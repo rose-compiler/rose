@@ -127,7 +127,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
     while (true) {
         if (!toReplace.empty()) {
             // Find largest contiguous region of to-be-replaced instructions starting at to-be-replaced entry instruction.
-            rose_addr_t toReplaceVa = toReplace[0]->get_address();
+            Address toReplaceVa = toReplace[0]->get_address();
             AddressIntervalSet::ConstIntervalIterator found = toReplaceVas.findFirstOverlap(toReplaceVa);
             ASSERT_require(found != toReplaceVas.intervals().end());
             AddressInterval entryInterval = *found & AddressInterval::hull(toReplaceVa, AddressInterval::whole().greatest());
@@ -219,7 +219,7 @@ CodeInserter::replaceInsns(const std::vector<SgAsmInstruction*> &toReplace, cons
     // Find the largest contiguous region of to-be-replaced instructions starting with the first one. By "first one", I
     // mean the first one executed, which isn't necessarily the lowest address.
     AddressIntervalSet toReplaceVas = instructionLocations(toReplace);
-    rose_addr_t toReplaceVa = toReplace[0]->get_address();
+    Address toReplaceVa = toReplace[0]->get_address();
     AddressIntervalSet::ConstIntervalIterator found = toReplaceVas.findFirstOverlap(toReplaceVa);
     ASSERT_require(found != toReplaceVas.intervals().end());
     AddressInterval entryInterval = *found & AddressInterval::hull(toReplaceVa, AddressInterval::whole().greatest());
@@ -292,12 +292,12 @@ CodeInserter::fillWithRandom(const AddressIntervalSet &where) {
 }
 
 std::vector<uint8_t>
-CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
+CodeInserter::encodeJump(Address srcVa, Address tgtVa) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     std::vector<uint8_t> retval;
     if (as<const Architecture::X86>(partitioner_->architecture())) {
         // For now, just use a jump with a 4-byte operand.
-        rose_addr_t delta = tgtVa - (srcVa + 5);
+        Address delta = tgtVa - (srcVa + 5);
         retval.push_back(0xe9);
         retval.push_back((delta >>  0) & 0xff);
         retval.push_back((delta >>  8) & 0xff);
@@ -305,7 +305,7 @@ CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
         retval.push_back((delta >> 24) & 0xff);
 
     } else if (as<const Architecture::NxpColdfire>(partitioner_->architecture())) {
-        rose_addr_t delta = tgtVa - (srcVa + 2);
+        Address delta = tgtVa - (srcVa + 2);
         retval.push_back(0x60);                         // bra.l
         retval.push_back(0xff);
         retval.push_back((delta >> 24) & 0xff);
@@ -329,7 +329,7 @@ CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
 }
 
 std::vector<uint8_t>
-CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement, const std::vector<Relocation> &relocations,
+CodeInserter::applyRelocations(Address va, std::vector<uint8_t> replacement, const std::vector<Relocation> &relocations,
                                size_t relocStart, const InstructionInfoMap &insnInfoMap) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     if (debug) {
@@ -343,7 +343,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
 
     for (const Relocation &reloc: relocations) {
         ASSERT_require(reloc.offset < replacement.size());
-        rose_addr_t value = 0;
+        Address value = 0;
         SAWYER_MESG(debug) <<"  at offset " <<(relocStart + reloc.offset) <<": ";
         switch (reloc.type) {
             case RELOC_INDEX_ABS_LE32: {
@@ -394,7 +394,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 SAWYER_MESG(debug) <<"index_rel_le32(" <<StringUtility::addrToString(reloc.value);
 
                 ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
-                rose_addr_t addend = replacement[relocStart + reloc.offset + 0];
+                Address addend = replacement[relocStart + reloc.offset + 0];
                 addend |= replacement[relocStart + reloc.offset + 1] << 8;
                 addend |= replacement[relocStart + reloc.offset + 1] << 16;
                 addend |= replacement[relocStart + reloc.offset + 1] << 24;
@@ -417,7 +417,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 SAWYER_MESG(debug) <<"index_rel_be32(" <<StringUtility::addrToString(reloc.value);
 
                 ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
-                rose_addr_t addend = replacement[relocStart + reloc.offset + 0] << 24;
+                Address addend = replacement[relocStart + reloc.offset + 0] << 24;
                 addend |= replacement[relocStart + reloc.offset + 1] << 16;
                 addend |= replacement[relocStart + reloc.offset + 1] <<  8;
                 addend |= replacement[relocStart + reloc.offset + 1] <<  0;
@@ -442,7 +442,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 ASSERT_require(insnInfoMap.exists(relIdx));
 
                 const InstructionInfo &info = insnInfoMap[relIdx];
-                rose_addr_t value = info.newVaOffset ? va + info.newVaOffset.get() : info.originalVa;
+                Address value = info.newVaOffset ? va + info.newVaOffset.get() : info.originalVa;
 
                 ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
                 replacement[relocStart + reloc.offset + 0] = (value >>  0) & 0xff;
@@ -461,7 +461,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 ASSERT_require(insnInfoMap.exists(relIdx));
 
                 ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
-                rose_addr_t addend = replacement[relocStart + reloc.offset + 0];
+                Address addend = replacement[relocStart + reloc.offset + 0];
                 addend |= replacement[relocStart + reloc.offset + 1] << 8;
                 addend |= replacement[relocStart + reloc.offset + 1] << 16;
                 addend |= replacement[relocStart + reloc.offset + 1] << 24;
@@ -469,7 +469,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 SAWYER_MESG(debug) <<", addend=" <<StringUtility::toHex2(addend, 32) <<")";
 
                 const InstructionInfo &info = insnInfoMap[relIdx];
-                rose_addr_t targetVa = info.newVaOffset ? va + info.newVaOffset.get() : info.originalVa;
+                Address targetVa = info.newVaOffset ? va + info.newVaOffset.get() : info.originalVa;
                 SAWYER_MESG(debug) <<" [target=" <<StringUtility::addrToString(targetVa) <<"]";
                 value = targetVa - (va + relocStart + reloc.offset) + addend;
 
@@ -489,7 +489,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 ASSERT_require(insnInfoMap.exists(relIdx));
 
                 ASSERT_require(relocStart + reloc.offset + 4 <= replacement.size());
-                rose_addr_t addend = replacement[relocStart + reloc.offset + 0] << 24;
+                Address addend = replacement[relocStart + reloc.offset + 0] << 24;
                 addend |= replacement[relocStart + reloc.offset + 1] << 16;
                 addend |= replacement[relocStart + reloc.offset + 1] << 8;
                 addend |= replacement[relocStart + reloc.offset + 1] << 0;
@@ -497,7 +497,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
                 SAWYER_MESG(debug) <<", addend=" <<StringUtility::toHex2(addend, 32) <<")";
 
                 const InstructionInfo &info = insnInfoMap[relIdx];
-                rose_addr_t targetVa = info.newVaOffset ? va + info.newVaOffset.get() : info.originalVa;
+                Address targetVa = info.newVaOffset ? va + info.newVaOffset.get() : info.originalVa;
                 SAWYER_MESG(debug) <<" [target=" <<StringUtility::addrToString(targetVa) <<"]";
                 value = targetVa - (va + relocStart + reloc.offset) + addend;
 
@@ -525,7 +525,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
 }
 
 AddressInterval
-CodeInserter::allocateMemory(const size_t nBytes, const rose_addr_t jmpTargetVa, const Commit::Boolean commit) {
+CodeInserter::allocateMemory(const size_t nBytes, const Address jmpTargetVa, const Commit::Boolean commit) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"  allocateMemory(nBytes=" <<nBytes <<", jmpTargetVa=" <<StringUtility::addrToString(jmpTargetVa) <<"):"
                        <<(Commit::YES == commit ? "" : " (test only)") <<"\n";
@@ -554,7 +554,7 @@ CodeInserter::allocateMemory(const size_t nBytes, const rose_addr_t jmpTargetVa,
     static const size_t maxJmpEncodedSize = 16; // size of largest unconditional jump on any architecture
     //AddressInterval chunkArea = AddressInterval::hull(0x80000000, 0xbfffffff); // restrictions on chunk locations
     size_t chunkSize = std::max(nBytes + maxJmpEncodedSize, minChunkAllocationSize_);
-    rose_addr_t chunkVa = 0;
+    Address chunkVa = 0;
     if (!partitioner_->memoryMap()->findFreeSpace(chunkSize, chunkAllocationAlignment_, chunkAllocationRegion_)
         .assignTo(chunkVa)) {
         SAWYER_MESG(debug) <<"    cannot find " <<StringUtility::plural(chunkSize, "bytes")
@@ -621,7 +621,7 @@ CodeInserter::replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const A
         SAWYER_MESG(debug) <<"  replaceByOverwrite failed: replacement is larger than entryInterval\n";
         return false;
     }
-    rose_addr_t replacementVa = entryInterval.least();
+    Address replacementVa = entryInterval.least();
     if (replacement.size() < entryInterval.size()) {
         switch (nopPadding_) {
             case PAD_NOP_FRONT:
@@ -683,7 +683,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
 
     // Allocate memory for the replacement, plus enough to add a branch back to the first instruction after those being
     // replaced.
-    rose_addr_t toReplaceFallThroughVa = toReplace.back()->get_address() + toReplace.back()->get_size();
+    Address toReplaceFallThroughVa = toReplace.back()->get_address() + toReplace.back()->get_size();
     AddressInterval replacementVas = allocateMemory(replacement.size(), toReplaceFallThroughVa, Commit::NO);
     if (replacementVas.isEmpty()) {
         SAWYER_MESG(debug) <<"  replaceByTransfer failed: cannot allocate space in memory map\n";
@@ -701,7 +701,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
     }
 
     // Insert the jump back from the replacement
-    rose_addr_t replacementFallThroughVa = replacementVas.least() + replacement.size();
+    Address replacementFallThroughVa = replacementVas.least() + replacement.size();
     std::vector<uint8_t> jmpFrom = encodeJump(replacementFallThroughVa, toReplaceFallThroughVa);
     if (partitioner_->memoryMap()->at(replacementFallThroughVa).write(jmpFrom).size() != jmpFrom.size()) {
         SAWYER_MESG(debug) <<"  replaceByTransfer failed: short write to memory map for returning branch at "
@@ -711,7 +711,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
 
     // Insert the jump to the replacement code.  If we're nop-padding before the jump this becomes a bit complicated because
     // the size of the jump could change based on its address.  If that happens, give up.
-    rose_addr_t jmpToSite = toReplace[0]->get_address();
+    Address jmpToSite = toReplace[0]->get_address();
     std::vector<uint8_t> jmpTo = encodeJump(jmpToSite, replacementVas.least());
     if (jmpTo.size() > entryInterval.size()) {
         SAWYER_MESG(debug) <<"  replaceByTransfer failed: not enough room for the branch to moved code at "

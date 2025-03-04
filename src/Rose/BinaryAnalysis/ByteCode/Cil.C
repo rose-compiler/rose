@@ -42,7 +42,7 @@ constexpr bool TRACE_CONSTRUCTION = false;
 
 struct InstrAddr
 {
-  rose_addr_t addr = 0;
+  Address addr = 0;
 };
 
 std::string utf8ToString(const uint8_t* bytes) {
@@ -205,7 +205,7 @@ metadataToken(const SgAsmCilMetadataHeap* heap, const SgAsmExpression* expr)
   return metadataToken(heap, isSgAsmIntegerValueExpression(expr));
 }
 
-CilMethod::CilMethod(SgAsmCilMetadataRoot* mdr, SgAsmCilMethodDef* sgMethod, rose_addr_t va)
+CilMethod::CilMethod(SgAsmCilMetadataRoot* mdr, SgAsmCilMethodDef* sgMethod, Address va)
   : Method{va}, mdr_{mdr}, sgMethod_{sgMethod}, insns_{nullptr}, code_{nullptr, 0, 0}
 {
     insns_ = new SgAsmInstructionList;

@@ -38,7 +38,7 @@ AddressUser::AddressUser(const DataBlock::Ptr &dblock)
 
 AddressUser::~AddressUser() {}
 
-rose_addr_t
+Address
 AddressUser::address() const {
     if (insn_)
         return insn_->get_address();
@@ -204,7 +204,7 @@ AddressUsers::instructionExists(SgAsmInstruction *insn) const {
 }
 
 SgAsmInstruction*
-AddressUsers::instructionExists(rose_addr_t va) const {
+AddressUsers::instructionExists(Address va) const {
     return findInstruction(va).insn();
 }
 
@@ -218,7 +218,7 @@ AddressUsers::basicBlockExists(const BasicBlock::Ptr &bb) const {
 }
 
 BasicBlock::Ptr
-AddressUsers::basicBlockExists(rose_addr_t va) const {
+AddressUsers::basicBlockExists(Address va) const {
     const std::vector<BasicBlock::Ptr> &candidates = findBasicBlock(va).basicBlocks();
     for (const BasicBlock::Ptr &bb: candidates) {
         if (bb->address() == va)
@@ -233,7 +233,7 @@ AddressUsers::dataBlockExists(const DataBlock::Ptr &db) const {
 }
 
 DataBlock::Ptr
-AddressUsers::dataBlockExists(rose_addr_t va, rose_addr_t size) const {
+AddressUsers::dataBlockExists(Address va, Address size) const {
     return findDataBlock(va, size).dataBlock();
 }
 
@@ -247,7 +247,7 @@ AddressUsers::findInstruction(SgAsmInstruction *insn) const {
 }
 
 AddressUser
-AddressUsers::findInstruction(rose_addr_t va) const {
+AddressUsers::findInstruction(Address va) const {
     // This could be a binary search, but since instructions seldom overlap much, linear is almost certainly ok.
     for (const AddressUser &user: users_) {
         if (user.insn() && user.insn()->get_address() == va)
@@ -266,7 +266,7 @@ AddressUsers::findBasicBlock(const BasicBlock::Ptr &bblock) const {
 }
 
 AddressUser
-AddressUsers::findBasicBlock(rose_addr_t va) const {
+AddressUsers::findBasicBlock(Address va) const {
     for (const AddressUser &user: users_) {
         if (user.insn()) {
             for (const BasicBlock::Ptr &bb: user.basicBlocks()) {
@@ -288,7 +288,7 @@ AddressUsers::findDataBlock(const DataBlock::Ptr &dblock) const {
 }
 
 AddressUser
-AddressUsers::findDataBlock(rose_addr_t va, rose_addr_t size) const {
+AddressUsers::findDataBlock(Address va, Address size) const {
     for (const AddressUser &user: users_) {
         if (const DataBlock::Ptr &candidate = user.dataBlock()) {
             if (candidate->address() == va && candidate->size() == size)
@@ -578,7 +578,7 @@ AddressUsageMap::extent() const {
 }
 
 bool
-AddressUsageMap::exists(rose_addr_t va) const {
+AddressUsageMap::exists(Address va) const {
     return map_.exists(va);
 }
 
@@ -599,8 +599,8 @@ AddressUsageMap::anyExists(const AddressIntervalSet &where) const {
 
 AddressIntervalSet
 AddressUsageMap::unusedExtent(size_t nBits) const {
-    ASSERT_require(nBits>0 && nBits<=8*sizeof(rose_addr_t));
-    AddressInterval vaSpace = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(nBits));
+    ASSERT_require(nBits>0 && nBits<=8*sizeof(Address));
+    AddressInterval vaSpace = AddressInterval::hull(0, IntegerOps::genMask<Address>(nBits));
     return unusedExtent(vaSpace);
 }
 
@@ -617,7 +617,7 @@ AddressUsageMap::unusedExtent(const AddressIntervalSet &space) const {
 }
 
 AddressInterval
-AddressUsageMap::nextUnused(rose_addr_t minVa) const {
+AddressUsageMap::nextUnused(Address minVa) const {
     return map_.firstUnmapped(minVa);
 }
 
@@ -631,7 +631,7 @@ AddressUsageMap::instructionExists(SgAsmInstruction *insn) const {
 }
 
 SgAsmInstruction*
-AddressUsageMap::instructionExists(rose_addr_t va) const {
+AddressUsageMap::instructionExists(Address va) const {
     return map_.getOptional(va).orDefault().instructionExists(va);
 }
 
@@ -645,7 +645,7 @@ AddressUsageMap::basicBlockExists(const BasicBlock::Ptr &bb) const {
 }
 
 BasicBlock::Ptr
-AddressUsageMap::basicBlockExists(rose_addr_t va) const {
+AddressUsageMap::basicBlockExists(Address va) const {
     return map_.getOptional(va).orDefault().basicBlockExists(va);
 }
 
@@ -659,7 +659,7 @@ AddressUsageMap::dataBlockExists(const DataBlock::Ptr &db) const {
 }
 
 DataBlock::Ptr
-AddressUsageMap::dataBlockExists(rose_addr_t va, rose_addr_t size) const {
+AddressUsageMap::dataBlockExists(Address va, Address size) const {
     return map_.getOptional(va).orDefault().dataBlockExists(va, size);
 }
 
@@ -673,7 +673,7 @@ AddressUsageMap::findInstruction(SgAsmInstruction *insn) const {
 }
 
 AddressUser
-AddressUsageMap::findInstruction(rose_addr_t va) const {
+AddressUsageMap::findInstruction(Address va) const {
     return map_.getOptional(va).orDefault().findInstruction(va);
 }
 
@@ -687,7 +687,7 @@ AddressUsageMap::findBasicBlock(const BasicBlock::Ptr &bb) const {
 }
 
 AddressUser
-AddressUsageMap::findBasicBlock(rose_addr_t va) const {
+AddressUsageMap::findBasicBlock(Address va) const {
     return map_.getOptional(va).orDefault().findBasicBlock(va);
 }
 
@@ -701,7 +701,7 @@ AddressUsageMap::findDataBlock(const DataBlock::Ptr &db) const {
 }
 
 AddressUser
-AddressUsageMap::findDataBlock(rose_addr_t va, rose_addr_t size) const {
+AddressUsageMap::findDataBlock(Address va, Address size) const {
     return map_.getOptional(va).orDefault().findDataBlock(va, size);
 }
 
@@ -793,8 +793,8 @@ AddressUsageMap::containedIn(const AddressInterval&) const {
     //return containedIn(interval, AddressUsers::selectAllUsers);
 }
 
-Sawyer::Optional<rose_addr_t>
-AddressUsageMap::leastUnmapped(rose_addr_t startVa) const {
+Sawyer::Optional<Address>
+AddressUsageMap::leastUnmapped(Address startVa) const {
     return map_.leastUnmapped(startVa);
 }
 
@@ -919,7 +919,7 @@ AddressUsageMap::eraseDataBlockOwners(const OwnedDataBlock &odb) {
 }
 
 OwnedDataBlock
-AddressUsageMap::dataBlockExists(rose_addr_t startVa) const {
+AddressUsageMap::dataBlockExists(Address startVa) const {
     const AddressUsers noUsers;
     if (Sawyer::Optional<OwnedDataBlock> odb = map_.getOptional(startVa).orElse(noUsers).dataBlockExists(startVa)) {
         if (odb->dataBlock()->address() == startVa) {

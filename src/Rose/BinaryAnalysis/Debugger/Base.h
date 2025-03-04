@@ -111,8 +111,8 @@ public:
      *  in the EIP register.
      *
      * @{ */
-    virtual void executionAddress(ThreadId, rose_addr_t);
-    virtual rose_addr_t executionAddress(ThreadId);
+    virtual void executionAddress(ThreadId, Address);
+    virtual Address executionAddress(ThreadId);
     /** @} */
 
     /** Execute one machine instruction. */
@@ -122,7 +122,7 @@ public:
     virtual void runToBreakPoint(ThreadId) = 0;
 
     /** Run the program and return an execution trace. */
-    virtual Sawyer::Container::Trace<rose_addr_t> trace();
+    virtual Sawyer::Container::Trace<Address> trace();
 
     /** Run the program and return an execution trace.
      *
@@ -130,10 +130,10 @@ public:
      *  value of type @ref FilterAction from the filter functor controls whether the address is appended to the trace and whether the
      *  tracing should continue. */
     template<class Filter>
-    Sawyer::Container::Trace<rose_addr_t> trace(ThreadId tid, Filter &filter) {
-        Sawyer::Container::Trace<rose_addr_t> retval;
+    Sawyer::Container::Trace<Address> trace(ThreadId tid, Filter &filter) {
+        Sawyer::Container::Trace<Address> retval;
         while (!isTerminated()) {
-            rose_addr_t va = executionAddress(tid);
+            Address va = executionAddress(tid);
             FilterAction action = filter(va);
             if (action.isClear(FilterActionFlag::REJECT))
                 retval.append(va);
@@ -194,30 +194,30 @@ public:
     /** Read subordinate memory.
      *
      *  Returns the number of bytes read. */
-    virtual size_t readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) = 0;
+    virtual size_t readMemory(Address va, size_t nBytes, uint8_t *buffer) = 0;
 
     /** Read subordinate memory as an array of bytes.
      *
      *  If the read fails then a shorter buffer is returned. */
-    virtual std::vector<uint8_t> readMemory(rose_addr_t va, size_t nBytes) = 0;
+    virtual std::vector<uint8_t> readMemory(Address va, size_t nBytes) = 0;
 
     /** Read subordinate memory as a bit vector.
      *
      * @code
      *  uint64_t value = debugger->readMemory(0x12345678, 4, ByteOrder::ORDER_LSB).toInteger();
      * @endcode */
-    virtual Sawyer::Container::BitVector readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness order) = 0;
+    virtual Sawyer::Container::BitVector readMemory(Address va, size_t nBytes, ByteOrder::Endianness order) = 0;
 
     /** Writes some bytes to subordinate memory.
      *
      *  Returns the number of bytes written. */
-    virtual size_t writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *bytes) = 0;
+    virtual size_t writeMemory(Address va, size_t nBytes, const uint8_t *bytes) = 0;
 
     /** Write subordinate memory.
      *
      *  Writes something to memory. */
     template<typename T>
-    void writeMemory(rose_addr_t va, const T &value) {
+    void writeMemory(Address va, const T &value) {
         size_t n = writeMemory(va, sizeof(T), (const uint8_t*)&value);
         ASSERT_always_require(n == sizeof(T));
     }
@@ -227,7 +227,7 @@ public:
      *  Reads up to @p maxBytes bytes from the subordinate or until an ASCII NUL character is read, concatenates all the
      *  characters (except the NUL) into a C++ string and returns it. The @p maxBytes includes the NUL terminator although the
      *  NUL terminator is not returned as part of the string. */
-    virtual std::string readCString(rose_addr_t va, size_t maxBytes = UNLIMITED);
+    virtual std::string readCString(Address va, size_t maxBytes = UNLIMITED);
 
 
 

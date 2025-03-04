@@ -240,7 +240,7 @@ public:
 
 public:
     /** Concrete instruction pointer. */
-    rose_addr_t concreteInstructionPointer() const;
+    Address concreteInstructionPointer() const;
 
     /** True if subordinate process has terminated.
      *

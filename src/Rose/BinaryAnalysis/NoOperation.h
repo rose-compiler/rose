@@ -60,7 +60,7 @@ public:
 private:
     InstructionSemantics::BaseSemantics::DispatcherPtr cpu_;
     StateNormalizer::Ptr normalizer_;
-    Sawyer::Optional<rose_addr_t> initialSp_;
+    Sawyer::Optional<Address> initialSp_;
     bool ignoreTerminalBranches_ = true;
 
 public:
@@ -103,8 +103,8 @@ public:
      *  popped. It may be possible to do this without a concrete value also, depending on the semantic domain.
      *
      * @{ */
-    const Sawyer::Optional<rose_addr_t> initialStackPointer() const { return initialSp_; }
-    void initialStackPointer(const Sawyer::Optional<rose_addr_t> &v) { initialSp_ = v; }
+    const Sawyer::Optional<Address> initialStackPointer() const { return initialSp_; }
+    void initialStackPointer(const Sawyer::Optional<Address> &v) { initialSp_ = v; }
     /** @} */
 
     /** Property: Whether terminal branches can be no-ops.

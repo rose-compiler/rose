@@ -39,7 +39,7 @@ public:
 
 private:
     bool isFrozen_;                                     // true if object is read-only because it's in the CFG
-    rose_addr_t startVa_;                               // starting address
+    Address startVa_;                                   // starting address
     SgAsmType *type_;                                   // type of data stored in this block
     std::string comment_;                               // arbitrary comment, shown by printableName.
     std::vector<BasicBlockPtr> attachedBasicBlockOwners_; // attached basic blocks that own this data block, sorted and unique
@@ -56,21 +56,21 @@ private:
 protected:
     // needed for serialization
     DataBlock();
-    DataBlock(rose_addr_t startVa, SgAsmType *type);
+    DataBlock(Address startVa, SgAsmType *type);
 
 public:
     ~DataBlock();
 
 public:
     /** Static allocating constructor. */
-    static Ptr instance(rose_addr_t startVa, SgAsmType*);
+    static Ptr instance(Address startVa, SgAsmType*);
 
     /** Static allocating constructor.
      *
      *  Creates a data block whose type is just an array of bytes.
      *
      *  The @p startVa is the starting address of the data block. */
-    static Ptr instanceBytes(rose_addr_t startVa, size_t nBytes);
+    static Ptr instanceBytes(Address startVa, size_t nBytes);
 
     /** Determine if data block is read-only.
      *
@@ -78,7 +78,7 @@ public:
     bool isFrozen() const { return isFrozen_; }
 
     /** Returns the starting address. */
-    rose_addr_t address() const { return startVa_; }
+    Address address() const { return startVa_; }
 
     /** Returns the size in bytes. */
     size_t size() const;

@@ -25,14 +25,14 @@ public:
 public:
     static Ptr instance();                              /**< Allocating constructor. */
     virtual std::vector<FunctionPtr> functions() const override;
-    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
+    virtual bool match(const PartitionerConstPtr&, Address anchor) override;
 };
 
 /** Matches a PowerPC ELF dynamic function stub.
  *
  *  If the function's instructions make it look like an ELF dynamic linking stub and it references an entry in the Procedure
  *  Loookup Table (defined by the PLT location in memory), then return the PLT entry address, otherwise return nothing. */
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 matchElfDynamicStub(const PartitionerConstPtr&, const FunctionPtr&, const AddressIntervalSet &pltAddresses);
 
 /** Give names to thunks for dynamically linked functions. */

@@ -664,7 +664,7 @@ ControlFlow::build_block_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg)
     VertexInserter<ControlFlowGraph>(this, cfg, bv_map).traverse(root, preorder);
 
     // Mapping from block entry address to CFG vertex
-    Map<rose_addr_t, Vertex> addrToVertex;
+    Map<Address, Vertex> addrToVertex;
     for (typename BlockVertexMap::iterator bvi=bv_map.begin(); bvi!=bv_map.end(); ++bvi)
         addrToVertex[bvi->first->get_address()] = bvi->second;
 
@@ -897,7 +897,7 @@ ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_fallthrough_edges
                         SgAsmInstruction *caller_insn = get_ast_node(cfg, caller_vertex);
                         SgAsmBlock *caller_block = SageInterface::getEnclosingNode<SgAsmBlock>(caller_insn);
                         assert(caller_block!=NULL);
-                        rose_addr_t target_va, returnee_va; // returnee_va is usually the call's fall-through address
+                        Address target_va, returnee_va; // returnee_va is usually the call's fall-through address
                         if (caller_block->isFunctionCall(target_va/*out*/, returnee_va/*out*/)) {
                             // This is a true call, so we need to add a return edge from the return instruction (the
                             // "returner") to what is probably the fall-through address of the call site (the returnee).

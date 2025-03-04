@@ -35,7 +35,7 @@ MatchRetAddiu::functions() const {
 }
 
 bool
-MatchRetAddiu::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+MatchRetAddiu::match(const Partitioner::ConstPtr &partitioner, Address anchor) {
     ASSERT_not_null(partitioner);
     if (anchor & 3)
         return false;                                   // MIPS instructions must be 4-byte aligned

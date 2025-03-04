@@ -56,7 +56,7 @@ public:
                              size_t stepOrigin, size_t maxSteps) const override;
     virtual std::vector<Sarif::LocationPtr> toSarif(size_t maxSteps) const override;
     virtual size_t nSteps() const override;
-    virtual Sawyer::Optional<rose_addr_t> address() const override;
+    virtual Sawyer::Optional<Address> address() const override;
     virtual std::vector<TagPtr> execute(const SettingsPtr&, const SemanticCallbacksPtr&,
                                         const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 

@@ -107,7 +107,7 @@ X86::init(size_t wordsize)
 void
 X86::commentIpRelative(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
-    const rose_addr_t fallThroughVa = insn->get_address() + insn->get_size();
+    const Address fallThroughVa = insn->get_address() + insn->get_size();
     const size_t nBits = architecture()->bitsPerWord();
     AST::Traversal::forwardPre<SgAsmBinaryAdd>(insn, [&fallThroughVa, &nBits](SgAsmBinaryAdd *add) {
         SgAsmDirectRegisterExpression *reg = nullptr;
@@ -121,8 +121,8 @@ X86::commentIpRelative(SgAsmInstruction *insn) {
         if (reg && ival && reg->get_descriptor().majorNumber() == x86_regclass_ip &&
             reg->get_descriptor().minorNumber() == 0 && reg->get_descriptor().offset() == 0 &&
             reg->get_descriptor().nBits() == nBits) {
-            const rose_addr_t offset = ival->get_absoluteValue();
-            const rose_addr_t va = (fallThroughVa + offset) & BitOps::lowMask<rose_addr_t>(nBits);
+            const Address offset = ival->get_absoluteValue();
+            const Address va = (fallThroughVa + offset) & BitOps::lowMask<Address>(nBits);
             const std::string vaStr = "absolute=" + StringUtility::addrToString(va, nBits);
             std::string comment = add->get_comment();
             comment = comment.empty() ? vaStr : vaStr + "," + comment;
@@ -132,7 +132,7 @@ X86::commentIpRelative(SgAsmInstruction *insn) {
 }
 
 SgAsmInstruction *
-X86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
+X86::disassembleOne(const MemoryMap::Ptr &map, Address start_va, AddressSet *successors)
 {
     /* The low-level disassembly function don't understand MemoryMap mappings. Therefore, remap the next few bytes (enough
      * for at least one instruction) into a temporary buffer. The longest x86 instruction is 15 bytes in 16-bit mode and 13

@@ -13,7 +13,7 @@ namespace BinaryAnalysis {
 
 RelativeVirtualAddress::RelativeVirtualAddress() {}
 
-RelativeVirtualAddress::RelativeVirtualAddress(rose_addr_t rva, SgAsmGenericSection *section/*=nullptr*/)
+RelativeVirtualAddress::RelativeVirtualAddress(Address rva, SgAsmGenericSection *section/*=nullptr*/)
     : rva_(rva) {
     bindSection(section);
 }
@@ -31,7 +31,7 @@ RelativeVirtualAddress::operator=(const RelativeVirtualAddress &other) {
 }
 
 RelativeVirtualAddress
-RelativeVirtualAddress::sectionRelative(SgAsmGenericSection *section, rose_addr_t offset) {
+RelativeVirtualAddress::sectionRelative(SgAsmGenericSection *section, Address offset) {
     ASSERT_not_null(section);
     ASSERT_require(section->isMapped());
     return RelativeVirtualAddress(section->get_mappedPreferredRva() + offset, section);
@@ -39,7 +39,7 @@ RelativeVirtualAddress::sectionRelative(SgAsmGenericSection *section, rose_addr_
 
 // [Robb Matzke 2024-02-05]: deprecated
 RelativeVirtualAddress
-RelativeVirtualAddress::section_relative(SgAsmGenericSection *section, rose_addr_t offset) {
+RelativeVirtualAddress::section_relative(SgAsmGenericSection *section, Address offset) {
     return sectionRelative(section, offset);
 }
 
@@ -54,7 +54,7 @@ RelativeVirtualAddress::is_bound() const {
     return isBound();
 }
 
-rose_addr_t
+Address
 RelativeVirtualAddress::rva() const {
     if (section_) {
         assert(section_->isMapped());
@@ -65,13 +65,13 @@ RelativeVirtualAddress::rva() const {
 }
 
 // [Robb Matzke 2024-02-05]: deprecated
-rose_addr_t
+Address
 RelativeVirtualAddress::get_rva() const {
     return rva();
 }
 
 RelativeVirtualAddress&
-RelativeVirtualAddress::rva(rose_addr_t newRva) {
+RelativeVirtualAddress::rva(Address newRva) {
     rva_ = newRva;
     if (section_) {
         assert(section_->isMapped());
@@ -82,7 +82,7 @@ RelativeVirtualAddress::rva(rose_addr_t newRva) {
 
 // [Robb Matzke 2024-02-05]: deprecated
 RelativeVirtualAddress&
-RelativeVirtualAddress::set_rva(rose_addr_t newRva) {
+RelativeVirtualAddress::set_rva(Address newRva) {
     return rva(newRva);
 }
 
@@ -120,7 +120,7 @@ RelativeVirtualAddress::set_section(SgAsmGenericSection *new_section) {
 RelativeVirtualAddress&
 RelativeVirtualAddress::bindBestSection(SgAsmGenericHeader *fhdr) {
     assert(fhdr != nullptr);
-    rose_addr_t va = rva() + fhdr->get_baseVa();
+    Address va = rva() + fhdr->get_baseVa();
     SgAsmGenericSection *secbind = fhdr->get_bestSectionByVa(va, true);
     return bindSection(secbind);
 }
@@ -131,7 +131,7 @@ RelativeVirtualAddress::bind(SgAsmGenericHeader *fhdr) {
     return bindBestSection(fhdr);
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 RelativeVirtualAddress::va() const {
     if (section_) {
         ASSERT_require(section_->isMapped());
@@ -142,12 +142,12 @@ RelativeVirtualAddress::va() const {
 }
 
 // [Robb Matzke 2024-02-05]: deprecated
-rose_addr_t
+Address
 RelativeVirtualAddress::get_va() const {
     return va().orElse(rva_);
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 RelativeVirtualAddress::boundOffset() const {
     if (section_) {
         return rva_;
@@ -156,12 +156,12 @@ RelativeVirtualAddress::boundOffset() const {
     }
 }
 
-rose_addr_t
+Address
 RelativeVirtualAddress::get_rel() const {
     return boundOffset().orElse(rva_);
 }
 
-rose_addr_t
+Address
 RelativeVirtualAddress::offsetFrom(SgAsmGenericSection *section) const {
     ASSERT_not_null(section);
     ASSERT_require(section->isMapped());
@@ -169,13 +169,13 @@ RelativeVirtualAddress::offsetFrom(SgAsmGenericSection *section) const {
 }
 
 // [Robb Matzke 2024-02-05]: deprecated
-rose_addr_t
+Address
 RelativeVirtualAddress::get_rel(SgAsmGenericSection *s) {
     return offsetFrom(s);
 }
 
 void
-RelativeVirtualAddress::increment(rose_addr_t amount) {
+RelativeVirtualAddress::increment(Address amount) {
     rva_ += amount;
 }
 
@@ -211,12 +211,12 @@ operator<<(std::ostream &os, const Rose::BinaryAnalysis::RelativeVirtualAddress 
     return os;
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 operator+(const Rose::BinaryAnalysis::RelativeVirtualAddress &a1, const Rose::BinaryAnalysis::RelativeVirtualAddress &a2) {
     return a1.rva() + a2.rva();
 }
 
-rose_addr_t
+Rose::BinaryAnalysis::Address
 operator-(const Rose::BinaryAnalysis::RelativeVirtualAddress &a1, const Rose::BinaryAnalysis::RelativeVirtualAddress &a2) {
     return a1.rva() - a2.rva();
 }

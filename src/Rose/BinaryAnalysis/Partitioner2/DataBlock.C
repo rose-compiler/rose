@@ -17,21 +17,21 @@ namespace Partitioner2 {
 DataBlock::DataBlock()
     : isFrozen_(false), startVa_(0), type_(NULL) {}
 
-DataBlock::DataBlock(rose_addr_t startVa, SgAsmType *type)
+DataBlock::DataBlock(Address startVa, SgAsmType *type)
     : isFrozen_(false), startVa_(startVa), type_(type) {}
 
 DataBlock::~DataBlock() {}
 
 // class method
 DataBlock::Ptr
-DataBlock::instance(rose_addr_t startVa, SgAsmType *type) {
+DataBlock::instance(Address startVa, SgAsmType *type) {
     ASSERT_not_null(type);
     return Ptr(new DataBlock(startVa, type));
 }
 
 // class method
 DataBlock::Ptr
-DataBlock::instanceBytes(rose_addr_t startVa, size_t nBytes) {
+DataBlock::instanceBytes(Address startVa, size_t nBytes) {
     SgAsmType *type = SageBuilderAsm::buildTypeVector(nBytes, SageBuilderAsm::buildTypeU8());
     return instance(startVa, type);
 }

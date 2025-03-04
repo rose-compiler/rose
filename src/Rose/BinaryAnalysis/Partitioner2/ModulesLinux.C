@@ -135,7 +135,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
 
     // It must call a function named "__libc_start_main@plt"
     bool foundCallToLibcStartMain = false;
-    for (const rose_addr_t &succVa: args.partitioner->basicBlockConcreteSuccessors(args.bblock)) {
+    for (const Address &succVa: args.partitioner->basicBlockConcreteSuccessors(args.bblock)) {
         Function::Ptr func = args.partitioner->functionExists(succVa);
         if (func && (func->name() == "__libc_start_main@plt" || func->name() == "__libc_start_main")) {
             foundCallToLibcStartMain = true;

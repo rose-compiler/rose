@@ -74,7 +74,7 @@ public:
 
     void assert_args(I insn, A args, size_t nargs) {
         ASSERT_not_null(insn);
-        rose_addr_t alignment = insn->get_size();
+        Address alignment = insn->get_size();
         if (alignDown(insn->get_address(), alignment) != insn->get_address()) {
             std::string mesg = "instruction is not " + boost::lexical_cast<std::string>(alignment) + "-byte aligned";
             throw BaseSemantics::Exception(mesg, insn);

@@ -100,7 +100,7 @@ isX86JmpImmThunk(const Partitioner::ConstPtr &partitioner, const std::vector<SgA
     SgAsmIntegerValueExpression *jmpArg0 = isSgAsmIntegerValueExpression(jmpArgs[0]);
     if (!jmpArg0)
         return ThunkDetection();
-    rose_addr_t targetVa = jmpArg0->get_absoluteValue();
+    Address targetVa = jmpArg0->get_absoluteValue();
     if (!partitioner->memoryMap()->require(MemoryMap::EXECUTABLE).at(targetVa).exists())
         return ThunkDetection();                        // target must be an executable address
     if (!partitioner->instructionExists(targetVa) && !partitioner->instructionsOverlapping(targetVa).empty())
@@ -291,7 +291,7 @@ splitThunkFunctions(const Partitioner::Ptr &partitioner, const ThunkPredicates::
             } else {
                 newFunc->reasonComment(candidate->reasonComment());
             }
-            for (rose_addr_t va: candidate->basicBlockAddresses()) {
+            for (Address va: candidate->basicBlockAddresses()) {
                 if (va != thunkFunction->address())
                     newFunc->insertBasicBlock(va);
             }

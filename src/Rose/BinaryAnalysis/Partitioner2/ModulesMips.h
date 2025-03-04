@@ -24,7 +24,7 @@ public:
 public:
     static Ptr instance();                              /**< Allocating constructor. */
     virtual std::vector<FunctionPtr> functions() const override;
-    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
+    virtual bool match(const PartitionerConstPtr&, Address anchor) override;
 };
 
 } // namespace

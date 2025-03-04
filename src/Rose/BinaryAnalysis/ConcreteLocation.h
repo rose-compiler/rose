@@ -71,7 +71,7 @@ public:
     /** Address location.
      *
      *  Construct a concrete location that refers to an address in memory. */
-    explicit ConcreteLocation(rose_addr_t);
+    explicit ConcreteLocation(Address);
 
     /** Register and offset location.
      *
@@ -131,7 +131,7 @@ public:
      *
      *  Returns the address of the location if the location is a simple memory address. Otherwise, if the address is formed
      *  from a base register and an offset, or if the location is a register, then zero is returned. */
-    rose_addr_t address() const;
+    Address address() const;
 
     /** Offset part of the location.
      *

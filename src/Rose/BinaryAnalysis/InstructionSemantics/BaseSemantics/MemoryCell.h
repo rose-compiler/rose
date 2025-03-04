@@ -176,7 +176,7 @@ public:
      *  false if they were all already members.
      *
      * @{ */
-    bool insertWriter(rose_addr_t writerVa) /*final*/ { return writers_.insert(writerVa); }
+    bool insertWriter(Address writerVa) /*final*/ { return writers_.insert(writerVa); }
     virtual bool insertWriters(const AddressSet &writerVas) { return writers_.insert(writerVas); }
     /** @} */
 
@@ -186,7 +186,7 @@ public:
      *  addresses existed, false if any were removed.
      *
      * @{ */
-    bool eraseWriter(rose_addr_t writerVa) /*final*/ { return writers_.erase(writerVa); }
+    bool eraseWriter(Address writerVa) /*final*/ { return writers_.erase(writerVa); }
     virtual bool eraseWriters(const AddressSet &writerVas) { return writers_.erase(writerVas); }
     /** @} */
 
@@ -195,7 +195,7 @@ public:
      *  Changes writer information to be excactly the specified address or set of addresses.
      *
      * @{ */
-    void setWriter(rose_addr_t writerVa) /*final*/;
+    void setWriter(Address writerVa) /*final*/;
     virtual void setWriters(const AddressSet &writerVas) { writers_.insert(writerVas); }
     /** @} */
 

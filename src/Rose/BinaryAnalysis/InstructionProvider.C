@@ -41,7 +41,7 @@ InstructionProvider::isDisassemblerEnabled() const {
 }
 
 SgAsmInstruction*
-InstructionProvider::operator[](rose_addr_t va) const {
+InstructionProvider::operator[](Address va) const {
     SgAsmInstruction *insn = nullptr;
     if (!insnMap_.getOptional(va).assignTo(insn)) {
         if (memMap_ && memMap_->at(va).require(MemoryMap::EXECUTABLE).exists()) {

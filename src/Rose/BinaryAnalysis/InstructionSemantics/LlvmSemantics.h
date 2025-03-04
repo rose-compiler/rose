@@ -259,7 +259,7 @@ public:
     virtual std::string next_label();
 
     /** Obtain a label for a virtual address. */
-    virtual std::string addr_label(rose_addr_t);
+    virtual std::string addr_label(Address);
 
     /** Obtain a label for a function. */
     virtual std::string function_label(SgAsmFunction*);

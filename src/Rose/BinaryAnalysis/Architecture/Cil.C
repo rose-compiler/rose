@@ -471,7 +471,7 @@ Cil::terminatesBasicBlock(SgAsmInstruction *insn_) const {
 }
 
 bool
-Cil::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) const {
+Cil::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, Address *target, Address *return_va) const {
     if (insns.empty())
         return false;
     auto last = isSgAsmCilInstruction(insns.back());
@@ -516,7 +516,7 @@ Cil::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
     }
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 Cil::branchTarget(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmCilInstruction(insn_);
     ASSERT_not_null(insn);
@@ -588,8 +588,8 @@ switchSuccessors(const SgAsmCilInstruction* insn, bool &complete) {
     SgAsmIntegerValueExpression* ival{nullptr};
     AddressSet retval{};
     uint32_t nTargets{0};                               // blame a97ec5f7819
-    rose_addr_t va{insn->get_address()};
-    rose_addr_t fallThrough{va + insn->get_size()};
+    Address va{insn->get_address()};
+    Address fallThrough{va + insn->get_size()};
 
     complete = false;
 

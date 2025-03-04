@@ -48,7 +48,7 @@ MatchLink::functions() const {
 }
 
 bool
-MatchLink::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+MatchLink::match(const Partitioner::ConstPtr &partitioner, Address anchor) {
     ASSERT_not_null(partitioner);
     if (anchor & 1)
         return false;                               // m68k instructions must be 16-bit aligned
@@ -71,15 +71,15 @@ MatchLink::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
 // Find padding that appears before the entry address of a function that aligns the entry address on a 4-byte boundary.
 // For m68k, padding is either 2-byte TRAPF instructions (0x51 0xfc) or zero bytes.  Patterns we've seen are 51 fc, 51 fc 00
 // 51 fc, 00 00, 51 fc 51 fc, but we'll allow any combination.
-rose_addr_t
-MatchFunctionPadding::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+Address
+MatchFunctionPadding::match(const Partitioner::ConstPtr &partitioner, Address anchor) {
     ASSERT_not_null(partitioner);
     MemoryMap::Ptr m = partitioner->memoryMap();
     if (0==anchor)
         return anchor;
 
     // Read backward from the anchor, skipping over padding as we go
-    rose_addr_t padMin = anchor;
+    Address padMin = anchor;
     uint8_t buf[2];                                     // reading two bytes at a time
     while (AddressInterval accessed = m->at(padMin-1).limit(2).require(MemoryMap::EXECUTABLE)
            .read(buf, Sawyer::Container::MATCH_BACKWARD)) {
@@ -177,15 +177,15 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
 
     // At this point we've matched the MOVEA/JMP pair and we know that the offset table follows the JMP instruction.  Read
     // offsets from the table until the table runs into one of our successors.
-    rose_addr_t startOfOffsetTable = jmp->get_address() + jmp->get_size();
+    Address startOfOffsetTable = jmp->get_address() + jmp->get_size();
     size_t tableIdx = 0;
-    rose_addr_t leastCodeVa = (rose_addr_t)(-1);
-    std::set<rose_addr_t> codeVas;
+    Address leastCodeVa = (Address)(-1);
+    std::set<Address> codeVas;
     MemoryMap::Ptr map = args.partitioner->memoryMap();
     while (1) {
         // Where is the offset in memory?  It must be between the end of the JMP instruction (watch out for overflow) and the
         // lowest address for a switch case.
-        rose_addr_t offsetVa = startOfOffsetTable + tableIdx*2;
+        Address offsetVa = startOfOffsetTable + tableIdx*2;
         if (offsetVa < startOfOffsetTable || offsetVa+2 >= leastCodeVa)
             break;
         AddressInterval offsetExtent = AddressInterval::baseSize(offsetVa, 2);
@@ -208,12 +208,12 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
         }
 
         // M68k offsets are 16-bit big-endian that are sign extended to 32 bits
-        rose_addr_t offset = ByteOrder::beToHost(offsetBE);
+        Address offset = ByteOrder::beToHost(offsetBE);
         offset = IntegerOps::signExtend2(offset, 16, 32);
 
         // Case code address is computed from the JMP instruction. The case code must be after the (current) end of the offset
         // table, which is also after the JMP instruction.
-        rose_addr_t codeVa = (jmp->get_address() + 4 + offset) & IntegerOps::GenMask<rose_addr_t, 32>::value;
+        Address codeVa = (jmp->get_address() + 4 + offset) & IntegerOps::GenMask<Address, 32>::value;
         if (codeVa < offsetVa+2)
             break;
 
@@ -227,7 +227,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     // We now know the size of the offset table and the addresses of all the switch cases.  Throw away the successors that were
     // already computed (it was probably just a single indeterminate successor) and replace them with the ones we found.
     args.bblock->successors().clear();
-    for (rose_addr_t va: codeVas)
+    for (Address va: codeVas)
         args.bblock->insertSuccessor(va, 32);
 
     // Create a data block for the offset table and attach it to the basic block
@@ -241,12 +241,12 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
 }
 
 std::vector<Function::Ptr>
-findInterruptFunctions(const Partitioner::ConstPtr &partitioner, rose_addr_t vectorVa) {
+findInterruptFunctions(const Partitioner::ConstPtr &partitioner, Address vectorVa) {
     ASSERT_not_null(partitioner);
     std::vector<Function::Ptr> functions;
-    std::set<rose_addr_t> functionVas;
+    std::set<Address> functionVas;
     for (size_t i=0; i<256; ++i) {
-        rose_addr_t elmtVa = vectorVa + 4*i;
+        Address elmtVa = vectorVa + 4*i;
         uint32_t functionVa;
         if (4 == partitioner->memoryMap()->at(elmtVa).limit(4).read((uint8_t*)&functionVa).size()) {
             functionVa = ByteOrder::beToHost(functionVa);

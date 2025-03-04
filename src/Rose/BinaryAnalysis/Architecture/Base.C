@@ -184,12 +184,12 @@ Base::isControlTransfer(const SgAsmInstruction*) const {
 }
 
 bool
-Base::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) const {
+Base::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, Address*, Address*) const {
     return false;
 }
 
 bool
-Base::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *ret) const {
+Base::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, Address *target, Address *ret) const {
     return isFunctionCallFast(insns, target, ret);
 }
 
@@ -203,7 +203,7 @@ Base::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) const {
     return isFunctionReturnFast(insns);
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 Base::branchTarget(SgAsmInstruction*) const {
     return Sawyer::Nothing();
 }

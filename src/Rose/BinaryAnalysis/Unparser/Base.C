@@ -1161,27 +1161,27 @@ Base::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &function,
 
 typedef boost::variant<P2::BasicBlock::Ptr, P2::DataBlock::Ptr> InsnsOrData;
 
-struct AddressVisitor: public boost::static_visitor<rose_addr_t> {
+struct AddressVisitor: public boost::static_visitor<Address> {
     template<class T>
-    rose_addr_t operator()(const T& a) const {
+    Address operator()(const T& a) const {
         return a->address();
     }
 };
 
 static bool
 increasingAddress(const InsnsOrData &a, const InsnsOrData &b) {
-    rose_addr_t aVa = boost::apply_visitor(AddressVisitor(), a);
-    rose_addr_t bVa = boost::apply_visitor(AddressVisitor(), b);
+    Address aVa = boost::apply_visitor(AddressVisitor(), a);
+    Address bVa = boost::apply_visitor(AddressVisitor(), b);
     return aVa < bVa;
 }
 
 struct EmitBlockVisitor: public boost::static_visitor<> {
     std::ostream &out;
     P2::Function::Ptr function;
-    rose_addr_t &nextBlockVa;
+    Address &nextBlockVa;
     State &state;
 
-    EmitBlockVisitor(std::ostream &out, const P2::Function::Ptr &function, rose_addr_t &nextBlockVa, State &state)
+    EmitBlockVisitor(std::ostream &out, const P2::Function::Ptr &function, Address &nextBlockVa, State &state)
         : out(out), function(function), nextBlockVa(nextBlockVa), state(state) {}
 
     void operator()(const P2::BasicBlock::Ptr &bb) const {
@@ -1241,7 +1241,7 @@ Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, Sta
         // If we're not emitting instruction addresses then we need some other way to identify basic blocks for branch targets.
         if (settings().insn.address.showing && settings().insn.address.useLabels) {
             state.basicBlockLabels().clear();
-            for (rose_addr_t bbVa: function->basicBlockAddresses()) {
+            for (Address bbVa: function->basicBlockAddresses()) {
                 std::string label = "L" + boost::lexical_cast<std::string>(state.basicBlockLabels().size()+1);
                 state.basicBlockLabels().insertMaybe(bbVa, label);
             }
@@ -1253,7 +1253,7 @@ Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, Sta
         std::vector<InsnsOrData> blocks;
         blocks.reserve(function->nBasicBlocks() + function->nDataBlocks());
         ASSERT_not_null(state.partitioner());
-        for (rose_addr_t bbVa: function->basicBlockAddresses()) {
+        for (Address bbVa: function->basicBlockAddresses()) {
             if (P2::BasicBlock::Ptr bb = state.partitioner()->basicBlockExists(bbVa)) {
                 blocks.push_back(bb);
                 for (const P2::DataBlock::Ptr &db: bb->dataBlocks())
@@ -1266,7 +1266,7 @@ Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, Sta
         std::sort(blocks.begin(), blocks.end(), increasingAddress);
 
         // Emit each basic- or data-block
-        rose_addr_t nextBlockVa = function->address();
+        Address nextBlockVa = function->address();
         for (const InsnsOrData &block: blocks)
             boost::apply_visitor(EmitBlockVisitor(out, function, nextBlockVa, state), block);
     }
@@ -1768,7 +1768,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> edges = orderedBlockSuccessors(state.partitioner(), bb);
         P2::BasicBlock::Successors successors = state.partitioner()->basicBlockSuccessors(bb);
         for (P2::ControlFlowGraph::ConstEdgeIterator edge: edges) {
-            Sawyer::Optional<rose_addr_t> targetVa = edge->target()->value().optionalAddress();
+            Sawyer::Optional<Address> targetVa = edge->target()->value().optionalAddress();
 
             if (!state.cfgArrowsPointToInsns()) {
                 // The line we're about to emit is the nock end of the arrow--the arrow's origin, and we're emitting
@@ -1849,7 +1849,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
 
         // Ghost successors due to opaque predicates
         if (bb->ghostSuccessors().isCached()) {
-            for (rose_addr_t va: bb->ghostSuccessors().get()) {
+            for (Address va: bb->ghostSuccessors().get()) {
                 state.frontUnparser().emitLinePrefix(out, state);
                 StyleGuard style(state.styleStack(), settings().comment.line.style);
                 out <<"\t" <<style.render() <<";; successor: (ghost) ";
@@ -1913,7 +1913,7 @@ Base::emitDataBlockPrologue(std::ostream &out, const P2::DataBlock::Ptr &db, Sta
                 <<style.restore() <<"\n";
         }
         if (P2::Function::Ptr function = state.currentFunction()) {
-            for (rose_addr_t bbVa: function->basicBlockAddresses()) {
+            for (Address bbVa: function->basicBlockAddresses()) {
                 if (P2::BasicBlock::Ptr bb = state.partitioner()->basicBlockExists(bbVa)) {
                     if (bb->dataBlockExists(db)) {
                         state.frontUnparser().emitLinePrefix(out, state);
@@ -1948,7 +1948,7 @@ Base::emitDataBlockBody(std::ostream &out, const P2::DataBlock::Ptr &db, State &
             // Read the data in chunks and produce a hexdump
             while (where) {
                 uint8_t buf[8192];                      // multiple of 16
-                size_t maxSize = std::min(where.size(), (rose_addr_t)(sizeof buf));
+                size_t maxSize = std::min(where.size(), (Address)(sizeof buf));
                 AddressInterval read = state.partitioner()->memoryMap()->atOrAfter(where.least()).limit(maxSize).read(buf);
                 hexdump(out, read.least(), buf, read.size(), fmt);
                 if (read.greatest() == where.greatest())
@@ -2367,7 +2367,7 @@ Base::emitOperandEpilogue(std::ostream &out, SgAsmExpression *expr, State &state
 }
 
 bool
-Base::emitAddress(std::ostream &out, rose_addr_t va, State &state, bool always) const {
+Base::emitAddress(std::ostream &out, Address va, State &state, bool always) const {
     if (nextUnparser()) {
         return nextUnparser()->emitAddress(out, va, state, always);
     } else {
@@ -3514,8 +3514,8 @@ Base::updateIntraFunctionArrows(State &state) const {
 // class method
 bool
 Base::ascendingSourceAddress(P2::ControlFlowGraph::ConstEdgeIterator a, P2::ControlFlowGraph::ConstEdgeIterator b) {
-    Sawyer::Optional<rose_addr_t> aVa = a->source()->value().optionalLastAddress();
-    Sawyer::Optional<rose_addr_t> bVa = b->source()->value().optionalLastAddress();
+    Sawyer::Optional<Address> aVa = a->source()->value().optionalLastAddress();
+    Sawyer::Optional<Address> bVa = b->source()->value().optionalLastAddress();
 
     if (aVa && bVa) {
         return *aVa < *bVa;
@@ -3529,8 +3529,8 @@ Base::ascendingSourceAddress(P2::ControlFlowGraph::ConstEdgeIterator a, P2::Cont
 // class method
 bool
 Base::ascendingTargetAddress(P2::ControlFlowGraph::ConstEdgeIterator a, P2::ControlFlowGraph::ConstEdgeIterator b) {
-    Sawyer::Optional<rose_addr_t> aVa = a->source()->value().optionalAddress();
-    Sawyer::Optional<rose_addr_t> bVa = b->source()->value().optionalAddress();
+    Sawyer::Optional<Address> aVa = a->source()->value().optionalAddress();
+    Sawyer::Optional<Address> bVa = b->source()->value().optionalAddress();
 
     if (aVa && bVa) {
         return *aVa < *bVa;

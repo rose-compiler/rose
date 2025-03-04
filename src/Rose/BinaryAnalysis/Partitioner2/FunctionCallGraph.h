@@ -37,9 +37,9 @@ public:
 
     class VertexKey {
     public:
-        rose_addr_t address;
+        Address address;
         VertexKey();
-        explicit VertexKey(rose_addr_t);
+        explicit VertexKey(Address);
         explicit VertexKey(const FunctionPtr&);
         bool operator<(VertexKey) const;
     };
@@ -74,7 +74,7 @@ public:
      *
      * @{ */
     Graph::ConstVertexIterator findFunction(const FunctionPtr &function) const;
-    Graph::ConstVertexIterator findFunction(rose_addr_t entryVa) const;
+    Graph::ConstVertexIterator findFunction(Address entryVa) const;
     /** @} */
 
     /** Determine if a function exists in the call graph.
@@ -84,7 +84,7 @@ public:
      *
      * @{ */
     bool exists(const FunctionPtr &function) const;
-    bool exists(rose_addr_t entryVa) const;
+    bool exists(Address entryVa) const;
     /** @} */
 
     /** Insert a function vertex.

@@ -62,7 +62,7 @@ class CellErasurePredicate: public BaseSemantics::MemoryCell::Predicate {
     
 public:
     CellErasurePredicate(const BaseSemantics::RiscOperators::Ptr &ops, const BaseSemantics::SValue::Ptr &stackCurVa,
-                         rose_addr_t closeness)
+                         Address closeness)
         : ignorePoppedMemory(closeness!=0), ops(ops), stackCurVa(stackCurVa) {
         stackMinVa = ops->subtract(stackCurVa, ops->number_(stackCurVa->nBits(), closeness));
     }

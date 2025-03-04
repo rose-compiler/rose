@@ -46,9 +46,9 @@ SRecord::addressNBytes(Type type) {
 }
 
 // class method
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 SRecord::parseBigEndianInteger(const std::string &s, size_t start, size_t nChars) {
-    rose_addr_t retval = 0;
+    Address retval = 0;
     if (start + nChars > s.size())
         return Sawyer::Nothing();
     for (size_t i=0; i < nChars; ++i) {
@@ -389,17 +389,17 @@ SRecord::RunLengthEncoding::insert(const SRecord &srec) {
     }
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 SRecord::RunLengthEncoding::executionAddress() const {
     return executionVa_;
 }
 
-rose_addr_t
+Address
 SRecord::RunLengthEncoding::baseDataAddress() const {
     return dataVa_.orElse(0);
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 SRecord::RunLengthEncoding::dataAddress(const SRecord &srec) const {
     switch (srec.type()) {
         case SREC_M_DATA16:
@@ -419,7 +419,7 @@ SRecord::dataAddresses(const std::vector<SRecord> &srecs) {
     AddressIntervalSet retval;
     RunLengthEncoding rle;
     for (const SRecord &srec: srecs) {
-        rose_addr_t va = 0;
+        Address va = 0;
         if (rle.dataAddress(srec).assignTo(va))
             retval.insert(AddressInterval::baseSize(va, srec.data().size()));
         rle.insert(srec);
@@ -429,17 +429,17 @@ SRecord::dataAddresses(const std::vector<SRecord> &srecs) {
 
 // class method
 AddressIntervalSet
-SRecord::createSegments(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map, rose_addr_t alignment_, unsigned accessPerms,
+SRecord::createSegments(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map, Address alignment_, unsigned accessPerms,
                         const std::string &name, MemoryMap::Clobber clobber) {
     ASSERT_not_null(map);
-    const rose_addr_t alignment = std::max(alignment_, (rose_addr_t)1);
+    const Address alignment = std::max(alignment_, (Address)1);
 
     // Given all srecord addresses, extend them so they're aligned, and merge all overlapping extensions together.
     const AddressIntervalSet srecAddrs = dataAddresses(srecs);
     AddressIntervalSet alignedAddresses;
     for (const AddressInterval &interval: srecAddrs.intervals()) {
-        const rose_addr_t begin = alignDown(interval.least(), alignment);
-        const rose_addr_t end = alignUp(interval.greatest() + 1, alignment);
+        const Address begin = alignDown(interval.least(), alignment);
+        const Address end = alignUp(interval.greatest() + 1, alignment);
         ASSERT_require(begin < end);
         alignedAddresses |= AddressInterval::hull(begin, end-1);
     }
@@ -454,11 +454,11 @@ SRecord::createSegments(const std::vector<SRecord> &srecs, const MemoryMap::Ptr 
 }
 
 // class method
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 SRecord::load(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map) {
     RunLengthEncoding rle;
     for (const SRecord &srec: srecs) {
-        rose_addr_t va = 0;
+        Address va = 0;
         if (rle.dataAddress(srec).assignTo(va)) {
             size_t nWritten = map->at(va).write(srec.data()).size();
             if (nWritten != srec.data().size()) {
@@ -473,8 +473,8 @@ SRecord::load(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map) {
 }
 
 // class method
-Sawyer::Optional<rose_addr_t>
-SRecord::load(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map, rose_addr_t alignment, unsigned accessPerms,
+Sawyer::Optional<Address>
+SRecord::load(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map, Address alignment, unsigned accessPerms,
                const std::string &name, MemoryMap::Clobber clobber) {
     createSegments(srecs, map, alignment, accessPerms, name, clobber);
     return load(srecs, map);
@@ -514,7 +514,7 @@ SRecord::create(const MemoryMap::Ptr &map, Syntax syntax, size_t bytesPerRecord,
             ASSERT_not_reachable("invalid syntax family");
     }
 
-    rose_addr_t va = 0;
+    Address va = 0;
     RunLengthEncoding rle;
     while (map->atOrAfter(va).next().assignTo(va)) {
         size_t nRead = map->at(va).limit(bytesPerRecord).read(buffer).size();
@@ -528,7 +528,7 @@ SRecord::create(const MemoryMap::Ptr &map, Syntax syntax, size_t bytesPerRecord,
 
             case SREC_INTEL: {
                 ASSERT_require(va >= rle.baseDataAddress()); // because va is increasing
-                rose_addr_t offset = va - rle.baseDataAddress();
+                Address offset = va - rle.baseDataAddress();
                 if (0 == rle.nDataRecords()) {
                     static uint8_t zeros[2];
                     retval.push_back(SRecord(SREC_I_EXTENDED_LA, 0, zeros, 2)); // good form to initialize the linear addresses
@@ -586,7 +586,7 @@ SRecord::toString() const {
                 throw Exception("S-Record size is too large");
             s += (boost::format("%|02X|") % size).str();
 
-            const rose_addr_t addrMask = BitOps::lowMask<rose_addr_t>(8 * addressNBytes(type_));
+            const Address addrMask = BitOps::lowMask<Address>(8 * addressNBytes(type_));
             if (BitOps::signExtend(addr_ & addrMask, 8*addressNBytes(type_)) != addr_) {
                 throw Exception("S-Record address " + StringUtility::addrToString(addr_) +
                                 " needs more than " + StringUtility::numberToString(addressNBytes(type_)) + " bytes");

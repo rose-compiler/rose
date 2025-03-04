@@ -759,11 +759,11 @@ StringFinder::insertUncommonEncoders(ByteOrder::Endianness) {
 
 struct Finding {
     StringEncodingScheme::Ptr encoder;
-    rose_addr_t startVa;
-    rose_addr_t nBytes;
+    Address startVa;
+    Address nBytes;
     Finding()
         : startVa(0), nBytes(0) {}
-    Finding(const StringEncodingScheme::Ptr &enc, rose_addr_t va)
+    Finding(const StringEncodingScheme::Ptr &enc, Address va)
         : encoder(enc->clone()), startVa(va), nBytes(0) {
         encoder->reset();
     }
@@ -789,11 +789,11 @@ class StringSearcher {
     StringEncodingSchemes protoEncoders_;
     std::vector<std::vector<Finding> > findings_;
     std::vector<Finding> results_;
-    rose_addr_t bufferVa_;
+    Address bufferVa_;
     size_t minLength_, maxLength_;                      // limits on number of code points per string
     bool discardCodePoints_;                            // throw away decoded code points?
     size_t maxOverlap_;                                 // allow one encoder to match overlapping strings?
-    Sawyer::Optional<rose_addr_t> anchored_;            // are strings anchored to starting address?
+    Sawyer::Optional<Address> anchored_;                // are strings anchored to starting address?
     Sawyer::ProgressBar<size_t> progress_;
 public:
     StringSearcher(const std::vector<StringEncodingScheme::Ptr> &encoders,
@@ -807,7 +807,7 @@ public:
     }
 
     // anchor the search to a particular address
-    void anchor(rose_addr_t startVa) { anchored_ = startVa; }
+    void anchor(Address startVa) { anchored_ = startVa; }
 
     // obtain the final results
     const std::vector<Finding>& results() const { return results_; }
@@ -830,7 +830,7 @@ public:
         }
 
         std::vector<uint8_t> buffer(4096);              // arbitrary
-        rose_addr_t bufferVa = interval.least();
+        Address bufferVa = interval.least();
         while (1) {
             size_t nread = map.at(bufferVa).atOrBefore(interval.greatest()).read(buffer).size();
             progress_.value(progress_.value()+nread);

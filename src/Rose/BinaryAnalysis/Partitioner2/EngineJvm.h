@@ -37,17 +37,17 @@ private:
     std::map<std::string, SgAsmGenericFile*> classes_;
 
     // Mapping of function names to virtual address
-    std::map<std::string, rose_addr_t> functions_;
+    std::map<std::string, Address> functions_;
 
     // Mapping of unresolved (added to partitioner) function names to virtual address
-    std::map<std::string, rose_addr_t> unresolvedFunctions_;
+    std::map<std::string, Address> unresolvedFunctions_;
 
     // Listing of open jar files (maybe should be Zippers with
     std::vector<ModulesJvm::Zipper*> jars_; // Zipper owns SgAsmGenericFile*, ie, Zipper{gf}, yeah, will have buffer
                                             // Zipper.find(className)
 
-    static constexpr rose_addr_t vaDefaultIncrement{4*1024};
-    rose_addr_t nextFunctionVa_;
+    static constexpr Address vaDefaultIncrement{4*1024};
+    Address nextFunctionVa_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -198,14 +198,14 @@ public:
      *  Returns the AST node representing the file.
      *
      * @{ */
-    rose_addr_t loadClassFile(boost::filesystem::path, SgAsmGenericFileList*, rose_addr_t);
+    Address loadClassFile(boost::filesystem::path, SgAsmGenericFileList*, Address);
 
     /** Recursively find and load all super classes starting at the given address.
      *
      *  Returns the address of the last preloaded class.
      *
      * @{ */
-    rose_addr_t loadSuperClasses(const std::string &, SgAsmGenericFileList*, rose_addr_t);
+    Address loadSuperClasses(const std::string &, SgAsmGenericFileList*, Address);
 
     /** Load classes discoverable from the file list starting at the given address.
      *
@@ -214,7 +214,7 @@ public:
      *  Returns the next available address.
      *
      * @{ */
-    rose_addr_t loadDiscoverableClasses(SgAsmGenericFileList*, rose_addr_t);
+    Address loadDiscoverableClasses(SgAsmGenericFileList*, Address);
 
     /** Load class and super class starting at the given address.
      *
@@ -223,7 +223,7 @@ public:
      *  Returns the next available address.
      *
      * @{ */
-    rose_addr_t loadClass(uint16_t, SgAsmJvmConstantPool*, SgAsmGenericFileList*, rose_addr_t);
+    Address loadClass(uint16_t, SgAsmJvmConstantPool*, SgAsmGenericFileList*, Address);
 
     /** Path to the given class.
      *
@@ -238,8 +238,7 @@ public:
      *  stores the class names of the discovered functions.
      *
      * @{ */
-    void discoverFunctionCalls(SgAsmJvmMethod*, SgAsmJvmConstantPool*,
-                               std::map<std::string,rose_addr_t> &, std::set<std::string> &);
+    void discoverFunctionCalls(SgAsmJvmMethod*, SgAsmJvmConstantPool*, std::map<std::string,Address> &, std::set<std::string> &);
 
     /** Partition instructions into basic blocks and functions.
      *
@@ -353,8 +352,8 @@ public:
      *  binary container.
      *
      * @{ */
-    const std::vector<rose_addr_t>& functionStartingVas() const /*final*/;
-    std::vector<rose_addr_t>& functionStartingVas() /*final*/;
+    const std::vector<Address>& functionStartingVas() const /*final*/;
+    std::vector<Address>& functionStartingVas() /*final*/;
     /** @} */
 
     /** Replacement for ::frontend for Jvm files only */

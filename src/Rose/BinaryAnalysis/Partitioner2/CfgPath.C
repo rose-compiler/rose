@@ -375,7 +375,7 @@ CfgPath::hash() const {
     Combinatorics::HasherSha256Builtin hasher;
     for (const ControlFlowGraph::ConstVertexIterator &vertex: vertices()) {
         hasher.insert((uint64_t)vertex->value().type());
-        if (Sawyer::Optional<rose_addr_t> addr = vertex->value().optionalAddress())
+        if (Sawyer::Optional<Address> addr = vertex->value().optionalAddress())
             hasher.insert(*addr);
     }
     uint64_t retval = 0;
@@ -399,7 +399,7 @@ CfgPath::hash(SgAsmInstruction *lastInsn) const {
                 if (insnIdx++ <= lastInsnIdx)
                     hasher.insert(insn->get_address());
             }
-        } else if (Sawyer::Optional<rose_addr_t> addr = verts[vertIdx]->value().optionalAddress()) {
+        } else if (Sawyer::Optional<Address> addr = verts[vertIdx]->value().optionalAddress()) {
             hasher.insert(*addr);
             ++insnIdx;
         } else {

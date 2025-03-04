@@ -21,22 +21,22 @@ Function::~Function() {}
 Function::Function()
     : entryVa_(0), reasons_(0), isFrozen_(false) {}
 
-Function::Function(rose_addr_t entryVa, const std::string &name, unsigned reasons)
+Function::Function(Address entryVa, const std::string &name, unsigned reasons)
     : entryVa_(entryVa), name_(name), reasons_(reasons), isFrozen_(false) {
     bblockVas_.insert(entryVa);
 }
 
 Function::Ptr
-Function::instance(rose_addr_t entryVa, const std::string &name, unsigned reasons) {
+Function::instance(Address entryVa, const std::string &name, unsigned reasons) {
     return Ptr(new Function(entryVa, name, reasons));
 }
 
 Function::Ptr
-Function::instance(rose_addr_t entryVa, unsigned reasons) {
+Function::instance(Address entryVa, unsigned reasons) {
     return Ptr(new Function(entryVa, "", reasons));
 }
 
-rose_addr_t
+Address
 Function::address() const {
     return entryVa_;
 }
@@ -111,18 +111,18 @@ Function::reasonComment(const std::string &s) {
     reasonComment_ = s;
 }
 
-const std::set<rose_addr_t>&
+const std::set<Address>&
 Function::basicBlockAddresses() const {
     return bblockVas_;
 }
 
 bool
-Function::ownsBasicBlock(rose_addr_t bblockVa) const {
+Function::ownsBasicBlock(Address bblockVa) const {
     return bblockVas_.find(bblockVa) != bblockVas_.end();
 }
 
 bool
-Function::insertBasicBlock(rose_addr_t bblockVa) {
+Function::insertBasicBlock(Address bblockVa) {
     ASSERT_forbid(isFrozen_);
     bool wasInserted = bblockVas_.insert(bblockVa).second;
     if (wasInserted)
@@ -131,7 +131,7 @@ Function::insertBasicBlock(rose_addr_t bblockVa) {
 }
 
 void
-Function::eraseBasicBlock(rose_addr_t bblockVa) {        // no-op if not existing
+Function::eraseBasicBlock(Address bblockVa) {           // no-op if not existing
     ASSERT_forbid(isFrozen_);
     ASSERT_forbid2(bblockVa==entryVa_, "function entry block cannot be removed");
     clearCache();

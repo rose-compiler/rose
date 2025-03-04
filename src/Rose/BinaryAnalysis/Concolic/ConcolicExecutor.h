@@ -33,14 +33,14 @@ public:
     /** Information about a called function. */
     struct FunctionCall {
         std::string printableName;                      /** Name suitable for printing in diagnostic messages. */
-        rose_addr_t sourceVa;                           /** Address from which the function was called. */
-        rose_addr_t targetVa;                           /** Address that was called. */
-        rose_addr_t stackVa;                            /** Stack pointer when function is first called. */
+        Address sourceVa;                               /** Address from which the function was called. */
+        Address targetVa;                               /** Address that was called. */
+        Address stackVa;                                /** Stack pointer when function is first called. */
 
         FunctionCall()
             : sourceVa(0), targetVa(0), stackVa(0) {}
 
-        FunctionCall(const std::string &printableName, rose_addr_t sourceVa, rose_addr_t targetVa, rose_addr_t stackVa)
+        FunctionCall(const std::string &printableName, Address sourceVa, Address targetVa, Address stackVa)
             : printableName(printableName), sourceVa(sourceVa), targetVa(targetVa), stackVa(stackVa) {}
     };
 

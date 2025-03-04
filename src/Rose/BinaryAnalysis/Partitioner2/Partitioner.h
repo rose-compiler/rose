@@ -288,13 +288,13 @@ public:
     /** Represents information about a thunk. */
     struct Thunk {
         BasicBlockPtr bblock;                           /**< The one and only basic block for the thunk. */
-        rose_addr_t target;                             /**< The one and only successor for the basic block. */
-        Thunk(const BasicBlockPtr&, rose_addr_t target);
+        Address target;                                 /**< The one and only successor for the basic block. */
+        Thunk(const BasicBlockPtr&, Address target);
         ~Thunk();
     };
 
     /** Map address to name. */
-    typedef Sawyer::Container::Map<rose_addr_t, std::string> AddressNameMap;
+    typedef Sawyer::Container::Map<Address, std::string> AddressNameMap;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -338,7 +338,7 @@ private:
     static const size_t nSpecialVertices = 3;
 
     // Optional cached information
-    Sawyer::Optional<rose_addr_t> elfGotVa_;            // address of ELF GOT, set by findElfGotVa
+    Sawyer::Optional<Address> elfGotVa_;                // address of ELF GOT, set by findElfGotVa
 
     // Protects the following data members
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
@@ -462,7 +462,7 @@ public:
     /** Returns true if address is executable.
      *
      *  Thread safety: Not thread safe. */
-    bool addressIsExecutable(rose_addr_t) const;
+    bool addressIsExecutable(Address) const;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -604,7 +604,7 @@ public:
      *
      *  Returns a vector of @ref AddressUser objects that describe instructions, basic blocks, data blocks, and functions that
      *  exist at the specified address. */
-    std::vector<AddressUser> users(rose_addr_t) const;
+    std::vector<AddressUser> users(Address) const;
 
     /** Determine all ghost successors in the control flow graph.
      *
@@ -613,7 +613,7 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @sa basicBlockGhostSuccessors */
-    std::set<rose_addr_t> ghostSuccessors() const;
+    std::set<Address> ghostSuccessors() const;
 
     /** Determine if an edge is intra-procedural.
      *
@@ -720,7 +720,7 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    AddressUser instructionExists(rose_addr_t startVa) const;
+    AddressUser instructionExists(Address startVa) const;
     AddressUser instructionExists(SgAsmInstruction *insn) const;
     /** @} */
 
@@ -730,7 +730,7 @@ public:
      *  CFG then the end vertex is returned.
      *
      *  Thread safety: Not thread safe. */
-    ControlFlowGraph::ConstVertexIterator instructionVertex(rose_addr_t insnVa) const;
+    ControlFlowGraph::ConstVertexIterator instructionVertex(Address insnVa) const;
 
     /** Returns instructions that overlap with specified address interval.
      *
@@ -784,7 +784,7 @@ public:
      *  then that same instruction will be returned this time.
      *
      *  Thread safety: Not thread safe. */
-    SgAsmInstruction* discoverInstruction(rose_addr_t startVa) const;
+    SgAsmInstruction* discoverInstruction(Address startVa) const;
 
     /** Cross references.
      *
@@ -821,7 +821,7 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @sa findPlaceholder */
-    bool placeholderExists(rose_addr_t startVa) const;
+    bool placeholderExists(Address startVa) const;
 
     /** Find the CFG vertex for a basic block placeholder.
      *
@@ -833,8 +833,8 @@ public:
      *  @sa placeholderExists
      *
      *  @{ */
-    ControlFlowGraph::VertexIterator findPlaceholder(rose_addr_t startVa);
-    ControlFlowGraph::ConstVertexIterator findPlaceholder(rose_addr_t startVa) const;
+    ControlFlowGraph::VertexIterator findPlaceholder(Address startVa);
+    ControlFlowGraph::ConstVertexIterator findPlaceholder(Address startVa) const;
     /** @} */
 
     /** Insert a basic-block placeholder.
@@ -853,7 +853,7 @@ public:
      *  or the new placeholder.
      *
      *  Thread safety: Not thread safe. */
-    ControlFlowGraph::VertexIterator insertPlaceholder(rose_addr_t startVa);
+    ControlFlowGraph::VertexIterator insertPlaceholder(Address startVa);
 
     /** Remove a basic block placeholder from the CFG/AUM.
      *
@@ -869,7 +869,7 @@ public:
      *
      *  @{ */
     BasicBlockPtr erasePlaceholder(const ControlFlowGraph::ConstVertexIterator &placeholder) /*final*/;
-    BasicBlockPtr erasePlaceholder(rose_addr_t startVa) /*final*/;
+    BasicBlockPtr erasePlaceholder(Address startVa) /*final*/;
     /** @} */
 
 
@@ -949,7 +949,7 @@ public:
      *  @sa placeholderExists
      *
      *  @{ */
-    BasicBlockPtr basicBlockExists(rose_addr_t startVa) const;
+    BasicBlockPtr basicBlockExists(Address startVa) const;
     BasicBlockPtr basicBlockExists(const BasicBlockPtr&) const;
     /** @} */
 
@@ -993,7 +993,7 @@ public:
      *  instruction or basic block exists in the CFG/AUM.
      *
      *  Thread safety: Not thread safe. */
-    BasicBlockPtr basicBlockContainingInstruction(rose_addr_t insnVa) const;
+    BasicBlockPtr basicBlockContainingInstruction(Address insnVa) const;
 
     /** Returns the addresses used by basic block instructions.
      *
@@ -1037,7 +1037,7 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    BasicBlockPtr detachBasicBlock(rose_addr_t startVa);
+    BasicBlockPtr detachBasicBlock(Address startVa);
     BasicBlockPtr detachBasicBlock(const BasicBlockPtr &basicBlock);
     BasicBlockPtr detachBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder);
     /** @} */
@@ -1177,7 +1177,7 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    BasicBlockPtr discoverBasicBlock(rose_addr_t startVa) const;
+    BasicBlockPtr discoverBasicBlock(Address startVa) const;
     BasicBlockPtr discoverBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder) const;
     /** @} */
 
@@ -1205,7 +1205,7 @@ public:
      *  complete set is not concrete (false).
      *
      *  Thread safety: Not thread safe. */
-    std::vector<rose_addr_t> basicBlockConcreteSuccessors(const BasicBlockPtr&, bool *isComplete=NULL) const;
+    std::vector<Address> basicBlockConcreteSuccessors(const BasicBlockPtr&, bool *isComplete=NULL) const;
 
     /** Determine ghost successors for a basic block.
      *
@@ -1225,7 +1225,7 @@ public:
      *
      *
      *  Thread safety: Not thread safe. */
-    std::set<rose_addr_t> basicBlockGhostSuccessors(const BasicBlockPtr&) const;
+    std::set<Address> basicBlockGhostSuccessors(const BasicBlockPtr&) const;
 
     /** Determine if a basic block looks like a function call.
      *
@@ -1581,7 +1581,7 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    FunctionPtr functionExists(rose_addr_t entryVa) const;
+    FunctionPtr functionExists(Address entryVa) const;
     FunctionPtr functionExists(const BasicBlockPtr &entryBlock) const;
     FunctionPtr functionExists(const FunctionPtr &function) const;
     /** @} */
@@ -1772,7 +1772,7 @@ public:
     functionsOwningBasicBlock(const ControlFlowGraph::ConstVertexIterator&, bool doSort = true) const;
 
     std::vector<FunctionPtr>
-    functionsOwningBasicBlock(rose_addr_t bblockVa, bool doSort = true) const;
+    functionsOwningBasicBlock(Address bblockVa, bool doSort = true) const;
 
     std::vector<FunctionPtr>
     functionsOwningBasicBlock(const BasicBlockPtr&, bool doSort = true) const;
@@ -1842,7 +1842,7 @@ public:
      *  which are not actual control flow successors due to the presence of opaque predicates.
      *
      *  Thread safety: Not thread safe. */
-    std::set<rose_addr_t> functionGhostSuccessors(const FunctionPtr&) const;
+    std::set<Address> functionGhostSuccessors(const FunctionPtr&) const;
 
     /** Returns a function call graph.
      *
@@ -2051,7 +2051,7 @@ public:
      *
      *  This function runs a simple data-flow operation on the specified function and examines all states to obtain a set
      *  of constants. */
-    std::set<rose_addr_t> functionDataFlowConstants(const FunctionPtr&) const;
+    std::set<Address> functionDataFlowConstants(const FunctionPtr&) const;
 
 
 
@@ -2132,8 +2132,8 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    std::vector<FunctionPtr> nextFunctionPrologue(rose_addr_t startVa);
-    std::vector<FunctionPtr> nextFunctionPrologue(rose_addr_t startVa, rose_addr_t &lastSearchedVa /*out*/);
+    std::vector<FunctionPtr> nextFunctionPrologue(Address startVa);
+    std::vector<FunctionPtr> nextFunctionPrologue(Address startVa, Address &lastSearchedVa /*out*/);
     /** @} */
 
 public:
@@ -2298,7 +2298,7 @@ public:
     /** Returns a previously cached ELF GOT address.
      *
      *  See also, @ref elfGot. */
-    Sawyer::Optional<rose_addr_t> elfGotVa() const;
+    Sawyer::Optional<Address> elfGotVa() const;
 
 
 
@@ -2387,8 +2387,8 @@ public:
      *  Thread safety: Not thread safe.
      *
      * @{ */
-    void addressName(rose_addr_t, const std::string&);
-    const std::string& addressName(rose_addr_t) const;
+    void addressName(Address, const std::string&);
+    const std::string& addressName(Address) const;
     const AddressNameMap& addressNames() const;
     /** @} */
 
@@ -2510,7 +2510,7 @@ private:
     ControlFlowGraph::EdgeIterator adjustNonexistingEdges(const ControlFlowGraph::VertexIterator &vertex);
 
     // Implementation for the discoverBasicBlock methods.  The startVa must not be the address of an existing placeholder.
-    BasicBlockPtr discoverBasicBlockInternal(rose_addr_t startVa) const;
+    BasicBlockPtr discoverBasicBlockInternal(Address startVa) const;
 
     // This method is called whenever a new placeholder is inserted into the CFG or a new basic block is attached to the
     // CFG/AUM. The call happens immediately after the CFG/AUM are updated.
@@ -2518,7 +2518,7 @@ private:
 
     // This method is called whenever a basic block is detached from the CFG/AUM or when a placeholder is erased from the CFG.
     // The call happens immediately after the CFG/AUM are updated.
-    void bblockDetached(rose_addr_t startVa, const BasicBlockPtr &removedBlock);
+    void bblockDetached(Address startVa, const BasicBlockPtr &removedBlock);
 
     // Rebuild the vertexIndex_ and other cache-like data members from the control flow graph
     void rebuildVertexIndices();

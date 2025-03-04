@@ -94,7 +94,7 @@ Aarch64::~Aarch64() {
 }
 
 SgAsmInstruction*
-Aarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=nullptr*/) {
+Aarch64::disassembleOne(const MemoryMap::Ptr &map, Address va, AddressSet *successors/*=nullptr*/) {
     openCapstone();
 
     // Resources that must be explicitly reclaimed before returning.

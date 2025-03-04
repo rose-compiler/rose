@@ -77,7 +77,7 @@ public:
         ReasonFlags markingExplicitInstructionReferents; /**< If not empty, run @ref markExplicitInstructionReferents during iteration. */
         ReasonFlags markingImplicitFunctionReferents;    /**< If not empty, run @ref markImplicitFunctionReferents during iteration. */
 
-        rose_addr_t addressAlignment;                    /**< Alignment when reading constants from virtual memory. */
+        Address addressAlignment;                        /**< Alignment when reading constants from virtual memory. */
         size_t addressNBytes;                            /**< Size of addresses when reading constants from virtual memory. */
         ByteOrder::Endianness byteOrder;                 /**< Byte order to use when reading constants from virtual memory. */
 

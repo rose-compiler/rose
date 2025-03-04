@@ -22,19 +22,18 @@ namespace Disassembler {
 using opcode = JvmInstructionKind;
 using namespace ByteOrder;
 
-rose_addr_t
+Address
 Jvm::codeOffset() {
     return codeOffset_;
 }
 
 void
-Jvm::codeOffset(rose_addr_t offset) {
+Jvm::codeOffset(Address offset) {
     codeOffset_ = offset;
 }
 
 template <class T> size_t
-Jvm::appendOperand(const MemoryMap::Ptr &map, rose_addr_t va,
-                   SgUnsignedCharList &chars, SgAsmOperandList* operands)
+Jvm::appendOperand(const MemoryMap::Ptr &map, Address va, SgUnsignedCharList &chars, SgAsmOperandList* operands)
 {
   const size_t bufSize{sizeof(T)};
   uint8_t buf[bufSize];
@@ -60,10 +59,9 @@ Jvm::appendOperand(const MemoryMap::Ptr &map, rose_addr_t va,
 }
 
 size_t
-Jvm::appendTableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
-                       SgUnsignedCharList &chars, SgAsmOperandList* operands)
+Jvm::appendTableswitch(const MemoryMap::Ptr &map, Address start, SgUnsignedCharList &chars, SgAsmOperandList* operands)
 {
-  rose_addr_t va{start};
+  Address va{start};
 
   // switch default must begin on 4 byte boundary, skip padding
   ASSERT_require(va >= codeOffset());
@@ -108,10 +106,9 @@ Jvm::appendTableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
 }
 
 size_t
-Jvm::appendLookupswitch(const MemoryMap::Ptr &map, rose_addr_t start,
-                        SgUnsignedCharList &chars, SgAsmOperandList* operands)
+Jvm::appendLookupswitch(const MemoryMap::Ptr &map, Address start, SgUnsignedCharList &chars, SgAsmOperandList* operands)
 {
-  rose_addr_t va{start};
+  Address va{start};
 
   // switch default must begin on 4 byte boundary, skip padding
   ASSERT_require(va >= codeOffset());
@@ -167,11 +164,11 @@ Jvm::clone() const {
 }
 
 SgAsmInstruction*
-Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
+Jvm::disassembleOne(const MemoryMap::Ptr &map, Address start, AddressSet*)
 {
   SgAsmJvmInstruction* insn{nullptr};
 
-  rose_addr_t va{start};
+  Address va{start};
   uint8_t jbc = static_cast<uint8_t>(JvmInstructionKind::unknown);
   size_t nRead = map->at(va).limit(1).require(MemoryMap::READABLE).read(&jbc).size();
   if (0 == nRead) {

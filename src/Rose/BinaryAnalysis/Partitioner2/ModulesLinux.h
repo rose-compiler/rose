@@ -39,7 +39,7 @@ public:
  *  If the last instruction of a basic block is a call to __libc_start_main in a shared library, then one of its arguments is
  *  the address of the C "main" function. */
 class LibcStartMain: public BasicBlockCallback {
-    Sawyer::Optional<rose_addr_t> mainVa_;
+    Sawyer::Optional<Address> mainVa_;
 public:
     /** Shared ownership pointer to LibcStartMain callback. */
     typedef Sawyer::SharedPointer<LibcStartMain> Ptr;

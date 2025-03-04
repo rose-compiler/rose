@@ -14,14 +14,14 @@ namespace BinaryAnalysis {
  *************************************************************************************************************************/
 
 void
-hexdump(std::ostream &f, rose_addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt) {
+hexdump(std::ostream &f, Address base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt) {
     // Provide default formats. This is done here so that the header file doesn't depend on <inttypes.h>
     std::string addr_fmt = fmt.addr_fmt.empty() ? std::string("0x%|08x|: ") : fmt.addr_fmt;
     std::string numeric_fmt = fmt.numeric_fmt.empty() ? std::string("%|02x|") : fmt.numeric_fmt;
     std::string numeric_sep = fmt.numeric_sep.empty() ? std::string(" ") : fmt.numeric_sep;
     std::string prefix = fmt.prefix;
 
-    size_t numeric_width = (boost::format(numeric_fmt) % (rose_addr_t)0).str().size();
+    size_t numeric_width = (boost::format(numeric_fmt) % (Address)0).str().size();
 
     if (fmt.multiline)
         f <<prefix;
@@ -85,7 +85,7 @@ hexdump(std::ostream &f, rose_addr_t base_addr, const unsigned char *data, size_
 
 /* Stream output for old-style arguments. */
 void
-hexdump(std::ostream &f, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data, bool multiline) {
+hexdump(std::ostream &f, Address base_addr, const std::string &prefix, const SgUnsignedCharList &data, bool multiline) {
     if (!data.empty()) {
         HexdumpFormat fmt;
         fmt.multiline = multiline;
@@ -96,7 +96,7 @@ hexdump(std::ostream &f, rose_addr_t base_addr, const std::string &prefix, const
 
 /* Stream output for SgFileContentList */
 void
-hexdump(std::ostream &f, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList &data, bool multiline) {
+hexdump(std::ostream &f, Address base_addr, const std::string &prefix, const SgFileContentList &data, bool multiline) {
 
     if (!data.empty()) {
         HexdumpFormat fmt;
@@ -112,7 +112,7 @@ hexdump(std::ostream &f, rose_addr_t base_addr, const std::string &prefix, const
 
 /* String output with new-style arguments. */
 std::string
-hexdump(rose_addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt) {
+hexdump(Address base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt) {
     std::ostringstream s;
     hexdump(s, base_addr, data, n, fmt);
     return s.str();
@@ -120,7 +120,7 @@ hexdump(rose_addr_t base_addr, const unsigned char *data, size_t n, const Hexdum
 
 /* String output with old-style arguments. */
 std::string
-hexdump(rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data, bool multiline) {
+hexdump(Address base_addr, const std::string &prefix, const SgUnsignedCharList &data, bool multiline) {
     if (data.empty()) return "";
     HexdumpFormat fmt;
     fmt.multiline = multiline;
@@ -130,7 +130,7 @@ hexdump(rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharLi
 
 /* String output for SgFileContentList */
 std::string
-hexdump(rose_addr_t base_addr, const std::string &prefix, const SgFileContentList &data, bool multiline) {
+hexdump(Address base_addr, const std::string &prefix, const SgFileContentList &data, bool multiline) {
     if (data.empty()) return "";
     HexdumpFormat fmt;
     fmt.multiline = multiline;
@@ -144,21 +144,21 @@ hexdump(rose_addr_t base_addr, const std::string &prefix, const SgFileContentLis
 
 /* File output with new-style arguments */
 void
-hexdump(FILE *f, rose_addr_t base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt) {
+hexdump(FILE *f, Address base_addr, const unsigned char *data, size_t n, const HexdumpFormat &fmt) {
     if (f)
         fputs(hexdump(base_addr, data, n, fmt).c_str(), f);
 }
 
 /* File output with old-style arguments */    
 void
-hexdump(FILE *f, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data, bool multiline) {
+hexdump(FILE *f, Address base_addr, const std::string &prefix, const SgUnsignedCharList &data, bool multiline) {
     if (f)
         fputs(hexdump(base_addr, prefix, data, multiline).c_str(), f);
 }
 
 /* File output for SgFileContentList */
 void
-hexdump(FILE *f, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList &data, bool multiline) {
+hexdump(FILE *f, Address base_addr, const std::string &prefix, const SgFileContentList &data, bool multiline) {
     if (f)
         fputs(hexdump(base_addr, prefix, data, multiline).c_str(), f);
 }

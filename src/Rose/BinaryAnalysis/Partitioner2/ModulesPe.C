@@ -65,7 +65,7 @@ getImportIndex(const Partitioner::ConstPtr&, SgAsmPEFileHeader *peHeader, Import
                     for (SgAsmPEImportItem *import: importDir->get_imports()->get_vector()) {
                         if (import->get_hintname_rva() != 0 || import->get_hint() != 0 ||
                             !import->get_name()->get_string().empty()) {
-                            rose_addr_t va = *import->get_hintname_rva().va();
+                            Address va = *import->get_hintname_rva().va();
                             if (index.insertMaybe(va, import))
                                 ++nInserted;
                         }
@@ -102,7 +102,7 @@ findExportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmPEFileHeader 
         for (SgAsmGenericSection *section: peHeader->get_sections()->get_sections()) {
             if (SgAsmPEExportSection *exportSection = isSgAsmPEExportSection(section)) {
                 for (SgAsmPEExportEntry *exportEntry: exportSection->get_exports()->get_exports()) {
-                    rose_addr_t va = *exportEntry->get_exportRva().va();
+                    Address va = *exportEntry->get_exportRva().va();
                     if (partitioner->discoverInstruction(va)) {
                         Function::Ptr function = Function::instance(va, exportEntry->get_name()->get_string(),
                                                                     SgAsmFunction::FUNC_EXPORT);
@@ -213,7 +213,7 @@ rebaseImportAddressTables(const Partitioner::Ptr &partitioner, const ImportIndex
     for (const ImportIndex::Node &node: index.nodes()) {
         if (node.value()->get_iat_written())
             continue;
-        const rose_addr_t iatVa = node.value()->get_iatEntryVa();
+        const Address iatVa = node.value()->get_iatEntryVa();
         toWrite |= AddressInterval::baseSize(iatVa, wordSize);
     }
     makeMemoryWritable(partitioner->memoryMap(), toWrite);
@@ -243,7 +243,7 @@ rebaseImportAddressTables(const Partitioner::Ptr &partitioner, const ImportIndex
                 ASSERT_not_reachable("unknown default byte order");
         }
         
-        rose_addr_t iatVa = node.value()->get_iatEntryVa();
+        Address iatVa = node.value()->get_iatEntryVa();
         if (wordSize != partitioner->memoryMap()->at(iatVa).limit(wordSize).write(packed).size()){
             ASSERT_not_reachable("write failed to map we just created");
         }else{
@@ -304,7 +304,7 @@ nameImportThunks(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *
         if (!iatExtent.contains(indirectionAddress))
             continue;                                   // ...and where C is inside an Import Address Table...
         bool isComplete = true;
-        std::vector<rose_addr_t> successors = partitioner->basicBlockConcreteSuccessors(bblock, &isComplete);
+        std::vector<Address> successors = partitioner->basicBlockConcreteSuccessors(bblock, &isComplete);
         if (!isComplete || successors.size()!=1)
             continue;                                   // ...and the JMP has a single successor that is concrete...
         SgAsmPEImportItem *importItem = nullptr;
@@ -354,7 +354,7 @@ PeDescrambler::operator()(bool chain, const Args &args) {
         checkedPreconditions_ = true;
     }
 
-    rose_addr_t calleeVa = 0;
+    Address calleeVa = 0;
     if (chain &&
         basicBlockCallsDispatcher(args.partitioner, args.bblock) &&
         findCalleeAddress(args.partitioner, args.bblock->fallthroughVa()).assignTo(calleeVa)) {
@@ -375,12 +375,12 @@ PeDescrambler::basicBlockCallsDispatcher(const Partitioner::ConstPtr &partitione
     SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(bblock->instructions().back());
     if (!x86insn || (x86insn->get_kind() != x86_call && x86insn->get_kind() != x86_farcall))
         return false;
-    std::vector<rose_addr_t> successors = partitioner->basicBlockConcreteSuccessors(bblock);
+    std::vector<Address> successors = partitioner->basicBlockConcreteSuccessors(bblock);
     return 1==successors.size() && 1==partitioner->basicBlockSuccessors(bblock).size() && successors.front() == dispatcherVa_;
 }
 
-Sawyer::Optional<rose_addr_t>
-PeDescrambler::findCalleeAddress(const Partitioner::ConstPtr &partitioner, rose_addr_t returnVa) {
+Sawyer::Optional<Address>
+PeDescrambler::findCalleeAddress(const Partitioner::ConstPtr &partitioner, Address returnVa) {
     ASSERT_not_null(partitioner);
     size_t tableIdx = 0;
     bool hitNullEntry = false;
@@ -392,7 +392,7 @@ PeDescrambler::findCalleeAddress(const Partitioner::ConstPtr &partitioner, rose_
             static const size_t bytesPerEntry = wordsPerEntry * 4;
             static const size_t nWordsToRead = nEntriesToRead * wordsPerEntry;
             static uint32_t buf[nWordsToRead];
-            rose_addr_t batchVa = dispatchTableVa_ + dispatchTable_.size() * sizeof(DispatchEntry);
+            Address batchVa = dispatchTableVa_ + dispatchTable_.size() * sizeof(DispatchEntry);
             size_t nReadBytes = partitioner->memoryMap()->at(batchVa).limit(sizeof buf).read((uint8_t*)buf).size();
             reachedEndOfTable_ = nReadBytes < bytesPerEntry;
             for (size_t i=0; 4*(i+1)<nReadBytes; i+=2)
@@ -403,7 +403,7 @@ PeDescrambler::findCalleeAddress(const Partitioner::ConstPtr &partitioner, rose_
         if (tableIdx >= dispatchTable_.size())
             return Sawyer::Nothing();               // couldn't find a suitable entry
         if (dispatchTable_[tableIdx].returnVa == returnVa) {
-            rose_addr_t va = dispatchTable_[tableIdx].calleeVa;
+            Address va = dispatchTable_[tableIdx].calleeVa;
             if (hitNullEntry) {
                 uint32_t va2;
                 if (4 != partitioner->memoryMap()->at(va).limit(4).read((uint8_t*)&va2).size())

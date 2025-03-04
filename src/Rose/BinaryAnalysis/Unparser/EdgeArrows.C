@@ -118,12 +118,12 @@ EdgeArrows::computeCfgBlockLayout(const P2::Partitioner::ConstPtr &partitioner, 
     // We use the basic block addresses as the endpoint IDs since the unparser will emit the basic blocks in order of their starting
     // address.
     Graph graph;
-    for (rose_addr_t sourceVa: function->basicBlockAddresses()) {
+    for (Address sourceVa: function->basicBlockAddresses()) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(sourceVa);
         ASSERT_require(vertex != partitioner->cfg().vertices().end());
         for (const P2::ControlFlowGraph::Edge &edge: vertex->outEdges()) {
             if (edge.target()->value().type() == P2::V_BASIC_BLOCK) {
-                rose_addr_t targetVa = edge.target()->value().address();
+                Address targetVa = edge.target()->value().address();
                 if (function->ownsBasicBlock(targetVa)) // don't use Partitioner::isIntraFunctionEdge; we want all self edges
                     graph.insertEdgeWithVertices(sourceVa, targetVa, edge.id());
             }
@@ -144,7 +144,7 @@ EdgeArrows::computeCfgEdgeLayout(const P2::Partitioner::ConstPtr &partitioner, c
     std::vector<EndpointId> edgeEndpointIds;            // order that CFG edge endpoints are emitted by the unparser
     Graph graph;                                        // the arrows (edges) and their endpoints (vertices)
 
-    for (rose_addr_t sourceVa: function->basicBlockAddresses()) {
+    for (Address sourceVa: function->basicBlockAddresses()) {
         P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(sourceVa);
         ASSERT_not_null(bb);
 
@@ -154,7 +154,7 @@ EdgeArrows::computeCfgEdgeLayout(const P2::Partitioner::ConstPtr &partitioner, c
             edgeEndpointIds.push_back(edgeToTargetEndpoint(inEdge->id()));
 
             if (inEdge->target()->value().type() == P2::V_BASIC_BLOCK) {
-                rose_addr_t sourceVa = inEdge->source()->value().address();
+                Address sourceVa = inEdge->source()->value().address();
                 if (function->ownsBasicBlock(sourceVa)) // don't use Partitioner::isIntraFunctionEdge; we want all self edges
                     graph.insertEdgeWithVertices(edgeToSourceEndpoint(inEdge->id()), edgeToTargetEndpoint(inEdge->id()),
                                                  inEdge->id());

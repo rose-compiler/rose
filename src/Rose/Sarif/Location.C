@@ -51,7 +51,7 @@ Location::instance(const SourceLocation &begin, const SourceLocation &end, const
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 Location::Ptr
-Location::instance(const std::string &binaryArtifact, rose_addr_t addr, const std::string &mesg) {
+Location::instance(const std::string &binaryArtifact, BinaryAnalysis::Address addr, const std::string &mesg) {
     auto self = instance();
     self->binaryArtifact(binaryArtifact);
     self->binaryAddresses(addr);
@@ -84,7 +84,7 @@ Location::sourceRegion() const {
 }
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-std::pair<std::string, rose_addr_t>
+std::pair<std::string, BinaryAnalysis::Address>
 Location::binaryLocation() const {
     if (binaryAddresses()) {
         return std::make_pair(binaryArtifact(), binaryAddresses().least());

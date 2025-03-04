@@ -286,7 +286,7 @@ PathNode::tags() const {
     return tags_;                                       // must be a copy for thread safety
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 PathNode::address() const {
     // No lock necessary since the execution unit pointer cannot change after construction
     ASSERT_not_null(executionUnit_);

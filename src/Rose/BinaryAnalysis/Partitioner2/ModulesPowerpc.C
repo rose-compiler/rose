@@ -52,7 +52,7 @@ MatchStwuPrologue::functions() const {
 }
 
 bool
-MatchStwuPrologue::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+MatchStwuPrologue::match(const Partitioner::ConstPtr &partitioner, Address anchor) {
     ASSERT_not_null(partitioner);
     if (partitioner->instructionExists(anchor))
         return false;                                   // already in the CFG/AUM
@@ -90,7 +90,7 @@ MatchStwuPrologue::match(const Partitioner::ConstPtr &partitioner, rose_addr_t a
     return false;
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 matchElfDynamicStub(const Partitioner::ConstPtr &partitioner, const Function::Ptr &function,
                     const AddressIntervalSet &pltAddresses) {
     ASSERT_not_null(partitioner);
@@ -114,7 +114,7 @@ matchElfDynamicStub(const Partitioner::ConstPtr &partitioner, const Function::Pt
     SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(addis->get_operandList()->get_operands()[1]);
     if (!ival)
         return Sawyer::Nothing();
-    rose_addr_t target = ival->get_absoluteValue();
+    Address target = ival->get_absoluteValue();
     ival = isSgAsmIntegerValueExpression(addis->get_operandList()->get_operands()[2]);
     if (!ival)
         return Sawyer::Nothing();
@@ -188,7 +188,7 @@ nameImportThunks(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *
         if (!function->name().empty())
             continue;
 
-        Sawyer::Optional<rose_addr_t> pltSlotVa = matchElfDynamicStub(partitioner, function, pltAddresses);
+        Sawyer::Optional<Address> pltSlotVa = matchElfDynamicStub(partitioner, function, pltAddresses);
         if (!pltSlotVa)
             continue;
         

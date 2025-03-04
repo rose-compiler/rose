@@ -39,7 +39,7 @@ public:
      *  Creates a global variable descriptor for a variable whose lowest address is @p startingAddress and whose maximum size
      *  is @p maxSizeBytes bytes. The optional @p definingInstruction are the addresses of the instructions from which this
      *  variable was discerned and are usually memory dereferencing instructions. */
-    GlobalVariable(Address startingAddress, rose_addr_t maxSizeBytes,
+    GlobalVariable(Address startingAddress, Address maxSizeBytes,
                    const std::vector<InstructionAccess> &definingInstructions = std::vector<InstructionAccess>(),
                    const std::string &name = "");
 

@@ -54,7 +54,7 @@ MagicNumber::~MagicNumber() {
 }
 
 std::string
-MagicNumber::identify(const MemoryMap::Ptr &map, rose_addr_t va) const {
+MagicNumber::identify(const MemoryMap::Ptr &map, Address va) const {
     uint8_t buf[256];
     size_t nBytes = map->at(va).limit(std::min(maxBytes_, sizeof buf)).read(buf).size();
     if (0==nBytes)

@@ -398,7 +398,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     ASSERT_not_null(interp);                            // instructions must be part of the global AST
     const InstructionMap &insns = interp->get_instructionMap();
     SValue::Ptr eip = get_instruction_pointer();
-    rose_addr_t fallthrough_va = latest_insn->get_address() + latest_insn->get_size();
+    Address fallthrough_va = latest_insn->get_address() + latest_insn->get_size();
 
     // If EIP is a constant then it is one of the following cases:
     //    1. It points to an instruction that's in a different function than the last executed instruction, in which
@@ -415,7 +415,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
         } else if (func!=dst_func) {                    // func could be null
             std::string funcname = function_label(dst_func);
             o <<prefix() <<"call void " <<funcname <<"()\n";
-            rose_addr_t ret_addr = fallthrough_va;
+            Address ret_addr = fallthrough_va;
             SgAsmFunction *ret_func = AST::Traversal::findParentTyped<SgAsmFunction>(insns.get_value_or(ret_addr, NULL));
             if (ret_func!=func) {
                 // The fall through address might be invalid or in a different function if the call never returns.
@@ -441,14 +441,14 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
         LeafPtr leaf1 = inode->child(1)->isLeafNode();
         LeafPtr leaf2 = inode->child(2)->isLeafNode();
         if (leaf1!=NULL && leaf1->isIntegerConstant() && leaf2!=NULL && leaf2->isIntegerConstant()) {
-            rose_addr_t true_va = leaf1->toUnsigned().get();
-            rose_addr_t false_va = leaf2->toUnsigned().get();
+            Address true_va = leaf1->toUnsigned().get();
+            Address false_va = leaf2->toUnsigned().get();
             if (false_va != fallthrough_va)
                 std::swap(true_va, false_va);
             SgAsmFunction *true_func = AST::Traversal::findParentTyped<SgAsmFunction>(insns.get_value_or(true_va, NULL));
             SgAsmFunction *false_func = AST::Traversal::findParentTyped<SgAsmFunction>(insns.get_value_or(false_va, NULL));
             const SgAsmIntegerValuePtrList &succs = bb->get_successors();
-            std::vector<rose_addr_t> succs_va;
+            std::vector<Address> succs_va;
             for (SgAsmIntegerValuePtrList::const_iterator si=succs.begin(); si!=succs.end(); ++si)
                 succs_va.push_back((*si)->get_absoluteValue());
 
@@ -619,7 +619,7 @@ RiscOperators::next_label()
 }
 
 std::string
-RiscOperators::addr_label(rose_addr_t addr)
+RiscOperators::addr_label(Address addr)
 {
     return "L_" + StringUtility::addrToString(addr);
 }

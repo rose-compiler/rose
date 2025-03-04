@@ -116,12 +116,11 @@ alignDown(T address, U alignment) {
  *
  *  The Sawyer documentation contains many more examples.
  */
-class MemoryMap: public Sawyer::Container::AddressMap<rose_addr_t, uint8_t>, public Sawyer::SharedObject {
+class MemoryMap: public Sawyer::Container::AddressMap<Address, uint8_t>, public Sawyer::SharedObject {
 public:
     /** Reference counting pointer. */
     using Ptr = MemoryMapPtr;
 
-    typedef rose_addr_t Address;
     typedef uint8_t Value;
     typedef Sawyer::Container::AddressMap<Address, Value> Super;
     typedef Sawyer::Container::Buffer<Address, Value> Buffer;
@@ -130,8 +129,8 @@ public:
     typedef Sawyer::Container::NullBuffer<Address, Value> NullBuffer;
     typedef Sawyer::Container::StaticBuffer<Address, Value> StaticBuffer;
     typedef Sawyer::Container::SegmentPredicate<Address, Value> SegmentPredicate;
-    typedef Sawyer::Container::AddressMapConstraints<Sawyer::Container::AddressMap<rose_addr_t, uint8_t> > Constraints;
-    typedef Sawyer::Container::AddressMapConstraints<const Sawyer::Container::AddressMap<rose_addr_t, uint8_t> > ConstConstraints;
+    typedef Sawyer::Container::AddressMapConstraints<Sawyer::Container::AddressMap<Address, uint8_t> > Constraints;
+    typedef Sawyer::Container::AddressMapConstraints<const Sawyer::Container::AddressMap<Address, uint8_t> > ConstConstraints;
 
     /** Attach with ptrace first when reading a process? */
     struct Attach {                                     // For consistency with other <Feature>::Boolean types
@@ -231,12 +230,12 @@ public:
 
     /** Exception for when we try to access a virtual address that isn't mapped. */
     struct NotMapped : public Exception {
-        NotMapped(const std::string &mesg, const MemoryMap::Ptr &map, rose_addr_t va)
+        NotMapped(const std::string &mesg, const MemoryMap::Ptr &map, Address va)
             : Exception(mesg, map), va(va) {}
         virtual ~NotMapped() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const NotMapped&);
-        rose_addr_t va;
+        Address va;
     };
 
     /** Exception thrown by find_free() when there's not enough free space left. */
@@ -338,8 +337,7 @@ public:
      *
      *  Insert the contents of a file into the memory map at the specified address.  This is just a convenience wrapper that
      *  creates a new MappedBuffer and inserts it into the mapping. Returns the size of the file mapping. */
-    size_t insertFile(const std::string &fileName, rose_addr_t va, InsertFileMapMode mode = MAP_PRIVATE,
-                      std::string segmentName = "");
+    size_t insertFile(const std::string &fileName, Address va, InsertFileMapMode mode = MAP_PRIVATE, std::string segmentName = "");
 
     /** Insert file contents into memory map.
      *
@@ -466,7 +464,7 @@ public:
     struct ProcessMapRecord {
         AddressInterval interval;                       /** Mapped virtual addresses. */
         unsigned accessibility;                         /** The accessibility flags. */
-        rose_addr_t fileOffset;                         /** Starting byte offset in the file. */
+        Address fileOffset;                             /** Starting byte offset in the file. */
         std::string deviceName;                         /** The device from which the data is mapped, or "00:00". */
         size_t inode;                                   /** Inode on the device, or zero. */
         std::string comment;                            /** Optional comment. */
@@ -530,7 +528,7 @@ public:
      *
      *  A low or high aligment of zero is treated as an alignment of one; that is, the endpoint is not aligned. Higher values will
      *  cause segment beginning address to be aligned downward, and segment one-past-end addresses to be aligned upward. */
-    MemoryMap::Ptr align(rose_addr_t lowAlignment, rose_addr_t highAlignment) const;
+    MemoryMap::Ptr align(Address lowAlignment, Address highAlignment) const;
 
     /** Copy part of a file into a buffer.
      *
@@ -563,7 +561,7 @@ public:
     bool combineAdjacentSegments();
 
     /** Read data into buffer. */
-    size_t readQuick(void *buf, rose_addr_t startVa, size_t desired) const {
+    size_t readQuick(void *buf, Address startVa, size_t desired) const {
         return at(startVa).limit(desired).require(READABLE).read((uint8_t*)buf).size();
     }
 
@@ -579,7 +577,7 @@ public:
      *
      *  The @p validChar and @p invalidChar take an integer argument and return an integer value so that the C character
      *  classification functions from <ctype.h> can be used directly. */
-    std::string readString(rose_addr_t startVa, size_t desired, int(*validChar)(int)=NULL, int(*invalidChar)(int)=NULL,
+    std::string readString(Address startVa, size_t desired, int(*validChar)(int)=NULL, int(*invalidChar)(int)=NULL,
                            unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0, char terminator='\0') const;
 
     /** Read an unsigned value.
@@ -588,7 +586,7 @@ public:
      *  value is not mapped in memory then return nothing (not even any part of the multi-byte value that might have been
      *  present. */
     template<typename U>
-    Sawyer::Optional<U> readUnsigned(rose_addr_t startVa) const {
+    Sawyer::Optional<U> readUnsigned(Address startVa) const {
         U val = 0;
         if (at(startVa).limit(sizeof val).read((uint8_t*)&val).size() != sizeof val)
             return Sawyer::Nothing();
@@ -601,7 +599,7 @@ public:
      *  Reads a long unsigned value from memory and converts it from the memory byte order to the host byte order.  If the entire
      *  value is not mapped in memory then return nothing (not even any part of the multi-byte value that might have been
      *  present. */
-    Sawyer::Optional<uint64_t> readLongUnsinged(rose_addr_t startVa) const {
+    Sawyer::Optional<uint64_t> readLongUnsinged(Address startVa) const {
         uint64_t val = 0;
         if (at(startVa).limit(sizeof val).read((uint8_t*)&val).size() != sizeof val)
             return Sawyer::Nothing();
@@ -613,7 +611,7 @@ public:
      *
      *  Takes a unsigned value converts it from the memory byte order to the host byte order then writes to memory. 
      *  This does not verify the memory is writable. Returns the number of bytes written. */
-    size_t writeUnsigned(uint32_t value, rose_addr_t startVa) {
+    size_t writeUnsigned(uint32_t value, Address startVa) {
         return at(startVa).limit(sizeof(uint32_t)).write((const uint8_t*)(&value)).size(); 
     }
 
@@ -621,20 +619,20 @@ public:
      *
      *  Takes a long unsigned value converts it from the memory byte order to the host byte order then writes to memory. 
      *  This does not verify the memory is writable. Returns the number of bytes written. */
-    size_t writeUnsigned(uint64_t value, rose_addr_t startVa) {
+    size_t writeUnsigned(uint64_t value, Address startVa) {
         return at(startVa).limit(sizeof(uint64_t)).write((const uint8_t*)(&value)).size(); 
     } 
 
     /** Read a byte from memory.
      *
      *  Reads a byte at the specified address and returns it. Returns nothing if the address is not mapped. */
-    Sawyer::Optional<uint8_t> readByte(rose_addr_t) const;
+    Sawyer::Optional<uint8_t> readByte(Address) const;
 
     /** Read quickly into a vector. */
-    SgUnsignedCharList readVector(rose_addr_t startVa, size_t desired, unsigned requiredPerms=READABLE) const;
+    SgUnsignedCharList readVector(Address startVa, size_t desired, unsigned requiredPerms=READABLE) const;
 
     /** Write data from buffer. */
-    size_t writeQuick(const void *buf, rose_addr_t startVa, size_t desired) {
+    size_t writeQuick(const void *buf, Address startVa, size_t desired) {
         return at(startVa).limit(desired).require(WRITABLE).write((const uint8_t*)buf).size();
     }
 
@@ -645,10 +643,10 @@ public:
      *  method returns none.
      *
      *  @{ */
-    Sawyer::Optional<rose_addr_t> findAny(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
-                                          unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0) const;
-    Sawyer::Optional<rose_addr_t> findAny(const AddressInterval &limits, const std::vector<uint8_t> &bytesToFind,
-                                          unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0) const;
+    Sawyer::Optional<Address> findAny(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
+                                      unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0) const;
+    Sawyer::Optional<Address> findAny(const AddressInterval &limits, const std::vector<uint8_t> &bytesToFind,
+                                      unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0) const;
     /** @} */
 
     /** Search for a byte sequence.
@@ -656,7 +654,7 @@ public:
      *  Searches for the bytes specified by @p sequence occuring within the specified @p interval.  If the @p interval is empty
      *  or the sequence cannot be found then nothing is returned. Otherwise, the virtual address for the start of the sequence
      *  is returned. An empty sequence matches at the beginning of the @p interval. */
-    Sawyer::Optional<rose_addr_t> findSequence(const AddressInterval &interval, const std::vector<uint8_t> &sequence) const;
+    Sawyer::Optional<Address> findSequence(const AddressInterval &interval, const std::vector<uint8_t> &sequence) const;
 
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output.

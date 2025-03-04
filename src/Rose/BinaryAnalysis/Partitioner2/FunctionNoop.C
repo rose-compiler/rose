@@ -46,7 +46,7 @@ Partitioner::functionIsNoop(const Function::Ptr &function) const {
     // If any vertex of this function (other than its return vertices) has successors that are in some other function and that
     // other function is not a proven no-op, then assume that this function is not a no-op either.  We do this separately from
     // the data-flow because this loop is much faster than that one.
-    for (rose_addr_t bbVa: function->basicBlockAddresses()) {
+    for (Address bbVa: function->basicBlockAddresses()) {
         ControlFlowGraph::ConstVertexIterator bbVertex = findPlaceholder(bbVa);
         ASSERT_require(cfg().isValidVertex(bbVertex));
         BasicBlock::Ptr bb = bbVertex->value().bblock();
@@ -69,7 +69,7 @@ Partitioner::functionIsNoop(const Function::Ptr &function) const {
     
     // Now use data-flow to look at each basic block. If any basic block of this function is not a noop then assume the
     // function as a whole is not a no-op.
-    for (rose_addr_t bbVa: function->basicBlockAddresses()) {
+    for (Address bbVa: function->basicBlockAddresses()) {
         if (BasicBlock::Ptr bb = basicBlockExists(bbVa)) {
             // Get the instructions for this block, excluding the final instruction if this is a function return.
             std::vector<SgAsmInstruction*> insns = bb->instructions();

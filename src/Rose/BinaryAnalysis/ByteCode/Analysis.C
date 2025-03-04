@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/ByteCode/Analysis.h>
 
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -14,7 +15,7 @@
 
 using namespace Rose::BinaryAnalysis::Partitioner2;
 using PoolEntry = SgAsmJvmConstantPoolEntry;
-using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;
+using AddressSegment = Sawyer::Container::AddressSegment<Rose::BinaryAnalysis::Address,uint8_t>;
 using Rose::Diagnostics::DEBUG;
 using Rose::Diagnostics::INFO;
 using Rose::StringUtility::addrToString;
@@ -27,7 +28,7 @@ namespace ByteCode {
 // Method
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Method::Method(rose_addr_t va) : classAddr_{va} {}
+Method::Method(Address va) : classAddr_{va} {}
 
 Method::~Method() {}
 
@@ -41,9 +42,9 @@ Method::append(BasicBlock::Ptr bb) {
   blocks_.push_back(bb);
 }
 
-std::set<rose_addr_t>
+std::set<Address>
 Method::targets() const {
-  std::set<rose_addr_t> retval{};
+  std::set<Address> retval{};
   for (auto insn : instructions()->get_instructions()) {
     bool complete = true;
     auto successors = insn->architecture()->getSuccessors(insn, complete /*out*/);
@@ -59,12 +60,12 @@ Method::targets() const {
 // Class
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,rose_addr_t> &discoveredFunctions) const
+void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,Address> &discoveredFunctions) const
 {
   const size_t nBits = 64;
 
   for (auto constMethod : methods()) {
-    rose_addr_t va{0};
+    Address va{0};
     FunctionPtr function{};
     BasicBlockPtr block{};
     bool needNewBlock{true};
@@ -103,7 +104,7 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
       mlog[Diagnostics::WARN] << "Class::partition(): discovered duplicate function: " << functionName << "\n";
     }
 
-    std::set<rose_addr_t> targets = method->targets();
+    std::set<Address> targets = method->targets();
 
     for (auto astInsn : instructions) {
       // A copy of the instruction must be made if it is linked to ROSE's AST
@@ -176,7 +177,7 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
           // Insert a partitioner function for a system call when first seen
           if (discoveredFunctions.find(callee) == discoveredFunctions.end()) {
             if (method->isSystemReserved(callee)) {
-              rose_addr_t reservedVa = Container::nextSystemReservedVa();
+              Address reservedVa = Container::nextSystemReservedVa();
               auto reservedFunction = Partitioner2::Function::instance(reservedVa, callee);
               auto reservedBlock = Partitioner2::BasicBlock::instance(reservedVa, partitioner);
               reservedFunction->insertBasicBlock(reservedVa);
@@ -255,7 +256,7 @@ void Class::digraph() const
   for (size_t midx = 0; midx < methods().size(); midx++) {
     auto method = methods()[midx];
 
-    std::map<rose_addr_t,int> vaToBlock{};
+    std::map<Address,int> vaToBlock{};
     for (size_t bidx = 0; bidx < method->blocks().size(); bidx++) {
       auto block = method->blocks()[bidx];
       for (auto insn : block->instructions()) {
@@ -277,7 +278,7 @@ void Class::digraph() const
       if (block->successors().isCached()) {
         for (auto successor : block->successors().get()) {
           if (auto targetVa = successor.expr()->toUnsigned()) {
-            rose_addr_t va = targetVa.get();
+            Address va = targetVa.get();
             dotFile << "  block_" << midx << "_" << bidx << ":" << tail->get_address()
                     << " -> block_" << midx << "_" << vaToBlock[va] << ":" << va << "\n";
           }
@@ -293,7 +294,7 @@ void Class::digraph() const
 // Namespace
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void
-Namespace::partition(const PartitionerPtr &partitioner, std::map<std::string,rose_addr_t> &discoveredFunctions) const {
+Namespace::partition(const PartitionerPtr &partitioner, std::map<std::string,Address> &discoveredFunctions) const {
   for (auto cls: classes()) {
     cls->partition(partitioner, discoveredFunctions);
   }
@@ -302,11 +303,11 @@ Namespace::partition(const PartitionerPtr &partitioner, std::map<std::string,ros
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Container
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-rose_addr_t
-Container::nextSystemReservedVa_{static_cast<rose_addr_t>(-1)};
+Address
+Container::nextSystemReservedVa_{static_cast<Address>(-1)};
 
-rose_addr_t Container::nextSystemReservedVa() {
-  rose_addr_t va{nextSystemReservedVa_};
+Address Container::nextSystemReservedVa() {
+  Address va{nextSystemReservedVa_};
   nextSystemReservedVa_ -= 1024;
   return va;
 }
@@ -317,14 +318,14 @@ Container::partition(const PartitionerPtr &partitioner) const {
   partitioner->autoAddCallReturnEdges(true);
 
   // Do the partitioning and keep track of functions discovered during the process
-  std::map<std::string,rose_addr_t> discoveredFunctions{};
+  std::map<std::string,Address> discoveredFunctions{};
   for (auto nmSpace: namespaces_) {
     nmSpace->partition(partitioner, discoveredFunctions);
   }
 
   // Attach empty functions as targets for invoke of system functions
   for (auto discovered: discoveredFunctions) {
-    rose_addr_t va = discovered.second;
+    Address va = discovered.second;
     std::string name = discovered.first;
 
     // Create and attach system functions if placeholder doesn't exist already

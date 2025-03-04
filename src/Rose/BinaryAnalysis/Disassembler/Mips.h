@@ -49,11 +49,10 @@ public:
     static Ptr instance(const Architecture::BaseConstPtr&);
 
     virtual Base::Ptr clone() const override;
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
-                                             AddressSet *successors=NULL) override;
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, Address start_va, AddressSet *successors=NULL) override;
     virtual size_t nDelaySlots(MipsInstructionKind);
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;
-    SgAsmMipsInstruction *makeUnknownInstruction(rose_addr_t insn_va, unsigned opcode) const;
+    SgAsmMipsInstruction *makeUnknownInstruction(Address insn_va, unsigned opcode) const;
 
     /** Interface for disassembling a single instruction.  Each instruction (or in some cases groups of closely related
      *  instructions) will define a subclass whose operator() unparses a single instruction word and returns an
@@ -70,13 +69,13 @@ public:
         unsigned match;         // value of compared bits
         unsigned mask;          // bits of 'match' that will be compared
         typedef Mips D;
-        virtual SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned insn_bits) = 0;
+        virtual SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned insn_bits) = 0;
     };
 
     /** Find an instruction-specific disassembler.  Using the specified instruction bits, search for and return an
      *  instruction-specific disassembler.  Returns null if no appropriate disassembler can be found.  Instruction-specific
      *  disassemblers know how to disassemble specific instruction types (or groups of closely related instructions). */
-    Decoder *find_idis(rose_addr_t insn_va, unsigned insn_bits) const;
+    Decoder *find_idis(Address insn_va, unsigned insn_bits) const;
 
     /** Insert an instruction-specific disassembler. If @p replace is false (the default) then the table must not already
      *  contain an entry that has the same @p mask and @p match values. The pointers are managed by the caller and must not be
@@ -94,7 +93,7 @@ public:
     // The following functions are used by the various instruction-specific Mips32 subclasses.
 
     /** Create a new instruction. */
-    SgAsmMipsInstruction *makeInstruction(rose_addr_t insn_va, MipsInstructionKind,
+    SgAsmMipsInstruction *makeInstruction(Address insn_va, MipsInstructionKind,
                                           SgAsmExpression *arg1=NULL, SgAsmExpression *arg2=NULL,
                                           SgAsmExpression *arg3=NULL, SgAsmExpression *arg4=NULL) const;
 
@@ -102,13 +101,13 @@ public:
     SgAsmType* makeType(MipsDataFormat) const;
 
     /** Create a new general purpose register reference expression. */
-    SgAsmRegisterReferenceExpression *makeRegister(rose_addr_t insn_va, unsigned regnum) const;
+    SgAsmRegisterReferenceExpression *makeRegister(Address insn_va, unsigned regnum) const;
 
     /** Create a new floating point register reference expression. */
-    SgAsmRegisterReferenceExpression *makeFpRegister(rose_addr_t insn_va, unsigned regnum, MipsDataFormat) const;
+    SgAsmRegisterReferenceExpression *makeFpRegister(Address insn_va, unsigned regnum, MipsDataFormat) const;
 
     /** Create a new register reference for Coprocessor 0. */
-    SgAsmRegisterReferenceExpression *makeCp0Register(rose_addr_t insn_va, unsigned regnum, unsigned sel) const;
+    SgAsmRegisterReferenceExpression *makeCp0Register(Address insn_va, unsigned regnum, unsigned sel) const;
 
     /** Create a new register reference for Coprocessor 2. */
     SgAsmRegisterReferenceExpression *makeCp2Register(unsigned regnum) const;
@@ -116,7 +115,7 @@ public:
     /** Create a new floating point condition flag register reference expression.  The return value is a reference to one of
      *  the bits from the FCSR register.  If @p cc is zero then bit 23 is referenced, otherwise bit 24+cc is referenced. The @p
      *  cc value must be zero through seven, inclusive. */
-    SgAsmRegisterReferenceExpression *makeFpccRegister(rose_addr_t insn_va, unsigned cc) const;
+    SgAsmRegisterReferenceExpression *makeFpccRegister(Address insn_va, unsigned cc) const;
 
     /** Create a new register reference for a COP2 condition code.  See COP2ConditionCode() in the MIPS reference manual. */
     SgAsmRegisterReferenceExpression *makeCp2ccRegister(unsigned cc) const;
@@ -125,7 +124,7 @@ public:
     SgAsmRegisterReferenceExpression *makeHwRegister(unsigned regnum) const;
 
     /** Create a new register reference for a shadow GPR. */
-    SgAsmRegisterReferenceExpression *makeShadowRegister(rose_addr_t insn_va, unsigned regnum) const;
+    SgAsmRegisterReferenceExpression *makeShadowRegister(Address insn_va, unsigned regnum) const;
 
     /** Create a new 8-bit value expression from an 8-bit value.  The @p bit_offset and @p nbits indicate where the value
      * originally came from in the instruction. */
@@ -142,22 +141,22 @@ public:
     /** Create a 32-bit PC-relative branch target address from a 16-bit offset. The @p bit_offset and @p nbits indicate where
      *  the value originally came from in the instruction (usually 0 and 16, respectively). The return address is the
      *  address of the delay slot plus four times the signed @p offset16. */
-    SgAsmIntegerValueExpression *makeBranchTargetRelative(rose_addr_t insn_va, unsigned offset16, size_t bit_offset,
+    SgAsmIntegerValueExpression *makeBranchTargetRelative(Address insn_va, unsigned offset16, size_t bit_offset,
                                                           size_t nbits) const;
 
     /** Create a 32-bit branch address from an instruction index value.  The returned value is the @p insn_index (@p nbits
      * wide) multiplied by four and then combined with the address of the delay slot.  They are combined such that the
      * low-order @p nbits+2 bits are from the product and the upper bits are from the delay slot address. */
-    SgAsmIntegerValueExpression *makeBranchTargetAbsolute(rose_addr_t insn_va, unsigned insn_index, size_t bit_offset,
+    SgAsmIntegerValueExpression *makeBranchTargetAbsolute(Address insn_va, unsigned insn_index, size_t bit_offset,
                                                           size_t nbits) const;
 
     /** Build an expression for an offset from a register.  The return value is GPR[regnum]+signExtend(offset) expressed as an
      *  SgAsmBinaryAdd expression whose first operand is the register reference expression and second operand is the
      *  sign-extended offset. */
-    SgAsmBinaryAdd *makeRegisterOffset(rose_addr_t insn_va, unsigned gprnum, unsigned offset16) const;
+    SgAsmBinaryAdd *makeRegisterOffset(Address insn_va, unsigned gprnum, unsigned offset16) const;
 
     /** Build a register index expression.  The returned value is makeRegister(base_gprnum)+makeRegister(index_gprnum). */
-    SgAsmBinaryAdd *makeRegisterIndexed(rose_addr_t insn_va, unsigned base_gprnum, unsigned index_gprnum) const;
+    SgAsmBinaryAdd *makeRegisterIndexed(Address insn_va, unsigned base_gprnum, unsigned index_gprnum) const;
 
     /** Build a memory reference expression. */
     SgAsmMemoryReferenceExpression *makeMemoryReference(SgAsmExpression *addr, SgAsmType *type) const;

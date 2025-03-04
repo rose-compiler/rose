@@ -157,7 +157,7 @@ MemoryMap::name(const std::string &s) {
 }
 
 size_t
-MemoryMap::insertFile(const std::string &fileName, rose_addr_t startVa, InsertFileMapMode mode, std::string segmentName) {
+MemoryMap::insertFile(const std::string &fileName, Address startVa, InsertFileMapMode mode, std::string segmentName) {
     if (segmentName.empty())
         segmentName = FileSystem::toString(boost::filesystem::path(fileName).filename());
     unsigned accessBits = 0;
@@ -239,9 +239,9 @@ MemoryMap::insertFile(const std::string &locatorString) {
         throw insertFileError(locatorString, "not a locator string");
 
     // Virtual address
-    Sawyer::Optional<rose_addr_t> optionalVa;
+    Sawyer::Optional<Address> optionalVa;
     if (isdigit(*s)) {
-        optionalVa = parseInteger<rose_addr_t>(s /*in,out*/);
+        optionalVa = parseInteger<Address>(s /*in,out*/);
         if (!optionalVa)
             throw insertFileError(locatorString, "virtual address expected");
     }
@@ -473,7 +473,7 @@ MemoryMap::adjustMap(const std::string &locatorString) {
 
     } else {
         // Region is specified by a starting address and a size in bytes.
-        Sawyer::Optional<rose_addr_t> va = parseInteger<rose_addr_t>(s /*in,out*/);
+        Sawyer::Optional<Address> va = parseInteger<Address>(s /*in,out*/);
         if (!va)
             throw adjustMapError(locatorString, "virtual address expected");
 
@@ -482,7 +482,7 @@ MemoryMap::adjustMap(const std::string &locatorString) {
         while (isspace(*s)) ++s;
         if ('+' == *s) {
             ++s;
-            Sawyer::Optional<rose_addr_t> size = parseInteger<rose_addr_t>(s /*in,out*/);
+            Sawyer::Optional<Address> size = parseInteger<Address>(s /*in,out*/);
             if (!size)
                 throw adjustMapError(locatorString, "region size expected after '+'");
             if (!*size)
@@ -554,17 +554,17 @@ MemoryMap::adjustMap(const std::string &locatorString) {
         for (AddressInterval region: where.intervals()) {
             while (AddressInterval selected = atOrAfter(region.least()).singleSegment().available()) {
                 selected = selected & region;
-                rose_addr_t va = selected.least();
+                Address va = selected.least();
                 const ConstNodeIterator inode = at(va).nodes().begin();
                 const MemoryMap::Segment &segment = inode->value();
-                rose_addr_t bufferOffset = segment.offset() + selected.least() - inode->key().least();
+                Address bufferOffset = segment.offset() + selected.least() - inode->key().least();
                 const uint8_t *data = segment.buffer()->data() + bufferOffset;
                 out <<"# segment " <<segmentTitle(segment) <<"\n";
 
                 // Hexdumps are typically aligned so the first byte on each line is aligned on a 16-byte address, so print out some
                 // stuff to get the rest aligned if necessary.
-                rose_addr_t nRemain = selected.size();
-                rose_addr_t nLeader = std::min(16 - va % 16, nRemain);
+                Address nRemain = selected.size();
+                Address nLeader = std::min(16 - va % 16, nRemain);
                 if (nLeader != 16) {
                     hexdump(out, va, data, nLeader, fmt);
                     va += nLeader;
@@ -676,9 +676,9 @@ MemoryMap::insertData(const std::string &locatorString) {
         throw insertDataError(locatorString, "not a locator string");
 
     // Virtual address
-    Sawyer::Optional<rose_addr_t> optionalVa;
+    Sawyer::Optional<Address> optionalVa;
     if (isdigit(*s)) {
-        optionalVa = parseInteger<rose_addr_t>(s /*in,out*/);
+        optionalVa = parseInteger<Address>(s /*in,out*/);
         if (!optionalVa)
             throw insertDataError(locatorString, "virtual address expected");
     }
@@ -730,8 +730,8 @@ MemoryMap::insertData(const std::string &locatorString) {
         while (isspace(*s)) ++s;
         if (!*s)
             break;
-        rose_addr_t u = 0;
-        if (!parseInteger<rose_addr_t>(s /*in,out*/).assignTo(u))
+        Address u = 0;
+        if (!parseInteger<Address>(s /*in,out*/).assignTo(u))
             throw insertDataError(locatorString, "expected numeric value for byte " + StringUtility::numberToString(data.size()));
         if (u > 0xff)
             throw insertDataError(locatorString, "value " + StringUtility::numberToString(u) +
@@ -850,8 +850,8 @@ MemoryMap::readProcessMap(pid_t pid) {
 
         // virtual addresses
         ProcessMapRecord record;
-        rose_addr_t beginVa = rose_strtoull(matched.str(1).c_str(), NULL, 16);
-        rose_addr_t endVa = rose_strtoull(matched.str(2).c_str(), NULL, 16);
+        Address beginVa = rose_strtoull(matched.str(1).c_str(), NULL, 16);
+        Address endVa = rose_strtoull(matched.str(2).c_str(), NULL, 16);
         if (endVa <= beginVa)
             break;
         record.interval = AddressInterval::hull(beginVa, endVa - 1);
@@ -1019,9 +1019,9 @@ MemoryMap::linkTo(const MemoryMap::Ptr &other, const AddressIntervalSet &where, 
             ASSERT_forbid(dstAddrs.isEmpty());
 
             // Which part of the src's buffer do we want to link to?
-            const rose_addr_t bufferOffset = srcAddrs.least() <= part.least() ?
-                                             part.least() - srcAddrs.least() + srcSegment.offset() :
-                                             srcSegment.offset();
+            const Address bufferOffset = srcAddrs.least() <= part.least() ?
+                                         part.least() - srcAddrs.least() + srcSegment.offset() :
+                                         srcSegment.offset();
             ASSERT_require(bufferOffset < srcSegment.buffer()->size());
             ASSERT_require(bufferOffset + dstAddrs.size() <= srcSegment.buffer()->size());
 
@@ -1043,7 +1043,7 @@ MemoryMap::linkTo(const MemoryMap::Ptr &other, const AddressInterval &where, Clo
 }
 
 Sawyer::Optional<uint8_t>
-MemoryMap::readByte(rose_addr_t va) const {
+MemoryMap::readByte(Address va) const {
     uint8_t byte = 0;
     if (at(va).limit(1).read(&byte)) {
         return byte;
@@ -1053,7 +1053,7 @@ MemoryMap::readByte(rose_addr_t va) const {
 }
 
 SgUnsignedCharList
-MemoryMap::readVector(rose_addr_t va, size_t desired, unsigned requiredPerms) const
+MemoryMap::readVector(Address va, size_t desired, unsigned requiredPerms) const
 {
     size_t canRead = at(va).limit(desired).require(requiredPerms).read(NULL).size();
     SgUnsignedCharList retval(canRead);
@@ -1063,8 +1063,8 @@ MemoryMap::readVector(rose_addr_t va, size_t desired, unsigned requiredPerms) co
 }
 
 std::string
-MemoryMap::readString(rose_addr_t va, size_t desired, int(*validChar)(int), int(*invalidChar)(int),
-                      unsigned requiredPerms, unsigned prohibitedPerms, char terminator) const
+MemoryMap::readString(Address va, size_t desired, int(*validChar)(int), int(*invalidChar)(int), unsigned requiredPerms,
+                      unsigned prohibitedPerms, char terminator) const
 {
     std::vector<uint8_t> buf(desired, 0);
     size_t nread = at(va).require(requiredPerms).prohibit(prohibitedPerms).read(buf).size();
@@ -1087,7 +1087,7 @@ MemoryMap::eraseZeros(size_t minsize)
     AddressIntervalSet toRemove;                        // to save up intervals until we're done iterating
     AddressInterval zeroInterval;
     uint8_t buf[8192];
-    rose_addr_t va = hull().least();
+    Address va = hull().least();
     while (AddressInterval accessed = atOrAfter(va).require(permissions).limit(sizeof buf).read(buf)) {
         for (size_t offset=0; offset<accessed.size(); ++offset) {
             if (0 == buf[offset]) {
@@ -1116,7 +1116,7 @@ MemoryMap::eraseZeros(size_t minsize)
         erase(interval);
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 MemoryMap::findAny(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
                    unsigned requiredPerms, unsigned prohibitedPerms) const {
     if (limits.empty() || bytesToFind.empty())
@@ -1125,7 +1125,7 @@ MemoryMap::findAny(const Extent &limits, const std::vector<uint8_t> &bytesToFind
     return findAny(interval, bytesToFind, requiredPerms, prohibitedPerms);
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 MemoryMap::findAny(const AddressInterval &limits, const std::vector<uint8_t> &bytesToFind,
                    unsigned requiredPerms, unsigned prohibitedPerms) const {
     if (limits.isEmpty())
@@ -1136,7 +1136,7 @@ MemoryMap::findAny(const AddressInterval &limits, const std::vector<uint8_t> &by
     size_t bufMaxSize = std::max(buf.size(), (size_t)65536);
 
     // Search...
-    rose_addr_t va = limits.least();
+    Address va = limits.least();
     AddressInterval prevBuffer;                         // location of buffer previous time through loop
     while (atOrAfter(va).require(requiredPerms).prohibit(prohibitedPerms).next().assignTo(va)) {
         // Since the thing for which we're searching could overlap between two buffers (the previous loop iteration and this
@@ -1178,7 +1178,7 @@ MemoryMap::findAny(const AddressInterval &limits, const std::vector<uint8_t> &by
     return Sawyer::Nothing();
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 MemoryMap::findSequence(const AddressInterval &interval, const std::vector<uint8_t> &sequence) const {
     if (interval.isEmpty())
         return Sawyer::Nothing();
@@ -1186,7 +1186,7 @@ MemoryMap::findSequence(const AddressInterval &interval, const std::vector<uint8
         return interval.least();
     std::vector<uint8_t> buffer(4096);                  // size is arbitrary
     ASSERT_require2(sequence.size() <= buffer.size(), "long sequences not implemented yet");
-    rose_addr_t searchVa = interval.least();
+    Address searchVa = interval.least();
     while (AddressInterval window = atOrAfter(searchVa).read(buffer)) {
         for (size_t offset=0; offset+sequence.size()<=window.size(); ++offset) {
             if (std::equal(sequence.begin(), sequence.end(), &buffer[offset]))
@@ -1273,7 +1273,7 @@ MemoryMap::combineAdjacentSegments() {
 }
 
 static AddressInterval
-alignInterval(const AddressInterval &src, rose_addr_t loAlignment, rose_addr_t hiAlignment) {
+alignInterval(const AddressInterval &src, Address loAlignment, Address hiAlignment) {
     if (src.greatest() >= AddressInterval::whole().greatest()) {
         return AddressInterval::hull(Rose::BinaryAnalysis::alignDown(src.least(), loAlignment), src.greatest());
     } else {
@@ -1283,9 +1283,9 @@ alignInterval(const AddressInterval &src, rose_addr_t loAlignment, rose_addr_t h
 }
 
 MemoryMap::Ptr
-MemoryMap::align(rose_addr_t loAlignment, rose_addr_t hiAlignment) const {
-    loAlignment = std::max(loAlignment, (rose_addr_t)1);
-    hiAlignment = std::max(hiAlignment, (rose_addr_t)1);
+MemoryMap::align(Address loAlignment, Address hiAlignment) const {
+    loAlignment = std::max(loAlignment, (Address)1);
+    hiAlignment = std::max(hiAlignment, (Address)1);
     auto retval = MemoryMap::instance();
     retval->byteOrder(byteOrder());
 
@@ -1325,7 +1325,7 @@ MemoryMap::align(rose_addr_t loAlignment, rose_addr_t hiAlignment) const {
 Combinatorics::Hasher&
 MemoryMap::hash(Combinatorics::Hasher &hasher) const {
     uint8_t buffer[4096];                               // arbitrary size
-    rose_addr_t va = 0;
+    Address va = 0;
     while (AddressInterval where = this->atOrAfter(va).limit(sizeof buffer).read(buffer)) {
         hasher.append(buffer, where.size());
         if (where.greatest() == hull().greatest())

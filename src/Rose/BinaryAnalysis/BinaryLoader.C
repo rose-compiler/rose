@@ -337,8 +337,8 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
     trace <<"remapping sections of " <<header->get_file()->get_name() <<"\n";
     SgAsmGenericSectionPtrList sections = getRemapSections(header);
 
-    rose_addr_t old_base_va = header->get_baseVa();
-    rose_addr_t new_base_va = rebase(map, header, sections);
+    Address old_base_va = header->get_baseVa();
+    Address new_base_va = rebase(map, header, sections);
     if (new_base_va != old_base_va) {
         trace <<"  temporarily rebasing header from " <<StringUtility::addrToString(old_base_va)
               <<" to " <<StringUtility::addrToString(new_base_va) <<"\n";
@@ -376,15 +376,15 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
             }
 
             // Initial guesses
-            rose_addr_t malign_lo = std::max(section->get_mappedAlignment(), (rose_addr_t)1);
-            rose_addr_t malign_hi = std::min(std::max(section->get_mappedAlignment(), (rose_addr_t)1), (rose_addr_t)4096);
-            rose_addr_t va        = header->get_baseVa() + section->get_mappedPreferredRva();
-            rose_addr_t mem_size  = section->get_mappedSize();
-            rose_addr_t offset    = section->get_offset();
-            rose_addr_t file_size = section->get_size();
+            Address malign_lo = std::max(section->get_mappedAlignment(), (Address)1);
+            Address malign_hi = std::min(std::max(section->get_mappedAlignment(), (Address)1), (Address)4096);
+            Address va        = header->get_baseVa() + section->get_mappedPreferredRva();
+            Address mem_size  = section->get_mappedSize();
+            Address offset    = section->get_offset();
+            Address file_size = section->get_size();
 
             /* Figure out alignment, etc. */
-            rose_addr_t va_offset=0;
+            Address va_offset=0;
             bool anon_lo=true, anon_hi=true, map_private=false;
             ConflictResolution resolve = RESOLVE_THROW;
             MappingContribution contrib = alignValues(section, map,                      /* inputs */
@@ -393,8 +393,8 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
                                                       &offset, &file_size, &map_private, /* file location outputs */
                                                       &va_offset, &anon_lo, &anon_hi,    /* internal location outputs */
                                                       &resolve);                         /* conflict resolution output */
-            rose_addr_t falign_lo = std::max(section->get_fileAlignment(), (rose_addr_t)1);
-            rose_addr_t falign_hi = falign_lo;
+            Address falign_lo = std::max(section->get_fileAlignment(), (Address)1);
+            Address falign_hi = falign_lo;
 
             if (trace) {
                 if (CONTRIBUTE_NONE==contrib || 0==mem_size) {
@@ -470,7 +470,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
                         trace <<"    unable to map entire desired region.\n";
                         AddressInterval where = AddressInterval::hull(RESOLVE_REMAP_ABOVE==resolve ? va : 0,
                                                                       AddressInterval::whole().greatest());
-                        rose_addr_t new_va = 0;
+                        Address new_va = 0;
                         if (!map->findFreeSpace(mem_size, malign_lo, where).assignTo(new_va)) {
                             throw MemoryMap::NoFreeSpace("unable to allocate space in specimen memory map",
                                                          map, mem_size);
@@ -497,9 +497,9 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
 
             /* Anonymously map the part of memory beyond the physical end of the file */
             SgAsmGenericFile *file = section->get_file();
-            rose_addr_t total = file->get_data().size(); /*total size of file*/
+            Address total = file->get_data().size(); /*total size of file*/
             if (offset+mem_size > total) {
-                rose_addr_t n, a;
+                Address n, a;
                 if (offset >= total) {
                     /* starts beyond EOF */
                     n = mem_size;
@@ -520,8 +520,8 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
 
             /* Anonymously map the part of memory beyond the part of file */
             if (anon_hi && mem_size>file_size) {
-                rose_addr_t n = mem_size - file_size;
-                rose_addr_t a = va + file_size;
+                Address n = mem_size - file_size;
+                Address a = va + file_size;
                 trace <<"    mapping part beyond end of section:        va="
                       <<StringUtility::addrToString(a) <<" + " <<StringUtility::addrToString(n) <<" = "
                       <<StringUtility::addrToString(a+n) <<"\n";
@@ -532,8 +532,8 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
 
             /* Anonymously map the part of memory before the section */
             if (anon_lo && va_offset>0 && mem_size>0) {
-                rose_addr_t n = va_offset - va;
-                rose_addr_t a = va;
+                Address n = va_offset - va;
+                Address a = va;
                 trace <<"    mapping part before beginning of section: va="
                       <<StringUtility::addrToString(a) <<" + " <<StringUtility::addrToString(n) <<" = "
                       <<StringUtility::addrToString(a+n) <<"\n";
@@ -634,8 +634,8 @@ BinaryLoader::gcd(int64_t a, int64_t b, int64_t *xout/*=NULL*/, int64_t *yout/*=
     return a;
 }
 
-rose_addr_t
-BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, rose_addr_t align2) {
+Address
+BinaryLoader::bialign(Address val1, Address align1, Address val2, Address align2) {
     using namespace StringUtility;
 
     if (0==val1 % align1 && 0==val2 % align2)
@@ -709,15 +709,15 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
     SAWYER_MESG(trace) <<"      adjustment:   " <<addrToString(Aa) <<"\n";
     ASSERT_always_require(Aa==Ab);
     ASSERT_always_require2(Aa>0, "FIXME[Robb Matzke 2010-09-07]: add multiples of lcm(a,b) to make this positive");
-    return (rose_addr_t)Aa;
+    return (Address)Aa;
 }
 
 BinaryLoader::MappingContribution
 BinaryLoader::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr&,
-                          rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
-                          rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                          rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
-                          rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
+                          Address *malign_lo_p, Address *malign_hi_p,
+                          Address *va_p, Address *mem_size_p,
+                          Address *offset_p, Address *file_size_p, bool *map_private_p,
+                          Address *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
                           ConflictResolution *resolve_p) {
     ASSERT_not_null(section);
     ASSERT_require2(section->isMapped(), "section must be mapped to virtual memory");
@@ -736,16 +736,16 @@ BinaryLoader::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr&,
     ASSERT_not_null(header);
 
     /* Initial guesses */
-    rose_addr_t malign_lo = *malign_lo_p;
-    rose_addr_t malign_hi = *malign_hi_p;
-    rose_addr_t va = *va_p;
-    rose_addr_t mem_size = *mem_size_p;
-    rose_addr_t offset = *offset_p;
-    rose_addr_t falign_lo = std::max(section->get_fileAlignment(), (rose_addr_t)1);
-    rose_addr_t file_size = *file_size_p;
+    Address malign_lo = *malign_lo_p;
+    Address malign_hi = *malign_hi_p;
+    Address va = *va_p;
+    Address mem_size = *mem_size_p;
+    Address offset = *offset_p;
+    Address falign_lo = std::max(section->get_fileAlignment(), (Address)1);
+    Address file_size = *file_size_p;
 
     /* Align lower end of mapped region to satisfy both memory and file alignment constraints. */
-    rose_addr_t va_offset = bialign(va, malign_lo, offset, falign_lo);
+    Address va_offset = bialign(va, malign_lo, offset, falign_lo);
     if (va_offset>va || va_offset>offset) {
         mlog[TRACE] <<"      adjustment " <<va_offset <<" exceeds va or offset (va=" <<va
                     <<", offset=" <<offset <<")\n";

@@ -17,7 +17,7 @@ namespace Variables {
 /** Base class describing a source-level variable. */
 class BaseVariable {
 private:
-    rose_addr_t maxSizeBytes_ = 0;                      // maximum possible size of this variable in bytes
+    Address maxSizeBytes_ = 0;                      // maximum possible size of this variable in bytes
     std::vector<InstructionAccess> insns_;              // instructions accessing the variable
     std::string name_;                                  // optional variable name
 
@@ -53,8 +53,8 @@ public:
      *  of zero.
      *
      * @{ */
-    rose_addr_t maxSizeBytes() const;
-    void maxSizeBytes(rose_addr_t size);
+    Address maxSizeBytes() const;
+    void maxSizeBytes(Address size);
     /** @} */
 
     /** Property: Defining instructions.

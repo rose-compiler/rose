@@ -628,7 +628,7 @@ Gdb::writeRegister(ThreadId tid, RegisterDescriptor reg, uint64_t value) {
 }
 
 size_t
-Gdb::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
+Gdb::readMemory(Address va, size_t nBytes, uint8_t *buffer) {
     if (!isAttached())
         throw Exception("not attached to subordinate process");
     sendCommand("-data-read-memory-bytes " + boost::lexical_cast<std::string>(va) + " " + boost::lexical_cast<std::string>(nBytes));
@@ -642,8 +642,8 @@ Gdb::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
                     // When reading address 0xffffffff, GDB's "end" marker will overflow to zero.  It would have been better if they
                     // had used a "least" and "greatest" address (akin to C++ library "front" and "back" iterators or Sawyer's
                     // "Interval" type), but they didn't. Therefore we need to handle this situation as a special case.
-                    const rose_addr_t begin = elmt.second["begin"].as<rose_addr_t>() + elmt.second["offset"].as<rose_addr_t>();
-                    const rose_addr_t end = elmt.second["end"].as<rose_addr_t>();
+                    const Address begin = elmt.second["begin"].as<Address>() + elmt.second["offset"].as<Address>();
+                    const Address end = elmt.second["end"].as<Address>();
                     ASSERT_require2(end > begin || (begin > 0 && end == 0),
                                     "va=" + StringUtility::addrToString(va) +
                                     ", nBytes=" + StringUtility::addrToString(nBytes) +
@@ -667,7 +667,7 @@ Gdb::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 }
 
 std::vector<uint8_t>
-Gdb::readMemory(rose_addr_t va, size_t nBytes) {
+Gdb::readMemory(Address va, size_t nBytes) {
     std::vector<uint8_t> retval(nBytes);
     nBytes = readMemory(va, nBytes, retval.data());
     retval.resize(nBytes);
@@ -675,7 +675,7 @@ Gdb::readMemory(rose_addr_t va, size_t nBytes) {
 }
 
 Sawyer::Container::BitVector
-Gdb::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
+Gdb::readMemory(Address va, size_t nBytes, ByteOrder::Endianness sex) {
     std::vector<uint8_t> bytes = readMemory(va, nBytes);
     if (bytes.size() < nBytes)
         throw Exception("short read at " + StringUtility::addrToString(va));
@@ -699,7 +699,7 @@ Gdb::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
 }
 
 size_t
-Gdb::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *bytes) {
+Gdb::writeMemory(Address va, size_t nBytes, const uint8_t *bytes) {
     if (!isAttached())
         throw Exception("not attached to subordinate process");
     std::string s = "-data-write-memory-bytes " + StringUtility::intToHex(va) + " \"";

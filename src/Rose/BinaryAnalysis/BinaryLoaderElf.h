@@ -255,7 +255,7 @@ public:
     /** Find the section containing the specified virtual address.  Only ELF Sections of the specified header are searched,
      *  and we search based on the preferred mapping location of the section (not the actual mapping location).  The null
      *  pointer is returned if no suitable section can be found. */
-    virtual SgAsmGenericSection *findSectionByPreferredVa(SgAsmGenericHeader*, rose_addr_t va);
+    virtual SgAsmGenericSection *findSectionByPreferredVa(SgAsmGenericHeader*, Address va);
 
 protected:
     /** Returns mappable sections in a particular order.  Returns ELF Segments in the order they are defined in the segment
@@ -265,15 +265,15 @@ protected:
 
 public:
     /** Returns a new, temporary base address which is greater than everything that's been mapped already. */
-    virtual rose_addr_t rebase(const MemoryMap::Ptr&, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&) override;
+    virtual Address rebase(const MemoryMap::Ptr&, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&) override;
 
 protected:
     /** Linux-specific ELF Segment and Section alignment. */
     virtual MappingContribution alignValues(SgAsmGenericSection*, const MemoryMap::Ptr&,
-                                            rose_addr_t *malign_lo, rose_addr_t *malign_hi,
-                                            rose_addr_t *va, rose_addr_t *mem_size,
-                                            rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
-                                            rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
+                                            Address *malign_lo, Address *malign_hi,
+                                            Address *va, Address *mem_size,
+                                            Address *offset, Address *file_size, bool *map_private,
+                                            Address *va_offset, bool *anon_lo, bool *anon_hi,
                                             ConflictResolution *resolve) override;
 
     /** Builds the master symbol table. This table is built just before relocations are fixed up and contains information
@@ -305,7 +305,7 @@ protected:
      *  If no section can be found for the relocation offset then an Exception is thrown.
      *
      *  Debugging information is conditionally output and indented four spaces. */
-    rose_addr_t fixupInfoTargetVa(SgAsmElfRelocEntry*, SgAsmGenericSection **section_p=NULL, rose_addr_t *adj_p=NULL);
+    Address fixupInfoTargetVa(SgAsmElfRelocEntry*, SgAsmGenericSection **section_p=NULL, Address *adj_p=NULL);
 
     /** Returns the virtual address of a symbol adjusted for remapping.  The return value is computed by treating the symbol
      *  value as a virtual address, finding the section that would have contained that virtual address had all sections of the
@@ -316,7 +316,7 @@ protected:
      *  If no section can be found for the relocation offset then an Exception is thrown.
      *
      *  Debugging information is conditionally output and indented four spaces. */
-    rose_addr_t fixupInfoSymbolVa(SgAsmElfSymbol*, SgAsmGenericSection **section_p=NULL, rose_addr_t *adj_p=NULL);
+    Address fixupInfoSymbolVa(SgAsmElfSymbol*, SgAsmGenericSection **section_p=NULL, Address *adj_p=NULL);
 
     /** Returns the addend associated with a relocation.  If the relocation appears in a RELA relocation section then the
      *  addend is that which is specified in the relocation entry itself.  Otherwise the supplied relocation target virtual
@@ -327,7 +327,7 @@ protected:
      *  is always obtained from information in the relocation's file header.
      *
      *  An Exception is thrown if an attempt is made to read from memory which is not mapped or not readable. */
-    rose_addr_t fixupInfoAddend(SgAsmElfRelocEntry*, rose_addr_t target_va, const MemoryMap::Ptr&, size_t nbytes=0);
+    Address fixupInfoAddend(SgAsmElfRelocEntry*, Address target_va, const MemoryMap::Ptr&, size_t nbytes=0);
 
     /** Evaluates a simple postfix expression and returns the result.  The expression consists of terms, operators, and
      *  settings each consisting of a single character. They are defined as follows, and for the most part match various
@@ -361,8 +361,8 @@ protected:
      * the underlying fixup_info_* methods that are called.
      *
      * Exceptions are thrown when something goes wrong.  Most exceptions come from the underlying fixup_info_* methods. */
-    rose_addr_t fixupInfoExpr(const std::string &expression, SgAsmElfRelocEntry *reloc, const SymverResolver &resolver,
-                              const MemoryMap::Ptr &memmap, rose_addr_t *target_va_p=NULL);
+    Address fixupInfoExpr(const std::string &expression, SgAsmElfRelocEntry *reloc, const SymverResolver &resolver,
+                              const MemoryMap::Ptr &memmap, Address *target_va_p=NULL);
 
 
 
@@ -380,7 +380,7 @@ protected:
      *
      *  An Exception is thrown if the value cannot be written to the specimen memory due to memory not being mapped or not
      *  being writable. */
-    void fixupApply(rose_addr_t value, SgAsmElfRelocEntry*, const MemoryMap::Ptr&, rose_addr_t target_va=0, size_t nbytes=0);
+    void fixupApply(Address value, SgAsmElfRelocEntry*, const MemoryMap::Ptr&, Address target_va=0, size_t nbytes=0);
 
     /** Copies symbol memory to the relocation target.  This is usually used to copy initialized library data (initialized by
      *  the loader calling a constructor) into a common location in the executable's .bss. */

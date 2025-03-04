@@ -60,14 +60,14 @@ void initNamespace();
  *  the "push", subtracting -4 from the current ESP value will give you the original ESP, from which you can find the frame. */
 class Analysis {
 public:
-    typedef Sawyer::Container::Map<rose_addr_t, InstructionSemantics::BaseSemantics::SValuePtr> DeltasPerAddress;
+    typedef Sawyer::Container::Map<Address, InstructionSemantics::BaseSemantics::SValuePtr> DeltasPerAddress;
     typedef std::pair<InstructionSemantics::BaseSemantics::SValuePtr,
                       InstructionSemantics::BaseSemantics::SValuePtr> SValuePair;
-    typedef Sawyer::Container::Map<rose_addr_t, SValuePair> SValuePairPerAddress;
+    typedef Sawyer::Container::Map<Address, SValuePair> SValuePairPerAddress;
 
 private:
     InstructionSemantics::BaseSemantics::DispatcherPtr cpu_;
-    Sawyer::Optional<rose_addr_t> initialConcreteStackPointer_; // where to start
+    Sawyer::Optional<Address> initialConcreteStackPointer_; // where to start
 
     bool hasResults_;                                   // Are the following data members initialized?
     bool didConverge_;                                  // Are the following data membeers valid (else only approximations)?
@@ -171,8 +171,8 @@ public:
      *  pointer at the start of the analysis.
      *
      *  @{ */
-    Sawyer::Optional<rose_addr_t> initialConcreteStackPointer() const { return initialConcreteStackPointer_; }
-    void initialConcreteStackPointer(const Sawyer::Optional<rose_addr_t> &val) { initialConcreteStackPointer_ = val; }
+    Sawyer::Optional<Address> initialConcreteStackPointer() const { return initialConcreteStackPointer_; }
+    void initialConcreteStackPointer(const Sawyer::Optional<Address> &val) { initialConcreteStackPointer_ = val; }
     /** @} */
 
     /** Analyze one function.
@@ -243,13 +243,13 @@ public:
      *
      *  Returns the incoming and outgoing stack pointers for each basic block as determined by a data-flow analysis. If the
      *  data-flow did not reach the beginning and/or end of the basic block then null pointers are returned. */
-    SValuePair basicBlockStackPointers(rose_addr_t basicBlockAddress) const;
+    SValuePair basicBlockStackPointers(Address basicBlockAddress) const;
 
     /** Stack delta for an analyzed basic block.
      *
      *  Returns the net effect that an analyzed basic block has on the stack pointer.  If the data-flow did not reach this
      *  basic block then returns a null pointer. See also, @ref basicBlockStackDeltaConcrete. */
-    InstructionSemantics::BaseSemantics::SValuePtr basicBlockStackDelta(rose_addr_t basicBlockAddress) const;
+    InstructionSemantics::BaseSemantics::SValuePtr basicBlockStackDelta(Address basicBlockAddress) const;
 
     /** Stack delta for block w.r.t. function.
      *
@@ -257,15 +257,15 @@ public:
      *  null pointer if the data-flow did not reach the beginning or end of this block.
      *
      * @{ */
-    InstructionSemantics::BaseSemantics::SValuePtr basicBlockInputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const;
-    InstructionSemantics::BaseSemantics::SValuePtr basicBlockOutputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const;
+    InstructionSemantics::BaseSemantics::SValuePtr basicBlockInputStackDeltaWrtFunction(Address basicBlockAddress) const;
+    InstructionSemantics::BaseSemantics::SValuePtr basicBlockOutputStackDeltaWrtFunction(Address basicBlockAddress) const;
     /** @} */
 
     /** Concrete stack delta for an analyzed basic block.
      *
      *  Returns the concrete stack delta for a basic block if known, otherwise returns the @ref
      *  SgAsmInstruction::INVALID_STACK_DELTA constant. */
-    int64_t basicBlockStackDeltaConcrete(rose_addr_t basicBlockAddress) const;
+    int64_t basicBlockStackDeltaConcrete(Address basicBlockAddress) const;
 
     /** Initial and final stack ponters for an analyzed instruction.
      *

@@ -159,7 +159,7 @@ public:
 
 private:
     MemoryMap::Ptr map_;
-    rose_addr_t pageSize_;
+    Address pageSize_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -255,15 +255,15 @@ public:
      *  once the map contains data.
      *
      * @{ */
-    rose_addr_t pageSize() const { return pageSize_; }
-    void pageSize(rose_addr_t nBytes);
+    Address pageSize() const { return pageSize_; }
+    void pageSize(Address nBytes);
     /** @} */
 
     /** Allocate a page of memory.
      *
      *  The specified address will be contained in the page, which is aligned on a page boundary. Do not call this if the page
      *  is already allocated unless: it will replace the allocated page with a new one containing all zeros. */
-    void allocatePage(rose_addr_t va);
+    void allocatePage(Address va);
 
 };
 

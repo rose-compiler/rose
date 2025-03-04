@@ -401,7 +401,7 @@ CfgEmitter::selectFunctionCallers(const Function::Ptr &callee) {
         if (vertexOrganization(vertex).isSelected() && vertex.value().isOwningFunction(callee)) {
 
             // Are there edges coming into this vertex from outside this function?
-            typedef Sawyer::Container::Map<rose_addr_t /*caller*/, CallInfo> Callers;
+            typedef Sawyer::Container::Map<Address /*caller*/, CallInfo> Callers;
             Callers callers;
             for (const ControlFlowGraph::Edge &interEdge: vertex.inEdges()) {
                 if (partitioner_->isEdgeInterProcedural(interEdge, Function::Ptr(), callee) &&

@@ -146,8 +146,8 @@ public:
         bool unique(SgAsmFunction *a, SgAsmFunction *b) {
             return val(a)!=val(b);
         }
-        rose_addr_t val(SgAsmFunction *x) {
-            rose_addr_t lo;
+        Address val(SgAsmFunction *x) {
+            Address lo;
             x->get_extent(NULL, &lo);
             return lo;
         }

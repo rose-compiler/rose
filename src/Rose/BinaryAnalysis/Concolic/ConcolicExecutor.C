@@ -498,7 +498,7 @@ ConcolicExecutor::run() {
     size_t reportInsns = 0;                             // number of instructions remaining to be reported
 
     // Process instructions in execution order
-    rose_addr_t executionVa = cpu()->concreteInstructionPointer();
+    Address executionVa = cpu()->concreteInstructionPointer();
     while (!cpu()->isTerminated()) {
         BOOST_SCOPE_EXIT(ops) {
             ops->process()->nextInstructionLocation();

@@ -43,14 +43,13 @@ public:
     // Public methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t va,
-                                             AddressSet* successors=nullptr) override;
+    virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, Address va, AddressSet* successors=nullptr) override;
 
     virtual SgAsmInstruction* makeUnknownInstruction(const Disassembler::Exception&) override;
 
 private:
-    SgAsmCilInstruction* makeUnknownInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size);
-    SgAsmCilInstruction* makeInstruction(rose_addr_t, SgUnsignedCharList& bytes/*in,out*/, size_t, CilInstructionKind,
+    SgAsmCilInstruction* makeUnknownInstruction(Address va, SgUnsignedCharList &bytes, size_t size);
+    SgAsmCilInstruction* makeInstruction(Address, SgUnsignedCharList& bytes/*in,out*/, size_t, CilInstructionKind,
                                          SgAsmExpression* operand=nullptr) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

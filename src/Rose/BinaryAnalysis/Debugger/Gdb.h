@@ -192,7 +192,7 @@ private:
     std::vector<std::pair<std::string, RegisterDescriptor>> registers_;
     std::list<GdbResponse> responses_;                          // accumulated responses
     AddressIntervalSet breakPoints_;                            // all break points
-    std::map<rose_addr_t, unsigned /*bp_id*/> gdbBreakPoints_;  // subset of breakpoints known to GDB
+    std::map<Address, unsigned /*bp_id*/> gdbBreakPoints_;      // subset of breakpoints known to GDB
     std::future<int> exitCodeFuture_;                           // exit code returned from GDB thread
     Sawyer::Optional<int> exitCode_;                            // exit code from the GDB process
 
@@ -278,10 +278,10 @@ public:
     virtual std::vector<RegisterDescriptor> availableRegisters() override;
     virtual void writeRegister(ThreadId, RegisterDescriptor, const Sawyer::Container::BitVector&) override;
     virtual void writeRegister(ThreadId, RegisterDescriptor, uint64_t value) override;
-    virtual size_t readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) override;
-    virtual std::vector<uint8_t> readMemory(rose_addr_t va, size_t nBytes) override;
-    virtual Sawyer::Container::BitVector readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness order) override;
-    virtual size_t writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *bytes) override;
+    virtual size_t readMemory(Address va, size_t nBytes, uint8_t *buffer) override;
+    virtual std::vector<uint8_t> readMemory(Address va, size_t nBytes) override;
+    virtual Sawyer::Container::BitVector readMemory(Address va, size_t nBytes, ByteOrder::Endianness order) override;
+    virtual size_t writeMemory(Address va, size_t nBytes, const uint8_t *bytes) override;
     virtual bool isTerminated() override;
     virtual std::string howTerminated() override;
     virtual Sawyer::Container::BitVector readAllRegisters(ThreadId) override;

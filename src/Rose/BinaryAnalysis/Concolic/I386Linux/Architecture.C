@@ -795,7 +795,7 @@ void
 SyscallAccess::handlePostSyscall(SyscallContext &ctx) {
     hello("I386Linux::SyscallAccess::handlePostSyscall", ctx);
     if (mlog[DEBUG]) {
-        rose_addr_t fileNameVa = ctx.argsConcrete[0];
+        Address fileNameVa = ctx.argsConcrete[0];
         std::string fileName = ctx.architecture->partitioner()->memoryMap()->readString(fileNameVa, 16384);
         mlog[DEBUG] <<"  pathname = \"" <<StringUtility::cEscape(fileName) <<"\"\n";
         mlog[DEBUG] <<"  mode     = " <<StringUtility::toHex(ctx.argsConcrete[1]) <<"\n";
@@ -825,7 +825,7 @@ void
 SyscallBrk::handlePostSyscall(SyscallContext &ctx) {
     hello("I386Linux::SyscallBrk::handlePostSyscall", ctx);
 
-    rose_addr_t endVa = 0;
+    Address endVa = 0;
     if (!ctx.returnEvent->calculateResult(ctx.ops->inputVariables()->bindings())->toUnsigned().assignTo(endVa)) {
         SAWYER_MESG(mlog[ERROR]) <<"no concrete return value from brk system call\n";
         return;
@@ -891,7 +891,7 @@ void
 SyscallOpenat::handlePostSyscall(SyscallContext &ctx) {
     hello("I386Linux::SyscallOpenat::handlPostSyscall", ctx);
     if (mlog[DEBUG]) {
-        rose_addr_t fileNameVa = ctx.argsConcrete[1];
+        Address fileNameVa = ctx.argsConcrete[1];
         std::string fileName = ctx.architecture->partitioner()->memoryMap()->readString(fileNameVa, 16384);
         mlog[DEBUG] <<"  pathname = \"" <<StringUtility::cEscape(fileName) <<"\"\n";
     }
@@ -1091,8 +1091,7 @@ Architecture::createMemoryRestoreEvents() {
 }
 
 std::vector<ExecutionEvent::Ptr>
-Architecture::copyMemory(const MemoryMap::Ptr &srcMap, const MemoryMap::Ptr &dstMap, const AddressInterval &where,
-                         rose_addr_t insnVa) {
+Architecture::copyMemory(const MemoryMap::Ptr &srcMap, const MemoryMap::Ptr &dstMap, const AddressInterval &where, Address insnVa) {
     ASSERT_forbid(isFactory());
     ASSERT_not_null(srcMap);
     ASSERT_not_null(dstMap);
@@ -1126,7 +1125,7 @@ Architecture::copyMemory(const MemoryMap::Ptr &srcMap, const MemoryMap::Ptr &dst
 }
 
 std::vector<ExecutionEvent::Ptr>
-Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr &oldMap, rose_addr_t insnVa) {
+Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr &oldMap, Address insnVa) {
     ASSERT_forbid(isFactory());
     std::vector<ExecutionEvent::Ptr> retval;
     SAWYER_MESG(mlog[DEBUG]) <<"saving memory map adjustments\n";
@@ -1145,10 +1144,10 @@ Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr &oldMap, rose_addr_t
 #endif
 
     // Addresses that exist in the old map but not the new map are removed from the old map and unmap events are generated.
-    rose_addr_t oldVa = 0;
+    Address oldVa = 0;
     while (AddressInterval oldWhere = oldMap->atOrAfter(oldVa).available()) {
         AddressInterval newWhere = newMap->atOrAfter(oldWhere.least()).available();
-        rose_addr_t lastProcessedVa = 0;
+        Address lastProcessedVa = 0;
 
         if (!newWhere) {
             // No addresses here or higher in new map, so delete the rest of the old map
@@ -1187,10 +1186,10 @@ Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr &oldMap, rose_addr_t
     }
 
     // Addresses that exist in the new map but not the old map are added to the old map and map events are generated.
-    rose_addr_t newVa = 0;
+    Address newVa = 0;
     while (AddressInterval newWhere = newMap->atOrAfter(newVa).singleSegment().available()) {
         AddressInterval oldWhere = oldMap->atOrAfter(newWhere.least()).singleSegment().available();
-        rose_addr_t lastProcessedVa = 0;
+        Address lastProcessedVa = 0;
 
 
         if (!oldWhere) {
@@ -1411,7 +1410,7 @@ Architecture::createInputVariables(const P2::PartitionerConstPtr &partitioner, c
     //---------------------------------------------------------------------------------------------------------------------------
     ASSERT_require(SP.nBits() == 32);                   // we only handle 32-bit for now
     ASSERT_require(ops->currentState()->memoryState()->get_byteOrder() == memoryByteOrder());
-    rose_addr_t argcVa = readRegister(SP).toInteger();
+    Address argcVa = readRegister(SP).toInteger();
     size_t argc = readMemoryUnsigned(argcVa, wordSizeBytes);
 
     // Event and input variable
@@ -1444,11 +1443,11 @@ Architecture::createInputVariables(const P2::PartitionerConstPtr &partitioner, c
     //---------------------------------------------------------------------------------------------------------------------------
 
     // The characters argv[0][...] are not inputs because we don't have much control over them.
-    rose_addr_t argvVa = argcVa + wordSizeBytes;
+    Address argvVa = argcVa + wordSizeBytes;
     SAWYER_MESG(debug) <<"  argv @" <<StringUtility::addrToString(argvVa) <<" = [\n";
     for (size_t i = 1; i < argc; ++i) {
-        rose_addr_t ptrVa = argvVa + i * wordSizeBytes; // address of string pointer
-        rose_addr_t strVa = readMemoryUnsigned(ptrVa, wordSizeBytes);
+        Address ptrVa = argvVa + i * wordSizeBytes; // address of string pointer
+        Address strVa = readMemoryUnsigned(ptrVa, wordSizeBytes);
         std::string s = readCString(strVa);
         SAWYER_MESG(debug) <<"    " <<i <<": @" <<StringUtility::addrToString(strVa)
                            <<" \"" <<StringUtility::cEscape(s) <<"\"\n";
@@ -1456,7 +1455,7 @@ Architecture::createInputVariables(const P2::PartitionerConstPtr &partitioner, c
         if (markingArgvAsInput_) {
             SymbolicExpression::Ptr anyPreviousCharIsNul;     // is any previous char of this argument an ASCII NUL character?
             for (size_t j = 0; j <= s.size(); ++j) {
-                rose_addr_t charVa = strVa + j;
+                Address charVa = strVa + j;
 
                 // Event and input variable
                 std::string name = (boost::format("argv_%d_%d") % i % j).str();
@@ -1519,11 +1518,11 @@ Architecture::createInputVariables(const P2::PartitionerConstPtr &partitioner, c
 
     // Unlike for arguments, there's no count of the number of environment variables. We need a count, so the first thing we
     // do is scan the list of pointers to find the null pointer.
-    const rose_addr_t envpVa = argvVa + (argc + 1) * wordSizeBytes;
+    const Address envpVa = argvVa + (argc + 1) * wordSizeBytes;
     size_t envc = 0;
     while (true) {
-        rose_addr_t ptrVa = envpVa + envc * wordSizeBytes; // address of string pointer
-        rose_addr_t strVa = readMemoryUnsigned(ptrVa, wordSizeBytes);
+        Address ptrVa = envpVa + envc * wordSizeBytes; // address of string pointer
+        Address strVa = readMemoryUnsigned(ptrVa, wordSizeBytes);
         if (0 == strVa)
             break;
         ++envc;
@@ -1531,8 +1530,8 @@ Architecture::createInputVariables(const P2::PartitionerConstPtr &partitioner, c
 
     SAWYER_MESG(debug) <<"  envp @" <<StringUtility::addrToString(envpVa) <<" = [\n";
     for (size_t i = 0; i < envc; ++i) {
-        rose_addr_t ptrVa = envpVa + i * wordSizeBytes; // address of string pointer
-        rose_addr_t strVa = readMemoryUnsigned(ptrVa, wordSizeBytes);
+        Address ptrVa = envpVa + i * wordSizeBytes; // address of string pointer
+        Address strVa = readMemoryUnsigned(ptrVa, wordSizeBytes);
         std::string s = readCString(strVa);
         SAWYER_MESG(debug) <<"    " <<i <<": @" <<StringUtility::addrToString(strVa)
                            <<" \"" <<StringUtility::cEscape(s) <<"\"\n";
@@ -1540,7 +1539,7 @@ Architecture::createInputVariables(const P2::PartitionerConstPtr &partitioner, c
         if (markingEnvpAsInput_) {
             SymbolicExpression::Ptr anyPreviousCharIsNul;     // is any previous char of this env an ASCII NUL character?
             for (size_t j = 0; j <= s.size(); ++j) {
-                rose_addr_t charVa = strVa + j;
+                Address charVa = strVa + j;
 
                 // Event and input variable
                 std::string name = (boost::format("envp_%d_%d") % i % j).str();
@@ -1602,11 +1601,11 @@ Architecture::createInputVariables(const P2::PartitionerConstPtr &partitioner, c
     // auxv
     //---------------------------------------------------------------------------------------------------------------------------
     // Not marking these as inputs because the user that's running the program doesn't have much influence.
-    rose_addr_t auxvVa = envpVa + (envc + 1) * wordSizeBytes;
+    Address auxvVa = envpVa + (envc + 1) * wordSizeBytes;
     SAWYER_MESG(debug) <<"  auxv @" <<StringUtility::addrToString(auxvVa) <<" = [\n";
     size_t nAuxvPairs = 0;
     while (true) {
-        rose_addr_t va = auxvVa + nAuxvPairs * 2 * wordSizeBytes;
+        Address va = auxvVa + nAuxvPairs * 2 * wordSizeBytes;
         size_t key = readMemoryUnsigned(va, wordSizeBytes);
         size_t val = readMemoryUnsigned(va + wordSizeBytes, wordSizeBytes);
         SAWYER_MESG(debug) <<"    " <<nAuxvPairs <<": key=" <<StringUtility::addrToString(key)
@@ -1697,7 +1696,7 @@ Architecture::systemCall(const P2::PartitionerConstPtr &partitioner, const BS::R
     auto ops = Emulation::RiscOperators::promote(ops_);
     ASSERT_not_null(ops);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    const rose_addr_t ip = debugger()->executionAddress(Debugger::ThreadId::unspecified());
+    const Address ip = debugger()->executionAddress(Debugger::ThreadId::unspecified());
 
     //-------------------------------------
     // Create system call execution event.

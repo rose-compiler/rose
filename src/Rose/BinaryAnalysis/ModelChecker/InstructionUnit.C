@@ -115,7 +115,7 @@ InstructionUnit::nSteps() const {
     return 1;
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 InstructionUnit::address() const {
     // No lock necessary since this property is read-only
     ASSERT_not_null(insn_);

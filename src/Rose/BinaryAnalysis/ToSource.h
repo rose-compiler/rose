@@ -33,16 +33,16 @@ public:
         bool traceInsnExecution;
 
         /** Optional initial value for the instruction pointer. */
-        Sawyer::Optional<rose_addr_t> initialInstructionPointer;
+        Sawyer::Optional<Address> initialInstructionPointer;
 
         /** Optional initial value for the stack pointer. */
-        Sawyer::Optional<rose_addr_t> initialStackPointer;
+        Sawyer::Optional<Address> initialStackPointer;
 
         /** Whether to allocate the global memory array.  If this setting has no value (the default) then the global "mem"
          *  array is not allocated, but rather declared "extern".  If the setting is zero, then the array is allocated to be
          *  just large enough to hold the maximum initialized memory address. Otherwise, the array is allocated to the
          *  specified size. */
-        Sawyer::Optional<rose_addr_t> allocateMemoryArray;
+        Sawyer::Optional<Address> allocateMemoryArray;
 
         /** Whether to zero the memory array, or just allocated with malloc. */
         bool zeroMemoryArray;

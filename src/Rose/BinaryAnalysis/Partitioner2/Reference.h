@@ -26,7 +26,7 @@ class Reference {
     FunctionPtr function_;
     BasicBlockPtr bblock_;
     SgAsmInstruction *insn_;
-    Sawyer::Optional<rose_addr_t> address_;
+    Sawyer::Optional<Address> address_;
 public:
     /** Granularity. */
     enum Granularity {
@@ -48,14 +48,14 @@ public:
      * @{ */
     explicit Reference(const FunctionPtr&);
 
-    explicit Reference(const FunctionPtr&, const BasicBlockPtr&,
-                       SgAsmInstruction* = nullptr, const Sawyer::Optional<rose_addr_t>& = Sawyer::Nothing());
+    explicit Reference(const FunctionPtr&, const BasicBlockPtr&, SgAsmInstruction* = nullptr,
+                       const Sawyer::Optional<Address>& = Sawyer::Nothing());
 
-    explicit Reference(const BasicBlockPtr&, SgAsmInstruction* = nullptr, const Sawyer::Optional<rose_addr_t>& =Sawyer::Nothing());
+    explicit Reference(const BasicBlockPtr&, SgAsmInstruction* = nullptr, const Sawyer::Optional<Address>& =Sawyer::Nothing());
 
-    explicit Reference(SgAsmInstruction*, const Sawyer::Optional<rose_addr_t>& = Sawyer::Nothing());
+    explicit Reference(SgAsmInstruction*, const Sawyer::Optional<Address>& = Sawyer::Nothing());
 
-    explicit Reference(rose_addr_t address);
+    explicit Reference(Address address);
 
     Reference();
     /** @} */
@@ -105,7 +105,7 @@ public:
      *
      *  All non-empty references have either an explicitly stored address or an address that can be obtained from an
      *  instruction, basic block, or function.  This method returns the first address found from that list. */
-    rose_addr_t address() const;
+    Address address() const;
 
     /** Whether two references are equal.
      *

@@ -60,7 +60,7 @@ public:
     enum MayOrMust { MAY, MUST };
 
     /** Set of basic block addresses. */
-    typedef std::set<rose_addr_t> AddressSet;
+    typedef std::set<Address> AddressSet;
 
     /** Expression to be evaluated.
      *
@@ -84,14 +84,14 @@ public:
     struct Settings {
         // Path feasibility
         SearchMode searchMode;                          /**< Method to use when searching for feasible paths. */
-        Sawyer::Optional<rose_addr_t> initialStackPtr;  /**< Concrete value to use for stack pointer register initial value. */
+        Sawyer::Optional<Address> initialStackPtr;      /**< Concrete value to use for stack pointer register initial value. */
         size_t maxVertexVisit;                          /**< Max times to visit a particular vertex in one path. */
         size_t maxPathLength;                           /**< Limit path length in terms of number of instructions. */
         size_t maxCallDepth;                            /**< Max length of path in terms of function calls. */
         size_t maxRecursionDepth;                       /**< Max path length in terms of recursive function calls. */
         std::vector<Expression> assertions;             /**< Constraints to be satisfied at some point along the path. */
         std::vector<std::string> assertionLocations;    /**< Locations at which "constraints" are checked. */
-        std::vector<rose_addr_t> summarizeFunctions;    /**< Functions to always summarize. */
+        std::vector<Address> summarizeFunctions;        /**< Functions to always summarize. */
         bool nonAddressIsFeasible;                      /**< Indeterminate/undiscovered vertices are feasible? */
         std::string solverName;                         /**< Type of SMT solver. */
         SemanticMemoryParadigm memoryParadigm;          /**< Type of memory state when there's a choice to be made. */
@@ -100,7 +100,7 @@ public:
         double kCycleCoefficient;                       /**< Coefficient for adjusting maxPathLengh during CFG cycles. */
         EdgeVisitOrder edgeVisitOrder;                  /**< Order in which to visit edges. */
         bool trackingCodeCoverage;                      /**< If set, track which block addresses are reached. */
-        std::vector<rose_addr_t> ipRewrite;             /**< An even number of from,to pairs for rewriting the insn ptr reg. */
+        std::vector<Address> ipRewrite;                 /**< An even number of from,to pairs for rewriting the insn ptr reg. */
         Sawyer::Optional<boost::chrono::duration<double> > smtTimeout; /**< Max seconds allowed per SMT solve call. */
         size_t maxExprSize;                             /**< Maximum symbolic expression size before replacement. */
         bool traceSemantics;                            /**< Trace all instruction semantics operations. */
@@ -110,7 +110,7 @@ public:
             bool check;                                 /**< If true, look for null dereferences along the paths. */
             MayOrMust mode;                             /**< Check for addrs that may or must be null. */
             bool constOnly;                             /**< If true, check only constants or sets of constants. */
-            rose_addr_t minValid;                       /**< Minnimum address that is not treated as a null dereference */
+            Address minValid;                           /**< Minnimum address that is not treated as a null dereference */
 
             NullDeref()
                 : check(false), mode(MUST), constOnly(false), minValid(1024) {}
@@ -134,7 +134,7 @@ public:
         size_t maxPathLengthHits;                       /**< Number of times settings.maxPathLength was hit (effective K). */
         size_t maxCallDepthHits;                        /**< Number of times settings.maxCallDepth was hit. */
         size_t maxRecursionDepthHits;                   /**< Number of times settings.maxRecursionDepth was hit. */
-        Sawyer::Container::Map<rose_addr_t, size_t> reachedBlockVas; /**< Number of times each basic block was reached. */
+        Sawyer::Container::Map<Address, size_t> reachedBlockVas; /**< Number of times each basic block was reached. */
 
         Statistics()
             : nPathsExplored(0), maxVertexVisitHits(0), maxPathLengthHits(0), maxCallDepthHits(0), maxRecursionDepthHits(0) {}
@@ -163,7 +163,7 @@ public:
         SymbolicExpressionPtr memAddress;               /**< Address where variable is located. */
         size_t memSize;                                 /**< Size of total memory access in bytes. */
         size_t memByteNumber;                           /**< Byte number for memory access. */
-        Sawyer::Optional<rose_addr_t> returnFrom;       /**< This variable is the return value from the specified function. */
+        Sawyer::Optional<Address> returnFrom;           /**< This variable is the return value from the specified function. */
 
         VarDetail(): firstAccessInsn(NULL), memSize(0), memByteNumber(0) {}
         std::string toString() const;
@@ -290,9 +290,9 @@ public:
      *
      *  This is information for summarized functions. */
     struct FunctionSummary {
-        rose_addr_t address = 0;                            /**< Address of summarized function. */
-        int64_t stackDelta;                                 /**< Stack delta for summarized function. */
-        std::string name;                                   /**< Name of summarized function. */
+        Address address = 0;                            /**< Address of summarized function. */
+        int64_t stackDelta;                             /**< Stack delta for summarized function. */
+        std::string name;                               /**< Name of summarized function. */
 
         /** Construct empty function summary. */
         FunctionSummary();
@@ -302,7 +302,7 @@ public:
     };
 
     /** Summaries for multiple functions. */
-    typedef Sawyer::Container::Map<rose_addr_t, FunctionSummary> FunctionSummaries;
+    typedef Sawyer::Container::Map<Address, FunctionSummary> FunctionSummaries;
 
     /** Base class for callbacks for function summaries.
      *
@@ -600,7 +600,7 @@ public:
      *
      *  This is the summary information for a single function. If the specified function is not summarized then a
      *  default-constructed summary information object is returned. */
-    const FunctionSummary& functionSummary(rose_addr_t entryVa) const;
+    const FunctionSummary& functionSummary(Address entryVa) const;
 
     /** Details about a variable. */
     const VarDetail& varDetail(const InstructionSemantics::BaseSemantics::StatePtr&, const std::string &varName) const;
@@ -646,7 +646,7 @@ private:
     // Check that analysis settings are valid, or throw an exception.
     void checkSettings() const;
 
-    static rose_addr_t virtualAddress(const Partitioner2::ControlFlowGraph::ConstVertexIterator &vertex);
+    static Address virtualAddress(const Partitioner2::ControlFlowGraph::ConstVertexIterator &vertex);
 
     void insertCallSummary(const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                            const Partitioner2::ControlFlowGraph &cfg,

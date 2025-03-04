@@ -95,7 +95,7 @@ bool
 AddGhostSuccessors::operator()(bool chain, const Args &args) {
     if (chain) {
         size_t nBits = args.partitioner->instructionProvider().instructionPointerRegister().nBits();
-        for (rose_addr_t successorVa: args.partitioner->basicBlockGhostSuccessors(args.bblock))
+        for (Address successorVa: args.partitioner->basicBlockGhostSuccessors(args.bblock))
             args.bblock->insertSuccessor(successorVa, nBits);
     }
     return chain;
@@ -105,7 +105,7 @@ bool
 PreventDiscontiguousBlocks::operator()(bool chain, const Args &args) {
     if (chain) {
         bool complete;
-        std::vector<rose_addr_t> successors = args.partitioner->basicBlockConcreteSuccessors(args.bblock, &complete);
+        std::vector<Address> successors = args.partitioner->basicBlockConcreteSuccessors(args.bblock, &complete);
         if (complete && 1==successors.size() && successors[0]!=args.bblock->fallthroughVa())
             args.results.terminate = TERMINATE_NOW;
     }
@@ -215,7 +215,7 @@ InstructionLister::operator()(bool chain, const AttachedBasicBlock &args) {
         debug <<"  " <<plural(insns.size(), "instructions")
               <<" in [" <<addrToString(settings_.what.least()) <<"," <<addrToString(settings_.what.greatest()) <<"]\n";
         if (!insns.empty()) {
-            rose_addr_t va = insns.front()->get_address();
+            Address va = insns.front()->get_address();
             for (SgAsmInstruction *insn: insns) {
                 std::string label;
                 if (insn->get_address() > va) {
@@ -398,7 +398,7 @@ HexDumper::operator()(bool chain, const AttachedBasicBlock &args) {
         }
         fmt.prefix = "    ";                            // prefix before each line
 
-        rose_addr_t va = settings_.what.least();
+        Address va = settings_.what.least();
         while (AddressInterval avail = args.partitioner->memoryMap()->atOrAfter(va).singleSegment().available()) {
             if (avail.least() > settings_.what.greatest())
                 break;
@@ -477,7 +477,7 @@ Debugger::operator()(bool chain, const AttachedBasicBlock &args) {
 }
 
 void
-Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
+Debugger::debug(Address va, const BasicBlock::Ptr &bblock) {
     using namespace StringUtility;
     Stream debug(mlog[DEBUG]);
     debug.enable();
@@ -512,13 +512,13 @@ MatchThunk::functions() const {
 }
 
 bool
-MatchThunk::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+MatchThunk::match(const Partitioner::ConstPtr &partitioner, Address anchor) {
     ASSERT_not_null(partitioner);
 
     // Disassemble the next few undiscovered instructions
     static const size_t maxInsns = 2;                   // max length of a thunk
     std::vector<SgAsmInstruction*> insns;
-    rose_addr_t va = anchor;
+    Address va = anchor;
     for (size_t i=0; i<maxInsns; ++i) {
         if (partitioner->instructionExists(va))
             break;                                      // look only for undiscovered instructions
@@ -569,7 +569,7 @@ deExecuteZeros(const MemoryMap::Ptr &map /*in,out*/, size_t threshold, size_t le
     AddressIntervalSet changes;
     if (leaveAtFront + leaveAtBack >= threshold)
         return changes;
-    rose_addr_t va = map->hull().least();
+    Address va = map->hull().least();
     AddressInterval zeros;
     uint8_t buf[4096];
     while (AddressInterval accessed = map->atOrAfter(va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf)) {
@@ -623,11 +623,11 @@ labelSymbolAddresses(const Partitioner::Ptr &partitioner, SgAsmGenericHeader *fi
                 name = "(" + boost::to_lower_copy(typeName) + ")" + name;
             }
 
-            rose_addr_t value = fileHeader->get_baseVa() + symbol->get_value();
+            Address value = fileHeader->get_baseVa() + symbol->get_value();
             SgAsmGenericSection *section = symbol->get_bound();
 
             // Assume symbol's value is a virtual address, but make adjustments if its section is relocated
-            rose_addr_t va = value;
+            Address va = value;
             if (section && section->isMapped() &&
                 section->get_mappedPreferredVa() != section->get_mappedActualVa()) {
                 va += section->get_mappedActualVa() - section->get_mappedPreferredVa();
@@ -648,7 +648,7 @@ labelSymbolAddresses(const Partitioner::Ptr &partitioner, SgAsmGenericHeader *fi
 void
 nameStrings(const Partitioner::ConstPtr &partitioner, const AddressInterval &where) {
     ASSERT_not_null(partitioner);
-    Sawyer::Container::Map<rose_addr_t, std::string> seen;
+    Sawyer::Container::Map<Address, std::string> seen;
 
     Strings::StringFinder stringFinder;
     stringFinder.settings().minLength = 1;
@@ -663,7 +663,7 @@ nameStrings(const Partitioner::ConstPtr &partitioner, const AddressInterval &whe
         AST::Traversal::forwardPre<SgAsmIntegerValueExpression>(insn,
             [&partitioner, &stringFinder, &seen, &where](SgAsmIntegerValueExpression *ival) {
                 if (ival && ival->get_comment().empty()) {
-                    rose_addr_t va = ival->get_absoluteValue();
+                    Address va = ival->get_absoluteValue();
                     std::string label;
                     if (seen.getOptional(va).assignTo(label)) {
                         // We cached it earlier, even if the label might be empty.
@@ -720,7 +720,7 @@ findSymbolFunctions(const Partitioner::ConstPtr &partitioner, SgAsmGenericHeader
     ASSERT_not_null(partitioner);
     ASSERT_not_null(fileHeader);
 
-    typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrNames;
+    typedef Sawyer::Container::Map<Address, std::string> AddrNames;
     AddrNames addrNames;
 
     // This traversal only finds the addresses for the new functions, it does not modify the AST since that's a dangerous thing
@@ -730,13 +730,13 @@ findSymbolFunctions(const Partitioner::ConstPtr &partitioner, SgAsmGenericHeader
         if (symbol->get_definitionState() == SgAsmGenericSymbol::SYM_DEFINED &&
             symbol->get_type()      == SgAsmGenericSymbol::SYM_FUNC &&
             symbol->get_value()     != 0) {
-            rose_addr_t value = fileHeader->get_baseVa() + symbol->get_value();
+            Address value = fileHeader->get_baseVa() + symbol->get_value();
             SgAsmGenericSection *section = symbol->get_bound();
 
             // Add a function at the symbol's value. If the symbol is bound to a section and the section is mapped at a
             // different address than it expected to be mapped, then adjust the symbol's value by the same amount. Keep
             // only the first non-empty name we find for each address.
-            rose_addr_t va = value;
+            Address va = value;
             if (section!=NULL && section->isMapped() &&
                 section->get_mappedPreferredVa() != section->get_mappedActualVa()) {
                 va += section->get_mappedActualVa() - section->get_mappedPreferredVa();
@@ -938,7 +938,7 @@ buildBasicBlockAst(const Partitioner::ConstPtr &partitioner, const BasicBlock::P
         ast->set_successorsComplete(isComplete);
     } else {
         bool isComplete = true;
-        for (rose_addr_t successorVa: partitioner->basicBlockConcreteSuccessors(bb, &isComplete)) {
+        for (Address successorVa: partitioner->basicBlockConcreteSuccessors(bb, &isComplete)) {
             SgAsmIntegerValueExpression *succ = SageBuilderAsm::buildValueU64(successorVa);
             succ->set_parent(ast);
             ast->get_successors().push_back(succ);
@@ -970,7 +970,7 @@ buildFunctionAst(const Partitioner::ConstPtr &partitioner, const Function::Ptr &
     // Build the child basic block IR nodes and remember all the data blocks
     std::vector<DataBlock::Ptr> dblocks = function->dataBlocks();
     std::vector<SgAsmBlock*> children;
-    for (rose_addr_t blockVa: function->basicBlockAddresses()) {
+    for (Address blockVa: function->basicBlockAddresses()) {
         ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(blockVa);
         if (vertex == partitioner->cfg().vertices().end()) {
             mlog[WARN] <<function->printableName() <<" bblock "
@@ -1099,7 +1099,7 @@ buildAst(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp/*
 
 void
 fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
-    typedef Sawyer::Container::Map<rose_addr_t, SgAsmNode*> Index;
+    typedef Sawyer::Container::Map<Address, SgAsmNode*> Index;
 
     // Build various indexes since ASTs have inherently linear search time.  We store just the starting address for all these
     // things because that's all we ever want to point to.
@@ -1141,7 +1141,7 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
 
         for (SgAsmIntegerValueExpression *ival: ivals) {
             if (ival->get_baseNode()==NULL) {
-                rose_addr_t va = ival->get_absoluteValue();
+                Address va = ival->get_absoluteValue();
                 SgAsmNode *base = NULL;
                 if (funcIndex.getOptional(va).assignTo(base) || bblockIndex.getOptional(va).assignTo(base) ||
                     insnIndex.getOptional(va).assignTo(base)) {

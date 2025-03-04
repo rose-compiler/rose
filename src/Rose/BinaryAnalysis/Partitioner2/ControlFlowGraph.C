@@ -18,7 +18,7 @@ namespace Partitioner2 {
 // CfgAdjustmentCallback
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CfgAdjustmentCallback::AttachedBasicBlock::AttachedBasicBlock(const Partitioner::Ptr &partitioner, rose_addr_t startVa,
+CfgAdjustmentCallback::AttachedBasicBlock::AttachedBasicBlock(const Partitioner::Ptr &partitioner, Address startVa,
                                                               const BasicBlock::Ptr &bblock)
     : partitioner(partitioner), startVa(startVa), bblock(bblock) {
     ASSERT_not_null(partitioner);
@@ -26,7 +26,7 @@ CfgAdjustmentCallback::AttachedBasicBlock::AttachedBasicBlock(const Partitioner:
 
 CfgAdjustmentCallback::AttachedBasicBlock::~AttachedBasicBlock() {}
 
-CfgAdjustmentCallback::DetachedBasicBlock::DetachedBasicBlock(const Partitioner::Ptr &partitioner, rose_addr_t startVa,
+CfgAdjustmentCallback::DetachedBasicBlock::DetachedBasicBlock(const Partitioner::Ptr &partitioner, Address startVa,
                                                               const BasicBlock::Ptr &bblock)
     : partitioner(partitioner), startVa(startVa), bblock(bblock) {
     ASSERT_not_null(partitioner);
@@ -44,7 +44,7 @@ CfgVertex::CfgVertex()
 
 CfgVertex::~CfgVertex() {}
 
-CfgVertex::CfgVertex(rose_addr_t startVa)
+CfgVertex::CfgVertex(Address startVa)
     : type_(V_BASIC_BLOCK), startVa_(startVa) {}
 
 CfgVertex::CfgVertex(const BasicBlock::Ptr &bb)
@@ -63,14 +63,14 @@ CfgVertex::type() const {
     return type_;
 }
 
-rose_addr_t
+Address
 CfgVertex::address() const {
     ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
     return startVa_;
 }
 
 void
-CfgVertex::address(rose_addr_t va) {
+CfgVertex::address(Address va) {
     ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
     startVa_ = va;
 }
@@ -97,7 +97,7 @@ CfgVertex::addresses() const {
     return retval;
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 CfgVertex::optionalAddress() const {
     switch (type()) {
         case V_BASIC_BLOCK:
@@ -109,7 +109,7 @@ CfgVertex::optionalAddress() const {
     }
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 CfgVertex::optionalLastAddress() const {
     switch (type()) {
         case V_BASIC_BLOCK:

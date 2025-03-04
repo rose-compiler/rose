@@ -48,7 +48,7 @@ public:
     virtual void link(SgAsmInterpretation *interp) override;
 
     /** Returns a new, temporary base address which is greater than everything that's been mapped already. */
-    virtual rose_addr_t rebase(const MemoryMap::Ptr&, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&) override;
+    virtual Address rebase(const MemoryMap::Ptr&, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&) override;
 
     // Resolve import section to DLL files.
     virtual void fixup(SgAsmInterpretation *interp, FixupErrors *errors=NULL) override;
@@ -58,10 +58,10 @@ public:
 
     /** Windows-specific PE section alignment. */
     virtual MappingContribution alignValues(SgAsmGenericSection*, const MemoryMap::Ptr&,
-                                            rose_addr_t *malign_lo, rose_addr_t *malign_hi,
-                                            rose_addr_t *va, rose_addr_t *mem_size,
-                                            rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
-                                            rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
+                                            Address *malign_lo, Address *malign_hi,
+                                            Address *va, Address *mem_size,
+                                            Address *offset, Address *file_size, bool *map_private,
+                                            Address *va_offset, bool *anon_lo, bool *anon_hi,
                                             ConflictResolution *resolve) override;
 
     /** Returns true if the specified file name is already linked into the AST.

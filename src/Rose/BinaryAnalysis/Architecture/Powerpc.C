@@ -564,14 +564,14 @@ Powerpc::terminatesBasicBlock(SgAsmInstruction *insn_) const {
 }
 
 bool
-Powerpc::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) const {
+Powerpc::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, Address *target, Address *return_va) const {
     if (insns.empty())
         return false;
     auto insn = isSgAsmPowerpcInstruction(insns.back());
     ASSERT_not_null(insn);
 
     // Quick method based only on the kind of instruction
-    rose_addr_t tgt;
+    Address tgt;
     if (insn->get_kind() == powerpc_bl && insn->nOperands() == 1 && insn->operand(0)->asUnsigned().assignTo(tgt)) {
         if (target)
             *target = tgt;
@@ -635,7 +635,7 @@ Powerpc::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
             ASSERT_require(isSgAsmValueExpression(exprs[2]));
             SgAsmValueExpression *ve = isSgAsmValueExpression(exprs[2]);
             ASSERT_not_null(ve);
-            rose_addr_t target = SageInterface::getAsmConstant(ve);
+            Address target = SageInterface::getAsmConstant(ve);
             retval.insert(target);
 
             // Fall-through address only happens for conditional branches. If the BO field of a B-form conditional branch is
@@ -668,7 +668,7 @@ Powerpc::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
             ASSERT_not_null(isSgAsmValueExpression(exprs[0]));
             SgAsmValueExpression *ve = isSgAsmValueExpression(exprs[0]);
             ASSERT_not_null(ve);
-            rose_addr_t target = SageInterface::getAsmConstant(ve);
+            Address target = SageInterface::getAsmConstant(ve);
             retval.insert(target);
             break;
         }

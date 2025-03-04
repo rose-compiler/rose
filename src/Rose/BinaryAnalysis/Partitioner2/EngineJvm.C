@@ -36,7 +36,7 @@
 constexpr bool DEBUG_WITH_DUMP = false;
 
 using namespace Rose::Diagnostics;
-using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;
+using AddressSegment = Sawyer::Container::AddressSegment<Rose::BinaryAnalysis::Address,uint8_t>;
 using opcode = Rose::BinaryAnalysis::JvmInstructionKind;
 
 namespace Rose {
@@ -47,7 +47,7 @@ namespace Partitioner2 {
 bool EngineJvm::loadAllClasses = false;
 
 EngineJvm::EngineJvm(const Settings &settings)
-    : Engine("JVM", settings), nextFunctionVa_{static_cast<rose_addr_t>(-1)} {
+    : Engine("JVM", settings), nextFunctionVa_{static_cast<Address>(-1)} {
 }
 
 EngineJvm::~EngineJvm() {}
@@ -279,8 +279,8 @@ EngineJvm::loadJarFile(const std::string &filename) {
 }
 
 // Load class and super classes
-rose_addr_t
-EngineJvm::loadClass(uint16_t classIndex, SgAsmJvmConstantPool* pool, SgAsmGenericFileList* fileList, rose_addr_t baseVa) {
+Address
+EngineJvm::loadClass(uint16_t classIndex, SgAsmJvmConstantPool* pool, SgAsmGenericFileList* fileList, Address baseVa) {
     std::string superName{};
     std::string className{ByteCode::JvmClass::name(classIndex, pool)};
 
@@ -297,8 +297,8 @@ EngineJvm::loadClass(uint16_t classIndex, SgAsmJvmConstantPool* pool, SgAsmGener
     return baseVa;
 }
 
-rose_addr_t
-EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fileList, rose_addr_t baseVa) {
+Address
+EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fileList, Address baseVa) {
     size_t nbytes{0};
     unsigned char* classBytes{nullptr};
 
@@ -393,8 +393,8 @@ EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fil
     return baseVa;
 }
 
-rose_addr_t
-EngineJvm::loadDiscoverableClasses(SgAsmGenericFileList* fileList, rose_addr_t baseVa) {
+Address
+EngineJvm::loadDiscoverableClasses(SgAsmGenericFileList* fileList, Address baseVa) {
     for (auto file: fileList->get_files()) {
         auto jfh = dynamic_cast<SgAsmJvmFileHeader*>(file->get_header(SgAsmGenericFile::FAMILY_JVM));
         auto pool = jfh->get_constant_pool();
@@ -432,8 +432,8 @@ EngineJvm::loadDiscoverableClasses(SgAsmGenericFileList* fileList, rose_addr_t b
     return baseVa;
 }
 
-rose_addr_t
-EngineJvm::loadSuperClasses(const std::string &className, SgAsmGenericFileList* fileList, rose_addr_t baseVa) {
+Address
+EngineJvm::loadSuperClasses(const std::string &className, SgAsmGenericFileList* fileList, Address baseVa) {
     // Make sure the class has been processed and the SgAsmGenericFile for it exists
     if (classes_.find(className) == classes_.end()) {
         return baseVa;
@@ -463,8 +463,8 @@ EngineJvm::loadSuperClasses(const std::string &className, SgAsmGenericFileList* 
 }
 
 void
-EngineJvm::discoverFunctionCalls(SgAsmJvmMethod* sgMethod, SgAsmJvmConstantPool* pool,
-                                 std::map<std::string,rose_addr_t> &fnm, std::set<std::string> &classes) {
+EngineJvm::discoverFunctionCalls(SgAsmJvmMethod* sgMethod, SgAsmJvmConstantPool* pool, std::map<std::string,Address> &fnm,
+                                 std::set<std::string> &classes) {
     for (auto insn: sgMethod->get_instruction_list()->get_instructions()) {
         switch (isSgAsmJvmInstruction(insn)->get_kind()) {
           case opcode::invokedynamic:
@@ -523,7 +523,7 @@ EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &p
     ASSERT_not_null(jvmComposite->get_file_info());
 
     // Load class files starting at this virtual address
-    rose_addr_t baseVa = 0;
+    Address baseVa = 0;
 
     // Loop over all paths, loading jar files and classes
     for (auto path : paths) {
@@ -635,7 +635,7 @@ EngineJvm::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
     // Attach empty functions as targets for invoke of "java/" or bootstrap_method functions (reserved names)
     auto rit = functions_.rbegin();
     while (rit != functions_.rend()) {
-        rose_addr_t va = rit->second;
+        Address va = rit->second;
         std::string name = rit->first;
         if (ByteCode::JvmContainer::isJvmSystemReserved(name)) {
             auto function = Partitioner2::Function::instance(va, name);
@@ -686,14 +686,14 @@ EngineJvm::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
 
     // Primary task is to transfer call edges to the indeterminate vertex.
     // First, for efficiency create a map of function names to addresses.
-    std::map<std::string,rose_addr_t> functionNameMap;
+    std::map<std::string,Address> functionNameMap;
     for (auto function: partitioner->functions()) {
       functionNameMap[function->name()] = function->address();
     }
 
     // By this point all of the functions should have been found
     for (auto pair: unresolvedFunctions_) {
-        rose_addr_t va = pair.second;
+        Address va = pair.second;
         std::string name = pair.first;
         if (functionNameMap.find(name) == functionNameMap.end()) {
           mlog[WARN] << "unresolved function: " << name << " address: " << StringUtility::addrToString(va) <<"\n";
@@ -701,7 +701,7 @@ EngineJvm::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
     }
 
   // Mapping of basic blocks (with edge to indeterminate) to callee basic block
-  std::map<BasicBlock::Ptr, rose_addr_t> sourceBlocks;
+  std::map<BasicBlock::Ptr, Address> sourceBlocks;
 
   auto indeterminate = partitioner->indeterminateVertex();
   for (auto incoming: indeterminate->inEdges()) {
@@ -714,7 +714,7 @@ EngineJvm::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
           std::string functionName = last->get_comment();
           mlog[TRACE] << "... indeterminate incoming: " << functionName << " at " << StringUtility::addrToString(bb->address()) << std::endl;
           if (functionNameMap.find(functionName) != functionNameMap.end()) {
-            rose_addr_t functionVa = functionNameMap[functionName];
+            Address functionVa = functionNameMap[functionName];
             sourceBlocks[bb] = functionVa;
           }
         }
@@ -728,7 +728,7 @@ EngineJvm::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
   // The source basic block must be detached before the successor edge can be replaced.
   for (auto itr = sourceBlocks.begin(); itr != sourceBlocks.end(); itr++) {
     BasicBlock::Ptr bb = itr->first;
-    rose_addr_t va = itr->second;
+    Address va = itr->second;
     auto detached = partitioner->detachBasicBlock(bb);
     mlog[TRACE] << "replacing successor (to indeterminate) from bb(va): " << StringUtility::addrToString(bb->address())
                 << " : to " << StringUtility::addrToString(va) << "\n";
@@ -780,8 +780,8 @@ EngineJvm::discoverBasicBlocks(const PartitionerPtr& partitioner, const ByteCode
 
     const ByteCode::JvmMethod* method{dynamic_cast<const ByteCode::JvmMethod*>(m)};
     const SgAsmInstructionList* instructions{method->instructions()};
-    rose_addr_t startVa{method->code().offset()};
-    rose_addr_t va{startVa};
+    Address startVa{method->code().offset()};
+    Address va{startVa};
 
     // Not sure where this goes (I suppose this discovers basic blocks), at least part of it, as it disassembles
     method->decode(architecture()->newInstructionDecoder());
@@ -797,7 +797,7 @@ EngineJvm::discoverBasicBlocks(const PartitionerPtr& partitioner, const ByteCode
         bb->append(partitioner, insn);
         va += insn->get_size();
 
-        //TODO: void insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
+        //TODO: void insertSuccessor(Address va, size_t nBits, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
 
     }
 }

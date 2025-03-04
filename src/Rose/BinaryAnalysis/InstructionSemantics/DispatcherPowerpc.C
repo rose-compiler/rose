@@ -1072,7 +1072,7 @@ struct IP_lmw: P {
         SgAsmRegisterReferenceExpression *rt = isSgAsmRegisterReferenceExpression(args[0]);
         ASSERT_require(rt && rt->get_descriptor().majorNumber() == powerpc_regclass_gpr);
         RegisterDescriptor reg = rt->get_descriptor();
-        rose_addr_t offset = 0;
+        Address offset = 0;
         for (unsigned minor = reg.minorNumber(); minor < 32; minor += 1, offset += 4) {
             BaseSemantics::SValue::Ptr addr = ops->add(base, ops->number_(d->addressWidth(), offset));
             BaseSemantics::SValue::Ptr dflt = ops->undefined_(32);
@@ -2066,7 +2066,7 @@ struct IP_stmw: P {
         SgAsmRegisterReferenceExpression *rs = isSgAsmRegisterReferenceExpression(args[0]);
         ASSERT_require(rs && rs->get_descriptor().majorNumber() == powerpc_regclass_gpr);
         RegisterDescriptor reg = rs->get_descriptor();
-        rose_addr_t offset = 0;
+        Address offset = 0;
         for (unsigned minor=reg.minorNumber(); minor<32; minor+=1, offset+=4) {
             BaseSemantics::SValue::Ptr addr = ops->add(base, ops->number_(32, offset));
             reg.minorNumber(minor);

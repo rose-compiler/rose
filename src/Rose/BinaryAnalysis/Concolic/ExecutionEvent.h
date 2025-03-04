@@ -147,7 +147,7 @@ private:
     TestCasePtr testCase_;                              // each event belongs to a particular test case
     std::string name_;                                  // optional name for debugging
     ExecutionLocation location_;                        // location event occurs
-    rose_addr_t ip_ = 0;                                // address of instruction associated with event
+    Address ip_ = 0;                                    // address of instruction associated with event
 
     // These data members map to properties, but not necessarily 1:1. It's done this way for efficiency in the database.
     Action action_ = Action::NONE;                      // type of action
@@ -176,49 +176,49 @@ public:
     static Ptr instance();
 
     /** Allocating constructor for events with no action. */
-    static Ptr noAction(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip);
+    static Ptr noAction(const TestCasePtr&, const ExecutionLocation&, Address ip);
 
 
     /** Allocating constructor for @c BULK_MEMORY_MAP events. */
-    static Ptr bulkMemoryMap(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
+    static Ptr bulkMemoryMap(const TestCasePtr&, const ExecutionLocation&, Address ip,
                              const AddressInterval &where, unsigned permissions);
 
     /** Allocating constructor for @c BULK_MEMORY_UNMAP events. */
-    static Ptr bulkMemoryUnmap(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
+    static Ptr bulkMemoryUnmap(const TestCasePtr&, const ExecutionLocation&, Address ip,
                                const AddressInterval &where);
 
     /** Allocating constructor for @c BULK_MEMORY_WRITE events.
      *
      *  The number of bytes supplied must match the size of the memory region. */
-    static Ptr bulkMemoryWrite(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
+    static Ptr bulkMemoryWrite(const TestCasePtr&, const ExecutionLocation&, Address ip,
                                const AddressInterval &where, const std::vector<uint8_t> &bytes);
 
     /** Allocating constructor for @c BULK_MEMORY_HASH events.
      *
      *  Hashing uses SHA256 and the supplied digest must be exactly 256 bits, or 32 bytes. */
-    static Ptr bulkMemoryHash(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
+    static Ptr bulkMemoryHash(const TestCasePtr&, const ExecutionLocation&, Address ip,
                               const AddressInterval &where, const Combinatorics::Hasher::Digest&);
 
     /** Allocating constructor for @c MEMORY_WRITE events. */
-    static Ptr memoryWrite(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
+    static Ptr memoryWrite(const TestCasePtr&, const ExecutionLocation&, Address ip,
                            const AddressInterval &where, const SymbolicExpressionPtr &variable,
                            const SymbolicExpressionPtr &value, const SymbolicExpressionPtr &expression);
 
     /** Allocating constructor for @c BULK_REGISTER_WRITE events. */
-    static Ptr bulkRegisterWrite(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
+    static Ptr bulkRegisterWrite(const TestCasePtr&, const ExecutionLocation&, Address ip,
                                  const Sawyer::Container::BitVector&);
 
     /** Allocating constructor for @c REGISTER_WRITE events. */
-    static Ptr registerWrite(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
+    static Ptr registerWrite(const TestCasePtr&, const ExecutionLocation&, Address ip,
                              RegisterDescriptor where, const SymbolicExpressionPtr &variable,
                              const SymbolicExpressionPtr &value, const SymbolicExpressionPtr &expression);
 
     /** Allocating constructor for @c OS_SYSCALL events. */
-    static Ptr osSyscall(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
+    static Ptr osSyscall(const TestCasePtr&, const ExecutionLocation&, Address ip,
                          unsigned function, const std::vector<uint64_t> &arguments);
 
     /** Allocating constructor for @c OS_SHARED_MEMORY events. */
-    static Ptr osSharedMemory(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
+    static Ptr osSharedMemory(const TestCasePtr&, const ExecutionLocation&, Address ip,
                               const AddressInterval &where, const SymbolicExpressionPtr &variable,
                               const SymbolicExpressionPtr &value, const SymbolicExpressionPtr &expression);
 
@@ -283,8 +283,8 @@ public:
      *  Valid for all event types.
      *
      * @{ */
-    rose_addr_t instructionPointer() const;
-    void instructionPointer(rose_addr_t);
+    Address instructionPointer() const;
+    void instructionPointer(Address);
     /** @} */
 
     /** Property: Type of action.

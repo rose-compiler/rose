@@ -17,13 +17,13 @@ public:
     using Ptr = FailureUnitPtr;
 
 private:
-    const Sawyer::Optional<rose_addr_t> va_;
+    const Sawyer::Optional<Address> va_;
     const std::string description_;
     TagPtr tag_;
 
 protected:
     FailureUnit() = delete;
-    FailureUnit(const Sawyer::Optional<rose_addr_t>&, const SourceLocation&, const std::string &description,
+    FailureUnit(const Sawyer::Optional<Address>&, const SourceLocation&, const std::string &description,
                 const TagPtr&);
 public:
     ~FailureUnit();
@@ -39,8 +39,8 @@ public:
      *  Thread safety: This constructor is thread safe.
      *
      *  @{ */
-    static Ptr instance(const Sawyer::Optional<rose_addr_t>&, const SourceLocation&, const std::string &description);
-    static Ptr instance(const Sawyer::Optional<rose_addr_t>&, const SourceLocation&, const std::string &description, const TagPtr&);
+    static Ptr instance(const Sawyer::Optional<Address>&, const SourceLocation&, const std::string &description);
+    static Ptr instance(const Sawyer::Optional<Address>&, const SourceLocation&, const std::string &description, const TagPtr&);
     /** @} */
 
 public:
@@ -61,7 +61,7 @@ public:
                              size_t stepOrigin, size_t maxSteps) const override;
     virtual std::vector<Sarif::LocationPtr> toSarif(size_t maxSteps) const override;
     virtual size_t nSteps() const override;
-    virtual Sawyer::Optional<rose_addr_t> address() const override;
+    virtual Sawyer::Optional<Address> address() const override;
 
     virtual std::vector<TagPtr>
     execute(const SettingsPtr&, const SemanticCallbacksPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;

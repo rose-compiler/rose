@@ -956,7 +956,7 @@ M68k::extensionWordsUsed(State &state) const
 
 // see base class
 SgAsmInstruction *
-M68k::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
+M68k::disassembleOne(const MemoryMap::Ptr &map, Address start_va, AddressSet *successors)
 {
     State state; // all mutable state for this function and its descendences is stored here.
     start_instruction(state, map, start_va);
@@ -1362,7 +1362,7 @@ struct M68k_branch: M68k::Decoder {
             case 14: kind = m68k_bgt; break;
             case 15: kind = m68k_ble; break;
         }
-        rose_addr_t base = state.insn_va + 2;
+        Address base = state.insn_va + 2;
         int32_t offset = signExtend<8, 32>(extract<0, 7>(w0));
         M68kDataFormat fmt = m68k_fmt_unknown;
         if (0==offset) {
@@ -1374,7 +1374,7 @@ struct M68k_branch: M68k::Decoder {
         } else {
             fmt = m68k_fmt_i8;
         }
-        rose_addr_t target_va = (base + offset) & GenMask<rose_addr_t, 32>::value;
+        Address target_va = (base + offset) & GenMask<Address, 32>::value;
         SgAsmIntegerValueExpression *target = d->makeImmediateValue(state, m68k_fmt_i32, target_va);
         return d->makeInstruction(state, kind, fmt, target);
     }
@@ -1980,8 +1980,8 @@ struct M68k_dbcc: M68k::Decoder {
             case 15: kind = m68k_dble; break;
         }
         SgAsmExpression *src = d->makeDataRegister(state, extract<0, 2>(w0), m68k_fmt_i32);
-        rose_addr_t target_va = state.insn_va + 2 + signExtend<16, 32>((rose_addr_t)d->instructionWord(state, 1));
-        target_va &= GenMask<rose_addr_t, 32>::value;
+        Address target_va = state.insn_va + 2 + signExtend<16, 32>((Address)d->instructionWord(state, 1));
+        target_va &= GenMask<Address, 32>::value;
         SgAsmIntegerValueExpression *target = d->makeImmediateValue(state, m68k_fmt_i32, target_va);
         return d->makeInstruction(state, kind, m68k_fmt_i16, src, target);
     }
@@ -2454,8 +2454,8 @@ struct M68k_fb: M68k::Decoder {
             fmt = m68k_fmt_i16;
             offset = signExtend<16, 32>((uint32_t)d->instructionWord(state, 1));
         }
-        rose_addr_t base = state.insn_va + 2;
-        rose_addr_t target_va = (base + offset) & GenMask<rose_addr_t, 32>::value;
+        Address base = state.insn_va + 2;
+        Address target_va = (base + offset) & GenMask<Address, 32>::value;
         SgAsmIntegerValueExpression *target = d->makeImmediateValue(state, m68k_fmt_i32, target_va);
         return d->makeInstruction(state, kind, fmt, target);
     }

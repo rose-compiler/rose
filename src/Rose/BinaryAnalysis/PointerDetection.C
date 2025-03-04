@@ -71,11 +71,11 @@ Analysis::clearNonResults() {
 }
 
 struct MemoryTransfer {
-    rose_addr_t insnVa;                                 // address of instruction that accessed memory
+    Address insnVa;                                     // address of instruction that accessed memory
     SymbolicExpression::Ptr memoryVa;                   // memory address being accessed
     PointerDescriptor::Direction direction;             // read or write
 
-    MemoryTransfer(rose_addr_t insnVa, const SymbolicExpression::Ptr &memoryVa, PointerDescriptor::Direction direction)
+    MemoryTransfer(Address insnVa, const SymbolicExpression::Ptr &memoryVa, PointerDescriptor::Direction direction)
         : insnVa(insnVa), memoryVa(memoryVa), direction(direction) {}
 };
 
@@ -198,8 +198,8 @@ public:
         return changed;
     }
 
-    void saveMemoryTransfer(const rose_addr_t insnVa, const BaseSemantics::SValue::Ptr &addr,
-                            const BaseSemantics::SValue::Ptr &value, PointerDescriptor::Direction direction) {
+    void saveMemoryTransfer(const Address insnVa, const BaseSemantics::SValue::Ptr &addr, const BaseSemantics::SValue::Ptr &value,
+                            PointerDescriptor::Direction direction) {
         SymbolicExpression::Ptr addrExpr = SValue::promote(addr)->get_expression();
         SymbolicExpression::Ptr valueExpr = SValue::promote(value)->get_expression();
         insertMemoryTransfer(memoryTransfers_, valueExpr, MemoryTransfer(insnVa, addrExpr, direction));
@@ -316,7 +316,7 @@ Analysis::printInstructionsForDebugging(const P2::Partitioner::ConstPtr &partiti
     ASSERT_not_null(partitioner);
     if (mlog[DEBUG]) {
         mlog[DEBUG] <<"  function instructions:\n";
-        for (rose_addr_t bbVa: function->basicBlockAddresses()) {
+        for (Address bbVa: function->basicBlockAddresses()) {
             if (P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbVa)) {
                 for (SgAsmInstruction *insn: bb->instructions()) {
                     mlog[DEBUG] <<"    " <<partitioner->unparse(insn) <<"\n";

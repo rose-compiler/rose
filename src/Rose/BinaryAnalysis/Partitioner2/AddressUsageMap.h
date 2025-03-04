@@ -64,7 +64,7 @@ public:
      *
      *  Returns the address of the instruction or the address of the data block, depending on which of @ref isBasicBlock or
      *  @ref isDataBlock returns true. */
-    rose_addr_t address() const;
+    Address address() const;
 
     /** Predicate returning true if user is a basic block or instruction. */
     bool isBasicBlock() const;
@@ -182,7 +182,7 @@ public:
      *
      * @{ */
     SgAsmInstruction* instructionExists(SgAsmInstruction*) const;
-    SgAsmInstruction* instructionExists(rose_addr_t va) const;
+    SgAsmInstruction* instructionExists(Address va) const;
     /** @} */
 
     /** Determines whether the specified basic block or an equivalent exists.
@@ -193,7 +193,7 @@ public:
      *
      * @{ */
     BasicBlockPtr basicBlockExists(const BasicBlockPtr&) const;
-    BasicBlockPtr basicBlockExists(rose_addr_t va) const;
+    BasicBlockPtr basicBlockExists(Address va) const;
     /** @} */
 
     /** Determines whether the specified data block or an equivalent exists.
@@ -204,7 +204,7 @@ public:
      *
      * @{ */
     DataBlockPtr dataBlockExists(const DataBlockPtr&) const;
-    DataBlockPtr dataBlockExists(rose_addr_t va, rose_addr_t size) const;
+    DataBlockPtr dataBlockExists(Address va, Address size) const;
     /** @} */
 
     /** Find an AddressUser record for the specified instruction, or equivalent.
@@ -215,7 +215,7 @@ public:
      *
      * @{ */
     AddressUser findInstruction(SgAsmInstruction*) const;
-    AddressUser findInstruction(rose_addr_t va) const;
+    AddressUser findInstruction(Address va) const;
     /** @} */
 
     /** Find an AddressUser record for the specified basic block, or equivalent.
@@ -227,7 +227,7 @@ public:
      *
      * @{ */
     AddressUser findBasicBlock(const BasicBlockPtr&) const;
-    AddressUser findBasicBlock(rose_addr_t va) const;
+    AddressUser findBasicBlock(Address va) const;
     /** @} */
 
     /** Find an AddressUser record for the specified data block, or equivalent.
@@ -238,7 +238,7 @@ public:
      *
      * @{ */
     AddressUser findDataBlock(const DataBlockPtr&) const;
-    AddressUser findDataBlock(rose_addr_t va, rose_addr_t size) const;
+    AddressUser findDataBlock(Address va, Address size) const;
     /** @} */
 
     /** Insert an instruction/basic block pair.
@@ -413,7 +413,7 @@ public:
      *  Returns true if the specified address belongs to any instruction, basic block, or data block. This is a O(log N)
      *  operation where N is the number of contiguous intervals in this address usage map.  It may be slightly faster than some
      *  of the other methods since it doesn't need to construct a non-POD return value. */
-    bool exists(rose_addr_t) const;
+    bool exists(Address) const;
 
     /** Predicate to determine whether any of the specified addresses are used.
      *
@@ -443,7 +443,7 @@ public:
      *  Returns the next address interval that begins at or after the specified address and which does not correspond to any
      *  instruction, basic block, data block, or function. The largest such interval is returned, but it will not contain any
      *  values less than @p minVa. Returns an empty interval if no such interval exists. */
-    AddressInterval nextUnused(rose_addr_t minVa) const;
+    AddressInterval nextUnused(Address minVa) const;
 
     /** Determines whether the specified instruction or an equivalent exists.
      *
@@ -451,7 +451,7 @@ public:
      *
      * @{ */
     SgAsmInstruction* instructionExists(SgAsmInstruction*) const;
-    SgAsmInstruction* instructionExists(rose_addr_t va) const;
+    SgAsmInstruction* instructionExists(Address va) const;
     /** @} */
 
     /** Determine if a basic block exists.
@@ -463,7 +463,7 @@ public:
      *
      * @{ */
     BasicBlockPtr basicBlockExists(const BasicBlockPtr&) const;
-    BasicBlockPtr basicBlockExists(rose_addr_t startOfBlock) const;
+    BasicBlockPtr basicBlockExists(Address startOfBlock) const;
     /** @} */
 
     /** Determines if a data block exists.
@@ -473,7 +473,7 @@ public:
      *
      * @{ */
     DataBlockPtr dataBlockExists(const DataBlockPtr&) const;
-    DataBlockPtr dataBlockExists(rose_addr_t va, rose_addr_t size) const;
+    DataBlockPtr dataBlockExists(Address va, Address size) const;
     /** @} */
 
     /** Find an AddressUser record for the specified instruction, or equivalent.
@@ -484,7 +484,7 @@ public:
      *
      * @{ */
     AddressUser findInstruction(SgAsmInstruction*) const;
-    AddressUser findInstruction(rose_addr_t va) const;
+    AddressUser findInstruction(Address va) const;
     /** @} */
 
     /** Find an AddressUser record for the specified basic block, or equivalent.
@@ -496,7 +496,7 @@ public:
      *
      * @{ */
     AddressUser findBasicBlock(const BasicBlockPtr&) const;
-    AddressUser findBasicBlock(rose_addr_t va) const;
+    AddressUser findBasicBlock(Address va) const;
     /** @} */
 
     /** Find an AddressUser record for the specified data block, or equivalent.
@@ -507,7 +507,7 @@ public:
      *
      * @{ */
     AddressUser findDataBlock(const DataBlockPtr&) const;
-    AddressUser findDataBlock(rose_addr_t va, rose_addr_t size) const;
+    AddressUser findDataBlock(Address va, Address size) const;
     /** @} */
 
     /** Insert the instruction along with an owning basic block.
@@ -600,7 +600,7 @@ public:
      *
      *  Returns the smallest unmapped address that is greater than or equal to @p startVa.  If no such address exists then
      *  nothing is returned. */
-    Sawyer::Optional<rose_addr_t> leastUnmapped(rose_addr_t startVa) const;
+    Sawyer::Optional<Address> leastUnmapped(Address startVa) const;
 
     /** Dump the contents of this AUM to a stream.
      *

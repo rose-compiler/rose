@@ -48,7 +48,7 @@ private:
     SystemCallMap systemCalls_;                         // callbacks for syscalls
     SharedMemoryMap sharedMemory_;                      // callbacks for shared memory
     InputVariablesPtr inputVariables_;                  // info about variables for events and inputs
-    Sawyer::Optional<rose_addr_t> scratchVa_;           // scratch page for internal use in subordinate address space
+    Sawyer::Optional<Address> scratchVa_;               // scratch page for internal use in subordinate address space
 
 protected:
     // See "instance" methods in subclasses
@@ -170,8 +170,8 @@ public:
      *  executor in order to execute special code needed by the executor that isn't part of the normal process's image.
      *
      * @{ */
-    Sawyer::Optional<rose_addr_t> scratchVa() const;
-    void scratchVa(const Sawyer::Optional<rose_addr_t>&);
+    Sawyer::Optional<Address> scratchVa() const;
+    void scratchVa(const Sawyer::Optional<Address>&);
     /** @} */
 
     /** Property: Current execution location.
@@ -302,7 +302,7 @@ public:
      *  This is called after memory is inserted into or erased from the process memory map, such as in response to a brk or
      *  mmap2 system call.  It compares the process' current memory mapping with the provided mapping and adjusts the current
      *  mapping to match the concrete map by inserting and/or erasing certain regions. */
-    virtual std::vector<ExecutionEventPtr> createMemoryAdjustEvents(const MemoryMapPtr&, rose_addr_t insnVa) = 0;
+    virtual std::vector<ExecutionEventPtr> createMemoryAdjustEvents(const MemoryMapPtr&, Address insnVa) = 0;
 
     /** Create events that would restore register values.
      *
@@ -343,14 +343,14 @@ public:
     /** Read memory bytes as an unsigned integer.
      *
      *  The number of bytes should be between one and eight, inclusive. */
-    uint64_t readMemoryUnsigned(rose_addr_t va, size_t nBytes);
+    uint64_t readMemoryUnsigned(Address va, size_t nBytes);
 
     /** Read C-style NUL-terminated string from subordinate.
      *
      *  Reads up to @p maxBytes bytes or until an ASCII NUL character is read, concatenates all the characters (except the NUL)
      *  into a C++ string and returns it. The @p maxBytes includes the NUL terminator although the NUL terminator is not
      *  returned as part of the string. */
-    virtual std::string readCString(rose_addr_t va, size_t maxBytes = UNLIMITED);
+    virtual std::string readCString(Address va, size_t maxBytes = UNLIMITED);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Low-level functions controlling concrete execution.
@@ -364,8 +364,8 @@ public:
     /** Current execution address.
      *
      *  @{ */
-    virtual rose_addr_t ip();
-    virtual void ip(rose_addr_t);
+    virtual Address ip();
+    virtual void ip(Address);
     /** @} */
 
     /** Map a memory region.
@@ -382,13 +382,13 @@ public:
     /** Write bytes to memory.
      *
      *  Returns the number of bytes written, which might be fewer than the number requested if there is some kind of error. */
-    virtual size_t writeMemory(rose_addr_t startVa, const std::vector<uint8_t> &bytes);
+    virtual size_t writeMemory(Address startVa, const std::vector<uint8_t> &bytes);
 
     /** Read memory.
      *
      *  Reads the specified number of bytes from memory beginning at the specified address. Returns the number of bytes
      *  actually read, which might be fewer than the number requested if there is some kind of error. */
-    virtual std::vector<uint8_t> readMemory(rose_addr_t startVa, size_t nBytes);
+    virtual std::vector<uint8_t> readMemory(Address startVa, size_t nBytes);
 
     /** Write a value to a register.
      *
@@ -504,10 +504,10 @@ public:
      * @{ */
     virtual std::pair<ExecutionEventPtr, SymbolicExpressionPtr>
     sharedMemoryRead(const SharedMemoryCallbacks&, const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
-                       rose_addr_t memVa, size_t nBytes);
+                     Address memVa, size_t nBytes);
     virtual bool
     sharedMemoryWrite(const SharedMemoryCallbacks&, const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
-                      rose_addr_t memVa, const InstructionSemantics::BaseSemantics::SValuePtr&);
+                      Address memVa, const InstructionSemantics::BaseSemantics::SValuePtr&);
     /** @} */
 
     /** Run after-instruction shared memory callbacks.

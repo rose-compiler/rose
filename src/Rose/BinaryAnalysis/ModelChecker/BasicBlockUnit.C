@@ -177,7 +177,7 @@ BasicBlockUnit::nSteps() const {
     return bblock_->nInstructions();
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 BasicBlockUnit::address() const {
     // No lock necessary since the basic block pointer cannot be changed after construction. However, the BasicBlock API itself
     // might not be thread safe.
@@ -239,7 +239,7 @@ BasicBlockUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::
             // to the next instruction.
             if (i + 1 < bblock_->nInstructions()) {
                 BS::SValue::Ptr actualIp = semantics->instructionPointer(ops);
-                rose_addr_t expectedIp = bblock_->instructions()[i+1]->get_address();
+                Address expectedIp = bblock_->instructions()[i+1]->get_address();
                 if (actualIp->toUnsigned().orElse(expectedIp+1) != expectedIp) {
                     std::string mesg = "next IP should be " + StringUtility::addrToString(expectedIp) + " according to CFG";
                     tags.push_back(ErrorTag::instance(i, "unexpected IP", mesg, bblock_->instructions()[i], actualIp));

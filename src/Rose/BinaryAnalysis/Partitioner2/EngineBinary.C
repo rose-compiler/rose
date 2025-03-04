@@ -114,8 +114,8 @@ EngineBinary::reset() {
 }
 
 // Increment the address as far as possible while avoiding overflow.
-static rose_addr_t
-incrementAddress(rose_addr_t va, rose_addr_t amount, rose_addr_t maxaddr) {
+static Address
+incrementAddress(Address va, Address amount, Address maxaddr) {
     if (maxaddr - va < amount)
         return maxaddr;
     return va + amount;
@@ -1737,7 +1737,7 @@ EngineBinary::makeEntryFunctions(const Partitioner::Ptr &partitioner, SgAsmInter
     if (interp) {
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers()) {
             for (const RelativeVirtualAddress &rva: fileHeader->get_entryRvas()) {
-                rose_addr_t va = rva.rva() + fileHeader->get_baseVa();
+                Address va = rva.rva() + fileHeader->get_baseVa();
                 Function::Ptr function = Function::instance(va, "_start", SgAsmFunction::FUNC_ENTRY_POINT);
                 insertUnique(retval, partitioner->attachOrMergeFunction(function), sortFunctionsByAddress);
                 ASSERT_require2(function->address() == va, function->printableName());
@@ -1766,7 +1766,7 @@ EngineBinary::makeImportFunctions(const Partitioner::Ptr &partitioner, SgAsmInte
         // Windows PE imports
         ModulesPe::rebaseImportAddressTables(partitioner, ModulesPe::getImportIndex(partitioner, interp));
         for (const Function::Ptr &function: ModulesPe::findImportFunctions(partitioner, interp)) {
-            rose_addr_t va = function->address();
+            Address va = function->address();
             insertUnique(retval, partitioner->attachOrMergeFunction(function), sortFunctionsByAddress);
             ASSERT_always_require2(function->address() == va, function->printableName());
         }
@@ -1869,7 +1869,7 @@ EngineBinary::makeInterruptVectorFunctions(const Partitioner::Ptr &partitioner, 
         ByteOrder::Endianness byteOrder = partitioner->instructionProvider().defaultByteOrder();
 
         for (size_t i=0; i<nPointers; ++i) {
-            rose_addr_t elmtVa = interruptVector.least() + i*bytesPerPointer;
+            Address elmtVa = interruptVector.least() + i*bytesPerPointer;
             uint32_t functionVa;
             if (4 == partitioner->memoryMap()->at(elmtVa).limit(4).read((uint8_t*)&functionVa).size()) {
                 functionVa = ByteOrder::diskToHost(byteOrder, functionVa);
@@ -1888,10 +1888,10 @@ EngineBinary::makeInterruptVectorFunctions(const Partitioner::Ptr &partitioner, 
 }
 
 std::vector<Function::Ptr>
-EngineBinary::makeUserFunctions(const Partitioner::Ptr &partitioner, const std::vector<rose_addr_t> &vas) {
+EngineBinary::makeUserFunctions(const Partitioner::Ptr &partitioner, const std::vector<Address> &vas) {
     ASSERT_not_null(partitioner);
     std::vector<Function::Ptr> retval;
-    for (rose_addr_t va: vas) {
+    for (Address va: vas) {
         Function::Ptr function = Function::instance(va, SgAsmFunction::FUNC_CMDLINE);
         insertUnique(retval, partitioner->attachOrMergeFunction(function), sortFunctionsByAddress);
     }
@@ -1904,11 +1904,11 @@ EngineBinary::discoverBasicBlocks(const Partitioner::Ptr &partitioner) {
 }
 
 Function::Ptr
-EngineBinary::makeNextDataReferencedFunction(const Partitioner::ConstPtr &partitioner, rose_addr_t &readVa /*in,out*/) {
+EngineBinary::makeNextDataReferencedFunction(const Partitioner::ConstPtr &partitioner, Address &readVa /*in,out*/) {
     ASSERT_not_null(partitioner);
-    const rose_addr_t wordSize = partitioner->instructionProvider().instructionPointerRegister().nBits() / 8;
+    const Address wordSize = partitioner->instructionProvider().instructionPointerRegister().nBits() / 8;
     ASSERT_require2(wordSize>0 && wordSize<=8, StringUtility::numberToString(wordSize)+"-byte words not implemented yet");
-    const rose_addr_t maxaddr = partitioner->memoryMap()->hull().greatest();
+    const Address maxaddr = partitioner->memoryMap()->hull().greatest();
 
     while (readVa < maxaddr &&
            partitioner->memoryMap()->atOrAfter(readVa)
@@ -1916,7 +1916,7 @@ EngineBinary::makeNextDataReferencedFunction(const Partitioner::ConstPtr &partit
            .next().assignTo(readVa)) {
 
         // Addresses must be aligned on a word boundary
-        if (rose_addr_t misaligned = readVa % wordSize) {
+        if (Address misaligned = readVa % wordSize) {
             readVa = incrementAddress(readVa, wordSize-misaligned, maxaddr);
             continue;
         }
@@ -1931,7 +1931,7 @@ EngineBinary::makeNextDataReferencedFunction(const Partitioner::ConstPtr &partit
             readVa = incrementAddress(readVa, wordSize, maxaddr);
             continue;
         }
-        rose_addr_t targetVa = 0;
+        Address targetVa = 0;
         for (size_t i=0; i<wordSize; ++i)
             targetVa |= raw[i] << (8*i);
 
@@ -1965,9 +1965,9 @@ EngineBinary::makeNextCodeReferencedFunction(const Partitioner::ConstPtr &partit
     ASSERT_not_null(partitioner);
     // As basic blocks are inserted into the CFG their instructions go into a set to be examined by this function. Once this
     // function examines them, it moves them to an already-examined set.
-    rose_addr_t constant = 0;
+    Address constant = 0;
     while (codeFunctionPointers() && codeFunctionPointers()->nextConstant(partitioner).assignTo(constant)) {
-        rose_addr_t srcVa = codeFunctionPointers()->inProgress();
+        Address srcVa = codeFunctionPointers()->inProgress();
         SgAsmInstruction *srcInsn = partitioner->instructionProvider()[srcVa];
         ASSERT_not_null(srcInsn);
 
@@ -2001,12 +2001,12 @@ EngineBinary::makeCalledFunctions(const Partitioner::Ptr &partitioner) {
 }
 
 std::vector<Function::Ptr>
-EngineBinary::makeNextPrologueFunction(const Partitioner::Ptr &partitioner, rose_addr_t startVa) {
+EngineBinary::makeNextPrologueFunction(const Partitioner::Ptr &partitioner, Address startVa) {
     return makeNextPrologueFunction(partitioner, startVa, startVa);
 }
 
 std::vector<Function::Ptr>
-EngineBinary::makeNextPrologueFunction(const Partitioner::Ptr &partitioner, rose_addr_t startVa, rose_addr_t &lastSearchedVa) {
+EngineBinary::makeNextPrologueFunction(const Partitioner::Ptr &partitioner, Address startVa, Address &lastSearchedVa) {
     ASSERT_not_null(partitioner);
     std::vector<Function::Ptr> functions = partitioner->nextFunctionPrologue(startVa, lastSearchedVa /*out*/);
     for (const Function::Ptr &function: functions)
@@ -2015,9 +2015,9 @@ EngineBinary::makeNextPrologueFunction(const Partitioner::Ptr &partitioner, rose
 }
 
 std::vector<Function::Ptr>
-EngineBinary::makeFunctionFromInterFunctionCalls(const Partitioner::Ptr &partitioner, rose_addr_t &startVa /*in,out*/) {
+EngineBinary::makeFunctionFromInterFunctionCalls(const Partitioner::Ptr &partitioner, Address &startVa /*in,out*/) {
     ASSERT_not_null(partitioner);
-    static const rose_addr_t MAX_ADDR(-1);
+    static const Address MAX_ADDR(-1);
     static const std::vector<Function::Ptr> NO_FUNCTIONS;
     static const char *me = "makeFunctionFromInterFunctionCalls: ";
     Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -2125,7 +2125,7 @@ EngineBinary::makeFunctionFromInterFunctionCalls(const Partitioner::Ptr &partiti
 
             // Look at the basic block successors to find those which appear to be function calls. Note that the edge types are
             // probably all E_NORMAL at this point rather than E_FUNCTION_CALL, and the call-return edges are not yet present.
-            std::set<rose_addr_t> candidateFunctionVas; // entry addresses for potential new functions
+            std::set<Address> candidateFunctionVas; // entry addresses for potential new functions
             BasicBlock::Successors successors = partitioner->basicBlockSuccessors(bb, Precision::LOW);
             for (const BasicBlock::Successor &succ: successors) {
                 if (auto targetVa = succ.expr()->toUnsigned()) {
@@ -2157,7 +2157,7 @@ EngineBinary::makeFunctionFromInterFunctionCalls(const Partitioner::Ptr &partiti
             // recursively following their control flow.
             if (!candidateFunctionVas.empty()) {
                 std::vector<Function::Ptr> newFunctions;
-                for (rose_addr_t functionVa: candidateFunctionVas) {
+                for (Address functionVa: candidateFunctionVas) {
                     Function::Ptr newFunction = Function::instance(functionVa, SgAsmFunction::FUNC_CALL_INSN);
                     newFunction->reasonComment("from " + bb->instructions().back()->toString());
                     newFunctions.push_back(partitioner->attachOrMergeFunction(newFunction));
@@ -2177,9 +2177,9 @@ EngineBinary::makeFunctionFromInterFunctionCalls(const Partitioner::Ptr &partiti
 void
 EngineBinary::discoverFunctions(const Partitioner::Ptr &partitioner) {
     ASSERT_not_null(partitioner);
-    rose_addr_t nextPrologueVa = 0;                     // where to search for function prologues
-    rose_addr_t nextInterFunctionCallVa = 0;            // where to search for inter-function call instructions
-    rose_addr_t nextReadAddr = 0;                       // where to look for read-only function addresses
+    Address nextPrologueVa = 0;                         // where to search for function prologues
+    Address nextInterFunctionCallVa = 0;                // where to search for inter-function call instructions
+    Address nextReadAddr = 0;                           // where to look for read-only function addresses
 
     while (1) {
         // Find as many basic blocks as possible by recursively following the CFG as we build it.
@@ -2228,21 +2228,21 @@ EngineBinary::discoverFunctions(const Partitioner::Ptr &partitioner) {
     }
 }
 
-std::set<rose_addr_t>
+std::set<Address>
 EngineBinary::attachDeadCodeToFunction(const Partitioner::Ptr &partitioner, const Function::Ptr &function, size_t maxIterations) {
     ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
-    std::set<rose_addr_t> retval;
+    std::set<Address> retval;
 
     for (size_t i=0; i<maxIterations; ++i) {
         // Find ghost edges
-        std::set<rose_addr_t> ghosts = partitioner->functionGhostSuccessors(function);
+        std::set<Address> ghosts = partitioner->functionGhostSuccessors(function);
         if (ghosts.empty())
             break;
 
         // Insert placeholders for all ghost edge targets
         partitioner->detachFunction(function);          // so we can modify its basic block ownership list
-        for (rose_addr_t ghost: ghosts) {
+        for (Address ghost: ghosts) {
             if (retval.find(ghost)==retval.end()) {
                 partitioner->insertPlaceholder(ghost);  // ensure a basic block gets created here
                 function->insertBasicBlock(ghost);      // the function will own this basic block
@@ -2312,7 +2312,7 @@ EngineBinary::attachSurroundedCodeToFunctions(const Partitioner::Ptr &partitione
     size_t nNewBlocks = 0;
     if (partitioner->aum().isEmpty())
         return 0;
-    rose_addr_t va = partitioner->aum().hull().least() + 1;
+    Address va = partitioner->aum().hull().least() + 1;
     while (va < partitioner->aum().hull().greatest()) {
         // Find an address interval that's unused and also executable.
         AddressInterval unusedAum = partitioner->aum().nextUnused(va);
@@ -2361,12 +2361,12 @@ EngineBinary::attachBlocksToFunctions(const Partitioner::Ptr &partitioner) {
 }
 
 // Finds dead code and adds it to the function to which it seems to belong.
-std::set<rose_addr_t>
+std::set<Address>
 EngineBinary::attachDeadCodeToFunctions(const Partitioner::Ptr &partitioner, size_t maxIterations) {
     ASSERT_not_null(partitioner);
-    std::set<rose_addr_t> retval;
+    std::set<Address> retval;
     for (const Function::Ptr &function: partitioner->functions()) {
-        std::set<rose_addr_t> deadVas = attachDeadCodeToFunction(partitioner, function, maxIterations);
+        std::set<Address> deadVas = attachDeadCodeToFunction(partitioner, function, maxIterations);
         retval.insert(deadVas.begin(), deadVas.end());
     }
     return retval;
@@ -2420,9 +2420,9 @@ EngineBinary::attachSurroundedDataToFunctions(const Partitioner::Ptr &partitione
 bool
 EngineBinary::makeNextCallReturnEdge(const Partitioner::Ptr &partitioner, boost::logic::tribool assumeReturns) {
     ASSERT_not_null(partitioner);
-    Sawyer::Container::DistinctList<rose_addr_t> &workList = basicBlockWorkList()->pendingCallReturn();
+    Sawyer::Container::DistinctList<Address> &workList = basicBlockWorkList()->pendingCallReturn();
     while (!workList.isEmpty()) {
-        rose_addr_t va = workList.popBack();
+        Address va = workList.popBack();
         ControlFlowGraph::VertexIterator caller = partitioner->findPlaceholder(va);
 
         // Some sanity checks because it could be possible for this list to be out-of-date if the user monkeyed with the
@@ -2487,7 +2487,7 @@ EngineBinary::makeNextBasicBlockFromPlaceholder(const Partitioner::Ptr &partitio
 
     // Pick the first (as LIFO) item from the undiscovered worklist. Make sure the item is truly undiscovered
     while (!basicBlockWorkList()->undiscovered().isEmpty()) {
-        rose_addr_t va = basicBlockWorkList()->undiscovered().popBack();
+        Address va = basicBlockWorkList()->undiscovered().popBack();
         ControlFlowGraph::VertexIterator placeholder = partitioner->findPlaceholder(va);
         if (placeholder == partitioner->cfg().vertices().end()) {
             mlog[WARN] <<"makeNextBasicBlockFromPlaceholder: block " <<StringUtility::addrToString(va)

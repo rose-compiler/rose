@@ -58,7 +58,7 @@ public:
     // Overrides documented in a super class
     virtual ~Powerpc() {}
     virtual Base::Ptr clone() const;
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL);
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, Address start_va, AddressSet *successors=NULL);
     virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&);
 
@@ -184,7 +184,7 @@ private:
     void init();
     
     // Resets disassembler state to beginning of an instruction.
-    void startInstruction(State &state, rose_addr_t start_va, uint32_t c) const;
+    void startInstruction(State &state, Address start_va, uint32_t c) const;
 };
 
 } // namespace

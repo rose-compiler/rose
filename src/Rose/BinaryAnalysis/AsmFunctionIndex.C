@@ -239,7 +239,7 @@ AsmFunctionIndex::BeginAddrCallback::operator()(bool enabled, const DataArgs &ar
     if (enabled) {
         std::vector<SgAsmInstruction*> insns = AST::Traversal::findDescendantsTyped<SgAsmInstruction>(args.func);
         if (!insns.empty()) {
-            rose_addr_t addr = insns.front()->get_address();
+            Address addr = insns.front()->get_address();
             for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
                 addr = std::min(addr, (*ii)->get_address());
             args.output <<data_prefix <<std::setw(width) <<StringUtility::addrToString(addr);
@@ -256,7 +256,7 @@ AsmFunctionIndex::EndAddrCallback::operator()(bool enabled, const DataArgs &args
     if (enabled) {
         std::vector<SgAsmInstruction*> insns = AST::Traversal::findDescendantsTyped<SgAsmInstruction>(args.func);
         if (!insns.empty()) {
-            rose_addr_t addr = insns.front()->get_address() + insns.front()->get_size();
+            Address addr = insns.front()->get_address() + insns.front()->get_size();
             for (std::vector<SgAsmInstruction*>::iterator ii=insns.begin(); ii!=insns.end(); ++ii)
                 addr = std::max(addr, (*ii)->get_address()+(*ii)->get_size());
             args.output <<data_prefix <<std::setw(width) <<StringUtility::addrToString(addr);

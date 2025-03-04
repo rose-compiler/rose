@@ -99,7 +99,7 @@ Architecture::makeDispatcher(const BS::RiscOperators::Ptr &ops) {
     return IS::DispatcherM68k::instance(arch, ops);
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 Architecture::entryAddress() {
     ASSERT_not_null(partitioner());
 
@@ -209,7 +209,7 @@ Architecture::createMemoryHashEvents() {
 }
 
 std::vector<ExecutionEvent::Ptr>
-Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr&, rose_addr_t /*insnVa*/) {
+Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr&, Address /*insnVa*/) {
     ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }

@@ -271,7 +271,7 @@ public:
      *
      *  A function is created at each address and is attached to the partitioner's CFG/AUM. Returns a list of such functions,
      *  some of which may have existed prior to this call. */
-    virtual std::vector<FunctionPtr> makeUserFunctions(const PartitionerPtr&, const std::vector<rose_addr_t>&);
+    virtual std::vector<FunctionPtr> makeUserFunctions(const PartitionerPtr&, const std::vector<Address>&);
 
     /** Discover as many basic blocks as possible.
      *
@@ -292,7 +292,7 @@ public:
      *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check.
      *
      *  Functions created in this manner have the @c SgAsmFunction::FUNC_SCAN_RO_DATA reason. */
-    virtual FunctionPtr makeNextDataReferencedFunction(const PartitionerConstPtr&, rose_addr_t &startVa /*in,out*/);
+    virtual FunctionPtr makeNextDataReferencedFunction(const PartitionerConstPtr&, Address &startVa /*in,out*/);
 
     /** Scan instruction ASTs to function pointers.
      *
@@ -332,9 +332,8 @@ public:
      *  searched.
      *
      * @{ */
-    virtual std::vector<FunctionPtr> makeNextPrologueFunction(const PartitionerPtr&, rose_addr_t startVa);
-    virtual std::vector<FunctionPtr> makeNextPrologueFunction(const PartitionerPtr&, rose_addr_t startVa,
-                                                              rose_addr_t &lastSearchedVa);
+    virtual std::vector<FunctionPtr> makeNextPrologueFunction(const PartitionerPtr&, Address startVa);
+    virtual std::vector<FunctionPtr> makeNextPrologueFunction(const PartitionerPtr&, Address startVa, Address &lastSearchedVa);
     /** @} */
 
     /** Make functions from inter-function calls.
@@ -356,7 +355,7 @@ public:
      *  Returns the new function(s) for the first basic block that satisfied the requirements outlined above, and updates @p
      *  startVa to be a greater address which is not part of the basic block that was scanned. */
     virtual std::vector<FunctionPtr>
-    makeFunctionFromInterFunctionCalls(const PartitionerPtr&, rose_addr_t &startVa /*in,out*/);
+    makeFunctionFromInterFunctionCalls(const PartitionerPtr&, Address &startVa /*in,out*/);
 
     /** Discover as many functions as possible.
      *
@@ -380,8 +379,7 @@ public:
      *  Returns the set of newly discovered addresses for unreachable code.  These are the ghost edge target addresses
      *  discovered at each iteration of the loop and do not include addresses of basic blocks that are reachable from the ghost
      *  target blocks. */
-    virtual std::set<rose_addr_t> attachDeadCodeToFunction(const PartitionerPtr&, const FunctionPtr&,
-                                                           size_t maxIterations=size_t(-1));
+    virtual std::set<Address> attachDeadCodeToFunction(const PartitionerPtr&, const FunctionPtr&, size_t maxIterations=size_t(-1));
 
     /** Attach function padding to function.
      *
@@ -432,7 +430,7 @@ public:
      *  along @p maxIterations each time.
      *
      *  Returns the union of the dead code addresses discovered for each function. */
-    virtual std::set<rose_addr_t> attachDeadCodeToFunctions(const PartitionerPtr&, size_t maxIterations=size_t(-1));
+    virtual std::set<Address> attachDeadCodeToFunctions(const PartitionerPtr&, size_t maxIterations=size_t(-1));
 
     /** Attach intra-function data to functions.
      *

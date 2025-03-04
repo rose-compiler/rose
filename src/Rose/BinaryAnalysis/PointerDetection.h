@@ -181,11 +181,11 @@ public:
 
     /** Description of accessing memory. */
     struct Access {
-        rose_addr_t insnVa;                             /**< Instruction location where memory is accessed. */
+        Address insnVa;                                 /**< Instruction location where memory is accessed. */
         Direction direction;                            /**< Whether memory is read or written. */
         SymbolicExpression::Ptr value;                  /**< Value read or written. */
 
-        Access(rose_addr_t insnVa, Direction direction, const SymbolicExpression::Ptr &value)
+        Access(Address insnVa, Direction direction, const SymbolicExpression::Ptr &value)
             : insnVa(insnVa), direction(direction), value(value) {}
 
         bool operator<(const Access &other) const {
@@ -206,7 +206,7 @@ public:
     std::set<Access> pointerAccesses;                   /**< Where pointer variable's value was accessed. */
     std::set<Access> dereferences;                      /**< Where pointer was dereferenced. */
 
-    PointerDescriptor(const SymbolicExpression::Ptr &pointerVa, size_t nBits, rose_addr_t insnVa, Direction dir,
+    PointerDescriptor(const SymbolicExpression::Ptr &pointerVa, size_t nBits, Address insnVa, Direction dir,
                       const SymbolicExpression::Ptr &pointerValue)
         : pointerVa(pointerVa), nBits(nBits) {
         pointerAccesses.insert(Access(insnVa, dir, pointerValue));

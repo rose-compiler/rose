@@ -20,7 +20,7 @@ namespace Partitioner2 {
 BasicBlock::BasicBlock()
     : isFrozen_(false), startVa_(0) {}
 
-BasicBlock::BasicBlock(rose_addr_t startVa, const Partitioner::ConstPtr &partitioner)
+BasicBlock::BasicBlock(Address startVa, const Partitioner::ConstPtr &partitioner)
     : isFrozen_(false), startVa_(startVa) {
     semantics_.usingDispatcher = true;
     init(partitioner);
@@ -102,14 +102,14 @@ BasicBlock::insertSuccessor(const BaseSemantics::SValue::Ptr &successor_, EdgeTy
 }
 
 void
-BasicBlock::insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type, Confidence confidence) {
+BasicBlock::insertSuccessor(Address va, size_t nBits, EdgeType type, Confidence confidence) {
     BaseSemantics::RiscOperators::Ptr ops = semantics_.operators;
     ASSERT_not_null(ops);
     return insertSuccessor(ops->number_(nBits, va), type, confidence);
 }
 
 SgAsmInstruction*
-BasicBlock::instructionExists(rose_addr_t startVa) const {
+BasicBlock::instructionExists(Address startVa) const {
     if (insns_.size() >= bigBlock_) {
         // O(log N) search for large blocks
         ASSERT_require(insns_.size() == insnAddrMap_.size());
@@ -144,7 +144,7 @@ BasicBlock::instructionExists(SgAsmInstruction *toFind) const {
 }
 
 Sawyer::Optional<size_t>
-BasicBlock::instructionIndex(rose_addr_t startVa) const {
+BasicBlock::instructionIndex(Address startVa) const {
     if (insns_.size() >= bigBlock_) {
         // O(log N) search for large blocks
         ASSERT_require(insns_.size() == insnAddrMap_.size());
@@ -316,7 +316,7 @@ BasicBlock::dataAddresses() const {
     return retval;
 }
 
-rose_addr_t
+Address
 BasicBlock::fallthroughVa() const {
     ASSERT_require(!insns_.empty());
     return insns_.back()->get_address() + insns_.back()->get_size();
@@ -363,12 +363,12 @@ BasicBlock::replaceOrInsertDataBlock(const DataBlock::Ptr &dblock) {
     replaceOrInsert(dblocks_, dblock, sortDataBlocks);
 }
 
-std::set<rose_addr_t>
+std::set<Address>
 BasicBlock::explicitConstants() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    std::set<rose_addr_t> retval;
+    std::set<Address> retval;
     for (SgAsmInstruction *insn: insns_) {
-        std::set<rose_addr_t> insnConstants = insn->explicitConstants();
+        std::set<Address> insnConstants = insn->explicitConstants();
         retval.insert(insnConstants.begin(), insnConstants.end());
     }
     return retval;

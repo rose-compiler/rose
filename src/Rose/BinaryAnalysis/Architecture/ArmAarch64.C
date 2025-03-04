@@ -1875,7 +1875,7 @@ ArmAarch64::terminatesBasicBlock(SgAsmInstruction *insn_) const {
 }
 
 bool
-ArmAarch64::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) const {
+ArmAarch64::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, Address *target, Address *return_va) const {
     if (insns.empty())
         return false;
     auto last = isSgAsmAarch64Instruction(insns.back());
@@ -1917,7 +1917,7 @@ ArmAarch64::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) co
     }
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 ArmAarch64::branchTarget(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmAarch64Instruction(insn_);
     ASSERT_not_null(insn);

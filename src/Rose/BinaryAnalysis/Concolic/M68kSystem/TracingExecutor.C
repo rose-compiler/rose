@@ -100,7 +100,7 @@ TracingExecutor::execute(const TestCase::Ptr &testCase) {
     size_t nInsnsExecuted = 0;
     auto debugger = Debugger::Gdb::instance(Debugger::Gdb::Specimen(firmwareName, "localhost", 1234));
     while (!debugger->isTerminated()) {
-        rose_addr_t va = debugger->executionAddress(Debugger::ThreadId::unspecified());
+        Address va = debugger->executionAddress(Debugger::ThreadId::unspecified());
         result->trace().append(va);
         if (++nInsnsExecuted >= maxInsnsExecuted) {
             SAWYER_MESG(debug) <<"maximum number of allowed instructions reached (" <<maxInsnsExecuted <<");"

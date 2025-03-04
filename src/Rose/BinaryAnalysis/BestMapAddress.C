@@ -39,15 +39,15 @@ BestMapAddress::initDiagnostics() {
 void
 BestMapAddress::nBits(size_t n) {
     ASSERT_require(n > 0);
-    ASSERT_require(n <= 8*sizeof(rose_addr_t));
+    ASSERT_require(n <= 8*sizeof(Address));
     nBits_ = n;
 }
 
-rose_addr_t
+Address
 BestMapAddress::mask() const {
     if (0 == nBits_)
         throw Exception("no address space size specified yet");
-    return IntegerOps::genMask<rose_addr_t>(nBits_);
+    return IntegerOps::genMask<Address>(nBits_);
 }
 
 void
@@ -76,7 +76,7 @@ BestMapAddress::gatherAddresses(P2::Engine &engine) {
 
                 // Target address list
                 if (partitioner->basicBlockIsFunctionCall(bb)) {
-                    for (rose_addr_t target: partitioner->basicBlockConcreteSuccessors(bb)) {
+                    for (Address target: partitioner->basicBlockConcreteSuccessors(bb)) {
                         if (target != bb->fallthroughVa())
                             targetVas_.insert(target);
                     }
@@ -88,10 +88,10 @@ BestMapAddress::gatherAddresses(P2::Engine &engine) {
 
 // Describes *what* a worker thread works on
 struct Task {
-    rose_addr_t delta;
+    Address delta;
     size_t &result;
 
-    Task(rose_addr_t delta, size_t &result)
+    Task(Address delta, size_t &result)
         : delta(delta), result(result) {}
 };
 
@@ -105,9 +105,9 @@ struct Worker {
         : self(self), progress(progress), progressBar(progressBar) {}
 
     void operator()(size_t /*taskId*/, const Task &task) {
-        const rose_addr_t mask = IntegerOps::genMask<rose_addr_t>(self->nBits());
+        const Address mask = IntegerOps::genMask<Address>(self->nBits());
         size_t nMatches = 0;
-        for (rose_addr_t a: self->entryAddresses().values()) {
+        for (Address a: self->entryAddresses().values()) {
             if (self->targetAddresses().exists((a + task.delta) & mask))
                 ++nMatches;
         }
@@ -121,19 +121,19 @@ struct Worker {
 BestMapAddress&
 BestMapAddress::analyze(const AddressInterval &restrictEntryAddresses, const AddressInterval &restrictTargetAddresses) {
     // Build a table that contains all possible deltas.
-    const rose_addr_t mask = IntegerOps::genMask<rose_addr_t>(nBits_);
-    std::set<rose_addr_t> deltaSet;
+    const Address mask = IntegerOps::genMask<Address>(nBits_);
+    std::set<Address> deltaSet;
     maxMatches_ = 0;
-    for (rose_addr_t entryVa: entryVas_.values()) {
+    for (Address entryVa: entryVas_.values()) {
         if (restrictEntryAddresses.contains(entryVa)) {
             ++maxMatches_;
-            for (rose_addr_t targetVa: targetVas_.values()) {
+            for (Address targetVa: targetVas_.values()) {
                 if (restrictTargetAddresses.contains(targetVa))
                     deltaSet.insert((targetVa - entryVa) & mask);
             }
         }
     }
-    std::vector<rose_addr_t> deltas(deltaSet.begin(), deltaSet.end());
+    std::vector<Address> deltas(deltaSet.begin(), deltaSet.end());
 
     // Build worker thread tasks, each of which determines how many call targets would resolve to function entries if the
     // function entries were shifted by some delta.
@@ -165,11 +165,11 @@ BestMapAddress::bestDeltaRatio() const {
     return (double)results_.greatest() / maxMatches_;
 }
 
-const std::vector<rose_addr_t>&
+const std::vector<Address>&
 BestMapAddress::bestDeltas() const {
     if (!upToDate_)
         throw Exception("call BestMapAddress::analyze first");
-    static const std::vector<rose_addr_t> empty;
+    static const std::vector<Address> empty;
     return results_.isEmpty() ? empty : results_[results_.greatest()];
 }
 
@@ -220,7 +220,7 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
         }
         mlog[INFO] <<"found " <<StringUtility::plural(mapAnalyzer.entryAddresses().size(), "entry addresses") <<" and "
                    <<StringUtility::plural(mapAnalyzer.targetAddresses().size(), "target addresses") <<"\n";
-        for (rose_addr_t entryVa: entryAddresses.values())
+        for (Address entryVa: entryAddresses.values())
             mapAnalyzer.insertEntryAddress(entryVa);
         mlog[INFO] <<"using " <<StringUtility::plural(mapAnalyzer.entryAddresses().size(), "total entry addresses") <<"\n";
         info <<"performing remap analysis";
@@ -229,22 +229,22 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
             ProgressTask t(progress, "remap", (double)(nWork-0) / totalWork);
             mapAnalyzer.analyze();
         }
-        std::vector<rose_addr_t> deltas = mapAnalyzer.bestDeltas();
+        std::vector<Address> deltas = mapAnalyzer.bestDeltas();
         info <<"; took " <<remapTime <<"\n";
         mlog[INFO] <<"found " <<StringUtility::plural(deltas.size(), "deltas") <<" with match ratio "
                     <<(100.0*mapAnalyzer.bestDeltaRatio()) <<"%\n";
 
         // Find the best deltas by which to shift the executable segment. Try deltas in the order given until we find one that
         // shifts the executable segment to an area of memory where it doesn't overlap with any non-executable segments.
-        // static const rose_addr_t mask = mapAnalyzer.mask();
+        // static const Address mask = mapAnalyzer.mask();
         bool remapped = false;
         size_t bestDelta = 0;
-        const rose_addr_t mask = mapAnalyzer.mask();
-        for (rose_addr_t delta: deltas) {
+        const Address mask = mapAnalyzer.mask();
+        for (Address delta: deltas) {
             // Check for overflow: we don't want a delta that would split the executable segment between the highest addresses
             // and the lowest addresses.
-            rose_addr_t newLo = (interval.least() + delta) & mask;
-            rose_addr_t newHi = (interval.greatest() + delta) & mask;
+            Address newLo = (interval.least() + delta) & mask;
+            Address newHi = (interval.greatest() + delta) & mask;
             if (newHi < newLo)
                 continue;                               // overflow
             const AddressInterval newInterval = AddressInterval::hull(newLo, newHi);
@@ -271,8 +271,8 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
 
         // Add adjusted entry addresses to the set of all entry addresses.  This is optional, but sometimes helps the remap
         // analysis by giving it more information.
-        for (rose_addr_t origEntryVa: mapAnalyzer.entryAddresses().values()) {
-            rose_addr_t adjustedEntryVa = (origEntryVa + bestDelta) & mask;
+        for (Address origEntryVa: mapAnalyzer.entryAddresses().values()) {
+            Address adjustedEntryVa = (origEntryVa + bestDelta) & mask;
             entryAddresses.insert(adjustedEntryVa);
         }
     }

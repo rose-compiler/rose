@@ -116,7 +116,7 @@ public:
     struct Relocation {
         size_t offset;                                  /**< Location of relocation in replacement code. */
         RelocType type;                                 /**< Relocation algorithm. */
-        rose_addr_t value;                              /**< Argument for relocation algorithm. */
+        Address value;                                  /**< Argument for relocation algorithm. */
 
         /** Constructor.
          *
@@ -124,14 +124,14 @@ public:
          *  the area overwritten as well as the algorithm for computing the new bytes are determined by the relocation @p
          *  type. The @p value is one of the inputs to the relocation algorithm (the other is the virtual address of the byte
          *  at the specified @p offset in the replacement. */
-        Relocation(size_t offset, RelocType type, rose_addr_t value)
+        Relocation(size_t offset, RelocType type, Address value)
             : offset(offset), type(type), value(value) {}
     };
 
     /** Information about an instruction within the basic block being modified. */
     struct InstructionInfo {
-        rose_addr_t originalVa;                         /**< Original address of instruction. */
-        Sawyer::Optional<rose_addr_t> newVaOffset;      /**< Offset of instruction from front of encoded insn vector. */
+        Address originalVa;                             /**< Original address of instruction. */
+        Sawyer::Optional<Address> newVaOffset;          /**< Offset of instruction from front of encoded insn vector. */
 
         explicit InstructionInfo(SgAsmInstruction*);
     };
@@ -334,14 +334,14 @@ public:
      *  This encodes an unconditional branch instruction at @p srcVa that causes control to flow to @p tgtVa.  The caller
      *  should not assume that a particular size encoding will be returned. E.g., on x86, jumps to targets that are further
      *  away require more bytes to encode than jumps to nearby targets. */
-    virtual std::vector<uint8_t> encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa);
+    virtual std::vector<uint8_t> encodeJump(Address srcVa, Address tgtVa);
 
     /** Apply relocations to create a new encoding.
      *
      *  The @p relocations are applied to the @p replacement bytes which are assumed to be mapped in virtual memory starting at
      *  @p startVa. The @p relocStart is a byte offset for all the relocations; i.e., the actual offset in the @p replacement
      *  where the relocation is applied is the relocation's offset plus the @p relocStart value. */
-    virtual std::vector<uint8_t> applyRelocations(rose_addr_t startVa, std::vector<uint8_t> replacement,
+    virtual std::vector<uint8_t> applyRelocations(Address startVa, std::vector<uint8_t> replacement,
                                                   const std::vector<Relocation> &relocations, size_t relocStart,
                                                   const InstructionInfoMap &insnInfoMap);
 
@@ -354,7 +354,7 @@ public:
      *  are completed except removing it from the free list. The @ref commitAllocation function can be called later to remove
      *  it from the free list. If you don't remove it from the free list, a subsequent allocation request might return the same
      *  addresses. */
-    virtual AddressInterval allocateMemory(size_t nBytes, rose_addr_t jmpTargetVa, Commit::Boolean commit = Commit::YES);
+    virtual AddressInterval allocateMemory(size_t nBytes, Address jmpTargetVa, Commit::Boolean commit = Commit::YES);
 
     /** Commit previous allocation.
      *

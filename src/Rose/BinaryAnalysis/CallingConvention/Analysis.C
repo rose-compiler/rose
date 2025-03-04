@@ -224,7 +224,7 @@ Analysis::analyzeFunction(const P2::Partitioner::ConstPtr &partitioner, const P2
     // detection wouldn't be able to find anything. However, it might also be possible to change the local variable detector
     // so it looks for constants that are near the stack pointer's concrete value. [Robb Matzke 2022-07-12]
     const RegisterDescriptor SP = partitioner->instructionProvider().stackPointerRegister();
-    rose_addr_t initialStackPointer = 0xcf000000;       // arbitrary
+    Address initialStackPointer = 0xcf000000;           // arbitrary
     initialRegState->writeRegister(SP, cpu_->operators()->number_(SP.nBits(), initialStackPointer),
                                    cpu_->operators().get());
 #endif

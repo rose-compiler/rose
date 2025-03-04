@@ -132,10 +132,10 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
             // This is a ROSE configuration file.
             if (YAML::Node functions = configFile["rose"]["functions"]) {
                 for (const YAML::Node &function: functions) {
-                    Sawyer::Optional<rose_addr_t> addr;
+                    Sawyer::Optional<Address> addr;
                     std::string name;
                     if (function["address"])
-                        addr = function["address"].as<rose_addr_t>();
+                        addr = function["address"].as<Address>();
                     if (function["name"])
                         name = Modules::canonicalFunctionName(function["name"].as<std::string>());
                     FunctionConfiguration config(addr, name);
@@ -168,15 +168,15 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         SAWYER_MESG(mlog[ERROR]) <<"missing address for basic block configuration record\n";
                         continue;
                     }
-                    rose_addr_t addr = bblock["address"].as<rose_addr_t>();
+                    Address addr = bblock["address"].as<Address>();
                     BasicBlockConfiguration config(addr);
                     if (bblock["comment"])
                         config.comment(bblock["comment"].as<std::string>());
                     if (bblock["final_instruction"])
-                        config.finalInstructionVa(bblock["final_instruction"].as<rose_addr_t>());
+                        config.finalInstructionVa(bblock["final_instruction"].as<Address>());
                     if (const YAML::Node &successors = bblock["successors"]) {
                         for (const YAML::Node &successor: successors)
-                            config.successorVas().insert(successor.as<rose_addr_t>());
+                            config.successorVas().insert(successor.as<Address>());
                     }
                     if (bblock["source_location"])
                         config.sourceLocation(SourceLocation::parse(bblock["source_location"].as<std::string>()));
@@ -192,7 +192,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         SAWYER_MESG(mlog[ERROR]) <<"missing address for data block configuration record\n";
                         continue;
                     }
-                    rose_addr_t addr = dblock["address"].as<rose_addr_t>();
+                    Address addr = dblock["address"].as<Address>();
                     DataBlockConfiguration config(addr);
                     if (dblock["name"])
                         config.name(dblock["name"].as<std::string>());
@@ -212,7 +212,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         SAWYER_MESG(mlog[ERROR]) <<"missing address for address configuration record\n";
                         continue;
                     }
-                    rose_addr_t addr = detail["address"].as<rose_addr_t>();
+                    Address addr = detail["address"].as<Address>();
                     AddressConfiguration config(addr);
                     if (detail["name"])
                         config.name(detail["name"].as<std::string>());
@@ -260,10 +260,10 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
             if (functions) {
                 for (const auto &node: functions) {
                     Yaml::Node &function = node.second;
-                    Sawyer::Optional<rose_addr_t> addr;
+                    Sawyer::Optional<Address> addr;
                     std::string name;
                     if (function["address"])
-                        addr = function["address"].as<rose_addr_t>();
+                        addr = function["address"].as<Address>();
                     if (function["name"])
                         name = Modules::canonicalFunctionName(function["name"].as<std::string>());
                     FunctionConfiguration config(addr, name);
@@ -298,17 +298,17 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         SAWYER_MESG(mlog[ERROR]) <<"missing address for basic block configuration record\n";
                         continue;
                     }
-                    rose_addr_t addr = bblock["address"].as<rose_addr_t>();
+                    Address addr = bblock["address"].as<Address>();
                     BasicBlockConfiguration config(addr);
                     if (bblock["comment"])
                         config.comment(bblock["comment"].as<std::string>());
                     if (bblock["final_instruction"])
-                        config.finalInstructionVa(bblock["final_instruction"].as<rose_addr_t>());
+                        config.finalInstructionVa(bblock["final_instruction"].as<Address>());
                     Yaml::Node &successors = bblock["successors"];
                     if (successors) {
                         for (const auto &sucNode: successors) {
                             Yaml::Node &successor = sucNode.second;
-                            config.successorVas().insert(successor.as<rose_addr_t>());
+                            config.successorVas().insert(successor.as<Address>());
                         }
                     }
                     if (bblock["source_location"])
@@ -327,7 +327,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         SAWYER_MESG(mlog[ERROR]) <<"missing address for data block configuration record\n";
                         continue;
                     }
-                    rose_addr_t addr = dblock["address"].as<rose_addr_t>();
+                    Address addr = dblock["address"].as<Address>();
                     DataBlockConfiguration config(addr);
                     if (dblock["name"])
                         config.name(dblock["name"].as<std::string>());
@@ -349,7 +349,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         SAWYER_MESG(mlog[ERROR]) <<"missing address for address configuration record\n";
                         continue;
                     }
-                    rose_addr_t addr = detail["address"].as<rose_addr_t>();
+                    Address addr = detail["address"].as<Address>();
                     AddressConfiguration config(addr);
                     if (detail["name"])
                         config.name(detail["name"].as<std::string>());
@@ -398,7 +398,7 @@ printBasicBlockConfiguration(std::ostream &out, const BasicBlockConfiguration &c
         out <<"      final_instruction: " <<StringUtility::addrToString(*config.finalInstructionVa()) <<"\n";
     if (!config.successorVas().empty()) {
         out <<"      successors:" <<"\n";
-        for (rose_addr_t va: config.successorVas())
+        for (Address va: config.successorVas())
             out <<"          - " <<StringUtility::addrToString(va) <<"\n";
     }
     if (!config.sourceLocation().isEmpty())
@@ -456,17 +456,17 @@ Configuration::print(std::ostream &out) const {
 }
 
 BasicBlockConfiguration&
-Configuration::insertMaybeBasicBlock(rose_addr_t va) {
+Configuration::insertMaybeBasicBlock(Address va) {
     return bblockConfigurations_.insertMaybe(va, BasicBlockConfiguration(va));
 }
 
 DataBlockConfiguration&
-Configuration::insertMaybeDataBlock(rose_addr_t va) {
+Configuration::insertMaybeDataBlock(Address va) {
     return dblockConfigurations_.insertMaybe(va, DataBlockConfiguration(va));
 }
 
 FunctionConfiguration&
-Configuration::insertMaybeFunction(rose_addr_t va, const std::string &name) {
+Configuration::insertMaybeFunction(Address va, const std::string &name) {
     return functionConfigurationsByAddress_.insertMaybe(va, FunctionConfiguration(va, name));
 }
 
@@ -476,27 +476,27 @@ Configuration::insertMaybeFunction(const std::string &name) {
 }
 
 AddressConfiguration&
-Configuration::insertMaybeAddress(rose_addr_t va) {
+Configuration::insertMaybeAddress(Address va) {
     return addressConfigurations_.insertMaybe(va, AddressConfiguration(va));
 }
 
 const BasicBlockConfiguration&
-Configuration::basicBlock(rose_addr_t va) const {
+Configuration::basicBlock(Address va) const {
     return bblockConfigurations_.getOrDefault(va);
 }
 
 const DataBlockConfiguration&
-Configuration::dataBlock(rose_addr_t va) const {
+Configuration::dataBlock(Address va) const {
     return dblockConfigurations_.getOrDefault(va);
 }
 
 const AddressConfiguration&
-Configuration::address(rose_addr_t va) const {
+Configuration::address(Address va) const {
     return addressConfigurations_.getOrDefault(va);
 }
 
 const FunctionConfiguration&
-Configuration::function(rose_addr_t va) const {
+Configuration::function(Address va) const {
     return functionConfigurationsByAddress_.getOrDefault(va);
 }
 
@@ -540,43 +540,43 @@ Configuration::insertConfiguration(const AddressConfiguration &config) {
 }
 
 std::string
-Configuration::basicBlockComment(rose_addr_t bblockVa) const {
+Configuration::basicBlockComment(Address bblockVa) const {
     return bblockConfigurations_.getOptional(bblockVa).orDefault().comment();
 }
 
-Sawyer::Optional<rose_addr_t>
-Configuration::basicBlockFinalInstructionVa(rose_addr_t bblockVa) const {
+Sawyer::Optional<Address>
+Configuration::basicBlockFinalInstructionVa(Address bblockVa) const {
     return bblockConfigurations_.getOptional(bblockVa).orDefault().finalInstructionVa();
 }
 
-std::set<rose_addr_t>
-Configuration::basicBlockSuccessorVas(rose_addr_t bblockVa) const {
+std::set<Address>
+Configuration::basicBlockSuccessorVas(Address bblockVa) const {
     static const BasicBlockConfiguration emptyConfiguration;
     return bblockConfigurations_.getOptional(bblockVa).orElse(emptyConfiguration).successorVas();
 }
 
 std::string
-Configuration::dataBlockName(rose_addr_t dblockVa) const {
+Configuration::dataBlockName(Address dblockVa) const {
     return dblockConfigurations_.getOptional(dblockVa).orDefault().name();
 }
 
 std::string
-Configuration::dataBlockComment(rose_addr_t dblockVa) const {
+Configuration::dataBlockComment(Address dblockVa) const {
     return dblockConfigurations_.getOptional(dblockVa).orDefault().comment();
 }
 
 std::string
-Configuration::functionName(rose_addr_t functionVa) const {
+Configuration::functionName(Address functionVa) const {
     return functionConfigurationsByAddress_.getOptional(functionVa).orDefault().name();
 }
 
 std::string
-Configuration::functionDefaultName(rose_addr_t functionVa) const {
+Configuration::functionDefaultName(Address functionVa) const {
     return functionConfigurationsByAddress_.getOptional(functionVa).orDefault().defaultName();
 }
 
 std::string
-Configuration::functionComment(rose_addr_t functionVa) const {
+Configuration::functionComment(Address functionVa) const {
     return functionConfigurationsByAddress_.getOptional(functionVa).orDefault().comment();
 }
 
@@ -596,7 +596,7 @@ Configuration::functionComment(const Function::Ptr &function) const {
 }
 
 Sawyer::Optional<int64_t>
-Configuration::functionStackDelta(rose_addr_t functionVa) const {
+Configuration::functionStackDelta(Address functionVa) const {
     return functionConfigurationsByAddress_.getOptional(functionVa).orDefault().stackDelta();
 }
 
@@ -615,7 +615,7 @@ Configuration::functionStackDelta(const Function::Ptr &function) const {
 }
 
 Sawyer::Optional<bool>
-Configuration::functionMayReturn(rose_addr_t functionVa) const {
+Configuration::functionMayReturn(Address functionVa) const {
     return functionConfigurationsByAddress_.getOptional(functionVa).orDefault().mayReturn();
 }
 
@@ -634,12 +634,12 @@ Configuration::functionMayReturn(const Function::Ptr &function) const {
 }
 
 std::string
-Configuration::addressComment(rose_addr_t va) const {
+Configuration::addressComment(Address va) const {
     return addressConfigurations_.getOptional(va).orDefault().comment();
 }
 
 std::string
-Configuration::comment(rose_addr_t va) const {
+Configuration::comment(Address va) const {
     std::string s = addressComment(va);
     if (!s.empty())
         return s;

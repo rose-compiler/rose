@@ -274,7 +274,7 @@ public:
     /** Address of execution unit.
      *
      *  Thread safety: This method is thread safe. */
-    Sawyer::Optional<rose_addr_t> address() const;
+    Sawyer::Optional<Address> address() const;
 
     /** Printable name for this node.
      *

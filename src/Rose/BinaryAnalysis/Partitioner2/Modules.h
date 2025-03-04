@@ -90,7 +90,7 @@ public:
      *  address easier to write, but matchers that match at additional locations must explicitly check those other
      *  locations with the same conditions (FIXME[Robb P. Matzke 2014-08-04]: perhaps we should pass those conditions as an
      *  argument). */
-    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) = 0;
+    virtual bool match(const PartitionerConstPtr&, Address anchor) = 0;
 };
 
 
@@ -141,7 +141,7 @@ public:
      *  Attempts to match function padding that ends at the address immediately prior to @p anchor.  If a match is successful then
      *  the return value is the starting address for the padding and must be less than @p anchor. When no match is found then @p
      *  anchor is returned. The size of the matched padding is always `anchor-retval` where @c retval is the returned value. */
-    virtual rose_addr_t match(const PartitionerConstPtr&, rose_addr_t anchor) = 0;
+    virtual Address match(const PartitionerConstPtr&, Address anchor) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -236,7 +236,7 @@ public:
 class IpRewriter: public BasicBlockCallback {
 public:
     /** Pairs of old and new addresses. */
-    typedef std::pair<rose_addr_t, rose_addr_t> AddressPair;
+    typedef std::pair<Address, Address> AddressPair;
 
 private:
     std::vector<AddressPair> rewrites_;
@@ -368,7 +368,7 @@ public:
     static std::string docString();                     /**< Documentation string. */
     virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
     virtual bool operator()(bool chain, const DetachedBasicBlock&) override { return chain; }
-    void debug(rose_addr_t, const BasicBlockPtr&);
+    void debug(Address, const BasicBlockPtr&);
 };
 
 /** Match thunk.
@@ -399,7 +399,7 @@ public:
     /** @} */
 
     virtual std::vector<FunctionPtr> functions() const override;
-    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
+    virtual bool match(const PartitionerConstPtr&, Address anchor) override;
 };
 
 /** Remove execute permissions for zeros.

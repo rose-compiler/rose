@@ -4779,7 +4779,7 @@ DispatcherX86::repEnter(X86RepeatPrefix repeat)
 }
 
 void
-DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SValue::Ptr &in_loop, rose_addr_t insn_va,
+DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SValue::Ptr &in_loop, Address insn_va,
                         bool honorZeroFlag)
 {
     ASSERT_require(in_loop!=NULL && in_loop->nBits()==1);

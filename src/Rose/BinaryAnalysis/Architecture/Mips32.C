@@ -621,7 +621,7 @@ Mips32::terminatesBasicBlock(SgAsmInstruction *insn_) const {
 }
 
 bool
-Mips32::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) const {
+Mips32::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, Address *target, Address *return_va) const {
     if (insns.empty())
         return false;
     auto last = isSgAsmMipsInstruction(insns.back());
@@ -667,7 +667,7 @@ Mips32::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const 
     return true; // this is a "JR ra" instruction.
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 Mips32::branchTarget(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmMipsInstruction(insn_);
     ASSERT_not_null(insn);
@@ -736,7 +736,7 @@ Mips32::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
         case mips_jr_hb:
         case mips_syscall:
             // unconditional branch
-            if (Sawyer::Optional<rose_addr_t> target = branchTarget(insn)) {
+            if (Sawyer::Optional<Address> target = branchTarget(insn)) {
                 successors.insert(*target);
                 complete = true;
             }
@@ -771,7 +771,7 @@ Mips32::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
         case mips_tne:
         case mips_tnei:
             // conditional branch
-            if (Sawyer::Optional<rose_addr_t> target = branchTarget(insn)) {
+            if (Sawyer::Optional<Address> target = branchTarget(insn)) {
                 successors.insert(*target);
                 complete = true;
             }

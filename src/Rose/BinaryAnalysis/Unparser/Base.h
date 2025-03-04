@@ -198,7 +198,7 @@ public:
  *  unparser can be a const reference, and (2) multiple threads can be unparsing with the same unparser object. */
 class State {
 public:
-    typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrString; /**< Map from address to string. */
+    typedef Sawyer::Container::Map<Address, std::string> AddrString; /**< Map from address to string. */
 
 private:
     Partitioner2::PartitionerConstPtr partitioner_;
@@ -644,7 +644,7 @@ public:
     virtual std::vector<std::string> emitSignedInteger(std::ostream&, const Sawyer::Container::BitVector&, State&) const;
     virtual std::vector<std::string> emitInteger(std::ostream&, const Sawyer::Container::BitVector&, State&,
                                                  bool isSigned) const;
-    virtual bool emitAddress(std::ostream&, rose_addr_t, State&, bool always=true) const;
+    virtual bool emitAddress(std::ostream&, Address, State&, bool always=true) const;
     virtual bool emitAddress(std::ostream&, const Sawyer::Container::BitVector&, State&, bool always=true) const;
     virtual void emitCommentBlock(std::ostream&, const std::string&, State&, const std::string &prefix = ";;; ") const;
     virtual void emitTypeName(std::ostream&, SgAsmType*, State&) const;

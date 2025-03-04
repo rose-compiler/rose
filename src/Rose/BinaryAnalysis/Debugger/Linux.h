@@ -215,7 +215,7 @@ private:
     size_t kernelWordSize_ = 0;                         // cached width in bits of kernel's words
     RegPage regCache_;                                  // latest register information read from subordinate
     RegCacheType regCacheType_ = RegCacheType::NONE;    // what are the contents of regsPage_?
-    Sawyer::Optional<rose_addr_t> syscallVa_;           // address of some executable system call instruction.
+    Sawyer::Optional<Address> syscallVa_;               // address of some executable system call instruction.
     SystemCall syscallDecls_;                           // to get declarations for system calls
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -314,8 +314,8 @@ public:
     /** Map a new memory region in the subordinate.
      *
      *  This is similar to the @c mmap function, except it operates on the subordinate process. */
-    rose_addr_t remoteMmap(ThreadId, rose_addr_t va, size_t nBytes, unsigned prot, unsigned flags, const boost::filesystem::path&,
-                           off_t offset);
+    Address remoteMmap(ThreadId, Address va, size_t nBytes, unsigned prot, unsigned flags, const boost::filesystem::path&,
+                       off_t offset);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Overrides for methods declared and documented in the super class.
@@ -325,8 +325,8 @@ public:
     virtual void detach() override;
     virtual void terminate() override;
     virtual std::vector<ThreadId> threadIds() override;
-    virtual void executionAddress(ThreadId, rose_addr_t) override;
-    virtual rose_addr_t executionAddress(ThreadId) override;
+    virtual void executionAddress(ThreadId, Address) override;
+    virtual Address executionAddress(ThreadId) override;
     virtual void setBreakPoint(const AddressInterval&) override;
     virtual void clearBreakPoint(const AddressInterval&) override;
     virtual void clearBreakPoints() override;
@@ -335,10 +335,10 @@ public:
     virtual Sawyer::Container::BitVector readRegister(ThreadId, RegisterDescriptor) override;
     virtual void writeRegister(ThreadId, RegisterDescriptor, const Sawyer::Container::BitVector&) override;
     virtual void writeRegister(ThreadId, RegisterDescriptor, uint64_t value) override;
-    virtual size_t readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) override;
-    virtual std::vector<uint8_t> readMemory(rose_addr_t va, size_t nBytes) override;
-    virtual Sawyer::Container::BitVector readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness order) override;
-    virtual size_t writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *bytes) override;
+    virtual size_t readMemory(Address va, size_t nBytes, uint8_t *buffer) override;
+    virtual std::vector<uint8_t> readMemory(Address va, size_t nBytes) override;
+    virtual Sawyer::Container::BitVector readMemory(Address va, size_t nBytes, ByteOrder::Endianness order) override;
+    virtual size_t writeMemory(Address va, size_t nBytes, const uint8_t *bytes) override;
     virtual bool isTerminated() override;
     virtual std::string howTerminated() override;
     virtual std::vector<RegisterDescriptor> availableRegisters() override;
@@ -358,7 +358,7 @@ private:
     static void setPersonality(unsigned long);
 
     // Address of a system call instruction. The initial search can be expensive, so the result is cached.
-    Sawyer::Optional<rose_addr_t> findSystemCall();
+    Sawyer::Optional<Address> findSystemCall();
 
     // Low-level methods to read and write data for all known registers.
     AllRegValues loadAllRegisters(ThreadId);

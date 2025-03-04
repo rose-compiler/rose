@@ -69,7 +69,7 @@ public:
      *  If the source location is empty then the address is removed from the mapping.
      *
      * @{ */
-    void insert(const SourceLocation&, rose_addr_t);
+    void insert(const SourceLocation&, Address);
     void insert(const SourceLocation&, const AddressInterval&);
     void insert(const SourceLocation&, const AddressIntervalSet&);
     /** @} */
@@ -81,7 +81,7 @@ public:
      *  no effect.
      *
      * @{ */
-    void erase(const SourceLocation&, rose_addr_t);
+    void erase(const SourceLocation&, Address);
     void erase(const SourceLocation&, const AddressInterval&);
     void erase(const SourceLocation&, const AddressIntervalSet&);
     /** @} */
@@ -89,7 +89,7 @@ public:
     /** Remove all links for the specified addresses regardless of source.
      *
      * @{ */
-    void erase(rose_addr_t);
+    void erase(Address);
     void erase(const AddressInterval&);
     void erase(const AddressIntervalSet&);
     /** @} */
@@ -118,8 +118,8 @@ public:
     /** Find the source location for an address.
      *
      * @{ */
-    SourceLocation get(rose_addr_t) const;
-    SourceLocation operator()(rose_addr_t va) const {
+    SourceLocation get(Address) const;
+    SourceLocation operator()(Address va) const {
         return get(va);
     }
     /** @} */
@@ -130,8 +130,8 @@ public:
     /** Find the first address associated with a source location.
      *
      * @{ */
-    Sawyer::Optional<rose_addr_t> firstAddress(const SourceLocation&) const;
-    Sawyer::Optional<rose_addr_t> operator()(const SourceLocation &loc) const {
+    Sawyer::Optional<Address> firstAddress(const SourceLocation&) const;
+    Sawyer::Optional<Address> operator()(const SourceLocation &loc) const {
         return firstAddress(loc);
     }
     /** @} */
@@ -163,8 +163,8 @@ public:
 
 private:
     // Non-synchronized erasing of a link between source code and binary address.
-    void eraseNS(const SourceLocation&, rose_addr_t);
-    void eraseNS(rose_addr_t va);
+    void eraseNS(const SourceLocation&, Address);
+    void eraseNS(Address va);
 };
 
 std::ostream& operator<<(std::ostream&, const SourceLocations&);

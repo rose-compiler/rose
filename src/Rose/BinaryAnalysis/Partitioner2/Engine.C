@@ -45,7 +45,7 @@ namespace Partitioner2 {
 // Static utility functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef std::pair<rose_addr_t, size_t> AddressOrder;
+typedef std::pair<Address, size_t> AddressOrder;
 
 static bool
 isSecondZero(const AddressOrder &a) {
@@ -320,22 +320,22 @@ Engine::BasicBlockWorkList::operator()(bool chain, const DetachedBasicBlock &arg
     return chain;
 }
 
-Sawyer::Container::DistinctList<rose_addr_t>&
+Sawyer::Container::DistinctList<Address>&
 Engine::BasicBlockWorkList::pendingCallReturn() {
     return pendingCallReturn_;
 }
 
-Sawyer::Container::DistinctList<rose_addr_t>&
+Sawyer::Container::DistinctList<Address>&
 Engine::BasicBlockWorkList::processedCallReturn() {
     return processedCallReturn_;
 }
 
-Sawyer::Container::DistinctList<rose_addr_t>&
+Sawyer::Container::DistinctList<Address>&
 Engine::BasicBlockWorkList::finalCallReturn() {
     return finalCallReturn_;
 }
 
-Sawyer::Container::DistinctList<rose_addr_t>&
+Sawyer::Container::DistinctList<Address>&
 Engine::BasicBlockWorkList::undiscovered() {
     return undiscovered_;
 }
@@ -352,7 +352,7 @@ Engine::BasicBlockWorkList::moveAndSortCallReturn(const Partitioner::ConstPtr &p
         return;                                         // nothing to move, and finalCallReturn list was previously sorted
 
     if (maxSorts_ == 0) {
-        for (rose_addr_t va: processedCallReturn_.items())
+        for (Address va: processedCallReturn_.items())
             finalCallReturn().pushBack(va);
         processedCallReturn_.clear();
 
@@ -363,9 +363,9 @@ Engine::BasicBlockWorkList::moveAndSortCallReturn(const Partitioner::ConstPtr &p
         // Get the list of virtual addresses that need to be processed
         std::vector<AddressOrder> pending;
         pending.reserve(finalCallReturn_.size() + processedCallReturn_.size());
-        for (rose_addr_t va: finalCallReturn_.items())
+        for (Address va: finalCallReturn_.items())
             pending.push_back(AddressOrder(va, (size_t)0));
-        for (rose_addr_t va: processedCallReturn_.items())
+        for (Address va: processedCallReturn_.items())
             pending.push_back(AddressOrder(va, (size_t)0));
         finalCallReturn_.clear();
         processedCallReturn_.clear();
@@ -403,7 +403,7 @@ Engine::CodeConstants::instance() {
     return Ptr(new CodeConstants);
 }
 
-rose_addr_t
+Address
 Engine::CodeConstants::inProgress() {
     return inProgress_;
 }
@@ -434,10 +434,10 @@ Engine::CodeConstants::operator()(bool chain, const DetachedBasicBlock &detached
 }
 
 // Return the next constant from the next instruction
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 Engine::CodeConstants::nextConstant(const Partitioner::ConstPtr &partitioner) {
     if (!constants_.empty()) {
-        rose_addr_t constant = constants_.back();
+        Address constant = constants_.back();
         constants_.pop_back();
         return constant;
     }
@@ -447,16 +447,16 @@ Engine::CodeConstants::nextConstant(const Partitioner::ConstPtr &partitioner) {
         toBeExamined_.erase(inProgress_);
         if (SgAsmInstruction *insn = partitioner->instructionExists(inProgress_).insn()) {
 
-            std::set<rose_addr_t> constants;
+            std::set<Address> constants;
             AST::Traversal::forwardPre<SgAsmIntegerValueExpression>(insn, [&constants](SgAsmIntegerValueExpression *ival) {
                 if (ival->get_significantBits() <= 64)
                     constants.insert(ival->get_absoluteValue());
             });
-            constants_ = std::vector<rose_addr_t>(constants.begin(), constants.end());
+            constants_ = std::vector<Address>(constants.begin(), constants.end());
         }
 
         if (!constants_.empty()) {
-            rose_addr_t constant = constants_.back();
+            Address constant = constants_.back();
             constants_.pop_back();
             return constant;
         }
@@ -1058,7 +1058,7 @@ Engine::makeConfiguredFunctions(const Partitioner::Ptr &partitioner, const Confi
     ASSERT_not_null(partitioner);
     std::vector<Function::Ptr> retval;
     for (const FunctionConfiguration &fconfig: configuration.functionConfigurationsByAddress().values()) {
-        rose_addr_t entryVa = 0;
+        Address entryVa = 0;
         if (fconfig.address().assignTo(entryVa)) {
             Function::Ptr function = Function::instance(entryVa, fconfig.name(), SgAsmFunction::FUNC_CONFIGURED);
             function->comment(fconfig.comment());

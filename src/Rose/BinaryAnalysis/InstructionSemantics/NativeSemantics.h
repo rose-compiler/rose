@@ -400,7 +400,7 @@ public:
      *
      * @{ */
     virtual void processInstruction(SgAsmInstruction *insn) override;
-    void processInstruction(rose_addr_t va);
+    void processInstruction(Address va);
     /** @} */
 
     /** Decode the current instruction.

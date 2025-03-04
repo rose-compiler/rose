@@ -97,7 +97,7 @@ Powerpc::strictReserved(const bool b) {
 
 // This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space.
 SgAsmInstruction*
-Powerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors) {
+Powerpc::disassembleOne(const MemoryMap::Ptr &map, Address start_va, AddressSet *successors) {
     // The old PowerpcDisassembler::disassemble() function doesn't understand MemoryMap mappings. Therefore, remap the next few
     // bytes (enough for at least one instruction) into a temporary buffer.
     unsigned char temp[4];
@@ -583,7 +583,7 @@ Powerpc::decode_I_formInstruction(State &state) {
     uint8_t primaryOpcode = (state.insn >> 26) & 0x3F;
     switch(primaryOpcode) {
         case 0x12: {
-            rose_addr_t targetBranchAddress = LI(state);
+            Address targetBranchAddress = LI(state);
             if (AA(state) == 0)
                 targetBranchAddress += state.ip;
 
@@ -1867,7 +1867,7 @@ Powerpc::memrefux(State &state, SgAsmType* t) const {
 }
 
 void
-Powerpc::startInstruction(State &state, rose_addr_t start_va, uint32_t c) const {
+Powerpc::startInstruction(State &state, Address start_va, uint32_t c) const {
     state.ip = start_va;
     state.insn = c;
 }

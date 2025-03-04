@@ -543,7 +543,7 @@ Motorola::terminatesBasicBlock(SgAsmInstruction *insn_) const {
 }
 
 bool
-Motorola::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target_va, rose_addr_t *return_va) const {
+Motorola::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns, Address *target_va, Address *return_va) const {
     if (insns.empty())
         return false;
     auto last = isSgAsmM68kInstruction(insns.back());
@@ -562,8 +562,7 @@ Motorola::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns, rose_a
 }
 
 bool
-Motorola::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target_va,
-                                         rose_addr_t *return_va) const {
+Motorola::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, Address *target_va, Address *return_va) const {
     if (isFunctionCallFast(insns, target_va, return_va))
         return true;
 
@@ -687,7 +686,7 @@ Motorola::isFunctionReturnFast(const std::vector<SgAsmInstruction*>& insns) cons
     }
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 Motorola::branchTarget(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmM68kInstruction(insn_);
     ASSERT_not_null(insn);
@@ -927,7 +926,7 @@ Motorola::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
         case m68k_traple:
         case m68k_trapv:
             // Fall-through address and another (known or unknown) address
-            if (Sawyer::Optional<rose_addr_t> target_va = branchTarget(insn)) {
+            if (Sawyer::Optional<Address> target_va = branchTarget(insn)) {
                 retval.insert(*target_va);
             } else {
                 complete = false;
@@ -941,7 +940,7 @@ Motorola::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
         case m68k_jmp:
         case m68k_jsr:
             // Unconditional branches
-            if (Sawyer::Optional<rose_addr_t> target_va = branchTarget(insn)) {
+            if (Sawyer::Optional<Address> target_va = branchTarget(insn)) {
                 retval.insert(*target_va);
             } else {
                 complete = false;
@@ -1004,7 +1003,7 @@ Motorola::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool &compl
 
     if (debug) {
         debug <<"  successors:";
-        for (rose_addr_t va: successors.values())
+        for (Address va: successors.values())
             debug <<" " <<StringUtility::addrToString(va);
         debug <<(complete?"":"...") <<"\n";
     }

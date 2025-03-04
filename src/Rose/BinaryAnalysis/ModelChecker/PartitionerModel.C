@@ -323,13 +323,13 @@ findVariable(const AddressInterval &location, const Variables::GlobalVariables &
 // Function call stack
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FunctionCall::FunctionCall(const Partitioner2::Function::Ptr &function, rose_addr_t initialStackPointer,
-                           Sawyer::Optional<rose_addr_t> returnAddress, const Variables::StackVariables &vars)
+FunctionCall::FunctionCall(const Partitioner2::Function::Ptr &function, Address initialStackPointer,
+                           Sawyer::Optional<Address> returnAddress, const Variables::StackVariables &vars)
     : function_(function), initialStackPointer_(initialStackPointer), returnAddress_(returnAddress), stackVariables_(vars) {}
 
 FunctionCall::~FunctionCall() {}
 
-rose_addr_t
+Address
 FunctionCall::initialStackPointer() const {
     return initialStackPointer_;
 }
@@ -344,29 +344,29 @@ FunctionCall::stackVariables() const {
     return stackVariables_;
 }
 
-rose_addr_t
+Address
 FunctionCall::framePointerDelta() const {
     return framePointerDelta_;
 }
 
 void
-FunctionCall::framePointerDelta(rose_addr_t delta) {
+FunctionCall::framePointerDelta(Address delta) {
     framePointerDelta_ = delta;
 }
 
-rose_addr_t
+Address
 FunctionCall::framePointer(size_t nBits) const {
-    rose_addr_t mask = BitOps::lowMask<rose_addr_t>(nBits);
+    Address mask = BitOps::lowMask<Address>(nBits);
     return (initialStackPointer_ + framePointerDelta_) & mask;
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 FunctionCall::returnAddress() const {
     return returnAddress_;
 }
 
 void
-FunctionCall::returnAddress(Sawyer::Optional<rose_addr_t> va) {
+FunctionCall::returnAddress(Sawyer::Optional<Address> va) {
     returnAddress_ = va;
 }
 
@@ -722,7 +722,7 @@ RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMod
         const FoundVariable accessedVariable = [this, &accessedRegion, &callStack]() {
             if (auto v = findVariable(accessedRegion, gvars_, callStack, stackLimits_))
                 return v;
-            for (rose_addr_t accessedByteVa: accessedRegion) {
+            for (Address accessedByteVa: accessedRegion) {
                 if (auto v = findVariable(accessedByteVa, gvars_, callStack, stackLimits_))
                     return v;
             }
@@ -801,7 +801,7 @@ RiscOperators::nInstructions(size_t n) {
 }
 
 void
-RiscOperators::maybeInitCallStack(rose_addr_t insnVa) {
+RiscOperators::maybeInitCallStack(Address insnVa) {
     // If the call stack is empty, then push a record for the current function.
     if (computeMemoryRegions_) {
         FunctionCallStack &callStack = State::promote(currentState())->callStack();
@@ -821,7 +821,7 @@ RiscOperators::maybeInitCallStack(rose_addr_t insnVa) {
             if (function) {
                 const RegisterDescriptor SP = partitioner_->instructionProvider().stackPointerRegister();
                 const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
-                const rose_addr_t sp = spSValue->toUnsigned().get();      // must be concrete
+                const Address sp = spSValue->toUnsigned().get(); // must be concrete
                 pushCallStack(function, sp, Sawyer::Nothing());
             }
         }
@@ -829,7 +829,7 @@ RiscOperators::maybeInitCallStack(rose_addr_t insnVa) {
 }
 
 void
-RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initialSp, Sawyer::Optional<rose_addr_t> returnVa) {
+RiscOperators::pushCallStack(const P2::Function::Ptr &callee, Address initialSp, Sawyer::Optional<Address> returnVa) {
     if (computeMemoryRegions_) {
         FunctionCallStack &callStack = State::promote(currentState())->callStack();
         const size_t nBits = partitioner_->instructionProvider().wordSize();
@@ -881,7 +881,7 @@ RiscOperators::popCallStack() {
         mlog[DEBUG] <<"    returned from " <<fcall.printableName(nBits) <<"\n";
     }
 
-    Sawyer::Optional<rose_addr_t> poppedInitialSp = callStack.top().initialStackPointer();
+    Sawyer::Optional<Address> poppedInitialSp = callStack.top().initialStackPointer();
     callStack.pop();
 
     // Predicate to determine whether a memory cell should be discarded. When popping a call from the call stack, we need to
@@ -916,7 +916,7 @@ RiscOperators::popCallStack() {
     // pointer for the callee will be off by four -- we need to remove all the stuff pushed by the callee, plus the four byte
     // return value pushed by the caller.
     if (poppedInitialSp) {
-        rose_addr_t stackBoundary = *poppedInitialSp;
+        Address stackBoundary = *poppedInitialSp;
         const Architecture::Base::ConstPtr arch = partitioner_->architecture();
         if (as<const Architecture::Amd64>(arch)) {
             // x86-64 "call" pushes an 8-byte return address that's popped when the function returns. Stack grows down.
@@ -1287,13 +1287,13 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &valu
             if (auto fp = value->toUnsigned()) {
                 if (*fp <= fcall.initialStackPointer()) { // probably part of a function call return instruction
                     const size_t nBits = partitioner_->instructionProvider().wordSize();
-                    const rose_addr_t oldFp = fcall.framePointer(nBits);
-                    const rose_addr_t oldDelta = fcall.framePointerDelta();
-                    const rose_addr_t newDelta = *fp - fcall.initialStackPointer();
+                    const Address oldFp = fcall.framePointer(nBits);
+                    const Address oldDelta = fcall.framePointerDelta();
+                    const Address newDelta = *fp - fcall.initialStackPointer();
 
                     if (newDelta != oldDelta) {
                         fcall.framePointerDelta(newDelta);
-                        const rose_addr_t newFp = fcall.framePointer(nBits);
+                        const Address newFp = fcall.framePointer(nBits);
                         SAWYER_MESG(mlog[DEBUG]) <<"    adjusted frame pointer within " <<fcall.function()->printableName()
                                                  <<" from " <<StringUtility::addrToString(oldFp)
                                                  <<" to " <<StringUtility::addrToString(newFp)
@@ -1437,7 +1437,7 @@ SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettin
         static const size_t STACK_ALIGNMENT = 16;                   // alignment in bytes
         auto where = AddressInterval::hull(0x80000000, 0xffffffff); // where to look in the address space
 
-        Sawyer::Optional<rose_addr_t> va =
+        Sawyer::Optional<Address> va =
             partitioner->memoryMap()->findFreeSpace(RESERVE_BELOW + RESERVE_ABOVE, STACK_ALIGNMENT, where,
                                                     Sawyer::Container::MATCH_BACKWARD);
         if (!va) {
@@ -1731,7 +1731,7 @@ SemanticCallbacks::seenState(const BS::RiscOperators::Ptr &ops) {
 }
 
 ExecutionUnit::Ptr
-SemanticCallbacks::findUnit(rose_addr_t va, const Progress::Ptr &progress) {
+SemanticCallbacks::findUnit(Address va, const Progress::Ptr &progress) {
     ExecutionUnit::Ptr unit;
 
     // If we're following one path, then the execution unit is always the next one on the path.
@@ -1803,7 +1803,7 @@ SemanticCallbacks::findUnit(rose_addr_t va, const Progress::Ptr &progress) {
                     break;
                 }
                 BS::SValue::Ptr actualIp = ops->peekRegister(IP);
-                rose_addr_t expectedIp = bb->instructions()[i+1]->get_address();
+                Address expectedIp = bb->instructions()[i+1]->get_address();
                 if (actualIp->toUnsigned().orElse(expectedIp+1) != expectedIp) {
                     SAWYER_MESG(mlog[DEBUG]) <<"    " <<bb->printableName()
                                              <<" sequence error after " <<insn->toString() <<"; switched to insn\n";
@@ -1844,7 +1844,7 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
 
     if (nextUnit) {
         CodeAddresses retval;
-        rose_addr_t va = *onePath_.front()->address();
+        Address va = *onePath_.front()->address();
         retval.ip = instructionPointer(ops);
         retval.addresses.insert(va);
         retval.isComplete = true;
@@ -1880,7 +1880,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr&, const BS::RiscOperators::Ptr &ops
     }
 
     // Create execution units for the next concrete addresses
-    for (rose_addr_t va: next.addresses) {
+    for (Address va: next.addresses) {
         // Test whether next address is feasible with the given previous path assertions
         SmtSolver::Transaction tx(solver);
         auto assertion = SymbolicExpression::makeEq(ip, SymbolicExpression::makeIntegerConstant(ip->nBits(), va));
@@ -1954,7 +1954,7 @@ SemanticCallbacks::parsePath(const YAML::Node &root, const std::string &sourceNa
         if ("basic-block" == vertexType) {
             if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
-            rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
+            Address va = root[i]["vertex-address"].as<Address>();
             if (P2::BasicBlock::Ptr bb = partitioner()->basicBlockExists(va)) {
                 retval.push_back(BasicBlockUnit::instance(partitioner(), bb));
             } else {
@@ -1964,7 +1964,7 @@ SemanticCallbacks::parsePath(const YAML::Node &root, const std::string &sourceNa
         } else if ("instruction" == vertexType) {
             if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
-            rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
+            Address va = root[i]["vertex-address"].as<Address>();
             if (SgAsmInstruction *insn = partitioner()->instructionProvider()[va]) {
                 retval.push_back(InstructionUnit::instance(insn, partitioner()->sourceLocations().get(va)));
             } else {
@@ -1974,7 +1974,7 @@ SemanticCallbacks::parsePath(const YAML::Node &root, const std::string &sourceNa
         } else if ("extern-function" == vertexType) {
             if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
-            rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
+            Address va = root[i]["vertex-address"].as<Address>();
             if (P2::Function::Ptr function = partitioner()->functionExists(va)) {
                 retval.push_back(ExternalFunctionUnit::instance(function, partitioner()->sourceLocations().get(va)));
             } else {
@@ -2005,7 +2005,7 @@ SemanticCallbacks::parsePath(const Yaml::Node &root, const std::string &sourceNa
         if ("basic-block" == vertexType) {
             if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
-            rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
+            Address va = root[i]["vertex-address"].as<Address>();
             if (P2::BasicBlock::Ptr bb = partitioner()->basicBlockExists(va)) {
                 retval.push_back(BasicBlockUnit::instance(partitioner(), bb));
             } else {
@@ -2015,7 +2015,7 @@ SemanticCallbacks::parsePath(const Yaml::Node &root, const std::string &sourceNa
         } else if ("instruction" == vertexType) {
             if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
-            rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
+            Address va = root[i]["vertex-address"].as<Address>();
             if (SgAsmInstruction *insn = partitioner()->instructionProvider()[va]) {
                 retval.push_back(InstructionUnit::instance(insn, partitioner()->sourceLocations().get(va)));
             } else {
@@ -2025,7 +2025,7 @@ SemanticCallbacks::parsePath(const Yaml::Node &root, const std::string &sourceNa
         } else if ("extern-function" == vertexType) {
             if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
-            rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
+            Address va = root[i]["vertex-address"].as<Address>();
             if (P2::Function::Ptr function = partitioner()->functionExists(va)) {
                 retval.push_back(ExternalFunctionUnit::instance(function, partitioner()->sourceLocations().get(va)));
             } else {

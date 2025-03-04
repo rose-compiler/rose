@@ -72,7 +72,7 @@ public:
     virtual ByteOrder::Endianness memoryByteOrder() override;
     virtual std::vector<ExecutionEventPtr> createMemoryRestoreEvents() override;
     virtual std::vector<ExecutionEventPtr> createMemoryHashEvents() override;
-    virtual std::vector<ExecutionEventPtr> createMemoryAdjustEvents(const MemoryMap::Ptr&, rose_addr_t insnVa) override;
+    virtual std::vector<ExecutionEventPtr> createMemoryAdjustEvents(const MemoryMap::Ptr&, Address insnVa) override;
     virtual bool playEvent(const ExecutionEventPtr&) override;
     virtual void mapMemory(const AddressInterval&, unsigned permissions) override;
     virtual void unmapMemory(const AddressInterval&) override;
@@ -91,7 +91,7 @@ private:
     // Copy (share) some data from the dst map to the src map at where. Generate map and write events that will map the memory
     // and initialize it when played back.
     std::vector<ExecutionEventPtr> copyMemory(const MemoryMap::Ptr &src, const MemoryMap::Ptr &dst, const AddressInterval &where,
-                                              rose_addr_t insnVa);
+                                              Address insnVa);
 
     // List of process memory segments that are not special.
     std::vector<MemoryMap::ProcessMapRecord> disposableMemory();

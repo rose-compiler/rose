@@ -36,25 +36,25 @@ BinaryLoaderPe::canLoad(SgAsmGenericHeader *hdr) const {
 }
 
 /* For any given file header, start mapping at a particular location in the address space. */
-rose_addr_t
+Address
 BinaryLoaderPe::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList &sections) {
     SgAsmPEFileHeader* pe_header = isSgAsmPEFileHeader(header);
     ROSE_ASSERT(pe_header != NULL);
     const size_t maximum_alignment = pe_header->get_e_section_align();
-    rose_addr_t original = pe_header->get_baseVa();
+    Address original = pe_header->get_baseVa();
 
     // Find the minimum address desired by the sections to be mapped.
-    rose_addr_t min_preferred_rva = (uint64_t)(-1);
+    Address min_preferred_rva = (uint64_t)(-1);
     for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si)
         min_preferred_rva = std::min(min_preferred_rva, (*si)->get_mappedPreferredRva());
-    rose_addr_t min_preferred_va = header->get_baseVa() + min_preferred_rva;
+    Address min_preferred_va = header->get_baseVa() + min_preferred_rva;
 
     // Minimum address at which to map
     //AddressInterval freeSpace = map->unmapped(mappableArea.greatest(), Sawyer::Container::MATCH_BACKWARD);
     AddressInterval valid_range = AddressInterval::hull(pe_header->get_baseVa(),0x7FFFFFFFFFFF);
     ROSE_ASSERT(!valid_range.isEmpty());
-    rose_addr_t map_base_va = map->findFreeSpace(pe_header->get_e_image_size(), maximum_alignment, valid_range).get();
-    map_base_va = alignUp(map_base_va, (rose_addr_t)maximum_alignment);
+    Address map_base_va = map->findFreeSpace(pe_header->get_e_image_size(), maximum_alignment, valid_range).get();
+    map_base_va = alignUp(map_base_va, (Address)maximum_alignment);
     
     if(map_base_va != original){
         mlog[INFO]<<"Rebasing File "<<pe_header->get_file()->get_name()<<", From:0x"<<hex<<original<<" To:0x"<<map_base_va<<dec<<endl;
@@ -99,10 +99,10 @@ BinaryLoaderPe::getRemapSections(SgAsmGenericHeader *header) {
  * as defined in "PE.cpp 2738 2009-06-05 15:09:11Z murawski_dev". [RPM 2009-08-17] */
 BinaryLoader::MappingContribution
 BinaryLoaderPe::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr&,
-                            rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
-                            rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                            rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
-                            rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
+                            Address *malign_lo_p, Address *malign_hi_p,
+                            Address *va_p, Address *mem_size_p,
+                            Address *offset_p, Address *file_size_p, bool *map_private_p,
+                            Address *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
                             ConflictResolution *resolve_p) {
     SgAsmGenericHeader *header = isSgAsmPEFileHeader(section);
     if (!header) header = section->get_header();
@@ -112,25 +112,25 @@ BinaryLoaderPe::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr&,
         return CONTRIBUTE_NONE;
 
     /* File and memory alignment must be between 1 and 0x200 (512), inclusive */
-    rose_addr_t file_alignment = section->get_fileAlignment();
+    Address file_alignment = section->get_fileAlignment();
     if (file_alignment>0x200 || 0==file_alignment)
         file_alignment = 0x200;
-    rose_addr_t mapped_alignment = section->get_mappedAlignment();
+    Address mapped_alignment = section->get_mappedAlignment();
     if (0==mapped_alignment)
         mapped_alignment = 0x200;
 
     /* Align file size upward even before we align the file offset downward. */
-    rose_addr_t file_size = alignUp(section->get_size(), file_alignment);
+    Address file_size = alignUp(section->get_size(), file_alignment);
 
     /* Map the entire section's file content (aligned) or the requested map size, whichever is larger. */
-    rose_addr_t mapped_size = std::max(section->get_mappedSize(), file_size);
+    Address mapped_size = std::max(section->get_mappedSize(), file_size);
 
     /* Align file offset downward but do not adjust file size. */
-    rose_addr_t file_offset = alignDown(section->get_offset(), file_alignment);
+    Address file_offset = alignDown(section->get_offset(), file_alignment);
 
     /* Align the preferred relative virtual address downward without regard for the base virtual address, and do not adjust
      * mapped size. */
-    rose_addr_t mapped_va = header->get_baseVa() + alignDown(section->get_mappedPreferredRva(), mapped_alignment);
+    Address mapped_va = header->get_baseVa() + alignDown(section->get_mappedPreferredRva(), mapped_alignment);
 
     *malign_lo_p = mapped_alignment;
     *malign_hi_p = 1;
@@ -304,7 +304,7 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
     //Traverse sections to ensure mapped address and sections are properly set.
     for(auto h = headers.begin(); h != headers.end(); ++h) {
         SgAsmGenericSectionPtrList& sections = (*h)->get_sections()->get_sections();
-        rose_addr_t headerOffset = (*h)->get_mappedActualVa() - (*h)->get_baseVa();
+        Address headerOffset = (*h)->get_mappedActualVa() - (*h)->get_baseVa();
         for(auto s = sections.begin(); s != sections.end(); ++s){
             SgAsmGenericSection* section = *s;
             if((headerOffset + section->get_baseVa()) > section->get_mappedActualVa()){
@@ -398,8 +398,8 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
                         }
                         //Export entry found. Set address in the IAT
                         if(exportEntry != nullptr){
-                            rose_addr_t exportAddr   = *exportEntry->get_exportRva().va();
-                            rose_addr_t iatEntryAddr = importEntry->get_iatEntryVa();
+                            Address exportAddr   = *exportEntry->get_exportRva().va();
+                            Address iatEntryAddr = importEntry->get_iatEntryVa();
                             size_t written = memoryMap->writeUnsigned(exportAddr,iatEntryAddr);
                             if(written > 0) importEntry->set_iat_written(true);
                             mlog[TRACE]<<"Setting value in IAT: "<<dirName<<"."<<importName<<"-"<<entryOrdinal<<": IAT 0x"<<hex<<iatEntryAddr<<" Export: 0x"<<exportAddr<<dec<<endl;

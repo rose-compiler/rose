@@ -14,7 +14,7 @@ namespace Variables {
 
 GlobalVariable::GlobalVariable() {}
 
-GlobalVariable::GlobalVariable(Address startingAddress, rose_addr_t maxSizeBytes,
+GlobalVariable::GlobalVariable(Address startingAddress, Address maxSizeBytes,
                                const std::vector<InstructionAccess> &definingInstructionVas, const std::string &name)
     : BaseVariable(maxSizeBytes, definingInstructionVas, name), address_(startingAddress) {}
 

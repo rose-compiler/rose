@@ -23,21 +23,21 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-FailureUnit::FailureUnit(const Sawyer::Optional<rose_addr_t> &va, const SourceLocation &sloc,
-                         const std::string &description, const Tag::Ptr &tag)
+FailureUnit::FailureUnit(const Sawyer::Optional<Address> &va, const SourceLocation &sloc, const std::string &description,
+                         const Tag::Ptr &tag)
     : ExecutionUnit(sloc), va_(va), description_(description), tag_(tag) {}
 
 FailureUnit::~FailureUnit() {}
 
 FailureUnit::Ptr
-FailureUnit::instance(const Sawyer::Optional<rose_addr_t> &va, const SourceLocation &sloc, const std::string &description) {
+FailureUnit::instance(const Sawyer::Optional<Address> &va, const SourceLocation &sloc, const std::string &description) {
     std::string desc = boost::trim_copy(description);
     ASSERT_forbid(desc.empty());
     return Ptr(new FailureUnit(va, sloc, desc, Tag::Ptr()));
 }
 
 FailureUnit::Ptr
-FailureUnit::instance(const Sawyer::Optional<rose_addr_t> &va, const SourceLocation &sloc, const std::string &description,
+FailureUnit::instance(const Sawyer::Optional<Address> &va, const SourceLocation &sloc, const std::string &description,
                       const Tag::Ptr &tag) {
     std::string desc = boost::trim_copy(description);
     ASSERT_forbid(desc.empty());
@@ -117,7 +117,7 @@ FailureUnit::nSteps() const {
     return 1;
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 FailureUnit::address() const {
     // No lock necessary since va_ is read-only
     return va_;

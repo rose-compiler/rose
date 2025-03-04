@@ -103,7 +103,7 @@ BestCoverageFirst::instance() {
 double
 BestCoverageFirst::coverageRatio(const Path::Ptr &path) {
     ASSERT_not_null(path);
-    std::set<rose_addr_t> nodes;
+    std::set<Address> nodes;
     size_t nNodes = 0;
     for (const PathNode::Ptr &pnode: path->nodes()) {
         if (const auto va = pnode->executionUnit()->address()) {

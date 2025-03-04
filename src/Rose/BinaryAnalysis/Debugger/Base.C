@@ -23,7 +23,7 @@ initDiagnostics() {
 }
 
 struct DefaultTraceFilter {
-    FilterAction operator()(rose_addr_t) {
+    FilterAction operator()(Address) {
         return FilterAction();
     }
 };
@@ -32,7 +32,7 @@ Base::Base() {}
 
 Base::~Base() {}
 
-rose_addr_t
+Address
 Base::executionAddress(ThreadId tid) {
     if (!isAttached())
         throw Exception("not attached to subordinate process");
@@ -41,7 +41,7 @@ Base::executionAddress(ThreadId tid) {
 }
 
 void
-Base::executionAddress(ThreadId tid, rose_addr_t va) {
+Base::executionAddress(ThreadId tid, Address va) {
     if (!isAttached())
         throw Exception("not attached to subordinate process");
     const RegisterDescriptor REG_PC = disassembler()->architecture()->registerDictionary()->instructionPointerRegister();
@@ -66,14 +66,14 @@ Base::registerName(RegisterDescriptor desc) {
     return s.empty() ? desc.toString() : s;
 }
 
-Sawyer::Container::Trace<rose_addr_t>
+Sawyer::Container::Trace<Address>
 Base::trace() {
     DefaultTraceFilter filter;
     return trace(ThreadId::unspecified(), filter);
 }
 
 std::string
-Base::readCString(rose_addr_t va, size_t maxBytes) {
+Base::readCString(Address va, size_t maxBytes) {
     std::string retval;
     while (maxBytes > 0) {
         uint8_t buf[32];

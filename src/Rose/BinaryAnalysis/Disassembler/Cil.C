@@ -37,7 +37,7 @@ Cil::clone() const {
 }
 
 SgAsmInstruction*
-Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
+Cil::disassembleOne(const MemoryMap::Ptr &map, Address va, AddressSet*)
 {
     constexpr bool TRACE_DECODING = false;
     constexpr size_t BUF_SIZE = 11;
@@ -479,7 +479,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
            rawBytes.resize(minSwitchSize+branchTableSize);
            std::uint8_t* const loc = rawBytes.data() + minSwitchSize;
-           const rose_addr_t brtbl_va = va + minSwitchSize;
+           const Address brtbl_va = va + minSwitchSize;
            const std::uint32_t bytesRead = map->at(brtbl_va).limit(branchTableSize)
                                                .require(MemoryMap::EXECUTABLE).read(loc).size();
            ASSERT_require(bytesRead == branchTableSize);
@@ -1785,7 +1785,7 @@ Cil::makeUnknownInstruction(const Disassembler::Exception &e) {
 }
 
 SgAsmCilInstruction*
-Cil::makeUnknownInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size)
+Cil::makeUnknownInstruction(Address va, SgUnsignedCharList &bytes, size_t size)
 {
     auto insn = new SgAsmCilInstruction(va, *architecture()->registrationId(), Cil_unknown_instruction);
     auto operands = new SgAsmOperandList;
@@ -1799,8 +1799,7 @@ Cil::makeUnknownInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t si
 }
 
 SgAsmCilInstruction*
-Cil::makeInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size, CilInstructionKind kind,
-                     SgAsmExpression* operand) const
+Cil::makeInstruction(Address va, SgUnsignedCharList &bytes, size_t size, CilInstructionKind kind, SgAsmExpression* operand) const
 {
     ASSERT_forbid2(Cil_unknown_instruction==kind, "should have called make_unknown_instruction instead");
 

@@ -136,7 +136,7 @@ X86::terminatesBasicBlock(SgAsmInstruction *insn_) const {
 }
 
 bool
-X86::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) const {
+X86::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, Address *target, Address *return_va) const {
     if (insns.empty())
         return false;
     auto last = isSgAsmX86Instruction(insns.back());
@@ -155,7 +155,7 @@ X86::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t
 }
 
 bool
-X86::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) const {
+X86::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, Address *target, Address *return_va) const {
     if (isFunctionCallFast(insns, target, return_va))
         return true;
 
@@ -279,7 +279,7 @@ X86::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
     return last->get_kind() == x86_ret || last->get_kind() == x86_retf;
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 X86::branchTarget(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmX86Instruction(insn_);
     ASSERT_not_null(insn);
@@ -337,7 +337,7 @@ X86::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
         case x86_farjmp:
             /* Unconditional branch to operand-specified address. We cannot assume that a CALL instruction returns to the
              * fall-through address. */
-            if (Sawyer::Optional<rose_addr_t> va = branchTarget(insn)) {
+            if (Sawyer::Optional<Address> va = branchTarget(insn)) {
                 retval.insert(*va);
             } else {
                 complete = false;
@@ -367,7 +367,7 @@ X86::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
         case x86_loopnz:
         case x86_loopz:
             /* Conditional branches to operand-specified address */
-            if (Sawyer::Optional<rose_addr_t> va = branchTarget(insn)) {
+            if (Sawyer::Optional<Address> va = branchTarget(insn)) {
                 retval.insert(*va);
             } else {
                 complete = false;
@@ -457,7 +457,7 @@ X86::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool &complete, 
 
     if (debug) {
         debug <<"  successors:";
-        for (rose_addr_t va: successors.values())
+        for (Address va: successors.values())
             debug <<" " <<StringUtility::addrToString(va);
         debug <<(complete?"":"...") <<"\n";
     }

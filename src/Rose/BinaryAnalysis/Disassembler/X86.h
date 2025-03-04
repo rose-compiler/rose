@@ -114,8 +114,7 @@ public:
     // Public methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va,
-                                             AddressSet *successors=nullptr) override;
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, Address va, AddressSet *successors=nullptr) override;
 
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;
 
@@ -448,7 +447,7 @@ private:
 #endif
 
     // Resets disassembler state to beginning of an instruction for disassembly.
-    void startInstruction(State &state, rose_addr_t start_va, const uint8_t *buf, size_t bufsz) const {
+    void startInstruction(State &state, Address start_va, const uint8_t *buf, size_t bufsz) const {
         state.ip = start_va;
         state.insnbuf = SgUnsignedCharList(buf, buf+bufsz);
         state.insnbufat = 0;

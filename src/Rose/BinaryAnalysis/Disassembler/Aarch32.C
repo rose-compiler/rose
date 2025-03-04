@@ -121,7 +121,7 @@ Aarch32::bytesToWord(size_t nBytes, const uint8_t *bytes) {
 }
 
 SgAsmInstruction*
-Aarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=nullptr*/) {
+Aarch32::disassembleOne(const MemoryMap::Ptr &map, Address va, AddressSet *successors/*=nullptr*/) {
     openCapstone();
 
     // Resources that must be explicitly reclaimed before returning.
@@ -297,7 +297,7 @@ Aarch32::commentIpRelative(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
 
     const RegisterDescriptor REG_PC = RegisterDescriptor(aarch32_regclass_gpr, aarch32_gpr_pc, 0, 32);
-    const rose_addr_t fallThroughVa = insn->get_address() + insn->get_size();
+    const Address fallThroughVa = insn->get_address() + insn->get_size();
 
     AST::Traversal::forwardPre<SgAsmBinaryAdd>(insn, [&REG_PC, &fallThroughVa](SgAsmBinaryAdd *add) {
         SgAsmDirectRegisterExpression *reg = NULL;
@@ -309,8 +309,8 @@ Aarch32::commentIpRelative(SgAsmInstruction *insn) {
         }
 
         if (reg && ival && reg->get_descriptor() == REG_PC) {
-            const rose_addr_t offset = ival->get_absoluteValue();
-            const rose_addr_t va = (fallThroughVa + offset + 4) & BitOps::lowMask<rose_addr_t>(32);
+            const Address offset = ival->get_absoluteValue();
+            const Address va = (fallThroughVa + offset + 4) & BitOps::lowMask<Address>(32);
             const std::string vaStr = "absolute=" + StringUtility::addrToString(va, 32);
             std::string comment = add->get_comment();
             comment = comment.empty() ? vaStr : vaStr + "," + comment;

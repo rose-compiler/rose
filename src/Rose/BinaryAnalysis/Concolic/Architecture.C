@@ -132,7 +132,7 @@ Architecture::configureSharedMemory(const Yaml::Node &config) {
             if (driverName.empty())
                 throw Exception(err + "[driver] is not specified or is not valid");
 
-            const auto va = StringUtility::toNumber<rose_addr_t>(list[i]["address"].as<std::string>()).ok();
+            const auto va = StringUtility::toNumber<Address>(list[i]["address"].as<std::string>()).ok();
             if (!va)
                 throw Exception(err + "[address] is not specified or is not valid");
 
@@ -208,13 +208,13 @@ Architecture::debugger(const Debugger::Base::Ptr &d) {
     debugger_ = d;
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 Architecture::scratchVa() const {
     return scratchVa_;
 }
 
 void
-Architecture::scratchVa(const Sawyer::Optional<rose_addr_t> &va) {
+Architecture::scratchVa(const Sawyer::Optional<Address> &va) {
     scratchVa_ = va;
 }
 
@@ -246,14 +246,14 @@ Architecture::isTerminated() {
     return !debugger() || debugger()->isTerminated();
 }
 
-rose_addr_t
+Address
 Architecture::ip() {
     ASSERT_forbid(isFactory());
     return debugger()->executionAddress(Debugger::ThreadId::unspecified());
 }
 
 void
-Architecture::ip(rose_addr_t va) {
+Architecture::ip(Address va) {
     ASSERT_forbid(isFactory());
     debugger()->executionAddress(Debugger::ThreadId::unspecified(), va);
 }
@@ -268,13 +268,13 @@ Architecture::createRegisterRestoreEvents() {
 }
 
 size_t
-Architecture::writeMemory(rose_addr_t va, const std::vector<uint8_t> &bytes) {
+Architecture::writeMemory(Address va, const std::vector<uint8_t> &bytes) {
     ASSERT_forbid(isFactory());
     return debugger()->writeMemory(va, bytes.size(), bytes.data());
 }
 
 std::vector<uint8_t>
-Architecture::readMemory(rose_addr_t va, size_t nBytes) {
+Architecture::readMemory(Address va, size_t nBytes) {
     ASSERT_forbid(isFactory());
     return debugger()->readMemory(va, nBytes);
 }
@@ -301,7 +301,7 @@ void
 Architecture::executeInstruction(const P2::PartitionerConstPtr &partitioner) {
     ASSERT_forbid(isFactory());
     if (mlog[DEBUG]) {
-        rose_addr_t va = debugger()->executionAddress(Debugger::ThreadId::unspecified());
+        Address va = debugger()->executionAddress(Debugger::ThreadId::unspecified());
         if (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
             mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
                         <<" " <<partitioner->unparse(insn) <<"\n";
@@ -347,7 +347,7 @@ Architecture::executeInstruction(const BS::RiscOperators::Ptr &ops, SgAsmInstruc
     ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
     ASSERT_not_null(insn);
-    rose_addr_t va = insn->get_address();
+    Address va = insn->get_address();
 
     checkInstruction(insn);
     debugger()->executionAddress(Debugger::ThreadId::unspecified(), va);
@@ -355,7 +355,7 @@ Architecture::executeInstruction(const BS::RiscOperators::Ptr &ops, SgAsmInstruc
 }
 
 std::string
-Architecture::readCString(rose_addr_t va, size_t maxBytes) {
+Architecture::readCString(Address va, size_t maxBytes) {
     ASSERT_forbid(isFactory());
     return debugger()->readCString(va, maxBytes);
 }
@@ -621,7 +621,7 @@ Architecture::runToEvent(const ExecutionEvent::Ptr &event, const P2::Partitioner
 }
 
 uint64_t
-Architecture::readMemoryUnsigned(rose_addr_t va, size_t nBytes) {
+Architecture::readMemoryUnsigned(Address va, size_t nBytes) {
     ASSERT_forbid(isFactory());
     ASSERT_require(nBytes >= 1 && nBytes <= 8);
     std::vector<uint8_t> bytes = readMemory(va, nBytes);
@@ -717,14 +717,14 @@ Architecture::restoreInputVariables(const Partitioner2::PartitionerConstPtr&, co
 
 std::pair<ExecutionEvent::Ptr, SymbolicExpression::Ptr>
 Architecture::sharedMemoryRead(const SharedMemoryCallbacks &callbacks, const P2::Partitioner::ConstPtr&,
-                               const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, size_t nBytes) {
+                               const Emulation::RiscOperators::Ptr &ops, Address addr, size_t nBytes) {
     // A shared memory read has just been encountered, and we're in the middle of executing the instruction that caused it.
     ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
     ASSERT_not_null2(ops->currentInstruction(), "must be called during instruction execution");
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
-    const rose_addr_t ip = ops->currentInstruction()->get_address();
+    const Address ip = ops->currentInstruction()->get_address();
     SAWYER_MESG(debug) <<"  shared memory read at instruction " <<StringUtility::addrToString(ip)
                        <<" from memory address " <<StringUtility::addrToString(addr)
                        <<" for " <<StringUtility::plural(nBytes, "bytes") <<"\n";
@@ -767,14 +767,14 @@ Architecture::sharedMemoryRead(const SharedMemoryCallbacks &callbacks, const P2:
 
 bool
 Architecture::sharedMemoryWrite(const SharedMemoryCallbacks &callbacks, const P2::Partitioner::ConstPtr&,
-                                const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, const BS::SValue::Ptr &value) {
+                                const Emulation::RiscOperators::Ptr &ops, Address addr, const BS::SValue::Ptr &value) {
     // A shared memory write has just been encountered, and we're in the middle of executing the instruction that caused it.
     ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
     ASSERT_not_null2(ops->currentInstruction(), "must be called during instruction execution");
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
-    const rose_addr_t ip = ops->currentInstruction()->get_address();
+    const Address ip = ops->currentInstruction()->get_address();
     SAWYER_MESG(debug) <<"  shared memory write at instruction " <<StringUtility::addrToString(ip)
                        <<" to memory address " <<StringUtility::addrToString(addr)
                        <<" writing " <<*value <<"\n";
@@ -793,7 +793,7 @@ Architecture::runSharedMemoryPostCallbacks(const ExecutionEvent::Ptr &sharedMemo
     ASSERT_not_null(sharedMemoryEvent);
     ASSERT_not_null(ops);
 
-    rose_addr_t memoryVa = sharedMemoryEvent->memoryLocation().least();
+    Address memoryVa = sharedMemoryEvent->memoryLocation().least();
     SharedMemoryCallbacks callbacks = sharedMemory().getOrDefault(memoryVa);
     SharedMemoryContext ctx(sharedFromThis(), ops, sharedMemoryEvent);
     ctx.phase = ConcolicPhase::POST_EMULATION;

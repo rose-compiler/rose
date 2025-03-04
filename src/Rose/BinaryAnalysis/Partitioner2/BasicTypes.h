@@ -376,7 +376,7 @@ struct PartitionerSettings {
      *
      *  This is a list of addresses where functions will be created to start recursive disassembly. These addresses are in
      *  addition to entry addresses, addresses from symbols, addresses from configuration files, etc. */
-    std::vector<rose_addr_t> functionStartingVas;
+    std::vector<Address> functionStartingVas;
 
     /** Whether to follow ghost edges.
      *
@@ -424,7 +424,7 @@ struct PartitionerSettings {
      *  graph. Whenever an instruction has a successor whose address is an old address, it will be replaced with a successor edge
      *  that points to the new address.  This list must have an even number of elements where element `2*i+0` is and old address and
      *  element `2*i+1` is the corresponding new address. */
-    std::vector<rose_addr_t> ipRewrites;
+    std::vector<Address> ipRewrites;
 
     /** Whether to find function padding.
      *
@@ -444,7 +444,7 @@ struct PartitionerSettings {
      *
      *  If non-zero then the partitioner defeats PE-scrambled binary obfuscation by replacing control flow edges that go
      *  through this function with the de-scrambled control flow edge. */
-    rose_addr_t peScramblerDispatcherVa = 0;
+    Address peScramblerDispatcherVa = 0;
 
     /** Whether to find intra-function code.
      *
@@ -695,7 +695,7 @@ class Exception;
 class Function;
 using FunctionPtr = Sawyer::SharedPointer<Function>;    /**< Shared-ownership pointer for @ref Function. */
 
-using Functions = Sawyer::Container::Map<rose_addr_t, FunctionPtr>; /**< Mapping from address to function. */
+using Functions = Sawyer::Container::Map<Address, FunctionPtr>; /**< Mapping from address to function. */
 
 class FunctionCallGraph;
 

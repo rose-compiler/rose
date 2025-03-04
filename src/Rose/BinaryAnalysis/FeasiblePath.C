@@ -686,7 +686,7 @@ FeasiblePath::Statistics::operator+=(const FeasiblePath::Statistics &other) {
     maxPathLengthHits += other.maxPathLengthHits;
     maxCallDepthHits += other.maxCallDepthHits;
     maxRecursionDepthHits += other.maxRecursionDepthHits;
-    typedef Sawyer::Container::Map<rose_addr_t, size_t> Map;
+    typedef Sawyer::Container::Map<Address, size_t> Map;
     for (const Map::Node &node: other.reachedBlockVas.nodes())
         reachedBlockVas.insertMaybe(node.key(), 0) += node.value();
     return *this;
@@ -967,7 +967,7 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
     return sg;
 }
 
-rose_addr_t
+Address
 FeasiblePath::virtualAddress(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
     if (vertex->value().type() == P2::V_BASIC_BLOCK || vertex->value().type() == P2::V_USER_DEFINED)
         return vertex->value().address();
@@ -1752,7 +1752,7 @@ FeasiblePath::insertAssertions(const SmtSolver::Ptr &solver, const P2::CfgPath &
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     P2::ControlFlowGraph::ConstVertexIterator vertex = path.backVertex();
-    if (Sawyer::Optional<rose_addr_t> blockVa = vertex->value().optionalAddress()) {
+    if (Sawyer::Optional<Address> blockVa = vertex->value().optionalAddress()) {
         SAWYER_MESG(debug) <<"    assertions for " <<StringUtility::addrToString(*blockVa) <<":\n";
         for (size_t i = 0; i < assertions.size(); ++i) {
             if (assertions[i].location.contains(*blockVa) || (atEndOfPath && assertions[i].location.isEmpty())) {
@@ -1811,7 +1811,7 @@ FeasiblePath::pathLength(const P2::CfgPath &path, int position) {
 
 void
 FeasiblePath::markAsReached(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
-    if (Sawyer::Optional<rose_addr_t> addr = vertex->value().optionalAddress()) {
+    if (Sawyer::Optional<Address> addr = vertex->value().optionalAddress()) {
         SAWYER_THREAD_TRAITS::LockGuard lock(statsMutex_);
         ++stats_.reachedBlockVas.insertMaybe(*addr, 0);
     }
@@ -2131,7 +2131,7 @@ FeasiblePath::summarizeOrInline(P2::CfgPath &path, const Semantics &sem) {
 
                 // If the IP is concrete, then we found the target of the indirect call and can inline it.
                 if (ip && ip->toUnsigned()) {
-                    rose_addr_t targetVa = ip->toUnsigned().get();
+                    Address targetVa = ip->toUnsigned().get();
                     P2::ControlFlowGraph::ConstVertexIterator targetVertex = partitioner()->findPlaceholder(targetVa);
                     if (partitioner()->cfg().isValidVertex(targetVertex))
                         P2::inlineOneCallee(paths_, backVertex, partitioner()->cfg(),
@@ -2336,7 +2336,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
 }
 
 const FeasiblePath::FunctionSummary&
-FeasiblePath::functionSummary(rose_addr_t entryVa) const {
+FeasiblePath::functionSummary(Address entryVa) const {
     return functionSummaries_.getOrDefault(entryVa);
 }
 

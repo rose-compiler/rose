@@ -34,8 +34,8 @@ public:
                         const ExecutionEventPtr &sharedMemoryEvent);
 
     /** Constructor for a shared memory write. */
-    SharedMemoryContext(const ArchitecturePtr&, const Emulation::RiscOperatorsPtr&, rose_addr_t accessingInstructionVa,
-                        rose_addr_t accessedVa, const SymbolicExpression::Ptr &value);
+    SharedMemoryContext(const ArchitecturePtr&, const Emulation::RiscOperatorsPtr&, Address accessingInstructionVa,
+                        Address accessedVa, const SymbolicExpression::Ptr &value);
 
     virtual ~SharedMemoryContext();
 
@@ -60,7 +60,7 @@ public:
     Emulation::RiscOperatorsPtr ops;
 
     /** Address of instruction accessing the shared memory. */
-    rose_addr_t ip = 0;
+    Address ip = 0;
 
     /** Addresses being accessed. */
     AddressInterval accessedVas;

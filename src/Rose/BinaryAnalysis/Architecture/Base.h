@@ -297,8 +297,8 @@ public:
      *  Thread safety: Thread safe.
      *
      * @{ */
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) const;
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) const;
+    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, Address *target, Address *ret) const;
+    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, Address *target, Address *ret) const;
     /** @} */
 
     /** Returns true if the specified basic block looks like a function return.
@@ -324,7 +324,7 @@ public:
      *  The default implementation returns nothing.
      *
      *  Thread safety: Thread safe. */
-    virtual Sawyer::Optional<rose_addr_t> branchTarget(SgAsmInstruction*) const;
+    virtual Sawyer::Optional<Address> branchTarget(SgAsmInstruction*) const;
 
     /** Control flow successors for a single instruction.
      *

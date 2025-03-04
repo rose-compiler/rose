@@ -185,7 +185,7 @@ public:
         using Ptr = Sawyer::SharedPointer<Function>;
 
     private:
-        rose_addr_t address_;                           // required starting address that identifies function in library
+        Address address_;                               // required starting address that identifies function in library
         std::string name_;                              // optional name of function (possibly mangled)
         std::string demangledName_;                     // optional demangled name of function
         std::string hash_;                              // hash used for matching
@@ -195,8 +195,8 @@ public:
         std::string cversion_;                          // ROSE version that created this object; empty if unknown
 
     protected:
-        Function(rose_addr_t address, const std::string &name, const std::string &demangledName, const std::string &hash,
-                 size_t nInsns, time_t ctime, const std::string &cversion, const Library::Ptr &library);
+        Function(Address address, const std::string &name, const std::string &demangledName, const std::string &hash, size_t nInsns,
+                 time_t ctime, const std::string &cversion, const Library::Ptr &library);
 
     public:
         /** Allocating constructor.
@@ -204,23 +204,22 @@ public:
          *  The arguments are the same as the various properties documented for this class. The creation time and creation
          *  version are set to current values, thus this factory is useful for creating function objects that are backed
          *  by a database. */
-        static Ptr instance(rose_addr_t address, const std::string &name, const std::string &demangledName,
-                            const std::string &hash, size_t nInsns, const Library::Ptr &library);
+        static Ptr instance(Address address, const std::string &name, const std::string &demangledName, const std::string &hash,
+                            size_t nInsns, const Library::Ptr &library);
 
         /** Allocating constructor.
          *
          *  The arguments are the same as the various properties documented for this class. The creation time and creation
          *  version are specified, thus this factory is useful for creating function objects from a database that stores
          *  those fields. */
-        static Ptr instance(rose_addr_t address, const std::string &name, const std::string &demangledName,
-                            const std::string &hash, size_t nInsns, time_t creationTime, const std::string &creationVersion,
-                            const Library::Ptr &library);
+        static Ptr instance(Address address, const std::string &name, const std::string &demangledName, const std::string &hash,
+                            size_t nInsns, time_t creationTime, const std::string &creationVersion, const Library::Ptr &library);
 
     public:
         /** Property: Function entry virtual address.
          *
          *  The entry address identifies the function within its library. */
-        rose_addr_t address() const;
+        Address address() const;
 
         /** Property: Function name.
          *

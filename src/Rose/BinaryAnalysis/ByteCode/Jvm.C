@@ -24,7 +24,7 @@
 #include <Cxx_GrammarDowncast.h>
 
 using PoolEntry = SgAsmJvmConstantPoolEntry;
-using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;
+using AddressSegment = Sawyer::Container::AddressSegment<Rose::BinaryAnalysis::Address,uint8_t>;
 using opcode = Rose::BinaryAnalysis::JvmInstructionKind;
 
 namespace Rose {
@@ -40,7 +40,7 @@ std::string JvmField::name() const
   return std::string{""};
 }
 
-JvmMethod::JvmMethod(SgAsmJvmFileHeader* jfh, SgAsmJvmMethod* method, rose_addr_t va)
+JvmMethod::JvmMethod(SgAsmJvmFileHeader* jfh, SgAsmJvmMethod* method, Address va)
   : Method{va}, jfh_{jfh}, sgMethod_{method}, code_{nullptr,0,0}
 {
   ASSERT_not_null(jfh);
@@ -84,8 +84,8 @@ JvmMethod::instructions() const {
 
 void
 JvmMethod::decode(const Disassembler::Base::Ptr &disassembler) const {
-  rose_addr_t va{classAddr_ + code_.offset()};
-  rose_addr_t endVa{va + code_.size()};
+  Address va{classAddr_ + code_.offset()};
+  Address endVa{va + code_.size()};
 
   auto disassemblerJvm{as<Disassembler::Jvm>(disassembler)};
   disassemblerJvm->codeOffset(va);

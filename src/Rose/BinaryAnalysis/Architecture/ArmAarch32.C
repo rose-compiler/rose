@@ -1260,8 +1260,7 @@ ArmAarch32::terminatesBasicBlock(SgAsmInstruction *insn_) const {
 }
 
 bool
-ArmAarch32::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t */*target*/,
-                               rose_addr_t */*return_va*/) const {
+ArmAarch32::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, Address */*target*/, Address */*return_va*/) const {
     if (insns.empty())
         return false;
     auto back = isSgAsmAarch32Instruction(insns.back());
@@ -1286,7 +1285,7 @@ ArmAarch32::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) co
     return last->get_kind() == Aarch32InstructionKind::ARM_INS_POP && last->get_writesToIp();
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 ArmAarch32::branchTarget(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmAarch32Instruction(insn_);
     ASSERT_not_null(insn);
@@ -1818,7 +1817,7 @@ ArmAarch32::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
 
     complete = true;                                    // assume true, and prove otherwise
     ASSERT_forbid(insn->get_condition() == ARM_CC_INVALID);
-    rose_addr_t fallThroughVa = insn->get_address() + insn->get_size();
+    Address fallThroughVa = insn->get_address() + insn->get_size();
     AddressSet retval;
     switch (insn->get_kind()) {
         case Aarch32InstructionKind::ARM_INS_INVALID:

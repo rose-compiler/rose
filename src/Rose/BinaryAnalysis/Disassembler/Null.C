@@ -31,7 +31,7 @@ Null::clone() const {
 }
 
 SgAsmInstruction*
-Null::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*) {
+Null::disassembleOne(const MemoryMap::Ptr &map, Address va, AddressSet*) {
     uint8_t byte = 0;
     size_t nRead = map->at(va).limit(1).require(MemoryMap::EXECUTABLE).read(&byte).size();
     if (0 == nRead)

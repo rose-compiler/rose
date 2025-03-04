@@ -23,7 +23,7 @@ class Code {
 public:
   virtual const uint8_t* bytes() const = 0;
   virtual size_t size() const = 0;
-  virtual rose_addr_t offset() const = 0;
+  virtual Address offset() const = 0;
 
 protected:
   Code() {}
@@ -49,7 +49,7 @@ public:
   virtual void annotate() = 0;
 
   /* Set of instruction branch targets */
-  std::set<rose_addr_t> targets() const;
+  std::set<Address> targets() const;
 
   // Methods associated with basic blocks (Rose::BinaryAnalysis::Partitioner2)
   //
@@ -59,9 +59,9 @@ public:
   Method() = delete;
 
 protected:
-  Method(rose_addr_t);
+  Method(Address);
   ~Method();
-  rose_addr_t classAddr_;
+  Address classAddr_;
   Partitioner2::FunctionPtr function_;
   std::vector<BasicBlockPtr> blocks_;
 };
@@ -90,24 +90,24 @@ public:
   virtual const std::vector<const Attribute*> &attributes() const = 0;
   virtual const std::vector<const Interface*> &interfaces() const = 0;
   virtual const std::vector<std::string> &strings() = 0;
-  virtual void partition(const PartitionerPtr &, std::map<std::string,rose_addr_t> &) const;
+  virtual void partition(const PartitionerPtr &, std::map<std::string,Address> &) const;
   virtual void digraph() const;
   virtual void dump() = 0;
 
-  rose_addr_t address() const {return address_;}
+  Address address() const {return address_;}
 
   Class() = delete;
 
 protected:
-  rose_addr_t address_;
+  Address address_;
   std::shared_ptr<Namespace> namespace_;
-  Class(std::shared_ptr<Namespace> ns, rose_addr_t va) : address_{va}, namespace_{ns} {}
+  Class(std::shared_ptr<Namespace> ns, Address va) : address_{va}, namespace_{ns} {}
 };
 
 class Namespace {
 public:
   virtual std::string name() const = 0;
-  virtual void partition(const PartitionerPtr &partitioner, std::map<std::string,rose_addr_t> &) const;
+  virtual void partition(const PartitionerPtr &partitioner, std::map<std::string,Address> &) const;
 
   void append(std::shared_ptr<Class> ptr) {
     classes_.push_back(ptr);
@@ -130,14 +130,14 @@ public:
   const std::vector<std::shared_ptr<Namespace>> &namespaces() const {return namespaces_;}
 
   /* A unique (per container) virtual address for system/library functions */
-  static rose_addr_t nextSystemReservedVa();
+  static Address nextSystemReservedVa();
 
 protected:
   Container() {}
   std::vector<std::shared_ptr<Namespace>> namespaces_;
 
 private:
-  static rose_addr_t nextSystemReservedVa_;
+  static Address nextSystemReservedVa_;
 };
 
 } // namespace

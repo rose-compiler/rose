@@ -189,7 +189,7 @@ public:
     void appendInputParameter(RegisterDescriptor reg, int64_t offset) {
         appendInputParameter(ConcreteLocation(reg, offset));
     }
-    void appendInputParameter(rose_addr_t va) {
+    void appendInputParameter(Address va) {
         appendInputParameter(ConcreteLocation(va));
     }
     /** @} */
@@ -224,7 +224,7 @@ public:
     void appendOutputParameter(RegisterDescriptor reg, int64_t offset) {
         appendOutputParameter(ConcreteLocation(reg, offset));
     }
-    void appendOutputParameter(rose_addr_t va) {
+    void appendOutputParameter(Address va) {
         appendOutputParameter(ConcreteLocation(va));
     }
     /** @} */
@@ -330,7 +330,7 @@ public:
     void thisParameter(RegisterDescriptor reg, int64_t offset) {
         thisParameter(ConcreteLocation(reg, offset));
     }
-    void thisParameter(rose_addr_t va) {
+    void thisParameter(Address va) {
         thisParameter(ConcreteLocation(va));
     }
     /** @} */

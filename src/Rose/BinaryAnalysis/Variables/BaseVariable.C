@@ -23,13 +23,13 @@ BaseVariable::BaseVariable(size_t maxSizeBytes, const std::vector<InstructionAcc
 BaseVariable::BaseVariable(const BaseVariable &other) = default;
 BaseVariable::~BaseVariable() {}
 
-rose_addr_t
+Address
 BaseVariable::maxSizeBytes() const {
     return maxSizeBytes_;
 }
 
 void
-BaseVariable::maxSizeBytes(rose_addr_t size) {
+BaseVariable::maxSizeBytes(Address size) {
     ASSERT_require(size > 0);
     maxSizeBytes_ = size;
 }

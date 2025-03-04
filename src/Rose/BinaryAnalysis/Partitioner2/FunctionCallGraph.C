@@ -16,7 +16,7 @@ namespace Partitioner2 {
 FunctionCallGraph::VertexKey::VertexKey()
     : address(0) {}
 
-FunctionCallGraph::VertexKey::VertexKey(rose_addr_t va)
+FunctionCallGraph::VertexKey::VertexKey(Address va)
     : address(va) {}
 
 FunctionCallGraph::VertexKey::VertexKey(const Function::Ptr &function)
@@ -40,7 +40,7 @@ FunctionCallGraph::findFunction(const FunctionPtr &function) const {
 }
 
 FunctionCallGraph::Graph::ConstVertexIterator
-FunctionCallGraph::findFunction(rose_addr_t entryVa) const {
+FunctionCallGraph::findFunction(Address entryVa) const {
     return graph_.findVertexKey(VertexKey(entryVa));
 }
 
@@ -50,7 +50,7 @@ FunctionCallGraph::exists(const Function::Ptr &function) const {
 }
 
 bool
-FunctionCallGraph::exists(rose_addr_t entryVa) const {
+FunctionCallGraph::exists(Address entryVa) const {
     return findFunction(entryVa) != graph_.vertices().end();
 }
 

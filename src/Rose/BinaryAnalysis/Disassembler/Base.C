@@ -77,8 +77,7 @@ Base::instructionAlignment() const {
 
 /* Disassemble one instruction. */
 SgAsmInstruction *
-Base::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
-                             AddressSet *successors)
+Base::disassembleOne(const unsigned char *buf, Address buf_va, size_t buf_size, Address start_va, AddressSet *successors)
 {
     MemoryMap::Ptr map = MemoryMap::instance();
     map->insert(AddressInterval::baseSize(buf_va, buf_size),
@@ -88,7 +87,7 @@ Base::disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_t buf_si
 }
 
 SgAsmInstruction *
-Base::find_instruction_containing(const InstructionMap &insns, rose_addr_t va)
+Base::find_instruction_containing(const InstructionMap &insns, Address va)
 {
     const size_t max_insns_size = 16;
     InstructionMap::const_iterator ii=insns.upper_bound(va);
@@ -121,7 +120,7 @@ Base::mark_referenced_instructions(SgAsmInterpretation *interp, const MemoryMap:
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
             SgAsmInstruction *insn = ii->second;
             ASSERT_require(insn->get_size()<=sizeof buf);
-            rose_addr_t va = insn->get_address();
+            Address va = insn->get_address();
             size_t nbytes = insn->get_size();
 
             while (nbytes>0) {
@@ -182,7 +181,7 @@ Base::get_block_successors(const InstructionMap& insns, bool &complete)
     /* For the purposes of disassembly, assume that a CALL instruction eventually executes a RET that causes execution to
      * resume at the address following the CALL. This is true 99% of the time.  Higher software layers (e.g., Partitioner) may
      * make other assumptions, which is why this code is not in getSuccessors(). [RPM 2010-05-09] */
-    rose_addr_t target, return_va;
+    Address target, return_va;
     if (architecture()->isFunctionCallSlow(block, &target, &return_va))
         successors.insert(return_va);
 

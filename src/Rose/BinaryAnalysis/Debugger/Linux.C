@@ -257,21 +257,21 @@ Linux::sendCommandInt(__ptrace_request request, void *addr, int i) {
 }
 
 #if __WORDSIZE==32
-static rose_addr_t
+static Address
 getInstructionPointer(const user_regs_struct &regs) {
     return regs.eip;
 }
 static void
-setInstructionPointer(user_regs_struct &regs, rose_addr_t va) {
+setInstructionPointer(user_regs_struct &regs, Address va) {
     regs.eip = va;
 }
 #else
-static rose_addr_t
+static Address
 getInstructionPointer(const user_regs_struct &regs) {
     return regs.rip;
 }
 static void
-setInstructionPointer(user_regs_struct &regs, rose_addr_t va) {
+setInstructionPointer(user_regs_struct &regs, Address va) {
     regs.rip = va;
 }
 #endif
@@ -661,7 +661,7 @@ Linux::devNullTo(int targetFd, int openFlags) {
 }
 
 void
-Linux::executionAddress(ThreadId, rose_addr_t va) {
+Linux::executionAddress(ThreadId, Address va) {
     user_regs_struct regs;
     sendCommand(PTRACE_GETREGS, 0, &regs);
     setInstructionPointer(regs, va);
@@ -669,7 +669,7 @@ Linux::executionAddress(ThreadId, rose_addr_t va) {
     SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": set execution address to " <<StringUtility::addrToString(va) <<"\n";
 }
 
-rose_addr_t
+Address
 Linux::executionAddress(ThreadId tid) {
     return readRegister(tid, RegisterDescriptor(x86_regclass_ip, 0, 0, kernelWordSize())).toInteger();
 }
@@ -925,7 +925,7 @@ Linux::writeRegister(ThreadId tid, RegisterDescriptor desc, uint64_t value) {
 }
 
 Sawyer::Container::BitVector
-Linux::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
+Linux::readMemory(Address va, size_t nBytes, ByteOrder::Endianness sex) {
     using namespace Sawyer::Container;
 
     struct Resources {
@@ -960,7 +960,7 @@ Linux::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
 }
 
 std::vector<uint8_t>
-Linux::readMemory(rose_addr_t va, size_t nBytes) {
+Linux::readMemory(Address va, size_t nBytes) {
     std::vector<uint8_t> buf(nBytes);
     size_t nRead = readMemory(va, nBytes, buf.data());
     buf.resize(nRead);
@@ -968,7 +968,7 @@ Linux::readMemory(rose_addr_t va, size_t nBytes) {
 }
 
 size_t
-Linux::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
+Linux::readMemory(Address va, size_t nBytes, uint8_t *buffer) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"PID " <<child_ <<": read " <<StringUtility::plural(nBytes, "bytes")
                        <<" from va " <<StringUtility::addrToString(va) <<"\n";
@@ -1027,7 +1027,7 @@ Linux::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 }
 
 size_t
-Linux::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
+Linux::writeMemory(Address va, size_t nBytes, const uint8_t *buffer) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"PID " <<child_ <<": write " <<StringUtility::plural(nBytes, "bytes")
                        <<" from va " <<StringUtility::addrToString(va) <<"\n";
@@ -1132,7 +1132,7 @@ Linux::setPersonality(unsigned long bits) {
 #endif
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 Linux::findSystemCall() {
     std::vector<uint8_t> needle{0xcd, 0x80};            // x86: INT 0x80
 
@@ -1211,7 +1211,7 @@ Linux::remoteSystemCall(ThreadId tid, int syscallNumber, std::vector<uint64_t> a
     }
 
     // Find a system call that we can hijack to do our bidding.
-    Sawyer::Optional<rose_addr_t> syscallVa = findSystemCall();
+    Sawyer::Optional<Address> syscallVa = findSystemCall();
     if (!syscallVa) {
         SAWYER_MESG(debug) <<"syscall failed: cannot find a system call instruction\n";
         return -1;
@@ -1257,7 +1257,7 @@ Linux::remoteSystemCall(ThreadId tid, int syscallNumber, std::vector<uint64_t> a
     writeRegister(tid, syscallReg, syscallNumber);
 
     // Single step through the syscall instruction
-    rose_addr_t ip = executionAddress(tid);
+    Address ip = executionAddress(tid);
     executionAddress(tid, *syscallVa);
     singleStep(tid);
     executionAddress(tid, ip);
@@ -1279,7 +1279,7 @@ Linux::remoteSystemCall(ThreadId tid, int syscallNumber, std::vector<uint64_t> a
 int
 Linux::remoteOpenFile(ThreadId tid, const boost::filesystem::path &fileName, unsigned flags, mode_t mode) {
     // Find some writable memory in which to write the file name
-    Sawyer::Optional<rose_addr_t> nameVa;
+    Sawyer::Optional<Address> nameVa;
     std::vector<MemoryMap::ProcessMapRecord> mapRecords = MemoryMap::readProcessMap(child_);
     for (const MemoryMap::ProcessMapRecord &record: mapRecords) {
         if ((record.accessibility & MemoryMap::READ_WRITE) == MemoryMap::READ_WRITE &&
@@ -1307,8 +1307,8 @@ Linux::remoteCloseFile(ThreadId tid, unsigned fd) {
     return remoteSystemCall(tid, 6 /*close*/, std::vector<uint64_t>{fd});
 }
 
-rose_addr_t
-Linux::remoteMmap(ThreadId tid, rose_addr_t va, size_t nBytes, unsigned prot, unsigned flags,
+Address
+Linux::remoteMmap(ThreadId tid, Address va, size_t nBytes, unsigned prot, unsigned flags,
                    const boost::filesystem::path &fileName, off_t offset_) {
     uint64_t offset = boost::numeric_cast<uint64_t>(offset_);
     int fd = remoteOpenFile(tid, fileName, O_RDONLY, 0);

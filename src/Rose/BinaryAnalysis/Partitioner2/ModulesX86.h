@@ -35,7 +35,7 @@ public:
 public:
     static Ptr instance();                              /**< Allocating constructor. */
     virtual std::vector<FunctionPtr> functions() const override;
-    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
+    virtual bool match(const PartitionerConstPtr&, Address anchor) override;
 };
 
 /** Matches an x86 function prologue with hot patch.
@@ -50,7 +50,7 @@ class MatchHotPatchPrologue: public MatchStandardPrologue {
 public:
     static Ptr instance() { return Ptr(new MatchHotPatchPrologue); } /**< Allocating constructor. */
     virtual std::vector<FunctionPtr> functions() const override { return std::vector<FunctionPtr>(1, function_); }
-    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
+    virtual bool match(const PartitionerConstPtr&, Address anchor) override;
 };
 
 /** Matches an x86 `MOV EDI,EDI; PUSH ESI` function prologe. */
@@ -65,7 +65,7 @@ public:
 public:
     static Ptr instance();                              /**< Allocating constructor. */
     virtual std::vector<FunctionPtr> functions() const override;
-    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
+    virtual bool match(const PartitionerConstPtr&, Address anchor) override;
 };
 
 /** Matches an x86 "ENTER xxx, 0" prologue. */
@@ -75,7 +75,7 @@ protected:
 public:
     static Ptr instance() { return Ptr(new MatchEnterPrologue); } /**< Allocating constructor. */
     virtual std::vector<FunctionPtr> functions() const override { return std::vector<FunctionPtr>(1, function_); }
-    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
+    virtual bool match(const PartitionerConstPtr&, Address anchor) override;
 };
 
 /** Match RET followed by PUSH with intervening no-op padding. */
@@ -85,7 +85,7 @@ protected:
 public:
     static Ptr instance() { return Ptr(new MatchRetPadPush); } /**< Allocating constructor. */
     virtual std::vector<FunctionPtr> functions() const override { return std::vector<FunctionPtr>(1, function_); }
-    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
+    virtual bool match(const PartitionerConstPtr&, Address anchor) override;
 };
 
 /** Basic block callback to detect function returns.
@@ -109,7 +109,7 @@ public:
     enum EntryType { ABSOLUTE, RELATIVE };
 
 private:
-    Sawyer::Optional<rose_addr_t> tableVa_;             // possible address for jump table
+    Sawyer::Optional<Address> tableVa_;                 // possible address for jump table
     EntryType entryType_;                               // type of table entries
     size_t entrySizeBytes_;                             // size of each table entry
 
@@ -131,7 +131,7 @@ bool matchEnterAnyZero(const PartitionerConstPtr&, SgAsmX86Instruction*);
 /** Matches "JMP constant".
  *
  *  Returns the constant if matched, nothing otherwise. */
-Sawyer::Optional<rose_addr_t> matchJmpConst(const PartitionerConstPtr&, SgAsmX86Instruction*);
+Sawyer::Optional<Address> matchJmpConst(const PartitionerConstPtr&, SgAsmX86Instruction*);
 
 /** Matches "LEA ECX, [EBP + constant]" or variant. */
 bool matchLeaCxMemBpConst(const PartitionerConstPtr&, SgAsmX86Instruction*);
@@ -166,11 +166,10 @@ bool matchPushSi(const PartitionerConstPtr&, SgAsmX86Instruction*);
  *  Upon return, the @p tableLimits is adjusted to be the addresses where valid table entries were found unioned with the
  *  addresses of the optional post-table indexes.  The return value is the valid table entries in the order they occur in the
  *  table. */
-std::vector<rose_addr_t> scanCodeAddressTable(const PartitionerConstPtr&, AddressInterval &tableLimits /*in,out*/,
-                                              const AddressInterval &targetLimits,
-                                              SwitchSuccessors::EntryType tableEntryType, size_t tableEntrySizeBytes,
-                                              Sawyer::Optional<rose_addr_t> probableStartVa = Sawyer::Nothing(),
-                                              size_t nSkippable = 0);
+std::vector<Address> scanCodeAddressTable(const PartitionerConstPtr&, AddressInterval &tableLimits /*in,out*/,
+                                          const AddressInterval &targetLimits, SwitchSuccessors::EntryType tableEntryType,
+                                          size_t tableEntrySizeBytes, Sawyer::Optional<Address> probableStartVa = Sawyer::Nothing(),
+                                          size_t nSkippable = 0);
 
 /** Try to match a base+offset expression.
  *
@@ -182,7 +181,7 @@ std::vector<rose_addr_t> scanCodeAddressTable(const PartitionerConstPtr&, Addres
  * @li [ base + register * size ]
  *
  * Returns the numeric value of @c base or nothing if the expression is not a recognized form. */
-Sawyer::Optional<rose_addr_t> findTableBase(SgAsmExpression*);
+Sawyer::Optional<Address> findTableBase(SgAsmExpression*);
 
 
 } // namespace

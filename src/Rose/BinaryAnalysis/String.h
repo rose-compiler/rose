@@ -121,7 +121,7 @@ namespace BinaryAnalysis {
  *  #include <Rose/BinaryAnalysis/String.h>
  *  using namespace Rose::BinaryAnalysis::Strings;
  *  MemoryMap map = ...;                        // initialized elsewhere
- *  rose_addr_t stringVa = ...;                 // starting address of string
+ *  Address stringVa = ...;                 // starting address of string
  *
  *  StringFinder finder;                        // holds settings
  *  finder.settings().minLength = 0;            // no strings shorter than 5 characters
@@ -769,7 +769,7 @@ public:
     const AddressInterval& where() const { return where_; }
 
     /** Starting address of string in memory. */
-    rose_addr_t address() const { return where_.least(); }
+    Address address() const { return where_.least(); }
 
     /** Size of encoded string in bytes. */
     size_t size() const { return where_.size(); }

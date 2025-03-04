@@ -97,7 +97,7 @@ public:
      *  The default implementation always returns nothing.
      *
      *  Thread safety: The implementation must be thread safe. */
-    virtual Sawyer::Optional<rose_addr_t> address() const;
+    virtual Sawyer::Optional<Address> address() const;
 
     /** Property: Location in source code.
      *

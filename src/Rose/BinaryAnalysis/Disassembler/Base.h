@@ -147,7 +147,7 @@ public:
      *
      *  Thread safety: The safety of this method depends on its implementation in the subclass. In any case, no other thread can be
      *  modifying the MemoryMap or successors set at the same time. */
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL) = 0;
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, Address start_va, AddressSet *successors=NULL) = 0;
 
     /** Similar in functionality to the disassembleOne method that takes a MemoryMap argument, except the content buffer is
      *  mapped 1:1 to virtual memory beginning at the specified address.
@@ -155,7 +155,7 @@ public:
      *  Thread safety:  The safety of this method depends on the implementation of the disassembleOne() defined in the
      *  subclass. If the subclass is thread safe then this method can be called in multiple threads as long as the supplied
      *  buffer and successors set are not being modified by another thread. */
-    SgAsmInstruction *disassembleOne(const unsigned char *buf, rose_addr_t buf_va, size_t buf_size, rose_addr_t start_va,
+    SgAsmInstruction *disassembleOne(const unsigned char *buf, Address buf_va, size_t buf_size, Address start_va,
                                      AddressSet *successors=NULL);
 
 
@@ -185,7 +185,7 @@ public:
      *
      *  Thread safety: This class method is thread safe provided no other thread is modifying the instruction map nor the
      *  instructions to which the map points, particularly the instructions' virtual address and raw bytes. */
-    static SgAsmInstruction *find_instruction_containing(const InstructionMap &insns, rose_addr_t va);
+    static SgAsmInstruction *find_instruction_containing(const InstructionMap &insns, Address va);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated [Robb Matzke 2023-11-24]

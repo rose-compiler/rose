@@ -504,8 +504,8 @@ findGlobalVariables(const BaseSemantics::RiscOperators::Ptr &ops, size_t wordNBy
 
     // Find groups of consecutive addresses that were written to by the same instruction.  This is how we coalesce adjacent
     // bytes into larger variables.
-    using StackWriters = Sawyer::Container::IntervalMap<AddressInterval, rose_addr_t /*writer*/>;
-    using SymbolicAddresses = Sawyer::Container::Map<rose_addr_t, BaseSemantics::SValue::Ptr>;
+    using StackWriters = Sawyer::Container::IntervalMap<AddressInterval, Address /*writer*/>;
+    using SymbolicAddresses = Sawyer::Container::Map<Address, BaseSemantics::SValue::Ptr>;
     StackWriters stackWriters;
     SymbolicAddresses symbolicAddrs;
     BaseSemantics::MemoryCellState::Ptr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
@@ -517,7 +517,7 @@ findGlobalVariables(const BaseSemantics::RiscOperators::Ptr &ops, size_t wordNBy
             // There may have been many writers for an address. Rather than write an algorithm to find the largest sets of
             // addresses written by the same writer, we'll just arbitrarily choose the least address.
             const AddressSet &allWriters = cell->getWriters();
-            rose_addr_t leastWriter = 0;
+            Address leastWriter = 0;
             if (!allWriters.isEmpty())
                 leastWriter = allWriters.least();
             stackWriters.insert(AddressInterval::baseSize(*va, nBytes), leastWriter);
@@ -528,12 +528,12 @@ findGlobalVariables(const BaseSemantics::RiscOperators::Ptr &ops, size_t wordNBy
     // Organize the intervals into a list of global variables
     std::vector<AbstractLocation> retval;
     for (const AddressInterval &interval: stackWriters.intervals()) {
-        rose_addr_t va = interval.least();
-        rose_addr_t nRemaining = interval.size();
+        Address va = interval.least();
+        Address nRemaining = interval.size();
         ASSERT_require2(nRemaining>0, "overflow");
         while (nRemaining > 0) {
             BaseSemantics::SValue::Ptr addr = symbolicAddrs.get(va);
-            rose_addr_t nBytes = std::min(nRemaining, (rose_addr_t)wordNBytes);
+            Address nBytes = std::min(nRemaining, (Address)wordNBytes);
             retval.push_back(AbstractLocation(addr, nBytes));
             va += nBytes;
             nRemaining -= nBytes;
@@ -586,7 +586,7 @@ DfCfgVertex::inliningId() const {
     return inliningId_;
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 DfCfgVertex::address() const {
     switch (type_) {
         case BBLOCK:

@@ -47,9 +47,9 @@ public:
     bool isUnknown(const SgAsmInstruction*) const override;
     bool isControlTransfer(const SgAsmInstruction*) const override;
     bool terminatesBasicBlock(SgAsmInstruction*) const override;
-    bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) const override;
+    bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, Address *target, Address *ret) const override;
     bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) const override;
-    Sawyer::Optional<rose_addr_t> branchTarget(SgAsmInstruction*) const override;
+    Sawyer::Optional<Address> branchTarget(SgAsmInstruction*) const override;
     AddressSet getSuccessors(SgAsmInstruction*, bool &complete) const override;
 
     Disassembler::BasePtr newInstructionDecoder() const override;

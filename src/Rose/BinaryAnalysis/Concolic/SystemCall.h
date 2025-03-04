@@ -58,7 +58,7 @@ public:
     /** Address of system call.
      *
      *  Virtual address where the system call occurs. */
-    rose_addr_t ip = 0;
+    Address ip = 0;
 
     /** Concrete arguments.
      *

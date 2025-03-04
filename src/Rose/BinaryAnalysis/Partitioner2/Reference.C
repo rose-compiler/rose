@@ -17,16 +17,16 @@ Reference::Reference(const Function::Ptr &function)
     : function_(function), insn_(nullptr) {}
 
 Reference::Reference(const Function::Ptr &function, const BasicBlock::Ptr &bblock, SgAsmInstruction *insn,
-                     const Sawyer::Optional<rose_addr_t> &address)
+                     const Sawyer::Optional<Address> &address)
     : function_(function), bblock_(bblock), insn_(insn), address_(address) {}
 
-Reference::Reference(const BasicBlock::Ptr &bblock, SgAsmInstruction *insn, const Sawyer::Optional<rose_addr_t> &address)
+Reference::Reference(const BasicBlock::Ptr &bblock, SgAsmInstruction *insn, const Sawyer::Optional<Address> &address)
     : bblock_(bblock), insn_(insn), address_(address) {}
 
-Reference::Reference(SgAsmInstruction *insn, const Sawyer::Optional<rose_addr_t> &address)
+Reference::Reference(SgAsmInstruction *insn, const Sawyer::Optional<Address> &address)
     : insn_(insn), address_(address) {}
 
-Reference::Reference(rose_addr_t address)
+Reference::Reference(Address address)
     : insn_(nullptr), address_(address) {}
 
 Reference::Reference()
@@ -85,7 +85,7 @@ Reference::hasExplicitAddress() const {
     return address_;
 }
 
-rose_addr_t
+Address
 Reference::address() const {
     if (address_)
         return *address_;

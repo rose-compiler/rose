@@ -64,10 +64,10 @@ BinaryLoaderElfObj::mappingPermissions(SgAsmGenericSection *section_) const {
  * memory. */
 BinaryLoader::MappingContribution
 BinaryLoaderElfObj::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr &map,
-                                rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
-                                rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                                rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
-                                rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
+                                Address *malign_lo_p, Address *malign_hi_p,
+                                Address *va_p, Address *mem_size_p,
+                                Address *offset_p, Address *file_size_p, bool *map_private_p,
+                                Address *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
                                 ConflictResolution *resolve_p) {
     if (section->isMapped())
         return BinaryLoaderElf::alignValues(section, map, malign_lo_p, malign_hi_p, va_p, mem_size_p,
@@ -76,12 +76,12 @@ BinaryLoaderElfObj::alignValues(SgAsmGenericSection *section, const MemoryMap::P
 
     if (section->get_containsCode() && section->get_size() > 0) {
         SgAsmGenericHeader *header = AST::Traversal::findParentTyped<SgAsmGenericHeader>(section);
-        rose_addr_t baseVa = header ? header->get_baseVa() : 0;
+        Address baseVa = header ? header->get_baseVa() : 0;
 
         /* We don't need to worry about file alignment because the Unix loader isn't going to ever be mapping this object file
          * anyway.  We align memory on our best guess of a page boundary, 4096 bytes. */
-        rose_addr_t mem_alignment = 4096;
-        rose_addr_t size = section->get_size();
+        Address mem_alignment = 4096;
+        Address size = section->get_size();
         AddressInterval allocationRegion = AddressInterval::hull(baseVa, AddressInterval::whole().greatest());
 
         *malign_lo_p = *malign_hi_p = mem_alignment;

@@ -28,7 +28,7 @@ std::string systemFunctionName(const std::string&);
  *  This is a map from possible import addresses to the item in the Import Address Table (IAT) that describes the function that
  *  will be imported to that address. The map probably contains at least two addresses per function, the absolute address and a
  *  relative address, because we're not sure which is contained in the IAT -- it depends on whether a linker has run. */
-typedef Sawyer::Container::Map<rose_addr_t, SgAsmPEImportItem*> ImportIndex;
+typedef Sawyer::Container::Map<Address, SgAsmPEImportItem*> ImportIndex;
 
 /** Reads PE export sections to find functions.
  *
@@ -100,8 +100,8 @@ public:
     typedef std::vector<DispatchEntry> DispatchTable;
 
 private:
-    rose_addr_t dispatcherVa_;                          // address of PEScrambler's indirection decoder and dispatcher
-    rose_addr_t dispatchTableVa_;                       // address of PEScrambler's dispatch table
+    Address dispatcherVa_;                              // address of PEScrambler's indirection decoder and dispatcher
+    Address dispatchTableVa_;                           // address of PEScrambler's dispatch table
     bool reachedEndOfTable_;                            // true when we cannot read any more table entries
     bool checkedPreconditions_;                         // true after we did some first-call precondition checking
     static const size_t sizeofDispatcherFunction = 65;  // default size of PEscrambler dispatcher function in bytes
@@ -110,7 +110,7 @@ private:
 
 protected:
     // Non-subclass users: please use the instance() method instead; these objects are reference counted.
-    PeDescrambler(rose_addr_t dispatcherVa, rose_addr_t dispatchTableVa)
+    PeDescrambler(Address dispatcherVa, Address dispatchTableVa)
         : dispatcherVa_(dispatcherVa), dispatchTableVa_(dispatchTableVa), reachedEndOfTable_(false),
           checkedPreconditions_(false) {}
 
@@ -121,7 +121,7 @@ public:
      *  the call graph since it will be the function that probably has many more callers than any other function.  The @p
      *  dispatchTableVa is the address of the PEScrambler dispatch table, which normally starts at the first byte past the end
      *  of the dispatch function. */
-    static Ptr instance(rose_addr_t dispatcherVa, rose_addr_t dispatchTableVa) {
+    static Ptr instance(Address dispatcherVa, Address dispatchTableVa) {
         return Ptr(new PeDescrambler(dispatcherVa, dispatchTableVa));
     }
 
@@ -129,7 +129,7 @@ public:
      *
      *  This is the same as the two-argument constructor, but the dispatch table address is assumed to be at a fixed offset
      *  from the dispatch function. */
-    static Ptr instance(rose_addr_t dispatcherVa) {
+    static Ptr instance(Address dispatcherVa) {
         return Ptr(new PeDescrambler(dispatcherVa, dispatcherVa + sizeofDispatcherFunction));
     }
 
@@ -139,10 +139,10 @@ public:
     void nameKeyAddresses(const PartitionerPtr&);
 
     /** Virtual address of PEScrambler dispatch function. */
-    rose_addr_t dispatcherVa() const { return dispatcherVa_; }
+    Address dispatcherVa() const { return dispatcherVa_; }
 
     /** Virtual address of PEScrambler dispatch table. */
-    rose_addr_t dispatchTableVa() const { return dispatchTableVa_; }
+    Address dispatchTableVa() const { return dispatchTableVa_; }
 
     /** Dispatch table.
      *
@@ -165,7 +165,7 @@ private:
     bool basicBlockCallsDispatcher(const PartitionerConstPtr&, const BasicBlockPtr&);
 
     // Look up the return address in the PEScrambler dispatch table as if we were the dispatcher and return it if found.
-    Sawyer::Optional<rose_addr_t> findCalleeAddress(const PartitionerConstPtr&, rose_addr_t returnVa);
+    Sawyer::Optional<Address> findCalleeAddress(const PartitionerConstPtr&, Address returnVa);
 };
 
 } // namespace

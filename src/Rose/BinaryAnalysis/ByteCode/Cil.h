@@ -23,18 +23,18 @@ public:
   virtual size_t size() const {
     return size_; // UNIMPLEMENTED
   }
-  virtual rose_addr_t offset() const {
+  virtual Address offset() const {
     return offset_; // UNIMPLEMENTED
   }
 
-  explicit CilCode(uint8_t* bytes, size_t size, rose_addr_t offset)
+  explicit CilCode(uint8_t* bytes, size_t size, Address offset)
     : bytes_{bytes}, size_{size}, offset_{offset} {
   }
 
 private:
   const uint8_t* bytes_;
   size_t size_;
-  rose_addr_t offset_;
+  Address offset_;
 };
 
 class CilField final : public Field {
@@ -60,7 +60,7 @@ public:
   virtual void annotate() override;
 
   CilMethod() = delete;
-  explicit CilMethod(SgAsmCilMetadataRoot*, SgAsmCilMethodDef*, rose_addr_t);
+  explicit CilMethod(SgAsmCilMetadataRoot*, SgAsmCilMethodDef*, Address);
 
 private:
   SgAsmCilMetadataRoot* mdr_;

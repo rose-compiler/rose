@@ -119,7 +119,7 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
     }
 
     if (mlog[DEBUG]) {
-        for (rose_addr_t va: retval.addresses)
+        for (Address va: retval.addresses)
             mlog[DEBUG] <<"      address: " <<StringUtility::addrToString(va) <<"\n";
         if (!retval.isComplete)
             mlog[DEBUG] <<"      address: undetermined\n";

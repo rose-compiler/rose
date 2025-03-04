@@ -35,7 +35,7 @@ public:
     typedef Sawyer::SharedPointer<InstructionProvider> Ptr;
 
     /** Mapping from address to instruction. */
-    typedef Sawyer::Container::HashMap<rose_addr_t, SgAsmInstruction*> InsnMap;
+    typedef Sawyer::Container::HashMap<Address, SgAsmInstruction*> InsnMap;
 
 private:
     Architecture::BaseConstPtr architecture_;           // required architecture
@@ -87,7 +87,7 @@ public:
      *  "unknown" instruction is returned.  An "unknown" instruction is used for cases where a valid instruction could not be
      *  disassembled, including the case when the first byte of a multi-byte instruction is executable but the remaining bytes
      *  are not executable. */
-    SgAsmInstruction* operator[](rose_addr_t va) const;
+    SgAsmInstruction* operator[](Address va) const;
 
     /** Insert an instruction into the cache.
      *

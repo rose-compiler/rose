@@ -94,7 +94,7 @@ BinaryLoaderElf::getRemapSections(SgAsmGenericHeader *header) {
 }
 
 /* For any given file header, start mapping at a particular location in the address space. */
-rose_addr_t
+Address
 BinaryLoaderElf::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList &sections) {
     static const size_t maximum_alignment = 8192;
     AddressInterval mappableArea = AddressInterval::whole();
@@ -109,17 +109,17 @@ BinaryLoaderElf::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, c
 #endif
 
     // Find the minimum address desired by the sections to be mapped.
-    rose_addr_t min_preferred_rva = (uint64_t)(-1);
+    Address min_preferred_rva = (uint64_t)(-1);
     for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si)
         min_preferred_rva = std::min(min_preferred_rva, (*si)->get_mappedPreferredRva());
-    rose_addr_t min_preferred_va = header->get_baseVa() + min_preferred_rva;
+    Address min_preferred_va = header->get_baseVa() + min_preferred_rva;
 
     // Minimum address at which to map
     AddressInterval freeSpace = map->unmapped(mappableArea.greatest(), Sawyer::Container::MATCH_BACKWARD);
     freeSpace = freeSpace & mappableArea;
     if (freeSpace.isEmpty())
         throw MemoryMap::NoFreeSpace("no free specimen memory", map, 0);
-    rose_addr_t map_base_va = alignUp(freeSpace.least(), (rose_addr_t)maximum_alignment);
+    Address map_base_va = alignUp(freeSpace.least(), (Address)maximum_alignment);
 
     // If the minimum preferred virtual address is less than the floor of the page-aligned mapping area, then
     // return a base address which moves the min_preferred_va to somewhere in the page pointed to by map_base_va.
@@ -136,10 +136,10 @@ BinaryLoaderElf::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, c
 
 BinaryLoader::MappingContribution
 BinaryLoaderElf::alignValues(SgAsmGenericSection *_section, const MemoryMap::Ptr &map,
-                             rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
-                             rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                             rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
-                             rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
+                             Address *malign_lo_p, Address *malign_hi_p,
+                             Address *va_p, Address *mem_size_p,
+                             Address *offset_p, Address *file_size_p, bool *map_private_p,
+                             Address *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
                              ConflictResolution *resolve_p) {
     ASSERT_not_null(_section);
     ASSERT_not_null(map);
@@ -205,7 +205,7 @@ BinaryLoaderElf::alignValues(SgAsmGenericSection *_section, const MemoryMap::Ptr
             break;
         }
     }
-    rose_addr_t diff = part_of ? part_of->get_mappedActualVa() - part_of->get_mappedPreferredVa() : 0;
+    Address diff = part_of ? part_of->get_mappedActualVa() - part_of->get_mappedPreferredVa() : 0;
     *malign_hi_p = *malign_lo_p = 1; /*no alignment constraint*/
     *va_p = section->get_header()->get_baseVa() + section->get_mappedPreferredRva() + diff;
     *mem_size_p = section->get_mappedSize();
@@ -416,7 +416,7 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
 }
 
 SgAsmGenericSection *
-BinaryLoaderElf::findSectionByPreferredVa(SgAsmGenericHeader* header, rose_addr_t va) {
+BinaryLoaderElf::findSectionByPreferredVa(SgAsmGenericHeader* header, Address va) {
     SgAsmGenericSection *retval = NULL;
     SgAsmGenericSectionPtrList sections = header->get_sectionsByVa(va, true);
     for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
@@ -957,8 +957,8 @@ BinaryLoaderElf::fixupInfoRelocSymbol(SgAsmElfRelocEntry *reloc, const SymverRes
     return retval;
 }
 
-rose_addr_t
-BinaryLoaderElf::fixupInfoTargetVa(SgAsmElfRelocEntry *reloc, SgAsmGenericSection **section_p, rose_addr_t *adj_p) {
+Address
+BinaryLoaderElf::fixupInfoTargetVa(SgAsmElfRelocEntry *reloc, SgAsmGenericSection **section_p, Address *adj_p) {
     Stream trace(mlog[TRACE]);
     SgAsmGenericHeader *header = AST::Traversal::findParentTyped<SgAsmGenericHeader>(reloc);
     SgAsmGenericSection *section = findSectionByPreferredVa(header, reloc->get_r_offset());
@@ -967,8 +967,8 @@ BinaryLoaderElf::fixupInfoTargetVa(SgAsmElfRelocEntry *reloc, SgAsmGenericSectio
         throw Exception("reloc target " + StringUtility::addrToString(reloc->get_r_offset()) + " is not mapped");
     }
 
-    rose_addr_t target_adj = section->get_mappedActualVa() - section->get_mappedPreferredVa();
-    rose_addr_t target_va = reloc->get_r_offset() + target_adj;
+    Address target_adj = section->get_mappedActualVa() - section->get_mappedPreferredVa();
+    Address target_va = reloc->get_r_offset() + target_adj;
 
     if (trace) {
         trace <<"    target: file=\"" <<header->get_file()->get_name() <<"\"\n";
@@ -986,8 +986,8 @@ BinaryLoaderElf::fixupInfoTargetVa(SgAsmElfRelocEntry *reloc, SgAsmGenericSectio
     return target_va;
 }
 
-rose_addr_t
-BinaryLoaderElf::fixupInfoSymbolVa(SgAsmElfSymbol *symbol, SgAsmGenericSection **section_p, rose_addr_t *adj_p) {
+Address
+BinaryLoaderElf::fixupInfoSymbolVa(SgAsmElfSymbol *symbol, SgAsmGenericSection **section_p, Address *adj_p) {
     Stream trace(mlog[TRACE]);
 
     if (!symbol) {
@@ -1006,8 +1006,8 @@ BinaryLoaderElf::fixupInfoSymbolVa(SgAsmElfSymbol *symbol, SgAsmGenericSection *
         throw Exception("symbol value " + StringUtility::addrToString(symbol->get_value()) + " is not mapped");
     }
 
-    rose_addr_t symbol_adj = section->get_mappedActualVa() - section->get_mappedPreferredVa();
-    rose_addr_t symbol_va = symbol->get_value() + symbol_adj;
+    Address symbol_adj = section->get_mappedActualVa() - section->get_mappedPreferredVa();
+    Address symbol_va = symbol->get_value() + symbol_adj;
     if (trace) {
         trace <<"    symbol: file=\"" <<header->get_file()->get_name() <<"\"\n";
         trace <<"            section=[" <<section->get_id() <<"] \"" <<section->get_name()->get_string(true) <<"\"\n";
@@ -1025,9 +1025,8 @@ BinaryLoaderElf::fixupInfoSymbolVa(SgAsmElfSymbol *symbol, SgAsmGenericSection *
     return symbol_va;
 }
 
-rose_addr_t
-BinaryLoaderElf::fixupInfoAddend(SgAsmElfRelocEntry *reloc, rose_addr_t target_va, const MemoryMap::Ptr &memmap,
-                                 size_t nbytes) {
+Address
+BinaryLoaderElf::fixupInfoAddend(SgAsmElfRelocEntry *reloc, Address target_va, const MemoryMap::Ptr &memmap, size_t nbytes) {
     Stream trace(mlog[TRACE]);
 
     SgAsmElfRelocSection *reloc_section = AST::Traversal::findParentTyped<SgAsmElfRelocSection>(reloc);
@@ -1041,7 +1040,7 @@ BinaryLoaderElf::fixupInfoAddend(SgAsmElfRelocEntry *reloc, rose_addr_t target_v
     }
 
     trace <<"    reading " <<nbytes <<"-byte addend from memory at " <<StringUtility::addrToString(target_va) <<"\n";
-    rose_addr_t retval = 0;
+    Address retval = 0;
     ByteOrder::Endianness sex = reloc_section->get_header()->get_sex();
     ASSERT_not_null(memmap);
     switch (nbytes) {
@@ -1073,13 +1072,13 @@ BinaryLoaderElf::fixupInfoAddend(SgAsmElfRelocEntry *reloc, rose_addr_t target_v
     return retval;
 }
 
-rose_addr_t
+Address
 BinaryLoaderElf::fixupInfoExpr(const std::string &expression, SgAsmElfRelocEntry *reloc, const SymverResolver &resolver,
-                               const MemoryMap::Ptr &memmap, rose_addr_t *target_va_p) {
-    std::vector<rose_addr_t> stack;
+                               const MemoryMap::Ptr &memmap, Address *target_va_p) {
+    std::vector<Address> stack;
     SgAsmElfSymbol *symbol = NULL;                      /* Defining symbol for relocation */
     size_t nbytes = 0;                                  /* Size of addend */
-    rose_addr_t target_va = fixupInfoTargetVa(reloc);
+    Address target_va = fixupInfoTargetVa(reloc);
     if (target_va_p)
         *target_va_p = target_va;
 
@@ -1092,14 +1091,14 @@ BinaryLoaderElf::fixupInfoExpr(const std::string &expression, SgAsmElfRelocEntry
                 break;
 
             case 'A': {                                 /* Addend of relocation from reloc entry or specimen memory */
-                rose_addr_t addend = fixupInfoAddend(reloc, target_va, memmap, nbytes);
+                Address addend = fixupInfoAddend(reloc, target_va, memmap, nbytes);
                 stack.push_back(addend);
                 break;
             }
             case 'B': {                                 /* Adjustment for defining symbol's section */
                 if (!symbol)
                     symbol = fixupInfoRelocSymbol(reloc, resolver);
-                rose_addr_t symbol_adj;
+                Address symbol_adj;
                 fixupInfoSymbolVa(symbol, NULL, &symbol_adj);
                 stack.push_back(symbol_adj);
                 break;
@@ -1107,14 +1106,14 @@ BinaryLoaderElf::fixupInfoExpr(const std::string &expression, SgAsmElfRelocEntry
             case 'S': {                                 /* Value of defining symbol for relocation */
                 if (!symbol)
                     symbol = fixupInfoRelocSymbol(reloc, resolver);
-                rose_addr_t symbol_va = fixupInfoSymbolVa(symbol);
+                Address symbol_va = fixupInfoSymbolVa(symbol);
                 stack.push_back(symbol_va);
                 break;
             }
             case '+': {                                 /* Addition of two top stack items */
                 ASSERT_require(stack.size()>=2);
-                rose_addr_t opand1 = stack.back(); stack.pop_back();
-                rose_addr_t opand2 = stack.back(); stack.pop_back();
+                Address opand1 = stack.back(); stack.pop_back();
+                Address opand2 = stack.back(); stack.pop_back();
                 stack.push_back(opand1 + opand2);
                 break;
             }
@@ -1134,8 +1133,8 @@ BinaryLoaderElf::fixupInfoExpr(const std::string &expression, SgAsmElfRelocEntry
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-BinaryLoaderElf::fixupApply(rose_addr_t value, SgAsmElfRelocEntry *reloc, const MemoryMap::Ptr &memmap,
-                            rose_addr_t target_va/*=0*/, size_t nbytes/*=0*/) {
+BinaryLoaderElf::fixupApply(Address value, SgAsmElfRelocEntry *reloc, const MemoryMap::Ptr &memmap, Address target_va/*=0*/,
+                            size_t nbytes/*=0*/) {
     Stream trace(mlog[TRACE]);
 
     SgAsmGenericHeader *header = AST::Traversal::findParentTyped<SgAsmGenericHeader>(reloc);
@@ -1181,8 +1180,8 @@ BinaryLoaderElf::fixupApplySymbolCopy(SgAsmElfRelocEntry* reloc, const SymverRes
                                       const MemoryMap::Ptr &memmap) {
     Stream trace(mlog[TRACE]);
     SgAsmElfSymbol *symbol = fixupInfoRelocSymbol(reloc, resolver);
-    rose_addr_t target_va = fixupInfoTargetVa(reloc);
-    rose_addr_t symbol_va = fixupInfoSymbolVa(symbol);
+    Address target_va = fixupInfoTargetVa(reloc);
+    Address symbol_va = fixupInfoSymbolVa(symbol);
     size_t symbol_sz = symbol->get_size();
 
     trace <<"    copying " <<StringUtility::plural(symbol_sz, "bytes")
@@ -1293,13 +1292,13 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
     trace <<"  " <<StringUtility::addrToString(reloc->get_r_offset()) <<" " <<reloc->toString()
           <<" for \"" <<relocSymbol->get_name()->get_string(true) <<"\"\n";
 
-    rose_addr_t target_va = 0;
+    Address target_va = 0;
     switch (isa & SgAsmGenericHeader::ISA_FAMILY_MASK) {
         case SgAsmGenericHeader::ISA_IA32_Family:
             switch (reloc->get_type()) {
                 case SgAsmElfRelocEntry::R_386_JMP_SLOT:
                 case SgAsmElfRelocEntry::R_386_GLOB_DAT: {
-                    rose_addr_t value = fixupInfoExpr("S", reloc, resolver, memmap, &target_va);
+                    Address value = fixupInfoExpr("S", reloc, resolver, memmap, &target_va);
                     fixupApply(value, reloc, memmap, target_va, 4);
                     break;
                 }
@@ -1308,12 +1307,12 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
                     break;
                 }
                 case SgAsmElfRelocEntry::R_386_RELATIVE: {
-                    rose_addr_t value = fixupInfoExpr("4BA+", reloc, resolver, memmap, &target_va);
+                    Address value = fixupInfoExpr("4BA+", reloc, resolver, memmap, &target_va);
                     fixupApply(value, reloc, memmap, target_va, 4);
                     break;
                 }
                 case SgAsmElfRelocEntry::R_386_32: {
-                    rose_addr_t value = fixupInfoExpr("4SA+", reloc, resolver, memmap, &target_va);
+                    Address value = fixupInfoExpr("4SA+", reloc, resolver, memmap, &target_va);
                     fixupApply(value, reloc, memmap, target_va, 4);
                     break;
                 }
@@ -1353,13 +1352,13 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
             switch (reloc->get_type()) {
                 case SgAsmElfRelocEntry::R_X86_64_JUMP_SLOT:
                 case SgAsmElfRelocEntry::R_X86_64_GLOB_DAT: {
-                    rose_addr_t value = fixupInfoExpr("S", reloc, resolver, memmap, &target_va);
+                    Address value = fixupInfoExpr("S", reloc, resolver, memmap, &target_va);
                     fixupApply(value, reloc, memmap, target_va, 8);
                     break;
                 }
                 case SgAsmElfRelocEntry::R_X86_64_32: {
                     /* FIXME: Not sure if this is correct.  Are both the addend and result only 32 bits? [RPM 2010-09-16] */
-                    rose_addr_t value = fixupInfoExpr("4SA+", reloc, resolver, memmap, &target_va);
+                    Address value = fixupInfoExpr("4SA+", reloc, resolver, memmap, &target_va);
                     if (value > 0xffffffff) {
                         trace <<"    value exceeds 32-bit range\n";
                         throw Exception("value exceeds 32-bit range");
@@ -1370,18 +1369,18 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
                 case SgAsmElfRelocEntry::R_X86_64_32S: {
                     /* FIXME: Not sure if this is correct. Why would we need to sign extend to 64 bits if we're only
                      *        writing 32 bits back to memory? [RPM 2010-09-16] */
-                    rose_addr_t value = fixupInfoExpr("4SA+", reloc, resolver, memmap, &target_va);
+                    Address value = fixupInfoExpr("4SA+", reloc, resolver, memmap, &target_va);
                     value = IntegerOps::signExtend<32, 64>(value);
                     fixupApply(value, reloc, memmap, target_va, 4);
                     break;
                 }
                 case SgAsmElfRelocEntry::R_X86_64_64: {
-                    rose_addr_t value = fixupInfoExpr("8SA+", reloc, resolver, memmap, &target_va);
+                    Address value = fixupInfoExpr("8SA+", reloc, resolver, memmap, &target_va);
                     fixupApply(value, reloc, memmap, target_va, 8);
                     break;
                 }
                 case SgAsmElfRelocEntry::R_X86_64_RELATIVE: {
-                    rose_addr_t value = fixupInfoExpr("8BA+", reloc, resolver, memmap, &target_va);
+                    Address value = fixupInfoExpr("8BA+", reloc, resolver, memmap, &target_va);
                     fixupApply(value, reloc, memmap, target_va, 8);
                     break;
                 }
@@ -1540,7 +1539,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 // {
 //   ElfSymbolMapEntry() : symbol(NULL){};
 // public:
-//   rose_addr_t get_va() const
+//   Address get_va() const
 //   { return symbol->get_value() + section->get_base_va();}
 //
 //   SgAsmElfSymbol* symbol;
@@ -1706,7 +1705,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 //   return ElfSymbolMapEntry();
 // }
 //
-// SgAsmElfSectionPtrList sectionsOfAddress(rose_addr_t va_addr,
+// SgAsmElfSectionPtrList sectionsOfAddress(Address va_addr,
 //                                          const SgAsmElfSectionPtrList &extentSortedSections)
 // {
 //   SgAsmElfSectionPtrList returnSections;
@@ -1722,7 +1721,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 //   return returnSections;
 // }
 //
-// SgAsmElfSection* chooseSectionAtAddress(rose_addr_t va_addr,
+// SgAsmElfSection* chooseSectionAtAddress(Address va_addr,
 //                                      const SgAsmElfSectionPtrList &extentSortedSections)
 // {
 //   // we always prefer sections to segments (both of which are SgAsmElfSection's
@@ -1785,7 +1784,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 // }
 //
 //
-// string stringOfSectionsOfAddress(rose_addr_t va_addr,
+// string stringOfSectionsOfAddress(Address va_addr,
 //                                    const SgAsmElfSectionPtrList& extentSortedSections)
 // {
 //   std::vector<SgAsmElfSection*> sections = sectionsOfAddress(va_addr,extentSortedSections);
@@ -1814,7 +1813,7 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryM
 //
 //   for(size_t i=0; i < entries.size(); ++i){
 //     const ElfSymbolMapEntry& entry = entries[i];
-//     rose_addr_t symbol_va = entry.get_va();
+//     Address symbol_va = entry.get_va();
 //     printf(" %01d 0x%016x %s\n", i, symbol_va, sectionString(entry.section).c_str());
 //     printf("   %s\n",stringOfSectionsOfAddress(symbol_va,extentSortedSections).c_str());
 //   }

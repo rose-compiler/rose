@@ -45,8 +45,7 @@ SharedMemoryContext::SharedMemoryContext(const Architecture::Ptr &architecture, 
 }
 
 SharedMemoryContext::SharedMemoryContext(const Architecture::Ptr &architecture, const Emulation::RiscOperators::Ptr &ops,
-                                         rose_addr_t accessingInstructionVa, rose_addr_t accessedVa,
-                                         const SymbolicExpression::Ptr &value)
+                                         Address accessingInstructionVa, Address accessedVa, const SymbolicExpression::Ptr &value)
     : phase(ConcolicPhase::EMULATION), architecture(architecture), ops(ops), ip(accessingInstructionVa),
       accessedVas(AddressInterval::baseSize(accessedVa, (value->nBits()+7)/8)), direction(IoDirection::WRITE),
       valueWritten(value) {

@@ -1965,13 +1965,13 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     //       (extract[27] 0x05[32] 0x20[32] v2[32]))
     Nodes newArgs;
     const Interior *isPrevExtract = nullptr;            // is newArgs.back a suitable (extract X Y X)?
-    rose_addr_t prevLoOffset = 0;                       // valid only if isPrevExtract non-null
+    Address prevLoOffset = 0;                           // valid only if isPrevExtract non-null
     for (size_t argno = 0; argno < inode->nChildren(); ++argno) {
 
         // Does the argument have the form (extract X Y EXPR) where X and Y are known integers. If so, make isCurExtract point
         // to this argument and remember its low and high offsets.
         const Interior *isCurExtract = inode->childRaw(argno)->isInteriorNodeRaw();
-        rose_addr_t curLoOffset = 0, curHiOffset = 0;
+        Address curLoOffset = 0, curHiOffset = 0;
         if (isCurExtract != nullptr && isCurExtract->getOperator() == OP_EXTRACT &&
             isCurExtract->childRaw(0)->nBits() <= 8*sizeof(prevLoOffset) &&
             isCurExtract->childRaw(1)->nBits() <= 8*sizeof(prevLoOffset) &&

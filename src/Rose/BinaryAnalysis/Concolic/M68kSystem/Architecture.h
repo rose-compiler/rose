@@ -52,7 +52,7 @@ public:
     // Supporting functions
 private:
     // Return the address of the first instruction to be executed, if known.
-    Sawyer::Optional<rose_addr_t> entryAddress();
+    Sawyer::Optional<Address> entryAddress();
 
     // These are documented in the base class.
 public:
@@ -63,7 +63,7 @@ public:
     virtual void load(const boost::filesystem::path&) override;
     virtual ByteOrder::Endianness memoryByteOrder() override;
     virtual std::vector<ExecutionEventPtr> createMemoryHashEvents() override;
-    virtual std::vector<ExecutionEventPtr> createMemoryAdjustEvents(const MemoryMapPtr&, rose_addr_t insnVa) override;
+    virtual std::vector<ExecutionEventPtr> createMemoryAdjustEvents(const MemoryMapPtr&, Address insnVa) override;
     virtual std::vector<ExecutionEventPtr> createMemoryRestoreEvents() override;
     virtual void mapMemory(const AddressInterval&, unsigned permissions) override;
     virtual void unmapMemory(const AddressInterval&) override;

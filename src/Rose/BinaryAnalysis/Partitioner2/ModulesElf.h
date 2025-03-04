@@ -111,56 +111,56 @@ extractStaticArchive(const boost::filesystem::path &directory, const boost::file
  *  RVA which is added to the initial base address. */
 struct PltEntryMatcher: public InstructionMatcher {
     // These data members are generally optional, and filled in as they're matched.
-    rose_addr_t gotVa_ = 0;                             // address of global offset table
-    rose_addr_t gotEntryVa_ = 0;                        // address through which an indirect branch branches
+    Address gotVa_ = 0;                                 // address of global offset table
+    Address gotEntryVa_ = 0;                            // address through which an indirect branch branches
     size_t gotEntryNBytes_ = 0;                         // size of the global offset table entry in bytes
-    rose_addr_t gotEntry_ = 0;                          // address read from the GOT if the address is mapped (or zero)
+    Address gotEntry_ = 0;                              // address read from the GOT if the address is mapped (or zero)
     size_t nBytesMatched_ = 0;                          // number of bytes matched for PLT entry
-    rose_addr_t functionNumber_ = 0;                    // function number argument for the dynamic linker (usually a push)
-    rose_addr_t pltEntryAlignment_ = 1;                 // must PLT entries be aligned, and by how much?
+    Address functionNumber_ = 0;                        // function number argument for the dynamic linker (usually a push)
+    Address pltEntryAlignment_ = 1;                     // must PLT entries be aligned, and by how much?
 
 public:
-    explicit PltEntryMatcher(rose_addr_t gotVa)
+    explicit PltEntryMatcher(Address gotVa)
         : gotVa_(gotVa) {}
-    static Ptr instance(rose_addr_t gotVa) {
+    static Ptr instance(Address gotVa) {
         return Ptr(new PltEntryMatcher(gotVa));
     }
-    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor);
+    virtual bool match(const PartitionerConstPtr&, Address anchor);
 
     /** Address of global offset table. */
-    rose_addr_t gotVa() const { return gotVa_; }
+    Address gotVa() const { return gotVa_; }
 
     /** Size of the PLT entry in bytes. */
     size_t nBytesMatched() const { return nBytesMatched_; }
 
     /** Alignment of PLT entries w.r.t. the beginning of the PLT section. */
-    rose_addr_t pltEntryAlignment() const { return pltEntryAlignment_; }
+    Address pltEntryAlignment() const { return pltEntryAlignment_; }
 
     /** Address of the corresponding GOT entry. */
-    rose_addr_t gotEntryVa() const { return gotEntryVa_; }
+    Address gotEntryVa() const { return gotEntryVa_; }
 
     /** Size of the GOT entry in bytes. */
     size_t gotEntryNBytes() const { return gotEntryNBytes_; }
     
     /** Value stored in the GOT entry. */
-    rose_addr_t gotEntry() const { return gotEntry_; }
+    Address gotEntry() const { return gotEntry_; }
 
 private:
-    SgAsmInstruction* matchNop(const PartitionerConstPtr&, rose_addr_t va);
-    SgAsmInstruction* matchPush(const PartitionerConstPtr&, rose_addr_t var, rose_addr_t &n /*out*/);
-    SgAsmInstruction* matchDirectJump(const PartitionerConstPtr&, rose_addr_t va);
-    SgAsmInstruction* matchIndirectJump(const PartitionerConstPtr&, rose_addr_t va,
-                                        rose_addr_t &indirectVa /*out*/, size_t &indirectNBytes /*out*/);
-    SgAsmInstruction* matchIndirectJumpEbx(const PartitionerConstPtr&, rose_addr_t va,
-                                           rose_addr_t &offsetFromEbx /*out*/, size_t &indirectNBytes /*out*/);
-    SgAsmInstruction* matchAarch64Adrp(const PartitionerConstPtr&, rose_addr_t va, rose_addr_t &value /*out*/);
-    SgAsmInstruction* matchAarch64Ldr(const PartitionerConstPtr&, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
-                                      rose_addr_t &indirectNBytes /*out*/);
-    SgAsmInstruction* matchAarch64Add(const PartitionerConstPtr&, rose_addr_t va);
-    SgAsmInstruction* matchAarch64Br(const PartitionerConstPtr&, rose_addr_t va);
-    SgAsmInstruction* matchAarch32CopyPcToIp(const PartitionerConstPtr&, rose_addr_t va, uint32_t &result);
-    SgAsmInstruction* matchAarch32AddConstToIp(const PartitionerConstPtr&, rose_addr_t va, uint32_t &addend);
-    SgAsmInstruction* matchAarch32IndirectBranch(const PartitionerConstPtr&, rose_addr_t va, uint32_t &addend);
+    SgAsmInstruction* matchNop(const PartitionerConstPtr&, Address va);
+    SgAsmInstruction* matchPush(const PartitionerConstPtr&, Address var, Address &n /*out*/);
+    SgAsmInstruction* matchDirectJump(const PartitionerConstPtr&, Address va);
+    SgAsmInstruction* matchIndirectJump(const PartitionerConstPtr&, Address va, Address &indirectVa /*out*/,
+                                        size_t &indirectNBytes /*out*/);
+    SgAsmInstruction* matchIndirectJumpEbx(const PartitionerConstPtr&, Address va, Address &offsetFromEbx /*out*/,
+                                           size_t &indirectNBytes /*out*/);
+    SgAsmInstruction* matchAarch64Adrp(const PartitionerConstPtr&, Address va, Address &value /*out*/);
+    SgAsmInstruction* matchAarch64Ldr(const PartitionerConstPtr&, Address va, Address &indirectVa /*in,out*/,
+                                      Address &indirectNBytes /*out*/);
+    SgAsmInstruction* matchAarch64Add(const PartitionerConstPtr&, Address va);
+    SgAsmInstruction* matchAarch64Br(const PartitionerConstPtr&, Address va);
+    SgAsmInstruction* matchAarch32CopyPcToIp(const PartitionerConstPtr&, Address va, uint32_t &result);
+    SgAsmInstruction* matchAarch32AddConstToIp(const PartitionerConstPtr&, Address va, uint32_t &addend);
+    SgAsmInstruction* matchAarch32IndirectBranch(const PartitionerConstPtr&, Address va, uint32_t &addend);
 };
 
 /** Build may-return white and black lists. */

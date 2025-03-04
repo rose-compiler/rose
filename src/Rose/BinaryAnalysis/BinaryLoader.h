@@ -380,7 +380,7 @@ public:
      *
      *  This method is called with a memory map that describes what has been mapped so far, a file header for the sections
      *  that are about to be mapped, and a list of sections about to be mapped. */
-    virtual rose_addr_t rebase(const MemoryMap::Ptr&/*in,out*/, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList&) {
+    virtual Address rebase(const MemoryMap::Ptr&/*in,out*/, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList&) {
         return header->get_baseVa();
     }
 
@@ -402,8 +402,8 @@ public:
      *  both values results in each value satisfying its alignment constraint.
      *
      *  Note that it is not always possible to find an adjustment. When no adjustment can be found an Exception is thrown. */
-    rose_addr_t bialign(rose_addr_t val1, rose_addr_t align1,
-                        rose_addr_t val2, rose_addr_t align2);
+    Address bialign(Address val1, Address align1,
+                        Address val2, Address align2);
 
     /** For a given section, return information about how the section contributes to the memory map.
      *
@@ -446,10 +446,10 @@ public:
      *  be sufficiently influenced by the values that are returned.  In this case, this method should perform the mapping
      *  and return CONTRIB_NONE to prevent the caller from doing any further mapping. */
     virtual MappingContribution alignValues(SgAsmGenericSection*, const MemoryMap::Ptr&,
-                                            rose_addr_t *malign_lo, rose_addr_t *malign_hi,
-                                            rose_addr_t *va, rose_addr_t *mem_size,
-                                            rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
-                                            rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
+                                            Address *malign_lo, Address *malign_hi,
+                                            Address *va, Address *mem_size,
+                                            Address *offset, Address *file_size, bool *map_private,
+                                            Address *va_offset, bool *anon_lo, bool *anon_hi,
                                             ConflictResolution *resolve);
 
     /** Selects loadable sections.

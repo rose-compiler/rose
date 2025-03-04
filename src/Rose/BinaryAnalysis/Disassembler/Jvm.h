@@ -42,26 +42,22 @@ public:
     // Public methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t va,
-                                             AddressSet* successors=nullptr) override;
+    virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, Address va, AddressSet* successors=nullptr) override;
 
     virtual SgAsmInstruction* makeUnknownInstruction(const Disassembler::Exception&) override;
 
 private:
-    size_t appendTableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
-                             SgUnsignedCharList &chars, SgAsmOperandList* operands);
-    size_t appendLookupswitch(const MemoryMap::Ptr &map, rose_addr_t start,
-                              SgUnsignedCharList &chars, SgAsmOperandList* operands);
+    size_t appendTableswitch(const MemoryMap::Ptr &map, Address start, SgUnsignedCharList &chars, SgAsmOperandList* operands);
+    size_t appendLookupswitch(const MemoryMap::Ptr &map, Address start, SgUnsignedCharList &chars, SgAsmOperandList* operands);
     template <class T>
-      size_t appendOperand(const MemoryMap::Ptr &map, rose_addr_t va,
-                           SgUnsignedCharList &chars, SgAsmOperandList* operands);
+    size_t appendOperand(const MemoryMap::Ptr &map, Address va, SgUnsignedCharList &chars, SgAsmOperandList* operands);
 
     /* beginning offset to code segment being processed */
-    rose_addr_t codeOffset_;
+    Address codeOffset_;
 
 public:
-    rose_addr_t codeOffset();
-    void codeOffset(rose_addr_t offset);
+    Address codeOffset();
+    void codeOffset(Address offset);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization

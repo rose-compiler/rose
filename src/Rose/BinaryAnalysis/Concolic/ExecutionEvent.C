@@ -91,7 +91,7 @@ ExecutionEvent::instance() {
 }
 
 ExecutionEvent::Ptr
-ExecutionEvent::noAction(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip) {
+ExecutionEvent::noAction(const TestCase::Ptr &tc, const ExecutionLocation &loc, Address ip) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::NONE;
     e->testCase_ = tc;
@@ -101,8 +101,8 @@ ExecutionEvent::noAction(const TestCase::Ptr &tc, const ExecutionLocation &loc, 
 }
 
 ExecutionEvent::Ptr
-ExecutionEvent::bulkMemoryMap(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                              const AddressInterval &where, unsigned permissions) {
+ExecutionEvent::bulkMemoryMap(const TestCase::Ptr &tc, const ExecutionLocation &loc, Address ip, const AddressInterval &where,
+                              unsigned permissions) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::BULK_MEMORY_MAP;
     e->testCase_ = tc;
@@ -114,8 +114,7 @@ ExecutionEvent::bulkMemoryMap(const TestCase::Ptr &tc, const ExecutionLocation &
 }
 
 ExecutionEvent::Ptr
-ExecutionEvent::bulkMemoryUnmap(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                                const AddressInterval &where) {
+ExecutionEvent::bulkMemoryUnmap(const TestCase::Ptr &tc, const ExecutionLocation &loc, Address ip, const AddressInterval &where) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::BULK_MEMORY_UNMAP;
     e->testCase_ = tc;
@@ -126,8 +125,8 @@ ExecutionEvent::bulkMemoryUnmap(const TestCase::Ptr &tc, const ExecutionLocation
 }
 
 ExecutionEvent::Ptr
-ExecutionEvent::bulkMemoryWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                                const AddressInterval &where, const std::vector<uint8_t> &bytes) {
+ExecutionEvent::bulkMemoryWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, Address ip, const AddressInterval &where,
+                                const std::vector<uint8_t> &bytes) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::BULK_MEMORY_WRITE;
     e->testCase_ = tc;
@@ -140,8 +139,8 @@ ExecutionEvent::bulkMemoryWrite(const TestCase::Ptr &tc, const ExecutionLocation
 }
 
 ExecutionEvent::Ptr
-ExecutionEvent::bulkMemoryHash(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                               const AddressInterval &where, const Combinatorics::Hasher::Digest &digest) {
+ExecutionEvent::bulkMemoryHash(const TestCase::Ptr &tc, const ExecutionLocation &loc, Address ip, const AddressInterval &where,
+                               const Combinatorics::Hasher::Digest &digest) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::BULK_MEMORY_HASH;
     e->testCase_ = tc;
@@ -154,9 +153,9 @@ ExecutionEvent::bulkMemoryHash(const TestCase::Ptr &tc, const ExecutionLocation 
 }
 
 ExecutionEvent::Ptr
-ExecutionEvent::memoryWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                            const AddressInterval &where, const SymbolicExpression::Ptr &variable,
-                            const SymbolicExpression::Ptr &value, const SymbolicExpression::Ptr &expression) {
+ExecutionEvent::memoryWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, Address ip, const AddressInterval &where,
+                            const SymbolicExpression::Ptr &variable, const SymbolicExpression::Ptr &value,
+                            const SymbolicExpression::Ptr &expression) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::MEMORY_WRITE;
     e->testCase_ = tc;
@@ -172,7 +171,7 @@ ExecutionEvent::memoryWrite(const TestCase::Ptr &tc, const ExecutionLocation &lo
 }
 
 ExecutionEvent::Ptr
-ExecutionEvent::bulkRegisterWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
+ExecutionEvent::bulkRegisterWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, Address ip,
                                   const Sawyer::Container::BitVector &values) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::BULK_REGISTER_WRITE;
@@ -184,9 +183,9 @@ ExecutionEvent::bulkRegisterWrite(const TestCase::Ptr &tc, const ExecutionLocati
 }
 
 ExecutionEvent::Ptr
-ExecutionEvent::registerWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                              RegisterDescriptor where, const SymbolicExpression::Ptr &variable,
-                              const SymbolicExpression::Ptr &value, const SymbolicExpression::Ptr &expression) {
+ExecutionEvent::registerWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, Address ip, RegisterDescriptor where,
+                              const SymbolicExpression::Ptr &variable, const SymbolicExpression::Ptr &value,
+                              const SymbolicExpression::Ptr &expression) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::REGISTER_WRITE;
     e->testCase_ = tc;
@@ -202,8 +201,8 @@ ExecutionEvent::registerWrite(const TestCase::Ptr &tc, const ExecutionLocation &
 }
 
 ExecutionEvent::Ptr
-ExecutionEvent::osSyscall(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                          unsigned function, const std::vector<uint64_t> &arguments) {
+ExecutionEvent::osSyscall(const TestCase::Ptr &tc, const ExecutionLocation &loc, Address ip, unsigned function,
+                          const std::vector<uint64_t> &arguments) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::OS_SYSCALL;
     e->testCase_ = tc;
@@ -215,9 +214,9 @@ ExecutionEvent::osSyscall(const TestCase::Ptr &tc, const ExecutionLocation &loc,
 }
 
 ExecutionEvent::Ptr
-ExecutionEvent::osSharedMemory(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                               const AddressInterval &where, const SymbolicExpression::Ptr &variable,
-                               const SymbolicExpression::Ptr &value, const SymbolicExpression::Ptr &expression) {
+ExecutionEvent::osSharedMemory(const TestCase::Ptr &tc, const ExecutionLocation &loc, Address ip, const AddressInterval &where,
+                               const SymbolicExpression::Ptr &variable, const SymbolicExpression::Ptr &value,
+                               const SymbolicExpression::Ptr &expression) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::OS_SHARED_MEMORY;
     e->testCase_ = tc;
@@ -283,13 +282,13 @@ ExecutionEvent::location(const ExecutionLocation &loc) {
     location_ = loc;
 }
 
-rose_addr_t
+Address
 ExecutionEvent::instructionPointer() const {
     return ip_;
 }
 
 void
-ExecutionEvent::instructionPointer(rose_addr_t ip) {
+ExecutionEvent::instructionPointer(Address ip) {
     ip_ = ip;
 }
 

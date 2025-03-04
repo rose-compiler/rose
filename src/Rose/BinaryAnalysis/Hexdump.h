@@ -49,19 +49,19 @@ struct HexdumpFormat {
  *  terms of the stream version.
  *
  * @{ */
-void hexdump(std::ostream&, rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
-void hexdump(std::ostream&, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data, bool multiline=true);
-void hexdump(std::ostream&, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data, bool multiline=true);
+void hexdump(std::ostream&, Address base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
+void hexdump(std::ostream&, Address base_addr, const std::string &prefix, const SgUnsignedCharList& data, bool multiline=true);
+void hexdump(std::ostream&, Address base_addr, const std::string &prefix, const SgFileContentList& data, bool multiline=true);
 
 // Same, but returning a string instead.
-std::string hexdump(rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
-std::string hexdump(rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data, bool multiline=true);
-std::string hexdump(rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data, bool multiline=true);
+std::string hexdump(Address base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
+std::string hexdump(Address base_addr, const std::string &prefix, const SgUnsignedCharList& data, bool multiline=true);
+std::string hexdump(Address base_addr, const std::string &prefix, const SgFileContentList& data, bool multiline=true);
 
 // Same, but output to a FILE* instead.
-void hexdump(FILE*, rose_addr_t base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
-void hexdump(FILE*, rose_addr_t base_addr, const std::string &prefix, const SgUnsignedCharList& data, bool multiline=true);
-void hexdump(FILE*, rose_addr_t base_addr, const std::string &prefix, const SgFileContentList& data, bool multiline=true);
+void hexdump(FILE*, Address base_addr, const unsigned char *data, size_t data_sz, const HexdumpFormat&);
+void hexdump(FILE*, Address base_addr, const std::string &prefix, const SgUnsignedCharList& data, bool multiline=true);
+void hexdump(FILE*, Address base_addr, const std::string &prefix, const SgFileContentList& data, bool multiline=true);
 /** @} */
 
 } // namespace

@@ -28,7 +28,7 @@ SourceLocations::operator=(const SourceLocations &other) {
 }
 
 void
-SourceLocations::insert(const SourceLocation &src, rose_addr_t va) {
+SourceLocations::insert(const SourceLocation &src, Address va) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     eraseNS(va);
     if (!src.isEmpty()) {
@@ -41,7 +41,7 @@ void
 SourceLocations::insert(const SourceLocation &src, const AddressInterval &vas) {
     // No lock necessary since we call synchronized insert.
     // FIXME[Robb Matzke 2020-02-07]: this could be more efficient instead of doing one at a time
-    for (rose_addr_t va: vas)
+    for (Address va: vas)
         insert(src, va);
 }
 
@@ -53,13 +53,13 @@ SourceLocations::insert(const SourceLocation &src, const AddressIntervalSet &vas
 }
 
 void
-SourceLocations::erase(const SourceLocation &src, rose_addr_t va) {
+SourceLocations::erase(const SourceLocation &src, Address va) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     eraseNS(src, va);
 }
 
 void
-SourceLocations::eraseNS(const SourceLocation &src, rose_addr_t va) {
+SourceLocations::eraseNS(const SourceLocation &src, Address va) {
     if (src.isEmpty() || addrToSrc_.getOrDefault(va) != src)
         return;
     addrToSrc_.erase(va);
@@ -92,13 +92,13 @@ SourceLocations::erase(const SourceLocation &src, const AddressIntervalSet &vas)
 }
 
 void
-SourceLocations::erase(rose_addr_t va) {
+SourceLocations::erase(Address va) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     eraseNS(va);
 }
 
 void
-SourceLocations::eraseNS(rose_addr_t va) {
+SourceLocations::eraseNS(Address va) {
     SourceLocation src = addrToSrc_.getOrDefault(va);
     if (!src.isEmpty()) {
         srcToAddr_[src].erase(va);
@@ -114,7 +114,7 @@ void
 SourceLocations::erase(const AddressInterval &vas) {
     // No lock necessary since we call synchronized erase.
     // FIXME[Robb Matzke 2020-02-07]: This could be more efficient instead of doing one at a time
-    for (rose_addr_t va: vas)
+    for (Address va: vas)
         erase(va);
 }
 
@@ -184,7 +184,7 @@ SourceLocations::fillHoles(size_t maxHoleSize) {
 }
 
 SourceLocation
-SourceLocations::get(rose_addr_t va) const {
+SourceLocations::get(Address va) const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return addrToSrc_.getOrDefault(va);
 }
@@ -195,7 +195,7 @@ SourceLocations::get(const SourceLocation &src) const {
     return srcToAddr_.getOrDefault(src);
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 SourceLocations::firstAddress(const SourceLocation &src) const {
     // No lock necessary since we call synchronized get.
     const AddressIntervalSet &vas = get(src);
@@ -235,7 +235,7 @@ SourceLocations::printSrcToAddr(std::ostream &out, const std::string &prefix) co
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     for (const SourceToAddress::Node &node: srcToAddr_.nodes()) {
         out <<prefix <<node.key() <<":";
-        for (rose_addr_t va: node.value().scalars())
+        for (Address va: node.value().scalars())
             out <<" " <<StringUtility::addrToString(va);
         out <<"\n";
     }

@@ -177,7 +177,7 @@ private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
 
     bool isFrozen_;                                     // True when the object becomes read-only
-    rose_addr_t startVa_;                               // Starting address, perhaps redundant with insns_[0]->p_address
+    Address startVa_;                                   // Starting address, perhaps redundant with insns_[0]->p_address
     std::string comment_;                               // Mutli-line plain-text comment
     std::vector<SgAsmInstruction*> insns_;              // Instructions in the order they're executed
     BasicBlockSemantics semantics_;                     // All semantics-related information
@@ -188,14 +188,14 @@ private:
     // list. Therefore, we also keep a mapping from instruction address to position in the list. The mapping is only used when
     // the bigBlock size is reached.
     static const size_t bigBlock_ = 200;
-    typedef Sawyer::Container::Map<rose_addr_t, size_t> InsnAddrMap;
+    typedef Sawyer::Container::Map<Address, size_t> InsnAddrMap;
     InsnAddrMap insnAddrMap_;                           // maps instruction address to index in insns_ vector
 
     // The following members are caches either because their value is seldom needed and expensive to compute, or because
     // the value is best computed at a higher layer than a single basic block (e.g., in the partitioner) yet it makes the
     // most sense to store it here. Make sure clearCache() resets these to initial values.
     Sawyer::Cached<Successors> successors_;             // control flow successors out of final instruction
-    Sawyer::Cached<std::set<rose_addr_t> > ghostSuccessors_;// non-followed successors from opaque predicates, all insns
+    Sawyer::Cached<std::set<Address> > ghostSuccessors_;// non-followed successors from opaque predicates, all insns
     Sawyer::Cached<bool> isFunctionCall_;               // is this block semantically a function call?
     Sawyer::Cached<bool> isFunctionReturn_;             // is this block semantically a return from the function?
     Sawyer::Cached<bool> mayReturn_;                    // a function return is reachable from this basic block in the CFG
@@ -225,7 +225,7 @@ protected:
     BasicBlock();                                       // needed for serialization
 
     // use instance() instead
-    BasicBlock(rose_addr_t startVa, const PartitionerConstPtr&);
+    BasicBlock(Address startVa, const PartitionerConstPtr&);
 public:
     ~BasicBlock();
 
@@ -235,7 +235,7 @@ public:
      *  The @p startVa is the starting address for this basic block.  The @p partitioner is the partitioner on whose behalf
      *  this basic block is created.  The partitioner is not stored in the basic block, but is only used to initialize
      *  certain data members of the block (such as its instruction dispatcher). */
-    static Ptr instance(rose_addr_t startVa, const PartitionerConstPtr &partitioner) {
+    static Ptr instance(Address startVa, const PartitionerConstPtr &partitioner) {
         return Ptr(new BasicBlock(startVa, partitioner));
     }
 
@@ -244,7 +244,7 @@ public:
      *  The @p startVa is the starting address for this basic block.  The @p partitioner is the partitioner on whose behalf
      *  this basic block is created.  The partitioner is not stored in the basic block, but is only used to initialize
      *  certain data members of the block (such as its instruction dispatcher). */
-    virtual Ptr create(rose_addr_t startVa, const PartitionerConstPtr &partitioner) const {
+    virtual Ptr create(Address startVa, const PartitionerConstPtr &partitioner) const {
         return instance(startVa, partitioner);
     }
 
@@ -304,7 +304,7 @@ public:
      *  block.
      *
      *  Thread safety: This method is thread-safe. */
-    rose_addr_t address() const {
+    Address address() const {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         return startVa_;
     }
@@ -323,7 +323,7 @@ public:
      *  block.  The final executed instruction need not be the instruction with the highest address.
      *
      *  Thread safety: This method is not thread safe. */
-    rose_addr_t fallthroughVa() const;
+    Address fallthroughVa() const;
 
     /** Get the number of instructions in this block.
      *
@@ -351,7 +351,7 @@ public:
      *  address, returns null otherwise.
      *
      *  Thread safety: This method is not thread safe. */
-    SgAsmInstruction* instructionExists(rose_addr_t startVa) const;
+    SgAsmInstruction* instructionExists(Address startVa) const;
 
     /** Determines if this basic block contains the specified instruction.
      *
@@ -367,7 +367,7 @@ public:
      *  then returns nothing.
      *
      * @{ */
-    Sawyer::Optional<size_t> instructionIndex(rose_addr_t) const;
+    Sawyer::Optional<size_t> instructionIndex(Address) const;
     Sawyer::Optional<size_t> instructionIndex(SgAsmInstruction*) const;
     /** @} */
 
@@ -413,7 +413,7 @@ public:
      *  operands. Some architectures call these "immediate values".
      *
      *  Thread safety: This method is thread safe. */
-    std::set<rose_addr_t> explicitConstants() const;
+    std::set<Address> explicitConstants() const;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -527,7 +527,7 @@ public:
      *  in the basic block.
      *
      *  Thread safety: This method is not thread safe since it returns a reference. */
-    const Sawyer::Cached<std::set<rose_addr_t> >& ghostSuccessors() const { return ghostSuccessors_; }
+    const Sawyer::Cached<std::set<Address> >& ghostSuccessors() const { return ghostSuccessors_; }
 
     /** Insert a new successor.
      *
@@ -540,7 +540,7 @@ public:
      *
      *  @{ */
     void insertSuccessor(const BaseSemantics::SValuePtr&, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
-    void insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
+    void insertSuccessor(Address va, size_t nBits, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
     /** @} */
 
     /** Clear all successor information.

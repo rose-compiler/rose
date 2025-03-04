@@ -154,7 +154,7 @@ host_to_le(unsigned h, uint32_t *n) {
 
 // [Robb Matzke 2023-06-09]: deprecated
 void
-host_to_le(rose_addr_t h, uint64_t *n) {
+host_to_le(Address h, uint64_t *n) {
     hostToLe(h, n);
 }
 
@@ -250,7 +250,7 @@ host_to_be(unsigned h, uint32_t *n) {
 
 // [Robb Matzke 2023-06-09]: deprecated
 void
-host_to_be(rose_addr_t h, uint64_t *n) {
+host_to_be(Address h, uint64_t *n) {
     hostToBe(h, n);
 }
 
@@ -370,7 +370,7 @@ host_to_disk(Endianness sex, unsigned h, uint32_t *np) {
 
 // [Robb Matzke 2023-06-09]: deprecated
 void
-host_to_disk(Endianness sex, rose_addr_t h, uint64_t *np) {
+host_to_disk(Endianness sex, Address h, uint64_t *np) {
     hostToDisk(sex, h, np);
 }
 

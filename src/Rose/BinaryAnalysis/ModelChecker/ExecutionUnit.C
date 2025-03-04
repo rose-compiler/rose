@@ -25,7 +25,7 @@ ExecutionUnit::ExecutionUnit(const SourceLocation &sloc)
 
 ExecutionUnit::~ExecutionUnit() {}
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 ExecutionUnit::address() const {
     return Sawyer::Nothing();
 }
@@ -63,7 +63,7 @@ ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstructio
             // Update the instrucition pointer if the exception occurred before that could happen. Assume that we would just
             // execute instruction that follows the failed instruction in memory.
             const RegisterDescriptor IP = cpu->instructionPointerRegister();
-            const rose_addr_t curVa = insn->get_address();
+            const Address curVa = insn->get_address();
             if (cpu->operators()->peekRegister(IP)->toUnsigned().orElse(curVa) == curVa) {
                 BS::SValue::Ptr nextVa = cpu->operators()->number_(IP.nBits(), curVa + insn->get_size());
                 cpu->operators()->writeRegister(cpu->instructionPointerRegister(), nextVa);

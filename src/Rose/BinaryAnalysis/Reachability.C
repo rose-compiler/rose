@@ -542,7 +542,7 @@ Reachability::findExplicitInstructionReferents(const P2::Partitioner::ConstPtr &
     ASSERT_not_null(partitioner);
     ASSERT_not_null(bb);
     std::set<size_t> vertexIds;
-    for (rose_addr_t constant: bb->explicitConstants()) {
+    for (Address constant: bb->explicitConstants()) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(constant);
         if (vertex != partitioner->cfg().vertices().end() && vertex->value().type() == P2::V_BASIC_BLOCK)
             vertexIds.insert(vertex->id());
@@ -577,16 +577,16 @@ Reachability::findExplicitMemoryReferents(const P2::Partitioner::ConstPtr &parti
     if (ByteOrder::ORDER_UNSPECIFIED == sex)
         sex = partitioner->instructionProvider().defaultByteOrder();
 
-    ASSERT_require(bytesPerWord <= sizeof(rose_addr_t));
+    ASSERT_require(bytesPerWord <= sizeof(Address));
     ASSERT_not_null(map);
     alignment = std::max(alignment, (size_t)1);
     uint8_t buf[4096];                                  // arbitrary size
-    rose_addr_t bufVa = map->hull().least();
+    Address bufVa = map->hull().least();
     std::set<size_t> vertexIds;
 
     while (map->atOrAfter(bufVa).next().assignTo(bufVa)) {
         {
-            rose_addr_t tmp = alignUp(bufVa, alignment);
+            Address tmp = alignUp(bufVa, alignment);
             if (tmp < bufVa)
                 break;                                  // overflow
             bufVa = tmp;
@@ -605,7 +605,7 @@ Reachability::findExplicitMemoryReferents(const P2::Partitioner::ConstPtr &parti
             if (bufOffset + bytesPerWord > bufSize)
                 break;
 
-            rose_addr_t targetVa = 0;
+            Address targetVa = 0;
             switch (sex) {
                 case ByteOrder::ORDER_UNSPECIFIED:
                     static bool messageShown = false;
@@ -639,7 +639,7 @@ Reachability::findImplicitFunctionReferents(const P2::Partitioner::ConstPtr &par
     ASSERT_not_null(function);
     std::set<size_t> vertexIds;
 
-    for (rose_addr_t constant: partitioner->functionDataFlowConstants(function)) {
+    for (Address constant: partitioner->functionDataFlowConstants(function)) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(constant);
         if (vertex != partitioner->cfg().vertices().end() && vertex->value().type() == P2::V_BASIC_BLOCK)
             vertexIds.insert(vertex->id());

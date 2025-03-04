@@ -17,10 +17,10 @@ namespace Partitioner2 {
 
 /** Configuration information for a basic block. */
 class BasicBlockConfiguration {
-    rose_addr_t address_ = 0;
+    Address address_ = 0;
     std::string comment_;
-    Sawyer::Optional<rose_addr_t> finalInsnVa_;
-    std::set<rose_addr_t> successorVas_;
+    Sawyer::Optional<Address> finalInsnVa_;
+    std::set<Address> successorVas_;
     SourceLocation sourceLocation_;
 
 public:
@@ -28,12 +28,12 @@ public:
     BasicBlockConfiguration() {}
 
     /** Configuration information for a basic block. */
-    explicit BasicBlockConfiguration(rose_addr_t va): address_(va) {}
+    explicit BasicBlockConfiguration(Address va): address_(va) {}
 
     /** Property: starting address.
      *
      *  Addresses are read-only and specified in the constructor. */
-    rose_addr_t address() const { return address_; }
+    Address address() const { return address_; }
 
     /** Property: comment.
      *
@@ -58,8 +58,8 @@ public:
      *  of the other properties to be well defined.
      *
      * @{ */
-    Sawyer::Optional<rose_addr_t> finalInstructionVa() const { return finalInsnVa_; }
-    BasicBlockConfiguration& finalInstructionVa(const Sawyer::Optional<rose_addr_t> &va) { finalInsnVa_ = va; return *this; }
+    Sawyer::Optional<Address> finalInstructionVa() const { return finalInsnVa_; }
+    BasicBlockConfiguration& finalInstructionVa(const Sawyer::Optional<Address> &va) { finalInsnVa_ = va; return *this; }
     /** @} */
 
     /** Property: control flow successors.
@@ -69,10 +69,10 @@ public:
      *  only apply when the basic block reaches its final instruction (see @sa finalInstructionVa).
      *
      * @{ */
-    const std::set<rose_addr_t>& successorVas() const { return successorVas_; }
-    std::set<rose_addr_t>& successorVas() { return successorVas_; }
-    BasicBlockConfiguration& successorVas(const std::set<rose_addr_t> &vas) { successorVas_ = vas; return *this; }
-    BasicBlockConfiguration& insertSuccessorVa(rose_addr_t va) { successorVas_.insert(va); return *this; }
+    const std::set<Address>& successorVas() const { return successorVas_; }
+    std::set<Address>& successorVas() { return successorVas_; }
+    BasicBlockConfiguration& successorVas(const std::set<Address> &vas) { successorVas_ = vas; return *this; }
+    BasicBlockConfiguration& insertSuccessorVa(Address va) { successorVas_.insert(va); return *this; }
     BasicBlockConfiguration& clearSuccessorVas() { successorVas_.clear(); return *this; }
     /** @} */
 };
@@ -80,7 +80,7 @@ public:
 
 /** Configuration information for a data block. */
 class DataBlockConfiguration {
-    rose_addr_t address_;
+    Address address_;
     std::string name_;
     std::string comment_;
     SourceLocation sourceLocation_;
@@ -90,12 +90,12 @@ public:
     DataBlockConfiguration(): address_(0) {}
 
     /** Configuration information for a data block. */
-    explicit DataBlockConfiguration(rose_addr_t va): address_(va) {}
+    explicit DataBlockConfiguration(Address va): address_(va) {}
 
     /** Property: starting address.
      *
      *  Addresses are read-only and specified in the constructor. */
-    rose_addr_t address() const { return address_; }
+    Address address() const { return address_; }
 
     /** Property: name.
      *
@@ -126,7 +126,7 @@ public:
 
 /** Configuration information for a function. */
 class FunctionConfiguration {
-    Sawyer::Optional<rose_addr_t> address_;
+    Sawyer::Optional<Address> address_;
     std::string name_, defaultName_, comment_;
     Sawyer::Optional<int64_t> stackDelta_;
     Sawyer::Optional<bool> mayReturn_;
@@ -139,9 +139,9 @@ public:
     /** Configuration information for a function.
      *
      *  @{ */
-    explicit FunctionConfiguration(rose_addr_t va, const std::string &name=""): address_(va), name_(name) {}
+    explicit FunctionConfiguration(Address va, const std::string &name=""): address_(va), name_(name) {}
     explicit FunctionConfiguration(const std::string &name): name_(name) {}
-    FunctionConfiguration(const Sawyer::Optional<rose_addr_t> &va, const std::string &name): address_(va), name_(name) {}
+    FunctionConfiguration(const Sawyer::Optional<Address> &va, const std::string &name): address_(va), name_(name) {}
     /** @} */
     
     /** Property: address.
@@ -155,11 +155,11 @@ public:
      *   if (fconfig.address())
      *       std::cout <<address is " <<*fconfig.address() <<"\n";
      *   std::cout <<"address is " <<fconfig.address().orElse(0) <<"\n";
-     *   rose_addr_t va = 0;
+     *   Address va = 0;
      *   if (fconfig.address().assignTo(va))
      *       std::cout <<"address is " <<va <<"\n";
      * @endcode */
-    Sawyer::Optional<rose_addr_t> address() const { return address_; }
+    Sawyer::Optional<Address> address() const { return address_; }
 
     /** Property: name.
      *
@@ -237,7 +237,7 @@ public:
  *
  *  If the address is the start of a function, basic block, or data block, then use one of those configuration objects instead. */
 class AddressConfiguration {
-    rose_addr_t address_ = 0;
+    Address address_ = 0;
     std::string name_;
     std::string comment_;
     SourceLocation sourceLocation_;
@@ -247,13 +247,13 @@ public:
     AddressConfiguration() {}
 
     /** Construct a new address configuration object. */
-    explicit AddressConfiguration(rose_addr_t va)
+    explicit AddressConfiguration(Address va)
         : address_(va) {}
 
     /** Property: address.
      *
      *  The address property is read-only, set by the constructor. */
-    rose_addr_t address() const { return address_; }
+    Address address() const { return address_; }
 
     /** Property: name.
      *
@@ -280,11 +280,11 @@ public:
 /** Holds configuration information. */
 class Configuration {
 public:
-    typedef Sawyer::Container::Map<rose_addr_t, BasicBlockConfiguration> BasicBlockConfigurations;
-    typedef Sawyer::Container::Map<rose_addr_t, DataBlockConfiguration> DataBlockConfigurations;
-    typedef Sawyer::Container::Map<rose_addr_t, FunctionConfiguration> FunctionConfigurationsByAddress;
+    typedef Sawyer::Container::Map<Address, BasicBlockConfiguration> BasicBlockConfigurations;
+    typedef Sawyer::Container::Map<Address, DataBlockConfiguration> DataBlockConfigurations;
+    typedef Sawyer::Container::Map<Address, FunctionConfiguration> FunctionConfigurationsByAddress;
     typedef Sawyer::Container::Map<std::string, FunctionConfiguration> FunctionConfigurationsByName;
-    typedef Sawyer::Container::Map<rose_addr_t, AddressConfiguration> AddressConfigurations;
+    typedef Sawyer::Container::Map<Address, AddressConfiguration> AddressConfigurations;
 
 private:
     BasicBlockConfigurations bblockConfigurations_;
@@ -311,7 +311,7 @@ public:
      *
      *  If no configuration exists for a basic block starting at the specified address, then a reference to an empty
      *  configuration record is returned. */
-    const BasicBlockConfiguration& basicBlock(rose_addr_t) const;
+    const BasicBlockConfiguration& basicBlock(Address) const;
 
     /** All data block configuration details.
      *
@@ -324,7 +324,7 @@ public:
      *
      *  If no configuration exists for a data block starting at the specified address, then a reference to an empty
      *  configuration record is returned. */
-    const DataBlockConfiguration& dataBlock(rose_addr_t) const;
+    const DataBlockConfiguration& dataBlock(Address) const;
 
     /** All function configuration details for function configs that have addresses.
      *
@@ -346,7 +346,7 @@ public:
      *  reference to an empty configuration record is returned.
      *
      * @{ */
-    const FunctionConfiguration& function(rose_addr_t) const;
+    const FunctionConfiguration& function(Address) const;
     const FunctionConfiguration& function(const std::string &name) const;
     /** @} */
 
@@ -360,31 +360,31 @@ public:
     /** Configuration for a particular address.
      *
      *  If no configuration exists for the specified address, then a reference to an empty configuration record is returned. */
-    const AddressConfiguration& address(rose_addr_t) const;
+    const AddressConfiguration& address(Address) const;
 
     /** Lookup or insert a basic block.
      *
      *  If the basic block exists then return a reference to its configuration, otherwise create a new configuration for it. */
-    BasicBlockConfiguration& insertMaybeBasicBlock(rose_addr_t va);
+    BasicBlockConfiguration& insertMaybeBasicBlock(Address va);
 
     /** Lookup or insert a data block.
      *
      *  If the data block exists then return a reference to its configuration, otherwise create a new configuration for it. */
-    DataBlockConfiguration& insertMaybeDataBlock(rose_addr_t va);
+    DataBlockConfiguration& insertMaybeDataBlock(Address va);
 
     /** Lookup or insert a function.
      *
      *  If the function exists then return a reference to its configuration, otherwise create a new configuration for it.
      *
      * @{ */
-    FunctionConfiguration& insertMaybeFunction(rose_addr_t va, const std::string &name="");
+    FunctionConfiguration& insertMaybeFunction(Address va, const std::string &name="");
     FunctionConfiguration& insertMaybeFunction(const std::string &name);
     /** @} */
 
     /** Lookup or insert address details.
      *
      *  If the address exists then return a reference to its configuration, otherwise create a new configuration for it. */
-    AddressConfiguration& insertMaybeAddress(rose_addr_t va);
+    AddressConfiguration& insertMaybeAddress(Address va);
 
     /** Insert basic block configuration information.
      *
@@ -415,45 +415,45 @@ public:
      *  Returns the comment configured for the basic block at the specified address, or an empty string.
      *
      *  See also, @ref comment. */
-    std::string basicBlockComment(rose_addr_t bblockVa) const;
+    std::string basicBlockComment(Address bblockVa) const;
 
     /** Basic block final instruction address.
      *
      *  Returns the optional final instruction address for a basic block. If no such configuration information is avilable then
      *  nothing is returned. */
-    Sawyer::Optional<rose_addr_t> basicBlockFinalInstructionVa(rose_addr_t bblockVa) const;
+    Sawyer::Optional<Address> basicBlockFinalInstructionVa(Address bblockVa) const;
 
     /** Basic block successor addresses.
      *
      *  Returns the set of basic block successors. This set is only meaningful at the block's final instruction as returned by
      *  @ref basicBlockFinalInstructionVa. */
-    std::set<rose_addr_t> basicBlockSuccessorVas(rose_addr_t bblockVa) const;
+    std::set<Address> basicBlockSuccessorVas(Address bblockVa) const;
 
     /** Data block name.
      *
      *  Returns the name configured for a data block at the specified address, or an empty string. */
-    std::string dataBlockName(rose_addr_t dblockVa) const;
+    std::string dataBlockName(Address dblockVa) const;
 
     /** Data block comment.
      *
      *  Returns the comment configured for the data block at the specified address, or an empty string.
      *
      *  See also, @ref comment. */
-    std::string dataBlockComment(rose_addr_t dblockVa) const;
+    std::string dataBlockComment(Address dblockVa) const;
 
     /** Function name.
      *
      *  Returns the configured name for a function at the specified address.
      *
      *  @sa functionDefaultName */
-    std::string functionName(rose_addr_t functionVa) const;
+    std::string functionName(Address functionVa) const;
 
     /** Function default name.
      *
      *  Returns the configured default name for a function at the specified address.
      *
      *  @sa functionName */
-    std::string functionDefaultName(rose_addr_t functionVa) const;
+    std::string functionDefaultName(Address functionVa) const;
 
     /** Function comment.
      *
@@ -464,7 +464,7 @@ public:
      *  See also, @ref comment.
      *
      * @{ */
-    std::string functionComment(rose_addr_t functionVa) const;
+    std::string functionComment(Address functionVa) const;
     std::string functionComment(const std::string &functionName) const;
     std::string functionComment(const FunctionPtr&) const;
     /** @} */
@@ -476,7 +476,7 @@ public:
      *  return anything if "main" has an address in the configuration).
      *
      * @{ */
-    Sawyer::Optional<int64_t> functionStackDelta(rose_addr_t functionVa) const;
+    Sawyer::Optional<int64_t> functionStackDelta(Address functionVa) const;
     Sawyer::Optional<int64_t> functionStackDelta(const std::string &functionName) const;
     Sawyer::Optional<int64_t> functionStackDelta(const FunctionPtr&) const;
     /** @} */
@@ -492,7 +492,7 @@ public:
      *  you'll need to either dereference the return value or call something like @c orElse or @c assignTo.
      *
      * @{ */
-    Sawyer::Optional<bool> functionMayReturn(rose_addr_t functionVa) const;
+    Sawyer::Optional<bool> functionMayReturn(Address functionVa) const;
     Sawyer::Optional<bool> functionMayReturn(const std::string &functionName) const;
     Sawyer::Optional<bool> functionMayReturn(const FunctionPtr&) const;
     /** @} */
@@ -502,14 +502,14 @@ public:
      *  Returns the comment associated with the details for the specified address, if any.
      *
      *  See also, @ref comment. */
-    std::string addressComment(rose_addr_t va) const;
+    std::string addressComment(Address va) const;
 
     /** Address comment.
      *
      *  Returns the comment for the specified address by search first within the address details, then basic block details,
      *  then data block details, and finally function details. Returns the first non-empty comment that's found, or the empty
      *  string. */
-    std::string comment(rose_addr_t va) const;
+    std::string comment(Address va) const;
 
     /** Generate a YAML file. */
     void print(std::ostream&) const;

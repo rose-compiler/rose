@@ -273,7 +273,7 @@ BinaryToSource::emitBasicBlock(const P2::Partitioner::ConstPtr &partitioner, con
     ASSERT_not_null(partitioner);
     out <<"            case " <<StringUtility::addrToString(bblock->address()) <<":\n";
 
-    rose_addr_t fallThroughVa = 0;
+    Address fallThroughVa = 0;
     raisingOps_->resetState();
     for (SgAsmInstruction *insn: bblock->instructions()) {
         emitInstruction(insn, out);
@@ -317,7 +317,7 @@ BinaryToSource::emitFunction(const P2::Partitioner::ConstPtr &partitioner, const
         <<") {\n"
         <<"    while (" <<raisingOps_->registerVariableName(IP) <<" != ret_va) {\n"
         <<"        switch (" <<raisingOps_->registerVariableName(IP) <<") {\n";
-    for (rose_addr_t bblockVa: function->basicBlockAddresses()) {
+    for (Address bblockVa: function->basicBlockAddresses()) {
         P2::ControlFlowGraph::ConstVertexIterator placeholder = partitioner->findPlaceholder(bblockVa);
         ASSERT_require(partitioner->cfg().isValidVertex(placeholder));
         ASSERT_require(placeholder->value().type() == P2::V_BASIC_BLOCK);
@@ -403,7 +403,7 @@ BinaryToSource::emitMemoryInitialization(const P2::Partitioner::ConstPtr &partit
     }
 
     // Initialize the memory array with the contents of the memory map
-    rose_addr_t va = 0;
+    Address va = 0;
     uint8_t buf[8192];
     while (AddressInterval where = partitioner->memoryMap()->atOrAfter(va).limit(sizeof buf).read(buf)) {
         uint8_t *bufptr = buf;
@@ -429,7 +429,7 @@ BinaryToSource::emitMain(const P2::Partitioner::ConstPtr &partitioner, std::ostr
     Architecture::Base::ConstPtr arch = partitioner->architecture();
 
     // Initialize regsiters
-    Sawyer::Optional<rose_addr_t> initialIp;
+    Sawyer::Optional<Address> initialIp;
     if (settings_.initialInstructionPointer) {
         initialIp = *settings_.initialInstructionPointer;
     } else {
@@ -456,7 +456,7 @@ BinaryToSource::emitMain(const P2::Partitioner::ConstPtr &partitioner, std::ostr
 
     // Initialize call frame
     {
-        static const rose_addr_t magic = 0xfffffffffffffeull ; // arbitrary
+        static const Address magic = 0xfffffffffffffeull ; // arbitrary
         const size_t bytesPerWord = arch->bytesPerWord();
         std::string sp = raisingOps_->registerVariableName(arch->registerDictionary()->stackPointerRegister());
         for (size_t i=0; i<bytesPerWord; ++i)

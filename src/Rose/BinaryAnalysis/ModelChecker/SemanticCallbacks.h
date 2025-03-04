@@ -187,8 +187,8 @@ public:
      *  This is the return value for @ref nextCodeAddresses. */
     struct CodeAddresses {
         InstructionSemantics::BaseSemantics::SValuePtr ip; /**< Instruction pointer value. */
-        std::set<rose_addr_t> addresses;                    /**< The concrete addresses. */
-        bool isComplete = true;                             /**< Whether additional non-concrete addresses were found. */
+        std::set<Address> addresses;                       /**< The concrete addresses. */
+        bool isComplete = true;                            /**< Whether additional non-concrete addresses were found. */
     };
 
     /** Possible next code addresses.

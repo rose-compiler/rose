@@ -38,7 +38,7 @@ ROSE_UTIL_API unsigned hexadecimalToInt(char);
  *  Here's how to convert a vector of addresses to space-separated hexadecimal values:
  * @code
  *  using namespace Rose::StringUtility;
- *  std::vector<rose_addr_t> addresses = ...;
+ *  std::vector<Address> addresses = ...;
  *  std::string s = join(" ", toStrings(addresses, addrToString));
  * @endcode
  *
@@ -46,7 +46,7 @@ ROSE_UTIL_API unsigned hexadecimalToInt(char);
  * @code
  *  using namespace Rose::StringUtility;
  *  struct AngleSurround {
- *      std::string operator()(rose_addr_t addr) {
+ *      std::string operator()(Address addr) {
  *         return "<" + addrToString(addr) + ">";
  *      }
  *  };

@@ -198,7 +198,7 @@ public:
      *  instruction address causing the instruction to be repeated. Use this in conjunction with repEnter().  The REP and REPE
      *  prefixes are shared, both represented by x86_repeat_repe, and we use the honorZeroFlag to decide whether the prefix is
      *  REP (false) or REPE (true). */
-    virtual void repLeave(X86RepeatPrefix, const BaseSemantics::SValuePtr &in_loop, rose_addr_t insn_va, bool honorZeroFlag);
+    virtual void repLeave(X86RepeatPrefix, const BaseSemantics::SValuePtr &in_loop, Address insn_va, bool honorZeroFlag);
 
     /** Adds two values and adjusts flags.  This method can be used for subtraction if @p b is two's complement and @p
      *  invertCarries is set.  If @p cond is supplied, then the addition and flag adjustments are conditional.

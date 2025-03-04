@@ -390,7 +390,7 @@ Dispatcher::emulationOperators() const {
     return unwrapEmulationOperators(operators());
 }
 
-rose_addr_t
+Address
 Dispatcher::concreteInstructionPointer() const {
     return emulationOperators()->process()->ip();
 }

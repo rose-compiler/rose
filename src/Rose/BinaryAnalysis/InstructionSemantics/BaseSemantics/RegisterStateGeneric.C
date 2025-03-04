@@ -1046,7 +1046,7 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
                                 stream <<" [writer=" <<StringUtility::addrToString(*writers.values().begin()) <<"]";
                             } else if (!writers.isEmpty()) {
                                 stream <<" [writers={";
-                                for (Sawyer::Container::Set<rose_addr_t>::ConstIterator wi=writers.values().begin();
+                                for (Sawyer::Container::Set<Address>::ConstIterator wi=writers.values().begin();
                                      wi!=writers.values().end(); ++wi) {
                                     stream <<(wi==writers.values().begin()?"":", ") <<StringUtility::addrToString(*wi);
                                 }

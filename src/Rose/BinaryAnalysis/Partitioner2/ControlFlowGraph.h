@@ -28,7 +28,7 @@ namespace Partitioner2 {
 /** Control flow graph vertex. */
 class CfgVertex {
     VertexType type_;                                   // type of vertex, special or not
-    rose_addr_t startVa_;                               // address of start of basic block
+    Address startVa_;                                   // address of start of basic block
     BasicBlockPtr bblock_;                              // basic block, or null if only a place holder
     FunctionSet owningFunctions_;                       // functions to which vertex belongs
 
@@ -44,7 +44,7 @@ public:
     ~CfgVertex();
 
     /** Construct a basic block placeholder vertex. */
-    explicit CfgVertex(rose_addr_t startVa);
+    explicit CfgVertex(Address startVa);
 
     /** Construct a basic block vertex. */
     explicit CfgVertex(const BasicBlockPtr &bb);
@@ -63,20 +63,20 @@ public:
      *  See also, @ref optionalAddress.
      *
      * @{ */
-    rose_addr_t address() const;
-    void address(rose_addr_t);
+    Address address() const;
+    void address(Address);
     /** @} */
 
     /** Safe version of starting address.
      *
      *  This is the same as @ref address but doesn't fail if there is no address. */
-    Sawyer::Optional<rose_addr_t> optionalAddress() const;
+    Sawyer::Optional<Address> optionalAddress() const;
 
     /** Address of last item in the vertex.
      *
      *  If the vertex is a basic block with more than one instruction, then return the address of its last instruction.
      *  Otherwise, this is the same as @ref optionalAddress. */
-    Sawyer::Optional<rose_addr_t> optionalLastAddress() const;
+    Sawyer::Optional<Address> optionalLastAddress() const;
 
     /** Compute entire address set.
      *
@@ -195,7 +195,7 @@ std::ostream& operator<<(std::ostream&, const ControlFlowGraph::Vertex&);
 std::ostream& operator<<(std::ostream&, const ControlFlowGraph::Edge&);
 
 /** Mapping from basic block starting address to CFG vertex. */
-typedef Sawyer::Container::HashMap<rose_addr_t, ControlFlowGraph::VertexIterator> CfgVertexIndex;
+typedef Sawyer::Container::HashMap<Address, ControlFlowGraph::VertexIterator> CfgVertexIndex;
 
 /** List of CFG vertex pointers.
  *
@@ -249,9 +249,9 @@ public:
      *  this callback may represent only one step in a larger sequence, and modifying the CFG/AUM could confuse things. */
     struct AttachedBasicBlock {
         const PartitionerPtr partitioner;               /**< Partitioner in which change occurred. */
-        rose_addr_t startVa;                            /**< Starting address for basic block or placeholder. */
+        Address startVa;                                /**< Starting address for basic block or placeholder. */
         BasicBlockPtr bblock;                           /**< Optional basic block; otherwise a placeholder operation. */
-        AttachedBasicBlock(const PartitionerPtr&, rose_addr_t startVa, const BasicBlockPtr&);
+        AttachedBasicBlock(const PartitionerPtr&, Address startVa, const BasicBlockPtr&);
         ~AttachedBasicBlock();
     };
 
@@ -265,9 +265,9 @@ public:
      *  confuse things. */
     struct DetachedBasicBlock {
         PartitionerConstPtr partitioner;                /**< Partitioner in which change occurred. */
-        rose_addr_t startVa;                            /**< Starting address for basic block or placeholder. */
+        Address startVa;                                /**< Starting address for basic block or placeholder. */
         BasicBlockPtr bblock;                           /**< Optional basic block; otherwise a placeholder operation. */
-        DetachedBasicBlock(const PartitionerPtr&, rose_addr_t startVa, const BasicBlockPtr&);
+        DetachedBasicBlock(const PartitionerPtr&, Address startVa, const BasicBlockPtr&);
         ~DetachedBasicBlock();
     };
 

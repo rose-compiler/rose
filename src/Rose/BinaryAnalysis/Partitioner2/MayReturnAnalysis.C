@@ -72,7 +72,7 @@ Partitioner::basicBlockOptionalMayReturn(const BasicBlock::Ptr &bb) const {
             successorIsIndeterminate = true;            // sucessor vertex is (or would be) the indeterminate vertex
             continue;
         }
-        rose_addr_t successorVa = edge.expr()->toUnsigned().get();
+        Address successorVa = edge.expr()->toUnsigned().get();
         if (successorVa == bb->address())
             continue;                                   // a self edge is not significant to the analysis result
         ControlFlowGraph::ConstVertexIterator successorVertex = findPlaceholder(successorVa);

@@ -626,7 +626,7 @@ FunctionSimilarity::measureCfgConnectivity(CategoryId id, const P2::Partitioner:
                                            const P2::Function::Ptr &function, size_t maxPoints) {
     ASSERT_not_null(partitioner);
     size_t nPoints = 0;
-    for (rose_addr_t bbva: function->basicBlockAddresses()) {
+    for (Address bbva: function->basicBlockAddresses()) {
         CartesianPoint point;
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(bbva);
         if (partitioner->cfg().isValidVertex(vertex)) {
@@ -664,7 +664,7 @@ FunctionSimilarity::measureCallGraphConnectivity(CategoryId id, const P2::Partit
                                                  const P2::Function::Ptr &function) {
     ASSERT_not_null(partitioner);
     ASSERT_require(partitioner->nFunctions() > 0);
-    for (rose_addr_t bbva: function->basicBlockAddresses()) {
+    for (Address bbva: function->basicBlockAddresses()) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(bbva);
         if (partitioner->cfg().isValidVertex(vertex) && vertex->value().type() == P2::V_BASIC_BLOCK &&
             partitioner->basicBlockIsFunctionCall(vertex->value().bblock())) {
@@ -694,7 +694,7 @@ void
 FunctionSimilarity::measureMnemonicStream(CategoryId id, const P2::Partitioner::ConstPtr &partitioner,
                                           const P2::Function::Ptr &function) {
     ASSERT_not_null(partitioner);
-    for (rose_addr_t bbva: function->basicBlockAddresses()) {
+    for (Address bbva: function->basicBlockAddresses()) {
         if (P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbva)) {
             OrderedList list;
             for (SgAsmInstruction *insn: bb->instructions())

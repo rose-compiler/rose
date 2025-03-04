@@ -15,9 +15,8 @@ namespace Variables {
 
 StackVariable::StackVariable() {}
 
-StackVariable::StackVariable(const P2::FunctionPtr &function, int64_t stackOffset, rose_addr_t maxSizeBytes,
-                             Purpose purpose, const std::vector<InstructionAccess> &definingInstructionVas,
-                             const std::string &name)
+StackVariable::StackVariable(const P2::FunctionPtr &function, int64_t stackOffset, Address maxSizeBytes, Purpose purpose,
+                             const std::vector<InstructionAccess> &definingInstructionVas, const std::string &name)
     : BaseVariable(maxSizeBytes, definingInstructionVas, name), function_(function), stackOffset_(stackOffset),
       purpose_(purpose) {}
 
@@ -107,7 +106,7 @@ StackVariable::operator!=(const StackVariable &other) const {
 OffsetInterval
 StackVariable::interval() const {
     // We need to watch for overflows.  The return type, OffsetInterval, has int64_t least and greatest values. The stack
-    // offset is also int64_t. The maximum size in bytes however is uint64_t (i.e., rose_addr_t).  We may need to reduce the
+    // offset is also int64_t. The maximum size in bytes however is uint64_t (i.e., Address).  We may need to reduce the
     // maximum size in order to fit it into the interval return value.
     int64_t least = stackOffset_;
     int64_t maxSizeSigned = maxSizeBytes() > boost::numeric_cast<uint64_t>(boost::integer_traits<int64_t>::const_max)

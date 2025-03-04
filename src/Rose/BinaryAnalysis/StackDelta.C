@@ -123,7 +123,7 @@ public:
             BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
 
         const RegisterDescriptor SP = cpu()->stackPointerRegister();
-        rose_addr_t initialSp = 0;
+        Address initialSp = 0;
         if (analysis_->initialConcreteStackPointer().assignTo(initialSp)) {
             newState->writeRegister(SP, ops->number_(SP.nBits(), initialSp), ops.get());
         } else {
@@ -338,22 +338,22 @@ Analysis::functionStackDeltaConcrete() const {
 }
 
 Analysis::SValuePair
-Analysis::basicBlockStackPointers(rose_addr_t basicBlockAddress) const {
+Analysis::basicBlockStackPointers(Address basicBlockAddress) const {
     return bblockStackPtrs_.getOrDefault(basicBlockAddress);
 }
 
 BaseSemantics::SValue::Ptr
-Analysis::basicBlockStackDelta(rose_addr_t basicBlockAddress) const {
+Analysis::basicBlockStackDelta(Address basicBlockAddress) const {
     return bblockDeltas_.getOrDefault(basicBlockAddress);
 }
 
 int64_t
-Analysis::basicBlockStackDeltaConcrete(rose_addr_t basicBlockAddress) const {
+Analysis::basicBlockStackDeltaConcrete(Address basicBlockAddress) const {
     return toInt(basicBlockStackDelta(basicBlockAddress)).orElse(SgAsmInstruction::INVALID_STACK_DELTA);
 }
 
 BaseSemantics::SValue::Ptr
-Analysis::basicBlockInputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const {
+Analysis::basicBlockInputStackDeltaWrtFunction(Address basicBlockAddress) const {
     BaseSemantics::SValue::Ptr initialSp = functionStackPtrs_.first;
     BaseSemantics::SValue::Ptr finalSp = bblockStackPtrs_.getOrDefault(basicBlockAddress).first;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
@@ -362,7 +362,7 @@ Analysis::basicBlockInputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) co
 }
 
 BaseSemantics::SValue::Ptr
-Analysis::basicBlockOutputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const {
+Analysis::basicBlockOutputStackDeltaWrtFunction(Address basicBlockAddress) const {
     BaseSemantics::SValue::Ptr initialSp = functionStackPtrs_.first;
     BaseSemantics::SValue::Ptr finalSp = bblockStackPtrs_.getOrDefault(basicBlockAddress).second;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
@@ -479,12 +479,12 @@ Analysis::print(std::ostream &out) const {
     }
 
     out <<"  Basic block information:\n";
-    std::set<rose_addr_t> bblockVas;
-    for (rose_addr_t va: bblockStackPtrs_.keys())
+    std::set<Address> bblockVas;
+    for (Address va: bblockStackPtrs_.keys())
         bblockVas.insert(va);
-    for (rose_addr_t va: bblockDeltas_.keys())
+    for (Address va: bblockDeltas_.keys())
         bblockVas.insert(va);
-    for (rose_addr_t va: bblockVas) {
+    for (Address va: bblockVas) {
         out <<"    Basic block " <<StringUtility::addrToString(va) <<":\n";
         if (BaseSemantics::SValue::Ptr v = basicBlockStackPointers(va).first) {
             out <<"      Initial stack pointer: " <<*v <<"\n";
@@ -504,12 +504,12 @@ Analysis::print(std::ostream &out) const {
     }
 
     out <<"  Instruction information:\n";
-    std::set<rose_addr_t> insnVas;
-    for (rose_addr_t va: insnStackPtrs_.keys())
+    std::set<Address> insnVas;
+    for (Address va: insnStackPtrs_.keys())
         insnVas.insert(va);
-    for (rose_addr_t va: insnSpDeltas_.keys())
+    for (Address va: insnSpDeltas_.keys())
         insnVas.insert(va);
-    for (rose_addr_t va: insnVas) {
+    for (Address va: insnVas) {
         out <<"    Instruction " <<StringUtility::addrToString(va) <<":\n";
         if (BaseSemantics::SValue::Ptr v = insnStackPtrs_.getOrDefault(va).first) {
             out <<"      Initial stack pointer: " <<*v <<"\n";

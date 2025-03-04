@@ -69,7 +69,7 @@ public:
     StackVariable();
 
     /** Construct a variable descriptor. */
-    StackVariable(const Partitioner2::FunctionPtr&, int64_t stackOffset, rose_addr_t maxSizeBytes, Purpose,
+    StackVariable(const Partitioner2::FunctionPtr&, int64_t stackOffset, Address maxSizeBytes, Purpose,
                   const std::vector<InstructionAccess> &definingInstructions = std::vector<InstructionAccess>(),
                   const std::string &name = "");
 

@@ -43,9 +43,9 @@ struct Settings {
     TestMode oobRead = TestMode::OFF;                   /**< How to test for out-of-bounds reads. */
     TestMode oobWrite = TestMode::OFF;                  /**< How to test for out-of-bounds writes. */
     TestMode uninitVar = TestMode::OFF;                 /**< How to test for uninitialized variable reads. */
-    rose_addr_t maxNullAddress = 4095;                  /**< Maximum address of the null page. */
+    Address maxNullAddress = 4095;                      /**< Maximum address of the null page. */
     bool debugNull = false;                             /**< When debugging is enabled, show null pointer checking? */
-    Sawyer::Optional<rose_addr_t> initialStackVa;       /**< Address for initial stack pointer. */
+    Sawyer::Optional<Address> initialStackVa;           /**< Address for initial stack pointer. */
     MemoryType memoryType = MemoryType::MAP;            /**< Type of memory state. */
     bool solverMemoization = false;                     /**< Whether the SMT solver should use memoization. */
     bool traceSemantics = false;                        /**< Whether to trace all RISC operators. */
@@ -77,14 +77,14 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings&);
 /** Describes one funtion call in the call stack. */
 class FunctionCall {
     Partitioner2::FunctionPtr function_;
-    rose_addr_t initialStackPointer_ = 0;
-    rose_addr_t framePointerDelta_ = (rose_addr_t)(-4); // Normal frame pointer w.r.t. initial stack pointer
-    Sawyer::Optional<rose_addr_t> returnAddress_;
+    Address initialStackPointer_ = 0;
+    Address framePointerDelta_ = (Address)(-4); // Normal frame pointer w.r.t. initial stack pointer
+    Sawyer::Optional<Address> returnAddress_;
     Variables::StackVariables stackVariables_;
 
 public:
     ~FunctionCall();
-    FunctionCall(const Partitioner2::FunctionPtr&, rose_addr_t initialSp, Sawyer::Optional<rose_addr_t> returnAddress,
+    FunctionCall(const Partitioner2::FunctionPtr&, Address initialSp, Sawyer::Optional<Address> returnAddress,
                  const Variables::StackVariables&);
 
     /** Property: The function called. */
@@ -93,7 +93,7 @@ public:
     /** Property: Initial stack pointer.
      *
      *  The concrete value of the stack pointer at the start of the function. */
-    rose_addr_t initialStackPointer() const;
+    Address initialStackPointer() const;
 
     /** Property: Stack variables. */
     const Variables::StackVariables& stackVariables() const;
@@ -103,20 +103,20 @@ public:
      *  Amount to add to the initial stack pointer to get the usual frame pointer.
      *
      * @{ */
-    rose_addr_t framePointerDelta() const;
-    void framePointerDelta(rose_addr_t);
+    Address framePointerDelta() const;
+    void framePointerDelta(Address);
     /** @} */
 
     /** Computed frame pointer.
      *
      *  This is the frame pointer computed from the initial stack pointer and the frame pointer delta. */
-    rose_addr_t framePointer(size_t nBits) const;
+    Address framePointer(size_t nBits) const;
 
     /** Address to which function returns
      *
      * @{ */
-    Sawyer::Optional<rose_addr_t> returnAddress() const;
-    void returnAddress(Sawyer::Optional<rose_addr_t>);
+    Sawyer::Optional<Address> returnAddress() const;
+    void returnAddress(Sawyer::Optional<Address>);
     /** @} */
 
     /** Some basic info about the function call. */
@@ -384,10 +384,10 @@ public: // Supporting functions
     /** @} */
 
     /** Ensure call stack has a root function. */
-    void maybeInitCallStack(rose_addr_t insnVa);
+    void maybeInitCallStack(Address insnVa);
 
     /** Push a function onto the call stack. */
-    void pushCallStack(const Partitioner2::FunctionPtr &callee, rose_addr_t initialSp, Sawyer::Optional<rose_addr_t> returnVa);
+    void pushCallStack(const Partitioner2::FunctionPtr &callee, Address initialSp, Sawyer::Optional<Address> returnVa);
 
     /** Pop a function from the call stack.
      *
@@ -515,7 +515,7 @@ public: // Override RISC operations
 class SemanticCallbacks: public Rose::BinaryAnalysis::ModelChecker::SemanticCallbacks {
 public:
     using Ptr = SemanticCallbacksPtr;
-    using UnitCounts = Sawyer::Container::Map<rose_addr_t, size_t>;
+    using UnitCounts = Sawyer::Container::Map<Address, size_t>;
 
 private:
     Settings settings_;                                 // settings are set by the constructor and not modified thereafter
@@ -524,7 +524,7 @@ private:
     AddressInterval stackRegion_;                       // addresses considered to be in the stack's area of memory
 
     mutable SAWYER_THREAD_TRAITS::Mutex unitsMutex_;    // protects only the units_ data member
-    Sawyer::Container::Map<rose_addr_t, ExecutionUnitPtr> units_; // cached execution units
+    Sawyer::Container::Map<Address, ExecutionUnitPtr> units_; // cached execution units
 
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
     std::set<uint64_t> seenStates_;                     // states we've seen, by hash
@@ -736,7 +736,7 @@ private:
     bool seenState(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     // Find and cache the execution unit at the specified address.
-    ExecutionUnitPtr findUnit(rose_addr_t va, const Progress::Ptr&);
+    ExecutionUnitPtr findUnit(Address va, const Progress::Ptr&);
 };
 
 } // namespace

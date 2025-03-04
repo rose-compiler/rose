@@ -23,7 +23,7 @@ public:
   virtual size_t size() const {
     return size_;
   }
-  rose_addr_t offset() const {
+  Address offset() const {
     return offset_;
   }
   void bytes(const uint8_t* buf) {
@@ -32,18 +32,18 @@ public:
   void size(size_t sz) {
     size_ = sz;
   }
-  void offset(rose_addr_t off) {
+  void offset(Address off) {
     offset_ = off;
   }
 
-  explicit JvmCode(uint8_t* bytes, size_t size, rose_addr_t offset)
+  explicit JvmCode(uint8_t* bytes, size_t size, Address offset)
     : bytes_{bytes}, size_{size}, offset_{offset} {
   }
 
 private:
   const uint8_t* bytes_;
   size_t size_;
-  rose_addr_t offset_;
+  Address offset_;
 };
 
 class JvmField final : public Field {
@@ -72,7 +72,7 @@ public:
   virtual void annotate() override;
 
   JvmMethod() = delete;
-  explicit JvmMethod(SgAsmJvmFileHeader*, SgAsmJvmMethod*, rose_addr_t);
+  explicit JvmMethod(SgAsmJvmFileHeader*, SgAsmJvmMethod*, Address);
 
 private:
   SgAsmJvmFileHeader* jfh_;

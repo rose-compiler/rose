@@ -25,7 +25,7 @@ public:
     using Ptr = TracingResultPtr;
 
     /** Type for instruction traces. */
-    using Trace = Sawyer::Container::Trace<rose_addr_t, Sawyer::Container::TraceMapIndexTag>;
+    using Trace = Sawyer::Container::Trace<Address, Sawyer::Container::TraceMapIndexTag>;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Data members
@@ -44,17 +44,17 @@ private:
     template<class S>
     void save(S &s, const unsigned /*version*/) const {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
-        std::vector<rose_addr_t> vas = trace_.toVector();
+        std::vector<Address> vas = trace_.toVector();
         s & BOOST_SERIALIZATION_NVP(vas);
     }
 
     template<class S>
     void load(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
-        std::vector<rose_addr_t> vas;
+        std::vector<Address> vas;
         s & BOOST_SERIALIZATION_NVP(vas);
         trace_.clear();
-        for (rose_addr_t va: vas)
+        for (Address va: vas)
             trace_.append(va);
     }
 

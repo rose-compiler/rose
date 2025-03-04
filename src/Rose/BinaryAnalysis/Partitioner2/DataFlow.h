@@ -86,7 +86,7 @@ public:
     /** Virtual address of vertex.
      *
      *  Returns the virtual address if known, otherwise nothing. */
-    Sawyer::Optional<rose_addr_t> address() const;
+    Sawyer::Optional<Address> address() const;
 
     /** Print a short description of this vertex.
      *

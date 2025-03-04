@@ -22,7 +22,7 @@ namespace BinaryAnalysis {
 class RelativeVirtualAddress {
     // Offset relative to a section's preferred mapping address (if `section_` is not null) or relative to a file's base address (if
     // `section_` is null). The offset is treated as a signed quantity by virtue of unsigned 64-bit overflow.
-    rose_addr_t rva_ = 0;
+    Address rva_ = 0;
 
     // Optional base section. If present, then it must have a preferred mapping address, and the `rva_` is an offset to the
     // section's preferred address.
@@ -47,7 +47,7 @@ public:
      *
      *  The new instance is constructed with the specified RVA and section.  The @p rva is relative to the base address of the
      *  file header.  The section is optional, and if present then the new instance is bound to that section. */
-    RelativeVirtualAddress(const rose_addr_t rva, SgAsmGenericSection* = nullptr); //implicit
+    RelativeVirtualAddress(const Address rva, SgAsmGenericSection* = nullptr); //implicit
 
     /** Copy constructor. */
     RelativeVirtualAddress(const RelativeVirtualAddress&);
@@ -59,7 +59,7 @@ public:
      *
      *  The RVA is computed by adding the specified offset to the section's preferred mapping address. The returned instance is
      *  bound to the section, which must not be null. */
-    static RelativeVirtualAddress sectionRelative(SgAsmGenericSection*, rose_addr_t sectionOffset);
+    static RelativeVirtualAddress sectionRelative(SgAsmGenericSection*, Address sectionOffset);
 
     /** Determines whether this instance is associated with a file section. */
     bool isBound() const;
@@ -68,12 +68,12 @@ public:
      *
      *  The returned value is an address relative to a base address stored in a (implied) file header.  The file header is not
      *  actually referenced, thus this instance may be unbound. */
-    rose_addr_t rva() const;
+    Address rva() const;
 
     /** Assign a new RVA without adjusting the bound section.
      *
      *  This object will store the new RVA. The binding to a section is not modified by this function. */
-    RelativeVirtualAddress& rva(rose_addr_t rva);
+    RelativeVirtualAddress& rva(Address rva);
 
     /** Returns the section to which this RVA is bound. */
     SgAsmGenericSection *boundSection() const;
@@ -93,20 +93,20 @@ public:
     /** Return the absolute address if known.
      *
      *  The absolute address is created by adding this RVA's numeric value to the base address associated with the bound section. */
-    Sawyer::Optional<rose_addr_t> va() const;
+    Sawyer::Optional<Address> va() const;
 
     /** Returns an offset from the currently bound section.
      *
      *  Returns this address with respect to the beginning of the bound section. If no section is bound then nothing is returned. */
-    Sawyer::Optional<rose_addr_t> boundOffset() const;
+    Sawyer::Optional<Address> boundOffset() const;
 
     /** Returns an offset relative to the specified section.
      *
      *  The specified section must be mapped to a VA. */
-    rose_addr_t offsetFrom(SgAsmGenericSection*) const;
+    Address offsetFrom(SgAsmGenericSection*) const;
 
     /** Increment the address by the specified amount, keeping it attached to the same (if any) section. */
-    void increment(rose_addr_t amount);
+    void increment(Address amount);
 
     /** Convert to a string representation.
      *
@@ -116,16 +116,16 @@ public:
 
     // [Robb Matzke 2024-02-05]: deprecated
 public:
-    static RelativeVirtualAddress section_relative(SgAsmGenericSection*, rose_addr_t) ROSE_DEPRECATED("use sectionRelative instead");
+    static RelativeVirtualAddress section_relative(SgAsmGenericSection*, Address) ROSE_DEPRECATED("use sectionRelative instead");
     bool is_bound() const ROSE_DEPRECATED("use isBound instead");
-    rose_addr_t get_rva() const ROSE_DEPRECATED("use rva instead");
-    RelativeVirtualAddress& set_rva(rose_addr_t rva) ROSE_DEPRECATED("use rva instead");
+    Address get_rva() const ROSE_DEPRECATED("use rva instead");
+    RelativeVirtualAddress& set_rva(Address rva) ROSE_DEPRECATED("use rva instead");
     SgAsmGenericSection *get_section() const ROSE_DEPRECATED("use boundSection instead");
     RelativeVirtualAddress& set_section(SgAsmGenericSection*) ROSE_DEPRECATED("use bindSection instead");
     RelativeVirtualAddress& bind(SgAsmGenericHeader*) ROSE_DEPRECATED("use bindBestSection instead");
-    rose_addr_t get_va() const ROSE_DEPRECATED("use va instead");
-    rose_addr_t get_rel() const ROSE_DEPRECATED("use boundOffset instead");
-    rose_addr_t get_rel(SgAsmGenericSection*) ROSE_DEPRECATED("use offsetFrom instead");
+    Address get_va() const ROSE_DEPRECATED("use va instead");
+    Address get_rel() const ROSE_DEPRECATED("use boundOffset instead");
+    Address get_rel(SgAsmGenericSection*) ROSE_DEPRECATED("use offsetFrom instead");
     std::string to_string() const ROSE_DEPRECATED("use toString instead");
 };
 
@@ -137,10 +137,10 @@ using rose_rva_t = Rose::BinaryAnalysis::RelativeVirtualAddress;
 
 std::ostream &operator<<(std::ostream&, const Rose::BinaryAnalysis::RelativeVirtualAddress&);
 
-rose_addr_t operator-(const Rose::BinaryAnalysis::RelativeVirtualAddress &a1,
-                      const Rose::BinaryAnalysis::RelativeVirtualAddress &a2);
-rose_addr_t operator+(const Rose::BinaryAnalysis::RelativeVirtualAddress &a1,
-                      const Rose::BinaryAnalysis::RelativeVirtualAddress &a2);
+Rose::BinaryAnalysis::Address operator-(const Rose::BinaryAnalysis::RelativeVirtualAddress &a1,
+                                        const Rose::BinaryAnalysis::RelativeVirtualAddress &a2);
+Rose::BinaryAnalysis::Address operator+(const Rose::BinaryAnalysis::RelativeVirtualAddress &a1,
+                                        const Rose::BinaryAnalysis::RelativeVirtualAddress &a2);
 
 bool operator< (const Rose::BinaryAnalysis::RelativeVirtualAddress &a1, const Rose::BinaryAnalysis::RelativeVirtualAddress &a2);
 bool operator<=(const Rose::BinaryAnalysis::RelativeVirtualAddress &a1, const Rose::BinaryAnalysis::RelativeVirtualAddress &a2);

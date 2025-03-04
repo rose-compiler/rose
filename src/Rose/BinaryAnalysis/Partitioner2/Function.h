@@ -50,13 +50,13 @@ public:
     typedef FunctionPtr Ptr;
 
 private:
-    rose_addr_t entryVa_;                               // entry address; destination for calls to this function
+    Address entryVa_;                                   // entry address; destination for calls to this function
     std::string name_;                                  // optional function name
     std::string demangledName_;                         // optional demangled name
     std::string comment_;                               // optional multi-line, plain-text, commment
     unsigned reasons_;                                  // reason bits from SgAsmFunction::FunctionReason
     std::string reasonComment_;                         // additional commentary about reasons_
-    std::set<rose_addr_t> bblockVas_;                   // addresses of basic blocks
+    std::set<Address> bblockVas_;                       // addresses of basic blocks
     std::vector<DataBlockPtr> dblocks_;                 // data blocks owned by this function, sorted by starting address
     bool isFrozen_;                                     // true if function is represented by the CFG
     CallingConvention::Analysis ccAnalysis_;            // analysis computing how registers etc. are used
@@ -88,21 +88,21 @@ protected:
     Function();
 
     // Use instance() instead
-    explicit Function(rose_addr_t entryVa, const std::string &name, unsigned reasons);
+    explicit Function(Address entryVa, const std::string &name, unsigned reasons);
 
 public:
     /** Static allocating constructor.  Creates a new function having the specified characteristics.
      *
      *  @{ */
-    static Ptr instance(rose_addr_t entryVa, const std::string &name="", unsigned reasons=0);
-    static Ptr instance(rose_addr_t entryVa, unsigned reasons);
+    static Ptr instance(Address entryVa, const std::string &name="", unsigned reasons=0);
+    static Ptr instance(Address entryVa, unsigned reasons);
     /** @} */
 
     /** Read-only property: Entry address.
      *
      *  The entry address also serves as an identifier for the function since the CFG can only hold one function per entry
      *  address.  Detached functions need not have unique entry addresses. */
-    rose_addr_t address() const;
+    Address address() const;
 
     /** Property: Optional function name.
      *
@@ -170,10 +170,10 @@ public:
      *  definition without requiring that the blocks actually exist.  When a detached function is inserted into the CFG then
      *  basic block placeholders will be created for any basic blocks that don't exist in the CFG (see @ref
      *  Partitioner::attachFunction). */
-    const std::set<rose_addr_t>& basicBlockAddresses() const;
+    const std::set<Address>& basicBlockAddresses() const;
 
     /** Predicate to test whether a function owns a basic block address. */
-    bool ownsBasicBlock(rose_addr_t bblockVa) const;
+    bool ownsBasicBlock(Address bblockVa) const;
 
     /** Add a basic block to this function.
      *
@@ -183,14 +183,14 @@ public:
      *  function then it is not added a second time.
      *
      *  Returns true if the block is inserted, false if the block was already part of this function. */
-    bool insertBasicBlock(rose_addr_t bblockVa);
+    bool insertBasicBlock(Address bblockVa);
 
     /** Remove a basic block from this function.  This method does not adjust the partitioner CFG.  Basic blocks cannot be
      * removed by this method when this function is attached to the CFG since it would cause the CFG to become outdated with
      * respect to this function, but as long as the function is detached blocks can be inserted and removed arbitrarily.  If
      * the specified address is not a basic block address for this function then this is a no-op.  Removing the function's
      * entry address is never permitted. */
-    void eraseBasicBlock(rose_addr_t bblockVa);         // no-op if not existing
+    void eraseBasicBlock(Address bblockVa);         // no-op if not existing
 
     /** Returns data blocks owned by this function.  Returns the data blocks that are owned by this function in order of their
      *  starting address. */

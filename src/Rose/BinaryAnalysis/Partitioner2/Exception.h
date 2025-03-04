@@ -20,12 +20,12 @@ public:
 };
 
 class PlaceholderError: public Exception {
-    rose_addr_t startVa_;
+    Address startVa_;
 public:
-    PlaceholderError(rose_addr_t startVa, const std::string &mesg)
+    PlaceholderError(Address startVa, const std::string &mesg)
         : Exception(mesg), startVa_(startVa) {}
     ~PlaceholderError() throw() {}
-    rose_addr_t startVa() const { return startVa_; }
+    Address startVa() const { return startVa_; }
 };
 
 class BasicBlockError: public Exception {

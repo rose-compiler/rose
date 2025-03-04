@@ -204,16 +204,16 @@ MemoryState::clear() {
 }
 
 void
-MemoryState::pageSize(rose_addr_t nBytes) {
+MemoryState::pageSize(Address nBytes) {
     ASSERT_require(map_ == NULL || map_->isEmpty());
-    pageSize_ = std::max(nBytes, (rose_addr_t)1);
+    pageSize_ = std::max(nBytes, (Address)1);
 }
 
 void
-MemoryState::allocatePage(rose_addr_t va) {
+MemoryState::allocatePage(Address va) {
     if (!map_)
         map_ = MemoryMap::instance();
-    rose_addr_t pageVa = alignDown(va, pageSize_);
+    Address pageVa = alignDown(va, pageSize_);
     unsigned acc = MemoryMap::READABLE | MemoryMap::WRITABLE;
     map_->insert(AddressInterval::hull(pageVa, pageVa+pageSize_-1),
                  MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(pageSize_),
@@ -226,9 +226,9 @@ MemoryState::memoryMap(const MemoryMap::Ptr &map, Sawyer::Optional<unsigned> pad
     if (!map)
         return;
 
-    rose_addr_t va = 0;
+    Address va = 0;
     while (map_->atOrAfter(va).next().assignTo(va)) {
-        rose_addr_t pageVa = alignDown(va, pageSize_);
+        Address pageVa = alignDown(va, pageSize_);
 
         // Mapped area must begin at a page boundary.
         if (pageVa < va) {
@@ -240,7 +240,7 @@ MemoryState::memoryMap(const MemoryMap::Ptr &map, Sawyer::Optional<unsigned> pad
         // Mapped area must end at the last byte before a page boundary.
         if (AddressInterval unused = map_->unmapped(va)) {
             va = unused.least();
-            rose_addr_t nextPageVa = alignUp(va, pageSize_);
+            Address nextPageVa = alignUp(va, pageSize_);
             if (nextPageVa > va) {
                 unsigned acc = padAccess ? *padAccess : map_->get(va-1).accessibility();
                 map_->insert(AddressInterval::hull(va, nextPageVa-1),
@@ -259,7 +259,7 @@ MemoryState::readOrPeekMemory(const BaseSemantics::SValue::Ptr &addr_, const Bas
                               BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/,
                               bool allowSideEffects) {
     ASSERT_require2(8==dflt_->nBits(), "ConcreteSemantics::MemoryState requires memory cells contain 8-bit data");
-    rose_addr_t addr = addr_->toUnsigned().get();
+    Address addr = addr_->toUnsigned().get();
     uint8_t dflt = dflt_->toUnsigned().get();
     if (!map_ || !map_->at(addr).exists()) {
         if (allowSideEffects) {
@@ -288,7 +288,7 @@ void
 MemoryState::writeMemory(const BaseSemantics::SValue::Ptr &addr_, const BaseSemantics::SValue::Ptr &value_,
                          BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) {
     ASSERT_require2(8==value_->nBits(), "ConcreteSemantics::MemoryState requires memory cells contain 8-bit data");
-    rose_addr_t addr = addr_->toUnsigned().get();
+    Address addr = addr_->toUnsigned().get();
     uint8_t value = value_->toUnsigned().get();
     if (!map_ || !map_->at(addr).exists())
         allocatePage(addr);
@@ -314,7 +314,7 @@ MemoryState::print(std::ostream &out, Formatter &fmt) const {
         out <<fmt.get_line_prefix() <<"no memory map\n";
     } else {
         map_->dump(out, fmt.get_line_prefix());
-        rose_addr_t pageVa = 0;
+        Address pageVa = 0;
         uint8_t* page = new uint8_t[pageSize_];
         while (map_->atOrAfter(pageVa).next().assignTo(pageVa)) {
             size_t nread = map_->at(pageVa).limit(pageSize_).read(page).size();

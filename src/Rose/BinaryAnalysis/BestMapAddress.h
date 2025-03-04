@@ -33,7 +33,7 @@ public:
     };
 
     /** Set of addresses. */
-    typedef Sawyer::Container::Set<rose_addr_t> AddressSet;
+    typedef Sawyer::Container::Set<Address> AddressSet;
 
     /** Facility for emitting diagnostics. */
     static Diagnostics::Facility mlog;
@@ -44,7 +44,7 @@ public:
     };
 
 private:
-    typedef Sawyer::Container::Map<size_t /*nMatches*/, std::vector<rose_addr_t>/*deltas*/> MatchedDeltas;
+    typedef Sawyer::Container::Map<size_t /*nMatches*/, std::vector<Address>/*deltas*/> MatchedDeltas;
 
     Settings settings_;
     AddressSet entryVas_;                               // set of function entry virtual addresses
@@ -103,7 +103,7 @@ public:
 
     /** Property: Number of bits in an address.
      *
-     *  This analysis represents address deltas using the same C data type as addresses, namely @ref rose_addr_t. Therefore,
+     *  This analysis represents address deltas using the same C data type as addresses, namely @ref Address. Therefore,
      *  the analysis needs to know the total size of the address space in order to represent negative deltas. The address space
      *  size is stored as a power of two.
      *
@@ -121,7 +121,7 @@ public:
      *
      *  This is the bit mask to use for doing address arithmetic. It has the N low-order bits set, where N is the number of
      *  bits stored in the @ref nBits property. */
-    rose_addr_t mask() const;
+    Address mask() const;
 
     /** Gather addresses for future analysis.
      *
@@ -136,7 +136,7 @@ public:
     /** Insert a function entry address.
      *
      *  Inserts a function entry address into the set of addresses that will be used during later analysis. */
-    void insertEntryAddress(rose_addr_t va) {
+    void insertEntryAddress(Address va) {
         if (entryVas_.insert(va))
             upToDate_ = false;
     }
@@ -145,7 +145,7 @@ public:
      *
      *  Insert the target address (i.e., the callee) of a function call into the set of addresses that will be used during
      *  later analysis. */
-    void insertTargetAddress(rose_addr_t va) {
+    void insertTargetAddress(Address va) {
         if (targetVas_.insert(va))
             upToDate_ = false;
     }
@@ -180,7 +180,7 @@ public:
      *
      *  Returns a list of the best shift amounts. Usually this is a single value, but in the case when multiple shift amounts
      *  tie for best, they're all returned. */
-    const std::vector<rose_addr_t>& bestDeltas() const;
+    const std::vector<Address>& bestDeltas() const;
 
     /** How well the best shift amounts performed.
      *

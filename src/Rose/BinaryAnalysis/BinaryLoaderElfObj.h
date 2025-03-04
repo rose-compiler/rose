@@ -42,10 +42,10 @@ public:
 
     // Same as super class but relaxes alignment constraints for sections that are ELF Sections but not ELF Segments.
     virtual MappingContribution alignValues(SgAsmGenericSection*, const MemoryMap::Ptr&,
-                                            rose_addr_t *malign_lo, rose_addr_t *malign_hi,
-                                            rose_addr_t *va, rose_addr_t *mem_size,
-                                            rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
-                                            rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
+                                            Address *malign_lo, Address *malign_hi,
+                                            Address *va, Address *mem_size,
+                                            Address *offset, Address *file_size, bool *map_private,
+                                            Address *va_offset, bool *anon_lo, bool *anon_hi,
                                             ConflictResolution *resolve) override;
 
     // choose permissions based on the section content.

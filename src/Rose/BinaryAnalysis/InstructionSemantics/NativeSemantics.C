@@ -142,7 +142,7 @@ MemoryState::peekMemory(const BaseSemantics::SValue::Ptr &address, const BaseSem
     ASSERT_not_null(process_);
     std::vector<uint8_t> buffer((dflt->nBits() + 7) / 8);
     ASSERT_require(buffer.size() <= 8);
-    rose_addr_t va = SValue::promote(address)->toUnsigned().get();
+    Address va = SValue::promote(address)->toUnsigned().get();
     size_t nRead = process_->readMemory(va, buffer.size(), &buffer[0]);
     if (nRead != buffer.size())
         throw Exception("short read from process at " + StringUtility::addrToString(va));
@@ -254,7 +254,7 @@ Dispatcher::processInstruction(SgAsmInstruction *insn) {
 }
 
 void
-Dispatcher::processInstruction(rose_addr_t va) {
+Dispatcher::processInstruction(Address va) {
     ASSERT_not_null(process_);
     process_->executionAddress(Debugger::ThreadId::unspecified(), va);
     process_->singleStep(Debugger::ThreadId::unspecified());
@@ -263,7 +263,7 @@ Dispatcher::processInstruction(rose_addr_t va) {
 SgAsmInstruction*
 Dispatcher::currentInstruction() const {
     ASSERT_not_null(process_);
-    rose_addr_t va = process_->executionAddress(Debugger::ThreadId::unspecified());
+    Address va = process_->executionAddress(Debugger::ThreadId::unspecified());
     uint8_t buf[16];
     size_t nRead = process_->readMemory(va, sizeof buf, buf);
     if (0 == nRead)

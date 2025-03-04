@@ -36,7 +36,7 @@ ConcreteLocation::ConcreteLocation(RegisterDescriptor reg, const RegisterDiction
     ASSERT_require(reg.isValid());
 }
 
-ConcreteLocation::ConcreteLocation(rose_addr_t va)
+ConcreteLocation::ConcreteLocation(Address va)
     : va_(va) {}
 
 ConcreteLocation::ConcreteLocation(RegisterDescriptor reg, int64_t offset)
@@ -192,7 +192,7 @@ ConcreteLocation::reg() const {
     return reg_;
 }
 
-rose_addr_t
+Address
 ConcreteLocation::address() const {
     return reg_ ? 0 : *va_;
 }

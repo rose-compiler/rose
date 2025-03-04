@@ -68,7 +68,7 @@ public:
 
     // overrides
     Base::Ptr clone() const override;
-    SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=nullptr) override;
+    SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, Address startVa, AddressSet *successors=nullptr) override;
     SgAsmInstruction* makeUnknownInstruction(const Exception&) override;
 
 private:

@@ -70,7 +70,7 @@ public:
 
 private:
     Type type_;
-    rose_addr_t addr_;
+    Address addr_;
     std::vector<uint8_t> data_;
     std::string error_;
 
@@ -84,9 +84,9 @@ public:
     /** Construct an S-Record with data.
      *
      *  @{ */
-    SRecord(Type type, rose_addr_t addr, const std::vector<uint8_t> data)
+    SRecord(Type type, Address addr, const std::vector<uint8_t> data)
         : type_(type), addr_(addr), data_(data) {}
-    SRecord(Type type, rose_addr_t addr, const uint8_t *buffer, size_t bufsz)
+    SRecord(Type type, Address addr, const uint8_t *buffer, size_t bufsz)
         : type_(type), addr_(addr), data_(buffer+0, buffer+bufsz) {}
     /** @} */
 
@@ -123,7 +123,7 @@ public:
      *  exist if referenced by the specified @p map.
      *
      *  The return value is the set of addresses that were added to the @p map. */
-    static AddressIntervalSet createSegments(const std::vector<SRecord>&, const MemoryMapPtr &map, rose_addr_t alignment,
+    static AddressIntervalSet createSegments(const std::vector<SRecord>&, const MemoryMapPtr &map, Address alignment,
                                              unsigned accessPermissions, const std::string &segmentName,
                                              MemoryMap::Clobber clobber);
 
@@ -132,14 +132,14 @@ public:
      *  The data from the specified S-Records are loaded into the specified memory map. The map must contains segments at all
      *  S-Record addresses or else a @ref MemoryMap::NotMapped exception is thrown. The return value is the execution starting
      *  address contained in the S-Records, if any. */
-    static Sawyer::Optional<rose_addr_t> load(const std::vector<SRecord>&, const MemoryMapPtr&);
+    static Sawyer::Optional<Address> load(const std::vector<SRecord>&, const MemoryMapPtr&);
 
     /** Load S-Records into a memory map, creating segments if necessary.
      *
      *  This is a convenience function that calls @ref createSegments in order to create any necessary segments in the memory
      *  map, and then calls the two-argument version of @ref load in order to load the S-Record data into those segments. Therefore,
      *  the arguments are the union of the arguments for those two functions. */
-    static Sawyer::Optional<rose_addr_t> load(const std::vector<SRecord>&, const MemoryMapPtr&, rose_addr_t alignment,
+    static Sawyer::Optional<Address> load(const std::vector<SRecord>&, const MemoryMapPtr&, Address alignment,
                                                unsigned accessPerms, const std::string &name, MemoryMap::Clobber);
 
     /** Create S-Records from a memory map. */
@@ -179,8 +179,8 @@ public:
      *  See also, @ref RunLengthEncoding::dataAddress to get the fully specified address.
      *
      *  @{ */
-    rose_addr_t address() const { return addr_; }
-    SRecord& address(rose_addr_t addr) { addr_ = addr; return *this; }
+    Address address() const { return addr_; }
+    SRecord& address(Address addr) { addr_ = addr; return *this; }
     /** @} */
 
     /** Property: record data.
@@ -206,7 +206,7 @@ public:
 public:
     /** Run-length encoding information. */
     class RunLengthEncoding {
-        Sawyer::Optional<rose_addr_t> dataVa_, executionVa_;
+        Sawyer::Optional<Address> dataVa_, executionVa_;
         size_t nDataRecords_;
     public:
         /** Default constructor. */
@@ -219,15 +219,15 @@ public:
         void insert(const SRecord&);
 
         /** Returns the memory address for the start of a data record, or nothing. */
-        Sawyer::Optional<rose_addr_t> dataAddress(const SRecord&) const;
+        Sawyer::Optional<Address> dataAddress(const SRecord&) const;
 
         /** Base data address.
          *
          *  This is the amount which to add to individual S-Record addresses. */
-        rose_addr_t baseDataAddress() const;
+        Address baseDataAddress() const;
 
         /** Returns the execution starting address if one was specified. */
-        Sawyer::Optional<rose_addr_t> executionAddress() const;
+        Sawyer::Optional<Address> executionAddress() const;
 
         /** Number of data records seen. */
         size_t nDataRecords() const { return nDataRecords_; }
@@ -245,7 +245,7 @@ public:
      *  number of characters. Each character in that range must be a valid hexadecimal digit representing four bits of the
      *  result in big-endian order.  Returns the unsigned value if successful, or nothing if a syntax error, short read,
      *  or overflow is encountered. */
-    static Sawyer::Optional<rose_addr_t> parseBigEndianInteger(const std::string&, size_t start, size_t nChars);
+    static Sawyer::Optional<Address> parseBigEndianInteger(const std::string&, size_t start, size_t nChars);
 
     /** Convert the first few bytes of the buffer to a big-endian integer. */
     static unsigned bigEndian(const std::vector<uint8_t> &data, size_t nBytes);

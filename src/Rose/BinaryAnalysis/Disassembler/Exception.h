@@ -24,12 +24,12 @@ public:
         {}
 
     /** An exception bound to a virtual address but no raw data or instruction. */
-    Exception(const std::string &reason, rose_addr_t ip)
+    Exception(const std::string &reason, Address ip)
         : Rose::Exception(reason), ip(ip), bit(0), insn(NULL)
         {}
 
     /** An exception bound to a particular instruction being disassembled. */
-    Exception(const std::string &reason, rose_addr_t ip, const SgUnsignedCharList &raw_data, size_t bit)
+    Exception(const std::string &reason, Address ip, const SgUnsignedCharList &raw_data, size_t bit)
         : Rose::Exception(reason), ip(ip), bytes(raw_data), bit(bit), insn(NULL)
         {}
 
@@ -41,7 +41,7 @@ public:
     void print(std::ostream&) const;
     friend std::ostream& operator<<(std::ostream &o, const Exception &e);
 
-    rose_addr_t ip;                 /**< Virtual address where failure occurred; zero if no associated instruction */
+    Address ip;                     /**< Virtual address where failure occurred; zero if no associated instruction */
     SgUnsignedCharList bytes;       /**< Bytes (partial) of failed disassembly, including byte at failure. Empty if the
                                      *   exception is not associated with a particular byte sequence, such as if an
                                      *   attempt was made to disassemble at an invalid address. */

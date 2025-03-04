@@ -355,7 +355,7 @@ Jvm::terminatesBasicBlock(SgAsmInstruction *insn_) const {
 }
 
 bool
-Jvm::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) const {
+Jvm::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, Address *target, Address *return_va) const {
     if (insns.empty())
         return false;
 
@@ -403,7 +403,7 @@ Jvm::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
     }
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 Jvm::branchTarget(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmJvmInstruction(insn_);
     ASSERT_not_null(insn);
@@ -464,7 +464,7 @@ static AddressSet
 switchSuccessors(const SgAsmJvmInstruction* insn, bool &complete) {
     SgAsmIntegerValueExpression* ival{nullptr};
     AddressSet retval{};
-    rose_addr_t va{insn->get_address()};
+    Address va{insn->get_address()};
     auto kind{insn->get_kind()};
 
     complete = false;

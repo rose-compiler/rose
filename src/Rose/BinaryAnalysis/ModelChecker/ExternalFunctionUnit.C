@@ -113,7 +113,7 @@ ExternalFunctionUnit::nSteps() const {
     return 1;
 }
 
-Sawyer::Optional<rose_addr_t>
+Sawyer::Optional<Address>
 ExternalFunctionUnit::address() const {
     // No lock necessary since the function pointer is read-only
     ASSERT_not_null(function_);

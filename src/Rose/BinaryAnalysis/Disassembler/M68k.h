@@ -29,7 +29,7 @@ public:
     // State mutated during the call to disassembleOne. Used internally.
     struct State: boost::noncopyable { // noncopyable is so we don't accidentally pass it by value
         MemoryMap::Ptr map;                         /**< Map from which to read instruction words. */
-        rose_addr_t insn_va;                        /**< Address of instruction. */
+        Address insn_va;                            /**< Address of instruction. */
         uint16_t    iwords[11];                     /**< Instruction words. */
         size_t      niwords;                        /**< Number of instruction words read. */
         size_t      niwords_used;                   /**< High water number of instruction words used by instructionWord(). */
@@ -114,8 +114,7 @@ public:
     static Ptr instance(const Architecture::BaseConstPtr&, M68kFamily);
 
     virtual Base::Ptr clone() const override;
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
-                                             AddressSet *successors = nullptr) override;
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, Address start_va, AddressSet *successors = nullptr) override;
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;
 
     typedef std::pair<SgAsmExpression*, SgAsmExpression*> ExpressionPair;
@@ -130,7 +129,7 @@ public:
     void insert_idis(Decoder*);
 
     /** Called by disassembleOne() to initialize the disassembler state for the next instruction. */
-    void start_instruction(State &state, const MemoryMap::Ptr &map, rose_addr_t start_va) const{
+    void start_instruction(State &state, const MemoryMap::Ptr &map, Address start_va) const{
         state.map = map;
         state.insn_va = start_va;
         state.niwords = 0;

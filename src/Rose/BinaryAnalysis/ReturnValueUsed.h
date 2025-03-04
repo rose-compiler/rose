@@ -98,7 +98,7 @@ private:
 
 class Analysis {
 private:
-    typedef Sawyer::Container::Map<rose_addr_t /*call_site*/, CallSiteResults> CallSiteMap;
+    typedef Sawyer::Container::Map<Address /*call_site*/, CallSiteResults> CallSiteMap;
 
 private:
     CallingConvention::Definition::Ptr defaultCallingConvention_;

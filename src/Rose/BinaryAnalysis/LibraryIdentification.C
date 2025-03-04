@@ -84,7 +84,7 @@ LibraryIdentification::Library::creationVersion() const {
 // Functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LibraryIdentification::Function::Function(rose_addr_t address, const std::string &name, const std::string &demangledName,
+LibraryIdentification::Function::Function(Address address, const std::string &name, const std::string &demangledName,
                                           const std::string &hash, size_t nInsns, time_t ctime, const std::string &cversion,
                                           const Library::Ptr &library)
     : address_(address), name_(name), demangledName_(demangledName), hash_(hash), nInsns_(nInsns), library_(library),
@@ -93,19 +93,19 @@ LibraryIdentification::Function::Function(rose_addr_t address, const std::string
 }
 
 LibraryIdentification::Function::Ptr
-LibraryIdentification::Function::instance(rose_addr_t address, const std::string &name, const std::string &demangledName,
+LibraryIdentification::Function::instance(Address address, const std::string &name, const std::string &demangledName,
                                           const std::string &hash, size_t nInsns, const Library::Ptr &library) {
     return Ptr(new Function(address, name, demangledName, hash, nInsns, time(NULL), CommandLine::versionString, library));
 }
 
 LibraryIdentification::Function::Ptr
-LibraryIdentification::Function::instance(rose_addr_t address, const std::string &name, const std::string &demangledName,
+LibraryIdentification::Function::instance(Address address, const std::string &name, const std::string &demangledName,
                                           const std::string &hash, size_t nInsns, time_t ctime, const std::string &cversion,
                                           const Library::Ptr &library) {
     return Ptr(new Function(address, name, demangledName, hash, nInsns, ctime, cversion, library));
 }
 
-rose_addr_t
+Address
 LibraryIdentification::Function::address() const {
     return address_;
 }
@@ -464,7 +464,7 @@ std::vector<LibraryIdentification::Function::Ptr>
 LibraryIdentification::functions(Sawyer::Database::Statement stmt) {
     std::vector<Function::Ptr> retval;
     for (auto row: stmt) {
-        const rose_addr_t va = row.get<rose_addr_t>(0).orElse(0);
+        const Address va = row.get<Address>(0).orElse(0);
         const std::string name = row.get<std::string>(1).orDefault();
         const std::string demangledName = row.get<std::string>(2).orDefault();
         const std::string hash = row.get<std::string>(3).orDefault();
@@ -527,7 +527,7 @@ LibraryIdentification::hash(const Partitioner2::Partitioner::ConstPtr &partition
 
     auto hasher = std::make_shared<Combinatorics::HasherSha256Builtin>();
     AstHasher astHash(hasher);
-    for (rose_addr_t va: function->basicBlockAddresses()) {
+    for (Address va: function->basicBlockAddresses()) {
         if (Partitioner2::BasicBlock::Ptr bb = partitioner->basicBlockExists(va))
             astHash.hash(bb);
     }
@@ -539,7 +539,7 @@ LibraryIdentification::nInsns(const Partitioner2::Partitioner::ConstPtr &partiti
     ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
     size_t nInsns = 0;
-    for (rose_addr_t bbVa: function->basicBlockAddresses()) {
+    for (Address bbVa: function->basicBlockAddresses()) {
         if (Partitioner2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbVa))
             nInsns += bb->nInstructions();
     }
@@ -699,7 +699,7 @@ LibraryIdentification::search(const Partitioner2::Partitioner::ConstPtr &partiti
                          " from functions where hash = ?hash")
                 .bind("hash", h);
     for (auto row: stmt) {
-        const rose_addr_t address = row.get<rose_addr_t>(0).orElse(0);
+        const Address address = row.get<Address>(0).orElse(0);
         const std::string name = row.get<std::string>(1).orDefault();
         const std::string demangledName = row.get<std::string>(2).orDefault();
         const size_t nInsns = row.get<size_t>(3).orElse(0);

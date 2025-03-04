@@ -205,7 +205,7 @@ MemoryCell::operator+(const std::string &linePrefix) {
 }
 
 void
-MemoryCell::setWriter(rose_addr_t writerVa) {
+MemoryCell::setWriter(Address writerVa) {
     eraseWriters();
     writers_.insert(writerVa);
 }
