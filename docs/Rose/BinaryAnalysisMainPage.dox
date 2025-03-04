@@ -79,11 +79,11 @@
  *  @subsection mainpage_headers Header files
  *
  *  The ROSE build system installs header files with path names that mirror the namespace hierarchy. The user should include these
- *  headers using <code>@#include <Rose/....h></code>. The base names of public include files match the C++ symbol they primarily
- *  define and always end with a ".h" extension. Base names and path components use the same capitalization as the C++ symbols
- *  (described above). For instance, one includes the header file for the @ref Rose::CommandLine::SelfTest class as <code>@#include
- *  <Rose/CommandLine/SelfTest.h></code>.  To support file systems that are not POSIX compliant with regard to case sensitivity, no
- *  ROSE include directory ever contains two header files whose names are identical when converted to lower case.
+ *  headers using `@#include <Rose/....h>`. The base names of public include files match the C++ symbol they primarily define and
+ *  always end with a ".h" extension. Base names and path components use the same capitalization as the C++ symbols (described
+ *  above). For instance, one includes the header file for the @ref Rose::CommandLine::SelfTest class as `@#include
+ *  <Rose/CommandLine/SelfTest.h>`.  To support file systems that are not POSIX compliant with regard to case sensitivity, no ROSE
+ *  include directory ever contains two header files whose names are identical when converted to lower case.
  *
  *  Each namespace has a header file that recursively includes all header files under that namespace. Although users find this
  *  convenient, the ROSE library itself does not include these namespace headers into its own compilation units because doing so

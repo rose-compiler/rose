@@ -147,7 +147,7 @@ public:
      *
      *  @li If a @p hint is supplied, use it.
      *
-     *  @li Fail by throwing an <code>std::runtime_error</code>.
+     *  @li Fail by throwing an `std::runtime_error`.
      *
      *  In any case, the @ref binaryLoader property is set to this method's return value.
      *

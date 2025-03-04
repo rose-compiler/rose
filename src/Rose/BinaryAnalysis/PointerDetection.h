@@ -48,7 +48,7 @@ namespace BinaryAnalysis {
  *  Ld: ret
  *  @endcode
  *
- *  L9 reads from memory address <code>eax + ecx * 4</code>, and that address was calculated by previous instructions:
+ *  L9 reads from memory address `eax + ecx * 4`, and that address was calculated by previous instructions:
  *
  *  @li L3 read a value from the stack, therefore L3 is a definer of EAX's value before L9
  *  @li L6 read a value from the stack, therefore L6 is a definer of ECX's value before L9

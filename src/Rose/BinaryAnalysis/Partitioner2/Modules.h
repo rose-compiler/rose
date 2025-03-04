@@ -29,9 +29,9 @@ namespace Partitioner2 {
  *  the successor list can be adjusted by invoking methods in the partitioner API or by modifying the cache directly.
  *
  *  Another important use for these callbacks is to tell the partitioner when a basic block is finished.  The partitioner has a
- *  fairly long list of criteria that it uses as documented in @ref Partitioner::discoverBasicBlock.  One of these criteria is
- *  to look at the <code>args.results.termination</code> enum returned by the callbacks: if it is TERMINATE_NOW or
- *  TERMINATE_PRIOR then the block is forcibly terminated regardless of what would have otherwise happened.
+ *  fairly long list of criteria that it uses as documented in @ref Partitioner::discoverBasicBlock.  One of these criteria is to
+ *  look at the `args.results.termination` enum returned by the callbacks: if it is TERMINATE_NOW or TERMINATE_PRIOR then the block
+ *  is forcibly terminated regardless of what would have otherwise happened.
  *
  *  The partitioner expects callbacks to have shared ownership (see @ref heap_object_shared_ownership) and references them only
  *  via @ref Sawyer::SharedPointer.  Therefore, subclasses should implement an @c instance class method that allocates a new
@@ -138,10 +138,9 @@ public:
 
     /** Attempt to match padding.
      *
-     *  Attempts to match function padding that ends at the address immediately prior to @p anchor.  If a match is successful
-     *  then the return value is the starting address for the padding and must be less than @p anchor. When no match is found
-     *  then @p anchor is returned. The size of the matched padding is always <code>anchor-retval</code> where @c retval is
-     *  the returned value. */
+     *  Attempts to match function padding that ends at the address immediately prior to @p anchor.  If a match is successful then
+     *  the return value is the starting address for the padding and must be less than @p anchor. When no match is found then @p
+     *  anchor is returned. The size of the matched padding is always `anchor-retval` where @c retval is the returned value. */
     virtual rose_addr_t match(const PartitionerConstPtr&, rose_addr_t anchor) = 0;
 };
 

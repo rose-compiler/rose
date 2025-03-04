@@ -185,8 +185,7 @@ public:
     
     /** Append a hot-patch record.
      *
-     *  This is just a convenience function that's equivalent to <code>records.push_back(x)</code>. It returns the index
-     *  of the new record. */
+     *  This is just a convenience function that's equivalent to `records.push_back(x)`. It returns the index of the new record. */
     size_t append(const Record &record) {
         records_.push_back(record);
         return records_.size() - 1;

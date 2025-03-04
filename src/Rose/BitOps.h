@@ -253,10 +253,10 @@ inline Unsigned shiftRightSigned(Unsigned src, size_t n) {
 
 /** Right shift low bits without affecting other bits.
  *
- *  Right shift the low-order @p w bits by @p n without affecting higher order bits. The width, @p w, must not be larger than
- *  the @p src width. If @n is greater than or equal to @p w then the @p w low order bits are set or cleared depending on bit
- *  <code>w-1</code>. Otherwise, the @p n low order bits are discarded and the @p n new bits introduced at index
- *  <code>w-1</code> are either zero or one depending on bit <code>w-1</code>.
+ *  Right shift the low-order @p w bits by @p n without affecting higher order bits. The width, @p w, must not be larger than the @p
+ *  src width. If @n is greater than or equal to @p w then the @p w low order bits are set or cleared depending on bit
+ *  `w-1`. Otherwise, the @p n low order bits are discarded and the @p n new bits introduced at index `w-1` are either zero or one
+ *  depending on bit `w-1`.
  *
  *  @snippet{trimleft} bitOpUnitTests.C shiftRightSignedLsb */
 template<typename Unsigned>

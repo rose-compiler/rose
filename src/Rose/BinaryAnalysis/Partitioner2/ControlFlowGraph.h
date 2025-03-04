@@ -284,8 +284,8 @@ public:
 
 /** Insert one control flow graph into another.
  *
- *  The @p vmap is updated with the mapping of vertices from source to destination. Upon return, <code>vmap[srcVertex]</code>
- *  will point to the corresponding vertex in the destination graph. */
+ *  The @p vmap is updated with the mapping of vertices from source to destination. Upon return, `vmap[srcVertex]` will point to the
+ *  corresponding vertex in the destination graph. */
 void insertCfg(ControlFlowGraph &dst, const ControlFlowGraph &src, CfgVertexMap &vmap /*out*/);
 
 /** Find back edges.

@@ -233,7 +233,7 @@ public:
      *
      *  Stack-based input parameters need not be enumerated. If N input parameters are enumerated, numbered 0 through N-1, then
      *  parameters N and above are assumed to be on the stack and are called the "implied stack parameters".  This
-     *  stackParameterOrder property describes whether a source code statement like <code>function_call(a, b, c)</code> pushes
+     *  stackParameterOrder property describes whether a source code statement like `function_call(a, b, c)` pushes
      *  @c a first (@c LEFT_TO_RIGHT) or @c first (@c RIGHT_TO_LEFT).
      *
      *  If the enumerated input parameter list contains any stack parameters then implied stack parameters are not allowed.

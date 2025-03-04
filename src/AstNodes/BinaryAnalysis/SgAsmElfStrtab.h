@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/Address.h>
+
 /** ELF string table. */
 class SgAsmElfStrtab: public SgAsmGenericStrtab {
 public:
@@ -29,32 +31,32 @@ public:
      *  If @p shared is true then attempt to re-use a previous storage object, otherwise always create a new one. Each
      *  storage object is considered a separate string, therefore when two strings share the same storage object, changing
      *  one string changes the other. */
-    virtual SgAsmStringStorage *createStorage(rose_addr_t offset, bool shared) override;
+    virtual SgAsmStringStorage *createStorage(Rose::BinaryAnalysis::Address offset, bool shared) override;
 
     /** Returns the number of bytes required to store the string in the string table.
      *
      *  This is the length of the string plus one for the NUL terminator. */
-    virtual rose_addr_t get_storageSize(const SgAsmStringStorage*) override;
+    virtual Rose::BinaryAnalysis::Address get_storageSize(const SgAsmStringStorage*) override;
 
     /** Find offset for a string.
      *
-     *  Tries to find a suitable offset for a string such that it overlaps with some other string already allocated. If the
-     *  new string is the same as the end of some other string (new="main", existing="domain") then we just use an offset
-     *  into that string since the space is already allocated for the existing string. If the new string ends with an
-     *  existing string (new="domain", existing="main") and there's enough free space before the existing string (two bytes
-     *  in this case) then we allocate some of that free space and use a suitable offset. In any case, upon return
-     *  <code>storege->get_offset()</code> will return the allocated offset if successful, or
-     *  @ref SgAsmGenericString::unallocated if we couldn't find an overlap. */
+     *  Tries to find a suitable offset for a string such that it overlaps with some other string already allocated. If the new
+     *  string is the same as the end of some other string (new="main", existing="domain") then we just use an offset into that
+     *  string since the space is already allocated for the existing string. If the new string ends with an existing string
+     *  (new="domain", existing="main") and there's enough free space before the existing string (two bytes in this case) then we
+     *  allocate some of that free space and use a suitable offset. In any case, upon return `storage->get_offset()` will return the
+     *  allocated offset if successful, or @ref SgAsmGenericString::unallocated if we couldn't find an overlap. */
     virtual void allocateOverlap(SgAsmStringStorage*) override;
-
-    /** Similar to create_storage() but uses a storage object that's already been allocated. */
-    virtual void rebind(SgAsmStringStorage*, rose_addr_t) override;
+    
+    /** Similar to `create_storage` but uses a storage object that's already been allocated. */
+    virtual void rebind(SgAsmStringStorage*, Rose::BinaryAnalysis::Address) override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual SgAsmStringStorage *create_storage(rose_addr_t, bool) override ROSE_DEPRECATED("use createStorage");
-    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) override ROSE_DEPRECATED("use get_storageSize");
+    virtual SgAsmStringStorage *create_storage(Rose::BinaryAnalysis::Address, bool) override ROSE_DEPRECATED("use createStorage");
+    virtual Rose::BinaryAnalysis::Address get_storage_size(const SgAsmStringStorage*) override
+        ROSE_DEPRECATED("use get_storageSize");
     virtual void allocate_overlap(SgAsmStringStorage*) override ROSE_DEPRECATED("use allocateOverlap");
 };

@@ -16,7 +16,7 @@ namespace StringUtility {
 
 /** Convert an integer to a string.
  *
- *  These functions are wrappers around <code>boost::lexical_cast<std::string></code>.
+ *  These functions are wrappers around `boost::lexical_cast<std::string>`.
  *
  *  @{ */
 ROSE_UTIL_API std::string numberToString(long long);

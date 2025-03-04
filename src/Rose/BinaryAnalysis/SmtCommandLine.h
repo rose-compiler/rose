@@ -41,9 +41,9 @@ std::string smtSolverDocumentationString(const std::string &dfltSolver);
 
 /** Validates SMT solver name from command-line.
  *
- *  This is a Sawyer command-line switch action that validates the "--smt-solver=NAME" command-line switch value and also
- *  handles the case when NAME is "list". When NAME is "list" a list of all known SMT solvers is shows on standard output
- *  along with an indication of whether that solver is available, then <code>exit(0)</code> is called. */
+ *  This is a Sawyer command-line switch action that validates the "--smt-solver=NAME" command-line switch value and also handles
+ *  the case when NAME is "list". When NAME is "list" a list of all known SMT solvers is shows on standard output along with an
+ *  indication of whether that solver is available, then `exit(0)` is called. */
 class SmtSolverValidator: public Sawyer::CommandLine::SwitchAction {
 protected:
     SmtSolverValidator() {}

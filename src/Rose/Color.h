@@ -270,8 +270,8 @@ public:
 
     /** Insert a point into the gradient.
      *
-     *  This method is just a wrapper around <code>this->colors().insert(where, color)</code> and is provided because it's a
-     *  common operation. */
+     *  This method is just a wrapper around `this->colors().insert(where, color)` and is provided because it's a common
+     *  operation. */
     void insert(double where, const HSV &color) { colors_.insert(where, color); }
 
     /** Return a color for the specified position.

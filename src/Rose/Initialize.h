@@ -37,7 +37,7 @@ namespace Rose {
  *  The @p configToken argument is normally the C preprocessor macro @c ROSE_CONFIG_TOKEN, which should be treated as
  *  a black box.  Passing a null pointer bypasses the configuration and version checking but still initializes the ROSE library
  *  and its dependencies.  If the configuration and version checking (see @ref checkConfigToken) detects an inconsistency then
- *  an error message is emitted and a <code>std::runtime_error</code> is thrown.
+ *  an error message is emitted and a `std::runtime_error` is thrown.
  *
  *  Example usage:
  *  @code
@@ -55,7 +55,7 @@ namespace Rose {
  *  consistency.
  *
  *  See also, @ref isInitialized and @ref checkConfigToken. The @c ROSE_INITIALIZE C preprocessor-defined symbol expands to
- *  <code>Rose::initialize(ROSE_CONFIG_TOKEN)</code> but might be easier to remember. */
+ *  `Rose::initialize(ROSE_CONFIG_TOKEN)` but might be easier to remember. */
 ROSE_DLL_API void initialize(const char *configToken);
 
 /** Checks whether the library has been initialized.

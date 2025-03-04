@@ -198,7 +198,7 @@ public:
 
         ~SideEffect();
 
-        // Default constructor. Not normally used, but needed by <code>std::vector</code>. (DON'T DOCUMENT)
+        // Default constructor. Not normally used, but needed by `std::vector`. (DON'T DOCUMENT)
         SideEffect();
 
         // Used internally, not neede by users since data members are public.

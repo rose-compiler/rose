@@ -453,9 +453,9 @@ private:
  *  @li Hashing Rule: User-defined flags are significant for hashing.  E.g., structural equivalence will return false if the
  *      two expressions have different flags since structural equivalence uses hashes.
  *
- *  @li Relational Operator Rule:  Simplification of relational operators to produce a Boolean constant will act as if they are
- *      performing constant folding even if the simplification is on variables.  E.g., <code>(ule v1 v1)</code> results in true
- *      with flags the same as @c v1. */
+ *  @li Relational Operator Rule: Simplification of relational operators to produce a Boolean constant will act as if they are
+ *      performing constant folding even if the simplification is on variables.  E.g., `(ule v1 v1)` results in true with flags the
+ *      same as @c v1. */
 class Node
     : public Sawyer::SharedObject,
       public Sawyer::SharedFromThis<Node>,

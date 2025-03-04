@@ -825,8 +825,8 @@ public:
 
     /** Find the CFG vertex for a basic block placeholder.
      *
-     *  If the CFG contains a basic block placeholder at the specified address then that CFG vertex is returned, otherwise the
-     *  end vertex (<code>partitioner.cfg().vertices().end()</code>) is returned.
+     *  If the CFG contains a basic block placeholder at the specified address then that CFG vertex is returned, otherwise the end
+     *  vertex (`partitioner.cfg().vertices().end()`) is returned.
      *
      *  Thread safety: Not thread safe.
      *
@@ -1915,9 +1915,9 @@ public:
      *  default calling convention is supplied then it determines which registers are clobbered by a call to a function that
      *  hasn't been analyzed yet.
      *
-     *  Calling convention analysis results are stored in the function object. If calling convention analysis has already been
-     *  run for this function then the old results are returned.  The old results can be cleared on a per-function basis with
-     *  <code>function->callingConventionAnalysis().clear()</code>.
+     *  Calling convention analysis results are stored in the function object. If calling convention analysis has already been run
+     *  for this function then the old results are returned.  The old results can be cleared on a per-function basis with
+     *  `function->callingConventionAnalysis().clear()`.
      *
      *  See also, @ref allFunctionCallingConvention, which computes calling convention characteristics for all functions at
      *  once, and @ref functionCallingConventionDefinitions, which returns matching definitions.
@@ -2020,9 +2020,8 @@ public:
      *  Since this analysis is based on data-flow, which is based on a control flow graph, the function must be attached to the
      *  CFG/AUM and all its basic blocks must also exist in the CFG/AUM.
      *
-     *  The no-op analysis results are stored in the function object. If no-op analysis has already been run for this function
-     *  then the old results are returned. The old results can be cleared on a per-function basis with
-     *  <code>function->isNoop().clear()</code>.
+     *  The no-op analysis results are stored in the function object. If no-op analysis has already been run for this function then
+     *  the old results are returned. The old results can be cleared on a per-function basis with `function->isNoop().clear()`.
      *
      *  Thread safety: Not thread safe.
      *

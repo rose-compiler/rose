@@ -45,9 +45,9 @@ ROSE_UTIL_API std::list<std::string> tokenize(const std::string&, char delim);
 
 /** Join individual items to form a single string.
  *
- *  Given a container containing printable objects (such as <code>std::list<std::string></code>, join the objects together
- *  separated from one another by the specified @p separator. The separator does not appear before the first object or after
- *  the final object.  If the container is empty then an empty string is returned.
+ *  Given a container containing printable objects (such as `std::list<std::string>`, join the objects together separated from one
+ *  another by the specified @p separator. The separator does not appear before the first object or after the final object.  If the
+ *  container is empty then an empty string is returned.
  *
  * @{ */
 template<class Iterator>
@@ -80,17 +80,17 @@ ROSE_UTIL_API std::string join(char separator, const char *strings[], size_t nst
  *  This is useful when generating documentation strings.
  *
  *  If the input is empty, the output is the empty string.
- *  I.e., <code>() => ""</code>
+ *  I.e., `() => ""`
  *
  *  If the input is one phrase, the output is that phrase.
- *  E.g., <code>("foo") => "foo"</code>
+ *  E.g., `("foo") => "foo"`
  *
  *  If the input is two phrases, the output will be those two phrases separated by "and" (the @p finalIntro).
- *  E.g., <code>("foo", "bar") => "foo and bar"</code>
+ *  E.g., `("foo", "bar") => "foo and bar"`
  *
  *  If the input is three or more phrases, they will be separated from one another by commas (the @p separator) and the last
  *  item will also be introduced with "and" (the @p finalIntro).
- *  E.g., <code>("foo", "bar", "baz") => "foo, bar, and baz"</code>
+ *  E.g., `("foo", "bar", "baz") => "foo, bar, and baz"`
  *
  *  No transformations are performed on the input phrases. Space characters are inserted after each @p separator and @p
  *  finalIntro. A space is also inserted before the @p finalIntro when the input is two phrases.

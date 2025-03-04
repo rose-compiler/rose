@@ -67,8 +67,8 @@ public:
  *
  *  The temporary directory is created as a subdirectory of the directory which is suitable for temporary files under the
  *  conventions of the operating system.  The specifics of how this path is determined are implementation defined (see
- *  <code>boost::filesystem::temp_directory_path</code>).  The created subdirectory has a name of the form
- *  "rose-%%%%%%%%-%%%%%%%%" where each "%" is a random hexadecimal digit.  Returns the path to this directory. */
+ *  `boost::filesystem::temp_directory_path`).  The created subdirectory has a name of the form "rose-%%%%%%%%-%%%%%%%%" where each
+ *  "%" is a random hexadecimal digit.  Returns the path to this directory. */
 ROSE_UTIL_API Path createTemporaryDirectory();
 
 /** Normalize a path name.
@@ -169,7 +169,7 @@ ROSE_UTIL_API void copyFile(const Path &sourceFileName, const Path &destinationF
  *  For instance, copyFiles(["bar/baz"], "foo", "frob") will copy "bar/baz" to "frob/../bar/baz" since "bar" is apparently
  *  a sibling of "foo", and therefore must be a sibling of "frob".
  *
- *  Throws a <code>boost::filesystem::filesystem_error</code> on failure. */
+ *  Throws a `boost::filesystem::filesystem_error` on failure. */
 ROSE_UTIL_API void copyFiles(const std::vector<Path> &files, const Path &root, const Path &destinationDirectory);
 
 /** Recursively copy files.

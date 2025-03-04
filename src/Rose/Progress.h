@@ -86,10 +86,10 @@ namespace Rose {
  *
  *  The following guidelines should be used when writing a long-running task, such as a ROSE analysis or transformation, that
  *  supports progress reporting. These guidelines assume that the task is encapsulated in a class (as most analyses and
- *  transformations should be) so that an application is able to have more than one instance of the task. A task that's
- *  implemented as a single function should take an argument of type <code>const Rose::Progress::Ptr&</code> (which may be a
- *  null progress object), and a task that's implemented in a namespace should try to provide an API similar to a class (the
- *  main difference will be that there's only once "instance" of the analysis).
+ *  transformations should be) so that an application is able to have more than one instance of the task. A task that's implemented
+ *  as a single function should take an argument of type `const Rose::Progress::Ptr&` (which may be a null progress object), and a
+ *  task that's implemented in a namespace should try to provide an API similar to a class (the main difference will be that there's
+ *  only once "instance" of the analysis).
  *
  *  @li The task class should have a private data member to hold a @ref Progress::Ptr.
  *
@@ -104,16 +104,16 @@ namespace Rose {
  *  @li The task should expect that the progress object could be null, in which case the user is saying that there's no need
  *  for the analyzer to spend time updating any progress reports because nobody will be listening for them.
  *
- *  @li The task should update the progress with a completion ratio between 0 and 1 without specifying a phase name (unless
- *  the analysis has multiple phases).  I.e., use <code>update(double)</code> instead of <code>update(Report)</code>.
+ *  @li The task should update the progress with a completion ratio between 0 and 1 without specifying a phase name (unless the
+ *  analysis has multiple phases).  I.e., use `update(double)` instead of `update(Report)`.
  *
  *  @li If the task creates an inner task object that's able to report progress, then the same progress object should be
  *  assigned to the inner task.
  *
- *  @li If the task calls an inner task that uses the same progress object as the outer task (see previous bullet) then the
- *  outer task should use the @ref ProgressTask RAII aproach by declaring a variable like this: <code>ProgressTask pt(progress,
- *  "name_of_task", completion)</code>, where @c completion is the progress of the outer task after the inner task returns
- *  (either normally or by exception).
+ *  @li If the task calls an inner task that uses the same progress object as the outer task (see previous bullet) then the outer
+ *  task should use the @ref ProgressTask RAII aproach by declaring a variable like this: `ProgressTask pt(progress, "name_of_task",
+ *  completion)`, where @c completion is the progress of the outer task after the inner task returns (either normally or by
+ *  exception).
  *
  *  @li The task should call @ref finished when the analysis has completed if the progress object is non-null, even if the
  *  task has some other mechanism to notify listeners that it has completed.

@@ -144,8 +144,8 @@ public:
 
     /** Unparse memory and/or registers to this format.
      *
-     *  If a non-null memory map is supplied, then the memory that's contained within the specified @p memoryLimit
-     *  address range is output (pass <code>AddressInterval::whole()</code> to emit all mapped memory).
+     *  If a non-null memory map is supplied, then the memory that's contained within the specified @p memoryLimit address range is
+     *  output (pass `AddressInterval::whole()` to emit all mapped memory).
      *
      *  If a non-null register state is specified, then output values for all the registers contained in that state, skipping
      *  registers that don't have a concrete value. In this case, a RiscOperators object must also be supplied in order to

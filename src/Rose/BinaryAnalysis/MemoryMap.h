@@ -345,8 +345,8 @@ public:
      *
      *  Uses a locator string to load a file into a memory map.
      *
-     *  Returns the address interval that was inserted into this memory map, or throws an <code>std::runtime_error</code> for
-     *  syntax errors and problems reading the file.
+     *  Returns the address interval that was inserted into this memory map, or throws an `std::runtime_error` for syntax errors and
+     *  problems reading the file.
      *
      * @section syntax Locator Syntax
      *

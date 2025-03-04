@@ -60,7 +60,7 @@ struct is_invocable {
  *  const size_t n = affirm(myIntParser(s), [](auto x) { return x != -1; }, "cannot parse input");
  * @endcode
  *
- *  You could rewrite @c myFunction to return <code>Sawyer::Result<int, std::string></code> which is more flexible and can be used
+ *  You could rewrite @c myFunction to return `Sawyer::Result<int, std::string>` which is more flexible and can be used
  *  many ways, such as:
  *
  * @code

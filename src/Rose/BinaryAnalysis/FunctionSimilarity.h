@@ -179,7 +179,7 @@ public:
      *
      *  All characteristics values of this category have the same specified dimensionality.  The order that points are inserted
      *  into this category is irrelevant.  If @p allowExisting is false then the specified name must not already exist or else
-     *  an <code>std::runtime_error</code> is thrown; if @p allowExisting is true then either a new category is created or the
+     *  an `std::runtime_error` is thrown; if @p allowExisting is true then either a new category is created or the
      *  ID of an existing category is returned.  Returns a new category ID number, which are consecutive small integers
      *  starting at zero. */
     CategoryId declarePointCategory(const std::string &name, size_t dimensionality, bool allowExisting = true);
@@ -187,7 +187,7 @@ public:
     /** Declare a new category of ordered lists of integers. Each characteristic value inserted into this category may be a
      * different length, but the order that they're inserted defines how they're compared when comparing two such categories
      * from different functions. If @p allowExisting is false then the specified name must not already exist or else an
-     * <code>std::runtime_error</code> is thrown; if @p allowExisting is true then either a new category is created or the ID
+     * `std::runtime_error` is thrown; if @p allowExisting is true then either a new category is created or the ID
      * of an existing category is returned.  Returns a new category ID number, which are consecutive small integers starting at
      * zero. */
     CategoryId declareListCategory(const std::string &name, bool allowExisting = true);
@@ -341,7 +341,7 @@ public:
      *  Compare the given @p needle function with all other @p haystack functions. The returned list is unsorted.
      *
      *  This analysis operates in parallel using multi-threading. It honors the global thread count usually specified with the
-     *  <code>--threads=N</code> switch.
+     *  `--threads=N` switch.
      *
      * @{ */
     template<class FunctionIterator>
@@ -374,7 +374,7 @@ public:
      *  returns a square matrix of function distances.
      *
      *  This analysis operates in parallel using multi-threading. It honors the global thread count usually specified with the
-     *  <code>--threads=N</code> switch. */
+     *  `--threads=N` switch. */
     std::vector<std::vector<double> > compareManyToMany(const std::vector<Partitioner2::FunctionPtr>&,
                                                         const std::vector<Partitioner2::FunctionPtr>&) const;
 
@@ -386,7 +386,7 @@ public:
      *  function lists have wildly different sizes.
      *
      *  This analysis operates in parallel using multi-threading. It honors the global thread count usually specified with the
-     *  <code>--threads=N</code> switch. */
+     *  `--threads=N` switch. */
     DistanceMatrix compareManyToManyMatrix(std::vector<Partitioner2::FunctionPtr>,
                                            std::vector<Partitioner2::FunctionPtr>) const;
 
@@ -406,7 +406,7 @@ public:
      *
      *  This is a low-level function to compute the distance between all pairs of functions from list1 and list2 in
      *  parallel. The return value contains the distances so that the distance between the function @c list1[i] and @c list2[j]
-     *  is at index <code>i * list2.size() + j</code> in the return value. */
+     *  is at index `i * list2.size() + j` in the return value. */
     std::vector<double> computeDistances(const std::vector<Partitioner2::FunctionPtr> &list1,
                                          const std::vector<Partitioner2::FunctionPtr> &list2,
                                          size_t nThreads) const;

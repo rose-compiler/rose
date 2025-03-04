@@ -99,8 +99,8 @@ toDigit(char ch, IntegralType radix = 10) {
  *  separated from one another (or from the radix specifier) by a single underscore, as in
  *  "0b_0001_0010_0011_0100_0101_0110_0111_1000".
  *
- *  The @p IntegralType must be a signed or unsigned integer type of any width. The @c uint8_t and @c int8_t types are also
- *  accepted although they're aliases for <code>unsigned char</code> and <code>signed char</code> .
+ *  The @p IntegralType must be a signed or unsigned integer type of any width. The @c uint8_t and @c int8_t types are also accepted
+ *  although they're aliases for `unsigned char` and `signed char`.
  *
  *  If a syntax error occurs, or if the magnitude of the value is too large to be represented by the specified @p IntegralType,
  *  then an error message is returned. The text of the message begins with either "syntax error:" or "overflow error:". */
@@ -113,7 +113,7 @@ toNumber(const std::string &s) {
 /** Safely convert a string to a number using C++ style syntax.
  *
  *  This function is identical to @ref toNumber except in the return type and error situation. If an error occurs, then a
- *  <code>Rose::Exception</code> is thrown whose message is the error message. On success, the parsed value is returned. */
+ *  `Rose::Exception` is thrown whose message is the error message. On success, the parsed value is returned. */
 template<class IntegralType>
 typename std::enable_if<std::is_integral<IntegralType>::value, IntegralType>::type
 toNumberOrThrow(const std::string &s) {

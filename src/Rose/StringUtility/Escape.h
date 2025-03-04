@@ -37,10 +37,10 @@ ROSE_UTIL_API std::string cEscape(char, char context = '\'');
  *
  *  When given a C++ string literals content, the part between the enclosing quotes, this function will look for escape sequences,
  *  parse them, and replace them in the return value with the actual characters they represent.  For instance, passing in
- *  <code>std::string{"hello\\nworld\\00hidden"}</code> that contains 20 characters including two backslashes, the function replaces
- *  the first backslash+"n" pair with a line feed, and the second backslash+"0"+"0" with a NUL to result in
- *  <code>std::string{"hello\nworld\0hidden"}</code> (18 characters including the LF and NUL). Unicode escapes are not supported
- *  and will be left escaped in the return value. */
+ *  `std::string{"hello\\nworld\\00hidden"}` that contains 20 characters including two backslashes, the function replaces the first
+ *  backslash+"n" pair with a line feed, and the second backslash+"0"+"0" with a NUL to result in
+ *  `std::string{"hello\nworld\0hidden"}` (18 characters including the LF and NUL). Unicode escapes are not supported and will be
+ *  left escaped in the return value. */
 ROSE_UTIL_API std::string cUnescape(const std::string&);
 
 /** Escapes characters that are special to the Bourne shell.

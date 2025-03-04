@@ -50,7 +50,7 @@ public:
      *  file. The return value in this case is @c SLOW.
      *
      *  @li If this is Windows and the libmagic library is not available then the return value is NONE. In this case, all calls
-     *  to identify will throw a <code>std::runtime_error</code>.
+     *  to identify will throw a `std::runtime_error`.
      *
      *  This property is read-only. */
     Mechanism mechanism() const { return mechanism_; }

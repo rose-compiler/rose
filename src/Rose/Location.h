@@ -51,10 +51,9 @@ public:
      *
      *  Objects are equal if they are the same type and they point to the same location. Otherwise they are unequal.
      *
-     *  The operator== is implemented in the base class only. For the expression <code>a == b</code> it calls both
-     *  <code>a.isEqual(b)</code> and <code>b.isEqual(a)</code>, returning true only if both tests return true. Subclasses
-     *  should implement <code>x.isEqual(y)</code> by dynamic casting @c y to the type of @c x and returning true if and only
-     *  if the cast succeeds and @c x and @c y point to the same location.
+     *  The operator== is implemented in the base class only. For the expression `a == b` it calls both `a.isEqual(b)` and
+     *  `b.isEqual(a)`, returning true only if both tests return true. Subclasses should implement `x.isEqual(y)` by dynamic casting
+     *  @c y to the type of @c x and returning true if and only if the cast succeeds and @c x and @c y point to the same location.
      *
      *  The operator!= is implemented in the base class as the complement of operator==.
      *

@@ -19,8 +19,7 @@ class TaintedFlow {
 public:
     /** Taint values.
      *
-     *  These values form a lattice where <code>NOT_TAINTED</code> and <code>TAINTED</code> are children of <code>TOP</code>
-     *  and parents of <code>BOTTOM</code>. */
+     *  These values form a lattice where `NOT_TAINTED` and `TAINTED` are children of `TOP` and parents of `BOTTOM`. */
     enum Taintedness { BOTTOM, NOT_TAINTED, TAINTED, TOP };
 
     /** Mode of operation.
@@ -81,8 +80,8 @@ public:
 
         /** Find the taintedness for some variable.
          *
-         * The specified variable must exist in this state according to <code>Variable::mustAlias</code>. Returns a reference
-         * to the variables taintedness value. */
+         * The specified variable must exist in this state according to `Variable::mustAlias`. Returns a reference to the variables
+         * taintedness value. */
         Taintedness& lookup(const DataFlow::Variable&);
 
         /** Set taintedness if the variable exists.

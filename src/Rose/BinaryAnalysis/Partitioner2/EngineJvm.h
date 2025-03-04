@@ -94,8 +94,8 @@ public:
      *  functions. If the specimen consisted of an ELF or PE container then the parent nodes of the returned AST will lead
      *  eventually to an SgProject node.
      *
-     *  The command-line can be provided as a typical @c argc and @c argv pair, or as a vector of arguments. In the latter
-     *  case, the vector should not include <code>argv[0]</code> or <code>argv[argc]</code> (which is always a null pointer).
+     *  The command-line can be provided as a typical @c argc and @c argv pair, or as a vector of arguments. In the latter case, the
+     *  vector should not include `argv[0]` or `argv[argc]` (which is always a null pointer).
      *
      *  The command-line supports a "--help" (or "-h") switch to describe all other switches and arguments, essentially
      *  generating output like a Unix man(1) page.
@@ -107,8 +107,8 @@ public:
      *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
      *  special meaning.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
-     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an `std::runtime_exception` occurs and the @ref EngineSettings::exitOnError property is set, then the exception is
+     *  caught, its text is emitted to the partitioner's fatal error stream, and `exit(1)` is invoked.
      *
      * @{ */
     virtual SgAsmBlock* frontend(const std::vector<std::string> &args,
@@ -151,8 +151,8 @@ public:
      *  interpretation. If the list of names has nothing suitable for ROSE's @c frontend function (the thing that does the
      *  container parsing) then the null pointer is returned.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
-     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an `std::runtime_exception` occurs and the @ref EngineSettings::exitOnError property is set, then the exception is
+     *  caught, its text is emitted to the partitioner's fatal error stream, and `exit(1)` is invoked.
      *
      * @{ */
     virtual SgAsmInterpretation* parseContainers(const std::vector<std::string> &fileNames) override;
@@ -256,8 +256,8 @@ public:
      *
      *  Returns the partitioner that was used and which contains the results.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
-     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an `std::runtime_exception` occurs and the @ref EngineSettings::exitOnError property is set, then the exception is
+     *  caught, its text is emitted to the partitioner's fatal error stream, and `exit(1)` is invoked.
      *
      * @{ */
     virtual PartitionerPtr partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
@@ -326,8 +326,8 @@ public:
      *
      *  @li Call Modules::buildAst to build the AST.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
-     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an `std::runtime_exception` occurs and the @ref EngineSettings::exitOnError property is set, then the exception is
+     *  caught, its text is emitted to the partitioner's fatal error stream, and `exit(1)` is invoked.
      *
      * @{ */
     virtual SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;

@@ -591,8 +591,8 @@ public:
      *  functions. If the specimen consisted of an ELF or PE container then the parent nodes of the returned AST will lead
      *  eventually to an SgProject node.
      *
-     *  The command-line can be provided as a typical @c argc and @c argv pair, or as a vector of arguments. In the latter
-     *  case, the vector should not include <code>argv[0]</code> or <code>argv[argc]</code> (which is always a null pointer).
+     *  The command-line can be provided as a typical @c argc and @c argv pair, or as a vector of arguments. In the latter case, the
+     *  vector should not include `argv[0]` or `argv[argc]` (which is always a null pointer).
      *
      *  The command-line supports a "--help" (or "-h") switch to describe all other switches and arguments, essentially
      *  generating output like a Unix man(1) page.
@@ -604,8 +604,8 @@ public:
      *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
      *  special meaning.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
-     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an `std::runtime_exception` occurs and the @ref EngineSettings::exitOnError property is set, then the exception is
+     *  caught, its text is emitted to the partitioner's fatal error stream, and `exit(1)` is invoked.
      *
      * @{ */
     SgAsmBlock* frontend(int argc, char *argv[],
@@ -631,11 +631,11 @@ public:
      *  than just engine-related switches, the more usual approach is for the user to obtain engine-related command-line switch
      *  declarations and parse the command-line in user code.
      *
-     *  This function automatically applies the command-line when it's successfully parsed, thereby updating this engine's
-     *  settings.  If something goes wrong with the command-line then an <code>std::runtime_error</code> is thrown.
+     *  This function automatically applies the command-line when it's successfully parsed, thereby updating this engine's settings.
+     *  If something goes wrong with the command-line then an `std::runtime_error` is thrown.
      *
-     *  The command-line can be provided as a typical @c argc and @c argv pair, or as a vector of arguments. In the latter
-     *  case, the vector should not include <code>argv[0]</code> or <code>argv[argc]</code> (which is always a null pointer).
+     *  The command-line can be provided as a typical @c argc and @c argv pair, or as a vector of arguments. In the latter case, the
+     *  vector should not include `argv[0]` or `argv[argc]` (which is always a null pointer).
      *
      *  The @p purpose should be a single line string that will be shown in the title of the man page and should
      *  not start with an upper-case letter, a hyphen, white space, or the name of the command. E.g., a disassembler tool might
@@ -647,8 +647,8 @@ public:
      *  If the tool requires additional switches, an opportunity to adjust the parser, or other special handling, it can call
      *  @ref commandLineParser to obtain a parser and then call its @c parse and @c apply methods explicitly.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
-     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an `std::runtime_exception` occurs and the @ref EngineSettings::exitOnError property is set, then the exception is
+     *  caught, its text is emitted to the partitioner's fatal error stream, and `exit(1)` is invoked.
      *
      * @{ */
     Sawyer::CommandLine::ParserResult parseCommandLine(int argc, char *argv[],
@@ -667,8 +667,8 @@ public:
      *
      *  @li Call Modules::buildAst to build the AST.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
-     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an `std::runtime_exception` occurs and the @ref EngineSettings::exitOnError property is set, then the exception is
+     *  caught, its text is emitted to the partitioner's fatal error stream, and `exit(1)` is invoked.
      *
      * @{ */
     virtual SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) = 0;
@@ -710,8 +710,8 @@ public:
      *  interpretation. If the list of names has nothing suitable for ROSE's @c frontend function (the thing that does the
      *  container parsing) then the null pointer is returned.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
-     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an `std::runtime_exception` occurs and the @ref EngineSettings::exitOnError property is set, then the exception is
+     *  caught, its text is emitted to the partitioner's fatal error stream, and `exit(1)` is invoked.
      *
      * @{ */
     virtual SgAsmInterpretation* parseContainers(const std::vector<std::string> &fileNames) = 0;
@@ -734,8 +734,8 @@ public:
      *
      *  Returns a reference to the engine's memory map.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
-     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an `std::runtime_exception` occurs and the @ref EngineSettings::exitOnError property is set, then the exception is
+     *  caught, its text is emitted to the partitioner's fatal error stream, and `exit(1)` is invoked.
      *
      * @{ */
     virtual MemoryMapPtr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>()) = 0;
@@ -757,8 +757,8 @@ public:
      *
      *  Returns the partitioner that was used and which contains the results.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
-     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an `std::runtime_exception` occurs and the @ref EngineSettings::exitOnError property is set, then the exception is
+     *  caught, its text is emitted to the partitioner's fatal error stream, and `exit(1)` is invoked.
      *
      * @{ */
     virtual PartitionerPtr partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) = 0;

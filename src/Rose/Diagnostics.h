@@ -30,14 +30,13 @@ namespace Rose {
  *  @li @c Rose::Diagnostics::Stream is an alias of @ref Sawyer::Message::Stream
  *  @li @c Rose::Diagnostics::mfacilities is an alias of @ref Sawyer::Message::mfacilities
  *
- *  Sawyer supports multiple instances of messaging facilities (@ref Sawyer::Message::Facility / @c
- *  Rose::Diagnostics::Facility) each of which defines a <code>std::ostream</code> object for each of a number of message
- *  importance levels.  ROSE defines one global library-wide facility, @ref Rose::Diagnostics::mlog whose string name (used in
- *  output) is simply "rose".  Software layers within ROSE may define their own facilities and give them names indicative of
- *  the software layer, like "Rose::BinaryAnalysis::StackDelta. Tools that use ROSE can also define and register their own
- *  facilities.  All these facilities are then grouped together into a single @ref Sawyer::Message::Facilities object,
- *  @c Rose::Diagnostics::mfacilities, so they can be controlled collectively or individually from the ROSE command-line (e.g.,
- *  the @c frontend call).
+ *  Sawyer supports multiple instances of messaging facilities (@ref Sawyer::Message::Facility, a.k.a.,
+ *  `Rose::Diagnostics::Facility` each of which defines a `std::ostream` object for each of a number of message importance levels.
+ *  ROSE defines one global library-wide facility, @ref Rose::Diagnostics::mlog whose string name (used in output) is simply "rose".
+ *  Software layers within ROSE may define their own facilities and give them names indicative of the software layer, like
+ *  `Rose::BinaryAnalysis::StackDelta`. Tools that use ROSE can also define and register their own facilities.  All these facilities
+ *  are then grouped together into a single @ref Sawyer::Message::Facilities object (a.k.a., `Rose::Diagnostics::mfacilities`), so
+ *  they can be controlled collectively or individually from the ROSE command-line (e.g., the `frontend` call).
  *
  * @section diagnostics_cmdline_usage Command-line usage
  *
@@ -114,9 +113,9 @@ namespace Rose {
  *  analysis is not always enabled in ROSE), you'll want to add a dummy version of @c initDiagnostics that does nothing
  *  (preferrable to using conditional compilation in the next step).
  *
- *  The fourth and final step is to add a call to <code>BinaryLoader::initDiagnostics</code> from @ref
- *  Diagnostics::initialize. This function is defined in "src/roseSupport/Diagnostics.C". You probably don't need to include
- *  your entire header file in Diagnostics.C; a declarations should be sufficient and faster to compile.
+ *  The fourth and final step is to add a call to `BinaryLoader::initDiagnostics` from @ref Diagnostics::initialize. This function
+ *  is defined in "src/roseSupport/Diagnostics.C". You probably don't need to include your entire header file in Diagnostics.C; a
+ *  declarations should be sufficient and faster to compile.
  *
  * @section diagnostics_in_tools Adding a facility to a tool
  *
@@ -166,10 +165,10 @@ namespace Rose {
  * @section diagnostics_facility_usage Using a facility in the ROSE library or tools
  *
  *  When using a message facility within the ROSE library source code, it is generally desirable to have a "using namespace
- *  Rose::Diagnostics" in effect.  Not only does this alleviate the need to qualify the important levels (e.g.,
- *  <code>INFO</code>, <code>WARN</code>, etc), but it also brings @ref Rose::Diagnostics::mlog, the library-wide logging
- *  facility, into scope.  Doing so will allow any software component to perform logging using the library-wide facility, and
- *  once a more local @c mlog is declared the more local symbol is automatically used.
+ *  Rose::Diagnostics" in effect.  Not only does this alleviate the need to qualify the important levels (e.g., `INFO`, `WARN`,
+ *  etc), but it also brings @ref Rose::Diagnostics::mlog, the library-wide logging facility, into scope.  Doing so will allow any
+ *  software component to perform logging using the library-wide facility, and once a more local @c mlog is declared the more local
+ *  symbol is automatically used.
  *
  *  When using a message facility within a tool, importing the @ref Sawyer::Message::Common instead of @ref Rose::Diagnostics
  *  will prevent an ambiguity between the tool's global @c mlog and @ref Rose::Diagnostics::mlog. You can do which ever you
@@ -193,9 +192,8 @@ namespace Rose {
  *  identityTranslator[30603] 0.00949s BinaryLoader[INFO]: loading "/usr/lib32/libc.so"
  * @endcode
  *
- *  ROSE also defines a global macro @c mprintf that is a drop-in replacement for @c printf.  This macro uses whatever
- *  <code>mlog[DEBUG]</code> is in scope.  The @ref mfprintf function can be used as a replacement when a specific logging
- *  stream is desired.
+ *  ROSE also defines a global macro @c mprintf that is a drop-in replacement for @c printf.  This macro uses whatever `mlog[DEBUG]`
+ *  is in scope.  The @ref mfprintf function can be used as a replacement when a specific logging stream is desired.
  *
  *  Sometimes one wants the right hand side of the output statements to be evaluated only in certain circumstances for
  *  performance reasons, and there are multiple ways to do that.  If you already use conditional compilation or "if" statements
@@ -229,9 +227,8 @@ namespace Rose {
  *  }
  * @endcode
  *
- *  Not only does this reduce typing a little, but since the function is using its own private message stream, partial
- *  messages emitted to that stream won't interfere with partial messages emitted to <code>mlog[DEBUG]</code> by called
- *  functions (see next section).
+ *  Not only does this reduce typing a little, but since the function is using its own private message stream, partial messages
+ *  emitted to that stream won't interfere with partial messages emitted to `mlog[DEBUG]` by called functions (see next section).
  *
  *  Another debugging trick is to create a local stream like above, and then explicitly enable or disable it based on some
  *  condition you're trying to debug:
@@ -374,8 +371,8 @@ public:
 
 /** Print to a C++ stream using a printf-like API.
  *
- *  The mfprintf function is a partial function whose return value is the real function. It's argument can be any C++
- *  <code>std::ostream</code> although it's intended mainly for Sawyer::Message::Stream streams.  It's used like this:
+ *  The mfprintf function is a partial function whose return value is the real function. It's argument can be any C++ `std::ostream`
+ *  although it's intended mainly for Sawyer::Message::Stream streams.  It's used like this:
  *
  * @code
  *  uint64_t va = ...;
@@ -387,8 +384,8 @@ public:
  *  mprintf("address is 0x" PRIx64 "\n", va);
  * @endcode
  *
- * The @c mprintf macro always uses <code>mlog[DEBUG]</code> without any name qualification in order to resolve to the most
- * locally defined @c mlog.  Therefore, a "using namespace Rose::Diagnostics" probably needs to be in effect. */
+ * The @c mprintf macro always uses `mlog[DEBUG]` without any name qualification in order to resolve to the most locally defined @c
+ * mlog.  Therefore, a "using namespace Rose::Diagnostics" probably needs to be in effect. */
 StreamPrintf mfprintf(std::ostream &stream);
 
 // See mfprintf. "mlog" must be resolved at point where macro is expanded.

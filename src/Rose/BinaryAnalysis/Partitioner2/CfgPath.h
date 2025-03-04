@@ -456,11 +456,11 @@ inlineOneCallee(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Cons
  *  some vertices that correspond to a function call site in the master CFG, and this inliner will copy part of the master CFG
  *  corresponding to the called function into the paths graph.
  *
- *  When a function is copied from the master CFG to the paths graph, only those edges in the called function that participate
- *  in some path from the entry vertex to a returning vertex are copied.  Usually a call site will call a single function, but
- *  an indirect call (e.g., x86 <code>call eax</code>) could have calls to multiple functions, and/or the special indeterminate
- *  vertex (e.g., depending on whether anything is known about @c eax in <code>call eax</code>).  Once all the functions called
- *  from a call site are inlined, the @ref E_CALL_RETURN edge is removed from that vertex.
+ *  When a function is copied from the master CFG to the paths graph, only those edges in the called function that participate in
+ *  some path from the entry vertex to a returning vertex are copied.  Usually a call site will call a single function, but an
+ *  indirect call (e.g., x86 `call eax`) could have calls to multiple functions, and/or the special indeterminate vertex (e.g.,
+ *  depending on whether anything is known about @c eax in `call eax`).  Once all the functions called from a call site are inlined,
+ *  the @ref E_CALL_RETURN edge is removed from that vertex.
  *
  *  The inliner has an optional list of blacklisted vertices and edges. These vertices and edges cannot appear in any path.
  *

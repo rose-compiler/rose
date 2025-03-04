@@ -17,9 +17,9 @@ namespace Rose {
  *  }
  * @endcode
  *
- * You might ask, "Why use this class instead of just saying <code>++depth</code> and <code>--depth</code>?". If you use this
+ * You might ask, "Why use this class instead of just saying `++depth` and `--depth`?". If you use this
  * class you don't have to remember to decrement the depth, especially if you (or someone else) adds additional
- * <code>return</code> statements later, or if anything can throw and exception. */
+ * `return` statements later, or if anything can throw and exception. */
 struct RecursionCounter {
     size_t &depth;
 

@@ -420,10 +420,10 @@ struct PartitionerSettings {
 
     /** CFG edge rewrite pairs.
      *
-     *  This property is a list of old/new instruction pointer pairs that describe how to rewrite edges of the global control
-     *  flow graph. Whenever an instruction has a successor whose address is an old address, it will be replaced with a successor
-     *  edge that points to the new address.  This list must have an even number of elements where element <code>2*i+0</code> is
-     *  and old address and element <code>2*i+1</code> is the corresponding new address. */
+     *  This property is a list of old/new instruction pointer pairs that describe how to rewrite edges of the global control flow
+     *  graph. Whenever an instruction has a successor whose address is an old address, it will be replaced with a successor edge
+     *  that points to the new address.  This list must have an even number of elements where element `2*i+0` is and old address and
+     *  element `2*i+1` is the corresponding new address. */
     std::vector<rose_addr_t> ipRewrites;
 
     /** Whether to find function padding.
