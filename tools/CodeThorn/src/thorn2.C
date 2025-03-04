@@ -312,7 +312,7 @@ struct Acuity
                            );
 
     void
-    writeObjLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+    writeObjLayoutIfRequested( const ct::CompatibilityBridge& compatLayer,
                             const Parameters& params,
                             ct::ClassNameFn& classNameFn,
                             ct::VarNameFn& varNameFn,
@@ -321,7 +321,7 @@ struct Acuity
                           );
 
     void
-    writeVTables( const ct::RoseCompatibilityBridge& compatLayer,
+    writeVTables( const ct::CompatibilityBridge& compatLayer,
                   const Parameters& params,
                   ct::ClassNameFn& classNameFn,
                   ct::FuncNameFn& funcNameFn,
@@ -331,7 +331,7 @@ struct Acuity
                 );
 
     void
-    writeVFunctions( const ct::RoseCompatibilityBridge& compatLayer,
+    writeVFunctions( const ct::CompatibilityBridge& compatLayer,
                      const Parameters& params,
                      ct::ClassNameFn& classNameFn,
                      ct::FuncNameFn& funcNameFn,
@@ -341,7 +341,7 @@ struct Acuity
                    );
 
     void
-    writeVFuncInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+    writeVFuncInfoIfRequested( const ct::CompatibilityBridge& compatLayer,
                                const Parameters& params,
                                ct::ClassNameFn& classNameFn,
                                ct::FuncNameFn& funcNameFn,
@@ -372,7 +372,7 @@ struct Acuity
     }
 
     void
-    writeVBaseInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+    writeVBaseInfoIfRequested( const ct::CompatibilityBridge& compatLayer,
                                const Parameters& params,
                                ct::ClassNameFn& classNameFn,
                                ct::ClassFilterFn include,
@@ -417,7 +417,7 @@ struct Acuity
                       extractClass
                     );
 
-      ct::ClassNameFn           nameClasses = ct::RoseCompatibilityBridge{}.classNomenclator();
+      ct::ClassNameFn           nameClasses = ct::CompatibilityBridge{}.classNomenclator();
       std::vector<ClassKeyType> diff;
 
       std::set_difference( astClasses.begin(),  astClasses.end(),
@@ -466,8 +466,8 @@ struct Acuity
       SAWYER_MESG(msgInfo())
                 << "getting all classes.. " << std::endl;
 
-      ct::RoseCompatibilityBridge compatLayer;
-      ct::AnalysesTuple   analyses = invokeClassAndCastAnalyses(project);
+      ct::CompatibilityBridge compatLayer;
+      ct::AnalysesTuple       analyses = invokeClassAndCastAnalyses(project);
 
       const ct::ClassAnalysis& allClasses = analyses.classAnalysis();
       const int           numClasses = allClasses.size();
@@ -497,13 +497,13 @@ struct Acuity
 
 
 void
-Acuity::writeObjLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
-                                const Parameters& params,
-                                ct::ClassNameFn& classNameFn,
-                                ct::VarNameFn& varNameFn,
-                                ct::ClassFilterFn include,
-                                const ct::AnalysesTuple& analyses
-                              )
+Acuity::writeObjLayoutIfRequested( const ct::CompatibilityBridge& compatLayer,
+                                   const Parameters& params,
+                                   ct::ClassNameFn& classNameFn,
+                                   ct::VarNameFn& varNameFn,
+                                   ct::ClassFilterFn include,
+                                   const ct::AnalysesTuple& analyses
+                                 )
 {
   using OutputGenFn = decltype(&classLayoutDot);
 
@@ -543,7 +543,7 @@ Acuity::writeObjLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLaye
 
 
 void
-Acuity::writeVTables( const ct::RoseCompatibilityBridge& compatLayer,
+Acuity::writeVTables( const ct::CompatibilityBridge& compatLayer,
                       const Parameters& params,
                       ct::ClassNameFn& classNameFn,
                       ct::FuncNameFn& funcNameFn,
@@ -586,7 +586,7 @@ Acuity::writeVTables( const ct::RoseCompatibilityBridge& compatLayer,
 
 
 void
-Acuity::writeVFunctions( const ct::RoseCompatibilityBridge& compatLayer,
+Acuity::writeVFunctions( const ct::CompatibilityBridge& compatLayer,
                          const Parameters& params,
                          ct::ClassNameFn& classNameFn,
                          ct::FuncNameFn& funcNameFn,
@@ -615,7 +615,7 @@ Acuity::writeVFunctions( const ct::RoseCompatibilityBridge& compatLayer,
 }
 
 void
-Acuity::writeVBaseInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+Acuity::writeVBaseInfoIfRequested( const ct::CompatibilityBridge& compatLayer,
                                    const Parameters& params,
                                    ct::ClassNameFn& classNameFn,
                                    ct::ClassFilterFn include,

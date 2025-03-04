@@ -90,23 +90,44 @@ namespace
     return binop;
   }
 
-  // TClassAnalysis = ClassAnalysis or const ClassAnalysis
-  template <class TClassAnalysis>
-  inline
-  auto
-  lookup(TClassAnalysis& m, const typename TClassAnalysis::key_type& key) -> decltype(*m.find(key))
+  [[noreturn]]
+  void reportAndThrowError(ct::ClassKeyType key, const ct::ClassAnalysis& m)
   {
-    auto pos = m.find(key);
-
-    if (pos != m.end())
-      return *pos;
-
     msgError() << m.classInfo(key) << std::endl;
 
     if (m.size() == 0)
       msgError() << "\nNote, the class hierarchy database is empty." << std::endl;
 
     throw std::out_of_range("Unable to find key in ClassAnalysis.");
+  }
+
+  [[noreturn]]
+  void reportAndThrowError(ct::FunctionKeyType key, const ct::VirtualFunctionAnalysis& m)
+  {
+    ct::CompatibilityBridge cb;
+
+    msgError() << "Function " << cb.nameOf(key) << " not found in VirtualFunctionAnalysis"
+               << std::endl;
+
+    if (m.size() == 0)
+      msgError() << "\nNote, the virtual hierarchy database is empty." << std::endl;
+
+    throw std::out_of_range("Unable to find key in VirtualFunctionAnalysis.");
+  }
+
+
+  // AnalysisMap = is either a const or non-const analysis (i.e., ClassAnalysis, VirtualFunctionAnalysis)
+  template <class AnalysisMap>
+  inline
+  auto
+  lookup(AnalysisMap& m, const typename AnalysisMap::key_type& key) -> decltype(*m.find(key))
+  {
+    auto pos = m.find(key);
+
+    if (pos != m.end())
+      return *pos;
+
+    reportAndThrowError(key, m);
   }
 }
 
@@ -219,15 +240,15 @@ ClassAnalysis::concreteDescendants(ClassKeyType classKey) const
 {
   using container = ClassData::AncestorContainer;
 
-  RoseCompatibilityBridge      rcb;
+  CompatibilityBridge          cb;
   std::vector<InheritanceDesc> res;
   const container&             descendants = this->at(classKey).descendants();
 
   std::copy_if( descendants.begin(), descendants.end(),
                 std::back_inserter(res),
-                [&rcb](const InheritanceDesc& desc) -> bool
+                [&cb](const InheritanceDesc& desc) -> bool
                 {
-                  return !rcb.isAbstract(desc.getClass());
+                  return !cb.isAbstract(desc.getClass());
                 }
               );
 
@@ -532,8 +553,8 @@ namespace
       int res = 0;
 
       firstDecisiveComparison
-      || (res = rcb.compareNames(lhs, rhs))
-      || (res = rcb.compareTypes(lhs, rhs))
+      || (res = compat.compareNames(lhs, rhs))
+      || (res = compat.compareTypes(lhs, rhs))
       ;
 
       return res < 0;
@@ -545,7 +566,7 @@ namespace
       return (*this)(std::get<0>(lhs), std::get<0>(rhs));
     }
 
-    const RoseCompatibilityBridge& rcb;
+    const CompatibilityBridge& compat;
   };
 
 /*
@@ -573,23 +594,23 @@ struct ComputeVFunctionRelation
 {
   void operator()(FunctionKeyType drv, FunctionKeyType bas) const
   {
-    using ReturnTypeRelation = RoseCompatibilityBridge::ReturnTypeRelation;
+    using ReturnTypeRelation = CompatibilityBridge::ReturnTypeRelation;
 
-    const ReturnTypeRelation rel = rcb.haveSameOrCovariantReturn(classes, bas, drv);
-    ROSE_ASSERT(rel != RoseCompatibilityBridge::unrelated);
+    const ReturnTypeRelation rel = compat.haveSameOrCovariantReturn(classes, bas, drv);
+    ROSE_ASSERT(rel != CompatibilityBridge::unrelated);
 
-    if (rel == RoseCompatibilityBridge::unrelated)
+    if (rel == CompatibilityBridge::unrelated)
     {
       msgError() << "oops, covariant return assertion failed: "
-                 << rcb.nameOf(bas) << " <> " << rcb.nameOf(drv)
+                 << compat.nameOf(bas) << " <> " << compat.nameOf(drv)
                  << std::endl;
       return;
     }
 
-    //~ std::cerr << rcb.nameOf(drv) << " overrides " << rcb.nameOf(bas)
+    //~ std::cerr << compat.nameOf(drv) << " overrides " << compat.nameOf(bas)
               //~ << std::endl;
 
-    const bool               covariant = rel == RoseCompatibilityBridge::covariant;
+    const bool               covariant = rel == CompatibilityBridge::covariant;
 
     vfunAnalysis.at(drv).overridden().emplace_back(bas, covariant);
     vfunAnalysis.at(bas).overriders().emplace_back(drv, covariant);
@@ -600,16 +621,16 @@ struct ComputeVFunctionRelation
   void operator()(unavailable_t, FunctionKeyType) const {}
 
   // data members
-  const RoseCompatibilityBridge& rcb;
-  const ClassAnalysis&           classes;
-  VirtualFunctionAnalysis&       vfunAnalysis;
-  ClassKeyType                   ancestor;
-  ClassKeyType                   descendant;
+  const CompatibilityBridge& compat;
+  const ClassAnalysis&       classes;
+  VirtualFunctionAnalysis&   vfunAnalysis;
+  ClassKeyType               ancestor;
+  ClassKeyType               descendant;
 };
 
 using SortedVirtualMemberFunctions = std::unordered_map<ClassKeyType, ClassData::VirtualFunctionContainer>;
 
-void computeOverriders( const RoseCompatibilityBridge& rcb,
+void computeOverriders( const CompatibilityBridge& compat,
                         const ClassAnalysis& classes,
                         VirtualFunctionAnalysis& vfunAnalysis,
                         const ClassAnalysis::value_type& entry,
@@ -625,12 +646,12 @@ void computeOverriders( const RoseCompatibilityBridge& rcb,
   ROSE_ASSERT(vfunSorted.empty());
 
   vfunSorted = entry.second.virtualFunctions();
-  std::sort(vfunSorted.begin(), vfunSorted.end(), VFNameTypeOrder{ rcb });
+  std::sort(vfunSorted.begin(), vfunSorted.end(), VFNameTypeOrder{ compat });
 
   std::for_each( vfunSorted.begin(), vfunSorted.end(),
-                 [&vfunAnalysis, &entry, &rcb](FunctionKeyType id) -> void
+                 [&vfunAnalysis, &entry, &compat](FunctionKeyType id) -> void
                  {
-                   vfunAnalysis.emplace(id, VirtualFunctionDesc{entry.first, rcb.isPureVirtual(id)});
+                   vfunAnalysis.emplace(id, VirtualFunctionDesc{entry.first, compat.isPureVirtual(id)});
                  }
                );
 
@@ -640,23 +661,23 @@ void computeOverriders( const RoseCompatibilityBridge& rcb,
 
     merge_keys( vfunSorted.begin(), vfunSorted.end(),
                 parentVFunSorted.begin(), parentVFunSorted.end(),
-                ComputeVFunctionRelation{rcb, classes, vfunAnalysis, entry.first, parentDesc.getClass()},
-                VFNameTypeOrder{rcb}
+                ComputeVFunctionRelation{compat, classes, vfunAnalysis, entry.first, parentDesc.getClass()},
+                VFNameTypeOrder{compat}
               );
   }
 }
 
 VirtualFunctionAnalysis
-analyzeVirtualFunctions(const RoseCompatibilityBridge& rcb, const ClassAnalysis& all, bool normalizedSignature)
+analyzeVirtualFunctions(const CompatibilityBridge& compat, const ClassAnalysis& all, bool normalizedSignature)
 {
   VirtualFunctionAnalysis      res;
   SortedVirtualMemberFunctions tmpSorted;
 
   topDownTraversal( all,
-                    [&rcb, &all, &res, &tmpSorted, &normalizedSignature]
+                    [&compat, &all, &res, &tmpSorted, &normalizedSignature]
                     (const ClassAnalysis::value_type& clrep) -> void
                     {
-                      computeOverriders(rcb, all, res, clrep, normalizedSignature, tmpSorted);
+                      computeOverriders(compat, all, res, clrep, normalizedSignature, tmpSorted);
                     }
                   );
 
@@ -666,17 +687,17 @@ analyzeVirtualFunctions(const RoseCompatibilityBridge& rcb, const ClassAnalysis&
 VirtualFunctionAnalysis
 analyzeVirtualFunctions(const ClassAnalysis& all, bool normalizedSignature)
 {
-  return analyzeVirtualFunctions(RoseCompatibilityBridge{}, all, normalizedSignature);
+  return analyzeVirtualFunctions(CompatibilityBridge{}, all, normalizedSignature);
 }
 
 
 AnalysesTuple
-analyzeClassesAndCasts(const RoseCompatibilityBridge& rcb, ASTRootType n)
+analyzeClassesAndCasts(const CompatibilityBridge& compat, ASTRootType n)
 {
   ClassAnalysis classes{true /* full view of translation unit */};
   CastAnalysis  casts;
 
-  rcb.extractFromProject(classes, casts, n);
+  compat.extractFromProject(classes, casts, n);
   inheritanceRelations(classes);
   analyzeClassRelationships(classes);
 
@@ -686,19 +707,19 @@ analyzeClassesAndCasts(const RoseCompatibilityBridge& rcb, ASTRootType n)
 AnalysesTuple
 analyzeClassesAndCasts(ASTRootType n)
 {
-  return analyzeClassesAndCasts(RoseCompatibilityBridge{}, n);
+  return analyzeClassesAndCasts(CompatibilityBridge{}, n);
 }
 
 ClassAnalysis
-analyzeClasses(const RoseCompatibilityBridge& rcb, ASTRootType n)
+analyzeClasses(const CompatibilityBridge& compat, ASTRootType n)
 {
-  return std::move(analyzeClassesAndCasts(rcb, n).classAnalysis());
+  return std::move(analyzeClassesAndCasts(compat, n).classAnalysis());
 }
 
 ClassAnalysis
 analyzeClasses(ASTRootType n)
 {
-  return analyzeClasses(RoseCompatibilityBridge{}, n);
+  return analyzeClasses(CompatibilityBridge{}, n);
 }
 
 ClassAnalysis
@@ -706,7 +727,7 @@ analyzeClassesFromMemoryPool()
 {
   ClassAnalysis classes{true /* full view of translation unit */};
 
-  RoseCompatibilityBridge{}.extractFromMemoryPool(classes);
+  CompatibilityBridge{}.extractFromMemoryPool(classes);
   inheritanceRelations(classes);
   analyzeClassRelationships(classes);
 
@@ -715,11 +736,11 @@ analyzeClassesFromMemoryPool()
 
 ClassAnalysis analyzeClass(ClassKeyType n)
 {
-  RoseCompatibilityBridge rcb;
-  ClassAnalysis           classes{false /* incomplete view */};
+  CompatibilityBridge compat;
+  ClassAnalysis       classes{false /* incomplete view */};
 
   // collect all classes reachable upwards from n
-  rcb.extractClassAndBaseClasses(classes, n);
+  compat.extractClassAndBaseClasses(classes, n);
 
   inheritanceRelations(classes);
   analyzeClassRelationships(classes);
@@ -727,7 +748,26 @@ ClassAnalysis analyzeClass(ClassKeyType n)
   return classes;
 }
 
+VirtualFunctionAnalysis::mapped_type&
+VirtualFunctionAnalysis::at(const VirtualFunctionAnalysis::key_type& k)
+{
+  return lookup(*this, k).second;
+}
 
+const VirtualFunctionAnalysis::mapped_type&
+VirtualFunctionAnalysis::at(const VirtualFunctionAnalysis::key_type& k) const
+{
+  return lookup(*this, k).second;
+}
+
+FunctionPredicate
+VirtualFunctionAnalysis::virtualFunctionTest() const
+{
+  return [self = *this](FunctionKeyType key) -> bool
+         {
+           return self.find(key) != self.end();
+         };
+}
 
 }
 

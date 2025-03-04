@@ -52,10 +52,7 @@ namespace CodeThorn
   using FunctionCallDataSequence = std::vector<FunctionCallData>;
 
   std::tuple<CallGraph, FunctionCallDataSequence>
-  generateCallGraphFromAST(SgProject*);
-
-  std::tuple<CallGraph, FunctionCallDataSequence>
-  generateCallGraphFromAST(SgProject*, ClassAnalysis&, VirtualFunctionAnalysis&, CallEdge::Property edgeKinds = CallEdge::defaultValue);
+  generateCallGraphFromAST(SgProject*, const VirtualFunctionAnalysis* vfa = nullptr, bool withAddrTaken = true, bool withOverrider = true);
 
   // CallGraph generateCallGraphFromNormalizedAST(SgProject* proj);
 } // end of namespace CodeThorn

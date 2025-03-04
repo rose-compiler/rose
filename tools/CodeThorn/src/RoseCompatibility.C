@@ -40,8 +40,21 @@ namespace
     void handle(SgTemplateFunctionDefinition&)        {}
     void handle(SgTemplateMemberFunctionDeclaration&) {}
     void handle(SgTemplateVariableDeclaration&)       {}
+
+    static bool templated(const SgNode* n);
     //~ void handle(SgTemplateTypedefDeclaration&)        {} // may need some handling
   };
+
+  bool ExcludeTemplates::templated(const SgNode* n)
+  {
+    return (  isSgTemplateClassDeclaration(n)
+           || isSgTemplateClassDefinition(n)
+           || isSgTemplateFunctionDeclaration(n)
+           || isSgTemplateFunctionDefinition(n)
+           || isSgTemplateMemberFunctionDeclaration(n)
+           || isSgTemplateVariableDeclaration(n)
+           );
+  }
 
   bool isVirtual(const SgFunctionDeclaration& dcl)
   {
@@ -87,6 +100,12 @@ namespace
     return &n != clsdef.get_definition();
   }
 
+  const SgType&
+  typeOfExpr(const SgExpression& n)
+  {
+    return SG_DEREF(n.get_type());
+  }
+
   struct NodeCollector : ExcludeTemplates
   {
       typedef std::unordered_set<SgNode*> NodeTracker;
@@ -94,9 +113,9 @@ namespace
       NodeCollector( NodeTracker& visited,
                      ct::ClassAnalysis& classes,
                      ct::CastAnalysis& casts,
-                     const ct::RoseCompatibilityBridge& compat
+                     const ct::RoseCompatibilityBridge& cb
                    )
-      : visitedNodes(&visited), allClasses(&classes), allCasts(&casts), rcb(&compat), currentClass(nullptr)
+      : visitedNodes(&visited), allClasses(&classes), allCasts(&casts), rcb(&cb), currentClass(nullptr)
       {}
 
       void descend(SgNode& n, ct::ClassAnalysis::value_type* cls = nullptr);
@@ -147,7 +166,7 @@ namespace
         SgExpression& expr = SG_DEREF(n.get_operand());
 
         // store cast types and cast expressions
-        (*allCasts)[ct::CastDesc{expr.get_type(), n.get_type()}].push_back(&n);
+        (*allCasts)[ct::CastDesc{&typeOfExpr(expr), &typeOfExpr(n)}].push_back(&n);
 
         descend(n);
       }
@@ -201,12 +220,7 @@ namespace
 
         if (isRegular) return false;
 
-        const bool isTemplate = (  isSgTemplateClassDeclaration(n)
-                                || isSgTemplateFunctionDeclaration(n)
-                                || isSgTemplateMemberFunctionDeclaration(n)
-                                );
-
-        if (isTemplate) return true;
+        if (ExcludeTemplates::templated(n)) return true;
 
         auto res = templatedAncestor.emplace(std::make_pair(n, true));
 
@@ -744,7 +758,7 @@ std::string dbgInfo(ClassKeyType key, std::size_t numParents)
 
     if (curr)
     {
-      std::vector<SgNode*> succ = const_cast<SgNode*>(curr)->get_traversalSuccessorContainer();
+      std::vector<SgNode*> succ = curr->get_traversalSuccessorContainer();
 
       if (std::find(succ.begin(), succ.end(), prev) == succ.end())
         os << "!";
@@ -1392,7 +1406,7 @@ SgClassDefinition* getClassDefOpt(const SgExpression& n, bool skipUpCasts)
                                                   // | SgType::STRIP_ARRAY_TYPE
                                                   );
 
-  SgType&          ty  = SG_DEREF(n.get_type());
+  const SgType&    ty  = typeOfExpr(n);
   SgClassType*     cls = isSgClassType(ty.stripType(STRIP_TO_CLASS));
 
   if (cls == nullptr) return nullptr;
@@ -1421,9 +1435,8 @@ namespace
 {
   struct AnalyseCallExp : sg::DispatchHandler<CallData>
   {
-      explicit
-      AnalyseCallExp(const SgExpression& ex)
-      : Base(), ref(&ex)
+      AnalyseCallExp(const ct::FunctionPredicate& virtualFunctionTest, const SgExpression& ex)
+      : Base(), isVirtualFunction(virtualFunctionTest), ref(&ex)
       {}
 
       CallData descend(const SgNode* n) const;
@@ -1468,9 +1481,10 @@ namespace
       //~ void handle(const SgTemplateFunctionRefExp& n)          { res = castCall{n}; }
 
     private:
-      const SgExpression*      ref                 = nullptr;
-      Optional<ClassKeyType>   receiverKey         = {};
-      bool                     polymorphicReceiver = false; // or Optional to distinguish between set/unset
+      const ct::FunctionPredicate& isVirtualFunction;
+      const SgExpression*          ref                 = nullptr;
+      Optional<ClassKeyType>       receiverKey         = {};
+      bool                         polymorphicReceiver = false; // or Optional to distinguish between set/unset
   };
 
   CallData
@@ -1488,13 +1502,21 @@ namespace
   {
     // lhs is the receiver expression
     sg::NotNull<const SgExpression> receiverExpr = n.get_lhs_operand();
-    sg::NotNull<const SgType>       receiverType = receiverExpr->get_type();
-    sg::NotNull<const SgClassType>  receiverClss = isSgClassType(receiverType->findBaseType());
+    const SgType&                   receiverType = typeOfExpr(*receiverExpr);
+    const SgClassType*              receiverClss = isSgClassType(receiverType.findBaseType());
+
+    if (!receiverClss)
+    {
+      msgError() << "unable to find class-type in lhs of " << n.unparseToString() << std::endl;
+      throw std::logic_error{"that's it"};
+    }
+
+    // sg::NotNull<const SgClassType>  receiverClss = isSgClassType(receiverType.findBaseType());
 
     receiverKey = classDefinition_opt(*receiverClss);
     ASSERT_require(receiverKey && *receiverKey);
 
-    SgType* const                   receiverBaseType = receiverType->stripTypedefsAndModifiers();
+    SgType* const                   receiverBaseType = receiverType.stripTypedefsAndModifiers();
 
     polymorphicReceiver = (  isSgPointerType(receiverBaseType)
                           || isSgReferenceType(receiverBaseType)
@@ -1512,18 +1534,34 @@ namespace
     const SgMemberFunctionDeclaration* mfn = n.getAssociatedMemberFunctionDeclaration();
     const bool                         virtualCall = (  polymorphicReceiver
                                                      && (n.get_need_qualifier() == 0)
+                                                     && isVirtualFunction(rcb.functionId(mfn))
                                                      );
 
-    ASSERT_require(receiverKey);
-    return { rcb.functionId(mfn), &n, receiverKey, ref, virtualCall };
+    Optional<ClassKeyType>             keyCopy = receiverKey;
+
+    // if not set from context
+    // \todo check that receiverKey matches if already set.
+    if (!keyCopy)
+      keyCopy = &getClassDef(SG_DEREF(n.getAssociatedMemberFunctionDeclaration()));
+
+    ASSERT_require(keyCopy);
+    return { rcb.functionId(mfn), &n, keyCopy, ref, virtualCall };
+  }
+
+  bool
+  pointsToMemberFunction(const SgExpression& n)
+  {
+    return isSgMemberFunctionType(&typeOfExpr(n));
   }
 
   CallData
   AnalyseCallExp::unresolvable(const SgExpression& n) const
   {
+    const bool polymorphicCall = polymorphicReceiver && pointsToMemberFunction(n);
+
     // virtualCall is conservative, as the runtime state of the
     //   pointer used for dispatch could point to a non-virtual function.
-    return { {}, &n, receiverKey, ref, polymorphicReceiver };
+    return { {}, &n, receiverKey, ref, polymorphicCall };
   }
 
   CallData
@@ -1533,28 +1571,62 @@ namespace
   }
 
   CallData
-  analyseCallExp(const SgFunctionCallExp& n)
+  analyseCallExp(const SgFunctionCallExp& n, const ct::FunctionPredicate& virtualFunctionTest)
   {
-    return sg::dispatch(AnalyseCallExp{n}, n.get_function());
+    return sg::dispatch(AnalyseCallExp{virtualFunctionTest, n}, n.get_function());
+  }
+
+  void logPathToGlobal(std::ostream& os, const SgNode* n)
+  {
+    os << "  >" << n->class_name();
+
+    n = n->get_parent();
+
+    while (n && !isSgGlobal(n))
+    {
+      os << "." << n->class_name();
+
+      n = n->get_parent();
+    }
+
+    os << std::endl;
   }
 
   CallData
-  analyseCallExp(const SgConstructorInitializer& n)
+  analyseCallExp(const SgConstructorInitializer& n, const ct::FunctionPredicate&)
   {
-    return sg::dispatch(AnalyseCallExp{n}, &n);
+    RoseCompatibilityBridge            rcb;
+    const SgMemberFunctionDeclaration* mfn = n.get_declaration();
+    Optional<FunctionKeyType>          fnkey;
+
+    if (mfn) fnkey = rcb.functionId(mfn);
+
+    Optional<ClassKeyType>             clskey;
+    const SgClassDeclaration*          clsdcl = n.get_class_decl();
+
+    if (clsdcl) clskey = &getClassDef(*clsdcl);
+    else
+    {
+      msgError() << "NO class in: " << n.get_parent()->unparseToString() << std::endl;
+
+      logPathToGlobal(msgError(), &n);
+    }
+
+    return { fnkey, &n, clskey, &n, false };
   }
 
-  struct CallDataFinder : sg::DispatchHandler< std::vector<CallData> >
+  struct CallDataFinder : sg::DispatchHandler< std::vector<CallData> >, ExcludeTemplates
   {
-      CallDataFinder(ReturnType vec, bool ignoreFunctionRefExp)
-      : Base(std::move(vec)),
-        ignoreFunctionRefs(ignoreFunctionRefExp)
+      CallDataFinder(ReturnType vec, bool ignoreFunctionRefExp, sg::NotNull<ct::FunctionPredicate> virtualFunctionTest)
+      : Base(std::move(vec)), ExcludeTemplates(),
+        ignoreFunctionRefs(ignoreFunctionRefExp),
+        isVirtualFunction(virtualFunctionTest)
       {}
 
-      CallDataFinder()
-      : Base(), ignoreFunctionRefs(false)
+      explicit
+      CallDataFinder(sg::NotNull<ct::FunctionPredicate> virtualFunctionTest)
+      : Base(), ExcludeTemplates(), ignoreFunctionRefs(false), isVirtualFunction(virtualFunctionTest)
       {}
-
 
       void descend(SgNode& n, bool ignoreFunctionRefExp = false);
       void handleNode(SgNode* n, bool ignoreFunctionRefExp = false);
@@ -1567,10 +1639,12 @@ namespace
       template <class SageExpression>
       void handleCallExp(SageExpression& n)
       {
-        res.emplace_back(analyseCallExp(n));
+        res.emplace_back(analyseCallExp(n, *isVirtualFunction));
 
         descend(n, true);
       }
+
+      using ExcludeTemplates::handle;
 
       void handle(SgNode& n)                   { descend(n); }
 
@@ -1606,13 +1680,14 @@ namespace
       }
 
     private:
-      bool ignoreFunctionRefs = false;
+      bool                               ignoreFunctionRefs = false;
+      sg::NotNull<ct::FunctionPredicate> isVirtualFunction;
   };
 
   void
   CallDataFinder::descend(SgNode& n, bool ignoreFunctionRefExp)
   {
-    res = sg::traverseChildren( CallDataFinder{ std::move(res), ignoreFunctionRefExp },
+    res = sg::traverseChildren( CallDataFinder{ std::move(res), ignoreFunctionRefExp, isVirtualFunction },
                                 &n
                               );
   }
@@ -1620,7 +1695,7 @@ namespace
   void
   CallDataFinder::handleNode(SgNode* n, bool ignoreFunctionRefExp)
   {
-    res = sg::dispatch( CallDataFinder{ std::move(res), ignoreFunctionRefExp },
+    res = sg::dispatch( CallDataFinder{ std::move(res), ignoreFunctionRefExp, isVirtualFunction },
                         n
                       );
   }
@@ -1638,20 +1713,93 @@ namespace
   }
 
   std::vector<CallData>
-  functionRelations_internal(const SgFunctionDeclaration* fn)
+  functionRelations_internal(const SgFunctionDeclaration* fn, ct::FunctionPredicate isVirtualFunction)
   {
     SgFunctionDeclaration* fndef = isSgFunctionDeclaration(fn->get_definingDeclaration());
     if (fndef == nullptr) return {};
 
-    return sg::dispatch(CallDataFinder{}, fndef);
+    return sg::dispatch(CallDataFinder{&isVirtualFunction}, fndef);
   }
 }
 
 std::vector<CallData>
-RoseCompatibilityBridge::functionRelations(FunctionKeyType fn) const
+RoseCompatibilityBridge::functionRelations(FunctionKeyType fn, FunctionPredicate isVirtualFunction) const
 {
-  return functionRelations_internal(fn);
+  return functionRelations_internal(fn, std::move(isVirtualFunction));
 }
+
+}
+
+
+namespace
+{
+  template <class Fn, class BranchGenerator = sg::DefaultTraversalSuccessors>
+  Fn
+  traverseBranches(Fn fn, const SgNode& root, BranchGenerator gen = {})
+  {
+    SgNodePtrList const branches = gen(root);
+
+    return std::for_each( branches.begin(), branches.end(),
+                          std::move(fn)
+                        );
+  }
+
+  template <class Functor>
+  struct UnorderedTraversal
+  {
+      // no explicit
+      UnorderedTraversal(Functor astfun) : fn(std::move(astfun)) {}
+
+      UnorderedTraversal(UnorderedTraversal&&)            = default;
+      UnorderedTraversal& operator=(UnorderedTraversal&&) = default;
+
+      void traverse(const SgNode& n, std::true_type)
+      {
+        fn = traverseBranches(UnorderedTraversal{std::move(fn)}, n);
+      }
+
+      void traverse(const SgNode& n, std::false_type)
+      {
+        traverseBranches(UnorderedTraversal{fn}, n);
+      }
+
+      void operator()(const SgNode* n)
+      {
+        if (ExcludeTemplates::templated(n))
+        {
+          std::cerr << "no" << std::endl;
+          return;
+        }
+
+        fn(n);
+
+        if (n)
+          traverse(*n, typename std::is_move_assignable<Functor>::type{} );
+      }
+
+      operator Functor() && { return std::move(fn); }
+
+    private:
+      Functor fn;
+
+      UnorderedTraversal()                                     = delete;
+      UnorderedTraversal(const UnorderedTraversal&)            = delete;
+      UnorderedTraversal& operator=(const UnorderedTraversal&) = delete;
+  };
+
+  template <class Functor>
+  Functor
+  unorderedTraversal0(Functor astfun, const SgNode* root)
+  {
+    UnorderedTraversal<Functor> fn{std::move(astfun)};
+    fn(root);
+
+    return fn;
+  }
+}
+
+namespace CodeThorn
+{
 
 std::vector<FunctionKeyType>
 RoseCompatibilityBridge::allFunctionKeys(ASTRootType n) const
@@ -1660,14 +1808,18 @@ RoseCompatibilityBridge::allFunctionKeys(ASTRootType n) const
   std::size_t               nc = 0;
 
   auto collectFunctionKeys =
-         [&fnkeys, &nc](const SgNode* n) -> void
+         [&fnkeys, &nc, rcb=RoseCompatibilityBridge{}](const SgNode* n) -> void
          {
            ++nc;
+
            if (const SgFunctionDeclaration* fn = isSgFunctionDeclaration(n))
-             fnkeys.insert(RoseCompatibilityBridge{}.functionId(fn));
+           {
+             msgWarn() << " :: " << fn->get_name() << std::endl;
+             fnkeys.insert(rcb.functionId(fn));
+           }
          };
 
-  si::Ada::simpleTraversal(collectFunctionKeys, n);
+  unorderedTraversal0(collectFunctionKeys, n);
 
   SAWYER_MESG(msgInfo())
             << "Traversed nodes/Unique functions " << nc << "/" << fnkeys.size()
@@ -1677,9 +1829,43 @@ RoseCompatibilityBridge::allFunctionKeys(ASTRootType n) const
 
   res.reserve(fnkeys.size());
   std::copy(fnkeys.begin(), fnkeys.end(), std::back_inserter(res));
+  return res;
+}
 
+
+FunctionPredicate
+RoseCompatibilityBridge::functionNamePredicate(std::string name) const
+{
+  return [nm=std::move(name)](const SgFunctionDeclaration* fn) -> bool
+         {
+           return fn && (nm == fn->get_name().getString());
+         };
+}
+
+std::vector<FunctionKeyType>
+RoseCompatibilityBridge::allFunctionKeys(ASTRootType n, FunctionPredicate pred) const
+{
+  std::set<FunctionKeyType> fnkeys;
+
+  auto collectFunctionKeys =
+         [&fnkeys, predicate=std::move(pred)](const SgNode* n) mutable -> void
+         {
+           RoseCompatibilityBridge rcb;
+
+           if (const SgFunctionDeclaration* fn = isSgFunctionDeclaration(n))
+             if (predicate(fn))
+               fnkeys.insert(rcb.functionId(fn));
+         };
+
+  unorderedTraversal0(collectFunctionKeys, n);
+
+  std::vector<FunctionKeyType> res;
+
+  res.reserve(fnkeys.size());
+  std::copy(fnkeys.begin(), fnkeys.end(), std::back_inserter(res));
   return res;
 }
 
 
 }
+

@@ -1,5 +1,7 @@
 #include "CallGraphAnalysis.h"
 
+#include <boost/range/adaptors.hpp>
+
 #include "sage3basic.h"                                 // every librose .C file must start with this
 #include "Rose/Diagnostics.h"
 #include "sageGeneric.h"
@@ -24,13 +26,13 @@ namespace
 
       void operator()(ct::FunctionKeyType src)
       {
-        ct::RoseCompatibilityBridge        rcb;
+        ct::CompatibilityBridge            compat;
         ct::CallGraph::ConstVertexIterator srcpos = g->findVertexKey(src);
         ct::CallDataSequence               unresolvedElems;
         ct::CallDataSequence               addressTknElems;
         ct::CallDataSequence               virtualElems;
 
-        for (ct::CallData call : rcb.functionRelations(src))
+        for (ct::CallData call : compat.functionRelations(src, *isVirtualFunction))
         {
           if (call.callee())
           {
@@ -67,10 +69,11 @@ namespace
 
       void expandVirtualCalls(const ct::VirtualFunctionAnalysis& vfa);
 
-      sg::NotNull<ct::CallGraph>   g;
-      ct::FunctionCallDataSequence unresolved = {};
-      ct::FunctionCallDataSequence virtuals   = {};
-      ct::FunctionCallDataSequence addressTkn = {};
+      sg::NotNull<ct::FunctionPredicate> isVirtualFunction;
+      sg::NotNull<ct::CallGraph>         g;
+      ct::FunctionCallDataSequence       unresolved = {};
+      ct::FunctionCallDataSequence       virtuals   = {};
+      ct::FunctionCallDataSequence       addressTkn = {};
   };
 
   void InsertEdges::insert( ct::CallGraph::ConstVertexIterator src,
@@ -86,9 +89,9 @@ namespace
       return;
     }
 
-    ct::RoseCompatibilityBridge rcb;
+    ct::CompatibilityBridge compat;
 
-    msgError() << rcb.nameOf(tgtkey) << " not found" << std::endl;
+    msgError() << compat.nameOf(tgtkey) << " not found" << std::endl;
   }
 
 
@@ -112,15 +115,35 @@ namespace
 
   void InsertEdges::expandVirtualCalls(const ct::VirtualFunctionAnalysis& vfa)
   {
+    namespace adapt = boost::adaptors;
+
+    auto isVirtualCall =
+           [](const ct::CallData& data)->bool
+           {
+             return data.virtualCall();
+           };
+
     for (const ct::FunctionCallData& fcd : virtuals)
     {
       ct::FunctionKeyType                srckey = std::get<0>(fcd);
       ct::CallGraph::ConstVertexIterator srcpos = g->findVertexKey(srckey);
       ASSERT_require(g->isValidVertex(srcpos));
-      const ct::VirtualFunctionDesc&     vfunc  = vfa.at(srckey);
 
-      for (ct::OverrideDesc overrider : vfunc.overriders())
-        insert(srcpos, overrider.function(), ct::CallEdge::overrider);
+      for (ct::CallData cd : std::get<1>(fcd) | adapt::filtered(isVirtualCall))
+      {
+        ASSERT_require(cd.callee());
+
+        try
+        {
+          const ct::VirtualFunctionDesc& vfunc  = vfa.at(*cd.callee());
+
+          for (ct::OverrideDesc overrider : vfunc.overriders())
+            insert(srcpos, overrider.function(), ct::CallEdge::overrider);
+        }
+        catch (...)
+        {
+        }
+      }
     }
   }
 }
@@ -129,35 +152,30 @@ namespace
 namespace CodeThorn
 {
   std::tuple<CallGraph, FunctionCallDataSequence>
-  generateCallGraphFromAST(ASTRootType n)
+  generateCallGraphFromAST(SgProject* n, const VirtualFunctionAnalysis* vfa, bool withAddrTaken, bool withOverrider)
   {
-    ClassAnalysis           ca  = analyzeClasses(n);
-    VirtualFunctionAnalysis vfa = analyzeVirtualFunctions(ca);
+    ASSERT_require(!withOverrider || (vfa != nullptr));
 
-    return generateCallGraphFromAST(n, ca, vfa);
-  }
-
-  std::tuple<CallGraph, FunctionCallDataSequence>
-  generateCallGraphFromAST(ASTRootType n, ClassAnalysis& classes, VirtualFunctionAnalysis& vfa, CallEdge::Property edgeKinds)
-  {
     CallGraph                    g;
-    RoseCompatibilityBridge      rcb;
-    std::vector<FunctionKeyType> allFunctions   = rcb.allFunctionKeys(n);
+    CompatibilityBridge          compat;
+    std::vector<FunctionKeyType> allFunctions   = compat.allFunctionKeys(n);
     auto                         insertVertices = [&g](FunctionKeyType key) -> void { g.insertVertex(key); };
+    ct::FunctionPredicate        alwaysFalse    = [](FunctionKeyType key) -> bool { return false; };
+    ct::FunctionPredicate        isVirtualFunc  = vfa ? vfa->virtualFunctionTest() : alwaysFalse;
 
     std::for_each( allFunctions.begin(), allFunctions.end(),
                    insertVertices
                  );
 
     InsertEdges ie = std::for_each( allFunctions.begin(), allFunctions.end(),
-                                    InsertEdges{&g}
+                                    InsertEdges{&isVirtualFunc, &g}
                                   );
 
-    if ((edgeKinds & CallEdge::addressTaken) == CallEdge::addressTaken)
+    if (withAddrTaken)
       ie.integrateAddressTaken();
 
-    if ((edgeKinds & CallEdge::virtualCall) == CallEdge::virtualCall)
-      ie.expandVirtualCalls(vfa);
+    if (withOverrider)
+      ie.expandVirtualCalls(*vfa);
 
     SAWYER_MESG(msgInfo())
               << "Vertices = " << g.nVertices()
@@ -165,8 +183,8 @@ namespace CodeThorn
               << std::endl;
 
     SAWYER_MESG(ie.unresolved.empty() ? msgInfo() : msgWarn())
-      << "Number of functions with unresolved calls: " << ie.unresolved.size()
-      << std::endl;
+              << "Number of functions with unresolved calls: " << ie.unresolved.size()
+              << std::endl;
 
     SAWYER_MESG(msgInfo())
               << "Number of functions taking addresses of functions: " <<  ie.addressTkn.size()

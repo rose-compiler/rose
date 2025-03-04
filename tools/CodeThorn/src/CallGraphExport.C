@@ -9,7 +9,7 @@
 
 #include <boost/range/algorithm.hpp>
 #include <boost/range/adaptors.hpp>
-#include <boost/phoenix.hpp>
+//~ #include <boost/phoenix.hpp>
 
 #include <nlohmann/json.hpp>
 
@@ -29,9 +29,9 @@ namespace
   std::intptr_t
   uniqueId(ct::FunctionKeyType key)
   {
-    ct::RoseCompatibilityBridge rcb;
+    ct::CompatibilityBridge compat;
 
-    return rcb.numericId(key);
+    return compat.numericId(key);
   }
 
   std::intptr_t
@@ -43,9 +43,9 @@ namespace
   std::string
   nameOf(ct::FunctionKeyType key)
   {
-    ct::RoseCompatibilityBridge rcb;
+    ct::CompatibilityBridge compat;
 
-    return rcb.nameOf(key);
+    return compat.nameOf(key);
   }
 /*
   std::string
@@ -202,9 +202,9 @@ namespace
   {
     json::json res;
 
-    res["directed"]   = false;
+    res["directed"]   = true;
     res["multigraph"] = false;
-    res["graph"]      = json::json{};
+    res["graph"]      = json::json::object();
     res["nodes"]      = verticesAsJsonArray(cg.vertices(), pred);
     res["links"]      = edgesAsJsonArray(useWeightForMultiEdges)(cg.edges(), pred);
 
@@ -224,7 +224,7 @@ namespace CodeThorn
   {
     return [](const CallGraph::Vertex& v) -> bool
            {
-             return RoseCompatibilityBridge{}.hasDefinition(v.value());
+             return CompatibilityBridge{}.hasDefinition(v.value());
            };
   }
 

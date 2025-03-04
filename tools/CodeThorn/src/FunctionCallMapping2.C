@@ -271,7 +271,7 @@ namespace
     {
       static constexpr bool withReturnType = true;
 
-      return RoseCompatibilityBridge{}.compareFunctionTypes(lhs, rhs, withReturnType) < 0;
+      return CompatibilityBridge{}.compareFunctionTypes(lhs, rhs, withReturnType) < 0;
     }
   };
 }

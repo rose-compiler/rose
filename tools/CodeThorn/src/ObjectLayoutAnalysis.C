@@ -237,7 +237,7 @@ namespace
                                 const ct::VTableLayoutContainer& layouts,
                                 const OverriderInfo& overriders,
                                 ct::VTableSection& sect,
-                                const ct::RoseCompatibilityBridge& rcb
+                                const ct::CompatibilityBridge& compat
                               )
   {
     using VTableSections = ct::VTableLayout::VTableSections;
@@ -337,7 +337,7 @@ namespace
     // 3) compute final overrider
     std::transform( candidates.begin(), candidates.end(),
                     std::back_inserter(vt),
-                    [&overriders,&vt,&rcb,numFn]
+                    [&overriders,&vt,&compat,numFn]
                     (const std::vector<ct::VTableLayoutElement>& els) -> ct::VTableLayoutElement
                     {
                       ROSE_ASSERT(els.size());
@@ -360,7 +360,7 @@ namespace
                         }
                         else if (res.function() != vtElem.function())
                         {
-                          if (!rcb.isAutoGeneratable(vt.getClass(), res.function()))
+                          if (!compat.isAutoGeneratable(vt.getClass(), res.function()))
                             msgError() << "No unique overrider for virtual inheritance!"
                                        << std::endl;
                         }
@@ -407,7 +407,7 @@ namespace
                        const ct::VTableLayoutContainer& layouts,
                        const ct::ClassAnalysis::value_type& clazz,
                        VirtualMemberFnSummary summary,
-                       const ct::RoseCompatibilityBridge& rcb
+                       const ct::CompatibilityBridge& compat
                      )
   {
     using Vec = std::vector<ct::InheritanceDesc>;
@@ -493,7 +493,7 @@ namespace
                                     layouts,
                                     summary.overriderInfo(),
                                     virtualSect,
-                                    rcb
+                                    compat
                                   );
     }
 
@@ -501,13 +501,13 @@ namespace
     bool isAbstract = false;
 
     std::for_each( res.begin(), res.end(),
-                   [&isAbstract,&clazz,&rcb](ct::VTableLayoutElement& el)->void
+                   [&isAbstract,&clazz,&compat](ct::VTableLayoutElement& el)->void
                    {
                      ct::VirtualFunctionEntry& vfn = boost::get<ct::VirtualFunctionEntry>(el);
                      ASSERT_not_null(vfn.getClass());
 
                      const bool willGen = (  (clazz.first != vfn.getClass())
-                                          && rcb.isAutoGeneratable(clazz.first, vfn.function())
+                                          && compat.isAutoGeneratable(clazz.first, vfn.function())
                                           );
 
                      if (!isAbstract && vfn.isPureVirtual() && !willGen)
@@ -530,17 +530,17 @@ namespace
                        const ct::VTableLayoutContainer& layouts,
                        const ct::ClassAnalysis::value_type& clazz,
                        const ct::VirtualFunctionAnalysis& vfa,
-                       const ct::RoseCompatibilityBridge& rcb
+                       const ct::CompatibilityBridge& compat
                      )
   {
     return computeVTableLayout( all,
                                 layouts,
                                 clazz,
                                 createVirtualMemberFunctionSummary(vfa, clazz),
-                                rcb
+                                compat
                               );
   }
-  
+
   // TClassAnalysis = ClassAnalysis or const ClassAnalysis
   template <class TLayoutAnalysis>
   inline
@@ -553,7 +553,7 @@ namespace
     if (pos != m.end())
       return *pos;
 
-    msgError() << "\nUnable to find representation for class " << ct::typeNameOf(key) 
+    msgError() << "\nUnable to find representation for class " << ct::typeNameOf(key)
                << "\n  * Number of known classes (in " << code << "): " << m.size()
                << std::endl;
 
@@ -578,7 +578,7 @@ computeObjectLayouts(const ClassAnalysis& all, bool onlyClassesWithVTable)
           (const ClassAnalysis::value_type& clazz) -> void
           {
             if (onlyClassesWithVTable && !clazz.second.hasVirtualTable()) return;
-            
+
             res.emplace(clazz.first, computeObjectLayout(all, res, clazz));
           };
 
@@ -589,17 +589,17 @@ computeObjectLayouts(const ClassAnalysis& all, bool onlyClassesWithVTable)
 
 
 VTableLayoutAnalysis
-computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vfa, const RoseCompatibilityBridge& rcb)
+computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vfa, const CompatibilityBridge& compat)
 {
   VTableLayoutContainer   res;
 
   auto vtableLayoutComputation =
-          [&all, &vfa, &rcb, &res]
+          [&all, &vfa, &compat, &res]
           (const ClassAnalysis::value_type& clazz) -> void
           {
             if (!clazz.second.hasVirtualTable()) return;
 
-            res.emplace(clazz.first, computeVTableLayout(all, res, clazz, vfa, rcb));
+            res.emplace(clazz.first, computeVTableLayout(all, res, clazz, vfa, compat));
           };
   topDownTraversal(all, vtableLayoutComputation);
   return res;
@@ -608,9 +608,9 @@ computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vf
 VTableLayoutAnalysis
 computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vfa)
 {
-  RoseCompatibilityBridge rcb;
+  CompatibilityBridge compat;
 
-  return computeVTableLayouts(all, vfa, rcb);
+  return computeVTableLayouts(all, vfa, compat);
 }
 
 //
@@ -628,20 +628,20 @@ VTableLayout::virtualBaseSection(ClassKeyType key) const
   return *pos;
 }
 
-VTableSection& 
+VTableSection&
 VTableLayout::createVTableSection()
 {
   sections.emplace_back(nullptr, 0, 0, size(), false);
   return sections.back();
 }
 
-VTableLayoutElement& 
+VTableLayoutElement&
 VTableLayout::at(const VTableSection& sec, std::size_t i)
 {
   return this->base::at(sec.startOffset() + i);
 }
 
-const VTableLayoutElement& 
+const VTableLayoutElement&
 VTableLayout::at(const VTableSection& sec, std::size_t i) const
 {
   return this->base::at(sec.startOffset() + i);

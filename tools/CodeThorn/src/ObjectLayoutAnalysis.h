@@ -66,7 +66,7 @@ class ObjectLayout : std::vector<ObjectLayoutEntry>
     bool abstractClass()          const { return hasAbstractMethods; }
     void abstractClass(bool bval)       { hasAbstractMethods = bval; }
     /// \}
-    
+
   private:
     bool hasAbstractMethods = false;
 };
@@ -90,14 +90,14 @@ class ObjectLayoutAnalysis : ObjectLayoutAnalysisBase
     using base::emplace;
     using base::find;
     using base::size;
-    using base::clear;  
-    
+    using base::clear;
+
     /// replaces base::at with functions that can provide better diagnostics
     ///   in case \p k is not known.
     /// \{
           mapped_type& at (const key_type& k);
     const mapped_type& at (const key_type& k) const;
-    /// \}    
+    /// \}
 };
 
 /// computes a sample object layout table for classes in \p all
@@ -283,13 +283,13 @@ class VTableLayout : VTableLayoutBase
     bool   isAbstractClass() const { return isAbstract; }
     void   isAbstractClass(bool v) { isAbstract = v; }
     /// \}
-    
+
     /// return the \p i ^th element in vtable section \p sec
     /// \{
           VTableLayoutElement& at(const VTableSection& sec, std::size_t i);
     const VTableLayoutElement& at(const VTableSection& sec, std::size_t i) const;
     /// \}
-    
+
   private:
     ClassKeyType   clazz;
     VTableSections sections;
@@ -340,7 +340,7 @@ VTableLayoutAnalysis
 computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vfa);
 
 VTableLayoutAnalysis
-computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vfa, const RoseCompatibilityBridge& rcb);
+computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vfa, const CompatibilityBridge& compat);
 
 }
 

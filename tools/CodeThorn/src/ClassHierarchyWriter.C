@@ -4,8 +4,6 @@
 //~ #include <sageGeneric.h>
 #include <cassert>
 
-#include "RoseCompatibility.h"
-
 namespace ct = CodeThorn;
 
 namespace CodeThorn

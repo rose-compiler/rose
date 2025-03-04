@@ -1688,7 +1688,7 @@ namespace sg
   /// \private
   struct DefaultTraversalSuccessors
   {
-    SgNodePtrList operator()(SgNode& n) const
+    SgNodePtrList operator()(const SgNode& n) const
     {
       return n.get_traversalSuccessorContainer();
     }

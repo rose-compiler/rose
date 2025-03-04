@@ -37,6 +37,9 @@ using FuncNameFn    = std::function<std::string(FunctionKeyType)>;
 /// type of a variable naming function
 using VarNameFn     = std::function<std::string(VariableKeyType)>;
 
+/// a predicate type for functions
+using FunctionPredicate = std::function<bool(FunctionKeyType)>;
+
 
 class ClassAnalysis;
 class CastAnalysis;
@@ -45,7 +48,7 @@ template <class T>
 using Optional = boost::optional<T>;
 
 using CallDataBase = std::tuple< Optional<FunctionKeyType>,
-                                 ExpressionKeyType,
+                                 ExpressionKeyType, // \todo may need optional since it is not present in ctor inits
                                  Optional<ClassKeyType>,
                                  ExpressionKeyType,
                                  bool
@@ -64,6 +67,7 @@ struct CallData : CallDataBase
 };
 
 
+
 /// a compatibility layer that abstracts functions and queries of
 ///   the AST and implements those capabilities for ROSE.
 class RoseCompatibilityBridge
@@ -76,8 +80,12 @@ class RoseCompatibilityBridge
       covariant = 2
     };
 
-    RoseCompatibilityBridge()  = default;
-    ~RoseCompatibilityBridge() = default;
+    RoseCompatibilityBridge()                                          = default;
+    RoseCompatibilityBridge(const RoseCompatibilityBridge&)            = default;
+    RoseCompatibilityBridge& operator=(const RoseCompatibilityBridge&) = default;
+    RoseCompatibilityBridge(RoseCompatibilityBridge&&)                 = default;
+    RoseCompatibilityBridge& operator=(RoseCompatibilityBridge&&)      = default;
+    ~RoseCompatibilityBridge()                                         = default;
 
     /// returns the variable-id for a variable or parameter \p var
     /// \{
@@ -188,22 +196,26 @@ class RoseCompatibilityBridge
 
     /// returns all callees (if known)
     /// \param fn the function for which the result shall be computed
-    /// \param withFunctionAddressTaken if true, a taken function address
-    ///                                 will be included in the result
-    ///                                 even if it is not a call.
+    /// \param isVirtualFunction a predicate that returns true if
+    ///                          a function is explciticely or implcitely
+    ///                          virtual.
     /// \return a set of functions called by \p fn
+    /// \{
     std::vector<CallData>
-    functionRelations(FunctionKeyType fn) const;
+    functionRelations(FunctionKeyType fn, FunctionPredicate isVirtualFunction) const;
+    ///}
 
+    /// returns a predicate testing if a function has name \p name.
+    FunctionPredicate
+    functionNamePredicate(std::string name) const;
+
+    /// returns all functions reachable from n
     std::vector<FunctionKeyType>
     allFunctionKeys(ASTRootType n) const;
 
-  private:
-    //~ RoseCompatibilityBridge()                                          = delete;
-    RoseCompatibilityBridge(RoseCompatibilityBridge&&)                 = delete;
-    RoseCompatibilityBridge& operator=(RoseCompatibilityBridge&&)      = delete;
-    RoseCompatibilityBridge(const RoseCompatibilityBridge&)            = delete;
-    RoseCompatibilityBridge& operator=(const RoseCompatibilityBridge&) = delete;
+    /// returns all functions reachable from n where pred holds.
+    std::vector<FunctionKeyType>
+    allFunctionKeys(ASTRootType n, FunctionPredicate pred) const;
 };
 
 /// wrapper class to produce informative debug output about casts

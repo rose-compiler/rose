@@ -19,6 +19,8 @@
 
 namespace CodeThorn
 {
+  using CompatibilityBridge = RoseCompatibilityBridge;
+
   extern Sawyer::Message::Facility logger; // from "CodeThornLib.h"
 }
 
@@ -406,10 +408,22 @@ class VirtualFunctionAnalysis : private std::unordered_map<FunctionKeyType, Virt
     using base::begin;
     using base::end;
     using base::operator[];
-    using base::at;
+    //~ using base::at;
     using base::find;
     using base::emplace;
     using base::size;
+
+    /// replaces base::at with functions that can provide better diagnostics
+    ///   in case \p k is not known.
+    /// \{
+          mapped_type& at (const key_type& k);
+    const mapped_type& at (const key_type& k) const;
+    /// \}
+
+    /// returns a predicate testing if a function is virtual
+    /// \note the lifetime of the VirtualFunctionAnalysis object must exceed
+    ///       the lifetime of the predicate.
+    FunctionPredicate virtualFunctionTest() const;
 };
 
 
@@ -430,13 +444,13 @@ struct AnalysesTuple : std::tuple<ClassAnalysis, CastAnalysis>
 
 /// collects the class hierarchy and all casts from a project
 /// \{
-AnalysesTuple analyzeClassesAndCasts(const RoseCompatibilityBridge& rcb, ASTRootType n);
+AnalysesTuple analyzeClassesAndCasts(const CompatibilityBridge& compat, ASTRootType n);
 AnalysesTuple analyzeClassesAndCasts(ASTRootType n);
 /// \}
 
 /// collects the class hierarchy from a project
 /// \{
-ClassAnalysis analyzeClasses(const RoseCompatibilityBridge& rcb, ASTRootType n);
+ClassAnalysis analyzeClasses(const CompatibilityBridge& compat, ASTRootType n);
 ClassAnalysis analyzeClasses(ASTRootType n);
 ClassAnalysis analyzeClass(ClassKeyType n);
 /// \}
@@ -454,7 +468,7 @@ using ClassAnalysisConstFn = std::function<void(const ClassAnalysis::value_type&
 /// computes function overriders for all virtual functions
 /// \{
 VirtualFunctionAnalysis
-analyzeVirtualFunctions(const RoseCompatibilityBridge& rcb, const ClassAnalysis& classes, bool normalizedSignature = false);
+analyzeVirtualFunctions(const CompatibilityBridge& compat, const ClassAnalysis& classes, bool normalizedSignature = false);
 
 VirtualFunctionAnalysis
 analyzeVirtualFunctions(const ClassAnalysis& classes, bool normalizedSignature = false);
