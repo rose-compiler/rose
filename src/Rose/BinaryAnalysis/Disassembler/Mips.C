@@ -225,15 +225,15 @@ Mips::makeUnknownInstruction(const Exception &e)
 }
 
 SgAsmMipsInstruction*
-Mips::makeUnknownInstruction(rose_addr_t insn_va, unsigned ib) const {
+Mips::makeUnknownInstruction(Address insn_va, unsigned ib) const {
     SgAsmMipsInstruction *insn = makeInstruction(insn_va, mips_unknown_instruction);
     insn->set_rawBytes(SgUnsignedCharList((unsigned char*)&ib, (unsigned char*)&ib + 4));
     return insn;
 }
 
 SgAsmMipsInstruction *
-Mips::makeInstruction(rose_addr_t insn_va, MipsInstructionKind kind, SgAsmExpression *op1, SgAsmExpression *op2,
-                      SgAsmExpression *op3, SgAsmExpression *op4) const
+Mips::makeInstruction(Address insn_va, MipsInstructionKind kind, SgAsmExpression *op1, SgAsmExpression *op2, SgAsmExpression *op3,
+                      SgAsmExpression *op4) const
 {
     SgAsmMipsInstruction *insn = new SgAsmMipsInstruction(insn_va, *architecture()->registrationId(), kind);
 
@@ -275,7 +275,7 @@ Mips::makeType(MipsDataFormat fmt) const {
 }
 
 SgAsmRegisterReferenceExpression *
-Mips::makeRegister(rose_addr_t insn_va, unsigned regnum) const
+Mips::makeRegister(Address insn_va, unsigned regnum) const
 {
     std::string regname = "r" + StringUtility::numberToString(regnum);
     const RegisterDescriptor reg = architecture()->registerDictionary()->find(regname);
@@ -287,7 +287,7 @@ Mips::makeRegister(rose_addr_t insn_va, unsigned regnum) const
 }
 
 SgAsmRegisterReferenceExpression *
-Mips::makeFpRegister(const rose_addr_t insnVa, const unsigned regNum, const MipsDataFormat fmt) const {
+Mips::makeFpRegister(const Address insnVa, const unsigned regNum, const MipsDataFormat fmt) const {
     // See MIPS RegisterDictionary. Pairs of 32-bit `fN' registers where N is even are named `fNd`
     const std::string regNameSuffix = (mips_fmt_d == fmt || mips_fmt_ps == fmt || mips_fmt_l == fmt) ? "d" : "";
     const std::string regName = "f" + boost::lexical_cast<std::string>(regNum) + regNameSuffix;
@@ -305,7 +305,7 @@ Mips::makeFpRegister(const rose_addr_t insnVa, const unsigned regNum, const Mips
 }
 
 SgAsmRegisterReferenceExpression *
-Mips::makeCp0Register(rose_addr_t insn_va, unsigned regnum, unsigned sel) const
+Mips::makeCp0Register(Address insn_va, unsigned regnum, unsigned sel) const
 {
     ASSERT_require(regnum<32);
     ASSERT_require(sel<8);
@@ -541,7 +541,7 @@ Mips::makeCp0Register(rose_addr_t insn_va, unsigned regnum, unsigned sel) const
 }
 
 SgAsmRegisterReferenceExpression *
-Mips::makeFpccRegister(const rose_addr_t insn_va, const unsigned cc) const {
+Mips::makeFpccRegister(const Address insn_va, const unsigned cc) const {
     ASSERT_require(cc <= 7);
 
     // Find the condition code bits of the FCSR
@@ -588,7 +588,7 @@ Mips::makeHwRegister(const unsigned regnum) const {
 }
 
 SgAsmRegisterReferenceExpression *
-Mips::makeShadowRegister(const rose_addr_t insn_va, const unsigned cc) const {
+Mips::makeShadowRegister(const Address insn_va, const unsigned cc) const {
     // Get the general purpose register
     SgAsmRegisterReferenceExpression *regref = makeRegister(insn_va, cc);
     ASSERT_not_null(regref);
@@ -628,7 +628,7 @@ Mips::makeImmediate32(const unsigned value, const size_t bit_offset, const size_
 }
 
 SgAsmIntegerValueExpression *
-Mips::makeBranchTargetRelative(const rose_addr_t insn_va, unsigned pc_offset, const size_t bit_offset, size_t nbits) const {
+Mips::makeBranchTargetRelative(const Address insn_va, unsigned pc_offset, const size_t bit_offset, size_t nbits) const {
     ASSERT_require(0 == (pc_offset & ~0xffff));
     pc_offset = shiftLeft<32>(pc_offset, 2);        // insns have 4-byte alignment
     pc_offset = signExtend<18, 32>(pc_offset);      // offsets are signed
@@ -640,8 +640,7 @@ Mips::makeBranchTargetRelative(const rose_addr_t insn_va, unsigned pc_offset, co
 }
 
 SgAsmIntegerValueExpression *
-Mips::makeBranchTargetAbsolute(rose_addr_t insn_va, unsigned insn_index, size_t bit_offset,
-                               size_t nbits) const
+Mips::makeBranchTargetAbsolute(Address insn_va, unsigned insn_index, size_t bit_offset, size_t nbits) const
 {
     ROSE_UNUSED(bit_offset);
 
@@ -657,7 +656,7 @@ Mips::makeBranchTargetAbsolute(rose_addr_t insn_va, unsigned insn_index, size_t 
 }
 
 SgAsmBinaryAdd *
-Mips::makeRegisterOffset(rose_addr_t insn_va, unsigned gprnum, unsigned offset16) const
+Mips::makeRegisterOffset(Address insn_va, unsigned gprnum, unsigned offset16) const
 {
     SgAsmRegisterReferenceExpression *regref = makeRegister(insn_va, gprnum);
     ASSERT_require(0==(offset16 & ~0xffff));
@@ -668,7 +667,7 @@ Mips::makeRegisterOffset(rose_addr_t insn_va, unsigned gprnum, unsigned offset16
 }
 
 SgAsmBinaryAdd *
-Mips::makeRegisterIndexed(rose_addr_t insn_va, unsigned base_gprnum, unsigned index_gprnum) const
+Mips::makeRegisterIndexed(Address insn_va, unsigned base_gprnum, unsigned index_gprnum) const
 {
     SgAsmRegisterReferenceExpression *base_reg = makeRegister(insn_va, base_gprnum);
     SgAsmRegisterReferenceExpression *index_reg = makeRegister(insn_va, index_gprnum);
@@ -685,7 +684,7 @@ Mips::makeMemoryReference(SgAsmExpression *addr, SgAsmType *type) const
 }
 
 Mips::Decoder *
-Mips::find_idis(rose_addr_t insn_va, unsigned insn_bits) const
+Mips::find_idis(Address insn_va, unsigned insn_bits) const
 {
     Decoder *retval = NULL;
     for (size_t i=0; i<idis_table.size(); ++i) {
@@ -756,7 +755,7 @@ static struct Mips32_abs_s: Mips::Decoder {
     Mips32_abs_s(): Mips::Decoder(Release1,
                            sOP(021)|sR0(020)|sR1(000)|sFN(005),
                            mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_abs_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -768,7 +767,7 @@ static struct Mips32_abs_d: Mips::Decoder {
     Mips32_abs_d(): Mips::Decoder(Release1,
                            sOP(021)|sR0(021)|sR1(000)|sFN(005),
                            mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_abs_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -780,7 +779,7 @@ static struct Mips32_abs_ps: Mips::Decoder {
     Mips32_abs_ps(): Mips::Decoder(Release2,
                             sOP(021)|sR0(026)|sR1(000)|sFN(005),
                             mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_abs_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps));
@@ -792,7 +791,7 @@ static struct Mips32_add: Mips::Decoder {
     Mips32_add(): Mips::Decoder(Release1,
                          sOP(000)|sR3(000)|sFN(040),
                          mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_add,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -805,7 +804,7 @@ static struct Mips32_add_s: Mips::Decoder {
     Mips32_add_s(): Mips::Decoder(Release1,
                            sOP(021)|sR0(020)|sFN(000),
                            mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_add_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s),
@@ -818,7 +817,7 @@ static struct Mips32_add_d: Mips::Decoder {
     Mips32_add_d(): Mips::Decoder(Release1,
                            sOP(021)|sR0(021)|sFN(000),
                            mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_add_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d),
@@ -831,7 +830,7 @@ static struct Mips32_add_ps: Mips::Decoder {
     Mips32_add_ps(): Mips::Decoder(Release2,
                             sOP(021)|sR0(026)|sFN(000),
                             mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_add_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps),
@@ -842,7 +841,7 @@ static struct Mips32_add_ps: Mips::Decoder {
 // ADDI -- add immediate word
 static struct Mips32_addi: Mips::Decoder {
     Mips32_addi(): Mips::Decoder(Release1, sOP(010), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_addi,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -853,7 +852,7 @@ static struct Mips32_addi: Mips::Decoder {
 // ADDIU -- add immediate unsigned word
 static struct Mips32_addiu: Mips::Decoder {
     Mips32_addiu(): Mips::Decoder(Release1, sOP(011), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_addiu,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -866,7 +865,7 @@ static struct Mips32_addu: Mips::Decoder {
     Mips32_addu(): Mips::Decoder(Release1,
                           sOP(000)|sR3(000)|sFN(041),
                           mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_addu,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -879,7 +878,7 @@ static struct Mips32_alnv_ps: Mips::Decoder {
     Mips32_alnv_ps(): Mips::Decoder(Release2,
                              sOP(023)|sFN(036),
                              mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_alnv_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps),
@@ -893,7 +892,7 @@ static struct Mips32_and: Mips::Decoder {
     Mips32_and(): Mips::Decoder(Release1,
                          sOP(000)|sR3(000)|sFN(044),
                          mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_and,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -904,7 +903,7 @@ static struct Mips32_and: Mips::Decoder {
 // ANDI -- and immediate
 static struct Mips32_andi: Mips::Decoder {
     Mips32_andi(): Mips::Decoder(Release1, sOP(014), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_andi,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -918,7 +917,7 @@ static struct Mips32_bc1f: Mips::Decoder {
     Mips32_bc1f(): Mips::Decoder(Release1,
                           sOP(021)|sR0(010)|shift_to<16, 17>(0),
                           mOP()   |mR0()   |mask_for<16, 17>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned cc = extract<18, 20>(ib);
         return d->makeInstruction(insn_va, mips_bc1f,
                                   d->makeFpccRegister(insn_va, cc),
@@ -931,7 +930,7 @@ static struct Mips32_bc1fl: Mips::Decoder {
     Mips32_bc1fl(): Mips::Decoder(Release1,
                            sOP(021)|sR0(010)|shift_to<16, 17>(2),
                            mOP()   |mR0()   |mask_for<16, 17>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned cc = extract<18, 20>(ib);
         return d->makeInstruction(insn_va, mips_bc1fl,
                                   d->makeFpccRegister(insn_va, cc),
@@ -944,7 +943,7 @@ static struct Mips32_bc1t: Mips::Decoder {
     Mips32_bc1t(): Mips::Decoder(Release1,
                           sOP(021)|sR0(010)|shift_to<16, 17>(1),
                           mOP()   |mR0()   |mask_for<16, 17>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned cc = extract<18, 20>(ib);
         return d->makeInstruction(insn_va, mips_bc1t,
                                   d->makeFpccRegister(insn_va, cc),
@@ -957,7 +956,7 @@ static struct Mips32_bc1tl: Mips::Decoder {
     Mips32_bc1tl(): Mips::Decoder(Release1,
                            sOP(21)|sR0(010)|shift_to<16, 17>(3),
                            mOP()  |mR0()   |mask_for<16, 17>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned cc = extract<18, 20>(ib);
         return d->makeInstruction(insn_va, mips_bc1tl,
                                   d->makeFpccRegister(insn_va, cc),
@@ -970,7 +969,7 @@ static struct Mips32_bc2f: Mips::Decoder {
     Mips32_bc2f(): Mips::Decoder(Release1,
                           sOP(022)|sR0(010)|shift_to<16, 17>(0),
                           mOP()   |mR0()   |mask_for<16, 17>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned cc = extract<18, 20>(ib);
         return d->makeInstruction(insn_va, mips_bc2f,
                                   d->makeCp2ccRegister(cc),
@@ -983,7 +982,7 @@ static struct Mips32_bc2fl: Mips::Decoder {
     Mips32_bc2fl(): Mips::Decoder(Release1,
                            sOP(022)|sR0(010)|shift_to<16, 17>(2),
                            mOP()   |mR0()   |mask_for<16, 17>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned cc = extract<18, 20>(ib);
         return d->makeInstruction(insn_va, mips_bc2fl,
                                   d->makeCp2ccRegister(cc),
@@ -996,7 +995,7 @@ static struct Mips32_bc2t: Mips::Decoder {
     Mips32_bc2t(): Mips::Decoder(Release1,
                           sOP(022)|sR0(010)|shift_to<16, 17>(1),
                           mOP()   |mR0()   |mask_for<16, 17>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned cc = extract<18, 20>(ib);
         return d->makeInstruction(insn_va, mips_bc2t,
                                   d->makeCp2ccRegister(cc),
@@ -1009,7 +1008,7 @@ static struct Mips32_bc2tl: Mips::Decoder {
     Mips32_bc2tl(): Mips::Decoder(Release1,
                            sOP(022)|sR0(010)|shift_to<16, 17>(3),
                            mOP()   |mR0()   |mask_for<16, 17>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned cc = extract<18, 20>(ib);
         return d->makeInstruction(insn_va, mips_bc2tl,
                                   d->makeCp2ccRegister(cc),
@@ -1020,7 +1019,7 @@ static struct Mips32_bc2tl: Mips::Decoder {
 // BEQ -- branch on equal
 static struct Mips32_beq: Mips::Decoder {
     Mips32_beq(): Mips::Decoder(Release1, sOP(004), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         if (gR0(ib) == 0 && gR1(ib) == 0) {
             return d->makeInstruction(insn_va, mips_b, d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
         } else {
@@ -1035,7 +1034,7 @@ static struct Mips32_beq: Mips::Decoder {
 // BEQL -- branch on equal likely
 static struct Mips32_beql: Mips::Decoder {
     Mips32_beql(): Mips::Decoder(Release1, sOP(024), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_beql,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -1048,7 +1047,7 @@ static struct Mips32_bgez: Mips::Decoder {
     Mips32_bgez(): Mips::Decoder(Release1,
                           sOP(001)|sR1(001),
                           mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_bgez,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
@@ -1060,7 +1059,7 @@ static struct Mips32_bgezal: Mips::Decoder {
     Mips32_bgezal(): Mips::Decoder(Release1,
                             sOP(001)|sR1(021),
                             mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         if (gR0(ib) == 0) {
             return d->makeInstruction(insn_va, mips_bal, d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
         } else {
@@ -1076,7 +1075,7 @@ static struct Mips32_bgezall: Mips::Decoder {
     Mips32_bgezall(): Mips::Decoder(Release1,
                              sOP(001)|sR1(023),
                              mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_bgezall,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
@@ -1088,7 +1087,7 @@ static struct Mips32_bgezl: Mips::Decoder {
     Mips32_bgezl(): Mips::Decoder(Release1,
                            sOP(001)|sR1(003),
                            mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_bgezl,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
@@ -1100,7 +1099,7 @@ static struct Mips32_bgtz: Mips::Decoder {
     Mips32_bgtz(): Mips::Decoder(Release1,
                           sOP(007)|sR1(000),
                           mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_bgtz,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
@@ -1112,7 +1111,7 @@ static struct Mips32_bgtzl: Mips::Decoder {
     Mips32_bgtzl(): Mips::Decoder(Release1,
                            sOP(023)|sR1(000),
                            mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_bgtzl,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
@@ -1124,7 +1123,7 @@ static struct Mips32_blez: Mips::Decoder {
     Mips32_blez(): Mips::Decoder(Release1,
                           sOP(006)|sR1(000),
                           mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_blez,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
@@ -1136,7 +1135,7 @@ static struct Mips32_blezl: Mips::Decoder {
     Mips32_blezl(): Mips::Decoder(Release1,
                            sOP(026)|sR1(000),
                            mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_blezl,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
@@ -1148,7 +1147,7 @@ static struct Mips32_bltz: Mips::Decoder {
     Mips32_bltz(): Mips::Decoder(Release1,
                           sOP(001)|sR1(000),
                           mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_bltz,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
@@ -1160,7 +1159,7 @@ static struct Mips32_bltzal: Mips::Decoder {
     Mips32_bltzal(): Mips::Decoder(Release1,
                             sOP(001)|sR1(020),
                             mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_bltzal,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
@@ -1172,7 +1171,7 @@ static struct Mips32_bltzall: Mips::Decoder {
     Mips32_bltzall(): Mips::Decoder(Release1,
                              sOP(001)|sR1(022),
                              mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_bltzall,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
@@ -1184,7 +1183,7 @@ static struct Mips32_bltzl: Mips::Decoder {
     Mips32_bltzl(): Mips::Decoder(Release1,
                            sOP(001)|sR1(002),
                            mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_bltzl,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeBranchTargetRelative(insn_va, gIM(ib), 0, 16));
@@ -1194,7 +1193,7 @@ static struct Mips32_bltzl: Mips::Decoder {
 // BNE -- branch on not equal
 static struct Mips32_bne: Mips::Decoder {
     Mips32_bne(): Mips::Decoder(Release1, sOP(005), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_bne,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -1205,7 +1204,7 @@ static struct Mips32_bne: Mips::Decoder {
 // BNEL -- branch on not equal likely (deprecated instruction)
 static struct Mips32_bnel: Mips::Decoder {
     Mips32_bnel(): Mips::Decoder(Release1, sOP(025), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_bnel,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -1222,7 +1221,7 @@ static struct Mips32_break: Mips::Decoder {
     Mips32_break(): Mips::Decoder(Release1,
                            sOP(000)|sFN(015),
                            mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned code UNUSED_VAR = extract<6, 25>(ib); // only available by reading the instruction
         return d->makeInstruction(insn_va, mips_break);
     }
@@ -1235,7 +1234,7 @@ static struct Mips32_c_cond_s: Mips::Decoder {
     Mips32_c_cond_s(): Mips::Decoder(Release1,
                               sOP(021)|sR0(020)|shift_to<4, 7>(003),
                               mOP()   |mR0()   |mask_for<4, 7>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned cc = extract<8, 10>(ib);
         unsigned condition = extract<0, 3>(ib);
         MipsInstructionKind kind;
@@ -1272,7 +1271,7 @@ static struct Mips32_c_cond_d: Mips::Decoder {
     Mips32_c_cond_d(): Mips::Decoder(Release1,
                               sOP(021)|sR0(021)|shift_to<4, 7>(003),
                               mOP()   |mR0()   |mask_for<4, 7>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned cc = extract<8, 10>(ib);
         unsigned condition = extract<0, 3>(ib);
         MipsInstructionKind kind;
@@ -1309,7 +1308,7 @@ static struct Mips32_c_cond_ps: Mips::Decoder {
     Mips32_c_cond_ps(): Mips::Decoder(Release2,
                                sOP(021)|sR0(026)|shift_to<4, 7>(003),
                                mOP()   |mR0()   |mask_for<4, 7>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned cc = extract<8, 10>(ib);
         unsigned condition = extract<0, 3>(ib);
         MipsInstructionKind kind;
@@ -1342,7 +1341,7 @@ static struct Mips32_c_cond_ps: Mips::Decoder {
 // CACHE -- perform cache operation
 static struct Mips32_cache: Mips::Decoder {
     Mips32_cache(): Mips::Decoder(Release1, sOP(057), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cache,
                                   d->makeImmediate8(gR1(ib), 16, 5),
                                   d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib)));
@@ -1354,7 +1353,7 @@ static struct Mips32_cachee: Mips::Decoder {
     Mips32_cachee(): Mips::Decoder(Release1,
                             sOP(037)|sFN(033)|shift_to<6, 6>(0),
                             mOP()   |mFN()   |mask_for<6, 6>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cachee,
                                   d->makeImmediate8(gR1(ib), 16, 5),
                                   d->makeRegisterOffset(insn_va, gR0(ib), extract<7, 15>(ib)));
@@ -1366,7 +1365,7 @@ static struct Mips32_ceil_l_s: Mips::Decoder {
     Mips32_ceil_l_s(): Mips::Decoder(Release2,
                               sOP(021)|sR0(020)|sR1(0)||sFN(012),
                               mOP()   |mR0()   |mR1() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_ceil_l_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_l),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -1378,7 +1377,7 @@ static struct Mips32_ceil_l_d: Mips::Decoder {
     Mips32_ceil_l_d(): Mips::Decoder(Release2,
                               sOP(021)|sR0(021)|sR1(0)|sFN(012),
                               mOP()   |mR0()   |mR1() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_ceil_l_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_l),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -1390,7 +1389,7 @@ static struct Mips32_ceil_w_s: Mips::Decoder {
     Mips32_ceil_w_s(): Mips::Decoder(Release1,
                               sOP(021)|sR0(020)|sR1(0)|sFN(016),
                               mOP()   |mR0()   |mR1() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_ceil_w_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_w),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -1402,7 +1401,7 @@ static struct Mips32_ceil_w_d: Mips::Decoder {
     Mips32_ceil_w_d(): Mips::Decoder(Release1,
                               sOP(021)|sR0(021)|sR1(0)|sFN(016),
                               mOP()   |mR0()   |mR1() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_ceil_w_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_w),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -1414,7 +1413,7 @@ static struct Mips32_cfc1: Mips::Decoder {
     Mips32_cfc1(): Mips::Decoder(Release1,
                           sOP(021)|sR0(002)|shift_to<0, 10>(0),
                           mOP()   |mR0()   |mask_for<0, 10>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cfc1,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeImmediate8(gR2(ib), 11, 5));
@@ -1426,7 +1425,7 @@ static struct Mips32_cfc2: Mips::Decoder {
     Mips32_cfc2(): Mips::Decoder(Release1,
                           sOP(022)|sR0(002),
                           mOP()   |mR0()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cfc2,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -1438,7 +1437,7 @@ static struct Mips32_clo: Mips::Decoder {
     Mips32_clo(): Mips::Decoder(Release1,
                          sOP(034)|sR3(0)|sFN(041),
                          mOP()   |mR3() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         bool valid UNUSED_VAR = gR1(ib) == gR2(ib); // r1 must be same register number as r2
         return d->makeInstruction(insn_va, mips_clo,
                                   d->makeRegister(insn_va, gR2(ib)),
@@ -1451,7 +1450,7 @@ static struct Mips32_clz: Mips::Decoder {
     Mips32_clz(): Mips::Decoder(Release1,
                          sOP(034)|sR3(0)|sFN(040),
                          mOP()   |mR3() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         bool valid UNUSED_VAR = gR1(ib) == gR2(ib); // r1 must be same register number as r2
         return d->makeInstruction(insn_va, mips_clz,
                                   d->makeRegister(insn_va, gR2(ib)),
@@ -1464,7 +1463,7 @@ static struct Mips32_cop2: Mips::Decoder {
     Mips32_cop2(): Mips::Decoder(Release1,
                           sOP(022)|shift_to<25, 25>(1),
                           mOP()   |mask_for<25, 25>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cop2,
                                   d->makeImmediate32(extract<0, 24>(ib), 0, 24));
     }
@@ -1475,7 +1474,7 @@ static struct Mips32_ctc1: Mips::Decoder {
     Mips32_ctc1(): Mips::Decoder(Release1,
                           sOP(021)|sR0(006)|shift_to<0, 10>(0),
                           mOP()   |mR0()   |mask_for<0, 10>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_ctc1,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeImmediate8(gR2(ib), 11, 5));
@@ -1487,7 +1486,7 @@ static struct Mips32_ctc2: Mips::Decoder {
     Mips32_ctc2(): Mips::Decoder(Release1,
                           sOP(022)|sR0(006),
                           mOP()   |mR0()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_ctc2,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -1499,7 +1498,7 @@ static struct Mips32_cvt_d_s: Mips::Decoder {
     Mips32_cvt_d_s(): Mips::Decoder(Release1,
                              sOP(021)|sR0(020)|sR1(0)|sFN(041),
                              mOP()   |mR0()   |mR1() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_d_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -1511,7 +1510,7 @@ static struct Mips32_cvt_d_w: Mips::Decoder {
     Mips32_cvt_d_w(): Mips::Decoder(Release1,
                              sOP(021)|sR0(024)|sR1(0)|sFN(041),
                              mOP()   |mR0()   |mR1() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_d_w,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_w));
@@ -1523,7 +1522,7 @@ static struct Mips32_cvt_d_l: Mips::Decoder {
     Mips32_cvt_d_l(): Mips::Decoder(Release2,
                              sOP(021)|sR0(025)|sR1(0)|sFN(041),
                              mOP()   |mR0()   |mR1() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_d_l,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_l));
@@ -1535,7 +1534,7 @@ static struct Mips32_cvt_l_s: Mips::Decoder {
     Mips32_cvt_l_s(): Mips::Decoder(Release2,
                              sOP(021)|sR0(020)|sR1(0)|sFN(045),
                              mOP()   |mR0()   |mR1() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_l_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_l),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -1547,7 +1546,7 @@ static struct Mips32_cvt_l_d: Mips::Decoder {
     Mips32_cvt_l_d(): Mips::Decoder(Release2,
                              sOP(21)|sR0(021)|sR1(0)|sFN(045),
                              mOP()  |mR0()   |mR1() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_l_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_l),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -1559,7 +1558,7 @@ static struct Mips32_cvt_ps_s: Mips::Decoder {
     Mips32_cvt_ps_s(): Mips::Decoder(Release2,
                               sOP(021)|sR0(020)|sFN(046),
                               mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_ps_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s),
@@ -1572,7 +1571,7 @@ static struct Mips32_cvt_s_d: Mips::Decoder {
     Mips32_cvt_s_d(): Mips::Decoder(Release1,
                              sOP(021)|sR0(021)|sR1(000)|sFN(040),
                              mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_s_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -1584,7 +1583,7 @@ static struct Mips32_cvt_s_w: Mips::Decoder {
     Mips32_cvt_s_w(): Mips::Decoder(Release1,
                              sOP(021)|sR0(024)|sR1(000)|sFN(040),
                              mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_s_w,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_w));
@@ -1596,7 +1595,7 @@ static struct Mips32_cvt_s_l: Mips::Decoder {
     Mips32_cvt_s_l(): Mips::Decoder(Release2,
                              sOP(021)|sR0(025)|sR1(000)|sFN(040),
                              mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_s_l,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_l));
@@ -1608,7 +1607,7 @@ static struct Mips32_cvt_s_pl: Mips::Decoder {
     Mips32_cvt_s_pl(): Mips::Decoder(Release2,
                               sOP(021)|sR0(026)|sR1(000)|sFN(050),
                               mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_s_pl,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps));
@@ -1620,7 +1619,7 @@ static struct Mips32_cvt_s_pu: Mips::Decoder {
     Mips32_cvt_s_pu(): Mips::Decoder(Release2,
                               sOP(021)|sR0(026)|sR1(000)|sFN(040),
                               mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_s_pu,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps));
@@ -1632,7 +1631,7 @@ static struct Mips32_cvt_w_s: Mips::Decoder {
     Mips32_cvt_w_s(): Mips::Decoder(Release1,
                              sOP(021)|sR0(020)|sR1(000)|sFN(044),
                              mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_w_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_w),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -1644,7 +1643,7 @@ static struct Mips32_cvt_w_d: Mips::Decoder {
     Mips32_cvt_w_d(): Mips::Decoder(Release1,
                              sOP(021)|sR0(021)|sR1(000)|sFN(044),
                              mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_cvt_w_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_w),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -1657,7 +1656,7 @@ static struct Mips32_di: Mips::Decoder {
     Mips32_di(): Mips::Decoder(Release2,
                         sOP(020)|sR0(023)|sR2(024)|sR3(0)|shift_to<5, 5>(0)|shift_to<3, 4>(0)|shift_to<0, 2>(0),
                         mOP()   |mR0()   |mR2()   |mR3() |mask_for<5, 5>() |mask_for<3, 4>() |mask_for<0, 2>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_di,
                                   d->makeRegister(insn_va, gR1(ib)));
     }
@@ -1668,7 +1667,7 @@ static struct Mips32_div: Mips::Decoder {
     Mips32_div(): Mips::Decoder(Release1,
                          sOP(000)|shift_to<6, 15>(0)|sFN(032),
                          mOP()   |mask_for<6, 15>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_div,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeRegister(insn_va, gR1(ib)));
@@ -1680,7 +1679,7 @@ static struct Mips32_div_s: Mips::Decoder {
     Mips32_div_s(): Mips::Decoder(Release1,
                            sOP(021)|sR0(020)|sFN(003),
                            mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_div_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s),
@@ -1693,7 +1692,7 @@ static struct Mips32_div_d: Mips::Decoder {
     Mips32_div_d(): Mips::Decoder(Release1,
                            sOP(021)|sR0(021)|sFN(003),
                            mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_div_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d),
@@ -1706,7 +1705,7 @@ static struct Mips32_divu: Mips::Decoder {
     Mips32_divu(): Mips::Decoder(Release1,
                           sOP(000)|shift_to<6, 15>(0)|sFN(033),
                           mOP()   |mask_for<6, 15>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_divu,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeRegister(insn_va, gR1(ib)));
@@ -1719,7 +1718,7 @@ static struct Mips32_ei: Mips::Decoder {
     Mips32_ei(): Mips::Decoder(Release2,
                         sOP(020)|sR0(023)|sR2(014)|sR3(0)|shift_to<5, 5>(1)|shift_to<3, 4>(0)|shift_to<0, 2>(0),
                         mOP()   |mR0()   |mR2()   |mR3() |mask_for<5, 5>() |mask_for<3, 4>() |mask_for<0, 2>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_ei,
                                   d->makeRegister(insn_va, gR1(ib)));
     }
@@ -1730,7 +1729,7 @@ static struct Mips32_eret: Mips::Decoder {
     Mips32_eret(): Mips::Decoder(Release1,
                           sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(030),
                           mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_eret);
     }
 } mips32_eret;
@@ -1740,7 +1739,7 @@ static struct Mips32_ext: Mips::Decoder {
     Mips32_ext(): Mips::Decoder(Release2,
                          sOP(037)|sFN(000),
                          mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_ext,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -1754,7 +1753,7 @@ static struct Mips32_floor_l_s: Mips::Decoder {
     Mips32_floor_l_s(): Mips::Decoder(Release2,
                                sOP(021)|sR0(020)|sR1(000)|sFN(013),
                                mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_floor_l_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_l),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -1766,7 +1765,7 @@ static struct Mips32_floor_l_d: Mips::Decoder {
     Mips32_floor_l_d(): Mips::Decoder(Release2,
                                sOP(021)|sR0(021)|sR1(000)|sFN(013),
                                mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_floor_l_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_l),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -1778,7 +1777,7 @@ static struct Mips32_floor_w_s: Mips::Decoder {
     Mips32_floor_w_s(): Mips::Decoder(Release1,
                                sOP(021)|sR0(020)|sR1(000)|sFN(017),
                                mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_floor_w_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_w),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -1790,7 +1789,7 @@ static struct Mips32_floor_w_d: Mips::Decoder {
     Mips32_floor_w_d(): Mips::Decoder(Release1,
                                sOP(021)|sR0(021)|sR1(000)|sFN(017),
                                mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_floor_w_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_w),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -1802,7 +1801,7 @@ static struct Mips32_ins: Mips::Decoder {
     Mips32_ins(): Mips::Decoder(Release2,
                          sOP(037)|sFN(004),
                          mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned pos = gR3(ib);
         unsigned size = gR2(ib) - pos + 1;
         if (pos >= 32 || size > 32 || pos + size > 32)
@@ -1818,7 +1817,7 @@ static struct Mips32_ins: Mips::Decoder {
 // J -- jump
 static struct Mips32_j: Mips::Decoder {
     Mips32_j(): Mips::Decoder(Release1, sOP(002), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_j,
                                   d->makeBranchTargetAbsolute(insn_va, extract<0, 25>(ib), 0, 26));
     }
@@ -1827,7 +1826,7 @@ static struct Mips32_j: Mips::Decoder {
 // JAL -- jump and link
 static struct Mips32_jal: Mips::Decoder {
     Mips32_jal(): Mips::Decoder(Release1, sOP(003), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_jal,
                                   d->makeBranchTargetAbsolute(insn_va, extract<0, 25>(ib), 0, 26));
     }
@@ -1839,7 +1838,7 @@ static struct Mips32_jalr: Mips::Decoder {
     Mips32_jalr(): Mips::Decoder(Release1,
                           sOP(000)|sR1(000)|sR3(000)|sFN(011),  // R3 "hint" field must be zero for Release1
                           mOP()   |mR1()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_jalr,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)));
@@ -1852,7 +1851,7 @@ static struct Mips32_jalr_hb: Mips::Decoder {
     Mips32_jalr_hb(): Mips::Decoder(Release2, // "hint" field (bits 6-9) must be zero for Release1
                              sOP(000)|sR1(000)|shift_to<10, 10>(1)|shift_to<6, 9>(0)|sFN(011),
                              mOP()   |mR1()   |mask_for<10, 10>() |mask_for<6, 9>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_jalr_hb,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)));
@@ -1862,7 +1861,7 @@ static struct Mips32_jalr_hb: Mips::Decoder {
 // JALX -- jump and link exchange
 static struct Mips32_jalx: Mips::Decoder {
     Mips32_jalx(): Mips::Decoder(Release1, sOP(035), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_jalx,
                                   d->makeBranchTargetAbsolute(insn_va, extract<0, 25>(ib), 0, 26));
     }
@@ -1873,7 +1872,7 @@ static struct Mips32_jr: Mips::Decoder {
     Mips32_jr(): Mips::Decoder(Release1, // "hint" field (bits 6-10) must be zero for Release1
                         sOP(000)|shift_to<11, 20>(0)|shift_to<6, 10>(0)|sFN(010),
                         mOP()   |mask_for<11, 20>() |mask_for<6, 10>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_jr,
                                   d->makeRegister(insn_va, gR0(ib)));
     }
@@ -1884,7 +1883,7 @@ static struct Mips32_jr_hb: Mips::Decoder {
     Mips32_jr_hb(): Mips::Decoder(Release2, // "hint field (bits 6-9) must be zero for Release1
                            sOP(000)|shift_to<11, 20>(0)|shift_to<10, 10>(1)|shift_to<6, 9>(0)|sFN(010),
                            mOP()   |mask_for<11, 20>() |mask_for<10, 10>() |mask_for<6, 9>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_jr_hb,
                                   d->makeRegister(insn_va, gR0(ib)));
     }
@@ -1893,7 +1892,7 @@ static struct Mips32_jr_hb: Mips::Decoder {
 // LB -- load byte
 static struct Mips32_lb: Mips::Decoder {
     Mips32_lb(): Mips::Decoder(Release1, sOP(040), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_lb,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -1906,7 +1905,7 @@ static struct Mips32_lbe: Mips::Decoder {
     Mips32_lbe(): Mips::Decoder(Release1,
                          sOP(037)|shift_to<6, 6>(0)|sFN(054),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_lbe,
@@ -1918,7 +1917,7 @@ static struct Mips32_lbe: Mips::Decoder {
 // LBU -- load byte unsigned
 static struct Mips32_lbu: Mips::Decoder {
     Mips32_lbu(): Mips::Decoder(Release1, sOP(044), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_lbu,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -1931,7 +1930,7 @@ static struct Mips32_lbue: Mips::Decoder {
     Mips32_lbue(): Mips::Decoder(Release1,
                           sOP(037)|shift_to<6, 6>(0)|sFN(050),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_lbue,
@@ -1943,7 +1942,7 @@ static struct Mips32_lbue: Mips::Decoder {
 // LDC1 -- load doubleword to floating point
 static struct Mips32_ldc1: Mips::Decoder {
     Mips32_ldc1(): Mips::Decoder(Release1, sOP(065), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_ldc1,
                                   d->makeFpRegister(insn_va, gR1(ib), mips_fmt_d),
@@ -1954,7 +1953,7 @@ static struct Mips32_ldc1: Mips::Decoder {
 // LDC2 -- load doubleword to coprocessor 2
 static struct Mips32_ldc2: Mips::Decoder {
     Mips32_ldc2(): Mips::Decoder(Release1, sOP(066), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_ldc2,
                                   d->makeCp2Register(gR1(ib)),
@@ -1967,7 +1966,7 @@ static struct Mips32_ldxc1: Mips::Decoder {
     Mips32_ldxc1(): Mips::Decoder(Release2,
                            sOP(023)|sR2(000)|sFN(001),
                            mOP()   |mR2()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterIndexed(insn_va, gR0(ib), gR1(ib));
         return d->makeInstruction(insn_va, mips_ldxc1,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
@@ -1978,7 +1977,7 @@ static struct Mips32_ldxc1: Mips::Decoder {
 // LH -- load halfword
 static struct Mips32_lh: Mips::Decoder {
     Mips32_lh(): Mips::Decoder(Release1, sOP(041), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_lh,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -1991,7 +1990,7 @@ static struct Mips32_lhe: Mips::Decoder {
     Mips32_lhe(): Mips::Decoder(Release1,
                          sOP(037)|shift_to<6, 6>(1)|sFN(055),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_lhe,
@@ -2003,7 +2002,7 @@ static struct Mips32_lhe: Mips::Decoder {
 // LHU -- load halfword unsigned
 static struct Mips32_lhu: Mips::Decoder {
     Mips32_lhu(): Mips::Decoder(Release1, sOP(045), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_lhu,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -2016,7 +2015,7 @@ static struct Mips32_lhue: Mips::Decoder {
     Mips32_lhue(): Mips::Decoder(Release1,
                           sOP(037)|shift_to<6, 6>(0)|sFN(051),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_lhue,
@@ -2028,7 +2027,7 @@ static struct Mips32_lhue: Mips::Decoder {
 // LL -- load linked word
 static struct Mips32_ll: Mips::Decoder {
     Mips32_ll(): Mips::Decoder(Release1, sOP(060), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_ll,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -2041,7 +2040,7 @@ static struct Mips32_lle: Mips::Decoder {
     Mips32_lle(): Mips::Decoder(Release1,
                          sOP(037)|shift_to<6, 6>(0)|sFN(056),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_lle,
@@ -2055,7 +2054,7 @@ static struct Mips32_lui: Mips::Decoder {
     Mips32_lui(): Mips::Decoder(Release1,
                          sOP(017)|sR0(000),
                          mOP()   |mR0()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_lui,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -2067,7 +2066,7 @@ static struct Mips32_luxc1: Mips::Decoder {
     Mips32_luxc1(): Mips::Decoder(Release2,
                            sOP(023)|sR2(000)|sFN(005),
                            mOP()   |mR2()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_luxc1,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeRegisterIndexed(insn_va, gR0(ib), gR1(ib)));
@@ -2077,7 +2076,7 @@ static struct Mips32_luxc1: Mips::Decoder {
 // LW -- load word
 static struct Mips32_lw: Mips::Decoder {
     Mips32_lw(): Mips::Decoder(Release1, sOP(043), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_lw,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -2088,7 +2087,7 @@ static struct Mips32_lw: Mips::Decoder {
 // LWC1 -- load word to floating point
 static struct Mips32_lwc1: Mips::Decoder {
     Mips32_lwc1(): Mips::Decoder(Release1, sOP(061), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_lwc1,
                                   d->makeFpRegister(insn_va, gR1(ib), mips_fmt_s),
@@ -2099,7 +2098,7 @@ static struct Mips32_lwc1: Mips::Decoder {
 // LWC2 -- load word to coprocessor 2
 static struct Mips32_lwc2: Mips::Decoder {
     Mips32_lwc2(): Mips::Decoder(Release1, sOP(062), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_lwc2,
                                   d->makeCp2Register(gR1(ib)),
@@ -2112,7 +2111,7 @@ static struct Mips32_lwe: Mips::Decoder {
     Mips32_lwe(): Mips::Decoder(Release1,
                          sOP(037)|shift_to<6, 6>(0)|sFN(057),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_lwe,
@@ -2124,7 +2123,7 @@ static struct Mips32_lwe: Mips::Decoder {
 // LWL -- load word left
 static struct Mips32_lwl: Mips::Decoder {
     Mips32_lwl(): Mips::Decoder(Release1, sOP(042), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_lwl,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -2137,7 +2136,7 @@ static struct Mips32_lwle: Mips::Decoder {
     Mips32_lwle(): Mips::Decoder(Release1,
                           sOP(037)|shift_to<6, 6>(0)|sFN(031),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_lwle,
@@ -2149,7 +2148,7 @@ static struct Mips32_lwle: Mips::Decoder {
 // LWR -- load word right
 static struct Mips32_lwr: Mips::Decoder {
     Mips32_lwr(): Mips::Decoder(Release1, sOP(046), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_lwr,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -2162,7 +2161,7 @@ static struct Mips32_lwre: Mips::Decoder {
     Mips32_lwre(): Mips::Decoder(Release1,
                           sOP(037)|shift_to<6, 6>(0)|sFN(032),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_lwre,
@@ -2174,7 +2173,7 @@ static struct Mips32_lwre: Mips::Decoder {
 // LWU -- load word unsigned
 static struct Mips32_lwu: Mips::Decoder {
     Mips32_lwu(): Mips::Decoder(Release1, sOP(047), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_lwu,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -2187,7 +2186,7 @@ static struct Mips32_lwxc1: Mips::Decoder {
     Mips32_lwxc1(): Mips::Decoder(Release2,
                            sOP(023)|sR2(000)|sFN(000),
                            mOP()   |mR2()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterIndexed(insn_va, gR0(ib), gR1(ib));
         return d->makeInstruction(insn_va, mips_lwxc1,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
@@ -2200,7 +2199,7 @@ static struct Mips32_madd: Mips::Decoder {
     Mips32_madd(): Mips::Decoder(Release1,
                           sOP(034)|sR2(000)|sR3(000)|sFN(000),
                           mOP()   |mR2()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_madd,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeRegister(insn_va, gR1(ib)));
@@ -2212,7 +2211,7 @@ static struct Mips32_madd_s: Mips::Decoder {
     Mips32_madd_s(): Mips::Decoder(Release2,
                             sOP(023)|sFN(040),
                             mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_madd_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR0(ib), mips_fmt_s),
@@ -2226,7 +2225,7 @@ static struct Mips32_madd_d: Mips::Decoder {
     Mips32_madd_d(): Mips::Decoder(Release2,
                             sOP(23)|sFN(041),
                             mOP()  |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_madd_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR0(ib), mips_fmt_d),
@@ -2240,7 +2239,7 @@ static struct Mips32_madd_ps: Mips::Decoder {
     Mips32_madd_ps(): Mips::Decoder(Release2,
                              sOP(23)|sFN(046),
                              mOP()  |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_madd_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR0(ib), mips_fmt_ps),
@@ -2254,7 +2253,7 @@ static struct Mips32_maddu: Mips::Decoder {
     Mips32_maddu(): Mips::Decoder(Release1,
                            sOP(034)|sR2(000)|sR3(000)|sFN(001),
                            mOP()   |mR2()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_maddu,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeRegister(insn_va, gR1(ib)));
@@ -2266,7 +2265,7 @@ static struct Mips32_mfc0: Mips::Decoder {
     Mips32_mfc0(): Mips::Decoder(Release1,
                           sOP(020)|sR0(000)|shift_to<3, 10>(0),
                           mOP()   |mR0()   |mask_for<3, 10>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned sel = extract<0, 2>(ib);
         return d->makeInstruction(insn_va, mips_mfc0,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -2280,7 +2279,7 @@ static struct Mips32_mfc1: Mips::Decoder {
     Mips32_mfc1(): Mips::Decoder(Release1,
                           sOP(021)|sR0(000)|shift_to<0, 10>(0),
                           mOP()   |mR0()   |mask_for<0, 10>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mfc1,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -2292,7 +2291,7 @@ static struct Mips32_mfc2: Mips::Decoder {
     Mips32_mfc2(): Mips::Decoder(Release1,
                           sOP(022)|sR0(000),
                           mOP()   |mR0()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mfc2,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -2304,7 +2303,7 @@ static struct Mips32_mfhc1: Mips::Decoder {
     Mips32_mfhc1(): Mips::Decoder(Release2,
                            sOP(021)|sR0(003)|shift_to<0, 10>(0),
                            mOP()   |mR0()   |mask_for<0, 10>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mfhc1,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -2316,7 +2315,7 @@ static struct Mips32_mfhc2: Mips::Decoder {
     Mips32_mfhc2(): Mips::Decoder(Release2,
                            sOP(022)|sR0(003),
                            mOP()   |mR0()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mfhc2,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -2328,7 +2327,7 @@ static struct Mips32_mfhi: Mips::Decoder {
     Mips32_mfhi(): Mips::Decoder(Release1,
                           sOP(000)|sR0(000)|sR1(000)|sR3(000)|sFN(020),
                           mOP()   |mR0()   |mR1()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mfhi,
                                   d->makeRegister(insn_va, gR2(ib)));
     }
@@ -2339,7 +2338,7 @@ static struct Mips32_mflo: Mips::Decoder {
     Mips32_mflo(): Mips::Decoder(Release1,
                           sOP(000)|sR0(000)|sR1(000)|sR3(000)|sFN(022),
                           mOP()   |mR0()   |mR1()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mflo,
                                   d->makeRegister(insn_va, gR2(ib)));
     }
@@ -2350,7 +2349,7 @@ static struct Mips32_mov_s: Mips::Decoder {
     Mips32_mov_s(): Mips::Decoder(Release1,
                            sOP(021)|sR0(020)|sR1(000)|sFN(006),
                            mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mov_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -2362,7 +2361,7 @@ static struct Mips32_mov_d: Mips::Decoder {
     Mips32_mov_d(): Mips::Decoder(Release1,
                            sOP(021)|sR0(021)|sR1(000)|sFN(006),
                            mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mov_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -2374,7 +2373,7 @@ static struct Mips32_mov_ps: Mips::Decoder {
     Mips32_mov_ps(): Mips::Decoder(Release2,
                             sOP(021)|sR0(026)|sR1(000)|sFN(006),
                             mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mov_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps));
@@ -2386,7 +2385,7 @@ static struct Mips32_movf: Mips::Decoder {
     Mips32_movf(): Mips::Decoder(Release1,
                           sOP(000)|shift_to<16, 17>(0)|sR3(000)|sFN(001),
                           mOP()   |mask_for<16, 17>() |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movf,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -2399,7 +2398,7 @@ static struct Mips32_movf_s: Mips::Decoder {
     Mips32_movf_s(): Mips::Decoder(Release1,
                             sOP(021)|sR0(020)|shift_to<16, 17>(0)|sFN(021),
                             mOP()   |mR0()   |mask_for<16, 17>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movf_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s),
@@ -2412,7 +2411,7 @@ static struct Mips32_movf_d: Mips::Decoder {
     Mips32_movf_d(): Mips::Decoder(Release1,
                             sOP(021)|sR0(021)|shift_to<16, 17>(0)|sFN(021),
                             mOP()   |mR0()   |mask_for<16, 17>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movf_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d),
@@ -2425,7 +2424,7 @@ static struct Mips32_movf_ps: Mips::Decoder {
     Mips32_movf_ps(): Mips::Decoder(Release2,
                             sOP(021)|sR0(026)|shift_to<16, 17>(0)|sFN(021),
                             mOP()   |mR0()   |mask_for<16, 17>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movf_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps),
@@ -2438,7 +2437,7 @@ static struct Mips32_movn: Mips::Decoder {
     Mips32_movn(): Mips::Decoder(Release1,
                           sOP(000)|sR3(000)|sFN(013),
                           mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movn,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -2451,7 +2450,7 @@ static struct Mips32_movn_s: Mips::Decoder {
     Mips32_movn_s(): Mips::Decoder(Release1,
                             sOP(021)|sR0(020)|sFN(023),
                             mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movn_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s),
@@ -2464,7 +2463,7 @@ static struct Mips32_movn_d: Mips::Decoder {
     Mips32_movn_d(): Mips::Decoder(Release1,
                             sOP(021)|sR0(021)|sFN(023),
                             mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movn_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d),
@@ -2477,7 +2476,7 @@ static struct Mips32_movn_ps: Mips::Decoder {
     Mips32_movn_ps(): Mips::Decoder(Release2,
                              sOP(021)|sR0(026)|sFN(023),
                              mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movn_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps),
@@ -2490,7 +2489,7 @@ static struct Mips32_movt: Mips::Decoder {
     Mips32_movt(): Mips::Decoder(Release1,
                           sOP(000)|shift_to<16, 17>(1)|sR3(000)|sFN(001),
                           mOP()   |mask_for<16, 17>() |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movt,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -2503,7 +2502,7 @@ static struct Mips32_movt_s: Mips::Decoder {
     Mips32_movt_s(): Mips::Decoder(Release1,
                             sOP(021)|sR0(020)|shift_to<16, 17>(1)|sFN(021),
                             mOP()   |mR0()   |mask_for<16, 17>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movt_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s),
@@ -2516,7 +2515,7 @@ static struct Mips32_movt_d: Mips::Decoder {
     Mips32_movt_d(): Mips::Decoder(Release1,
                             sOP(021)|sR0(021)|shift_to<16, 17>(1)|sFN(021),
                             mOP()   |mR0()   |mask_for<16, 17>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movt_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d),
@@ -2529,7 +2528,7 @@ static struct Mips32_movt_ps: Mips::Decoder {
     Mips32_movt_ps(): Mips::Decoder(Release2,
                              sOP(021)|sR0(026)|shift_to<16, 17>(1)|sFN(021),
                              mOP()   |mR0()   |mask_for<16, 17>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movt_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps),
@@ -2542,7 +2541,7 @@ static struct Mips32_movz: Mips::Decoder {
     Mips32_movz(): Mips::Decoder(Release1,
                           sOP(000)|sR3(000)|sFN(012),
                           mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movz,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -2555,7 +2554,7 @@ static struct Mips32_movz_s: Mips::Decoder {
     Mips32_movz_s(): Mips::Decoder(Release1,
                             sOP(021)|sR0(020)|sFN(022),
                             mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movz_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s),
@@ -2568,7 +2567,7 @@ static struct Mips32_movz_d: Mips::Decoder {
     Mips32_movz_d(): Mips::Decoder(Release1,
                             sOP(021)|sR0(021)|sFN(022),
                             mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movz_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d),
@@ -2581,7 +2580,7 @@ static struct Mips32_movz_ps: Mips::Decoder {
     Mips32_movz_ps(): Mips::Decoder(Release2,
                             sOP(021)|sR0(026)|sFN(022),
                             mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_movz_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps),
@@ -2594,7 +2593,7 @@ static struct Mips32_msub: Mips::Decoder {
     Mips32_msub(): Mips::Decoder(Release1,
                           sOP(034)|sR2(000)|sR3(000)|sFN(004),
                           mOP()   |mR2()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_msub,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeRegister(insn_va, gR1(ib)));
@@ -2606,7 +2605,7 @@ static struct Mips32_msub_s: Mips::Decoder {
     Mips32_msub_s(): Mips::Decoder(Release2,
                             sOP(023)|sFN(050),
                             mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_msub_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR0(ib), mips_fmt_s),
@@ -2620,7 +2619,7 @@ static struct Mips32_msub_d: Mips::Decoder {
     Mips32_msub_d(): Mips::Decoder(Release2,
                             sOP(023)|sFN(051),
                             mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_msub_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR0(ib), mips_fmt_d),
@@ -2634,7 +2633,7 @@ static struct Mips32_msub_ps: Mips::Decoder {
     Mips32_msub_ps(): Mips::Decoder(Release2,
                              sOP(023)|sFN(056),
                              mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_msub_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR0(ib), mips_fmt_ps),
@@ -2648,7 +2647,7 @@ static struct Mips32_msubu: Mips::Decoder {
     Mips32_msubu(): Mips::Decoder(Release1,
                            sOP(034)|sR2(000)|sR3(000)|sFN(005),
                            mOP()   |mR2()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_msubu,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeRegister(insn_va, gR1(ib)));
@@ -2660,7 +2659,7 @@ static struct Mips32_mtc0: Mips::Decoder {
     Mips32_mtc0(): Mips::Decoder(Release1,
                           sOP(020)|sR0(004)|shift_to<3, 10>(0),
                           mOP()   |mR0()   |mask_for<3, 10>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned sel = extract<0, 2>(ib);
         return d->makeInstruction(insn_va, mips_mtc0,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -2674,7 +2673,7 @@ static struct Mips32_mtc1: Mips::Decoder {
     Mips32_mtc1(): Mips::Decoder(Release1,
                           sOP(021)|sR0(004)|shift_to<0, 10>(0),
                           mOP()   |mR0()   |mask_for<0, 10>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mtc1,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -2686,7 +2685,7 @@ static struct Mips32_mtc2: Mips::Decoder {
     Mips32_mtc2(): Mips::Decoder(Release1,
                           sOP(022)|sR0(004),
                           mOP()   |mR0()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mtc2,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -2698,7 +2697,7 @@ static struct Mips32_mthc1: Mips::Decoder {
     Mips32_mthc1(): Mips::Decoder(Release2,
                            sOP(021)|sR0(007)|shift_to<0, 10>(0),
                            mOP()   |mR0()   |mask_for<0, 10>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mthc1,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -2710,7 +2709,7 @@ static struct Mips32_mthc2: Mips::Decoder {
     Mips32_mthc2(): Mips::Decoder(Release2,
                            sOP(022)|sR0(007),
                            mOP()   |mR0()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mthc2,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -2722,7 +2721,7 @@ static struct Mips32_mthi: Mips::Decoder {
     Mips32_mthi(): Mips::Decoder(Release1,
                           sOP(000)|shift_to<6, 20>(0)|sFN(021),
                           mOP()   |mask_for<6, 20>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mthi,
                                   d->makeRegister(insn_va, gR0(ib)));
     }
@@ -2733,7 +2732,7 @@ static struct Mips32_mtlo: Mips::Decoder {
     Mips32_mtlo(): Mips::Decoder(Release1,
                           sOP(000)|shift_to<6, 20>(0)|sFN(023),
                           mOP()   |mask_for<6, 20>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mtlo,
                                   d->makeRegister(insn_va, gR0(ib)));
     }
@@ -2744,7 +2743,7 @@ static struct Mips32_mul: Mips::Decoder {
     Mips32_mul(): Mips::Decoder(Release1,
                          sOP(034)|sR3(000)|sFN(002),
                          mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mul,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -2757,7 +2756,7 @@ static struct Mips32_mul_s: Mips::Decoder {
     Mips32_mul_s(): Mips::Decoder(Release1,
                            sOP(021)|sR0(020)|sFN(002),
                            mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mul_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s),
@@ -2770,7 +2769,7 @@ static struct Mips32_mul_d: Mips::Decoder {
     Mips32_mul_d(): Mips::Decoder(Release1,
                            sOP(021)|sR0(021)|sFN(002),
                            mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mul_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d),
@@ -2783,7 +2782,7 @@ static struct Mips32_mul_ps: Mips::Decoder {
     Mips32_mul_ps(): Mips::Decoder(Release2,
                             sOP(021)|sR0(026)|sFN(002),
                             mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mul_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps),
@@ -2796,7 +2795,7 @@ static struct Mips32_mult: Mips::Decoder {
     Mips32_mult(): Mips::Decoder(Release1,
                           sOP(000)|shift_to<6, 15>(0)|sFN(030),
                           mOP()   |mask_for<6, 15>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_mult,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeRegister(insn_va, gR1(ib)));
@@ -2808,7 +2807,7 @@ static struct Mips32_multu: Mips::Decoder {
     Mips32_multu(): Mips::Decoder(Release1,
                            sOP(000)|shift_to<6, 15>(0)|sFN(031),
                            mOP()   |mask_for<6, 15>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_multu,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeRegister(insn_va, gR1(ib)));
@@ -2820,7 +2819,7 @@ static struct Mips32_neg_s: Mips::Decoder {
     Mips32_neg_s(): Mips::Decoder(Release1,
                            sOP(021)|sR0(020)|sR1(000)|sFN(007),
                            mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_neg_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -2832,7 +2831,7 @@ static struct Mips32_neg_d: Mips::Decoder {
     Mips32_neg_d(): Mips::Decoder(Release1,
                            sOP(021)|sR0(021)|sR1(000)|sFN(007),
                            mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_neg_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -2844,7 +2843,7 @@ static struct Mips32_neg_ps: Mips::Decoder {
     Mips32_neg_ps(): Mips::Decoder(Release2,
                             sOP(021)|sR0(026)|sR1(000)|sFN(007),
                             mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_neg_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps));
@@ -2856,7 +2855,7 @@ static struct Mips32_nmadd_s: Mips::Decoder {
     Mips32_nmadd_s(): Mips::Decoder(Release2,
                              sOP(023)|sFN(060),
                              mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_nmadd_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR0(ib), mips_fmt_s),
@@ -2870,7 +2869,7 @@ static struct Mips32_nmadd_d: Mips::Decoder {
     Mips32_nmadd_d(): Mips::Decoder(Release2,
                              sOP(023)|sFN(061),
                              mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_nmadd_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR0(ib), mips_fmt_d),
@@ -2884,7 +2883,7 @@ static struct Mips32_nmadd_ps: Mips::Decoder {
     Mips32_nmadd_ps(): Mips::Decoder(Release2,
                               sOP(023)|sFN(066),
                               mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_nmadd_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR0(ib), mips_fmt_ps),
@@ -2898,7 +2897,7 @@ static struct Mips32_nmsub_s: Mips::Decoder {
     Mips32_nmsub_s(): Mips::Decoder(Release2,
                              sOP(023)|sFN(070),
                              mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_nmsub_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR0(ib), mips_fmt_s),
@@ -2912,7 +2911,7 @@ static struct Mips32_nmsub_d: Mips::Decoder {
     Mips32_nmsub_d(): Mips::Decoder(Release2,
                              sOP(023)|sFN(071),
                              mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_nmsub_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR0(ib), mips_fmt_d),
@@ -2926,7 +2925,7 @@ static struct Mips32_nmsub_ps: Mips::Decoder {
     Mips32_nmsub_ps(): Mips::Decoder(Release2,
                               sOP(023)|sFN(076),
                               mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_nmsub_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR0(ib), mips_fmt_ps),
@@ -2940,7 +2939,7 @@ static struct Mips32_nor: Mips::Decoder {
     Mips32_nor(): Mips::Decoder(Release1,
                          sOP(000)|sR3(000)|sFN(047),
                          mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_nor,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -2953,7 +2952,7 @@ static struct Mips32_or: Mips::Decoder {
     Mips32_or(): Mips::Decoder(Release1,
                         sOP(000)|sR3(000)|sFN(045),
                         mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_or,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -2964,7 +2963,7 @@ static struct Mips32_or: Mips::Decoder {
 // ORI -- bitwise OR immediate
 static struct Mips32_ori: Mips::Decoder {
     Mips32_ori(): Mips::Decoder(Release1, sOP(015), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_ori,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -2977,7 +2976,7 @@ static struct Mips32_pause: Mips::Decoder {
     Mips32_pause(): Mips::Decoder(Release2,
                            sOP(000)|sR0(000)|sR1(000)|sR2(000)|sR3(005)|sFN(000),
                            mOP()   |mR0()   |mR1()   |mR2()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_pause);
     }
 } mips32_pause;
@@ -2987,7 +2986,7 @@ static struct Mips32_pll_ps: Mips::Decoder {
     Mips32_pll_ps(): Mips::Decoder(Release2,
                             sOP(021)|sR0(026)|sFN(054),
                             mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_pll_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps),
@@ -3000,7 +2999,7 @@ static struct Mips32_plu_ps: Mips::Decoder {
     Mips32_plu_ps(): Mips::Decoder(Release2,
                             sOP(021)|sR0(026)|sFN(055),
                             mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_plu_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps),
@@ -3011,7 +3010,7 @@ static struct Mips32_plu_ps: Mips::Decoder {
 // PREF -- prefetch
 static struct Mips32_pref: Mips::Decoder {
     Mips32_pref(): Mips::Decoder(Release1, sOP(063), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_pref,
                                   d->makeImmediate8(gR1(ib), 16, 5),
                                   d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib)));
@@ -3023,7 +3022,7 @@ static struct Mips32_prefe: Mips::Decoder {
     Mips32_prefe(): Mips::Decoder(Release1,
                            sOP(037)|shift_to<6, 6>(0)|sFN(043),
                            mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         return d->makeInstruction(insn_va, mips_prefe,
                                   d->makeImmediate8(gR1(ib), 16, 5),
@@ -3036,7 +3035,7 @@ static struct Mips32_prefx: Mips::Decoder {
     Mips32_prefx(): Mips::Decoder(Release2,
                            sOP(023)|sR3(000)|sFN(017),
                            mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_prefx,
                                   d->makeImmediate8(gR2(ib), 11, 5),
                                   d->makeRegisterIndexed(insn_va, gR0(ib), gR1(ib)));
@@ -3048,7 +3047,7 @@ static struct Mips32_pul_ps: Mips::Decoder {
     Mips32_pul_ps(): Mips::Decoder(Release2,
                             sOP(021)|sR0(026)|sFN(056),
                             mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_pul_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps),
@@ -3061,7 +3060,7 @@ static struct Mips32_puu_ps: Mips::Decoder {
     Mips32_puu_ps(): Mips::Decoder(Release2,
                             sOP(021)|sR0(026)|sFN(057),
                             mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_puu_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps),
@@ -3074,7 +3073,7 @@ static struct Mips32_rdhwr: Mips::Decoder {
     Mips32_rdhwr(): Mips::Decoder(Release2,
                            sOP(037)|sR0(000)|sR3(000)|sFN(073),
                            mOP()   |mR0()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_rdhwr,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeHwRegister(gR2(ib)));
@@ -3086,7 +3085,7 @@ static struct Mips32_rdpgpr: Mips::Decoder {
     Mips32_rdpgpr(): Mips::Decoder(Release2,
                             sOP(020)|sR0(012)|shift_to<0, 10>(0),
                             mOP()   |mR0()   |mask_for<0, 10>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_rdpgpr,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeShadowRegister(insn_va, gR1(ib)));
@@ -3098,7 +3097,7 @@ static struct Mips32_recip_s: Mips::Decoder {
     Mips32_recip_s(): Mips::Decoder(Release2,
                              sOP(021)|sR0(020)|sR1(000)|sFN(025),
                              mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_recip_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -3110,7 +3109,7 @@ static struct Mips32_recip_d: Mips::Decoder {
     Mips32_recip_d(): Mips::Decoder(Release2,
                              sOP(021)|sR0(021)|sR1(000)|sFN(025),
                              mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_recip_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -3122,7 +3121,7 @@ static struct Mips32_rotr: Mips::Decoder {
     Mips32_rotr(): Mips::Decoder(Release2,
                           sOP(000)|sR0(001)|sFN(002),
                           mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_rotr,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3135,7 +3134,7 @@ static struct Mips32_rotrv: Mips::Decoder {
     Mips32_rotrv(): Mips::Decoder(Release2,
                            sOP(000)|sR3(001)|sFN(006),
                            mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_rotrv,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3148,7 +3147,7 @@ static struct Mips32_round_l_s: Mips::Decoder {
     Mips32_round_l_s(): Mips::Decoder(Release2,
                                sOP(021)|sR0(020)|sR1(000)|sFN(010),
                                mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_round_l_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_l),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -3160,7 +3159,7 @@ static struct Mips32_round_l_d: Mips::Decoder {
     Mips32_round_l_d(): Mips::Decoder(Release2,
                                sOP(021)|sR0(021)|sR1(000)|sFN(010),
                                mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_round_l_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_l),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -3172,7 +3171,7 @@ static struct Mips32_round_w_s: Mips::Decoder {
     Mips32_round_w_s(): Mips::Decoder(Release1,
                                sOP(021)|sR0(020)|sR1(000)|sFN(014),
                                mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_round_w_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_w),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -3184,7 +3183,7 @@ static struct Mips32_round_w_d: Mips::Decoder {
     Mips32_round_w_d(): Mips::Decoder(Release1,
                                sOP(021)|sR0(021)|sR1(000)|sFN(014),
                                mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_round_w_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_w),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -3196,7 +3195,7 @@ static struct Mips32_rsqrt_s: Mips::Decoder {
     Mips32_rsqrt_s(): Mips::Decoder(Release2,
                              sOP(021)|sR0(020)|sR1(000)|sFN(026),
                              mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_rsqrt_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -3208,7 +3207,7 @@ static struct Mips32_rsqrt_d: Mips::Decoder {
     Mips32_rsqrt_d(): Mips::Decoder(Release2,
                              sOP(021)|sR0(021)|sR1(000)|sFN(026),
                              mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_rsqrt_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -3218,7 +3217,7 @@ static struct Mips32_rsqrt_d: Mips::Decoder {
 // SB -- store byte
 static struct Mips32_sb: Mips::Decoder {
     Mips32_sb(): Mips::Decoder(Release1, sOP(050), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_sb,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3231,7 +3230,7 @@ static struct Mips32_sbe: Mips::Decoder {
     Mips32_sbe(): Mips::Decoder(Release1,
                          sOP(037)|shift_to<6, 6>(0)|sFN(034),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_sbe,
@@ -3243,7 +3242,7 @@ static struct Mips32_sbe: Mips::Decoder {
 // SC -- store conditional word
 static struct Mips32_sc: Mips::Decoder {
     Mips32_sc(): Mips::Decoder(Release1, sOP(070), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_sc,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3256,7 +3255,7 @@ static struct Mips32_sce: Mips::Decoder {
     Mips32_sce(): Mips::Decoder(Release1,
                          sOP(047)|shift_to<6, 6>(0)|sFN(036),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_sce,
@@ -3268,7 +3267,7 @@ static struct Mips32_sce: Mips::Decoder {
 // SDC1 -- store doubleword from floating point
 static struct Mips32_sdc1: Mips::Decoder {
     Mips32_sdc1(): Mips::Decoder(Release1, sOP(075), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_sdc1,
                                   d->makeFpRegister(insn_va, gR1(ib), mips_fmt_d),
@@ -3279,7 +3278,7 @@ static struct Mips32_sdc1: Mips::Decoder {
 // SDC2 -- store doubleword from coprocessor 2
 static struct Mips32_sdc2: Mips::Decoder {
     Mips32_sdc2(): Mips::Decoder(Release1, sOP(076), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_sdc2,
                                   d->makeCp2Register(gR1(ib)),
@@ -3292,7 +3291,7 @@ static struct Mips32_sdxc1: Mips::Decoder {
     Mips32_sdxc1(): Mips::Decoder(Release2,
                            sOP(023)|sR3(000)|sFN(011),
                            mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterIndexed(insn_va, gR0(ib), gR1(ib));
         return d->makeInstruction(insn_va, mips_sdxc1,
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d),
@@ -3305,7 +3304,7 @@ static struct Mips32_seb: Mips::Decoder {
     Mips32_seb(): Mips::Decoder(Release2,
                          sOP(037)|sR0(000)|sR3(020)|sFN(040),
                          mOP()   |mR0()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_seb,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR1(ib)));
@@ -3317,7 +3316,7 @@ static struct Mips32_seh: Mips::Decoder {
     Mips32_seh(): Mips::Decoder(Release2,
                          sOP(037)|sR0(000)|sR3(030)|sFN(040),
                          mOP()   |mR0()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_seh,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR1(ib)));
@@ -3327,7 +3326,7 @@ static struct Mips32_seh: Mips::Decoder {
 // SH -- store halfword
 static struct Mips32_sh: Mips::Decoder {
     Mips32_sh(): Mips::Decoder(Release1, sOP(051), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_sh,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3340,7 +3339,7 @@ static struct Mips32_she: Mips::Decoder {
     Mips32_she(): Mips::Decoder(Release1,
                          sOP(037)|shift_to<6, 6>(0)|sFN(035),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_she,
@@ -3357,7 +3356,7 @@ static struct Mips32_sll: Mips::Decoder {
     Mips32_sll(): Mips::Decoder(Release1,
                          sOP(000)|sR0(000)|sFN(000),
                          mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         if (gR1(ib)==0 && gR2(ib)==0 && gR3(ib)==0)
             return d->makeInstruction(insn_va, mips_nop);
         if (gR1(ib)==0 && gR2(ib)==0 && gR3(ib)==1)
@@ -3376,7 +3375,7 @@ static struct Mips32_sllv: Mips::Decoder {
     Mips32_sllv(): Mips::Decoder(Release1,
                           sOP(000)|sR3(000)|sFN(004),
                           mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_sllv,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3389,7 +3388,7 @@ static struct Mips32_slt: Mips::Decoder {
     Mips32_slt(): Mips::Decoder(Release1,
                          sOP(000)|sR3(000)|sFN(052),
                          mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_slt,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -3400,7 +3399,7 @@ static struct Mips32_slt: Mips::Decoder {
 // SLTI -- set on less than immediate
 static struct Mips32_slti: Mips::Decoder {
     Mips32_slti(): Mips::Decoder(Release1, sOP(012), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_slti,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -3411,7 +3410,7 @@ static struct Mips32_slti: Mips::Decoder {
 // SLTIU -- set on less than immediate unsigned
 static struct Mips32_sltiu: Mips::Decoder {
     Mips32_sltiu(): Mips::Decoder(Release1, sOP(013), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_sltiu,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -3424,7 +3423,7 @@ static struct Mips32_sltu: Mips::Decoder {
     Mips32_sltu(): Mips::Decoder(Release1,
                           sOP(000)|sR3(000)|sFN(053),
                           mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_sltu,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -3437,7 +3436,7 @@ static struct Mips32_sqrt_s: Mips::Decoder {
     Mips32_sqrt_s(): Mips::Decoder(Release1,
                             sOP(021)|sR0(020)|sR1(000)|sFN(004),
                             mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_sqrt_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -3449,7 +3448,7 @@ static struct Mips32_sqrt_d: Mips::Decoder {
     Mips32_sqrt_d(): Mips::Decoder(Release1,
                             sOP(021)|sR0(021)|sR1(000)|sFN(004),
                             mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_sqrt_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -3461,7 +3460,7 @@ static struct Mips32_sra: Mips::Decoder {
     Mips32_sra(): Mips::Decoder(Release1,
                          sOP(000)|sR0(000)|sFN(003),
                          mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_sra,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3474,7 +3473,7 @@ static struct Mips32_srav: Mips::Decoder {
     Mips32_srav(): Mips::Decoder(Release1,
                           sOP(000)|sR3(000)|sFN(007),
                           mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_srav,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3487,7 +3486,7 @@ static struct Mips32_srl: Mips::Decoder {
     Mips32_srl(): Mips::Decoder(Release1,
                          sOP(000)|sR0(000)|sFN(002),
                          mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_srl,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3500,7 +3499,7 @@ static struct Mips32_srlv: Mips::Decoder {
     Mips32_srlv(): Mips::Decoder(Release1,
                           sOP(000)|sR3(000)|sFN(006),
                           mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_srlv,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3513,7 +3512,7 @@ static struct Mips32_sub: Mips::Decoder {
     Mips32_sub(): Mips::Decoder(Release1,
                          sOP(000)|sR3(000)|sFN(042),
                          mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_sub,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -3526,7 +3525,7 @@ static struct Mips32_sub_s: Mips::Decoder {
     Mips32_sub_s(): Mips::Decoder(Release1,
                            sOP(021)|sR0(020)|sFN(001),
                            mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_sub_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_s),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s),
@@ -3539,7 +3538,7 @@ static struct Mips32_sub_d: Mips::Decoder {
     Mips32_sub_d(): Mips::Decoder(Release1,
                            sOP(021)|sR0(021)|sFN(001),
                            mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_sub_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_d),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d),
@@ -3552,7 +3551,7 @@ static struct Mips32_sub_ps: Mips::Decoder {
     Mips32_sub_ps(): Mips::Decoder(Release2,
                             sOP(021)|sR0(026)|sFN(001),
                             mOP()   |mR0()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_sub_ps,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_ps),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_ps),
@@ -3565,7 +3564,7 @@ static struct Mips32_subu: Mips::Decoder {
     Mips32_subu(): Mips::Decoder(Release1,
                           sOP(000)|sR3(000)|sFN(043),
                           mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_subu,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -3578,7 +3577,7 @@ static struct Mips32_suxc1: Mips::Decoder {
     Mips32_suxc1(): Mips::Decoder(Release2,
                            sOP(023)|sR3(000)|sFN(015),
                            mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterIndexed(insn_va, gR0(ib), gR1(ib));
         return d->makeInstruction(insn_va, mips_suxc1,
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d),
@@ -3589,7 +3588,7 @@ static struct Mips32_suxc1: Mips::Decoder {
 // SW -- store word
 static struct Mips32_sw: Mips::Decoder {
     Mips32_sw(): Mips::Decoder(Release1, sOP(053), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_sw,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3600,7 +3599,7 @@ static struct Mips32_sw: Mips::Decoder {
 // SWC1 -- store word from floating point
 static struct Mips32_swc1: Mips::Decoder {
     Mips32_swc1(): Mips::Decoder(Release1, sOP(071), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_swc1,
                                   d->makeFpRegister(insn_va, gR1(ib), mips_fmt_s),
@@ -3611,7 +3610,7 @@ static struct Mips32_swc1: Mips::Decoder {
 // SWC2 -- store word from coprocessor 2
 static struct Mips32_swc2: Mips::Decoder {
     Mips32_swc2(): Mips::Decoder(Release1, sOP(072), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_swc2,
                                   d->makeCp2Register(gR1(ib)),
@@ -3624,7 +3623,7 @@ static struct Mips32_swe: Mips::Decoder {
     Mips32_swe(): Mips::Decoder(Release1,
                          sOP(037)|shift_to<6, 6>(0)|sFN(037),
                          mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_swe,
@@ -3636,7 +3635,7 @@ static struct Mips32_swe: Mips::Decoder {
 // SWL -- store word left
 static struct Mips32_swl: Mips::Decoder {
     Mips32_swl(): Mips::Decoder(Release1, sOP(052), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_swl,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3649,7 +3648,7 @@ static struct Mips32_swle: Mips::Decoder {
     Mips32_swle(): Mips::Decoder(Release1,
                           sOP(037)|shift_to<6, 6>(0)|sFN(041),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_swle,
@@ -3661,7 +3660,7 @@ static struct Mips32_swle: Mips::Decoder {
 // SWR -- store word right
 static struct Mips32_swr: Mips::Decoder {
     Mips32_swr(): Mips::Decoder(Release1, sOP(056), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib));
         return d->makeInstruction(insn_va, mips_swr,
                                   d->makeRegister(insn_va, gR1(ib)),
@@ -3674,7 +3673,7 @@ static struct Mips32_swre: Mips::Decoder {
     Mips32_swre(): Mips::Decoder(Release1,
                           sOP(037)|shift_to<6, 6>(0)|sFN(042),
                           mOP()   |mask_for<6, 6>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned offset16 = signExtend<9, 16>(extract<7, 15>(ib));
         SgAsmExpression *addr = d->makeRegisterOffset(insn_va, gR0(ib), offset16);
         return d->makeInstruction(insn_va, mips_swre,
@@ -3688,7 +3687,7 @@ static struct Mips32_swxc1: Mips::Decoder {
     Mips32_swxc1(): Mips::Decoder(Release2,
                            sOP(023)|sR3(000)|sFN(010),
                            mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         SgAsmExpression *addr = d->makeRegisterIndexed(insn_va, gR0(ib), gR1(ib));
         return d->makeInstruction(insn_va, mips_swxc1,
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s),
@@ -3702,7 +3701,7 @@ static struct Mips32_sync: Mips::Decoder {
     Mips32_sync(): Mips::Decoder(Release1,
                           sOP(000)|shift_to<11, 25>(0)|sFN(017),
                           mOP()   |mask_for<11, 25>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_sync,
                                   d->makeImmediate8(gR3(ib), 6, 5));
     }
@@ -3713,7 +3712,7 @@ static struct Mips32_synci: Mips::Decoder {
     Mips32_synci(): Mips::Decoder(Release2,
                            sOP(001)|sR1(037),
                            mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_synci,
                                   d->makeRegisterOffset(insn_va, gR0(ib), gIM(ib)));
     }
@@ -3724,7 +3723,7 @@ static struct Mips32_syscall: Mips::Decoder {
     Mips32_syscall(): Mips::Decoder(Release1,
                              sOP(000)|sFN(014),
                              mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned code UNUSED_VAR = extract<6, 25>(ib);
         return d->makeInstruction(insn_va, mips_syscall);
     }
@@ -3735,7 +3734,7 @@ static struct Mips32_teq: Mips::Decoder {
     Mips32_teq(): Mips::Decoder(Release1,
                          sOP(000)|sFN(064),
                          mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned code UNUSED_VAR = extract<6, 15>(ib);
         return d->makeInstruction(insn_va, mips_teq,
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -3748,7 +3747,7 @@ static struct Mips32_teqi: Mips::Decoder {
     Mips32_teqi(): Mips::Decoder(Release1,
                           sOP(001)|sR1(014),
                           mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_teqi,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -3760,7 +3759,7 @@ static struct Mips32_tge: Mips::Decoder {
     Mips32_tge(): Mips::Decoder(Release1,
                          sOP(000)|sFN(060),
                          mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned code UNUSED_VAR = extract<6, 15>(ib);
         return d->makeInstruction(insn_va, mips_tge,
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -3773,7 +3772,7 @@ static struct Mips32_tgei: Mips::Decoder {
     Mips32_tgei(): Mips::Decoder(Release1,
                           sOP(001)|sR1(010),
                           mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_tgei,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -3785,7 +3784,7 @@ static struct Mips32_tgeiu: Mips::Decoder {
     Mips32_tgeiu(): Mips::Decoder(Release1,
                            sOP(001)|sR1(011),
                            mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_tgeiu,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -3797,7 +3796,7 @@ static struct Mips32_tgeu: Mips::Decoder {
     Mips32_tgeu(): Mips::Decoder(Release1,
                           sOP(000)|sFN(061),
                           mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned code UNUSED_VAR = extract<6, 15>(ib);
         return d->makeInstruction(insn_va, mips_tgeu,
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -3810,7 +3809,7 @@ static struct Mips32_tlbinv: Mips::Decoder {
     Mips32_tlbinv(): Mips::Decoder(Release1,
                             sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(003),
                             mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_tlbinv);
     }
 } mips32_tlbinv;
@@ -3820,7 +3819,7 @@ static struct Mips32_tlbinvf: Mips::Decoder {
     Mips32_tlbinvf(): Mips::Decoder(Release1,
                              sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(004),
                              mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_tlbinvf);
     }
 } mips32_tlbinvf;
@@ -3830,7 +3829,7 @@ static struct Mips32_tlbp: Mips::Decoder {
     Mips32_tlbp(): Mips::Decoder(Release1,
                           sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(010),
                           mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_tlbp);
     }
 } mips32_tlbp;
@@ -3840,7 +3839,7 @@ static struct Mips32_tlbr: Mips::Decoder {
     Mips32_tlbr(): Mips::Decoder(Release1,
                           sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(001),
                           mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_tlbr);
     }
 } mips32_tlbr;
@@ -3850,7 +3849,7 @@ static struct Mips32_tlbwi: Mips::Decoder {
     Mips32_tlbwi(): Mips::Decoder(Release1,
                            sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(002),
                            mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_tlbwi);
     }
 } mips32_tlbwi;
@@ -3860,7 +3859,7 @@ static struct Mips32_tlbwr: Mips::Decoder {
     Mips32_tlbwr(): Mips::Decoder(Release1,
                            sOP(020)|shift_to<25, 25>(1)|shift_to<6, 24>(0)|sFN(006),
                            mOP()   |mask_for<25, 25>() |mask_for<6, 24>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned) {
         return d->makeInstruction(insn_va, mips_tlbwr);
     }
 } mips32_tlbwr;
@@ -3870,7 +3869,7 @@ static struct Mips32_tlt: Mips::Decoder {
     Mips32_tlt(): Mips::Decoder(Release1,
                          sOP(000)|sFN(062),
                          mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned code UNUSED_VAR = extract<6, 15>(ib);
         return d->makeInstruction(insn_va, mips_tlt,
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -3883,7 +3882,7 @@ static struct Mips32_tlti: Mips::Decoder {
     Mips32_tlti(): Mips::Decoder(Release1,
                           sOP(001)|sR1(012),
                           mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_tlti,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -3895,7 +3894,7 @@ static struct Mips32_tltiu: Mips::Decoder {
     Mips32_tltiu(): Mips::Decoder(Release1,
                            sOP(001)|sR1(013),
                            mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_tltiu,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -3907,7 +3906,7 @@ static struct Mips32_tltu: Mips::Decoder {
     Mips32_tltu(): Mips::Decoder(Release1,
                           sOP(000)|sFN(063),
                           mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned code UNUSED_VAR = extract<6, 15>(ib);
         return d->makeInstruction(insn_va, mips_tltu,
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -3920,7 +3919,7 @@ static struct Mips32_tne: Mips::Decoder {
     Mips32_tne(): Mips::Decoder(Release1,
                          sOP(000)|sFN(066),
                          mOP()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned code UNUSED_VAR = extract<6, 15>(ib);
         return d->makeInstruction(insn_va, mips_tne,
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -3933,7 +3932,7 @@ static struct Mips32_tnei: Mips::Decoder {
     Mips32_tnei(): Mips::Decoder(Release1,
                           sOP(001)|sR1(016),
                           mOP()   |mR1()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_tnei,
                                   d->makeRegister(insn_va, gR0(ib)),
                                   d->makeImmediate16(gIM(ib), 0, 16));
@@ -3945,7 +3944,7 @@ static struct Mips32_trunc_l_s: Mips::Decoder {
     Mips32_trunc_l_s(): Mips::Decoder(Release2,
                                sOP(021)|sR0(020)|sR1(000)|sFN(011),
                                mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_trunc_l_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_l),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -3957,7 +3956,7 @@ static struct Mips32_trunc_l_d: Mips::Decoder {
     Mips32_trunc_l_d(): Mips::Decoder(Release2,
                                sOP(021)|sR0(021)|sR1(000)|sFN(011),
                                mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_trunc_l_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_l),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -3969,7 +3968,7 @@ static struct Mips32_trunc_w_s: Mips::Decoder {
     Mips32_trunc_w_s(): Mips::Decoder(Release1,
                                sOP(021)|sR0(020)|sR1(000)|sFN(015),
                                mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_trunc_w_s,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_w),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_s));
@@ -3981,7 +3980,7 @@ static struct Mips32_trunc_w_d: Mips::Decoder {
     Mips32_trunc_w_d(): Mips::Decoder(Release1,
                                sOP(021)|sR0(021)|sR1(000)|sFN(015),
                                mOP()   |mR0()   |mR1()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_trunc_w_d,
                                   d->makeFpRegister(insn_va, gR3(ib), mips_fmt_w),
                                   d->makeFpRegister(insn_va, gR2(ib), mips_fmt_d));
@@ -3993,7 +3992,7 @@ static struct Mips32_wait: Mips::Decoder {
     Mips32_wait(): Mips::Decoder(Release1,
                           sOP(020)|shift_to<25, 25>(1)|sFN(040),
                           mOP()   |mask_for<25, 25>() |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         unsigned impl UNUSED_VAR = extract<6, 24>(ib);
         return d->makeInstruction(insn_va, mips_wait);
     }
@@ -4004,7 +4003,7 @@ static struct Mips32_wrpgpr: Mips::Decoder {
     Mips32_wrpgpr(): Mips::Decoder(Release2,
                             sOP(020)|sR0(016)|shift_to<0, 10>(0),
                             mOP()   |mR0()   |mask_for<0, 10>()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_wrpgpr,
                                   d->makeShadowRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR1(ib)));
@@ -4016,7 +4015,7 @@ static struct Mips32_wsbh: Mips::Decoder {
     Mips32_wsbh(): Mips::Decoder(Release2,
                           sOP(037)|sR0(000)|sR3(002)|sFN(040),
                           mOP()   |mR0()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_wsbh,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR1(ib)));
@@ -4028,7 +4027,7 @@ static struct Mips32_xor: Mips::Decoder {
     Mips32_xor(): Mips::Decoder(Release1,
                          sOP(000)|sR3(000)|sFN(046),
                          mOP()   |mR3()   |mFN()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_xor,
                                   d->makeRegister(insn_va, gR2(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
@@ -4039,7 +4038,7 @@ static struct Mips32_xor: Mips::Decoder {
 // XORI -- exclusive OR immediate
 static struct Mips32_xori: Mips::Decoder {
     Mips32_xori(): Mips::Decoder(Release1, sOP(016), mOP()) {}
-    SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned ib) {
+    SgAsmMipsInstruction *operator()(Address insn_va, const D *d, unsigned ib) {
         return d->makeInstruction(insn_va, mips_xori,
                                   d->makeRegister(insn_va, gR1(ib)),
                                   d->makeRegister(insn_va, gR0(ib)),
