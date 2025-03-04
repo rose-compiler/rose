@@ -635,7 +635,8 @@ class Grammar
        // MK: We need this function to determine if the object itself is an STL container
           bool isSTLContainer(const std::string& typeString);
 
-       // MK: Method to build the iterator declaration for traversing an STL container
+       // MK: Method to build the const_iterator declaration for traversing an STL container
+       // PP: changed from iterator to const_iterator
           std::string getIteratorString(const std::string& typeString);
 
        // DQ (5/24/2005): Added support to output sizes of IR nodes 

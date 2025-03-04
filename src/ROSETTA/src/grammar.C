@@ -3747,7 +3747,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
              }
        // start: generate get_traversalSuccessorContainer() method
           outputFile << "vector<" << grammarPrefixName << "Node*>\n"
-                     << node.getName() << "::get_traversalSuccessorContainer() {\n"
+                     << node.getName() << "::get_traversalSuccessorContainer() const {\n"
                      << "  vector<" << grammarPrefixName << "Node*> " << successorContainerName << ";\n";
        // GB (8/1/2007): Preallocating the memory needed for the traversal successors to avoid frequent reallocations on
        // push_back. This makes things a little more efficient.
@@ -3801,7 +3801,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
 
        // start: generate get_traversalSuccessorNamesContainer() method
           outputFile << "vector<string>\n"
-                     << node.getName() << "::get_traversalSuccessorNamesContainer() {\n"
+                     << node.getName() << "::get_traversalSuccessorNamesContainer() const {\n"
                      << "vector<string> " << successorContainerName << ";\n";
        // GB (8/16/2007): Moved the variable i here. It is initialized to the number of single traversal successors and
        // will be the starting index for the numbering of container successors (if any).
@@ -3821,7 +3821,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
        // start: generate get_numberOfTraversalSuccessors() method
        // GB (09/25/2007): Added this method.
           outputFile << "size_t\n"
-                     << node.getName() << "::get_numberOfTraversalSuccessors() {\n";
+                     << node.getName() << "::get_numberOfTraversalSuccessors() const {\n";
           if (traverseDataMemberList.size() > 0)
              {
                outputFile << "return "
@@ -3841,7 +3841,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
        // start: generate get_traversalSuccessorByIndex() method
        // GB (09/25/2007): Added this method.
           outputFile << "SgNode *\n"
-                     << node.getName() << "::get_traversalSuccessorByIndex(size_t idx) {\n";
+                     << node.getName() << "::get_traversalSuccessorByIndex(size_t idx) const {\n";
           if (traverseDataMemberList.size() > 0)
              {
                GrammarString *gs = traverseDataMemberList.front();
@@ -3944,7 +3944,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
        // start: generate get_childIndex() method
        // GB (09/25/2007): Added this method.
           outputFile << "size_t\n"
-                     << node.getName() << "::get_childIndex(SgNode *child) {\n";
+                     << node.getName() << "::get_childIndex(SgNode *child) const {\n";
           if (traverseDataMemberList.size() > 0)
              {
                GrammarString *gs = traverseDataMemberList.front();
@@ -3959,7 +3959,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                   {
                     outputFile << "if (child == compute_baseTypeDefiningDeclaration()) return 0;\n"
                                << "else {\n"
-                               << "SgInitializedNamePtrList::iterator itr = find(p_variables.begin(), p_variables.end(), child);\n"
+                               << "SgInitializedNamePtrList::const_iterator itr = find(p_variables.begin(), p_variables.end(), child);\n"
                                << "if (itr != p_variables.end()) return (itr - p_variables.begin()) + 1;\n"
                                << "else return (size_t) -1;\n"
                                << "}\n";
@@ -3982,7 +3982,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                   {
                      outputFile << "if (child == p_body) return 0;\n"
                                << "else {\n"
-                               << "SgOmpClausePtrList::iterator itr = find(p_clauses.begin(), p_clauses.end(), child);\n"
+                               << "SgOmpClausePtrList::const_iterator itr = find(p_clauses.begin(), p_clauses.end(), child);\n"
                                << "if (itr != p_clauses.end()) return (itr - p_clauses.begin()) + 1;\n"
                                << "else return (size_t) -1;\n"
                                << "}\n";
@@ -4053,7 +4053,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
        // *** and causes the program to abort. Build this code string and write it to
        // *** the outputFile
 
-          outputFile << "vector<" << grammarPrefixName << "Node*>\n" << node.getName() << "::get_traversalSuccessorContainer() {\n"
+          outputFile << "vector<" << grammarPrefixName << "Node*>\n" << node.getName() << "::get_traversalSuccessorContainer() const {\n"
                      << "vector<" << grammarPrefixName << "Node*> " << successorContainerName << ";\n";
           outputFile << "   cerr << \"Internal error(!): called tree traversal mechanism for illegal object: \" << endl\n"
                      << "<< \"static: " << node.getName() << "\" << endl << \"dynamic:  \" << this->sage_class_name() << endl;\n"
@@ -4061,7 +4061,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                      << "ROSE_ASSERT(false);\n"
                      << "return " << successorContainerName << ";\n }\n\n";
 
-          outputFile << "vector<string>\n" << node.getName() << "::get_traversalSuccessorNamesContainer() {\n"
+          outputFile << "vector<string>\n" << node.getName() << "::get_traversalSuccessorNamesContainer() const {\n"
                      << "vector<string> " << successorContainerName << ";\n";
           outputFile << "   cerr << \"Internal error(!): called tree traversal mechanism for illegal object: \" << endl\n"
                      << "<< \"static: " << node.getName() << "\" << endl << \"dynamic:  \" << this->sage_class_name() << endl;\n"
@@ -4070,21 +4070,21 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                      << "return " << successorContainerName << ";\n }\n\n";
 
        // GB (09/25/2007): Added implementations for the new methods get_numberOfTraversalSuccessors, get_traversalSuccessorByIndex, and get_childIndex.
-          outputFile << "size_t\n" << node.getName() << "::get_numberOfTraversalSuccessors() {\n";
+          outputFile << "size_t\n" << node.getName() << "::get_numberOfTraversalSuccessors() const {\n";
           outputFile << "   cerr << \"Internal error(!): called tree traversal mechanism for illegal object: \" << endl\n"
                      << "<< \"static: " << node.getName() << "\" << endl << \"dynamic:  this = \" << this << \" = \" << this->sage_class_name() << endl;\n"
                      << "cerr << \"Aborting ...\" << endl;\n"
                      << "ROSE_ASSERT(false);\n"
                      << "return 42;\n }\n\n";
 
-          outputFile << "SgNode*\n" << node.getName() << "::get_traversalSuccessorByIndex(size_t) {\n";
+          outputFile << "SgNode*\n" << node.getName() << "::get_traversalSuccessorByIndex(size_t) const {\n";
           outputFile << "   cerr << \"Internal error(!): called tree traversal mechanism for illegal object: \" << endl\n"
                      << "<< \"static: " << node.getName() << "\" << endl << \"dynamic:  \" << this->sage_class_name() << endl;\n"
                      << "cerr << \"Aborting ...\" << endl;\n"
                      << "ROSE_ASSERT(false);\n"
                      << "return NULL;\n }\n\n";
 
-          outputFile << "size_t\n" << node.getName() << "::get_childIndex(SgNode *) {\n";
+          outputFile << "size_t\n" << node.getName() << "::get_childIndex(SgNode *) const {\n";
           outputFile << "   cerr << \"Internal error(!): called tree traversal mechanism for illegal object: \" << endl\n"
                      << "<< \"static: " << node.getName() << "\" << endl << \"dynamic:  \" << this->sage_class_name() << endl;\n"
                      << "cerr << \"Aborting ...\" << endl;\n"
@@ -4481,7 +4481,7 @@ Grammar::getIteratorString(const string& typeString)
      if (ts.size() >= 3 && ts.substr(ts.size() - 3) == "Ptr") {
        ts = ts.substr(0, ts.size() - 3);
      }
-     return ts + "::iterator";
+     return ts + "::const_iterator";
    }
 
 AstNodeClass* lookupTerminal(const vector<AstNodeClass*>& tl, const std::string& name) {
