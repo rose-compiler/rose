@@ -140,7 +140,7 @@ public:
         ASSERT_require(segmentInterval.contains(dataInterval));
         const MemoryMap::Segment &segment = inode->value();
         if (const uint8_t *data = segment.buffer()->data()) {
-            rose_addr_t bufferOffset = segment.offset() + dataInterval.least() - segmentInterval.least();
+            Address bufferOffset = segment.offset() + dataInterval.least() - segmentInterval.least();
             ASSERT_require(segment.buffer()->available(bufferOffset) >= dataInterval.size());
             formatData(stream, segmentInterval, segment, dataInterval, data+bufferOffset);
         }
@@ -160,8 +160,8 @@ public:
 
     virtual void formatData(std::ostream &stream, const AddressInterval &segmentInterval, const MemoryMap::Segment &segment,
                             const AddressInterval &dataInterval, const uint8_t *data) override {
-        rose_addr_t va = dataInterval.least();
-        rose_addr_t nRemain = dataInterval.size();
+        Address va = dataInterval.least();
+        Address nRemain = dataInterval.size();
 
         if (dataInterval.least() == segmentInterval.least())
             stream <<"Dumping segment " <<segmentInterval <<" \"" <<StringUtility::cEscape(segment.name()) <<"\"\n";
@@ -170,7 +170,7 @@ public:
 
         // Hexdumps are typically aligned so the first byte on each line is aligned on a 16-byte address, so print
         // out some stuff to get the rest aligned if necessary.
-        rose_addr_t nLeader = std::min(16 - va % 16, nRemain);
+        Address nLeader = std::min(16 - va % 16, nRemain);
         if (nLeader != 16) {
             hexdump(stream, va, data, nLeader, fmt_);
             va += nLeader;
@@ -270,7 +270,7 @@ main(int argc, char *argv[]) {
 
     } else {
         for (AddressInterval where: settings.where) {
-            rose_addr_t va = where.least();
+            Address va = where.least();
             while (AddressInterval interval = map->atOrAfter(va).singleSegment().available()) {
                 interval = interval.intersection(where);
                 ASSERT_forbid(interval.isEmpty());

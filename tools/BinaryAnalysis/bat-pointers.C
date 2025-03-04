@@ -24,7 +24,7 @@ Sawyer::Message::Facility mlog;
 
 struct Settings {
     std::set<std::string> functionNames;
-    std::set<rose_addr_t> addresses;
+    std::set<Address> addresses;
     SerialIo::Format stateFormat = SerialIo::BINARY;
 };
 

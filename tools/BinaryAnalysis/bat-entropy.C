@@ -27,7 +27,7 @@ struct Settings {
     size_t symbolSize = 1;                              // size of each symbol in bytes
     size_t windowSize = 1024;                           // size of each window in symbols
     size_t translation = 1;                             // window translation at each step in symbols
-    rose_addr_t alignment = 0;                          // how to align the first window in bytes; 0 means same as symbolSize
+    Address alignment = 0;                              // how to align the first window in bytes; 0 means same as symbolSize
     AddressInterval where = AddressInterval::whole();   // what part of memory to examine
     size_t barLength = 0;                               // for bar charts, total number of columns
     size_t nBuckets = 0;                                // number of buckets for histograms
@@ -157,7 +157,7 @@ public:
         return symbols_.isEmpty() ? 0 : location_.size() / symbols_.least().size(); // assumes all symbols same size
     }
 
-    void insert(const MemoryMap::Ptr &map, rose_addr_t va, size_t nSymbols, size_t symbolSize) {
+    void insert(const MemoryMap::Ptr &map, Address va, size_t nSymbols, size_t symbolSize) {
         ASSERT_require(symbolSize > 0);
         ASSERT_require2(symbols_.isEmpty() || symbols_.least().size() == symbolSize, "inconsistent symbols size");
         AddressInterval newInterval = AddressInterval::baseSize(va, nSymbols*symbolSize);
@@ -174,7 +174,7 @@ public:
         }
     }
 
-    void erase(const MemoryMap::Ptr &map, rose_addr_t va, size_t nSymbols, size_t symbolSize) {
+    void erase(const MemoryMap::Ptr &map, Address va, size_t nSymbols, size_t symbolSize) {
         ASSERT_require(symbolSize > 0);
         ASSERT_require2(symbols_.isEmpty() || symbols_.least().size() == symbolSize, "inconsistent symbols size");
         if (nSymbols > 0) {
@@ -333,13 +333,13 @@ main(int argc, char *argv[]) {
 
     std::vector<double> bucketAverages;
     Window window;
-    rose_addr_t va = 0;
+    Address va = 0;
     while (map->atOrAfter(va).next().assignTo(va)) {
 
         // If this is the first window, align it
         if (window.isEmpty()) {
             if (va % settings.alignment != 0) {
-                rose_addr_t alignedVa = alignUp(va, settings.alignment);
+                Address alignedVa = alignUp(va, settings.alignment);
                 if (alignedVa <= va)
                     break;                              // overflow
                 va = alignedVa;
@@ -351,7 +351,7 @@ main(int argc, char *argv[]) {
         size_t nAvail = map->at(va).available().size();
         if (nAvail < settings.windowSize * settings.symbolSize) {
             window.clear();
-            rose_addr_t nextVa = va + nAvail + 1;
+            Address nextVa = va + nAvail + 1;
             if (nextVa <= va)
                 break;                                  // overflow
             va = nextVa;
@@ -407,7 +407,7 @@ main(int argc, char *argv[]) {
         }
 
         // Calculate shifted window address
-        rose_addr_t nextVa = va + settings.translation * settings.symbolSize;
+        Address nextVa = va + settings.translation * settings.symbolSize;
         if (nextVa <= va)
             break;                                      // overflow
         va = nextVa;

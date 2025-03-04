@@ -25,8 +25,8 @@ enum class OutputFormat { GRAPHVIZ, TEXT, GEXF, UNSPECIFIED };
 struct Settings {
     OutputFormat outputFormat = OutputFormat::UNSPECIFIED; // style of output
     bool inliningImports = false;                          // inline imported functions when creating GraphViz output
-    std::set<std::string> functionNames;                // restrict output to these function names, addresses,...
-    std::set<rose_addr_t> addresses;                    // ...and/or these functions
+    std::set<std::string> functionNames;                   // restrict output to these function names, addresses,...
+    std::set<Address> addresses;                           // ...and/or these functions
     SerialIo::Format stateFormat = SerialIo::BINARY;
 };
 

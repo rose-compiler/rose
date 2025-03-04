@@ -90,7 +90,7 @@ public:
     virtual void semanticFailure(std::ostream&) = 0;    /**< semantic failure message. */
     virtual void indetVertex(std::ostream&, size_t idx) = 0;  /**< path vertex that's indeterminate. */
     virtual void indetStep(std::ostream&, size_t idx) = 0;  /**< Indeterminate location within vertex. */
-    virtual void summaryVertex(std::ostream&, size_t idx, rose_addr_t) = 0; /**< Function summary vertex. */
+    virtual void summaryVertex(std::ostream&, size_t idx, Rose::BinaryAnalysis::Address) = 0; /**< Function summary vertex. */
     virtual void summaryStep(std::ostream&, size_t idx, const std::string &name) = 0; /**< Function summary within vertex. */
     virtual void edge(std::ostream&, const std::string&) = 0; /**< Name of edge along path. */
     virtual void state(std::ostream&, size_t vertexIdx, const std::string &title,
@@ -135,7 +135,7 @@ public:
     void semanticFailure(std::ostream&) override {}
     void indetVertex(std::ostream&, size_t /*idx*/) override {}
     void indetStep(std::ostream&, size_t /*idx*/) override {}
-    void summaryVertex(std::ostream&, size_t /*idx*/, rose_addr_t) override {}
+    void summaryVertex(std::ostream&, size_t /*idx*/, Rose::BinaryAnalysis::Address) override {}
     void summaryStep(std::ostream&, size_t /*idx*/, const std::string &/*name*/) override {}
     void edge(std::ostream&, const std::string &/*name*/) override {}
     void state(std::ostream&, size_t /*vertexIdx*/, const std::string &/*title*/,
@@ -183,7 +183,7 @@ public:
     void semanticFailure(std::ostream&) override;
     void indetVertex(std::ostream&, size_t idx) override;
     void indetStep(std::ostream&, size_t idx) override;
-    void summaryVertex(std::ostream&, size_t idx, rose_addr_t) override;
+    void summaryVertex(std::ostream&, size_t idx, Rose::BinaryAnalysis::Address) override;
     void summaryStep(std::ostream&, size_t idx, const std::string &name) override;
     void edge(std::ostream&, const std::string &name) override;
     void state(std::ostream&, size_t vertexIdx, const std::string &title,
@@ -245,7 +245,7 @@ public:
     void semanticFailure(std::ostream&) override;
     void indetVertex(std::ostream&, size_t idx) override;
     void indetStep(std::ostream&, size_t idx) override;
-    void summaryVertex(std::ostream&, size_t idx, rose_addr_t) override;
+    void summaryVertex(std::ostream&, size_t idx, Rose::BinaryAnalysis::Address) override;
     void summaryStep(std::ostream&, size_t idx, const std::string &name) override;
     void edge(std::ostream&, const std::string &name) override;
     void state(std::ostream&, size_t vertexIdx, const std::string &title,
@@ -310,7 +310,7 @@ selectFunctionsByNameOrAddress(const std::vector<Rose::BinaryAnalysis::Partition
  *  an instruction. */
 std::vector<Rose::BinaryAnalysis::Partitioner2::FunctionPtr>
 selectFunctionsContainingInstruction(const Rose::BinaryAnalysis::Partitioner2::PartitionerConstPtr&,
-                                     const std::set<rose_addr_t> &insnVas);
+                                     const std::set<Rose::BinaryAnalysis::Address> &insnVas);
 
 /** Select CFG vertex by name or address. */
 Rose::BinaryAnalysis::Partitioner2::ControlFlowGraph::ConstVertexIterator
@@ -449,7 +449,7 @@ public:
 
     /** Reject paths with duplicate endpoints. */
     class RejectDuplicateEndpoints: public Predicate {
-        Sawyer::Container::Map<rose_addr_t /*insn*/, size_t /*path_length*/> seen_;
+        Sawyer::Container::Map<Rose::BinaryAnalysis::Address /*insn*/, size_t /*path_length*/> seen_;
         bool showShorterPaths_;                         // if true, don't reject a seen path that's shorter than previously seen
     public:
         explicit RejectDuplicateEndpoints(bool showShorterPaths)

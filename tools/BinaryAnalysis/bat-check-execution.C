@@ -33,7 +33,7 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static Sawyer::Message::Facility mlog;
 
-typedef Sawyer::Container::Map<rose_addr_t, size_t> AddressCounts;
+typedef Sawyer::Container::Map<Address, size_t> AddressCounts;
 
 enum MapSource { MAP_NATIVE, MAP_ROSE };
 
@@ -129,9 +129,9 @@ parseCommandLine(int argc, char *argv[], const P2::EngineBinary::Ptr &engine, Se
 }
 
 // File has one address per line
-static std::set<rose_addr_t>
+static std::set<Address>
 parseAddressFile(const std::string &fileName) {
-    std::set<rose_addr_t> retval;
+    std::set<Address> retval;
     FILE *file = fopen(fileName.c_str(), "r");
     ASSERT_always_require2(file!=NULL, "cannot open address file for reading: " + fileName + ": " + strerror(errno));
     char *buf = NULL;
@@ -144,13 +144,13 @@ parseAddressFile(const std::string &fileName) {
 }
 
 static inline bool
-isGoodAddr(const std::set<rose_addr_t> &goodVas, const MemoryMap::Ptr &map, rose_addr_t va) {
+isGoodAddr(const std::set<Address> &goodVas, const MemoryMap::Ptr &map, Address va) {
     return !map->at(va).exists() || goodVas.find(va)!=goodVas.end();
 }
 
 // returns number of good and bad addresses executed
 static std::pair<size_t, size_t>
-execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, const Debugger::Linux::Ptr &debugger,
+execute(const Settings &settings, const std::set<Address> &knownVas, const Debugger::Linux::Ptr &debugger,
         const MemoryMap::Ptr &map, AddressCounts &executed /*in,out*/) {
     Sawyer::ProgressBar<size_t> progress(mlog[MARCH], "instructions");
     std::ofstream trace;
@@ -158,7 +158,7 @@ execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, const D
         trace.open((numberToString(*debugger->processId()) + ".trace").c_str());
     size_t totalGood=0, totalBad=0;
     while (!debugger->isTerminated()) {
-        rose_addr_t eip = debugger->executionAddress(Debugger::ThreadId::unspecified());
+        Address eip = debugger->executionAddress(Debugger::ThreadId::unspecified());
         size_t addrSequence = ++executed.insertMaybe(eip, 0);
         bool goodAddr = isGoodAddr(knownVas, map, eip);
 
@@ -191,7 +191,7 @@ main(int argc, char *argv[]) {
 
     // Parse file containing instruction addresses
     std::string addrFileName = args[0];
-    std::set<rose_addr_t> knownVas = parseAddressFile(addrFileName);
+    std::set<Address> knownVas = parseAddressFile(addrFileName);
     mlog[INFO] <<"parsed " <<plural(knownVas.size(), "unique addresses") <<"\n";
 
     // Load specimen natively and attach debugger
@@ -215,7 +215,7 @@ main(int argc, char *argv[]) {
     map->dump(mlog[INFO]);
 
     // The addresses specified in the instruction address file must all be in memory that is mapped.
-    for (rose_addr_t va: knownVas) {
+    for (Address va: knownVas) {
         ASSERT_always_require2(map->at(va).require(MemoryMap::EXECUTABLE).exists(),
                                "given address " + addrToString(va) + " is not mapped or lacks execute permission");
     }

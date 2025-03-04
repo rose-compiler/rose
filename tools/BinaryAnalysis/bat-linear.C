@@ -28,7 +28,7 @@ Sawyer::Message::Facility mlog;
 
 struct Settings {
     SerialIo::Format stateFormat = SerialIo::BINARY;
-    rose_addr_t alignment = 1;
+    Address alignment = 1;
     AddressInterval where = AddressInterval::whole();
     bool showSemanticTrace = false;
     bool showSideEffects = false;
@@ -82,7 +82,7 @@ createSwitchParser(Settings &settings) {
 static std::vector<std::string>
 parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser, Settings &settings) {
     std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
-    settings.alignment = std::max(settings.alignment, rose_addr_t(1));
+    settings.alignment = std::max(settings.alignment, Address(1));
     if (specimen.empty())
         specimen.push_back("-");
     return specimen;
@@ -213,8 +213,8 @@ main(int argc, char *argv[]) {
     fmt.set_show_latest_writers(false);
 
     std::map<std::string, size_t> histogram;
-    rose_addr_t va = settings.where.least();
-    Sawyer::Optional<rose_addr_t> lastSeenVa;
+    Address va = settings.where.least();
+    Sawyer::Optional<Address> lastSeenVa;
     while (map->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
         va = alignUp(va, settings.alignment);
         if (!settings.where.contains(va))

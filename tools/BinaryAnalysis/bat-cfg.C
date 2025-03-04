@@ -256,7 +256,7 @@ public:
             case P2::V_BASIC_BLOCK: {
                 P2::BasicBlock::Ptr bb = vertex->value().bblock();
                 ASSERT_not_null(bb);
-                const std::set<rose_addr_t> &bbVas = function_->basicBlockAddresses();
+                const std::set<Address> &bbVas = function_->basicBlockAddresses();
                 if (bbVas.find(bb->address()) != bbVas.end()) // block local to this function?
                     retval = "B" + StringUtility::numberToString(++nLocalBlocks_) + " ";
                 if (bb->address() == function_->address()) {
@@ -295,7 +295,7 @@ emitTextFunctionCfg(std::ostream &out, const P2::Partitioner::ConstPtr &partitio
     VertexLabels vertexLabels(partitioner, function);
 
     // Emit information about each basic block
-    for (rose_addr_t bbVa: function->basicBlockAddresses()) {
+    for (Address bbVa: function->basicBlockAddresses()) {
         P2::ControlFlowGraph::ConstVertexIterator placeholder = partitioner->findPlaceholder(bbVa);
         if (!partitioner->cfg().isValidVertex(placeholder)) {
             out <<"  " <<StringUtility::addrToString(bbVa) <<": not present in CFG\n";

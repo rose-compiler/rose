@@ -97,7 +97,7 @@ private:
     std::vector<SValueSValue> rewrites_;
 
 protected:
-    IpRewrite(const P2::Partitioner::ConstPtr &partitioner, const std::vector<rose_addr_t> &vaPairs) {
+    IpRewrite(const P2::Partitioner::ConstPtr &partitioner, const std::vector<Address> &vaPairs) {
         ASSERT_require(vaPairs.size() % 2 == 0);
         const RegisterDescriptor REG_IP = partitioner->instructionProvider().instructionPointerRegister();
         InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops = partitioner->newOperators();
@@ -109,7 +109,7 @@ protected:
     }
 
 public:
-    static Ptr instance(const P2::Partitioner::ConstPtr &partitioner, const std::vector<rose_addr_t> &vaPairs) {
+    static Ptr instance(const P2::Partitioner::ConstPtr &partitioner, const std::vector<Address> &vaPairs) {
         return Ptr(new IpRewrite(partitioner, vaPairs));
     }
 

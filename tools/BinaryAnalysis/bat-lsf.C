@@ -108,7 +108,7 @@ printFunctions(const P2::Partitioner::ConstPtr &partitioner, const Settings &set
     for (const P2::Function::Ptr &function: partitioner->functions()) {
         AddressIntervalSet fe = partitioner->functionExtent(function);
         size_t nInsns = 0;
-        for (rose_addr_t bbva: function->basicBlockAddresses()) {
+        for (Address bbva: function->basicBlockAddresses()) {
             if (P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbva))
                 nInsns += bb->nInstructions();
         }

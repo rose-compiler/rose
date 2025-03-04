@@ -186,7 +186,7 @@ public:
         return Ptr(new SimpleDecoder(*this));
     }
 
-    SgAsmInstruction* makeInstruction(rose_addr_t addr, const std::vector<uint8_t> &bytes, InsnKind kind) {
+    SgAsmInstruction* makeInstruction(Address addr, const std::vector<uint8_t> &bytes, InsnKind kind) {
         auto insn = new SgAsmUserInstruction(addr, *architecture()->registrationId(), static_cast<unsigned>(kind));
         auto operands = new SgAsmOperandList;
         insn->set_operandList(operands);
@@ -195,7 +195,7 @@ public:
         return insn;
     }
 
-    SgAsmInstruction* makeInstruction(rose_addr_t addr, const std::vector<uint8_t> &bytes, InsnKind kind,
+    SgAsmInstruction* makeInstruction(Address addr, const std::vector<uint8_t> &bytes, InsnKind kind,
                                       SgAsmExpression *arg1) {
         auto insn = makeInstruction(addr, bytes, kind);
         ASSERT_not_null(arg1);
@@ -204,7 +204,7 @@ public:
         return insn;
     }
 
-    SgAsmInstruction* makeInstruction(rose_addr_t addr, const std::vector<uint8_t> &bytes, InsnKind kind,
+    SgAsmInstruction* makeInstruction(Address addr, const std::vector<uint8_t> &bytes, InsnKind kind,
                                       SgAsmExpression *arg1, SgAsmExpression *arg2) {
         auto insn = makeInstruction(addr, bytes, kind, arg1);
         ASSERT_not_null(arg2);
@@ -228,7 +228,7 @@ public:
         return new SgAsmIntegerValueExpression(val, Rose::SageBuilderAsm::buildTypeU16());
     }
 
-    SgAsmInstruction* disassembleOne(const MemoryMap::Ptr &map, rose_addr_t addr, AddressSet *successors = nullptr) override {
+    SgAsmInstruction* disassembleOne(const MemoryMap::Ptr &map, Address addr, AddressSet *successors = nullptr) override {
         ASSERT_not_null(map);
         if (addr % 4 != 0)
             throw Disassembler::Exception("instruction pointer is not aligned", addr);
@@ -852,7 +852,7 @@ public:
     }
 
     // Is instruction sequence a function call?
-    bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *ret) const override {
+    bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, Address *target, Address *ret) const override {
         if (insns.empty())
             return false;
         auto last = isSgAsmUserInstruction(insns.back());
@@ -939,12 +939,12 @@ public:
                 return std::vector<P2::Function::Ptr>{function_};
             }
 
-            bool match(const P2::Partitioner::ConstPtr &partitioner, const rose_addr_t startAddr) override {
+            bool match(const P2::Partitioner::ConstPtr &partitioner, const Address startAddr) override {
                 ASSERT_not_null(partitioner);
                 const RegisterDescriptor SP = partitioner->architecture()->registerDictionary()->stackPointerRegister();
                 const RegisterDescriptor FP = partitioner->architecture()->registerDictionary()->stackFrameRegister();
                 const RegisterDescriptor LR = partitioner->architecture()->registerDictionary()->callReturnRegister();
-                rose_addr_t addr = startAddr;
+                Address addr = startAddr;
                 {
                     auto insn = isSgAsmUserInstruction(partitioner->discoverInstruction(addr));
                     if (!insn || insn->nOperands() != 1 || (InsnKind)insn->get_kind() != InsnKind::PUSH)

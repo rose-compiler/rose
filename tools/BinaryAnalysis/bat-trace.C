@@ -93,9 +93,9 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
     return args;
 }
 
-Sawyer::Container::Trace<rose_addr_t>
+Sawyer::Container::Trace<Address>
 loadTrace(const boost::filesystem::path &fileName) {
-    Sawyer::Container::Trace<rose_addr_t> retval;
+    Sawyer::Container::Trace<Address> retval;
     if (!fileName.empty()) {
         std::ifstream input(fileName.native().c_str());
         if (!input) {
@@ -108,7 +108,7 @@ loadTrace(const boost::filesystem::path &fileName) {
             const char *s = line.c_str();
             while (s && isspace(*s)) ++s;
             char *rest = NULL;
-            rose_addr_t va = rose_strtoull(s, &rest, 0);
+            Address va = rose_strtoull(s, &rest, 0);
             if (rest != s)
                 retval.append(va);
         }
@@ -118,8 +118,8 @@ loadTrace(const boost::filesystem::path &fileName) {
 
 struct TraceFilter {
     bool isComparing;                                          // whether we're comparing current trace to previous answer
-    Sawyer::Container::Trace<rose_addr_t> answer;              // compare new trace to this previous answer
-    Sawyer::Container::Trace<rose_addr_t>::ConstIterator iter; // iterates over the answer
+    Sawyer::Container::Trace<Address> answer;                  // compare new trace to this previous answer
+    Sawyer::Container::Trace<Address>::ConstIterator iter;     // iterates over the answer
     Sawyer::ProgressBar<size_t> nSteps;
     bool hadError;
 
@@ -129,7 +129,7 @@ struct TraceFilter {
         nSteps.suffix(" insns executed");
     }
 
-    Debugger::FilterAction operator()(rose_addr_t va) {
+    Debugger::FilterAction operator()(Address va) {
         SAWYER_MESG(mlog[DEBUG]) <<" executing at " <<StringUtility::addrToString(va) <<"\n";
         if (isComparing) {
             if (iter == answer.end()) {
@@ -159,11 +159,11 @@ struct TraceFilter {
 };
 
 void
-showAllInstructions(std::ostream &out, const Sawyer::Container::Trace<rose_addr_t> &trace,
+showAllInstructions(std::ostream &out, const Sawyer::Container::Trace<Address> &trace,
                     const P2::Partitioner::ConstPtr &partitioner) {
     struct Visitor {
         std::ostream &out;
-        Sawyer::Container::Map<rose_addr_t, std::string> seen;
+        Sawyer::Container::Map<Address, std::string> seen;
         P2::Partitioner::ConstPtr partitioner;          // not null
 
         Visitor(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner)
@@ -171,7 +171,7 @@ showAllInstructions(std::ostream &out, const Sawyer::Container::Trace<rose_addr_
             ASSERT_not_null(partitioner);
         }
         
-        bool operator()(rose_addr_t va) {
+        bool operator()(Address va) {
             std::string s;
             if (!seen.getOptional(va).assignTo(s)) {
                 if (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
@@ -189,11 +189,11 @@ showAllInstructions(std::ostream &out, const Sawyer::Container::Trace<rose_addr_
 }
 
 void
-showDistinctInstructions(std::ostream &out, const Sawyer::Container::Trace<rose_addr_t> &trace,
+showDistinctInstructions(std::ostream &out, const Sawyer::Container::Trace<Address> &trace,
                          const P2::Partitioner::ConstPtr &partitioner) {
     ASSERT_not_null(partitioner);
-    Sawyer::Container::Set<rose_addr_t> vas = trace.labels();
-    for (rose_addr_t va: vas.values()) {
+    Sawyer::Container::Set<Address> vas = trace.labels();
+    for (Address va: vas.values()) {
         if (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
             out <<partitioner->unparse(insn) <<"\n";
         } else {
@@ -203,21 +203,21 @@ showDistinctInstructions(std::ostream &out, const Sawyer::Container::Trace<rose_
 }
 
 void
-showDistinctAddresses(std::ostream &out, const Sawyer::Container::Trace<rose_addr_t> &trace) {
-    Sawyer::Container::Set<rose_addr_t> vas = trace.labels();
-    for (rose_addr_t va: vas.values())
+showDistinctAddresses(std::ostream &out, const Sawyer::Container::Trace<Address> &trace) {
+    Sawyer::Container::Set<Address> vas = trace.labels();
+    for (Address va: vas.values())
         out <<StringUtility::addrToString(va) <<"\n";
 }
 
 void
-showAllAddresses(std::ostream &out, const Sawyer::Container::Trace<rose_addr_t> &trace) {
+showAllAddresses(std::ostream &out, const Sawyer::Container::Trace<Address> &trace) {
     struct Visitor {
         std::ostream &out;
 
         Visitor(std::ostream &out)
             : out(out) {}
 
-        bool operator()(rose_addr_t va) {
+        bool operator()(Address va) {
             out <<StringUtility::addrToString(va) <<"\n";
             return true;
         }
@@ -226,7 +226,7 @@ showAllAddresses(std::ostream &out, const Sawyer::Container::Trace<rose_addr_t> 
 }
 
 void
-showSummary(const Sawyer::Container::Trace<rose_addr_t> &trace) {
+showSummary(const Sawyer::Container::Trace<Address> &trace) {
     std::cout <<"trace contains " <<StringUtility::plural(trace.size(), "steps")
               <<" at " <<StringUtility::plural(trace.nLabels(), "distinct addresses") <<"\n";
 }

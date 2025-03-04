@@ -139,13 +139,13 @@ template<class StringIterator>
 static MemoryMap::Ptr
 parseBytes(StringIterator string, StringIterator end) {
     std::vector<uint8_t> bytes;
-    Sawyer::Optional<rose_addr_t> va;
+    Sawyer::Optional<Address> va;
     for (/*void*/; string != end; ++string) {
         if (!string->empty() && '=' == (*string)[0]) {
             if (va) {
                 ::mlog[FATAL] <<"cannot parse \"" <<StringUtility::cEscape(*string) <<"\" because only one address can be specified\n";
                 exit(1);
-            } else if (auto addr = StringUtility::toNumber<rose_addr_t>(string->substr(1))) {
+            } else if (auto addr = StringUtility::toNumber<Address>(string->substr(1))) {
                 va = addr.ok();
             } else {
                 ::mlog[FATAL] <<"cannot parse \"" <<StringUtility::cEscape(string->substr(1)) <<"\""

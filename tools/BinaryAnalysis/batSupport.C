@@ -218,7 +218,7 @@ PlainTextFormatter::indetStep(std::ostream &out, size_t idx) {
 }
 
 void
-PlainTextFormatter::summaryVertex(std::ostream &out, size_t idx, rose_addr_t va) {
+PlainTextFormatter::summaryVertex(std::ostream &out, size_t idx, Address va) {
     out <<"    vertex #" <<idx <<" at " <<Rose::StringUtility::addrToString(va) <<"\n";
 }
 
@@ -466,7 +466,7 @@ YamlFormatter::indetStep(std::ostream &out, size_t idx) {
 }
 
 void
-YamlFormatter::summaryVertex(std::ostream &out, size_t idx, rose_addr_t va) {
+YamlFormatter::summaryVertex(std::ostream &out, size_t idx, Address va) {
     writeln(out, "    - vertex:", idx);
     writeln(out, "      type:", "summary");
     writeln(out, "      address:", Rose::StringUtility::addrToString(va));
@@ -586,13 +586,13 @@ selectFunctionsByNameOrAddress(const std::vector<P2::Function::Ptr> &functions, 
 
     // Try to convert each name to an address
     std::vector<std::string> names(nameSet.begin(), nameSet.end());
-    typedef std::vector<Sawyer::Optional<rose_addr_t> > AddressPerName;
+    typedef std::vector<Sawyer::Optional<Address> > AddressPerName;
     AddressPerName vas;
     for (const std::string &name: names) {
         errno = 0;
         const char *s = name.c_str();
         char *rest = NULL;
-        rose_addr_t va = rose_strtoull(s, &rest, 0);
+        Address va = rose_strtoull(s, &rest, 0);
         if (0 == errno && *rest == '\0') {
             vas.push_back(va);
         } else {
@@ -641,11 +641,11 @@ selectFunctionsByNameOrAddress(const std::vector<P2::Function::Ptr> &functions, 
 }
 
 std::vector<P2::Function::Ptr>
-selectFunctionsContainingInstruction(const P2::Partitioner::ConstPtr &partitioner, const std::set<rose_addr_t> &insnVas) {
+selectFunctionsContainingInstruction(const P2::Partitioner::ConstPtr &partitioner, const std::set<Address> &insnVas) {
     ASSERT_not_null(partitioner);
     std::vector<P2::Function::Ptr> retval;
 
-    for (rose_addr_t insnVa: insnVas) {
+    for (Address insnVa: insnVas) {
         std::vector<P2::Function::Ptr> found = partitioner->functionsOverlapping(insnVa);
         for (const P2::Function::Ptr &f: found)
             P2::insertUnique(retval, f, P2::sortFunctionsByAddress);
@@ -804,7 +804,7 @@ vertexForInstruction(const P2::Partitioner::ConstPtr &partitioner, const std::st
     const char *s = nameOrVa.c_str();
     char *rest;
     errno = 0;
-    rose_addr_t va = rose_strtoull(s, &rest, 0);
+    Address va = rose_strtoull(s, &rest, 0);
     if (*rest || errno!=0) {
         size_t nFound = 0;
         for (const P2::Function::Ptr &function: partitioner->functions()) {
@@ -883,7 +883,7 @@ bool
 PathSelector::RejectDuplicateEndpoints::shouldReject(const Rose::BinaryAnalysis::FeasiblePath&,
                                                      const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
                                                      SgAsmInstruction*) {
-    rose_addr_t va = path.backVertex()->value().optionalAddress().orElse((rose_addr_t)(-1));
+    Address va = path.backVertex()->value().optionalAddress().orElse((Address)(-1));
     size_t seenLength = seen_.getOrElse(va, Rose::UNLIMITED);
     size_t curLength = path.nVertices();
     return curLength >= seenLength;
@@ -894,7 +894,7 @@ PathSelector::RejectDuplicateEndpoints::wasRejected(bool rejected, const Rose::B
                                                      const Rose::BinaryAnalysis::Partitioner2::CfgPath &path,
                                                      SgAsmInstruction*) {
     if (!rejected) {
-        rose_addr_t va = path.backVertex()->value().optionalAddress().orElse((rose_addr_t)(-1));
+        Address va = path.backVertex()->value().optionalAddress().orElse((Address)(-1));
         seen_.insert(va, showShorterPaths_ ? path.nVertices() : 0);
     }
 }
@@ -997,9 +997,9 @@ PathSelector::printStatistics(std::ostream &out, const std::string &prefix) cons
 InsnHistogram
 computeInsnHistogram(const InstructionProvider &insns, const MemoryMap::Ptr &map) {
     InsnHistogram histogram;
-    rose_addr_t va = 0;
+    Address va = 0;
     while (map->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
-        const rose_addr_t aligned = alignUp(va, insns.instructionAlignment());
+        const Address aligned = alignUp(va, insns.instructionAlignment());
         if (va != aligned) {
             va = aligned;
         } else if (SgAsmInstruction *insn = insns[va]) {

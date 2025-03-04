@@ -26,7 +26,7 @@ using namespace Rose::BinaryAnalysis;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 using Flir = Rose::BinaryAnalysis::LibraryIdentification;
 using DbFunctionPair = std::pair<std::string /*dbname*/, Flir::Function::Ptr>;
-using Functions = Sawyer::Container::Map<rose_addr_t /*func_addr*/, std::vector<DbFunctionPair>>;
+using Functions = Sawyer::Container::Map<Address /*func_addr*/, std::vector<DbFunctionPair>>;
 using LibraryCountPair = std::pair<Flir::Library::Ptr, size_t>;
 using Libraries = Sawyer::Container::Map<std::string /*libhash*/, LibraryCountPair>;
 

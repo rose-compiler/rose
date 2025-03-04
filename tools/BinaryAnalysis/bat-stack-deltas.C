@@ -41,7 +41,7 @@ struct Settings {
     bool emitNan = true;
     SerialIo::Format stateFormat = SerialIo::BINARY;
     std::set<std::string> functionNames;
-    std::set<rose_addr_t> addresses;
+    std::set<Address> addresses;
 };
 
 struct StackDeltaPair {
@@ -206,7 +206,7 @@ main(int argc, char *argv[]) {
             BaseSemantics::SValue::Ptr postDelta = partitioner->functionStackDelta(function);
             insertDeltaPairs(sdmap, partitioner->functionBasicBlockExtent(function), postDelta);
         } else {
-            for (const rose_addr_t bbva: function->basicBlockAddresses()) {
+            for (const Address bbva: function->basicBlockAddresses()) {
                 if (P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbva)) {
                     if (SD_BASIC_BLOCK == settings.domain) {
                         BaseSemantics::SValue::Ptr preDelta = partitioner->basicBlockStackDeltaIn(bb, function);

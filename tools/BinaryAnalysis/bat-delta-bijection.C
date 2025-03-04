@@ -43,7 +43,7 @@ const char *description =
 #include <string>
 #include <vector>
 
-using Value = rose_addr_t;
+using Value = Rose::BinaryAnalysis::Address;
 using Set = std::set<Value>;
 
 using namespace Rose;

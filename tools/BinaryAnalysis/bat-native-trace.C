@@ -56,12 +56,12 @@ makeInstructionProvider(const P2::Engine::Ptr &engine) {
 }
 
 SgAsmInstruction*
-disassembleOne(InstructionProvider::Ptr& instructionProvider, rose_addr_t ip) {
+disassembleOne(InstructionProvider::Ptr& instructionProvider, Address ip) {
     return instructionProvider->operator[](ip);
 }
 
 SgAsmInstruction*
-disassembleOne(const Disassembler::Base::Ptr &disassembler, const uint8_t *buf, size_t bufSize, rose_addr_t ip)
+disassembleOne(const Disassembler::Base::Ptr &disassembler, const uint8_t *buf, size_t bufSize, Address ip)
     try {
         return disassembler->disassembleOne(buf, ip, bufSize, ip);
     } catch (const Disassembler::Exception &e) {

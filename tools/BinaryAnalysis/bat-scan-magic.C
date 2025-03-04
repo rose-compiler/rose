@@ -131,7 +131,7 @@ main(int argc, char *argv[]) {
 
     {
         Sawyer::ProgressBar<size_t> progress(nPositions, mlog[INFO], "positions");
-        for (rose_addr_t va=limits.least();
+        for (Address va=limits.least();
              va<=limits.greatest() && map->atOrAfter(va).next().assignTo(va);
              va+=step, ++progress) {
             std::string magicString = analyzer.identify(map, va);
