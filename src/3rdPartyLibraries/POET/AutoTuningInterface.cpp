@@ -17,7 +17,6 @@
 #define PAR_PARAM_NAME(handleName)  "pthread_" + handleName
 #define PAR_BLOCK_NAME(handleName)  "psize_" + handleName
 
-#define ICONST(val) POETProgram::make_Iconst(val)
 #define RANGE_TYPE(lb,ub) POETProgram::make_rangeType(lb,ub)
 #define LIST_TYPE(elem) POETProgram::make_listType(elem)
 #define INT_TYPE POETProgram::make_atomType(TYPE_INT)
@@ -176,26 +175,26 @@ int CopyArraySpec::index=0;
 /*QY: symbolic value conversion to POET values */
 /***********************************************************************/
 
-class POET_AstNodePtr : public AstNodePtr
+class POET_AstNodePtr 
 {
+  POETCode* repr = 0;
  public:
-  POET_AstNodePtr( POETCode* n = 0) { AstNodePtr::repr = n; }
-  POET_AstNodePtr( const AstNodePtr& that) : AstNodePtr(that) {}
-  POET_AstNodePtr& operator = (const AstNodePtr &that)
-      { AstNodePtr::operator = (that); return *this; }
+  POET_AstNodePtr( POETCode* n = 0) { repr = n; }
+  POET_AstNodePtr& operator = (const POET_AstNodePtr &that)
+      { repr = that.repr; return *this; }
   ~POET_AstNodePtr() {}
-  POETCode* get_ptr() const { return static_cast<POETCode*>(repr); }
-  POETCode* operator -> () const { return static_cast<POETCode*>(repr); }
+  POETCode* get_ptr() const { return repr; }
+  POETCode* operator -> () const { return repr; }
 };
 
-class SymbolicPOETWrap : public SymbolicAstWrap
+class SymbolicPOETWrap : public SymbolicValImpl
 {
   SymbolicValImpl* Clone() const { return new SymbolicPOETWrap(*this); }
+  POET_AstNodePtr poet_code;
 public:
-  SymbolicPOETWrap(POETCode* code)
-    : SymbolicAstWrap( POET_AstNodePtr(code)) {}
+  SymbolicPOETWrap(POETCode* code) : poet_code(code) {}
 
-  POETCode* get_ast() const { return POET_AstNodePtr(SymbolicAstWrap::get_ast()).get_ptr(); }
+  POETCode* get_ast() const { return poet_code.get_ptr(); }
   virtual std:: string GetTypeName() const { return "poet_astwrap"; }
   virtual void Dump() const { std::cerr << toString(); }
   virtual std:: string toString() const { return get_ast()->toString(); }
@@ -229,13 +228,13 @@ class SymbolicVal2POET : public SymbolicVisitor
       }
    virtual void VisitFunction(const SymbolicFunction& v)
      {
-        if (v.GetOp() == "/") 
+        if (v.GetOp().toString() == "/") 
           { res = BOP(POET_OP_DIVIDE,apply(v.get_arg(0)),apply(v.get_arg(1))); return; }
         POETCode* args = 0;
         for (int i=v.NumOfArgs()-1; i >= 0; --i) {
            args = LIST(apply(v.get_arg(i)),args);
         }
-        res = CODE_ACC("FunctionCall", PAIR(STRING(v.GetOp()),args));
+        res = CODE_ACC("FunctionCall", PAIR(STRING(v.GetOp().toString()),args));
      }
    virtual void VisitVar(const SymbolicVar& v)
       {  res = STRING(v.GetVarName()); }

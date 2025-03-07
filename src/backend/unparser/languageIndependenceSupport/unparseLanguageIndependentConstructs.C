@@ -2674,7 +2674,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // statement will not be unparsed properly (check this at some point).
      if (unp->delegate != nullptr)
         {
-          if (unp->delegate->unparse_statement(stmt,info)) {
+          if (unp->delegate->unparse_statement(stmt,info,unp->cur)) {
              mlog[INFO] << "[INFO]: Delegate unparser returned true for repl->unparse_statement()\n";
              return;
           }

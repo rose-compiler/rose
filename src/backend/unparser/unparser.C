@@ -815,7 +815,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
              {
                TimingPerformance timer ("Source code generation from AST (Fortran):");
                if (delegate) {
-                 delegate->unparse_statement(globalScope, info);
+                 delegate->unparse_statement(globalScope, info, cur);
                }
                else {
                  u_fortran_locatedNode->unparseStatement(globalScope, info);

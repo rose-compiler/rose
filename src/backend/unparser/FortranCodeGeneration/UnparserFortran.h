@@ -14,7 +14,8 @@ struct UnparserFortran : public UnparseDelegate {
   };
 
   // Entry point to unparser from Rose.
-  virtual bool unparse_statement(SgStatement* stmt, SgUnparse_Info& info) override;
+  virtual bool unparse_statement(SgStatement* stmt, SgUnparse_Info& info, UnparseFormat& out) override;
+
 };
 
 #endif // UNPARSER_FORTRAN_H

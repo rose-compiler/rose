@@ -7,6 +7,13 @@
 #include <AstInterface.h>
 #include <LoopTree.h>
 #include <LoopTreeTransform.h>
+
+/* This code has the interface for connecting the loop optimization 
+ * to the POET language for autotuning. The interface classes are 
+ * defined and used inside the 3rd party POET library, which is built 
+ * inside ROSE only when --with-poet is turned on during build configuration 
+*/
+
 class POETProgram;
 class XformVar;
 class CodeVar;
@@ -18,9 +25,6 @@ class ParallelizeLoop;
 class ArrayAbstractionInterface;
 class CopyArrayConfig;
 
-/* Qing Yi (1/2024) This code has the interface for connecting the loop optimization to the POET language for autotuning.
- * These interface classes are defined and used inside the 3rd party POET library, which is built inside ROSE
- * only when --with-poet is turned on during build configuration */
 
 /*QY: map loop tree nodes and AST nodes to tracing variables in POET */
 class LoopTreeCodeGenInfo;
@@ -188,11 +192,10 @@ class AutoTuningInterface
 /*QY: loop unrolling optimization*/
 class UnrollSpec : public OptSpec
 {
-   /*QY: relevant POET invocation names 
-         (need to be consistent with POET/lib/opt.pi*/
-  /*LocalVar* paramVar;*/ //warning: private field 'paramVar' is not used
+  LocalVar* paramVar; 
  public:
   UnrollSpec(LocalVar* handle, int unrollSize); 
+  const LocalVar* get_paramVar() const { return paramVar; }
   virtual OptEnum get_enum() const { return UNROLL; }
   virtual OptLevel get_opt_level() const { return OPT_PROC_LEVEL; }
   virtual std::string get_opt_prefix(OptLevel) { return "unroll"; }
@@ -214,9 +217,9 @@ class UnrollSpec : public OptSpec
 
 class ParLoopSpec : public OptSpec
 {
-  /* POETCode* privateVars; */ //warning: private fields not used*/
-  /* POETCode* ivarName, *bvarName; */ //warning: private fields not used
-  /* LocalVar* parVar, *parblockVar; */ //warning: private fields not used
+  POETCode* privateVars; 
+  POETCode* ivarName, *bvarName; 
+  LocalVar* parVar, *parblockVar; 
  public:
   ParLoopSpec(LocalVar* outerHandle, LoopTreeNode* loop, int bsize);
   virtual OptEnum get_enum() const { return PARLOOP; }
@@ -224,6 +227,12 @@ class ParLoopSpec : public OptSpec
   virtual std::string get_opt_prefix(OptLevel) { return "par"; }
   virtual std::string to_string(OptLevel level);
 
+  const POETCode* get_privateVars() const { return privateVars; }
+  const POETCode* get_index_var_name() const { return ivarName; }
+  const POETCode* get_blocking_index_name() const { return bvarName; }
+  const LocalVar* get_parrellel_blocking_var() const { return parblockVar; }
+  const LocalVar* get_parallel_index_var() const { return parVar; }
+ 
   /*QY: insert parameter decl; 
         modify lineNo with new line number; 
         return constrains on parameter values */
@@ -240,9 +249,9 @@ class ParLoopSpec : public OptSpec
 class BlockSpec : public OptSpec
 {
    std::vector<LoopInfo> loopVec; /*QY: the loops to block */ 
-   /* POETCode* nonperfect; */ /*QY: the non-perfect loops*/ //warning: private fields not used
-   /* LocalVar* blockPar, *ujPar; */ //warning: private fields not used
-   /* HandleMap& handleMap; */ // warning: private field 'handleMap' is not used
+   POETCode* nonperfect; 
+   LocalVar* blockPar, *ujPar; 
+   HandleMap& handleMap; 
    unsigned loopnum;
 
    /*QY: compute the blocking dimension configuration */
@@ -250,6 +259,12 @@ class BlockSpec : public OptSpec
 
  public:
   BlockSpec(HandleMap& handleMap, LocalVar* outerHandle, LoopTreeNode* innerLoop, LoopBlocking* config, const std::vector<FuseLoopInfo>* nonperfect=0); 
+  const HandleMap& get_handleMap() const { return handleMap; }
+  const LocalVar* get_blocking_parameter() const { return blockPar; }
+  const LocalVar* get_unroll_jam_parameter() const { return ujPar; }
+  const POETCode* get_non_perfect_loop() const { return nonperfect; }
+  unsigned get_loopnum() const { return loopnum; }
+ 
   virtual OptEnum get_enum() const { return BLOCK; }
   virtual OptLevel get_opt_level() const { return OPT_CACHE_REG_CLEANUP_LEVEL; }
   virtual std::string get_opt_prefix(OptLevel optLevel) 
@@ -263,7 +278,6 @@ class BlockSpec : public OptSpec
    }
   virtual std::string to_string(OptLevel level);
 
-  unsigned get_loopnum() const { return loopnum; }
   const LoopInfo& get_loop(int i) const { return loopVec[i]; }
 
   /*QY: insert parameter decl; 

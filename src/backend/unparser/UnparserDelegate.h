@@ -6,14 +6,14 @@
 // AST not transformed directly from the source file (character by character, to preserve
 // absolutely ALL formatting).  Patch files can then be generated from such files, where the
 // patches represent only the transformations introduced.
+class UnparseFormat;
 class UnparseDelegate {
  public:
   virtual ~UnparseDelegate() {};
 
   // This class need only support the unparsing of statements since all other IR nodes are
   // unparsed by the functions that unparse statements.
-
-  virtual bool unparse_statement(SgStatement* stmt, SgUnparse_Info& info) = 0;
+ virtual bool unparse_statement(SgStatement* stmt, SgUnparse_Info& info, UnparseFormat& out) = 0;
 };
 
 #endif

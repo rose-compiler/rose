@@ -244,24 +244,6 @@ SgClassDefinition* GetClassDefn(SgClassDeclaration* classDecl)
   return classDefn;
 }
 
-#if 0
-// Function not currently needed, defeat warning message by removing
-SgClassDefinition* GetClassDefinition(SgNamedType *classtype)
-{
-    if (classtype->variantT() == V_SgTypedefType) {
-         return GetClassDefinition(isSgNamedType(isSgTypedefType(classtype)->get_base_type()));
-    }
-    SgDeclarationStatement* decl = classtype->get_declaration();
-    if (decl->variantT() == V_SgClassDeclaration || 
-        decl->variantT() == V_SgTemplateClassDeclaration) 
-        return GetClassDefn(isSgClassDeclaration(decl));
-    else {
-       std::cerr << "unexpected class declaration type: " << decl->sage_class_name() << std::endl;
-       ROSE_ABORT();
-    }
-}
-#endif
-
 // Strip leading "const" and tailing '&'
 std::string StripParameterType( const std::string& name)
 {
