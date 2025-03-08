@@ -305,6 +305,7 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmStackMapFrame.C
   SgAsmJvmStackMapTable.C
   SgAsmJvmStackMapVerificationType.C
+  SgAsmJvmSynthetic.C
   SgAsmLEEntryPoint.C
   SgAsmLEEntryTable.C
   SgAsmLEFileHeader.C

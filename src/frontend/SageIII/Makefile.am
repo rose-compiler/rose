@@ -430,6 +430,7 @@ GENERATED_SOURCE =						\
         SgAsmJvmStackMapFrame.h					\
         SgAsmJvmStackMapTable.h					\
         SgAsmJvmStackMapVerificationType.h			\
+        SgAsmJvmSynthetic.h					\
         SgAsmLEEntryPoint.h					\
         SgAsmLEEntryTable.h					\
         SgAsmLEFileHeader.h					\
@@ -838,6 +839,7 @@ GENERATED_SOURCE =						\
 	SgAsmJvmStackMapFrame.h					\
 	SgAsmJvmStackMapTable.h					\
 	SgAsmJvmStackMapVerificationType.h			\
+	SgAsmJvmSynthetic.h					\
 	SgAsmLEEntryPoint.h					\
 	SgAsmLEEntryTable.h					\
 	SgAsmLEFileHeader.h					\
@@ -1393,6 +1395,7 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmStackMapFrame.h			\
    SgAsmJvmStackMapTable.h			\
    SgAsmJvmStackMapVerificationType.h		\
+   SgAsmJvmSynthetic.h				\
    SgAsmLEEntryPoint.h				\
    SgAsmLEEntryTable.h				\
    SgAsmLEFileHeader.h				\

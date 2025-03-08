@@ -40,6 +40,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   else if (name == "EnclosingMethod") { // 4.7.7
     return new SgAsmJvmEnclosingMethod(parent);
   }
+  else if (name == "Synthetic") { // 4.7.8
+    return new SgAsmJvmSynthetic(parent);
+  }
   else if (name == "Signature") { // 4.7.9
     return new SgAsmJvmSignature(parent);
   }
@@ -72,11 +75,8 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   Jvm::read_value(pool, attribute_name_index);
   Jvm::read_value(pool, attribute_length);
 
-  mlog[FATAL] << "--- " << name << " attribute ---\n"
+  mlog[FATAL] << "--- attribute name: " << name << " ---\n"
               << "SgAsmJvmAttribute::instance(): skipping attribute of length " << attribute_length << "\n";
-#ifdef DEBUG_ON
-  ROSE_ABORT();
-#endif
 
   SgAsmGenericHeader* header{pool->get_header()};
   ASSERT_not_null(header);
@@ -269,7 +269,7 @@ void SgAsmJvmExceptionTable::unparse(std::ostream &os) const
   }
 }
 
-void SgAsmJvmExceptionTable::dump(FILE* f, const char* prefix, ssize_t idx) const
+void SgAsmJvmExceptionTable::dump(FILE*, const char*, ssize_t) const
 {
   mlog[WARN] << "SgAsmJvmExceptionTable::dump() not implemented yet\n";
 }
@@ -297,7 +297,7 @@ void SgAsmJvmExceptionHandler::unparse(std::ostream &os) const
   Jvm::writeValue(os, p_catch_type);
 }
 
-void SgAsmJvmExceptionHandler::dump(FILE* f, const char* prefix, ssize_t idx) const
+void SgAsmJvmExceptionHandler::dump(FILE*, const char*, ssize_t) const
 {
   mlog[WARN] << "SgAsmJvmExceptionHandler::dump() not implemented yet\n";
 }
@@ -454,7 +454,7 @@ void SgAsmJvmStackMapFrame::unparse(std::ostream& os) const
   }
 }
 
-void SgAsmJvmStackMapFrame::dump(FILE* f, const char* prefix, ssize_t idx) const
+void SgAsmJvmStackMapFrame::dump(FILE*, const char*, ssize_t) const
 {
   mlog[WARN] << "dump of SgAsmJvmStackMapFrame is not implemented yet\n";
   // fprintf(f, "-->SgAsmJvmStackMapFrame:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
@@ -505,7 +505,7 @@ void SgAsmJvmStackMapVerificationType::unparse(std::ostream& os) const
   }
 }
 
-void SgAsmJvmStackMapVerificationType::dump(FILE* f, const char* prefix, ssize_t idx) const
+void SgAsmJvmStackMapVerificationType::dump(FILE*, const char*, ssize_t) const
 {
   mlog[WARN] << "dump of SgAsmJvmStackMapVerificationType is not implemented yet\n";
   // fprintf(f, "-->SgAsmJvmStackMapVerificationType:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
@@ -551,7 +551,7 @@ void SgAsmJvmExceptions::unparse(std::ostream &os) const
   }
 }
 
-void SgAsmJvmExceptions::dump(FILE* f, const char* prefix, ssize_t idx) const
+void SgAsmJvmExceptions::dump(FILE*, const char*, ssize_t) const
 {
   mlog[WARN] << "SgAsmJvmExceptions::dump() not implemented yet\n";
 }
@@ -593,7 +593,7 @@ void SgAsmJvmInnerClasses::unparse(std::ostream& os) const
   }
 }
 
-void SgAsmJvmInnerClasses::dump(FILE* f, const char* prefix, ssize_t idx) const
+void SgAsmJvmInnerClasses::dump(FILE*, const char*, ssize_t) const
 {
   mlog[WARN] << "SgAsmJvmInnerClasses::dump() ...\n";
 }
@@ -621,7 +621,7 @@ void SgAsmJvmInnerClassesEntry::unparse(std::ostream& os) const
   Jvm::writeValue(os, p_inner_class_access_flags);
 }
 
-void SgAsmJvmInnerClassesEntry::dump(FILE* f, const char* prefix, ssize_t idx) const
+void SgAsmJvmInnerClassesEntry::dump(FILE*, const char*, ssize_t) const
 {
   mlog[INFO] << "SgAsmJvmInnerClassesEntry::dump() is not implemented yet\n";
 }
@@ -660,8 +660,22 @@ void SgAsmJvmEnclosingMethod::dump(FILE* f, const char* prefix, ssize_t idx) con
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.8 The Synthetic Attribute. Synthetic_attribute represented by the TODO.
+// 4.7.8 The Synthetic Attribute. Synthetic_attribute represented by the SgAsmJvmSynthetic class.
 //
+SgAsmJvmSynthetic::SgAsmJvmSynthetic(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmAttribute* SgAsmJvmSynthetic::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+
+  // The value of the attribute_length item must be zero (section 4.7.8)
+  ASSERT_require(p_attribute_length == 0);
+  return this;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1018,7 +1032,7 @@ void SgAsmJvmBootstrapMethods::unparse(std::ostream &os) const
   }
 }
 
-void SgAsmJvmBootstrapMethods::dump(FILE* f, const char* prefix, ssize_t idx) const
+void SgAsmJvmBootstrapMethods::dump(FILE*, const char*, ssize_t) const
 {
   mlog[WARN] << "SgAsmJvmBootstrapMethods::dump() not implemented yet\n";
 }
@@ -1061,7 +1075,7 @@ void SgAsmJvmBootstrapMethod::unparse(std::ostream &os) const
   }
 }
 
-void SgAsmJvmBootstrapMethod::dump(FILE* f, const char* prefix, ssize_t idx) const
+void SgAsmJvmBootstrapMethod::dump(FILE*, const char*, ssize_t) const
 {
   mlog[WARN] << "SgAsmJvmBootstrapMethod::dump() not implemented yet\n";
 }
@@ -1133,10 +1147,6 @@ void SgAsmJvmMethodParametersEntry::dump(FILE* f, const char* prefix, ssize_t id
   fprintf(f, "%s:%ld: start_pc:%d line_number:%d\n", prefix, idx, p_name_index, p_access_flags);
 }
 
-
-
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // 4.7.25 The Module Attribute. Module_attribute represented by the TODO class.
@@ -1151,18 +1161,18 @@ void SgAsmJvmMethodParametersEntry::dump(FILE* f, const char* prefix, ssize_t id
 //
 // 4.7.27 The ModuleMainClass Attribute. ModuleMainClass_attribute represented by the SgAsmJvmModuleMainClass class.
 //
-SgAsmJvmAttribute* SgAsmJvmModuleMainClass::parse(SgAsmJvmConstantPool* pool)
+SgAsmJvmAttribute* SgAsmJvmModuleMainClass::parse(SgAsmJvmConstantPool*)
 {
   mlog[WARN] << "Parsing of SgAsmJvmModuleMainClass is not implemented yet\n";
   return nullptr;
 }
 
-void SgAsmJvmModuleMainClass::unparse(std::ostream& os) const
+void SgAsmJvmModuleMainClass::unparse(std::ostream&) const
 {
   mlog[WARN] << "Unparsing of SgAsmJvmModuleMainClass is not implemented yet\n";
 }
 
-void SgAsmJvmModuleMainClass::dump(FILE* f, const char *prefix, ssize_t idx) const
+void SgAsmJvmModuleMainClass::dump(FILE*, const char*, ssize_t) const
 {
   mlog[WARN] << "dump (of SgAsmJvmModuleMainClass) is not implemented yet\n";
 }
@@ -1190,11 +1200,10 @@ void SgAsmJvmNestHost::unparse(std::ostream &os) const
   Jvm::writeValue(os, p_host_class_index);
 }
 
-void SgAsmJvmNestHost::dump(FILE* f, const char* prefix, ssize_t idx) const
+void SgAsmJvmNestHost::dump(FILE*, const char*, ssize_t) const
 {
   mlog[WARN] << "SgAsmJvmNestHost::dump() not implemented yet\n";
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1236,7 +1245,7 @@ void SgAsmJvmNestMembers::unparse(std::ostream &os) const
   }
 }
 
-void SgAsmJvmNestMembers::dump(FILE* f, const char* prefix, ssize_t idx) const
+void SgAsmJvmNestMembers::dump(FILE*, const char*, ssize_t) const
 {
   mlog[WARN] << "SgAsmJvmNestMembers::dump() not implemented yet\n";
 }

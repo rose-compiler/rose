@@ -388,6 +388,7 @@ rosetta_generated_definitions =				\
 	  SgAsmJvmStackMapFrame.h			\
 	  SgAsmJvmStackMapTable.h			\
 	  SgAsmJvmStackMapVerificationType.h		\
+	  SgAsmJvmSynthetic.h				\
 	  SgAsmLEEntryPoint.h				\
 	  SgAsmLEEntryTable.h				\
 	  SgAsmLEFileHeader.h				\

@@ -306,6 +306,7 @@ run $(librose_compile) \
     SgAsmJvmStackMapFrame.C \
     SgAsmJvmStackMapTable.C \
     SgAsmJvmStackMapVerificationType.C \
+    SgAsmJvmSynthetic.C \
     SgAsmLEEntryPoint.C \
     SgAsmLEEntryTable.C \
     SgAsmLEFileHeader.C \
