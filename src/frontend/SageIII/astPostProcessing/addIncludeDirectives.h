@@ -4,7 +4,6 @@
 // DQ (5/7/2020): Iterate of the AST and add the include directives associated with 
 // SgIncludeFiles that were collected in the generation of the AST.
 
-
 // DQ (5/7/2020):
 /*! \brief Add include directives to the AST.
 
@@ -24,9 +23,7 @@ namespace EDG_ROSE_Translation
      extern std::map<std::string, SgIncludeFile*> edg_include_file_map;
    };
 
-
 void addIncludeDirectives( SgNode* node );
-
 
 class AddIncludeDirectivesInheritedAttribute
    {
@@ -34,9 +31,9 @@ class AddIncludeDirectivesInheritedAttribute
           bool xxx;
           bool foundStatementFromIncludeFile;
 
-       // AddIncludeDirectivesInheritedAttribute() : xxx(false) {}
           AddIncludeDirectivesInheritedAttribute();
-          AddIncludeDirectivesInheritedAttribute( const AddIncludeDirectivesInheritedAttribute & X );
+          AddIncludeDirectivesInheritedAttribute(const AddIncludeDirectivesInheritedAttribute &);
+          AddIncludeDirectivesInheritedAttribute& operator=(const AddIncludeDirectivesInheritedAttribute &) = default; // defeat warning
    };
 
 
@@ -44,7 +41,8 @@ class AddIncludeDirectivesSynthesizedAttribute
    {
      public:
           AddIncludeDirectivesSynthesizedAttribute();
-          AddIncludeDirectivesSynthesizedAttribute( const AddIncludeDirectivesSynthesizedAttribute & X );
+          AddIncludeDirectivesSynthesizedAttribute( const AddIncludeDirectivesSynthesizedAttribute &);
+          AddIncludeDirectivesSynthesizedAttribute& operator=(const AddIncludeDirectivesSynthesizedAttribute &) = default; // defeat warning
    };
 
 
@@ -52,14 +50,10 @@ class AddIncludeDirectivesTraversal
    : public SgTopDownBottomUpProcessing<AddIncludeDirectivesInheritedAttribute,AddIncludeDirectivesSynthesizedAttribute>
    {
      public:
-       // std::map<std::string, SgIncludeFile*> include_file_map;
           SgIncludeFile* include_file;
-
           SgStatement* previous_statement;
-
           bool includeDirectiveHasBeenInserted;
 
-       // AddIncludeDirectivesTraversal(std::map<std::string, SgIncludeFile*> & input_include_file_map);
           AddIncludeDirectivesTraversal(SgIncludeFile* input_include_file);
 
        // Required traversal function
@@ -75,4 +69,3 @@ class AddIncludeDirectivesTraversal
 
 // endif for ADD_INCLUDE_DIRECTIVES_H
 #endif
-
