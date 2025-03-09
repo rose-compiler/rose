@@ -401,6 +401,7 @@ GENERATED_SOURCE =						\
         SgAsmJvmConstantPoolEntry.h				\
         SgAsmJvmConstantPool.h					\
         SgAsmJvmConstantValue.h					\
+        SgAsmJvmDeprecated.h					\
         SgAsmJvmEnclosingMethod.h				\
         SgAsmJvmExceptionHandler.h				\
         SgAsmJvmExceptions.h					\
@@ -810,6 +811,7 @@ GENERATED_SOURCE =						\
 	SgAsmJvmConstantPoolEntry.h				\
 	SgAsmJvmConstantPool.h					\
 	SgAsmJvmConstantValue.h					\
+	SgAsmJvmDeprecated.h					\
 	SgAsmJvmEnclosingMethod.h				\
 	SgAsmJvmExceptionHandler.h				\
 	SgAsmJvmExceptions.h					\
@@ -1366,6 +1368,7 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmConstantPoolEntry.h			\
    SgAsmJvmConstantPool.h			\
    SgAsmJvmConstantValue.h			\
+   SgAsmJvmDeprecated.h				\
    SgAsmJvmEnclosingMethod.h			\
    SgAsmJvmExceptionHandler.h			\
    SgAsmJvmExceptions.h				\

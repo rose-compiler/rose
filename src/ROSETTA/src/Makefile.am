@@ -359,6 +359,7 @@ rosetta_generated_definitions =				\
 	  SgAsmJvmConstantPoolEntry.h			\
 	  SgAsmJvmConstantPool.h			\
 	  SgAsmJvmConstantValue.h			\
+	  SgAsmJvmDeprecated.h				\
 	  SgAsmJvmEnclosingMethod.h			\
 	  SgAsmJvmExceptionHandler.h			\
 	  SgAsmJvmExceptions.h				\

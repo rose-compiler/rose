@@ -276,6 +276,7 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmConstantPool.C
   SgAsmJvmConstantPoolEntry.C
   SgAsmJvmConstantValue.C
+  SgAsmJvmDeprecated.C
   SgAsmJvmEnclosingMethod.C
   SgAsmJvmExceptionHandler.C
   SgAsmJvmExceptionTable.C

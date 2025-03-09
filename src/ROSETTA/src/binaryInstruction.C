@@ -12737,6 +12737,70 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmDeprecated           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmDeprecated);
+IS_SERIALIZABLE(AsmJvmDeprecated);
+
+#ifndef DOCUMENTATION
+AsmJvmDeprecated.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+#ifdef DOCUMENTATION
+/** JVM Deprecated attribute.
+ *
+ *  A Deprecated attribute is an optional fixed-length attribute in the attributes table of a
+ *  ClassFile, field_info, or method_info structure, see section 4.7.15 of the JVM specification. */
+class SgAsmJvmDeprecated: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmDeprecated);
+#if defined(SgAsmJvmDeprecated_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmDeprecated -----------------------
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmDeprecated");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        debugSerializationEnd("SgAsmJvmDeprecated");
+    }
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
+public:
+    /** Initialize the attribute before parsing.
+     *
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
+    explicit SgAsmJvmDeprecated(SgAsmJvmAttributeTable* table);
+
+    /** Initialize the attribute by parsing the file. */
+    virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmDeprecated();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmDeprecated();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmDeprecated_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmConstantValue           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -13970,6 +14034,7 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
         | AsmJvmBootstrapMethods
         | AsmJvmCodeAttribute
         | AsmJvmConstantValue
+        | AsmJvmDeprecated
         | AsmJvmEnclosingMethod
         | AsmJvmExceptions
         | AsmJvmInnerClasses

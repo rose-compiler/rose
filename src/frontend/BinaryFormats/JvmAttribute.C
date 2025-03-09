@@ -58,6 +58,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   else if (name == "LocalVariableTypeTable") { // 4.7.14
     return new SgAsmJvmLocalVariableTable(parent);
   }
+  else if (name == "Deprecated") { // 4.7.15
+    return new SgAsmJvmDeprecated(parent);
+  }
   else if (name == "BootstrapMethods") { // 4.7.23
     return new SgAsmJvmBootstrapMethods(parent);
   }
@@ -957,8 +960,23 @@ void SgAsmJvmLocalVariableTypeEntry::dump(FILE* f, const char* prefix, ssize_t i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.15 The Deprecated Attribute. Deprecated_attribute represented by the TODO class.
+// 4.7.15 The Deprecated Attribute. Deprecated_attribute represented by the SgAsmJvmSynthetic class.
 //
+SgAsmJvmDeprecated::SgAsmJvmDeprecated(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmAttribute* SgAsmJvmDeprecated::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+
+  // The value of the attribute_length item must be zero (section 4.7.15)
+  ASSERT_require(p_attribute_length == 0);
+  return this;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

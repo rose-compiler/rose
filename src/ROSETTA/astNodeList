@@ -1066,3 +1066,4 @@ SgScopedRefExp
 SgScopedType
 SgTypeSymbol
 SgAsmJvmSynthetic
+SgAsmJvmDeprecated

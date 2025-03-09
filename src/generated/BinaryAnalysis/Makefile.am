@@ -280,6 +280,7 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmConstantPool.C \
         SgAsmJvmConstantPoolEntry.C \
         SgAsmJvmConstantValue.C \
+        SgAsmJvmDeprecated.C \
         SgAsmJvmEnclosingMethod.C \
         SgAsmJvmExceptionHandler.C \
         SgAsmJvmExceptionTable.C \
