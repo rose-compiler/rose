@@ -20,8 +20,6 @@
 // void fixupInitializersUsingIncludeFiles (SgNode* node);
 void fixupInitializersUsingIncludeFiles (SgProject* node);
 
-
-
 //! Inherited attribute required for FixupInitializers class.
 class FixupInitializersUsingIncludeFilesInheritedAttribute
    {
@@ -33,18 +31,17 @@ class FixupInitializersUsingIncludeFilesInheritedAttribute
           SgInitializedName* initializedName;
 
           FixupInitializersUsingIncludeFilesInheritedAttribute();
-          FixupInitializersUsingIncludeFilesInheritedAttribute( const FixupInitializersUsingIncludeFilesInheritedAttribute & X );
+          FixupInitializersUsingIncludeFilesInheritedAttribute(const FixupInitializersUsingIncludeFilesInheritedAttribute &);
+          FixupInitializersUsingIncludeFilesInheritedAttribute& operator=(const FixupInitializersUsingIncludeFilesInheritedAttribute&)=default;
    };
 
 class FixupInitializersUsingIncludeFilesSynthesizedAttribute
    {
      public:
           FixupInitializersUsingIncludeFilesSynthesizedAttribute();
-          FixupInitializersUsingIncludeFilesSynthesizedAttribute( const FixupInitializersUsingIncludeFilesSynthesizedAttribute & X );
+          FixupInitializersUsingIncludeFilesSynthesizedAttribute(const FixupInitializersUsingIncludeFilesSynthesizedAttribute &);
+          FixupInitializersUsingIncludeFilesSynthesizedAttribute& operator=(const FixupInitializersUsingIncludeFilesSynthesizedAttribute&)=default;
    };
-
-
-
 
 /*! \brief Fixup known ways in which inlcude files are used to initialized variable.
 
@@ -56,8 +53,6 @@ class FixupInitializersUsingIncludeFilesTraversal
    {
      public:
           FixupInitializersUsingIncludeFilesTraversal();
-
-       // refactored code.
           void findAndRemoveMatchingInclude(SgStatement* statement, SgExpression* expression, PreprocessingInfo::RelativePositionType location_to_search);
 
        // Required traversal function
