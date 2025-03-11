@@ -427,3 +427,4 @@ Status-Post-Processing:
 
 Coverage-Analysis:
     extends: .release-base 
+    timeout: 12h
