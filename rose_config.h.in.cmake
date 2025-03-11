@@ -134,7 +134,10 @@
 #cmakedefine HAVE_INTRINSICS_H @HAVE_INTRINSICS_H@
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-#cmakedefine HAVE_STDLIB_H @HAVE_STDLIB_H@ 
+#cmakedefine HAVE_STDLIB_H @HAVE_STDLIB_H@
+
+/* Define to 1 if you have the <sys/personality.h> header file. */
+#cmakedefine ROSE_HAVE_SYS_PERSONALITY_H @ROSE_HAVE_SYS_PERSONALITY_H@
 
 /* Define to 1 if you have the <sys/time.h> header file. */
 #cmakedefine HAVE_SYS_TIME_H @HAVE_SYS_TIME_H@

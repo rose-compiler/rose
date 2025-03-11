@@ -895,6 +895,9 @@ find_zlib()
 include(FindDwarf)
 find_dwarf()
 
+# Whether <sys/personality.h> is present (used by Rose::BinaryAnalysis::Debugger::Linux)
+find_path(ROSE_HAVE_SYS_PERSONALITY_H "sys/personality.h")
+
 set(ASSERTION_BEHAVIOR "exit" CACHE STRING "Default behavior of failed assertions. Can be 'abort', 'exit', or 'throw'.")
 if(ASSERTION_BEHAVIOR STREQUAL "abort")
   add_definitions("-DROSE_ASSERTION_BEHAVIOR=ROSE_ASSERTION_ABORT")
