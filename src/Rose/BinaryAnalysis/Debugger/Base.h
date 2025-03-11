@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Debugger/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/AddressInterval.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/Debugger/ThreadId.h>
@@ -93,12 +93,16 @@ public:
 
     /** Set breakpoints. */
     virtual void setBreakPoint(const AddressInterval&) = 0;
+    virtual void setBreakPoints(const AddressIntervalSet&) = 0;
 
     /** Remove breakpoints. */
     virtual void clearBreakPoint(const AddressInterval&) = 0;
 
     /** Remove all breakpoints. */
     virtual void clearBreakPoints() = 0;
+
+    /** All known breakpoints. */
+    virtual AddressIntervalSet breakPoints() = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Execution

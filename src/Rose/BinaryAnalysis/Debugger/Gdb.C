@@ -380,6 +380,17 @@ Gdb::setBreakPoint(const AddressInterval &where) {
 }
 
 void
+Gdb::setBreakPoints(const AddressIntervalSet &where) {
+    for (const AddressInterval &interval: where.intervals())
+        setBreakPoint(interval);
+}
+
+AddressIntervalSet
+Gdb::breakPoints() {
+    return breakPoints_;
+}
+
+void
 Gdb::clearBreakPoint(const AddressInterval &where) {
     if (!isAttached())
         throw Exception("not attached to subordinate process");

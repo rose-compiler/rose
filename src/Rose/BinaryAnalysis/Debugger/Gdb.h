@@ -270,6 +270,8 @@ public:
     virtual void terminate() override;
     virtual std::vector<ThreadId> threadIds() override;
     virtual void setBreakPoint(const AddressInterval&) override;
+    virtual void setBreakPoints(const AddressIntervalSet&) override;
+    virtual AddressIntervalSet breakPoints() override;
     virtual void clearBreakPoint(const AddressInterval&) override;
     virtual void clearBreakPoints() override;
     virtual void singleStep(ThreadId) override;

@@ -279,6 +279,12 @@ public:
      *  encountered a signal or terminated. Execution does not stop at break points. */
     void runToSystemCall(ThreadId);
 
+    /** Signal that is about to be delivered.
+     *
+     *  If the specimen is about to be sent a signal (at the next ptrace operation) then this function returns that signal,
+     *  otherwise it returns zero. */
+    int pendingSignal() const;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // System calls
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -328,6 +334,8 @@ public:
     virtual void executionAddress(ThreadId, Address) override;
     virtual Address executionAddress(ThreadId) override;
     virtual void setBreakPoint(const AddressInterval&) override;
+    virtual void setBreakPoints(const AddressIntervalSet&) override;
+    virtual AddressIntervalSet breakPoints() override;
     virtual void clearBreakPoint(const AddressInterval&) override;
     virtual void clearBreakPoints() override;
     virtual void singleStep(ThreadId) override;

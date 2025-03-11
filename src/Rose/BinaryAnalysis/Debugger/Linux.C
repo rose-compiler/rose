@@ -175,24 +175,16 @@ Linux::Specimen::prepareEnvAdjustments() const {
 
 bool
 Linux::Specimen::randomizedAddresses() const {
-#ifdef ROSE_HAVE_SYS_PERSONALITY_H
     return (persona_ & ADDR_NO_RANDOMIZE) == 0;
-#else
-    return false;
-#endif
 }
 
 void
 Linux::Specimen::randomizedAddresses(bool b) {
-#ifdef ROSE_HAVE_SYS_PERSONALITY_H
     if (b) {
         persona_ &= ~ADDR_NO_RANDOMIZE;
     } else {
         persona_ |= ADDR_NO_RANDOMIZE;
     }
-#else
-    ROSE_UNUSED(b);
-#endif
 }
 
 void
@@ -681,6 +673,17 @@ Linux::setBreakPoint(const AddressInterval &va) {
 }
 
 void
+Linux::setBreakPoints(const AddressIntervalSet &where) {
+    for (const AddressInterval &interval: where.intervals())
+        setBreakPoint(interval);
+}
+
+AddressIntervalSet
+Linux::breakPoints() {
+    return breakPoints_;
+}
+
+void
 Linux::clearBreakPoint(const AddressInterval &va) {
     SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": clear breakpoint " <<StringUtility::addrToString(va) <<"\n";
     breakPoints_.erase(va);
@@ -1111,25 +1114,21 @@ Linux::runToSystemCall(ThreadId) {
     waitForChild();
 }
 
+int
+Linux::pendingSignal() const {
+    return sendSignal_;
+}
+
 // class method
 unsigned long
 Linux::getPersonality() {
-#ifdef ROSE_HAVE_SYS_PERSONALITY_H
     return ::personality(0xffffffff);
-#else
-    return 0;
-#endif
 }
 
 // class method
 void
 Linux::setPersonality(unsigned long bits) {
-#ifdef ROSE_HAVE_SYS_PERSONALITY_H
     ::personality(bits);
-#else
-    if (bits != 0)
-        mlog[WARN] <<"unable to set process execution domain for this architecture\n";
-#endif
 }
 
 Sawyer::Optional<Address>
