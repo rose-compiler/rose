@@ -985,6 +985,7 @@ CxxGrammarMetaProgram_GENDEFN =		     	  	      	    	\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmConstantPoolEntry.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmConstantPool.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmConstantValue.h			\
+ $(ROSE)/src/ROSETTA/src/SgAsmJvmDeprecated.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmEnclosingMethod.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmExceptionHandler.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmExceptions.h				\
@@ -1014,6 +1015,7 @@ CxxGrammarMetaProgram_GENDEFN =		     	  	      	    	\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmStackMapFrame.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmStackMapTable.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmStackMapVerificationType.h		\
+ $(ROSE)/src/ROSETTA/src/SgAsmJvmSynthetic.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmLEEntryPoint.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmLEEntryTable.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmLEFileHeader.h				\
