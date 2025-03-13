@@ -10412,8 +10412,8 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
             // This is a declaration from the wrong file so go to the next statement.
             // surroundingStatement = (insertBefore == true) ? getNextStatement(surroundingStatement) : getPreviousStatement(surroundingStatement);
             // surroundingStatement = (insertBefore == true) ? getPreviousStatement(surroundingStatement) : getNextStatement(surroundingStatement);
-      // Liao, 12/26/2024. We should not climb out the current scope when finding the previous statement
-      // Otherwise, preprocessingInfo may be moved from a child stmt to its parent stmt, causing errors in AST.
+            // Liao, 12/26/2024. We should not climb out the current scope when finding the previous statement
+            // Otherwise, preprocessingInfo may be moved from a child stmt to its parent stmt, causing errors in AST.
                surroundingStatement = getPreviousStatement(surroundingStatement, false);
 
 #if REMOVE_STATEMENT_DEBUG
@@ -14387,6 +14387,20 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
    {
      ROSE_ASSERT(targetStmt &&newStmt);
      ROSE_ASSERT(targetStmt != newStmt); // should not share statement nodes!
+
+     if (isSgGlobal(targetStmt) ||
+         isSgClassDefinition(targetStmt)||
+         isSgNamespaceDefinitionStatement(targetStmt)||
+         isSgFunctionParameterList(targetStmt)||
+         isSgFunctionDefinition(targetStmt)||
+         isSgCtorInitializerList(targetStmt))
+     {
+       string className = targetStmt->class_name();
+       string err_msg = "targetStmt cannot be a " + className + ". Its parent does not implement insert_child(). Please revise your code to avoid inserting a stmt as a sibling of this type of targetStmt.";
+       cerr<<err_msg<<endl;
+       ROSE_ASSERT (false);
+     }
+
      SgNode* parent = targetStmt->get_parent();
      if (parent == NULL)
         {
@@ -14404,6 +14418,16 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
           parent = labelStatement->get_parent();
           ROSE_ASSERT(isSgLabelStatement(parent) == NULL);
         }
+
+     if (isSgFunctionDefinition(parent) ||
+         isSgTypedefDeclaration(parent) ||
+         isSgVariableDeclaration(parent))
+     { 
+       string className = targetStmt->class_name();
+       string err_msg = "targetStmt's parent cannot be a " + className + ". This parent does not implement insert() functioin. Please revise your code to avoid inserting a stmt as a sibling of this type of targetStmt.";
+       cerr<<err_msg<<endl;
+       ROSE_ASSERT (false);
+     }
 
 #if 0
      printf ("In SageInterface::insertStatement(): insert newStmt = %p = %s before/after targetStmt = %p = %s \n",newStmt,newStmt->class_name().c_str(),targetStmt,targetStmt->class_name().c_str());
@@ -27768,8 +27792,7 @@ void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<Pre
         data.depth = depth;
 
         // put directives with before location into the infoList
-        if (info->getRelativePosition () == PreprocessingInfo::before
-     )
+        if (info->getRelativePosition () == PreprocessingInfo::before)
         {
           infoList.push_back (info);
           infoMap[info] = data;
