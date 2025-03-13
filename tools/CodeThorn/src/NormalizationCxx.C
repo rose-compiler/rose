@@ -534,7 +534,7 @@ namespace
 
         SgMemberFunctionDeclaration& mfn = SG_DEREF( ctorini->get_declaration() );
 
-        return &getClassDef(mfn) == &classdef;
+        return &getClassDefForFunction(mfn) == &classdef;
       }
 
     private:
@@ -2275,7 +2275,7 @@ namespace
         using StmtInserter = void (SgBasicBlock::*)(SgStatement*);
 
         std::string                  fullName = mkFullName(ctordtor.get_name());
-        SgClassDefinition&           clsdef  = getClassDef(ctordtor);
+        SgClassDefinition&           clsdef   = getClassDefForFunction(ctordtor);
         const bool                   isConstructor = !isDtor(ctordtor);
 
         sg::NotNull<SgMemberFunctionDeclaration> fulldclNondef =
@@ -2356,7 +2356,7 @@ namespace
       findFullCtorDtor(SgMemberFunctionDeclaration& ctorDtor)
       {
         std::string        fullname = mkFullName(ctorDtor.get_name());
-        SgClassDefinition& clsdef   = getClassDef(ctorDtor);
+        SgClassDefinition& clsdef   = getClassDefForFunction(ctorDtor);
 
         for (SgDeclarationStatement* stmt : clsdef.get_members())
         {
@@ -2412,7 +2412,7 @@ namespace
 
       SgType& getThisType()
       {
-        SgClassDefinition&  clsdef  = getClassDef(memfn);
+        SgClassDefinition&  clsdef  = getClassDefForFunction(memfn);
         SgClassDeclaration& clsdcl  = SG_DEREF(clsdef.get_declaration());
         SgClassType&        clsty   = SG_DEREF(clsdcl.get_type());
         TypeModifer         modBldr = typeBuilder(memfn);
@@ -2611,7 +2611,7 @@ namespace
     if (!fun.get_definition()) return;
 
     SgBasicBlock&          blk = getCtorBody(fun);
-    SgClassDefinition&     cls = getClassDef(fun);
+    SgClassDefinition&     cls = getClassDefForFunction(fun);
     SgCtorInitializerList& lst = SG_DEREF( fun.get_CtorInitializerList() );
 
     // explicitly construct all member variables;
@@ -2661,7 +2661,7 @@ namespace
     if (!fun.get_definition()) return;
 
     SgBasicBlock&      blk = getCtorBody(fun);
-    SgClassDefinition& cls = getClassDef(fun);
+    SgClassDefinition& cls = getClassDefForFunction(fun);
 
     // recordScopedDestructors(blk, blk, blk, cont);
 
@@ -2785,7 +2785,7 @@ namespace
     if (alreadyProcessed(tf.visitedNodes(), &n))
       return;
 
-    sg::traverseChildren(std::move(tf), n);
+    sg::traverseDispatchedChildren(std::move(tf), n);
   }
 
   template <class Transformer>
@@ -2794,7 +2794,7 @@ namespace
     if (alreadyProcessed(tf.visitedNodes(), &n))
       return;
 
-    tf = std::move(sg::traverseChildren(std::move(tf), n));
+    tf = sg::traverseDispatchedChildren(std::move(tf), n);
   }
 
 
@@ -2893,7 +2893,7 @@ namespace
           return;
 
         // check if base classes and all non-trivial members have copy assignment
-        SgClassDefinition& clsdef = getClassDef(*memdcl);
+        SgClassDefinition& clsdef = getClassDefForFunction(*memdcl);
 
         if (alreadyProcessed(classesWithCopyAssignment, &clsdef, true /* needs copy-assign */))
           return;
@@ -3105,7 +3105,7 @@ namespace
 
         if (!ctordtor) return;
 
-        ClassKeyType                classkey     = &getClassDef(memdcl);
+        ClassKeyType                classkey     = &getClassDefForFunction(memdcl);
         const ClassData&            classdesc    = classAnalysis().at(classkey);
         const VirtualBaseContainer& virtualBases = classdesc.virtualBaseClassOrder();
 

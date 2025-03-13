@@ -152,10 +152,8 @@ namespace
 namespace CodeThorn
 {
   std::tuple<CallGraph, FunctionCallDataSequence>
-  generateCallGraphFromAST(SgProject* n, const VirtualFunctionAnalysis* vfa, bool withAddrTaken, bool withOverrider)
+  generateCallGraphFromAST(SgProject* n, const VirtualFunctionAnalysis* vfa, bool withAddrTaken)
   {
-    ASSERT_require(!withOverrider || (vfa != nullptr));
-
     CallGraph                    g;
     CompatibilityBridge          compat;
     std::vector<FunctionKeyType> allFunctions   = compat.allFunctionKeys(n);
@@ -174,7 +172,7 @@ namespace CodeThorn
     if (withAddrTaken)
       ie.integrateAddressTaken();
 
-    if (withOverrider)
+    if (vfa != nullptr /*withOverrider*/)
       ie.expandVirtualCalls(*vfa);
 
     SAWYER_MESG(msgInfo())

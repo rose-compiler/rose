@@ -163,7 +163,7 @@ namespace
     SgMemberFunctionDeclaration*        mkey = mdcl ? isSgMemberFunctionDeclaration(mdcl->get_firstNondefiningDeclaration())
                                                     : mdcl;
     SgMemberFunctionDeclaration&        mfn  = SG_DEREF(mkey);
-    SgClassDefinition&                  clsdef = getClassDef(mfn);
+    SgClassDefinition&                  clsdef = getClassDefForFunction(mfn);
     std::vector<SgFunctionDeclaration*> res = { &mfn };
 
     // return early if this is not a virtual call
@@ -187,7 +187,7 @@ namespace
     {
       const SgFunctionDeclaration*       fundcl = desc.function();
       const SgMemberFunctionDeclaration& ovrdcl = SG_DEREF(isSgMemberFunctionDeclaration(fundcl));
-      const SgClassDefinition&           ovrcls = getClassDef(ovrdcl);
+      const SgClassDefinition&           ovrcls = getClassDefForFunction(ovrdcl);
 
       if (cha.isBaseOf(&clsdef, &ovrcls))
         res.push_back(const_cast<SgFunctionDeclaration*>(fundcl));
@@ -330,7 +330,7 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 
            for (SgMemberFunctionDeclaration* fn : memberFunDecls[&memfnty])
            {
-             SgClassDefinition* candClass = &getClassDef(SG_DEREF(fn));
+             SgClassDefinition* candClass = &getClassDefForFunction(SG_DEREF(fn));
 
              if ((clsdef == candClass) || classes.isBaseOf(candClass, clsdef))
              {

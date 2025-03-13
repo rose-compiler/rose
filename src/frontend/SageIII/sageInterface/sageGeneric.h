@@ -1664,9 +1664,10 @@ namespace sg
     : gvisitor(std::move(gv))
     {}
 
-    void operator()(SgNode* n)
+    template <class SageNodePtr>
+    void operator()(SageNodePtr n)
     {
-      if (n != nullptr) gvisitor = sg::dispatch(std::move(gvisitor), n);
+      if (n) gvisitor = sg::dispatch(std::move(gvisitor), n);
     }
 
     operator GVisitor() && { return std::move(gvisitor); }
@@ -1682,7 +1683,6 @@ namespace sg
   {
     return DispatchHelper<GVisitor>(std::move(gv));
   }
-
   /// \}
 
   /// \private
@@ -1698,24 +1698,27 @@ namespace sg
   ///   are computed using a customizable generator. By default n.get_traversalSuccessorContainer()
   ///   is invoked.
   /// \{
-  template <class GVisitor, class SuccessorGenerator = DefaultTraversalSuccessors>
+  template <class SageNodeFunctor, class SageNode, class SageNodeChildrenGenerator = DefaultTraversalSuccessors>
   static inline
-  GVisitor traverseChildren( GVisitor gv, SgNode& n, SuccessorGenerator gen = {} )
+  SageNodeFunctor
+  traverseChildren(SageNodeFunctor fn, SageNode& n, SageNodeChildrenGenerator gen = {})
   {
     SgNodePtrList const successors = gen(n);
 
     return std::for_each( successors.begin(), successors.end(),
-                          dispatchHelper(std::move(gv))
+                          std::move(fn)
                         );
   }
-
-  template <class GVisitor>
-  static inline
-  GVisitor traverseChildren(GVisitor gv, SgNode* n)
-  {
-    return traverseChildren(std::move(gv), sg::deref(n));
-  }
   /// \}
+
+  template <class SageDispatchHandler, class SageNode, class SageNodeChildrenGenerator = DefaultTraversalSuccessors>
+  static inline
+  SageDispatchHandler
+  traverseDispatchedChildren(SageDispatchHandler handler, SageNode& n, SageNodeChildrenGenerator gen = {})
+  {
+    return traverseChildren(dispatchHelper(std::move(handler)), n, std::move(gen));
+  }
+
 
 
   /// Links parent node \p parent to child node \p child using the setter method \p setter.

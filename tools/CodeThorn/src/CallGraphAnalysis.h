@@ -51,8 +51,13 @@ namespace CodeThorn
 
   using FunctionCallDataSequence = std::vector<FunctionCallData>;
 
+  /// generates a CallGraph and call information from a ROSE project
+  ///   \param  ast           the ROSE project
+  ///   \param  vfa           a virtual function analysis, if overriders should be added to virtual calls
+  ///   \param  withAddrTaken if set, taking an address of a function generates a callgraph entry
+  ///   \return a call graph and detailed function call information.
   std::tuple<CallGraph, FunctionCallDataSequence>
-  generateCallGraphFromAST(SgProject*, const VirtualFunctionAnalysis* vfa = nullptr, bool withAddrTaken = true, bool withOverrider = true);
+  generateCallGraphFromAST(SgProject* ast, const VirtualFunctionAnalysis* vfa = nullptr, bool withAddrTaken = true);
 
   // CallGraph generateCallGraphFromNormalizedAST(SgProject* proj);
 } // end of namespace CodeThorn

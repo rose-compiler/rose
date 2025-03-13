@@ -199,7 +199,7 @@ namespace
     if (alreadyProcessed(*visitedNodes, &n))
       return;
 
-    sg::traverseChildren(this->withClass(cls), n);
+    sg::traverseDispatchedChildren(this->withClass(cls), n);
   }
 
   //
@@ -448,8 +448,8 @@ namespace
       void handleTypes(const SageType& lhs, const SgType& /* tag */)
       {
         // typedef types should not be skipped before they are dispatched
-        ROSE_ASSERT(lhs.variantT() != V_SgTypedefType);
-        ROSE_ASSERT(rhs.variantT() != V_SgTypedefType);
+        ASSERT_require(lhs.variantT() != V_SgTypedefType);
+        ASSERT_require(rhs.variantT() != V_SgTypedefType);
 
         //~ res = cmpValue(SageType::static_variant, rhs.variantT());
         res = cmpValue(lhs.variantT(), rhs.variantT());
@@ -925,7 +925,7 @@ RoseCompatibilityBridge::variableId(SgVariableDeclaration* var) const
   ASSERT_not_null(var);
 
   SgInitializedNamePtrList& lst = var->get_variables();
-  ROSE_ASSERT(lst.size() == 1);
+  ASSERT_require(lst.size() == 1);
 
   return variableId(lst[0]);
 }
@@ -1319,8 +1319,12 @@ RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType f
   ASSERT_require(clkey != ClassKeyType{});
   ASSERT_require(fnkey != FunctionKeyType{});
 
-  bool                             res = false;
-  const SgSpecialFunctionModifier& fnmod = fnkey->get_specialFunctionModifier();
+  // only member functions can be auto-generated
+  const SgMemberFunctionDeclaration* memfn = isSgMemberFunctionDeclaration(fnkey);
+  if (memfn == nullptr) return false;
+
+  bool                               res   = false;
+  const SgSpecialFunctionModifier&   fnmod = memfn->get_specialFunctionModifier();
 
   if (fnmod.isDestructor())
   {
@@ -1329,24 +1333,24 @@ RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType f
   }
   else if (fnmod.isConstructor())
     msgError() << "RoseCompatibilityBridge::isAutoGeneratable does not yet support "
-               << "constructors: " << fnkey->get_name()
+               << "constructors: " << memfn->get_name()
                << std::endl;
   else if (fnmod.isOperator())
   {
-    if (fnkey->get_name() != "operator=")
+    if (memfn->get_name() != "operator=")
     {
       // only copy/move assignment operators can be generated
       res = false;
     }
-    else if (clkey == &getClassDef(*fnkey))
+    else if (clkey == &getClassDefForFunction(*memfn))
     {
       // if the function is already in the class, then there is no need
       // to generate it.
       res = false;
     }
-    else if (isCopyAssignIn(fnkey, clkey))
+    else if (isCopyAssignIn(memfn, clkey))
       res = (copyAssignConflicts(clkey).size() == 0);
-    else if (isMoveAssignIn(fnkey, clkey))
+    else if (isMoveAssignIn(memfn, clkey))
       res = (moveAssignConflicts(clkey).size() == 0);
     else
       msgError() << "RoseCompatibilityBridge::isAutoGeneratable not yet implemented"
@@ -1373,7 +1377,7 @@ SgClassDefinition& getClassDef(const SgDeclarationStatement& n)
   return SG_DEREF(clsdef.get_definition());
 }
 
-SgClassDefinition& getClassDef(const SgMemberFunctionDeclaration& n)
+SgClassDefinition& getClassDefForFunction(const SgMemberFunctionDeclaration& n)
 {
   return getClassDef(SG_DEREF(n.get_associatedClassDeclaration()));
 }
@@ -1542,7 +1546,7 @@ namespace
     // if not set from context
     // \todo check that receiverKey matches if already set.
     if (!keyCopy)
-      keyCopy = &getClassDef(SG_DEREF(n.getAssociatedMemberFunctionDeclaration()));
+      keyCopy = &getClassDefForFunction(SG_DEREF(n.getAssociatedMemberFunctionDeclaration()));
 
     ASSERT_require(keyCopy);
     return { rcb.functionId(mfn), &n, keyCopy, ref, virtualCall };
@@ -1687,9 +1691,9 @@ namespace
   void
   CallDataFinder::descend(SgNode& n, bool ignoreFunctionRefExp)
   {
-    res = sg::traverseChildren( CallDataFinder{ std::move(res), ignoreFunctionRefExp, isVirtualFunction },
-                                &n
-                              );
+    res = sg::traverseDispatchedChildren( CallDataFinder{ std::move(res), ignoreFunctionRefExp, isVirtualFunction },
+                                          n
+                                        );
   }
 
   void
@@ -1766,10 +1770,7 @@ namespace
       void operator()(const SgNode* n)
       {
         if (ExcludeTemplates::templated(n))
-        {
-          std::cerr << "no" << std::endl;
           return;
-        }
 
         fn(n);
 

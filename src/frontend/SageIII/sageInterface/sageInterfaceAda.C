@@ -320,7 +320,7 @@ namespace
       ReturnType
       descend(SgNode* n);
 
-      void notFound() const { ROSE_ASSERT(!res); }
+      void notFound() const { ASSERT_require(!res); }
 
       size_t dimension() const
       {
@@ -2472,7 +2472,7 @@ namespace Ada
       if (!isFixedSpecialOperator(opname))
         return false;
 
-      ROSE_ASSERT(argtypes.size() >= 1);
+      ASSERT_require(argtypes.size() >= 1);
       return resolvesToFixedType(argtypes.front()) && resolvesToFixedType(argtypes.back());
     }
 
@@ -2487,7 +2487,7 @@ namespace Ada
   DominantArgInfo
   operatorArgumentWithNamedRootIfAvail(const SgTypePtrList& argtypes)
   {
-    ROSE_ASSERT(argtypes.size() == 1 || argtypes.size() == 2);
+    ASSERT_require(argtypes.size() == 1 || argtypes.size() == 2);
 
     SgType* lhsty = argtypes.front();
 
@@ -2510,7 +2510,7 @@ namespace Ada
   OperatorScopeInfo
   operatorScope(const std::string& opname, const SgTypePtrList& argtypes)
   {
-    ROSE_ASSERT(argtypes.size());
+    ASSERT_require(argtypes.size());
 
     if (isFixedSpecial(opname, argtypes))
     {
@@ -2871,7 +2871,7 @@ namespace Ada
 
       std::string comment = ppinfo->getString();
 
-      ROSE_ASSERT(comment.rfind("--", 0) == 0);
+      ASSERT_require(comment.rfind("--", 0) == 0);
       comment.replace(0, 2, prefix);
       comment.append(suffix);
       ppinfo->setString(comment);
@@ -2937,7 +2937,7 @@ namespace Ada
     if (op.empty()) return;
 
     // none of the functions in Standard should be defined.
-    ROSE_ASSERT(fndecl->get_definingDeclaration() == nullptr);
+    ASSERT_require(fndecl->get_definingDeclaration() == nullptr);
     work.emplace_back(fncall, std::move(op));
   }
 
@@ -2948,7 +2948,7 @@ namespace Ada
   {
     return [fn](SgExpressionPtrList operands) -> SgExpression&
            {
-             ROSE_ASSERT(operands.size() == 2);
+             ASSERT_require(operands.size() == 2);
              SgExpression*       lhs = operands[0];
              SgExpression*       rhs = operands[1];
 
@@ -2969,7 +2969,7 @@ namespace Ada
   {
     return [fn](SgExpressionPtrList operands) -> SgExpression&
            {
-             ROSE_ASSERT(operands.size() == 1);
+             ASSERT_require(operands.size() == 1);
              SgExpression*       arg = operands[0];
 
              ASSERT_not_null(arg);
@@ -3032,7 +3032,7 @@ namespace Ada
     {
       SgFunctionCallExp& orig  = SG_DEREF(std::get<0>(r));
       const int          numargs = arity(orig);
-      ROSE_ASSERT(numargs == 1 || numargs == 2);
+      ASSERT_require(numargs == 1 || numargs == 2);
       std::string const  key   = boost::to_lower_copy(std::get<1>(r));
       SgExpression&      repl  = numargs == 1 ? tfFn1.at(key)(operandExtractor(orig, false))
                                               : tfFn2.at(key)(operandExtractor(orig, false));
@@ -3480,7 +3480,7 @@ namespace Ada
 
     const SgInitializedNamePtrList& parmList = arglist.get_args();
 
-    ROSE_ASSERT(res.size() <= parmList.size());
+    ASSERT_require(res.size() <= parmList.size());
     extend(res, parmList.size()); // make arglist as long as function parameter list
 
     std::for_each( pos, zzz,
@@ -3762,7 +3762,7 @@ namespace
   std::pair<T, const char*>
   parseDec(const char* buf, int base = 10)
   {
-    ROSE_ASSERT((*buf != '\0') && (base > 0));
+    ASSERT_require((*buf != '\0') && (base > 0));
 
     // In constants folded by ASIS there can be a leading '-'
     //   otherwise a '-' is represented as unary operator.
@@ -3770,7 +3770,7 @@ namespace
 
     if (negmul < 0) ++buf;
 
-    ROSE_ASSERT((*buf != '\0') && char2Val(*buf, base).second);
+    ASSERT_require((*buf != '\0') && char2Val(*buf, base).second);
     T res = 0;
 
     while (*buf != '\0')
@@ -3786,16 +3786,16 @@ namespace
       // While the underflow is likely benign (System.Min_Int == -System.Min_Int)
       // for a two's complement representation, it seems more prudent to avoid it
       // altogether.
-      ROSE_ASSERT(  (std::numeric_limits<T>::lowest() / base <= res)
-                 && (std::numeric_limits<T>::max() / base >= res)
-                 && ("arithmethic over-/underflow during literal parsing (mul)")
-                 );
+      ASSERT_require(  (std::numeric_limits<T>::lowest() / base <= res)
+                    && (std::numeric_limits<T>::max() / base >= res)
+                    && ("arithmethic over-/underflow during literal parsing (mul)")
+                    );
       res = res*base;
 
-      ROSE_ASSERT(  ((negmul < 0) && (std::numeric_limits<T>::lowest() + v.first <= res))
-                 || ((negmul > 0) && (std::numeric_limits<T>::max() - v.first >= res))
-                 || (!"arithmethic over-/underflow during literal parsing (add)")
-                 );
+      ASSERT_require(  ((negmul < 0) && (std::numeric_limits<T>::lowest() + v.first <= res))
+                    || ((negmul > 0) && (std::numeric_limits<T>::max() - v.first >= res))
+                    || (!"arithmethic over-/underflow during literal parsing (add)")
+                    );
       res += (v.first * negmul);
 
       ++buf;
@@ -3813,7 +3813,7 @@ namespace
   std::pair<T, const char*>
   parseFrac(const char* buf, size_t base = 10)
   {
-    ROSE_ASSERT((*buf != '\0') && char2Val(*buf, base).second);
+    ASSERT_require((*buf != '\0') && char2Val(*buf, base).second);
 
     T      res = 0;
     size_t divisor = 1*base;
@@ -3821,16 +3821,16 @@ namespace
     while ((*buf != '\0') && (!isBasedDelimiter(*buf)))
     {
       const auto v = char2Val(*buf, base);
-      ROSE_ASSERT(v.second);
+      ASSERT_require(v.second);
 
       T val = v.first;
 
       if (val)
       {
-        ROSE_ASSERT(!std::isnan(divisor));
+        ASSERT_require(!std::isnan(divisor));
 
         T frac = val/divisor;
-        ROSE_ASSERT(!std::isnan(frac));
+        ASSERT_require(!std::isnan(frac));
 
         res += frac;
       }
@@ -3885,12 +3885,12 @@ namespace
   {
     int exp = 0;
 
-    ROSE_ASSERT(isBasedDelimiter(*cur));
+    ASSERT_require(isBasedDelimiter(*cur));
 
     ++cur;
-    ROSE_ASSERT(  (res >= std::numeric_limits<decltype(base)>::min())
-               && (res <= std::numeric_limits<decltype(base)>::max())
-               );
+    ASSERT_require(  (res >= std::numeric_limits<decltype(base)>::min())
+                  && (res <= std::numeric_limits<decltype(base)>::max())
+                  );
     base = res;
 
     std::tie(res, cur) = parseDec<long long int>(cur, base);
@@ -3951,7 +3951,7 @@ std::string convertStringLiteral(const char* textrep)
 
   std::stringstream buf;
   const char        delimiter = *textrep;
-  ROSE_ASSERT(delimiter == '"' || delimiter == '%');
+  ASSERT_require(delimiter == '"' || delimiter == '%');
 
   ++textrep;
   while (*(textrep+1))
@@ -3961,7 +3961,7 @@ std::string convertStringLiteral(const char* textrep)
     if (*textrep == delimiter)
     {
       ++textrep;
-      ROSE_ASSERT(*textrep == delimiter);
+      ASSERT_require(*textrep == delimiter);
     }
 
     buf << *textrep;
@@ -4026,11 +4026,11 @@ char convertCharLiteral(const char* img)
   ASSERT_not_null(img);
 
   const char delimiter = *img;
-  ROSE_ASSERT(delimiter == '\'');
+  ASSERT_require(delimiter == '\'');
 
   const char res = img[1];
   // \todo could we have a null character in quotes?
-  ROSE_ASSERT(res && img[2] == '\'');
+  ASSERT_require(res && img[2] == '\'');
   return res;
 }
 
@@ -4153,7 +4153,7 @@ overridingScope(const SgExprListExp& args, const std::vector<PrimitiveParameterD
     ++aa;
   }
 
-  ROSE_ASSERT(posArgLimit <= arglst.size());
+  ASSERT_require(posArgLimit <= arglst.size());
   ArgumentIterator firstNamed = arglst.begin() + posArgLimit;
   ArgumentIterator argLimit   = arglst.end();
 

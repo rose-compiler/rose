@@ -597,7 +597,7 @@ struct ComputeVFunctionRelation
     using ReturnTypeRelation = CompatibilityBridge::ReturnTypeRelation;
 
     const ReturnTypeRelation rel = compat.haveSameOrCovariantReturn(classes, bas, drv);
-    ROSE_ASSERT(rel != CompatibilityBridge::unrelated);
+    ASSERT_require(rel != CompatibilityBridge::unrelated);
 
     if (rel == CompatibilityBridge::unrelated)
     {
@@ -642,8 +642,7 @@ void computeOverriders( const CompatibilityBridge& compat,
 
   // create a new entry
   VirtualFunctionContainer& vfunSorted = sortedVFunMap[entry.first];
-
-  ROSE_ASSERT(vfunSorted.empty());
+  ASSERT_require(vfunSorted.empty());
 
   vfunSorted = entry.second.virtualFunctions();
   std::sort(vfunSorted.begin(), vfunSorted.end(), VFNameTypeOrder{ compat });

@@ -191,7 +191,7 @@ buildOutputSet(const ct::ClassAnalysis& classes)
 
                        const bool success = res.insert(elem.first).second;
 
-                       ROSE_ASSERT(success);
+                       ASSERT_require(success);
                      }
                    );
 
@@ -740,7 +740,7 @@ int main( int argc, char * argv[] )
 
     //~ tc.startTimer();
     SgProject* project = ct::CodeThornLib::runRoseFrontEnd(thornArgc,thornArgv,ctOpt,tc);
-    ROSE_ASSERT(project);
+    ASSERT_not_null(project);
     //~ tc.stopTimer();
 
     msgTrace() << "Parsing and creating AST finished."<<endl;

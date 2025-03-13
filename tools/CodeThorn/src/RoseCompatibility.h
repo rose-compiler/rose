@@ -221,10 +221,6 @@ class RoseCompatibilityBridge
 /// wrapper class to produce informative debug output about casts
 struct CastWriterDbg
 {
-    CastWriterDbg(CastKeyType n)
-    : node(n)
-    {}
-
     CastKeyType node;
 };
 
@@ -263,7 +259,7 @@ std::pair<ClassKeyType, TypeKeyType> getClassCastInfo(TypeKeyType tykey);
 SgClassDefinition& getClassDef(const SgDeclarationStatement& n);
 
 /// returns the class definition where \p n is defined
-SgClassDefinition& getClassDef(const SgMemberFunctionDeclaration& n);
+SgClassDefinition& getClassDefForFunction(const SgMemberFunctionDeclaration& n);
 
 /// returns the class definition associated with expression \p n
 /// \details

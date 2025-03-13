@@ -624,7 +624,7 @@ VTableLayout::virtualBaseSection(ClassKeyType key) const
   auto pred = [key](const VTableSection& sec) { return sec.virtualBase() && sec.associatedClass() == key; };
 
   pos = std::find_if(pos, lim, pred);
-  ROSE_ASSERT(pos != lim);
+  ASSERT_require(pos != lim);
   return *pos;
 }
 

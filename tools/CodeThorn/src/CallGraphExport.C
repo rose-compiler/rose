@@ -55,29 +55,18 @@ namespace
   }
 */
 
-  struct VertexToJson
-  {
-    json::json
-    operator()(const ct::CallGraph::Vertex& v) const
-    {
-      json::json                  res;
-      ct::FunctionKeyType         key = v.value();
-
-      res["id"]   = uniqueId(key);
-      res["name"] = nameOf(key);
-
-      return res;
-    }
-  };
 
   json::json
-  verticesAsJsonArray(boost::iterator_range<ct::CallGraph::ConstVertexIterator> range, ct::VertexPredicate pred)
+  verticesAsJsonArray( boost::iterator_range<ct::CallGraph::ConstVertexIterator> range,
+                       ct::VertexPredicate pred,
+                       ct::VertexToJsonConverter conv
+                     )
   {
     namespace adapt = boost::adaptors;
 
     json::json res = json::json::array();
 
-    boost::copy( range | adapt::filtered(pred) | adapt::transformed(VertexToJson{}),
+    boost::copy( range | adapt::filtered(pred) | adapt::transformed(conv),
                  std::back_inserter(res)
                );
 
@@ -198,14 +187,14 @@ namespace
 
 
   json::json
-  convertToJson(const ct::CallGraph& cg, bool useWeightForMultiEdges, ct::VertexPredicate pred)
+  convertToJson(const ct::CallGraph& cg, bool useWeightForMultiEdges, ct::VertexPredicate pred, ct::VertexToJsonConverter conv)
   {
     json::json res;
 
     res["directed"]   = true;
-    res["multigraph"] = false;
+    res["multigraph"] = !useWeightForMultiEdges;
     res["graph"]      = json::json::object();
-    res["nodes"]      = verticesAsJsonArray(cg.vertices(), pred);
+    res["nodes"]      = verticesAsJsonArray(cg.vertices(), pred, std::move(conv));
     res["links"]      = edgesAsJsonArray(useWeightForMultiEdges)(cg.edges(), pred);
 
     return res;
@@ -228,10 +217,42 @@ namespace CodeThorn
            };
   }
 
-  nlohmann::json
-  toJson(const CallGraph& cg, bool useWeightForMultiEdges, VertexPredicate pred)
+  VertexToJsonConverter basicVertexConverter()
   {
-    return convertToJson(cg, useWeightForMultiEdges, pred);
+    return [](const ct::CallGraph::Vertex& v) -> json::json
+           {
+             json::json          res;
+             ct::FunctionKeyType key = v.value();
+
+             res["id"]     = uniqueId(key);
+             res["name"]   = nameOf(key);
+
+             return res;
+           };
+  }
+
+  VertexToJsonConverter detailedVertexConverter()
+  {
+    return [](const ct::CallGraph::Vertex& v) -> json::json
+           {
+             json::json              res;
+             ct::FunctionKeyType     key = v.value();
+             ct::CompatibilityBridge compat;
+
+             res["id"]      = uniqueId(key);
+             res["name"]    = nameOf(key);
+             res["defined"] = compat.hasDefinition(key);
+             // res["fileid"]  = compat.location(key);
+
+             return res;
+           };
+  }
+
+
+  json::json
+  toJson(const CallGraph& cg, bool useWeightForMultiEdges, VertexPredicate pred, VertexToJsonConverter conv)
+  {
+    return convertToJson(cg, useWeightForMultiEdges, std::move(pred), std::move(conv));
   }
 } // end of namespace CodeThorn
 
