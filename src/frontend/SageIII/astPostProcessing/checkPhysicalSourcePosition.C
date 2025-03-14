@@ -26,7 +26,7 @@ checkPhysicalSourcePosition(SgNode *ast)
              }
 
        // Mark node as compiler generated and emit a warning if it wasn't already so marked.
-          void check(SgNode *node, Sg_File_Info *finfo)
+          void check(SgNode* /*node*/, Sg_File_Info* finfo)
              {
                if (finfo != NULL)
                   {

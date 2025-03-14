@@ -59,7 +59,7 @@ struct ReplacePointerInParent : public SimpleReferenceToPointerHandler {
     count(0)
   {}
 
-  virtual void operator()(SgNode * & key, const SgName & debugStringName, bool is_traversed) {
+  virtual void operator()(SgNode* & key, const SgName & /*debugStringName*/, bool /*is_traversed*/) {
     if (key == old_ptr) {
       ROSE_ASSERT(count == 0);
       key = new_ptr;
@@ -185,7 +185,7 @@ inline SgExpression * get_parent_if_folded_in(SgExpression * expr) {
   }
 }
 
-void removeConstantFoldedValue(SgProject * project) {
+void removeConstantFoldedValue(SgProject* /*project*/) {
   CollectExpressionTrees cet;
   cet.traverseMemoryPool();
 

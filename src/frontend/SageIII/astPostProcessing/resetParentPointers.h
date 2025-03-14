@@ -1,7 +1,6 @@
 #ifndef RESET_PARENT_POINTERS_H
 #define RESET_PARENT_POINTERS_H
 
- // DQ (3/4/2003)
  /*! \brief Interface function to reset parent pointers.
 
      Interface for resetting parent pointers (called by temporaryAstFixes()
@@ -10,30 +9,7 @@
 
      \internal This function can be called directly as well.
   */
-
- void resetParentPointers ( SgNode* node, SgNode* parent = NULL );
-
-#if 0
- // DQ (3/4/2003)
- /*! \brief Interface function to reset parent pointers (for SgFile* only).
-
-     Interface for resetting parent pointers (called by temporaryAstFixes()
-     function, but also required to reset parent pointers after any addition
-     of new AST fragements to the AST).
-
-     \deprecated This function will be removed in favor of the more general 
-                 version which takes any SgNode* (above).
-  */
-void resetParentPointers ( SgFile* node ) ROSE_DEPRECATED_FUNCTION;
-#endif
-
-/*
-  All fixes implemented in this file are temporary.
-  Changes necessary to remove it are:
-  - ROSE/ROSETTA/Grammar/Support.code : remove: temporaryAstFixes(this);
-  - ROSE/SAGE/Makefile.am : remove AstFixes.h and AstFixes.C
-  - ROSE/SAGE/AstFixes.[hC] : remove files
-*/
+ void resetParentPointers(SgNode* node, SgNode* parent = nullptr);
 
 // *******************************************************************************************
 // DQ (3/5/2003): Need to have this in the header file so that the static member data 
@@ -47,10 +23,11 @@ class ResetParentPointersInheritedAttribute
      public:
 
       //! Default constructor
-          ResetParentPointersInheritedAttribute(): parentNode(NULL) {}
+          ResetParentPointersInheritedAttribute(): parentNode(nullptr) {}
 
        // DQ (8/1/2019): Copy constructor.
-          ResetParentPointersInheritedAttribute(const ResetParentPointersInheritedAttribute & X ) { parentNode = X.parentNode; }
+          ResetParentPointersInheritedAttribute(const ResetParentPointersInheritedAttribute &X) { parentNode = X.parentNode; }
+          ResetParentPointersInheritedAttribute & operator=(const ResetParentPointersInheritedAttribute &) = default;
 
       //! Store previous node for reference and internal testing and output of debugging information
           SgNode* parentNode;
@@ -68,13 +45,6 @@ class ResetParentPointersInheritedAttribute
 class ResetParentPointers : public SgTopDownProcessing<ResetParentPointersInheritedAttribute>
    {
      public:
-      /*! \brief This stores debugging output.
-
-          This list of strings can be output as debugging information (in the future) 
-          about what nodes had to be reset from unexpected values.
-       */
-       // static std::list<std::string> modifiedNodeInformationList;
-
       //! Required traversal function
           ResetParentPointersInheritedAttribute
                evaluateInheritedAttribute(SgNode* node, ResetParentPointersInheritedAttribute inheritedAttribute);
@@ -106,7 +76,6 @@ class ResetParentPointers : public SgTopDownProcessing<ResetParentPointersInheri
           void resetParentPointersInTemplateArgumentList ( const SgTemplateArgumentPtrList& templateArgList );
    };
 
-
 /*! \brief This is a top level function not called recursively.
 
    This function calls resetParentPointer() which is a recursively 
@@ -114,7 +83,6 @@ class ResetParentPointers : public SgTopDownProcessing<ResetParentPointersInheri
    information from directly.
  */
 void topLevelResetParentPointer ( SgNode* node );
-
 
 /*! \brief This is a top level function not called recursively.
 
@@ -160,7 +128,6 @@ class ResetFileInfoParentPointersInMemoryPool : public ROSE_VisitTraversal
  */
 // DQ (8/23/2012): Modified to take a SgNode so that we could compute the global scope for use in setting 
 // parents of template instantiations that have not be placed into the AST but exist in the memory pool.
-// void resetParentPointersInMemoryPool();
 void resetParentPointersInMemoryPool(SgNode* node);
 
 /*! \brief This traversal uses the Memory Pool traversal to fixup remaining parent pointers.
