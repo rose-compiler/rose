@@ -20,7 +20,10 @@ namespace BinaryAnalysis {
  *  @li @ref Dictionary is a collection of calling convention definitions.
  *
  *  @li @ref Analysis performs an analysis and can determine which definitions best match the characteristics of some
- *      specified function. */
+ *      specified function.
+ *
+ *  @li @ref Declaration takes a calling convention definition and a C-like function prototype and outputs locations where
+ *      each argument would be stored. */
 namespace CallingConvention {
 }
 

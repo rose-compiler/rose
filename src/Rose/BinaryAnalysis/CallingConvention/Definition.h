@@ -78,7 +78,7 @@ protected:
 
     /** Construct a new calling convention.
      *
-     *  The name of the calling convention usually comes from the documentation (see @name) and is a single word. The comment
+     *  The name of the calling convention usually comes from the documentation (see @ref name) and is a single word. The comment
      *  is a more complete name for the convention perhaps including the operating system and architecture but not containing
      *  line termination. */
     Definition(const std::string &name, const std::string &comment, const Architecture::BaseConstPtr&);

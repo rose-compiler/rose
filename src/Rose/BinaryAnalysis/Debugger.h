@@ -14,7 +14,8 @@ namespace BinaryAnalysis {
 
 /** Name space for dynamic debuggers.
  *
- *  This name space holds everything related to running a specimen under a debugger. */
+ *  This name space holds everything related to running a specimen under a debugger. The main class is @ref Base, from which
+ *  various kinds of debuggers inherit. */
 namespace Debugger {}
 
 } // namespace
