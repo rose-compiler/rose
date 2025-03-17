@@ -1057,8 +1057,9 @@ Linux::writeMemory(Address va, size_t nBytes, const uint8_t *buffer) {
     if (-1 == lseek(mem.fd, va, SEEK_SET))
         return 0;                                       // bad address
     size_t totalWritten = 0;
+    const uint8_t *window = buffer;
     while (nBytes > 0) {
-        ssize_t nWritten = write(mem.fd, buffer, nBytes);
+        ssize_t nWritten = write(mem.fd, window, nBytes);
         if (-1 == nWritten) {
             if (EINTR == errno)
                 continue;
@@ -1068,7 +1069,7 @@ Linux::writeMemory(Address va, size_t nBytes, const uint8_t *buffer) {
             ASSERT_require(nWritten > 0);
             ASSERT_require((size_t)nWritten <= nBytes);
             nBytes -= nWritten;
-            buffer += nWritten;
+            window += nWritten;
             totalWritten += nWritten;
         }
     }
