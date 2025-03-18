@@ -47,6 +47,7 @@ public:
     class Specimen {
         BitFlags<Flag> flags_;                          // operational flags
         unsigned long persona_;                         // personality(2) flags
+        Architecture::BaseConstPtr arch_;               // optional architecture
 
         // Members for running a program
         boost::filesystem::path program_;               // full path of executable program
@@ -150,6 +151,15 @@ public:
          * @{ */
         unsigned long persona() const;
         void persona(unsigned long bits);
+        /** @} */
+
+        /** Property: Optional architecture.
+         *
+         *  Information about the specimen architecture, if available.
+         *
+         * @{ */
+        Architecture::BaseConstPtr architecture() const;
+        void architecture(const Architecture::BaseConstPtr&);
         /** @} */
 
         /** Property: Whether to randomize addresses of a process.
@@ -354,6 +364,9 @@ public:
     virtual void writeAllRegisters(ThreadId, const Sawyer::Container::BitVector&) override;
 
 private:
+    // Initialize after construction
+    void init();
+
     // Wait for subordinate or throw on error
     void waitForChild();
 
@@ -382,6 +395,10 @@ private:
 
     // Load system call declarations from the appropriate header file
     void declareSystemCalls(size_t nBits);
+
+    // Return the known specimen architecture from the `specimenArchitecture` property, or guess something. Returns null if a guess
+    // isn't even possible.
+    Architecture::BaseConstPtr guessSpecimenArchitecture() const;
 };
 
 std::ostream& operator<<(std::ostream&, const Linux::Specimen&);

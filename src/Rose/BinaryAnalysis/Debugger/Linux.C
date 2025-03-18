@@ -2,7 +2,8 @@
 #ifdef ROSE_ENABLE_DEBUGGER_LINUX
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
 
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/As.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 #include <Rose/BinaryAnalysis/Debugger/Exception.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/Hexdump.h>
@@ -123,6 +124,16 @@ Linux::Specimen::persona() const {
 void
 Linux::Specimen::persona(unsigned long bits) {
     persona_ = bits;
+}
+
+Architecture::Base::ConstPtr
+Linux::Specimen::architecture() const {
+    return arch_;                                       // may be null
+}
+
+void
+Linux::Specimen::architecture(const Architecture::Base::ConstPtr &arch) {
+    arch_ = arch;                                       // may be null
 }
 
 int
@@ -276,8 +287,19 @@ operator<<(std::ostream &out, const Debugger::Linux::Specimen &specimen) {
 
 void
 Linux::declareSystemCalls(size_t nBits) {
-    boost::filesystem::path h = "/usr/include/x86_64-linux-gnu/asm/unistd_" + boost::lexical_cast<std::string>(nBits) + ".h";
-    if (boost::filesystem::exists(h)) {
+    const auto h = [this]() -> boost::filesystem::path {
+        if (const auto arch = guessSpecimenArchitecture()) {
+            if (as<const Architecture::X86>(arch)) {
+                return "/usr/include/x86_64-linux-gnu/asm/unistd_" + boost::lexical_cast<std::string>(arch->bitsPerWord()) + ".h";
+            } else {
+                return {};
+            }
+        } else {
+            return {};
+        }
+    }();
+
+    if (!h.empty() && boost::filesystem::exists(h)) {
         SAWYER_MESG(mlog[DEBUG]) <<"parsing system call information from " <<h <<"\n";
         syscallDecls_.declare(SystemCall::parseHeaderFile(h));
     } else {
@@ -285,7 +307,10 @@ Linux::declareSystemCalls(size_t nBits) {
     }
 }
 
-Linux::Linux() {
+Linux::Linux() {}
+
+void
+Linux::init() {
     syscallVa_.reset();
     memset(regCache_.data(), 0, regCache_.size() * sizeof(RegPage::value_type));
 
@@ -535,6 +560,7 @@ Linux::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete) {
         detach();
         specimen_ = specimen;
         autoDetach_ = onDelete.orElse(DetachMode::KILL);
+        init();
 
         // Create the child exec arguments before the fork because heap allocation is not async-signal-safe.
         char **argv = new char*[1 /*name*/ + specimen.arguments().size() + 1 /*null*/]();
@@ -624,6 +650,8 @@ Linux::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete) {
         } else if (specimen.process() == child_) {
             // do nothing
         } else if (specimen.flags().isSet(Flag::ATTACH)) {
+            specimen_ = specimen;
+            init();
             child_ = specimen.process();
             SAWYER_MESG(debug) <<"attach: attaching to PID " <<child_ <<"\n";
             sendCommand(PTRACE_ATTACH);
@@ -632,11 +660,25 @@ Linux::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete) {
             if (SIGSTOP==sendSignal_)
                 sendSignal_ = 0;
         } else {
+            specimen_ = specimen;
+            init();
             child_ = specimen.process();
             SAWYER_MESG(debug) <<"attach: PID set to " <<child_ <<"\n";
             autoDetach_ = onDelete.orElse(DetachMode::NOTHING);
         }
-        specimen_ = specimen;
+    }
+}
+
+Architecture::Base::ConstPtr
+Linux::guessSpecimenArchitecture() const {
+    if (const auto arch = specimen_.architecture()) {
+        return arch;
+    } else if (const auto x86 = Architecture::findByName("intel-pentium4")) {
+        mlog[WARN] <<"assuming debug subordinate is " <<(*x86)->name() <<"\n";
+        return *x86;
+    } else {
+        mlog[ERROR] <<x86.unwrapError().what() <<"\n";
+        return {};
     }
 }
 
@@ -1061,8 +1103,11 @@ Linux::writeMemory(Address va, size_t nBytes, const uint8_t *buffer) {
     while (nBytes > 0) {
         ssize_t nWritten = write(mem.fd, window, nBytes);
         if (-1 == nWritten) {
-            if (EINTR == errno)
+            if (EINTR == errno) {
                 continue;
+            } else {
+                break;
+            }
         } else if (0 == nWritten) {
             break;
         } else {
@@ -1134,19 +1179,33 @@ Linux::setPersonality(unsigned long bits) {
 
 Sawyer::Optional<Address>
 Linux::findSystemCall() {
-    std::vector<uint8_t> needle{0xcd, 0x80};            // x86: INT 0x80
-
+    // Byte patterns to search for that are capable of making a system call
+    std::vector<std::vector<uint8_t>> needles;
+    if (as<const Architecture::X86>(guessSpecimenArchitecture())) {
+        needles.push_back(std::vector<uint8_t>{0xcd, 0x80}); // x86: INT 0x80
+        needles.push_back(std::vector<uint8_t>{0x0f, 0x05}); // x86: SYSCALL
+    }
+    
     // Make sure the syscall is still there if we already found it. This is reasonally fast.
     if (syscallVa_) {
-        std::vector<uint8_t> buf(needle.size());
-        size_t nRead = readMemory(*syscallVa_, buf.size(), buf.data());
-        if (nRead != buf.size() || !std::equal(buf.begin(), buf.end(), needle.begin()))
+        bool found = false;
+        for (const auto &needle: needles) {
+            std::vector<uint8_t> buf(needle.size());
+            size_t nRead = readMemory(*syscallVa_, buf.size(), buf.data());
+            if (nRead == buf.size() && std::equal(buf.begin(), buf.end(), needle.begin())) {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
             syscallVa_.reset();
     }
 
     // If we haven't found a syscall (even if we previously searched for one) then search now.
     std::vector<MemoryMap::ProcessMapRecord> segments = MemoryMap::readProcessMap(child_);
     for (const MemoryMap::ProcessMapRecord &segment: segments) {
+        if (syscallVa_)
+            break;
         if ("[vvar]" == segment.comment) {
             // Linux vvar segment cannot be read from /proc/*/mem even though it's marked readable in the map
         } else if ((segment.accessibility & MemoryMap::READ_EXECUTE) != MemoryMap::READ_EXECUTE) {
@@ -1154,8 +1213,10 @@ Linux::findSystemCall() {
         } else {
             auto map = MemoryMap::instance();
             map->insertProcessPid(child_, std::vector<MemoryMap::ProcessMapRecord>{segment});
-            if ((syscallVa_ = map->findAny(AddressInterval::whole(), std::vector<uint8_t>{0xcd, 0x80}, MemoryMap::EXECUTABLE)))
-                break;
+            for (const auto &needle: needles) {
+                if ((syscallVa_ = map->findAny(AddressInterval::whole(), needle, MemoryMap::EXECUTABLE)))
+                    break;
+            }
         }
     }
 
@@ -1213,36 +1274,42 @@ Linux::remoteSystemCall(ThreadId tid, int syscallNumber, std::vector<uint64_t> a
     // Find a system call that we can hijack to do our bidding.
     Sawyer::Optional<Address> syscallVa = findSystemCall();
     if (!syscallVa) {
-        SAWYER_MESG(debug) <<"syscall failed: cannot find a system call instruction\n";
+        SAWYER_MESG(mlog[ERROR]) <<"syscall failed: cannot find a system call instruction\n";
         return -1;
     } else {
         SAWYER_MESG(debug) <<"  subverting system call instruction at " <<StringUtility::addrToString(*syscallVa) <<"\n";
     }
 
     // Registers that we'll need later, one per syscall argument.
-    // FIXME[Robb Matzke 2020-08-26]: This is i386 specific, but I'm not sure what the best way is to figure out whether the
-    // subordinate is using the syscall numbers for i386, x86-64, or something else.
-    RegisterDescriptor syscallReg(x86_regclass_gpr, x86_gpr_ax, 0, 32);
+    Architecture::Base::ConstPtr arch = guessSpecimenArchitecture();
     std::vector<RegisterDescriptor> regs;
-#if 1 // i386
-    switch (args.size()) {
-        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bp, 0, 32)); // falls through
-        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32)); // falls through
-        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32)); // falls through
-        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32)); // falls through
-        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_cx, 0, 32)); // falls through
-        case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bx, 0, 32));
+    RegisterDescriptor syscallReg;
+    if (as<const Architecture::X86>(arch)) {
+        syscallReg = RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, arch->bitsPerWord());
+        if (arch->bitsPerWord() == 32) {
+            switch (args.size()) {
+                case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bp, 0, 32)); // falls through
+                case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32)); // falls through
+                case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32)); // falls through
+                case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32)); // falls through
+                case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_cx, 0, 32)); // falls through
+                case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bx, 0, 32));
+            }
+        } else if (arch->bitsPerWord() == 64) {
+            switch (args.size()) {
+                case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 9,          0, 32)); // falls through
+                case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 8,          0, 32)); // falls through
+                case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 10,         0, 32)); // falls through
+                case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32)); // falls through
+                case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32)); // falls through
+                case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32));
+            }
+        } else {
+            ASSERT_not_reachable("invalid x86 word size: " + boost::lexical_cast<std::string>(arch->bitsPerWord()));
+        }
+    } else if (arch) {
+        ASSERT_not_implemented("unsupported debug architecture: " + arch->name());
     }
-#else // x86-64
-    switch (args.size()) {
-        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 9,          0, 32)); // falls through
-        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 8,          0, 32)); // falls through
-        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 10,         0, 32)); // falls through
-        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32)); // falls through
-        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32)); // falls through
-        case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32));
-    }
-#endif
     std::reverse(regs.begin(), regs.end());
 
     // Save registers we're about to overwrite
@@ -1278,6 +1345,25 @@ Linux::remoteSystemCall(ThreadId tid, int syscallNumber, std::vector<uint64_t> a
 
 int
 Linux::remoteOpenFile(ThreadId tid, const boost::filesystem::path &fileName, unsigned flags, mode_t mode) {
+    const unsigned openSyscall = [this]() {
+        if (const auto arch = guessSpecimenArchitecture()) {
+            if (as<const Architecture::X86>(arch)) {
+                if (arch->bitsPerWord() == 32) {
+                    return 5;
+                } else if (arch->bitsPerWord() == 64) {
+                    return 2;
+                } else {
+                    ASSERT_not_reachable("invalid word size");
+                }
+            } else {
+                mlog[ERROR] <<"SYS_open not known for " <<arch->name() <<"\n";
+                return -1;
+            }
+        } else {
+            ASSERT_not_reachable("no architecture");
+        }
+    }();
+
     // Find some writable memory in which to write the file name
     Sawyer::Optional<Address> nameVa;
     std::vector<MemoryMap::ProcessMapRecord> mapRecords = MemoryMap::readProcessMap(child_);
@@ -1295,7 +1381,7 @@ Linux::remoteOpenFile(ThreadId tid, const boost::filesystem::path &fileName, uns
     std::vector<uint8_t> savedName(fileName.string().size() + 1);
     readMemory(*nameVa, fileName.string().size() + 1, savedName.data());
     writeMemory(*nameVa, fileName.string().size()+1, (const uint8_t*)fileName.c_str());
-    int retval = remoteSystemCall(tid, 5 /*open*/, std::vector<uint64_t>{*nameVa, flags, mode});
+    int retval = remoteSystemCall(tid, openSyscall, std::vector<uint64_t>{*nameVa, flags, mode});
 
     // Restore saved memory
     writeMemory(*nameVa, savedName.size(), savedName.data());
@@ -1304,17 +1390,55 @@ Linux::remoteOpenFile(ThreadId tid, const boost::filesystem::path &fileName, uns
 
 int
 Linux::remoteCloseFile(ThreadId tid, unsigned fd) {
-    return remoteSystemCall(tid, 6 /*close*/, std::vector<uint64_t>{fd});
+    const unsigned closeSyscall = [this]() {
+        if (const auto arch = guessSpecimenArchitecture()) {
+            if (as<const Architecture::X86>(arch)) {
+                if (arch->bitsPerWord() == 32) {
+                    return 6;
+                } else if (arch->bitsPerWord() == 64) {
+                    return 3;
+                } else {
+                    ASSERT_not_reachable("invalid word size");
+                }
+            } else {
+                mlog[ERROR] <<"SYS_open not known for " <<arch->name() <<"\n";
+                return -1;
+            }
+        } else {
+            ASSERT_not_reachable("no architecture");
+        }
+    }();
+
+    return remoteSystemCall(tid, closeSyscall, std::vector<uint64_t>{fd});
 }
 
 Address
 Linux::remoteMmap(ThreadId tid, Address va, size_t nBytes, unsigned prot, unsigned flags,
                    const boost::filesystem::path &fileName, off_t offset_) {
+    const unsigned mmapSyscall = [this]() {
+        if (const auto arch = guessSpecimenArchitecture()) {
+            if (as<const Architecture::X86>(arch)) {
+                if (arch->bitsPerWord() == 32) {
+                    return 192;                         // SYS_mmap2
+                } else if (arch->bitsPerWord() == 64) {
+                    return 9;                           // SYS_mmap
+                } else {
+                    ASSERT_not_reachable("invalid word size");
+                }
+            } else {
+                mlog[ERROR] <<"SYS_open not known for " <<arch->name() <<"\n";
+                return -1;
+            }
+        } else {
+            ASSERT_not_reachable("no architecture");
+        }
+    }();
+
     uint64_t offset = boost::numeric_cast<uint64_t>(offset_);
     int fd = remoteOpenFile(tid, fileName, O_RDONLY, 0);
     if (fd < 0)
         return fd;
-    int retval = remoteSystemCall(tid, 90 /*mmap*/, std::vector<uint64_t>{va, nBytes, prot, flags, (unsigned)fd, offset});
+    int retval = remoteSystemCall(tid, mmapSyscall, std::vector<uint64_t>{va, nBytes, prot, flags, (unsigned)fd, offset});
     remoteCloseFile(tid, fd);
     return retval;
 }
