@@ -1449,6 +1449,11 @@ SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettin
             SAWYER_MESG(mlog[INFO]) <<"initial stack:\n"
                                     <<"  pointer = " <<StringUtility::addrToString(*settings_.initialStackVa) <<"\n"
                                     <<"  region = " <<StringUtility::addrToString(stackRegion_) <<"\n";
+
+            partitioner_->memoryMap()->insert(stackRegion_,
+                                              MemoryMap::Segment::anonymousInstance(stackRegion_.size(),
+                                                                                    MemoryMap::READ_WRITE,
+                                                                                    "stack"));
         }
     }
 }
