@@ -110,9 +110,6 @@ void CollectTransitiveDependences :: Compute(const std::vector<std::string>& inp
     DebugLog Log("-debug-dep-table");
     Log.push("Output results of transitive dependence analysis");
     auto from = input;
-    if (from.empty()) {
-       from = saved_sources_;
-    }
     for (std::string e : from) {
           std::set<std::string> destinations;
           Compute(e, destinations, what_to_do);
