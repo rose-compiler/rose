@@ -17,6 +17,8 @@
 #include "unparser.h"
 #include "sage_support.h"
 
+using namespace Rose::Diagnostics;
+
 UnparseJovial::UnparseJovial(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
    {
@@ -106,7 +108,7 @@ UnparseJovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Inf
           case V_SgExprStatement:              unparseExprStmt       (stmt, info);  break;
 
           default: {
-             cerr << "UnparseJovial::unparseLanguageSpecificStatement: Error: No handler for "
+             mlog[ERROR] << "UnparseJovial::unparseLanguageSpecificStatement: Error: No handler for "
                   <<  stmt->class_name() << ", variant: " << stmt->variantT() << endl;
              ROSE_ABORT();
              break;
@@ -879,7 +881,7 @@ UnparseJovial::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& info
         }
      else
         {
-          cerr << "UnparseJovial::unparseProcessControlStmt: unknown statement enum "
+         mlog[WARN] << "UnparseJovial::unparseProcessControlStmt: unknown statement enum "
                <<  kind << endl;
           ROSE_ABORT();
         }
@@ -1148,7 +1150,7 @@ UnparseJovial::unparseTableBody(SgClassDefinition* table_def, SgUnparse_Info& in
                        curprint_indented(";\n", info);
 
                     }
-                 else cerr << "WARNING UNIMPLEMENTED: Unparse of unknown table member type \n";
+                 else mlog[WARN] << "WARNING UNIMPLEMENTED: Unparse of unknown table member type \n";
               }
            info.dec_nestingLevel();
 

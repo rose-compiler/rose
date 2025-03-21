@@ -27776,7 +27776,7 @@ void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<Pre
         }
         else
         {
-          cerr<<"Warning: unhandled relative position value:" <<info->getRelativePosition () <<endl;
+         mlog[Sawyer::Message::Common::WARN] <<"Warning: unhandled relative position value:" <<info->getRelativePosition () <<endl;
           // ROSE_ASSERT (false); // Jovial has end_of
         }
 
