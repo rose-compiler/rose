@@ -18350,6 +18350,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
   unsigned long long SageInterface::getIntegerConstantValue(SgValueExp* expr) {
     switch (expr->variantT()) {
       case V_SgCharVal: return (long long)(isSgCharVal(expr)->get_value());
+      case V_SgSignedCharVal: return (long long)(isSgSignedCharVal(expr)->get_value());
       case V_SgUnsignedCharVal: return isSgUnsignedCharVal(expr)->get_value();
       case V_SgShortVal: return (long long)(isSgShortVal(expr)->get_value());
       case V_SgUnsignedShortVal: return isSgUnsignedShortVal(expr)->get_value();
