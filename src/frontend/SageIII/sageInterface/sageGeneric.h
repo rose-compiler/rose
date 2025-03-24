@@ -817,6 +817,7 @@ namespace sg
     GEN_VISIT(SgUnknownArrayOrFunctionReference)
     GEN_VISIT(SgUnknownFile)
     GEN_VISIT(SgUnparse_Info)
+    GEN_VISIT(SgSignedCharVal)
     GEN_VISIT(SgUnsignedCharVal)
     GEN_VISIT(SgUnsignedIntVal)
     GEN_VISIT(SgUnsignedLongLongIntVal)
