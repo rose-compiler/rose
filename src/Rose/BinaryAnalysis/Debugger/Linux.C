@@ -1413,8 +1413,8 @@ Linux::remoteCloseFile(ThreadId tid, unsigned fd) {
 }
 
 Address
-Linux::remoteMmap(ThreadId tid, Address va, size_t nBytes, unsigned prot, unsigned flags,
-                   const boost::filesystem::path &fileName, off_t offset_) {
+Linux::remoteMmap(const ThreadId tid, const Address va, const size_t nBytes, const unsigned prot, const unsigned flags,
+                   const boost::filesystem::path &fileName, const off_t offset_) {
     const unsigned mmapSyscall = [this]() {
         if (const auto arch = guessSpecimenArchitecture()) {
             if (as<const Architecture::X86>(arch)) {
@@ -1434,11 +1434,11 @@ Linux::remoteMmap(ThreadId tid, Address va, size_t nBytes, unsigned prot, unsign
         }
     }();
 
-    uint64_t offset = boost::numeric_cast<uint64_t>(offset_);
-    int fd = remoteOpenFile(tid, fileName, O_RDONLY, 0);
+    const uint64_t offset = boost::numeric_cast<uint64_t>(offset_);
+    const int fd = remoteOpenFile(tid, fileName, O_RDONLY, 0);
     if (fd < 0)
         return fd;
-    int retval = remoteSystemCall(tid, mmapSyscall, std::vector<uint64_t>{va, nBytes, prot, flags, (unsigned)fd, offset});
+    const Address retval = remoteSystemCall(tid, mmapSyscall, std::vector<uint64_t>{va, nBytes, prot, flags, (unsigned)fd, offset});
     remoteCloseFile(tid, fd);
     return retval;
 }
