@@ -243,6 +243,48 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // PL (3/24/2025): Added case
+          case V_SgUnsignedCharVal:
+             {
+               const SgUnsignedCharVal* charValueExpression = isSgUnsignedCharVal(this);
+               ASSERT_not_null(charValueExpression);
+
+               unsigned char value = charValueExpression->get_value();
+               if (isalnum(value) == true)
+                  {
+                 // Leave this as a alpha or numeric value where possible.
+                    s = charValueExpression->get_value();
+                  }
+                 else
+                  {
+                 // Convert this to be a string of the numeric value so that it will print.
+                    snprintf (buffer,max_buffer_size,"%d",value);
+                    s = buffer;
+                  }
+               break;
+             }
+
+       // PL (3/24/2025): Added case
+          case V_SgSignedCharVal:
+             {
+               const SgSignedCharVal* charValueExpression = isSgSignedCharVal(this);
+               ASSERT_not_null(charValueExpression);
+
+               signed char value = charValueExpression->get_value();
+               if (isalnum(value) == true)
+                  {
+                 // Leave this as a alpha or numeric value where possible.
+                    s = charValueExpression->get_value();
+                  }
+                 else
+                  {
+                 // Convert this to be a string of the numeric value so that it will print.
+                    snprintf (buffer,max_buffer_size,"%d",value);
+                    s = buffer;
+                  }
+               break;
+             }
+
        // DQ (10/4/2010): Added case
           case V_SgFloatVal:
              {

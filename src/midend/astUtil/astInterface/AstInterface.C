@@ -1746,6 +1746,7 @@ IsConstant( const AstNodePtr& _exp, std::string* valtype, std::string *val)
       return true;
   case V_SgCharVal:
   case V_SgWcharVal:
+  case V_SgSignedCharVal:
   case V_SgUnsignedCharVal:
       if (valtype != 0) *valtype = "char";
       break;

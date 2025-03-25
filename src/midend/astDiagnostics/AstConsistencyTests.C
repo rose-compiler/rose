@@ -4378,6 +4378,7 @@ TestLValues::visit ( SgNode* node )
                         }
                         case V_SgShortVal:
                         case V_SgCharVal:
+                        case V_SgSignedCharVal:
                         case V_SgUnsignedCharVal:
                         case V_SgWcharVal:
                         case V_SgUnsignedShortVal:
