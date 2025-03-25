@@ -118,7 +118,7 @@ void WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* r
         } 
         return true;
       };
-     AstUtilInterface::ComputeAstSideEffects(input, root, save_dep, &annot_table);
+     AstUtilInterface::ComputeAstSideEffects(input, &save_dep, &annot_table);
   }
   if (AstInterface::IsBlock(input, 0, &children)) {
     for (AstInterface::AstNodeList::const_iterator p = children.begin(); p != children.end(); ++p) {

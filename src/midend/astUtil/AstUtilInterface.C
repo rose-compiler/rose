@@ -10,10 +10,11 @@
 
 DebugLog DebugAstUtil("-debugastutil");
 
-void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
-              std::function<bool(const AstNodePtr&, const AstNodePtr&, AstUtilInterface::OperatorSideEffect)>& collect,
-              DependenceTable* add_to_dep_analysis) {
-    AstInterfaceImpl astImpl(scope);
+void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, 
+              std::function<bool(const AstNodePtr&, 
+              const AstNodePtr&, AstUtilInterface::OperatorSideEffect)>* collect,
+              SaveOperatorSideEffectInterface* add_to_dep_analysis) {
+    AstInterfaceImpl astImpl(ast);
     AstInterface fa(&astImpl);
 
     OperatorSideEffectAnnotation* funcAnnot=OperatorSideEffectAnnotation::get_inst();
@@ -57,7 +58,8 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
          }
       }
       DebugAstUtil([&first](){ return "save modify:" + AstInterface::AstToString(first); });
-      return collect(first, second, OperatorSideEffect::Modify);
+      if (collect != 0) return (*collect)(first, second, OperatorSideEffect::Modify);
+      return true;
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_read = [&collect,&ast, do_annot, &done_annot_read, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
       if (!AstInterface::IsMemoryAccess(first))  {
@@ -74,13 +76,15 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
          }
       }
       DebugAstUtil([&first](){ return "save read:" + AstInterface::AstToString(first); });
-      return collect(first, second, OperatorSideEffect::Read);
+      if (collect != 0)  (*collect)(first, second, OperatorSideEffect::Read);
+      return true;
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_kill = [&collect] (AstNodePtr first, AstNodePtr second) {
       if (!AstInterface::IsMemoryAccess(first)) 
           return true;
       DebugAstUtil([&first](){ return "save kill:" + AstInterface::AstToString(first); });
-      return collect(first, second, OperatorSideEffect::Kill);
+      if (collect != 0) (*collect)(first, second, OperatorSideEffect::Kill);
+      return true;
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_call = [&collect,&ast, do_annot, &done_annot_call, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
       if (do_annot && (first == AST_UNKNOWN || !IsLocalRef(first.get_ptr(), body.get_ptr()))) {
@@ -92,19 +96,23 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, SgNode* scope,
          }
       }
       DebugAstUtil([&first](){ return "save call:" + AstInterface::AstToString(first); });
-      return collect(first, second, OperatorSideEffect::Call);
+      if (collect != 0)  (*collect)(first, second, OperatorSideEffect::Call);
+      return true;
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_decl = [&collect] (AstNodePtr var, AstNodePtr init) {
       DebugAstUtil([&var](){ return "save new decl:" + AstInterface::AstToString(var); });
-      return collect(var, init, OperatorSideEffect::Decl);
+      if (collect != 0) (*collect)(var, init, OperatorSideEffect::Decl);
+      return true;
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_allocate = [&collect] (AstNodePtr var, AstNodePtr init) {
       DebugAstUtil([&var](){ return "save allocate:" + AstInterface::AstToString(var); });
-      return collect(var, init, OperatorSideEffect::Allocate);
+      if (collect != 0) return (*collect)(var, init, OperatorSideEffect::Allocate);
+      return true;
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_free = [&collect] (AstNodePtr var, AstNodePtr init) {
       DebugAstUtil([&var](){ return "save free:" + AstInterface::AstToString(var); });
-      return collect(var, init, OperatorSideEffect::Free);
+      if (collect != 0) (*collect)(var, init, OperatorSideEffect::Free);
+      return true;
     };
     collect_operator.set_modify_collect(save_mod);
     collect_operator.set_read_collect(save_read);

@@ -143,7 +143,7 @@ class CollectTransitiveDependences : public CollectDependences {
 };
 
 //! Stores dependence entries in a table.
-class DependenceTable : public CollectDependences {
+class DependenceTable : public CollectDependences, public SaveOperatorSideEffectInterface {
   public:
     DependenceTable(bool update_annotations) 
       : update_annotations_(update_annotations) {}
@@ -190,10 +190,10 @@ class DependenceTable : public CollectDependences {
     }
 
     //! Erase existing annotation for the given operator.
-    void ClearOperatorSideEffect(SgNode* op); 
+    void ClearOperatorSideEffect(SgNode* op) override; 
     //
     //! The operator op accesses the given memory reference in nature of the given relation.
-    bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* sig = 0); 
+    bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* sig = 0) override; 
 
 
   private:
