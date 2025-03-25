@@ -1399,9 +1399,17 @@ LeafPtr makeFloatingPointNan(size_t eb, size_t sb, const std::string &comment=""
  *  interprets its operands as unsigned values unless the method has "Signed" in its name.
  *
  * @{ */
-Ptr makeAdd(const Ptr&a, const Ptr &b,
+Ptr makeAdd(const Ptr &a, const Ptr &b,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeAdd(const Ptr &a, uint64_t b, 
+            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeSubtract(const Ptr &a, const Ptr &b,
+                 const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeSubtract(const Ptr &a, uint64_t b,
+                 const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeAsr(const Ptr &sa, const Ptr &a,
+            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeAsr(size_t sa, const Ptr &a,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeAnd(const Ptr &a, const Ptr &b,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
@@ -1415,7 +1423,11 @@ Ptr makeConvert(const Ptr &a, const Type &b,
                 const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeEq(const Ptr &a, const Ptr &b,
            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeEq(const Ptr &a, uint64_t b,
+           const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a,
+                const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeExtract(size_t begin, size_t end, const Ptr &a,
                 const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeImplies(const Ptr &a, const Ptr &b,
                 const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
@@ -1441,13 +1453,19 @@ Ptr makeLssb(const Ptr &a,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeMax(const Ptr &a, const Ptr &b,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeMax(const Ptr &a, uint64_t b,
+             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeMin(const Ptr &a, const Ptr &b,
+             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeMin(const Ptr &a, uint64_t b,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeMssb(const Ptr &a,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeMultiplyAdd(const Ptr &a, const Ptr &b, const Ptr &c,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeNe(const Ptr &a, const Ptr &b,
+           const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeNe(const Ptr &a, uint64_t b,
            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeNegate(const Ptr &a,
                const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
@@ -1457,7 +1475,11 @@ Ptr makeReinterpret(const Ptr &a, const Type &b,
                     const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeRol(const Ptr &sa, const Ptr &a,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeRol(uint64_t sa, const Ptr &a,
+            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeRor(const Ptr &sa, const Ptr &a,
+            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeRor(uint64_t sa, const Ptr &a,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeRound(const Ptr &a,
               const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
@@ -1475,11 +1497,19 @@ Ptr makeSignedGt(const Ptr &a, const Ptr &b,
                  const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeShl0(const Ptr &sa, const Ptr &a,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeShl0(size_t sa, const Ptr &a,
+             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeShl1(const Ptr &sa, const Ptr &a,
+             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeShl1(size_t sa, const Ptr &a,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeShr0(const Ptr &sa, const Ptr &a,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeShr0(size_t sa, const Ptr &a,
+             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeShr1(const Ptr &sa, const Ptr &a,
+             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeShr1(size_t sa, const Ptr &a,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeIsSignedPos(const Ptr &a,
                     const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
@@ -1503,15 +1533,27 @@ Ptr makeExtend(const Ptr &newSize, const Ptr &a,
                const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeGe(const Ptr &a, const Ptr &b,
            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeGe(const Ptr &a, uint64_t b,
+           const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeGt(const Ptr &a, const Ptr &b,
+           const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeGt(const Ptr &a, uint64_t b,
            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeLe(const Ptr &a, const Ptr &b,
            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeLe(const Ptr &a, uint64_t b,
+           const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeLt(const Ptr &a, const Ptr &b,
+           const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeLt(const Ptr &a, uint64_t b,
            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeMod(const Ptr &a, const Ptr &b,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeMod(const Ptr &a, uint64_t b,
+            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeMul(const Ptr &a, const Ptr &b,
+            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeMul(const Ptr &a, uint64_t b,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeWrite(const Ptr &mem, const Ptr &addr, const Ptr &a,
               const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);

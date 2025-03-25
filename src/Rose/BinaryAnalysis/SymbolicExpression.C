@@ -3754,12 +3754,27 @@ makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const st
 }
 
 Ptr
-makeAdd(const Ptr&a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+makeAdd(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_ADD, a, b, solver, comment, flags);
     } else {
         return Interior::instance(OP_ADD, a, b, solver, comment, flags);
     }
+}
+
+Ptr
+makeAdd(const Ptr &a, const uint64_t b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeAdd(a, makeIntegerConstant(a->nBits(), b), solver, comment, flags);
+}
+
+Ptr
+makeSubtract(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeAdd(a, makeNegate(b, solver), solver, comment, flags);
+}
+
+Ptr
+makeSubtract(const Ptr &a, const uint64_t b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeAdd(a, makeIntegerConstant(a->nBits(), b), solver, comment, flags);
 }
 
 Ptr
@@ -3770,6 +3785,11 @@ makeBooleanAnd(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const s
 Ptr
 makeAsr(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_ASR, sa, a, solver, comment, flags);
+}
+
+Ptr
+makeAsr(size_t sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeAsr(makeIntegerConstant(a->nBits(), sa), a, solver, comment, flags);
 }
 
 Ptr
@@ -3807,9 +3827,22 @@ makeEq(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::stri
 }
 
 Ptr
+makeEq(const Ptr &a, const uint64_t b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeEq(a, makeIntegerConstant(a->nBits(), b), solver, comment, flags);
+}
+
+Ptr
 makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment,
             unsigned flags) {
     return Interior::instance(OP_EXTRACT, begin, end, a, solver, comment, flags);
+}
+
+Ptr
+makeExtract(const size_t begin, const size_t end, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment,
+            unsigned flags) {
+    Ptr b = makeIntegerConstant(a->nBits(), begin);
+    Ptr e = makeIntegerConstant(a->nBits(), end);
+    return makeExtract(b, e, a, solver, comment, flags);
 }
 
 Ptr
@@ -3887,12 +3920,22 @@ makeMax(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::str
 }
 
 Ptr
+makeMax(const Ptr &a, const uint64_t b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeMax(a, makeIntegerConstant(a->nBits(), b), solver, comment, flags);
+}
+
+Ptr
 makeMin(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_MIN, a, b, solver, comment, flags);
     } else {
         return makeIte(makeLe(a, b, solver, "", 0), a, b, solver, comment, flags);
     }
+}
+
+Ptr
+makeMin(const Ptr &a, const uint64_t b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeMin(a, makeIntegerConstant(a->nBits(), b), solver, comment, flags);
 }
 
 Ptr
@@ -3916,6 +3959,11 @@ makeNe(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::stri
     } else {
         return Interior::instance(OP_NE, a, b, solver, comment, flags);
     }
+}
+
+Ptr
+makeNe(const Ptr &a, const uint64_t b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeNe(a, makeIntegerConstant(a->nBits(), b), solver, comment, flags);
 }
 
 Ptr
@@ -3948,8 +3996,18 @@ makeRol(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::st
 }
 
 Ptr
+makeRol(const size_t sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeRol(makeIntegerConstant(a->nBits(), sa), a, solver, comment, flags);
+}
+
+Ptr
 makeRor(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_ROR, sa, a, solver, comment, flags);
+}
+
+Ptr
+makeRor(const size_t sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeRor(makeIntegerConstant(a->nBits(), sa), a, solver, comment, flags);
 }
 
 Ptr
@@ -4005,8 +4063,18 @@ makeShl0(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::s
 }
 
 Ptr
+makeShl0(const size_t sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeShl0(makeIntegerConstant(a->nBits(), sa), a, solver, comment, flags);
+}
+
+Ptr
 makeShl1(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_SHL1, sa, a, solver, comment, flags);
+}
+
+Ptr
+makeShl1(const size_t sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeShl1(makeIntegerConstant(a->nBits(), sa), a, solver, comment, flags);
 }
 
 Ptr
@@ -4015,8 +4083,18 @@ makeShr0(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::s
 }
 
 Ptr
+makeShr0(const size_t sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeShr0(makeIntegerConstant(a->nBits(), sa), a, solver, comment, flags);
+}
+
+Ptr
 makeShr1(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_SHR1, sa, a, solver, comment, flags);
+}
+
+Ptr
+makeShr1(const size_t sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeShr1(makeIntegerConstant(a->nBits(), sa), a, solver, comment, flags);
 }
 
 Ptr
@@ -4111,12 +4189,22 @@ makeGe(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::stri
 }
 
 Ptr
+makeGe(const Ptr &a, const uint64_t b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeGe(a, makeIntegerConstant(a->nBits(), b), solver, comment, flags);
+}
+
+Ptr
 makeGt(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_GT, a, b, solver, comment, flags);
     } else {
         return Interior::instance(OP_UGT, a, b, solver, comment, flags);
     }
+}
+
+Ptr
+makeGt(const Ptr &a, const uint64_t b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeGt(a, makeIntegerConstant(a->nBits(), b), solver, comment, flags);
 }
 
 Ptr
@@ -4129,12 +4217,22 @@ makeLe(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::stri
 }
 
 Ptr
+makeLe(const Ptr &a, const uint64_t b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeLe(a, makeIntegerConstant(a->nBits(), b), solver, comment, flags);
+}
+
+Ptr
 makeLt(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_LT, a, b, solver, comment, flags);
     } else {
         return Interior::instance(OP_ULT, a, b, solver, comment, flags);
     }
+}
+
+Ptr
+makeLt(const Ptr &a, const uint64_t b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeLt(a, makeIntegerConstant(a->nBits(), b), solver, comment, flags);
 }
 
 Ptr
@@ -4147,12 +4245,22 @@ makeMod(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::str
 }
 
 Ptr
+makeMod(const Ptr &a, const uint64_t b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeMod(a, makeIntegerConstant(a->nBits(), b), solver, comment, flags);
+}
+
+Ptr
 makeMul(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_MUL, a, b, solver, comment, flags);
     } else {
         return Interior::instance(OP_UMUL, a, b, solver, comment, flags);
     }
+}
+
+Ptr
+makeMul(const Ptr &a, uint64_t b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeMul(a, makeIntegerConstant(a->nBits(), b), solver, comment, flags);
 }
 
 Ptr
