@@ -1417,6 +1417,8 @@ Ptr makeEq(const Ptr &a, const Ptr &b,
            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a,
                 const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeImplies(const Ptr &a, const Ptr &b,
+                const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeInvert(const Ptr &a,
                const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeIsInfinite(const Ptr &a,

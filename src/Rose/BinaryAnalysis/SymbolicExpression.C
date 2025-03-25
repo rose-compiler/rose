@@ -3813,6 +3813,11 @@ makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a, const SmtSolver::Ptr
 }
 
 Ptr
+makeImplies(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
+    return makeOr(makeAnd(a, b, solver), makeInvert(a, solver), solver, comment, flags);
+}
+
+Ptr
 makeInvert(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_INVERT, a, solver, comment, flags);
 }
