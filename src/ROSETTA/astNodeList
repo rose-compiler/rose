@@ -700,7 +700,6 @@ SgJavaSynchronizedStatement
 SgJavaParameterizedType
 SgJavaWildcardType
 SgProcessControlStatement
-SgSignedCharVal
 SgSpecialFunctionModifier
 SgStatement
 SgStaticAssertionDeclaration
@@ -1068,3 +1067,4 @@ SgScopedType
 SgTypeSymbol
 SgAsmJvmSynthetic
 SgAsmJvmDeprecated
+SgSignedCharVal
