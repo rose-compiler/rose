@@ -1429,33 +1429,49 @@ SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettin
             SAWYER_MESG(debug) <<"  found " <<gvar <<"\n";
     }
 
-    if (!settings_.initialStackVa) {
+    // Allocate the stack in memory
+    static const size_t RESERVE_BELOW  = 15*1024*1024;  // memory to reserve below the initial stack inter
+    static const size_t RESERVE_ABOVE   =  1*1024*1024; // memory reserved at and above the initial stack pointer
+    static const size_t STACK_ALIGNMENT = 16;           // alignment in bytes
+    if (settings_.initialStackVa) {
+        // Use an existing stack address
+        Alignment stackAlignment(STACK_ALIGNMENT, partitioner->architecture()->bitsPerWord());
+        const Address maxAddr = BitOps::lowMask<Address>(partitioner->architecture()->bitsPerWord());
+        const Address loAddr = stackAlignment.alignDown(*settings_.initialStackVa >= RESERVE_BELOW ?
+                                                        *settings_.initialStackVa - RESERVE_BELOW :
+                                                        0);
+        const Address hiAddr = stackAlignment.alignUp(*settings_.initialStackVa <= maxAddr - (RESERVE_ABOVE + 1) ?
+                                                      *settings_.initialStackVa + RESERVE_ABOVE - 1 :
+                                                      maxAddr)
+                               .orElse(maxAddr + 1) - 1;
+        ASSERT_require(loAddr <= hiAddr);
+        stackRegion_ = AddressInterval::hull(loAddr, hiAddr);
+        Sawyer::Optional<Address> va = partitioner->memoryMap()->findFreeSpace(stackRegion_.size(), 1, stackRegion_);
+        if (!va) {
+            mlog[ERROR] <<"cannot allocate stack at " <<StringUtility::addrToString(stackRegion_) <<"\n";
+        } else {
+            SAWYER_MESG(mlog[INFO]) <<"initial stack:\n"
+                                    <<"  pointer = " <<StringUtility::addrToString(*settings_.initialStackVa) <<"\n"
+                                    <<"  region = " <<StringUtility::addrToString(stackRegion_) <<"\n";
+        }
+    } else {
         // Choose an initial stack pointer that's unlikely to interfere with instructions or data. This model requires a concrete
         // stack pointer.
-        static const size_t RESERVE_BELOW  = 15*1024*1024;          // memory to reserve below the initial stack inter
-        static const size_t RESERVE_ABOVE   =  1*1024*1024;         // memory reserved at and above the initial stack pointer
-        static const size_t STACK_ALIGNMENT = 16;                   // alignment in bytes
         auto where = AddressInterval::hull(0x80000000, 0xffffffff); // where to look in the address space
-
-        Sawyer::Optional<Address> va =
-            partitioner->memoryMap()->findFreeSpace(RESERVE_BELOW + RESERVE_ABOVE, STACK_ALIGNMENT, where,
-                                                    Sawyer::Container::MATCH_BACKWARD);
+        Sawyer::Optional<Address> va = partitioner->memoryMap()->findFreeSpace(RESERVE_BELOW + RESERVE_ABOVE, STACK_ALIGNMENT,
+                                                                               where, Sawyer::Container::MATCH_BACKWARD);
         if (!va) {
-            mlog[ERROR] <<"no room for a stack anywhere in " <<StringUtility::addrToString(where) <<"\n"
-                        <<"falling back to abstract stack address\n";
+            mlog[ERROR] <<"no room for a stack anywhere in " <<StringUtility::addrToString(where) <<"\n";
         } else {
             settings_.initialStackVa = *va + RESERVE_BELOW;
             stackRegion_ = AddressInterval::hull(*va, *va + RESERVE_BELOW + RESERVE_ABOVE - 1);
             SAWYER_MESG(mlog[INFO]) <<"initial stack:\n"
                                     <<"  pointer = " <<StringUtility::addrToString(*settings_.initialStackVa) <<"\n"
                                     <<"  region = " <<StringUtility::addrToString(stackRegion_) <<"\n";
-
-            partitioner_->memoryMap()->insert(stackRegion_,
-                                              MemoryMap::Segment::anonymousInstance(stackRegion_.size(),
-                                                                                    MemoryMap::READ_WRITE,
-                                                                                    "stack"));
         }
     }
+    const auto stackSegment = MemoryMap::Segment::anonymousInstance(stackRegion_.size(), MemoryMap::READ_WRITE, "stack");
+    partitioner_->memoryMap()->insert(stackRegion_, stackSegment);
 }
 
 SemanticCallbacks::~SemanticCallbacks() {}
