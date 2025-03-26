@@ -43,7 +43,7 @@ Null::disassembleOne(const MemoryMap::Ptr &map, Address va, AddressSet*) {
 }
 
 SgAsmInstruction*
-Null::makeUnknownInstruction(const Exception &e) {
+Null::makeUnknownInstruction(const Exception &/*e*/) {
 #if 0 // [Robb Matzke 2024-08-21]: we need to set an instruction kind corresponding to the arch's unknown instruction
     SgAsmInstruction *insn = new SgAsmNullInstruction(e.ip, *architecture()->registrationId(), "unknown");
     SgAsmOperandList *operands = new SgAsmOperandList;

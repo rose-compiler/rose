@@ -63,7 +63,8 @@ private:
 protected:
     SValue();                                           // needed for serialization
     explicit SValue(size_t nbits);                      // hot
-    SValue(const SValue &other);
+    SValue(const SValue&);
+    SValue& operator=(const SValue&);
 
 public:
     virtual ~SValue();

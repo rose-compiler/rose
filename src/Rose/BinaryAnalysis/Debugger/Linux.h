@@ -394,7 +394,7 @@ private:
     long sendCommandInt(__ptrace_request, void *addr, int i);
 
     // Load system call declarations from the appropriate header file
-    void declareSystemCalls(size_t nBits);
+    void declareSystemCalls();
 
     // Return the known specimen architecture from the `specimenArchitecture` property, or guess something. Returns null if a guess
     // isn't even possible.

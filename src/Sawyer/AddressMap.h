@@ -1061,6 +1061,11 @@ public:
         }
     }
 
+    AddressMap& operator=(const AddressMap &other) {
+        Super::operator=(other);
+        return *this;
+    }
+
     /** Constraint: required access bits.
      *
      *  Constrains address to those that have all of the access bits that are set in @p x.

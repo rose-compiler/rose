@@ -265,7 +265,6 @@ SgAsmGenericSection::set_mapped_size(Address size)
 void
 SgAsmGenericSection::set_mappedSize(Address size)
 {
-    ASSERT_not_null(this);
     if (get_mappedSize()!=size)
         set_isModified(true);
     p_mappedSize = size;
@@ -285,7 +284,6 @@ SgAsmGenericSection::set_mapped_preferred_rva(Address a)
 void
 SgAsmGenericSection::set_mappedPreferredRva(Address a)
 {
-    ASSERT_not_null(this);
     if (get_mappedPreferredRva()!=a)
         set_isModified(true);
     p_mappedPreferredRva = a;
@@ -300,7 +298,6 @@ SgAsmGenericSection::get_mapped_preferred_va() const
 Address
 SgAsmGenericSection::get_mappedPreferredVa() const
 {
-    ASSERT_not_null(this);
     if (isMapped())
         return get_baseVa() + get_mappedPreferredRva();
     return 0;
@@ -315,8 +312,6 @@ SgAsmGenericSection::get_base_va() const
 Address
 SgAsmGenericSection::get_baseVa() const
 {
-    ASSERT_not_null(this);
-
     if (isSgAsmGenericHeader(this))
         return isSgAsmGenericHeader(this)->get_baseVa();
 
@@ -333,7 +328,6 @@ SgAsmGenericSection::get_mapped_preferred_extent() const
 Extent
 SgAsmGenericSection::get_mappedPreferredExtent() const
 {
-    ASSERT_not_null(this);
     return Extent(get_mappedPreferredRva(), get_mappedSize());
 }
 
@@ -532,8 +526,6 @@ Address
 SgAsmGenericSection::write(std::ostream &f, Address offset, size_t bufsize, const void *buf) const
 {
     size_t nwrite;
-
-    ASSERT_not_null(this);
 
     /* Don't write past end of section */
     if (offset>=get_size()) {

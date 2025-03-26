@@ -74,6 +74,7 @@ public:
                   const std::string &name = "");
 
     StackVariable(const StackVariable&);
+    StackVariable& operator=(const StackVariable&);
     ~StackVariable();
 
     /** Property: Function owning the variable.

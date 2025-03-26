@@ -286,7 +286,7 @@ operator<<(std::ostream &out, const Debugger::Linux::Specimen &specimen) {
 }
 
 void
-Linux::declareSystemCalls(size_t nBits) {
+Linux::declareSystemCalls() {
     const auto h = [this]() -> boost::filesystem::path {
         if (const auto arch = guessSpecimenArchitecture()) {
             if (as<const Architecture::X86>(arch)) {
@@ -324,7 +324,7 @@ Linux::init() {
     // descriptors in this table have sizes that correspond to the data member in the user_regs_struct, not necessarily the
     // natural size of the register (e.g., The 16-bit segment registers are listed as 32 or 64 bits).
 #if defined(__x86_64) && __WORDSIZE==64
-    declareSystemCalls(32);
+    declareSystemCalls();
     disassembler_ = Architecture::findByName("amd64").orThrow()->newInstructionDecoder();
 
     //------------------------------------                                                 struct  struct
@@ -396,7 +396,7 @@ Linux::init() {
     //                                                                                       0x01a0
 
 #elif defined(__x86) && __WORDSIZE==32
-    declareSystemCalls(64);
+    declareSystemCalls();
     disassembler_ = new Disassembler::X86(4 /*bytes*/);
 
     //------------------------------------                                                 struct  struct

@@ -20,7 +20,8 @@ BaseVariable::BaseVariable(size_t maxSizeBytes, const std::vector<InstructionAcc
     : maxSizeBytes_(std::min(maxSizeBytes, ((size_t)(1) << (8*sizeof(size_t)-1))-1)),
       insns_(definingInstructionVas), name_(name) {}
 
-BaseVariable::BaseVariable(const BaseVariable &other) = default;
+BaseVariable::BaseVariable(const BaseVariable&) = default;
+BaseVariable& BaseVariable::operator=(const BaseVariable&) = default;
 BaseVariable::~BaseVariable() {}
 
 Address

@@ -3331,6 +3331,7 @@ X86::decodeOpcode0F(State &state) const
                         case mmF2:
                             throw ExceptionX86("bad mm prefix F2 for opcode 0x0f3a0f", state);
                     }
+                    ASSERT_not_reachable("invalid mmPrefix");
                 }
                 default: {
                     char opcodestr[16];
@@ -5421,6 +5422,7 @@ X86::decodeOpcode0F38(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f3800", state);
             }
+            ASSERT_not_reachable("invalid mmPrefix");
         }
         default:
             throw ExceptionX86("bad SSE3 opcode", state);

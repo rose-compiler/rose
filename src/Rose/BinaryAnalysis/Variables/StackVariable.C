@@ -21,6 +21,7 @@ StackVariable::StackVariable(const P2::FunctionPtr &function, int64_t stackOffse
       purpose_(purpose) {}
 
 StackVariable::StackVariable(const StackVariable&) = default;
+StackVariable& StackVariable::operator=(const StackVariable&) = default;
 StackVariable::~StackVariable() {}
 
 P2::Function::Ptr

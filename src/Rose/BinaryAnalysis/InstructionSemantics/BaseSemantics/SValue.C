@@ -38,6 +38,8 @@ SValue::SValue(const size_t nbits)
 SValue::SValue(const SValue &other)
     : Sawyer::SharedObject(other), width(other.width) {}
 
+SValue& SValue::operator=(const SValue&) = default;
+    
 SValue::~SValue() {}
 
 SValue::Ptr

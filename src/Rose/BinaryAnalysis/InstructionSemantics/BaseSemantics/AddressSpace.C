@@ -110,7 +110,7 @@ AddressSpace::AddressSpace(const Purpose p, const std::string &s)
 }
 
 AddressSpace::AddressSpace(const AddressSpace &other)
-    : purpose_(other.purpose_), name_(other.name_) {}
+    : boost::enable_shared_from_this<AddressSpace>(other), purpose_(other.purpose_), name_(other.name_) {}
 
 AddressSpace::Purpose
 AddressSpace::purpose() const {

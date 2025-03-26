@@ -44,6 +44,7 @@ protected:
 
 public:
     BaseVariable(const BaseVariable&);
+    BaseVariable& operator=(const BaseVariable&);
     ~BaseVariable();
 
 public:
