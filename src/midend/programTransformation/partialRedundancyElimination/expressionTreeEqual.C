@@ -128,6 +128,7 @@ bool expressionTreeEqual(SgExpression* a, SgExpression* b) {
       HANDLEVAL(SgLongLongIntVal);
       HANDLEVAL(SgShortVal);
       HANDLEVAL(SgStringVal);
+      HANDLEVAL(SgSignedCharVal);
       HANDLEVAL(SgUnsignedCharVal);
       HANDLEVAL(SgUnsignedIntVal);
       HANDLEVAL(SgUnsignedLongLongIntVal);

@@ -362,6 +362,11 @@ static SgValueExp* evaluateBinaryOp(SgBinaryOp* binaryOperator)
           result = buildResultValueExp_t<SgUnsignedCharVal,unsigned char>(binaryOperator,lhsValue,rhsValue);
           break;
         }
+      case V_SgSignedCharVal:
+        {
+          result = buildResultValueExp_t<SgSignedCharVal,signed char>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
       case V_SgUnsignedIntVal: 
         {
           result = buildResultValueExp_t<SgUnsignedIntVal,unsigned int>(binaryOperator,lhsValue,rhsValue);
