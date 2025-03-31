@@ -1209,7 +1209,7 @@ class EasyStorage < std::map< SgSymbol*,  std::vector < std::pair <SgOmpClause::
    {
      typedef StorageClassMemoryManagement< EasyStorageMapEntry<SgSymbol*, std::vector <std::pair <SgOmpClause::omp_map_dist_data_enum, SgExpression*> > > > Base;
     public:
-     void storeDataInEasyStorageClass(const std::map<SgSymbol*, std::vector <std::pair <SgOmpClause::omp_map_dist_data_enum, SgExpression*> > >& data_) 
+     void storeDataInEasyStorageClass(const std::map<SgSymbol*, std::vector <std::pair <SgOmpClause::omp_map_dist_data_enum, SgExpression*> > >& /*data_*/)
      {  };
      std::map< SgSymbol*, std::vector <std::pair <SgOmpClause::omp_map_dist_data_enum, SgExpression*> > > rebuildDataStoredInEasyStorageClass() const
      {

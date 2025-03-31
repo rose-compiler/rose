@@ -10,9 +10,7 @@ GrammarNode::GrammarNode() {}
 
 GrammarNode::~GrammarNode() {}
 
-void GrammarNode::collectChilds(std::set<GrammarNode *> & childs) const {}
-
-/*  */
+void GrammarNode::collectChilds(std::set<GrammarNode *> & /*childs*/) const {}
 
 NonTerminalNode::NonTerminalNode() :
     GrammarNode(),
