@@ -21362,12 +21362,7 @@ SageInterface::deleteAST ( SgNode* n )
                         printf ("Deleting node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
 #endif
                      // Normal nodes  will be removed in a post-order way
-
-                     // PL (3/26/2025): TODO - An SgUnsignedCharVal is being erroneously deleted here (see issue #542).
-                     // Commenting out this delete statement fixes a segmentation fault, but I'm not sure why a deleted
-                     // node is being reused later on in ROSE.
-
-                     // delete node;
+                        delete node;
 #if 0
                         printf ("After delete node: node = %p = %s \n",node,node->class_name().c_str());
 #endif
