@@ -152,7 +152,7 @@ namespace
 namespace CodeThorn
 {
   std::tuple<CallGraph, FunctionCallDataSequence>
-  generateCallGraphFromAST(SgProject* n, const VirtualFunctionAnalysis* vfa, bool withAddrTaken)
+  generateCallGraphFromAST(ASTRootType n, const VirtualFunctionAnalysis* vfa, bool withAddrTaken)
   {
     CallGraph                    g;
     CompatibilityBridge          compat;

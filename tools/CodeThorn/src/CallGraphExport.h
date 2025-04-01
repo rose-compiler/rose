@@ -29,19 +29,38 @@ namespace CodeThorn
   VertexToJsonConverter detailedVertexConverter();
 
 
-  /// Generates a json object from the control flow graph.
+  /// Generates a networkx compatible json object from the control flow graph.
   /// \param cg                     a control flow graph
   /// \param useWeightForMultiEdges generates edges that are unique in terms of (caller,callee).
   ///                               a weight is used to indicate that an caller,callee pair
   ///                               exists multiple times.
-  /// \param filter                 a filter that returns true if a vertex should be included in the
+  /// \param pred                   a filter that returns true if a vertex should be included in the
   ///                               JSON object.
+  /// \param conv                   a function that creates a JSON representation from a vertex
+  /// \result                       a JSON object representing the entire call graph.
   nlohmann::json
   toJson( const CallGraph& cg,
           bool useWeightForMultiEdges = false,
           VertexPredicate pred = anyFunction(),
           VertexToJsonConverter conv = basicVertexConverter()
         );
+
+  /// Writes a networkx compatible json object to the stream \p os,
+  ///   without creating a complete JSON representation in memory.
+  /// \param cg                     a control flow graph
+  /// \param useWeightForMultiEdges generates edges that are unique in terms of (caller,callee).
+  ///                               a weight is used to indicate that an caller,callee pair
+  ///                               exists multiple times.
+  /// \param pred                   a filter that returns true if a vertex should be included in the
+  ///                               JSON object.
+  /// \param conv                   a function that creates a JSON representation from a vertex
+  void
+  writeJson( std::ostream& os,
+             const CallGraph& cg,
+             bool useWeightForMultiEdges = false,
+             VertexPredicate pred = anyFunction(),
+             VertexToJsonConverter conv = basicVertexConverter()
+           );
 } // end of namespace CodeThorn
 
 #endif /* CALL_GRAPH_WRITER_H */

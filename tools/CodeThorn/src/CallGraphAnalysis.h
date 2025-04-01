@@ -12,9 +12,6 @@
  * \date 2022-2024
  */
 
-struct SgProject;
-struct SgDeclarationStatement;
-
 namespace CodeThorn
 {
   struct CallEdge
@@ -57,7 +54,7 @@ namespace CodeThorn
   ///   \param  withAddrTaken if set, taking an address of a function generates a callgraph entry
   ///   \return a call graph and detailed function call information.
   std::tuple<CallGraph, FunctionCallDataSequence>
-  generateCallGraphFromAST(SgProject* ast, const VirtualFunctionAnalysis* vfa = nullptr, bool withAddrTaken = true);
+  generateCallGraphFromAST(ASTRootType ast, const VirtualFunctionAnalysis* vfa = nullptr, bool withAddrTaken = true);
 
   // CallGraph generateCallGraphFromNormalizedAST(SgProject* proj);
 } // end of namespace CodeThorn
