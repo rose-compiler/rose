@@ -330,12 +330,11 @@ class VTableLayoutAnalysis : VTableLayoutAnalysisBase
 // \note using declaration for backward compatibility
 using VTableLayoutContainer = VTableLayoutAnalysis;
 
-/// computes a sample post-object construction virtual function table for classes in \p all
+/// computes a sample virtual function table for classes in \p all
 /// \param all the result of the class hierarchy analysis
 /// \param vfa result of virtual function analysis
 /// \details
 ///    The generated layout is similar but not exactly the same as the IA64 Itanium object model.
-///    virtual function tables for constructors are different, and their layout generation unsupported at this time.
 VTableLayoutAnalysis
 computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vfa);
 

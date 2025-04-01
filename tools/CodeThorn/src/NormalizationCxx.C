@@ -5,7 +5,8 @@
 #include "RoseAst.h"
 
 #include <memory>
-#include <boost/range/adaptor/reversed.hpp>
+// #include <boost/range/adaptor/reversed.hpp>
+#include <boost/range/adaptors.hpp>
 
 #include "Normalization.h"
 #include "NormalizationCxx.h"
@@ -1743,10 +1744,8 @@ namespace
         // \todo Make it possible to choose semantics of the Intel compiler.
         //       A design could be similar to constructors where most derived
         //       and base constructors coexist.
-        for (const ::ct::InheritanceDesc& inh : classes.at(clsdef).ancestors())
+        for (const ::ct::InheritanceDesc& inh : classes.at(clsdef).ancestors() | adapt::filtered(IsDirect{}))
         {
-          if (!inh.isDirect()) continue;
-
           const SgClassDefinition&     basecls   = SG_DEREF(inh.getClass());
           SgMemberFunctionDeclaration* basefn    = findEligibleCopyAssignment(basecls);
           SgClassDeclaration&          basedcl   = SG_DEREF(basecls.get_declaration());

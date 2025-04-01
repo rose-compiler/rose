@@ -142,12 +142,12 @@ nameGenerator(NameGen gen, const char* prefix, size_t maxlen)
 
 
 template <class NameGen>
-NameGen createNameGenerator(NameGen defaultNomenclator, const char* prefix, int maxLen)
+NameGen createNameGenerator(NameGen defaultNamer, const char* prefix, int maxLen)
 {
   if (maxLen < 0)
-    return defaultNomenclator;
+    return defaultNamer;
 
-  return nameGenerator(defaultNomenclator, prefix, maxLen);
+  return nameGenerator(defaultNamer, prefix, maxLen);
 }
 
 
@@ -417,7 +417,7 @@ struct Acuity
                       extractClass
                     );
 
-      ct::ClassNameFn           nameClasses = ct::CompatibilityBridge{}.classNomenclator();
+      ct::ClassNameFn           nameClasses = ct::CompatibilityBridge{}.classNaming();
       std::vector<ClassKeyType> diff;
 
       std::set_difference( astClasses.begin(),  astClasses.end(),
@@ -479,9 +479,9 @@ struct Acuity
                 << "number of classes with virtual tables: " << outset.size() << std::endl;
 
       const int           maxlen = params.numCharsOfOriginalName;
-      ct::ClassNameFn     clsNameGen = createNameGenerator(compatLayer.classNomenclator(), "Cl", maxlen);
-      ct::FuncNameFn      funNameGen = createNameGenerator(compatLayer.functionNomenclator(), "fn", maxlen);
-      ct::VarNameFn       varNameGen = createNameGenerator(compatLayer.variableNomenclator(), "var", maxlen);
+      ct::ClassNameFn     clsNameGen = createNameGenerator(compatLayer.classNaming(), "Cl", maxlen);
+      ct::FuncNameFn      funNameGen = createNameGenerator(compatLayer.functionNaming(), "fn", maxlen);
+      ct::VarNameFn       varNameGen = createNameGenerator(compatLayer.variableNaming(), "var", maxlen);
 
       writeDotFileIfRequested  (params, clsNameGen, outset, analyses);
       writeObjLayoutIfRequested(compatLayer, params, clsNameGen, varNameGen, outset, analyses);

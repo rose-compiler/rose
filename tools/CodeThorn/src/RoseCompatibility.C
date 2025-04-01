@@ -14,13 +14,79 @@
 
 #include "ClassHierarchyAnalysis.h"
 
+#include <boost/range/adaptors.hpp>
+#include <boost/range/algorithm.hpp>
+#include <boost/range/algorithm_ext/for_each.hpp>
+// #include <boost/range/join.hpp>
 
 namespace si = SageInterface;
 namespace ct = CodeThorn;
+namespace adapt = boost::adaptors;
 
 namespace
 {
   static constexpr bool firstDecisiveComparison = false; // syntactic sugar tag
+
+  // WARNING - THIS CLASS IS NOT REENTRANT IN NESTED LOOPS, AS THE
+  //   SgScopeStatement HOLDS STATE.
+  struct ConstSymbolTableIterator
+  {
+      using iterator_category = std::forward_iterator_tag;
+      using value_type = const SgSymbol;
+      using difference_type = std::ptrdiff_t;
+      using pointer = value_type*;
+      using reference = value_type&;
+
+      ConstSymbolTableIterator(const SgScopeStatement& s, value_type* el)
+      : scope(&s), current(el)
+      {}
+
+      const value_type& operator*()  const { return *current; }
+      const value_type* operator->() const { return current; }
+
+      ConstSymbolTableIterator& operator++()
+      {
+        current = scope->next_any_symbol();
+        return *this;
+      }
+
+      ConstSymbolTableIterator operator++(int)
+      {
+        ConstSymbolTableIterator tmp{*this};
+        ++(*this);
+        return tmp;
+      }
+
+      // Equality operator
+      bool operator==(const ConstSymbolTableIterator& that) const
+      {
+        return this->current == that.current;
+      }
+
+      bool operator!=(const ConstSymbolTableIterator& that) const
+      {
+        return this->current != that.current;
+      }
+
+    private:
+      sg::NotNull<const SgScopeStatement> scope;
+      value_type*                         current;
+  };
+
+  ConstSymbolTableIterator
+  symbolBegin(const SgScopeStatement& scope)
+  {
+    return ConstSymbolTableIterator{scope, scope.first_any_symbol()};
+  }
+
+  ConstSymbolTableIterator
+  symbolLimit(const SgScopeStatement& scope)
+  {
+    return ConstSymbolTableIterator{scope, nullptr};
+  }
+
+
+  using SymbolRange = boost::iterator_range<ConstSymbolTableIterator>;
 
   std::string typeNameOf(const SgClassDeclaration* dcl)
   {
@@ -58,6 +124,8 @@ namespace
 
   bool isVirtual(const SgFunctionDeclaration& dcl)
   {
+    // \note ROSE has isVirtual even when it is not
+    //       explicit in the source code.
     return dcl.get_functionModifier().isVirtual();
   }
 
@@ -115,7 +183,7 @@ namespace
                      ct::CastAnalysis& casts,
                      const ct::RoseCompatibilityBridge& cb
                    )
-      : visitedNodes(&visited), allClasses(&classes), allCasts(&casts), rcb(&cb), currentClass(nullptr)
+      : visitedNodes(&visited), allClasses(&classes), allCasts(&casts), compat(&cb), currentClass(nullptr)
       {}
 
       void descend(SgNode& n, ct::ClassAnalysis::value_type* cls = nullptr);
@@ -138,11 +206,11 @@ namespace
 
         descend(n, &*emplaced.first);
       }
-
+/*
       void handle(SgMemberFunctionDeclaration& n)
       {
         if (currentClass && isVirtual(n))
-          currentClass->second.virtualFunctions().emplace_back(rcb->functionId(&n));
+          currentClass->second.virtualFunctions().emplace_back(compat->functionId(&n));
 
         descend(n);
       }
@@ -150,11 +218,11 @@ namespace
       void handle(SgVariableDeclaration& n)
       {
         if (currentClass && !si::isStatic(&n))
-          currentClass->second.dataMembers().emplace_back(rcb->variableId(&n));
+          currentClass->second.dataMembers().emplace_back(compat->variableId(&n));
 
         descend(n);
       }
-
+*/
       // \todo consider providing a handler for SgClassDeclaration
       //       that only descends if the traversal is in allClass mode
       //       i.e., classes->containsAllClasses()
@@ -183,7 +251,7 @@ namespace
       NodeTracker*                       visitedNodes;
       ct::ClassAnalysis*                 allClasses;
       ct::CastAnalysis*                  allCasts;
-      const ct::RoseCompatibilityBridge* rcb;
+      const ct::RoseCompatibilityBridge* compat;
       ct::ClassAnalysis::value_type*     currentClass;
   };
 
@@ -259,31 +327,44 @@ namespace
   }
 
 
-  void
-  collectMembers(ct::ClassAnalysis& classes)
+  struct CollectMembers
   {
-    ct::RoseCompatibilityBridge rcb;
-
-    for (ct::ClassAnalysis::value_type& entry : classes)
+    void operator()(ct::ClassAnalysis::value_type& entry) const
     {
       sg::NotNull<const SgClassDefinition> clsdef = entry.first;
 
-      for (SgDeclarationStatement* mem : clsdef->get_members())
-      {
-        if (SgMemberFunctionDeclaration* memfun = isSgMemberFunctionDeclaration(mem))
-        {
-          ct::FunctionKeyType mfnid = rcb.functionId(memfun);
+      auto extractMembers =
+         [&entry](const SgSymbol& sym) -> void
+         {
+           ct::RoseCompatibilityBridge compat;
 
-          if (isVirtual(*mfnid))
-            entry.second.virtualFunctions().emplace_back(mfnid);
-        }
-        else if (SgVariableDeclaration* memvar = isSgVariableDeclaration(mem))
-        {
-          if (!si::isStatic(memvar))
-            entry.second.dataMembers().emplace_back(rcb.variableId(memvar));
-        }
-      }
+           if (const SgMemberFunctionSymbol* memfnsym = isSgMemberFunctionSymbol(&sym))
+           {
+             sg::NotNull<SgMemberFunctionDeclaration> memfun = memfnsym->get_declaration();
+
+             if (isVirtual(*memfun))
+               entry.second.virtualFunctions().emplace_back(compat.functionId(memfun));
+           }
+           else if (const SgVariableSymbol* memvarsym = isSgVariableSymbol(&sym))
+           {
+             sg::NotNull<SgInitializedName>      memvar = memvarsym->get_declaration();
+             sg::NotNull<SgDeclarationStatement> memdcl = isSgDeclarationStatement(memvar->get_parent());
+
+             if (!si::isStatic(memdcl))
+               entry.second.dataMembers().emplace_back(compat.variableId(memvar));
+           }
+         };
+
+      std::for_each( symbolBegin(*clsdef), symbolLimit(*clsdef),
+                     extractMembers
+                   );
     }
+  };
+
+  void
+  collectMembers(ct::ClassAnalysis& classes)
+  {
+    boost::range::for_each(classes, CollectMembers{});
   }
 
   void
@@ -623,7 +704,7 @@ namespace
   }
 
   std::vector<const SgClassDefinition*>
-  collectAncestors(const SgClassDefinition* cls, std::vector<const SgClassDefinition*>&& res = {})
+  collectClassAndAncestors(const SgClassDefinition* cls, std::vector<const SgClassDefinition*>&& res = {})
   {
     ASSERT_not_null(cls);
 
@@ -648,7 +729,7 @@ namespace
       const SgClassDeclaration*     bsdefn = isSgClassDeclaration(defdcl);
       ASSERT_not_null(bsdefn);
 
-      res = collectAncestors(bsdefn->get_definition(), std::move(res));
+      res = collectClassAndAncestors(bsdefn->get_definition(), std::move(res));
     }
 
     res.push_back(cls);
@@ -953,7 +1034,7 @@ RoseCompatibilityBridge::numericId(AnyKeyType id) const
 
 namespace
 {
-  struct CovarianceChecker : sg::DispatchHandler<RoseCompatibilityBridge::ReturnTypeRelation>
+  struct CovarianceChecker : sg::DispatchHandler<RoseCompatibilityBridge::TypeRelation>
   {
       explicit
       CovarianceChecker(const ClassAnalysis& classAnalysis, const SgType& baseType)
@@ -962,7 +1043,7 @@ namespace
 
       // non class types are checked for type equality
       ReturnType
-      areSameOrCovariant(const SgType& drvTy, const SgType& basTy)
+      sameOrCovariant(const SgType& drvTy, const SgType& basTy)
       {
         return compareTypes(drvTy, basTy) == 0 ? RoseCompatibilityBridge::sametype
                                                : RoseCompatibilityBridge::unrelated
@@ -970,7 +1051,7 @@ namespace
       }
 
       ReturnType
-      areSameOrCovariant(const SgModifierType& drvTy, const SgModifierType& basTy)
+      sameOrCovariant(const SgModifierType& drvTy, const SgModifierType& basTy)
       {
         const SgType& baseBaseTy = SG_DEREF(basTy.get_base_type());
 
@@ -982,7 +1063,7 @@ namespace
 
       // class types are checked for covariance
       ReturnType
-      areSameOrCovariant(const SgClassType& drvClass, const SgClassType& basClass)
+      sameOrCovariant(const SgClassType& drvClass, const SgClassType& basClass)
       {
         if (compareTypes(drvClass, basClass) == 0) return RoseCompatibilityBridge::sametype;
 
@@ -1036,7 +1117,6 @@ namespace
       }
 
       /// generic template routine to check for covariance
-      /// if \ref chw is null, the check tests for strict equality
       template <class SageType>
       ReturnType
       check(const SageType& drvTy)
@@ -1046,7 +1126,7 @@ namespace
         if (drvTy.variantT() != SG_DEREF(baseTy).variantT())
           return RoseCompatibilityBridge::unrelated;
 
-        return areSameOrCovariant(drvTy, static_cast<const SageType&>(*baseTy));
+        return sameOrCovariant(drvTy, static_cast<const SageType&>(*baseTy));
       }
 
       void handle(const SgNode& drv)                { SG_UNEXPECTED_NODE(drv); }
@@ -1062,10 +1142,11 @@ namespace
       void handle(const SgModifierType& drv)        { res = check(drv); }
       // @}
 
-      // should have been removed by CovariantPrefixChecker
+      // if same prefix, it should have been removed by CovariantPrefixChecker
       // @{
-      void handle(const SgReferenceType& drv)       { SG_UNEXPECTED_NODE(drv); }
-      void handle(const SgRvalueReferenceType& drv) { SG_UNEXPECTED_NODE(drv); }
+      void handle(const SgReferenceType& drv)       { res = RoseCompatibilityBridge::unrelated; }
+      void handle(const SgRvalueReferenceType& drv) { res = RoseCompatibilityBridge::unrelated; }
+      // void handle(const SgPointerType& drv) { can occur and are handled through check }
       // @}
 
     private:
@@ -1074,9 +1155,20 @@ namespace
   };
 
 
-  /// checks that both types have covariant prefixes (e.g., reference, pointer, rvalue-reference)
+  using PolymorphicRootTypesBase = std::tuple<const SgType*, const SgType*>;
+
+  struct PolymorphicRootTypes : PolymorphicRootTypesBase
+  {
+    using base = PolymorphicRootTypesBase;
+    using base::base;
+
+    const SgType* derivedRoot() const { return std::get<0>(*this); }
+    const SgType* baseRoot()    const { return std::get<0>(*this); }
+  };
+
+  /// checks that both types have the same covariant prefixes (e.g., reference, pointer, rvalue-reference)
   ///   to a class type.
-  struct CovariantPrefixChecker : sg::DispatchHandler< std::tuple<const SgType*, const SgType*> >
+  struct CovariantPrefixChecker : sg::DispatchHandler<PolymorphicRootTypes>
   {
       explicit
       CovariantPrefixChecker(const SgType& baseType)
@@ -1143,70 +1235,41 @@ namespace
 }
 
 
-std::vector<FunctionKeyType>
-RoseCompatibilityBridge::constructors(ClassKeyType cls) const
+RoseCompatibilityBridge::TypeRelation
+RoseCompatibilityBridge::areSameOrCovariant( const ClassAnalysis& classes,
+                                             TypeKeyType basId,
+                                             TypeKeyType drvId
+                                           ) const
 {
-  const SgDeclarationStatementPtrList& lst = cls->get_members();
+  ASSERT_require(basId != TypeKeyType{});
+  ASSERT_require(drvId != TypeKeyType{});
 
-  return std::accumulate( lst.begin(), lst.end(),
-                          std::vector<FunctionKeyType>{},
-                          [](std::vector<FunctionKeyType> res, SgDeclarationStatement* el) -> std::vector<FunctionKeyType>
-                          {
-                            const SgMemberFunctionDeclaration* fn = isSgMemberFunctionDeclaration(el);
+  // skip equal polymorphic stem (e.g., reference, pointer)
+  const PolymorphicRootTypes rootTypes = sg::dispatch(CovariantPrefixChecker{*basId}, drvId);
+  const SgType*              drvRoot   = rootTypes.derivedRoot();
 
-                            if (fn && fn->get_specialFunctionModifier().isConstructor())
-                              res.emplace_back(fn);
+  if (!drvRoot)
+  {
+    //~ std::cerr << "w/o root: " << basId.getIdCode() << "<>" << drvId.getIdCode() << std::endl;
+    return sg::dispatch(CovarianceChecker{classes, *basId}, drvId);
+  }
 
-                            return res;
-                          }
-                        );
-}
-
-FunctionKeyType
-RoseCompatibilityBridge::destructor(ClassKeyType cls) const
-{
-  const SgDeclarationStatementPtrList& lst = cls->get_members();
-  auto lim = lst.end();
-  auto pos = std::find_if( lst.begin(), lim,
-                           [](SgDeclarationStatement* el) -> bool
-                           {
-                             const SgMemberFunctionDeclaration* fn = isSgMemberFunctionDeclaration(el);
-
-                             return fn && fn->get_specialFunctionModifier().isDestructor();
-                           }
-                         );
-
-  return (pos != lim) ? isSgMemberFunctionDeclaration(*pos) : nullptr;
+  //~ std::cerr << "w/  root: " << basId.getIdCode() << "<>" << drvId.getIdCode() << std::endl;
+  // test if the roots are covariant
+  return sg::dispatch(CovarianceChecker{classes, SG_DEREF(rootTypes.baseRoot())}, drvRoot);
 }
 
 
-
-RoseCompatibilityBridge::ReturnTypeRelation
+RoseCompatibilityBridge::TypeRelation
 RoseCompatibilityBridge::haveSameOrCovariantReturn( const ClassAnalysis& classes,
                                                     FunctionKeyType basId,
                                                     FunctionKeyType drvId
                                                   ) const
 {
-  using PolymorphicRootTypes = CovariantPrefixChecker::ReturnType;
-
   const SgFunctionType&      basTy = functionType(basId);
   const SgFunctionType&      drvTy = functionType(drvId);
-  const SgType&              basRet = SG_DEREF(basTy.get_return_type());
-  const SgType&              drvRet = SG_DEREF(drvTy.get_return_type());
 
-  // skip polymorphic root (e.g., reference, pointer)
-  const PolymorphicRootTypes rootTypes = sg::dispatch(CovariantPrefixChecker{basRet}, &drvRet);
-  const SgType*              drvRoot = std::get<0>(rootTypes);
-
-  if (!drvRoot)
-  {
-    //~ std::cerr << "w/o root: " << basId.getIdCode() << "<>" << drvId.getIdCode() << std::endl;
-    return sg::dispatch(CovarianceChecker{classes, basRet}, &drvRet);
-  }
-
-  //~ std::cerr << "w/  root: " << basId.getIdCode() << "<>" << drvId.getIdCode() << std::endl;
-  // test if the roots are covariant
-  return sg::dispatch(CovarianceChecker{classes, SG_DEREF(std::get<1>(rootTypes))}, drvRoot);
+  return areSameOrCovariant(classes, basTy.get_return_type(), drvTy.get_return_type());
 }
 
 
@@ -1222,6 +1285,8 @@ RoseCompatibilityBridge::extractFromProject(ClassAnalysis& classes, CastAnalysis
   NodeCollector::NodeTracker visited;
 
   sg::dispatch(NodeCollector{visited, classes, casts, *this}, n);
+
+  collectMembers(classes);
 }
 
 void
@@ -1233,15 +1298,22 @@ RoseCompatibilityBridge::extractFromMemoryPool(ClassAnalysis& classes) const
 void
 RoseCompatibilityBridge::extractClassAndBaseClasses(ClassAnalysis& classes, ClassKeyType n) const
 {
-  std::vector<ClassKeyType>  ancestors = collectAncestors(n);
+  std::vector<ClassKeyType>  ancestors = collectClassAndAncestors(n);
   CastAnalysis               tmpCasts;
   NodeCollector::NodeTracker visited;
 
   for (ClassKeyType cls : ancestors)
   {
     if (classes.find(cls) == classes.end())
+    {
       sg::dispatch(NodeCollector{visited, classes, tmpCasts, *this}, cls);
+    }
   }
+
+  // \todo this is super inefficient, because we really only need to collect
+  //       the members for classes that were newly discovered.
+  // Can this be moved into the loop?
+  collectMembers(classes);
 }
 
 bool
@@ -1256,108 +1328,298 @@ bool RoseCompatibilityBridge::hasDefinition(FunctionKeyType id) const
 }
 
 FuncNameFn
-RoseCompatibilityBridge::functionNomenclator() const
+RoseCompatibilityBridge::functionNaming() const
 {
-  const RoseCompatibilityBridge* rcb = this;
-
-  return [=](FunctionKeyType id) -> std::string { return rcb->nameOf(id); };
+  return [](FunctionKeyType id) -> std::string { return RoseCompatibilityBridge{}.nameOf(id); };
 }
 
 VarNameFn
-RoseCompatibilityBridge::variableNomenclator() const
+RoseCompatibilityBridge::variableNaming() const
 {
-  const RoseCompatibilityBridge* rcb = this;
-
-  return [=](VariableKeyType id) -> std::string { return rcb->nameOf(id); };
+  return [](VariableKeyType id) -> std::string { return RoseCompatibilityBridge{}.nameOf(id); };
 }
 
 
 ClassNameFn
-RoseCompatibilityBridge::classNomenclator() const
+RoseCompatibilityBridge::classNaming() const
 {
   return typeNameOf;
 }
 
+}
 
 namespace
 {
   // \todo complete these functions
   // https://stackoverflow.com/questions/15590832/conditions-under-which-compiler-will-not-define-implicits-constructor-destruct
 
-  /// returns iff the function signature would be a legal copy-assignment operator
-  ///   in the class.
-  bool isCopyAssignIn(const SgFunctionDeclaration*, const SgClassDefinition*)
+  using CvQualificationBase = std::tuple<const SgType*, std::uint_fast8_t>;
+  struct CvQualification : CvQualificationBase
   {
+    enum Kind : std::uint8_t
+    {
+      none = 0, constqual = (1<<0), volatilequal = (1<<1), all = constqual | volatilequal
+    };
+
+    using base = CvQualificationBase;
+    using base::base;
+
+    const SgType* type()        const { return std::get<0>(*this); }
+    bool          hasConst()    const { return (std::get<1>(*this) & constqual) == constqual; }
+    bool          hasVolatile() const { return (std::get<1>(*this) & volatilequal) == volatilequal; }
+    bool          hasNone()     const { return (std::get<1>(*this) & all) == none; }
+  };
+
+
+  std::uint_fast8_t
+  cvQualifier(const SgConstVolatileModifier& cvmod, std::uint_fast8_t qual = 0)
+  {
+    if (cvmod.isVolatile()) qual += CvQualification::volatilequal;
+    if (cvmod.isConst())    qual += CvQualification::constqual;
+
+    return qual;
+  }
+
+  std::uint_fast8_t
+  cvQualifier(const SgTypeModifier& tymod, std::uint_fast8_t qual = 0)
+  {
+    return cvQualifier(tymod.get_constVolatileModifier(), qual);
+  }
+
+  std::uint_fast8_t
+  cvQualifier(const SgModifierType& modty, std::uint_fast8_t qual = 0)
+  {
+    return cvQualifier(modty.get_typeModifier(), qual);
+  }
+
+  CvQualification
+  removeCvQual(const SgType* ty, int qualifier = CvQualification::none)
+  {
+    if (const SgModifierType* modTy = isSgModifierType(ty))
+      return removeCvQual(modTy->get_base_type(), cvQualifier(*modTy, qualifier));
+
+    return { ty, qualifier };
+  }
+
+  using RefRemovalFn = std::function<sg::NotNull<const SgType>(sg::NotNull<const SgType>) >;
+
+  sg::NotNull<const SgType>
+  removeRvalueReference(sg::NotNull<const SgType> ty)
+  {
+    if (const SgRvalueReferenceType* refty = isSgRvalueReferenceType(&*ty))
+      return refty->get_base_type();
+
+    return ty;
+  }
+
+  sg::NotNull<const SgType>
+  removeReference(sg::NotNull<const SgType> ty)
+  {
+    if (const SgReferenceType* refty = isSgReferenceType(&*ty))
+      return refty->get_base_type();
+
+    return ty;
+  }
+
+  sg::NotNull<const SgType>
+  removeArray(sg::NotNull<const SgType> ty)
+  {
+    if (const SgArrayType* arrty = isSgArrayType(&*ty))
+      return arrty->get_base_type();
+
+    return ty;
+  }
+
+
+  ///
+  /// new code below
+
+  using ParameterTypeDescBase = std::tuple<bool, bool, bool, bool, bool>;
+  struct ParameterTypeDesc : ParameterTypeDescBase
+  {
+    using base = ParameterTypeDescBase;
+    using base::base;
+
+    bool        paramHasClassType()   const { return std::get<0>(*this); }
+    bool        withReference()       const { return std::get<1>(*this); }
+    bool        withRValueReference() const { return std::get<2>(*this); }
+    bool        withConst()           const { return std::get<3>(*this); }
+    bool        withVolatile()        const { return std::get<4>(*this); }
+  };
+
+
+  ParameterTypeDesc
+  specialMemberFunctionParameter(const SgMemberFunctionDeclaration& mfn, ct::ClassKeyType clkey)
+  {
+    const SgFunctionParameterList&  paramList = SG_DEREF(mfn.get_parameterList());
+    const SgInitializedNamePtrList& params    = paramList.get_args();
+    const std::size_t               numParams = params.size();
+
+    ASSERT_require(numParams > 0);
+    sg::NotNull<const SgType> const paramTy   = SG_DEREF(params.front()).get_type();
+    sg::NotNull<const SgType> const unRefTy   = removeReference(paramTy);
+    const bool                      hasRef    = paramTy != unRefTy;
+    sg::NotNull<const SgType> const unRvalueRefTy = removeRvalueReference(paramTy);
+    const bool                      hasRValueRef  = paramTy != unRvalueRefTy;
+
+    // only one, ref or rvalueRed can be true
+    ASSERT_require((hasRef & hasRValueRef) == false);
+
+    sg::NotNull<const SgType> const afterRefTy = hasRef ? unRefTy : unRvalueRefTy;
+    CvQualification                 unCvTy = removeCvQual(unRefTy);
+    const SgClassType* const        paramClassTy = isSgClassType(unCvTy.type());
+
+    // check that the parameter type is aligned with the enclosing class of the member function.
+    if (!paramClassTy || (ct::getClassDefOpt(*paramClassTy) != clkey))
+      return { /*all false*/ };
+
+    return { true, hasRef, hasRValueRef, unCvTy.hasConst(), unCvTy.hasVolatile() };
+  }
+
+
+  ParameterTypeDesc
+  specialMemberFunctionParameter(const SgMemberFunctionDeclaration& mfn)
+  {
+    return specialMemberFunctionParameter(mfn, &ct::getClassDefForFunction(mfn));
+  }
+
+  bool isMoveParameterType(ParameterTypeDesc parm)
+  {
+    return (  parm.paramHasClassType()
+           && parm.withRValueReference()
+           && !parm.withConst()
+           && !parm.withVolatile()
+           );
+  }
+
+  bool isCopyParameterType(ParameterTypeDesc parm)
+  {
+    // this casts a wide net, wider than needed
+    //   purpose is to accept signatures that compilers
+    //   also accept.
+    return (  parm.paramHasClassType()
+           && !parm.withRValueReference()
+           );
+  }
+
+  std::tuple<std::size_t, std::size_t>
+  countArguments(const SgFunctionDeclaration& n)
+  {
+    const SgFunctionParameterList&  paramList = SG_DEREF(n.get_parameterList());
+    const SgInitializedNamePtrList& params = paramList.get_args();
+    const std::size_t               numParams = params.size();
+
+    const auto                      paramBeg  = params.begin();
+    const auto                      paramLim  = params.end();
+    auto  isDefaulted =
+             [](const SgInitializedName* p) -> bool
+             {
+               return (p != nullptr) && (p->get_initializer() != nullptr);
+             };
+    const auto                      paramPos  = std::find_if(paramBeg, paramLim, isDefaulted);
+    const std::size_t               numNonDefault = std::distance(paramBeg, paramPos);
+
+    return { numNonDefault, numParams };
+  }
+
+
+  bool hasDestructor(const ct::ClassAnalysis::mapped_type& clazz)
+  {
+    const ct::SpecialMemberFunctionContainer& specials = clazz.specialMemberFunctions();
+    auto       isDestructor = [](const ct::SpecialMemberFunction& smf) -> bool { return smf.isDestructor(); };
+    auto const lim          = specials.end();
+    auto const pos          = std::find_if(specials.begin(), lim, isDestructor);
+
+    return (pos != lim) && (pos->function() != ct::FunctionKeyType{});
+  }
+
+  bool hasConstructor(const ct::ClassAnalysis::mapped_type&, const SgMemberFunctionDeclaration&)
+  {
+    msgError() << "RoseCompatibilityBridge::hasConstructor is not fully implemented."
+               << std::endl;
+
     return false;
   }
 
-  /// returns all existing functions that would prevent the compiler from
-  ///   creating a copy-assignment operator.
-  std::vector<FunctionKeyType>
-  copyAssignConflicts(const SgClassDefinition*)
+  bool
+  hasDefaultAssignType( const SgMemberFunctionDeclaration& mfn,
+                        ct::ClassKeyType clkey,
+                        std::function<bool(ParameterTypeDesc)> pred
+                      )
   {
-    return std::vector<FunctionKeyType>{};
+    std::size_t minargs = 0;
+    std::size_t maxargs = 0;
+
+    std::tie(minargs, maxargs) = countArguments(mfn);
+
+    return (  (minargs == 1)
+           && (maxargs == 1)
+           && pred(specialMemberFunctionParameter(mfn, clkey))
+           );
   }
 
-  /// returns iff the function signature would be a legal move-assignment operator
-  ///   in the class.
-  bool isMoveAssignIn(const SgFunctionDeclaration*, const SgClassDefinition*)
+  bool hasDefaultCopyAssignType(const SgMemberFunctionDeclaration& mfn, ct::ClassKeyType clkey)
   {
-    return false;
+    return hasDefaultAssignType(mfn, clkey, isCopyParameterType);
   }
 
-  /// returns all existing functions that would prevent the compiler from
-  ///   creating a move-assignment operator.
-  std::vector<FunctionKeyType>
-  moveAssignConflicts(const SgClassDefinition*)
+  bool hasDefaultMoveAssignType(const SgMemberFunctionDeclaration& mfn, ct::ClassKeyType clkey)
   {
-    return std::vector<FunctionKeyType>{};
+    return hasDefaultAssignType(mfn, clkey, isMoveParameterType);
   }
+
+  bool canGenerateDefaultCopyAssign(const ct::ClassAnalysis::mapped_type& clazz)
+  {
+    const ct::SpecialMemberFunctionContainer& specials = clazz.specialMemberFunctions();
+    auto       isCopyAssign = [](const ct::SpecialMemberFunction& smf) -> bool { return smf.isCopyAssign(); };
+    auto const lim          = specials.end();
+    auto const pos          = std::find_if(specials.begin(), lim, isCopyAssign);
+
+    // the default copy constructor can be generated if it can be generated but has not been provided
+    //   either by the frontend or by the user.
+    return (pos != lim) && (pos->function() == ct::FunctionKeyType{});
+  }
+
+  bool canGenerateDefaultMoveAssign(const ct::ClassAnalysis::mapped_type& clazz)
+  {
+    const ct::SpecialMemberFunctionContainer& specials = clazz.specialMemberFunctions();
+    auto       isMoveAssign = [](const ct::SpecialMemberFunction& smf) -> bool { return smf.isMoveAssign(); };
+    auto const lim          = specials.end();
+    auto const pos          = std::find_if(specials.begin(), lim, isMoveAssign);
+
+    // the default move constructor can be generated if it can be generated but has not been provided
+    //   either by the frontend or by the user.
+    return (pos != lim) && (pos->function() == ct::FunctionKeyType{});
+  }
+
 }
 
+namespace CodeThorn
+{
+
 bool
-RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType fnkey) const
+RoseCompatibilityBridge::isAutoGeneratable(const ClassAnalysis& all, ClassKeyType clkey, FunctionKeyType fnkey) const
 {
   ASSERT_require(clkey != ClassKeyType{});
   ASSERT_require(fnkey != FunctionKeyType{});
 
-  // only member functions can be auto-generated
+  // only member functions that are not available already can be auto-generated
   const SgMemberFunctionDeclaration* memfn = isSgMemberFunctionDeclaration(fnkey);
-  if (memfn == nullptr) return false;
+  if ((memfn == nullptr) || (clkey == &getClassDefForFunction(*memfn))) return false;
 
-  bool                               res   = false;
-  const SgSpecialFunctionModifier&   fnmod = memfn->get_specialFunctionModifier();
+  bool                             res   = false;
+  const SgSpecialFunctionModifier& fnmod = memfn->get_specialFunctionModifier();
 
   if (fnmod.isDestructor())
-  {
-    // there can only be one destructor. If it exists, it cannot be generated.
-    res = (destructor(clkey) == nullptr);
-  }
+    res = !hasDestructor(all.at(clkey));
   else if (fnmod.isConstructor())
-    msgError() << "RoseCompatibilityBridge::isAutoGeneratable does not yet support "
-               << "constructors: " << memfn->get_name()
-               << std::endl;
-  else if (fnmod.isOperator())
-  {
-    if (memfn->get_name() != "operator=")
-    {
-      // only copy/move assignment operators can be generated
-      res = false;
-    }
-    else if (clkey == &getClassDefForFunction(*memfn))
-    {
-      // if the function is already in the class, then there is no need
-      // to generate it.
-      res = false;
-    }
-    else if (isCopyAssignIn(memfn, clkey))
-      res = (copyAssignConflicts(clkey).size() == 0);
-    else if (isMoveAssignIn(memfn, clkey))
-      res = (moveAssignConflicts(clkey).size() == 0);
-    else
-      msgError() << "RoseCompatibilityBridge::isAutoGeneratable not yet implemented"
-                 << std::endl;
-  }
+    res = !hasConstructor(all.at(clkey), *memfn);
+  else if (memfn->get_name() != "operator=") // \todo consider spaceship operator
+    res = false;
+  else if (hasDefaultCopyAssignType(*memfn, clkey))
+    res = canGenerateDefaultCopyAssign(all.at(clkey));
+  else if (hasDefaultMoveAssignType(*memfn, clkey))
+    res = canGenerateDefaultMoveAssign(all.at(clkey));
 
   return res;
 }
@@ -1365,9 +1627,31 @@ RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType f
 bool
 RoseCompatibilityBridge::isAbstract(ClassKeyType clkey) const
 {
-  ASSERT_not_null(clkey);
+  ASSERT_require(clkey != ClassKeyType{});
 
   return clkey->get_isAbstract();
+}
+
+DataMemberType
+RoseCompatibilityBridge::typeOf(VariableKeyType var) const
+{
+  sg::NotNull<const SgType> ty      = var->get_type();
+  sg::NotNull<const SgType> unRefTy = removeReference(ty);
+  sg::NotNull<const SgType> unArrTy = removeArray(unRefTy);
+  CvQualification           unCvTy  = removeCvQual(unArrTy);
+  const SgClassDefinition*  clazz   = nullptr;
+
+  if (const SgClassType* clazzty = isSgClassType(unCvTy.type()))
+    clazz = getClassDefOpt(*clazzty);
+
+  // std::cerr << "u" << (unCvTy.type() ? typeid(*unCvTy.type()).name() : std::string{"null"}) << std::endl;
+
+  const bool                isConst = unCvTy.hasConst();
+  const bool                hasRef  = ty != unRefTy;
+  const bool                hasArr  = unRefTy != unArrTy;
+  const bool                hasInit = var->get_initializer() != nullptr;
+
+  return { clazz, isConst, hasRef, hasArr, hasInit };
 }
 
 
@@ -1433,8 +1717,7 @@ SgFunctionDeclaration& keyDecl(SgFunctionDeclaration& fn)
   SgFunctionDeclaration* fKey = isSgFunctionDeclaration(fn.get_firstNondefiningDeclaration());
   SgFunctionDeclaration* res  = fKey ? fKey : &fn;
 
-  // virtual(fn) => virtual(res)
-  ASSERT_require(!isVirtual(fn) || isVirtual(*res));
+  ASSERT_require(isVirtual(*res) == isVirtual(fn));
   return *res;
 }
 
@@ -1497,11 +1780,11 @@ namespace
   CallData
   AnalyseCallExp::normalCall(const SgFunctionRefExp& n) const
   {
-    RoseCompatibilityBridge      rcb;
+    RoseCompatibilityBridge      compat;
     const SgFunctionDeclaration* fn = n.getAssociatedFunctionDeclaration();
 
     ASSERT_require(!receiverKey);
-    return { rcb.functionId(fn), &n, receiverKey, ref, false };
+    return { compat.functionId(fn), &n, receiverKey, ref, false };
   }
 
   CallData
@@ -1537,11 +1820,11 @@ namespace
   CallData
   AnalyseCallExp::memberCall(const SgMemberFunctionRefExp& n) const
   {
-    RoseCompatibilityBridge            rcb;
+    RoseCompatibilityBridge            compat;
     const SgMemberFunctionDeclaration* mfn = n.getAssociatedMemberFunctionDeclaration();
     const bool                         virtualCall = (  polymorphicReceiver
                                                      && (n.get_need_qualifier() == 0)
-                                                     && isVirtualFunction(rcb.functionId(mfn))
+                                                     && isVirtualFunction(compat.functionId(mfn))
                                                      );
 
     Optional<ClassKeyType>             keyCopy = receiverKey;
@@ -1552,7 +1835,7 @@ namespace
       keyCopy = &getClassDefForFunction(SG_DEREF(n.getAssociatedMemberFunctionDeclaration()));
 
     ASSERT_require(keyCopy);
-    return { rcb.functionId(mfn), &n, keyCopy, ref, virtualCall };
+    return { compat.functionId(mfn), &n, keyCopy, ref, virtualCall };
   }
 
   bool
@@ -1602,11 +1885,11 @@ namespace
   CallData
   analyseCallExp(const SgConstructorInitializer& n, const ct::FunctionPredicate&)
   {
-    RoseCompatibilityBridge            rcb;
+    RoseCompatibilityBridge            compat;
     const SgMemberFunctionDeclaration* mfn = n.get_declaration();
     Optional<FunctionKeyType>          fnkey;
 
-    if (mfn) fnkey = rcb.functionId(mfn);
+    if (mfn) fnkey = compat.functionId(mfn);
 
     Optional<ClassKeyType>             clskey;
     const SgClassDeclaration*          clsdcl = n.get_class_decl();
@@ -1671,7 +1954,7 @@ namespace
         sg::NotNull<SgDeclarationStatement>      cls = dcl->get_associatedClassDeclaration();
         ClassKeyType                             key = classDefinition_opt(*cls);
 
-        ASSERT_not_null(key);
+        ASSERT_require(key != ClassKeyType{});
         handleFnRefExp(*dcl, n, key, isVirtual(*dcl));
       }
 
@@ -1712,8 +1995,8 @@ namespace
   {
     if (ignoreFunctionRefs) return;
 
-    RoseCompatibilityBridge rcb;
-    FunctionKeyType         key = rcb.functionId(&dcl);
+    RoseCompatibilityBridge compat;
+    FunctionKeyType         key = compat.functionId(&dcl);
 
     ASSERT_require(key);
     res.emplace_back( key, &n, typeBound, nullptr, isVirtual );
@@ -1744,11 +2027,9 @@ namespace
   Fn
   traverseBranches(Fn fn, const SgNode& root, BranchGenerator gen = {})
   {
-    SgNodePtrList const branches = gen(root);
+    auto nodeRange = gen(root);
 
-    return std::for_each( branches.begin(), branches.end(),
-                          std::move(fn)
-                        );
+    return std::for_each(nodeRange.begin(), nodeRange.end(), std::move(fn));
   }
 
   template <class Functor>
@@ -1800,6 +2081,165 @@ namespace
 
     return fn;
   }
+
+  struct CategorizeFunctions
+  {
+      explicit
+      CategorizeFunctions(std::unordered_set<ct::FunctionKeyType> userDefined)
+      : userDefinedFunctions(userDefined)
+      {}
+
+      ct::SpecialMemberFunction
+      none(ct::FunctionKeyType key) const
+      {
+        return { key, ct::SpecialMemberFunction::notspecial, false, false, true };
+      }
+
+      ct::SpecialMemberFunction
+      special(const SgMemberFunctionDeclaration& mfn, std::uint_fast8_t knd, bool copyWithConstRef = false, bool compliant = true) const
+      {
+        ct::RoseCompatibilityBridge compat;
+        ct::FunctionKeyType         key     = compat.functionId(&mfn);
+        const auto                  pos     = userDefinedFunctions.find(key);
+        const bool                  compGen = pos == userDefinedFunctions.end();
+
+        // should we also check for mfn.isCompilerGenerated()
+        //   does not always seem to be set.
+        return { &mfn, knd, compGen, copyWithConstRef, compliant };
+      }
+
+      // returns false for non-conforming copy assignments, such as operator=(const T)
+      bool compliantSignature(const SgMemberFunctionDeclaration& mfn, std::uint_fast8_t knd) const
+      {
+        constexpr std::uint_fast8_t cassign = ct::SpecialMemberFunction::cassign;
+
+        if ((knd & cassign) != cassign)
+          return true;
+
+        ParameterTypeDesc paramDescription = specialMemberFunctionParameter(mfn);
+
+        if (paramDescription.withReference())
+          return true;
+
+        return !(paramDescription.withConst() || paramDescription.withVolatile());
+      }
+
+      // returns true if this is a copy assignment or copy constructor callable with const T&
+      bool copyCallableWithConstRef(const SgMemberFunctionDeclaration& mfn, std::uint_fast8_t knd) const
+      {
+        constexpr std::uint_fast8_t cassign = ct::SpecialMemberFunction::cassign;
+        constexpr std::uint_fast8_t cctor   = ct::SpecialMemberFunction::cctor;
+
+        const bool copyAssignOrCtor = ((knd & cassign) == cassign) || ((knd & cctor) == cctor);
+
+        if (!copyAssignOrCtor)
+          return false;
+
+        ParameterTypeDesc paramDescription = specialMemberFunctionParameter(mfn);
+
+        // \todo check: a copy assignment taking a possibly cv qualified T and when
+        //              the class offers no cctor. In this case, the copy cannot be
+        //              constructed, ..
+        if (!paramDescription.withReference())
+          return true;
+
+        return paramDescription.withConst();
+      }
+
+
+      std::uint_fast8_t
+      chooseKind(const SgMemberFunctionDeclaration& fn, std::uint_fast8_t cp, std::uint_fast8_t mv) const
+      {
+        // check whether the first argument is either for copy ctor/assign or move ctor/assign or neither.
+        ParameterTypeDesc paramDescription = specialMemberFunctionParameter(fn);
+
+        if (isMoveParameterType(paramDescription))
+          return mv;
+
+        if (isCopyParameterType(paramDescription))
+          return cp;
+
+        return ct::SpecialMemberFunction::notspecial;
+      }
+
+      ct::SpecialMemberFunction
+      categorize(const SgMemberFunctionSymbol* sym) const
+      {
+        if (sym == nullptr)
+          return none(nullptr);
+
+        ct::CompatibilityBridge            compat;
+        const SgMemberFunctionDeclaration& fn = SG_DEREF(sym->get_declaration());
+
+        if (fn.get_specialFunctionModifier().isDestructor())
+          return special(fn, ct::SpecialMemberFunction::dtor);
+
+        std::size_t                        maxargs = 0;
+        std::size_t                        minargs = 0;
+
+        std::tie(minargs, maxargs) = countArguments(fn);
+
+        if (fn.get_specialFunctionModifier().isConstructor())
+        {
+          std::uint_fast8_t knd = ct::SpecialMemberFunction::ctor;
+
+          if (minargs == 0)                    knd |= ct::SpecialMemberFunction::dctor;
+          if ((minargs <= 1) && (maxargs > 0)) knd |= chooseKind(fn, ct::SpecialMemberFunction::cctor, ct::SpecialMemberFunction::mctor);
+
+          return special(fn, knd, copyCallableWithConstRef(fn, knd));
+        }
+
+        if (fn.get_name() == "operator=")
+        {
+          std::uint_fast8_t knd = ct::SpecialMemberFunction::notspecial;
+
+          if (maxargs == 1)
+            knd |= chooseKind(fn, ct::SpecialMemberFunction::cassign, ct::SpecialMemberFunction::massign);
+
+          return special(fn, knd, copyCallableWithConstRef(fn, knd), compliantSignature(fn, knd));
+        }
+
+        return none(&fn);
+      }
+
+      ct::SpecialMemberFunction
+      operator()(const SgSymbol& sym) const
+      {
+        return categorize(isSgMemberFunctionSymbol(&sym));
+      }
+
+    private:
+      std::unordered_set<ct::FunctionKeyType> userDefinedFunctions;
+  };
+
+  struct AsMemberFunction
+  {
+    const SgMemberFunctionDeclaration*
+    operator()(const SgDeclarationStatement* dcl) const
+    {
+      return isSgMemberFunctionDeclaration(dcl);
+    }
+  };
+
+  struct ToFunctionID
+  {
+    ct::FunctionKeyType
+    operator()(const SgMemberFunctionDeclaration* key) const
+    {
+      return ct::RoseCompatibilityBridge{}.functionId(key);
+    }
+  };
+
+  std::unordered_set<ct::FunctionKeyType>
+  userDefinedFunctions(ct::ClassKeyType clazz)
+  {
+    auto range = clazz->get_members() | adapt::transformed(AsMemberFunction{})
+                                      | adapt::filtered(ct::IsNotNull{})
+                                      | adapt::transformed(ToFunctionID{})
+                                      ;
+
+    return std::unordered_set<ct::FunctionKeyType>(range.begin(), range.end());
+  }
 }
 
 namespace CodeThorn
@@ -1812,15 +2252,12 @@ RoseCompatibilityBridge::allFunctionKeys(ASTRootType n) const
   std::size_t               nc = 0;
 
   auto collectFunctionKeys =
-         [&fnkeys, &nc, rcb=RoseCompatibilityBridge{}](const SgNode* n) -> void
+         [&fnkeys, &nc](const SgNode* n) -> void
          {
            ++nc;
 
            if (const SgFunctionDeclaration* fn = isSgFunctionDeclaration(n))
-           {
-             msgWarn() << " :: " << fn->get_name() << std::endl;
-             fnkeys.insert(rcb.functionId(fn));
-           }
+             fnkeys.insert(RoseCompatibilityBridge{}.functionId(fn));
          };
 
   unorderedTraversal0(collectFunctionKeys, n);
@@ -1829,11 +2266,7 @@ RoseCompatibilityBridge::allFunctionKeys(ASTRootType n) const
             << "Traversed nodes/Unique functions " << nc << "/" << fnkeys.size()
             << std::endl;
 
-  std::vector<FunctionKeyType> res;
-
-  res.reserve(fnkeys.size());
-  std::copy(fnkeys.begin(), fnkeys.end(), std::back_inserter(res));
-  return res;
+  return std::vector<FunctionKeyType>(fnkeys.begin(), fnkeys.end());
 }
 
 
@@ -1852,24 +2285,49 @@ RoseCompatibilityBridge::allFunctionKeys(ASTRootType n, FunctionPredicate pred) 
   std::set<FunctionKeyType> fnkeys;
 
   auto collectFunctionKeys =
-         [&fnkeys, predicate=std::move(pred)](const SgNode* n) mutable -> void
+         [&fnkeys, predicate=std::move(pred)](const SgNode* n) -> void
          {
-           RoseCompatibilityBridge rcb;
-
            if (const SgFunctionDeclaration* fn = isSgFunctionDeclaration(n))
              if (predicate(fn))
-               fnkeys.insert(rcb.functionId(fn));
+               fnkeys.insert(RoseCompatibilityBridge{}.functionId(fn));
          };
 
   unorderedTraversal0(collectFunctionKeys, n);
-
-  std::vector<FunctionKeyType> res;
-
-  res.reserve(fnkeys.size());
-  std::copy(fnkeys.begin(), fnkeys.end(), std::back_inserter(res));
-  return res;
+  return std::vector<FunctionKeyType>(fnkeys.begin(), fnkeys.end());
 }
 
+
+ct::SpecialMemberFunctionContainer
+RoseCompatibilityBridge::specialMemberFunctions(ct::ClassKeyType clazz) const
+{
+  ASSERT_require(clazz != ct::ClassKeyType{});
+
+  // compiler generated special member functions are not always marked
+  //   as compiler generated. Thus we cross-check with the member functions
+  //   that appear on the class member list.
+  std::unordered_set<FunctionKeyType> knownUserFunctions = userDefinedFunctions(clazz);
+
+  auto const beg = symbolBegin(*clazz);
+  auto const lim = symbolLimit(*clazz);
+
+  auto onlySpecial = [](const SpecialMemberFunction& el) -> bool { return el.isSpecialFunc(); };
+  auto resultRange = SymbolRange{beg, lim} | adapt::transformed(CategorizeFunctions{std::move(knownUserFunctions)})
+                                           | adapt::filtered(onlySpecial);
+
+  return ct::SpecialMemberFunctionContainer(resultRange.begin(), resultRange.end());
+}
+
+//
+// SpecialMemberFunction
+
+bool SpecialMemberFunction::isSpecialFunc() const { return kind()             != notspecial; }
+bool SpecialMemberFunction::isConstructor() const { return (kind() & ctor)    == ctor; }
+bool SpecialMemberFunction::isDefaultCtor() const { return (kind() & dctor)   == dctor; }
+bool SpecialMemberFunction::isCopyCtor()    const { return (kind() & cctor)   == cctor; }
+bool SpecialMemberFunction::isMoveCtor()    const { return (kind() & mctor)   == mctor; }
+bool SpecialMemberFunction::isDestructor()  const { return (kind() & dtor)    == dtor; }
+bool SpecialMemberFunction::isCopyAssign()  const { return (kind() & cassign) == cassign; }
+bool SpecialMemberFunction::isMoveAssign()  const { return (kind() & massign) == massign; }
 
 }
 

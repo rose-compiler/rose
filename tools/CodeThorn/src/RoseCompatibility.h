@@ -16,7 +16,6 @@ namespace CodeThorn
 constexpr
 unsigned char STRIP_MODIFIER_ALIAS = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE;
 
-
 using AnyKeyType            = const SgNode*;
 using ClassKeyType          = const SgClassDefinition*;
 using FunctionTypeKeyType   = const SgFunctionType*;
@@ -68,12 +67,100 @@ struct CallData : CallDataBase
 
 
 
+using DataMemberTypeBase = std::tuple<ClassKeyType, bool, bool, bool, bool>;
+struct DataMemberType : DataMemberTypeBase
+{
+  using base = DataMemberTypeBase;
+  using base::base;
+
+  ClassKeyType classType()      const { return std::get<0>(*this); }
+  bool         isConst()        const { return std::get<1>(*this); }
+  bool         hasReference()   const { return std::get<2>(*this); }
+  bool         hasArray()       const { return std::get<3>(*this); }
+  bool         hasInitializer() const { return std::get<4>(*this); }
+};
+
+
+using SpecialMemberFunctionBase = std::tuple<FunctionKeyType, std::int8_t, bool, bool, bool>;
+struct SpecialMemberFunction : SpecialMemberFunctionBase
+{
+    // \todo consider folding the 8bit kind and booleans into a 16bit kind
+
+    using base = SpecialMemberFunctionBase;
+    using base::base;
+
+    enum Kind : std::uint8_t
+    {
+      notspecial = 0,
+      ctor       = (1 << 0),
+      dctor      = ctor + (1 << 1),
+      cctor      = ctor + (1 << 2),
+      mctor      = ctor + (1 << 3),
+      dtor       = (1 << 4),
+      cassign    = (1 << 5),
+      massign    = (1 << 6)
+    };
+
+    FunctionKeyType
+    function() const { return std::get<0>(*this); }
+
+    std::int8_t
+    kind() const { return std::get<1>(*this); }
+
+    bool isSpecialFunc() const;
+    bool isConstructor() const;
+    bool isDefaultCtor() const;
+    bool isCopyCtor()    const;
+    bool isMoveCtor()    const;
+    bool isDestructor()  const;
+    bool isCopyAssign()  const;
+    bool isMoveAssign()  const;
+
+    /// returns true if the member function is compiler generated (as opposed to user defined).
+    /// \note
+    ///    if the member function is compiler generated it can still be declared
+    ///    (meaning that function() returns a valid ID).
+    ///    With the current EDG-ROSE connection this happens when an object
+    ///    calls one of the generated special member functions, so ROSE will
+    ///    find an implementation in the class scope though it will not have
+    ///    an entry in the class member list.
+    bool
+    compilerGenerated() const { return std::get<2>(*this); }
+
+    /// returns  if function is callable with a const reference argument (const T&).
+    /// \note    ONLY VALID for copy constructor and copy assignment.
+    /// \details when no user defined copy functionality (in the form of constructor
+    ///          or assignment operator) is present the compiler attempts to
+    ///          generate a version taking a const reference argument (const T&).
+    ///          However, if a base class or data member offers copy functionality
+    ///          for reference arguments (T&) only, the compiler will fall back to
+    ///          generating a version with a reference argument.
+    bool
+    copyCallableWithConstRefArgument() const { return std::get<3>(*this); }
+
+    /// returns true if a special member function has a standard conforming signature.
+    /// \note
+    ///    currently the only case where this returns false is the following:
+    ///    T& operator=(const T) is accepted by most compilers (clang, gcc, EDG)
+    ///    as a valid copy-assignment operator, but the standard says that it is not.
+    ///    C++14 12.8.17:
+    ///      "A user-declared copy assignment operator X::operator= is
+    ///       a non-static non-template member function of class X with
+    ///       exactly one parameter of type X, X&, const X&, volatile X&
+    ///       or const volatile X&."
+    bool
+    standardConforming() const { return std::get<4>(*this); }
+};
+
+using SpecialMemberFunctionContainer = std::vector<SpecialMemberFunction>;
+
+
 /// a compatibility layer that abstracts functions and queries of
 ///   the AST and implements those capabilities for ROSE.
 class RoseCompatibilityBridge
 {
   public:
-    enum ReturnTypeRelation : int
+    enum TypeRelation : int
     {
       unrelated = 0,
       sametype  = 1,
@@ -148,8 +235,16 @@ class RoseCompatibilityBridge
     /// \details
     ///    The function only checks the return type, and does not check whether the classes in which
     ///    the functions \p drvId and \p basId are defined are in a inheritance relationship.
-    ReturnTypeRelation
+    TypeRelation
     haveSameOrCovariantReturn(const ClassAnalysis&, FunctionKeyType basId, FunctionKeyType drvId) const;
+
+    /// tests if \p drvId have the same or covariant return type with respect to \p basId
+    /// \param classes the extracted class analysis
+    /// \param basId   typed ID of the base
+    /// \param drvId   typed ID of the derived
+    TypeRelation
+    areSameOrCovariant(const ClassAnalysis&, TypeKeyType basId, TypeKeyType drvId) const;
+
 
     /// extracts class and cast information under the root
     void extractFromProject(ClassAnalysis&, CastAnalysis&, ASTRootType) const;
@@ -168,31 +263,26 @@ class RoseCompatibilityBridge
     bool hasDefinition(FunctionKeyType id) const;
 
     /// returns a function that maps a FunctionKeyType to std::string
-    FuncNameFn functionNomenclator() const;
+    FuncNameFn functionNaming() const;
 
     /// returns a function that maps a ClassKeyType to std::string
-    ClassNameFn classNomenclator() const;
+    ClassNameFn classNaming() const;
 
     /// returns a function that maps a VariableId to std::string
-    VarNameFn variableNomenclator() const;
-
-    /// returns all constructors
-    /// (does not contain compiler generated c'tors)
-    std::vector<FunctionKeyType>
-    constructors(ClassKeyType) const;
-
-    /// returns the constructor if it was declared
-    FunctionKeyType
-    destructor(ClassKeyType) const;
+    VarNameFn variableNaming() const;
 
     /// returns true whether a function with the signature as \p fnkey
-    /// can be compiler generated by \p clkey.
+    /// can be compiler generated in class \p clkey.
+    /// \note if fnkey is already in clkey, isAutoGeneratable returns falls
+    ///       because fnkey is already in the class.
     bool
-    isAutoGeneratable(ClassKeyType clkey, FunctionKeyType fnkey) const;
+    isAutoGeneratable(const ClassAnalysis& all, ClassKeyType clkey, FunctionKeyType fnkey) const;
+
 
     /// returns true if the class referenced by \p clkey is abstract.
     bool
     isAbstract(ClassKeyType clkey) const;
+
 
     /// returns all callees (if known)
     /// \param fn the function for which the result shall be computed
@@ -216,6 +306,12 @@ class RoseCompatibilityBridge
     /// returns all functions reachable from n where pred holds.
     std::vector<FunctionKeyType>
     allFunctionKeys(ASTRootType n, FunctionPredicate pred) const;
+
+    DataMemberType
+    typeOf(VariableKeyType var) const;
+
+    SpecialMemberFunctionContainer
+    specialMemberFunctions(ClassKeyType clazz) const;
 };
 
 /// wrapper class to produce informative debug output about casts
@@ -253,6 +349,14 @@ std::pair<ClassKeyType, TypeKeyType> getClassCastInfo(TypeKeyType tykey);
 
 //
 // ROSE utilities
+// \todo move to sageGeneric/sageInterface
+
+struct IsNotNull
+{
+  template <class TPtr>
+  bool operator()(TPtr ptr) const { return ptr != nullptr; }
+};
+
 
 /// returns the class definition for \p n.
 /// \pre isSgClassDeclaration(n.get_definingDeclaration())

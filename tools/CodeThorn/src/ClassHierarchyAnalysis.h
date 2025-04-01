@@ -159,16 +159,17 @@ struct VirtualFunctionDesc : VirtualFunctionDescBase
   /// \}
 };
 
+
 /// holds data a class in a program
 class ClassData
 {
   public:
-    using VirtualFunctionContainer  = std::vector<FunctionKeyType>;
-    //~ using DataMemberContainer       = std::vector<VariableId>;
-    using DataMemberContainer       = std::vector<VariableKeyType>;
-    using AncestorContainer         = std::vector<InheritanceDesc>;
-    using DescendantContainer       = std::vector<InheritanceDesc>;
-    using VirtualBaseOrderContainer = std::vector<ClassKeyType>;
+    using VirtualFunctionContainer       = std::vector<FunctionKeyType>;
+    using DataMemberContainer            = std::vector<VariableKeyType>;
+    using AncestorContainer              = std::vector<InheritanceDesc>;
+    using DescendantContainer            = std::vector<InheritanceDesc>;
+    using VirtualBaseOrderContainer      = std::vector<ClassKeyType>;
+    using SpecialMemberFunctionContainer = CodeThorn::SpecialMemberFunctionContainer;
 
     ClassData()                            = default;
     ClassData(const ClassData&)            = default;
@@ -237,15 +238,27 @@ class ClassData
     void abstractClass(bool bval)       { hasAbstractMethods = bval; }
     /// \}
 
-  private:
-    AncestorContainer         allAncestors;
-    DescendantContainer       allDescendants;
-    VirtualFunctionContainer  allVirtualFunctions;
-    DataMemberContainer       allDataMembers;
-    VirtualBaseOrderContainer virtualBaseOrder;
+    const SpecialMemberFunctionContainer&
+    specialMemberFunctions() const;
 
-    bool                      hasInheritedVirtualMethods = false;
-    bool                      hasAbstractMethods = false;
+    SpecialMemberFunctionContainer&
+    specialMemberFunctions();
+
+#if COPY_CTOR_ANALYSIS
+    SpecialMemberFunctionContainer
+    specialMemberFunctions(SpecialMemberFunction::Kind knd) const;
+#endif /*COPY_CTOR_ANALYSIS*/
+
+  private:
+    AncestorContainer              allAncestors;
+    DescendantContainer            allDescendants;
+    VirtualFunctionContainer       allVirtualFunctions;
+    DataMemberContainer            allDataMembers;
+    SpecialMemberFunctionContainer allSpecialMemberFunctions;
+    VirtualBaseOrderContainer      virtualBaseOrder;
+
+    bool                           hasInheritedVirtualMethods = false;
+    bool                           hasAbstractMethods = false;
 };
 
 class ClassAnalysis;
@@ -263,11 +276,14 @@ struct ClassAnalysisInfo : ClassAnalysisInfoBase
 
 std::ostream& operator<<(std::ostream&, ClassAnalysisInfo);
 
+
+using ClassAnalysisBase = std::unordered_map<ClassKeyType, ClassData>;
+
 /// holds data about all classes in a program
-class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
+class ClassAnalysis : ClassAnalysisBase
 {
   public:
-    using base = std::unordered_map<ClassKeyType, ClassData>;
+    using base = ClassAnalysisBase;
 
     explicit
     ClassAnalysis(bool fullTranslUnit)
@@ -296,7 +312,7 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
     const mapped_type& at (const key_type& k) const;
     /// \}
 
-    /// convenience function to access the map using a SgClassDefinition&.
+    /// convenience function to access the map using a SgClassDefinition reference.
     const mapped_type& at(const SgClassDefinition& clsdef) const;
 
     /// adds an inheritance edge to both classes \p descendant and \p ancestorKey
@@ -499,6 +515,38 @@ void bottomUpTraversal (const ClassAnalysis& all, ClassAnalysisConstFn fn);
 void unorderedTraversal(ClassAnalysis& all, ClassAnalysisFn fn);
 void unorderedTraversal(const ClassAnalysis& all, ClassAnalysisConstFn fn);
 /// \}
+
+//
+// tools for querying special member functions
+
+/// a predicate type to querying special member functions
+using SpecialMemberFunctionPredicate = std::function<bool(const SpecialMemberFunction&)>;
+
+/// generate predicates for querying special member functions
+/// \{
+SpecialMemberFunctionPredicate isCopyCtor();
+SpecialMemberFunctionPredicate isCopyAssign();
+SpecialMemberFunctionPredicate isDefaultCtor();
+SpecialMemberFunctionPredicate isDtor();
+SpecialMemberFunctionPredicate isUserDefinedCtor();
+/// \}
+
+
+/// Query special member functions
+/// \{
+bool hasSpecialFunction(const SpecialMemberFunctionContainer& specials, SpecialMemberFunctionPredicate pred);
+bool hasSpecialFunction(const ClassAnalysis& all, ClassKeyType clazz, SpecialMemberFunctionPredicate pred);
+/// \}
+
+
+//
+// convenience functors
+
+struct IsDirect
+{
+  bool operator()(const InheritanceDesc& desc) const { return desc.isDirect(); }
+};
+
 
 }
 #endif /* CLASS_HIERARCHY_ANALYSIS_H */

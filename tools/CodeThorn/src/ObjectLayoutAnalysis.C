@@ -337,7 +337,7 @@ namespace
     // 3) compute final overrider
     std::transform( candidates.begin(), candidates.end(),
                     std::back_inserter(vt),
-                    [&overriders,&vt,&compat,numFn]
+                    [&overriders,&vt,&compat,&all,numFn]
                     (const std::vector<ct::VTableLayoutElement>& els) -> ct::VTableLayoutElement
                     {
                       ROSE_ASSERT(els.size());
@@ -360,7 +360,7 @@ namespace
                         }
                         else if (res.function() != vtElem.function())
                         {
-                          if (!compat.isAutoGeneratable(vt.getClass(), res.function()))
+                          if (!compat.isAutoGeneratable(all, vt.getClass(), res.function()))
                             msgError() << "No unique overrider for virtual inheritance!"
                                        << std::endl;
                         }
@@ -501,13 +501,13 @@ namespace
     bool isAbstract = false;
 
     std::for_each( res.begin(), res.end(),
-                   [&isAbstract,&clazz,&compat](ct::VTableLayoutElement& el)->void
+                   [&isAbstract,&clazz,&compat,&all](ct::VTableLayoutElement& el)->void
                    {
                      ct::VirtualFunctionEntry& vfn = boost::get<ct::VirtualFunctionEntry>(el);
                      ASSERT_not_null(vfn.getClass());
 
                      const bool willGen = (  (clazz.first != vfn.getClass())
-                                          && compat.isAutoGeneratable(clazz.first, vfn.function())
+                                          && compat.isAutoGeneratable(all, clazz.first, vfn.function())
                                           );
 
                      if (!isAbstract && vfn.isPureVirtual() && !willGen)
