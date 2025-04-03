@@ -1016,7 +1016,7 @@ size_t
 Linux::readMemory(Address va, size_t nBytes, uint8_t *buffer) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"PID " <<child_ <<": read " <<StringUtility::plural(nBytes, "bytes")
-                       <<" from va " <<StringUtility::addrToString(va) <<"\n";
+                       <<" at va " <<StringUtility::addrToString(va) <<"\n";
     if (0 == nBytes)
         return 0;
     const size_t nBytesDesired = nBytes;
@@ -1075,7 +1075,7 @@ size_t
 Linux::writeMemory(Address va, size_t nBytes, const uint8_t *buffer) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"PID " <<child_ <<": write " <<StringUtility::plural(nBytes, "bytes")
-                       <<" from va " <<StringUtility::addrToString(va) <<"\n";
+                       <<" at va " <<StringUtility::addrToString(va) <<"\n";
 
     if (0 == nBytes)
         return 0;
