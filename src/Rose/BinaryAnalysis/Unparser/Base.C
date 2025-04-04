@@ -300,14 +300,41 @@ State::currentFunction(const P2::Function::Ptr &f) {
     currentFunction_ = f;
 }
 
-Partitioner2::BasicBlock::Ptr
+P2::BasicBlock::Ptr
 State::currentBasicBlock() const {
     return currentBasicBlock_;
 }
 
 void
-State::currentBasicBlock(const Partitioner2::BasicBlockPtr &bb) {
+State::currentBasicBlock(const P2::BasicBlock::Ptr &bb) {
     currentBasicBlock_ = bb;
+}
+
+P2::BasicBlock::Ptr
+State::previousBasicBlock() const {
+    return previousBasicBlock_;
+}
+
+void
+State::previousBasicBlock(const P2::BasicBlock::Ptr &bb) {
+    previousBasicBlock_ = bb;
+}
+
+P2::BasicBlock::Ptr
+State::nextBasicBlock() const {
+    return nextBasicBlock_;
+}
+
+void
+State::nextBasicBlock(const P2::BasicBlock::Ptr &bb) {
+    nextBasicBlock_ = bb;
+}
+
+void
+State::rotateBasicBlocks(const P2::BasicBlock::Ptr &current, const P2::BasicBlock::Ptr &next) {
+    previousBasicBlock_ = current == nextBasicBlock_ ? currentBasicBlock_ : P2::BasicBlock::Ptr();
+    currentBasicBlock_ = current;
+    nextBasicBlock_ = next;
 }
 
 SgAsmExpression*
@@ -398,15 +425,20 @@ public:
 
 class BasicBlockGuard {
     State &state;
-    Partitioner2::BasicBlockPtr prev;
+    Partitioner2::BasicBlockPtr savedPrev, savedCur, savedNext;
 public:
-    BasicBlockGuard(State &state, const Partitioner2::BasicBlockPtr &bb)
-        : state(state) {
-        prev = state.currentBasicBlock();
-        state.currentBasicBlock(bb);
+    BasicBlockGuard(State &state, const P2::BasicBlock::Ptr newPrev, const P2::BasicBlock::Ptr &newCur,
+                    const P2::BasicBlock::Ptr &newNext)
+        : state(state), savedPrev(state.previousBasicBlock()), savedCur(state.currentBasicBlock()),
+          savedNext(state.nextBasicBlock()) {
+        state.previousBasicBlock(newPrev);
+        state.currentBasicBlock(newCur);
+        state.nextBasicBlock(newNext);
     }
     ~BasicBlockGuard() {
-        state.currentBasicBlock(prev);
+        state.previousBasicBlock(savedPrev);
+        state.currentBasicBlock(savedCur);
+        state.nextBasicBlock(savedNext);
     }
 };
 
@@ -572,6 +604,7 @@ Settings::Settings() {
     bblock.cfg.showingSuccessors = true;
     bblock.cfg.showingSharing = true;
     bblock.cfg.showingArrows = true;
+    bblock.cfg.showingFallThroughEdges = true;
     bblock.reach.showingReachability = true;
     bblock.cfg.arrowStyle.foreground = Color::HSV(0.58, 0.90, 0.3); // blue
     bblock.showingPostBlock = true;
@@ -736,6 +769,9 @@ commandLineSwitches(Settings &settings) {
     insertBooleanSwitch(sg, "bb-cfg-sharing", settings.bblock.cfg.showingSharing,
                         "For each basic block, emit the list of functions that own the block in addition to the function "
                         "in which the block is listed.");
+
+    insertBooleanSwitch(sg, "bb-show-fallthrough", settings.bblock.cfg.showingFallThroughEdges,
+                        "Show CFG edges that fall through from one basic block to the next.");
 
     insertBooleanSwitch(sg, "bb-reachability", settings.bblock.reach.showingReachability,
                         "For each basic block, emit information about whether the block is reachable according to the "
@@ -1037,6 +1073,7 @@ void
 Base::unparse(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bb) const {
     State state(partitioner, architecture(), settings(), *this);
     initializeState(state);
+    BasicBlockGuard push(state, P2::BasicBlock::Ptr(), bb, P2::BasicBlock::Ptr());
     emitBasicBlock(out, bb, state);
 }
 
@@ -1073,6 +1110,84 @@ Base::unparse(std::ostream &out, SgAsmExpression *expr) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
+Base::computeGutterArrows(const P2::Function::Ptr &function, State &state) const {
+    ASSERT_not_null(function);
+    state.intraFunctionCfgArrows().reset();
+
+    P2::Partitioner::ConstPtr partitioner = state.partitioner();
+    EdgeArrows::Graph graph;                             // the arrows (edges) and their endpoints (vertices)
+    std::vector<EdgeArrows::EndpointId> edgeEndpointIds; // order that CFG endpoints are emitted by the unparser
+
+    std::vector<Address> bbAddrs(function->basicBlockAddresses().begin(), function->basicBlockAddresses().end());
+    if (state.cfgArrowsPointToInsns()) {
+        for (size_t i = 0; i < bbAddrs.size(); ++i) {
+            const Address sourceVa = bbAddrs[i];
+            P2::BasicBlock::Ptr curBb = partitioner->basicBlockExists(sourceVa);
+            P2::BasicBlock::Ptr nextBb = i + 1 < bbAddrs.size() ?
+                                         partitioner->basicBlockExists(bbAddrs[i+1]) :
+                                         P2::BasicBlock::Ptr();
+            ASSERT_not_null(curBb);
+            P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(sourceVa);
+                ASSERT_require(vertex != partitioner->cfg().vertices().end());
+                for (const auto &edge: vertex->outEdges()) {
+                    const bool suppressOutgoingEdge = !settings().bblock.cfg.showingFallThroughEdges &&
+                                                      suppressFallThroughEdge(edge, curBb, nextBb, state);
+
+                    if (!suppressOutgoingEdge && edge.target()->value().type() == P2::V_BASIC_BLOCK) {
+                        Address targetVa = edge.target()->value().address();
+                        if (function->ownsBasicBlock(targetVa)) // don't use Partitioner::isIntraFunctionEdge; we want all self edges
+                            graph.insertEdgeWithVertices(sourceVa, targetVa, edge.id());
+                    }
+                }
+            }
+
+    } else {
+        // Arrows point to the edge source and target lines
+        for (size_t i = 0; i < bbAddrs.size(); ++i) {
+            P2::BasicBlock::Ptr curBb = partitioner->basicBlockExists(bbAddrs[i]);
+            P2::BasicBlock::Ptr prevBb = i > 0 ?
+                                         partitioner->basicBlockExists(bbAddrs[i-1]) :
+                                         P2::BasicBlock::Ptr();
+            P2::BasicBlock::Ptr nextBb = i + 1 < bbAddrs.size() ?
+                                         partitioner->basicBlockExists(bbAddrs[i+1]) :
+                                         P2::BasicBlock::Ptr();
+            ASSERT_not_null(curBb);
+
+            // Incoming edges for the basic block (and we do the arrow at the same time)
+            std::vector<P2::ControlFlowGraph::ConstEdgeIterator> inEdges =
+                Unparser::Base::orderedBlockPredecessors(partitioner, curBb);
+            for (P2::ControlFlowGraph::ConstEdgeIterator inEdge: inEdges) {
+                const bool suppressIncomingEdge = !settings().bblock.cfg.showingFallThroughEdges &&
+                                                  suppressFallThroughEdge(*inEdge, prevBb, curBb, state);
+
+                if (!suppressIncomingEdge) {
+                    edgeEndpointIds.push_back(EdgeArrows::edgeToTargetEndpoint(inEdge->id()));
+
+                    if (inEdge->target()->value().type() == P2::V_BASIC_BLOCK) {
+                        Address sourceVa = inEdge->source()->value().address();
+                        if (function->ownsBasicBlock(sourceVa)) // don't use Partitioner::isIntraFunctionEdge; we want all self edges
+                            graph.insertEdgeWithVertices(EdgeArrows::edgeToSourceEndpoint(inEdge->id()),
+                                                         EdgeArrows::edgeToTargetEndpoint(inEdge->id()),
+                                                         inEdge->id());
+                    }
+                }
+            }
+
+            // Followed by outgoing edges for the basic block
+            std::vector<P2::ControlFlowGraph::ConstEdgeIterator> outEdges =
+                Unparser::Base::orderedBlockSuccessors(partitioner, curBb);
+            for (P2::ControlFlowGraph::ConstEdgeIterator outEdge: outEdges) {
+                const bool suppressOutgoingEdge = !settings().bblock.cfg.showingFallThroughEdges &&
+                                                  suppressFallThroughEdge(*outEdge, curBb, nextBb, state);
+                if (!suppressOutgoingEdge)
+                    edgeEndpointIds.push_back(EdgeArrows::edgeToSourceEndpoint(outEdge->id()));
+            }
+        }
+    }
+    state.intraFunctionCfgArrows().arrows.computeLayout(graph, edgeEndpointIds);
+}
+
+void
 Base::emitFunction(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
     FunctionGuard push(state, function);
 
@@ -1082,14 +1197,8 @@ Base::emitFunction(std::ostream &out, const P2::Function::Ptr &function, State &
         state.frontUnparser().emitFunctionPrologue(out, function, state);
 
         // Update intra-function CFG arrow object for this function.
-        if (settings().bblock.cfg.showingArrows) {
-            state.intraFunctionCfgArrows().reset();
-            if (state.cfgArrowsPointToInsns()) {
-                state.intraFunctionCfgArrows().arrows.computeCfgBlockLayout(state.partitioner(), function);
-            } else {
-                state.intraFunctionCfgArrows().arrows.computeCfgEdgeLayout(state.partitioner(), function);
-            }
-        }
+        if (settings().bblock.cfg.showingArrows)
+            computeGutterArrows(function, state);
 
         // Update user-defined intra-function arrows for this function.
         state.intraFunctionBlockArrows().reset();
@@ -1175,38 +1284,64 @@ increasingAddress(const InsnsOrData &a, const InsnsOrData &b) {
     return aVa < bVa;
 }
 
+struct GetBasicBlockPtr: public boost::static_visitor<P2::BasicBlock::Ptr> {
+    P2::BasicBlock::Ptr operator()(const P2::BasicBlock::Ptr &bb) const {
+        return bb;
+    }
+
+    P2::BasicBlock::Ptr operator()(const P2::DataBlock::Ptr&) const {
+        return {};
+    }
+};
+
+P2::BasicBlock::Ptr
+getBasicBlockPtr(const InsnsOrData *block) {
+    if (!block) {
+        return {};
+    } else {
+        return boost::apply_visitor(GetBasicBlockPtr(), *block);
+    }
+}
+
 struct EmitBlockVisitor: public boost::static_visitor<> {
     std::ostream &out;
     P2::Function::Ptr function;
-    Address &nextBlockVa;
+    Address &fallThroughAddr;                           // tracks the fall-through address for each emitted block
+    const InsnsOrData *prevBlock, *nextBlock;           // optional pointers to the previous and next blocks to be emitted
     State &state;
 
-    EmitBlockVisitor(std::ostream &out, const P2::Function::Ptr &function, Address &nextBlockVa, State &state)
-        : out(out), function(function), nextBlockVa(nextBlockVa), state(state) {}
+    EmitBlockVisitor(std::ostream &out, const P2::Function::Ptr &function, Address &fallThroughAddr, const InsnsOrData *prevBlock,
+                     const InsnsOrData *nextBlock, State &state)
+        : out(out), function(function), fallThroughAddr(fallThroughAddr), prevBlock(prevBlock), nextBlock(nextBlock),
+          state(state) {}
 
     void operator()(const P2::BasicBlock::Ptr &bb) const {
-        state.frontUnparser().emitLinePrefix(out, state);
-        out <<"\n";
+        if (state.frontUnparser().settings().bblock.cfg.showingFallThroughEdges) {
+            state.frontUnparser().emitLinePrefix(out, state);
+            out <<"\n";
+        }
+
+        BasicBlockGuard push(state, getBasicBlockPtr(prevBlock), bb, getBasicBlockPtr(nextBlock));
         if (bb->address() != *function->basicBlockAddresses().begin()) {
-            if (bb->address() > nextBlockVa) {
+            if (bb->address() > fallThroughAddr) {
                 state.frontUnparser().emitLinePrefix(out, state);
                 StyleGuard style(state.styleStack(), state.frontUnparser().settings().comment.line.style);
                 out <<style.render();
-                out <<";;; skip forward " <<StringUtility::plural(bb->address() - nextBlockVa, "bytes") <<"\n";
+                out <<";;; skip forward " <<StringUtility::plural(bb->address() - fallThroughAddr, "bytes") <<"\n";
                 out <<style.restore();
-            } else if (bb->address() < nextBlockVa) {
+            } else if (bb->address() < fallThroughAddr) {
                 state.frontUnparser().emitLinePrefix(out, state);
                 StyleGuard style(state.styleStack(), state.frontUnparser().settings().comment.line.style);
                 out <<style.render();
-                out <<";;; skip backward " <<StringUtility::plural(nextBlockVa - bb->address(), "bytes") <<"\n";
+                out <<";;; skip backward " <<StringUtility::plural(fallThroughAddr - bb->address(), "bytes") <<"\n";
                 out <<style.restore();
             }
         }
         state.frontUnparser().emitBasicBlock(out, bb, state);
         if (bb->nInstructions() > 0) {
-            nextBlockVa = bb->fallthroughVa();
+            fallThroughAddr = bb->fallthroughVa();
         } else {
-            nextBlockVa = bb->address();
+            fallThroughAddr = bb->address();
         }
     }
 
@@ -1214,22 +1349,22 @@ struct EmitBlockVisitor: public boost::static_visitor<> {
         state.frontUnparser().emitLinePrefix(out, state);
         out <<"\n";
         if (db->address() != *function->basicBlockAddresses().begin()) {
-            if (db->address() > nextBlockVa) {
+            if (db->address() > fallThroughAddr) {
                 state.frontUnparser().emitLinePrefix(out, state);
                 StyleGuard style(state.styleStack(), state.frontUnparser().settings().comment.line.style);
                 out <<style.render();
-                out <<";;; skip forward " <<StringUtility::plural(db->address() - nextBlockVa, "bytes") <<"\n";
+                out <<";;; skip forward " <<StringUtility::plural(db->address() - fallThroughAddr, "bytes") <<"\n";
                 out <<style.restore();
-            } else if (db->address() < nextBlockVa) {
+            } else if (db->address() < fallThroughAddr) {
                 state.frontUnparser().emitLinePrefix(out, state);
                 StyleGuard style(state.styleStack(), state.frontUnparser().settings().comment.line.style);
                 out <<style.render();
-                out <<";;; skip backward " <<StringUtility::plural(nextBlockVa - db->address(), "bytes") <<"\n";
+                out <<";;; skip backward " <<StringUtility::plural(fallThroughAddr - db->address(), "bytes") <<"\n";
                 out <<style.restore();
             }
         }
         state.frontUnparser().emitDataBlock(out, db, state);
-        nextBlockVa = db->address() + db->size();
+        fallThroughAddr = db->address() + db->size();
     }
 };
 
@@ -1266,9 +1401,13 @@ Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, Sta
         std::sort(blocks.begin(), blocks.end(), increasingAddress);
 
         // Emit each basic- or data-block
-        Address nextBlockVa = function->address();
-        for (const InsnsOrData &block: blocks)
-            boost::apply_visitor(EmitBlockVisitor(out, function, nextBlockVa, state), block);
+        Address fallThroughAddr = function->address();
+        for (size_t i = 0; i < blocks.size(); ++i) {
+            const InsnsOrData &curBlock = blocks[i];
+            const InsnsOrData *prevBlock = i > 0 ? &blocks[i-1] : nullptr;
+            const InsnsOrData *nextBlock = i + 1 < blocks.size() ? &blocks[i+1] : nullptr;
+            boost::apply_visitor(EmitBlockVisitor(out, function, fallThroughAddr, prevBlock, nextBlock, state), curBlock);
+        }
     }
 }
 
@@ -1554,10 +1693,11 @@ Base::emitBasicBlock(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &st
     if (nextUnparser()) {
         nextUnparser()->emitBasicBlock(out, bb, state);
     } else {
-        BasicBlockGuard push(state, bb);
+        ASSERT_require(state.currentBasicBlock() == bb);
         state.frontUnparser().emitBasicBlockPrologue(out, bb, state);
         state.frontUnparser().emitBasicBlockBody(out, bb, state);
         state.frontUnparser().emitBasicBlockEpilogue(out, bb, state);
+        state.frontUnparser().emitBasicBlockSeparator(out, bb, state);
     }
 }
 
@@ -1706,6 +1846,53 @@ edgeTypeName(const P2::EdgeType &edgeType) {
     return retval;
 }
 
+bool
+Base::suppressFallThroughEdge(const P2::ControlFlowGraph::Edge &edge, const P2::BasicBlock::Ptr &src,
+                              const P2::BasicBlock::Ptr &dst, State &state) const {
+    if (settings().bblock.cfg.showingFallThroughEdges)
+        return false;
+
+    if (!src || !dst)
+        return false;
+
+    switch (edge.value().type()) {
+        case P2::E_NORMAL:
+        case P2::E_CALL_RETURN:
+        case P2::E_FUNCTION_XFER:
+            break;
+
+        case P2::E_FUNCTION_CALL:
+        case P2::E_FUNCTION_RETURN:
+        case P2::E_USER_DEFINED:
+            return false;
+    }
+
+    if (edge.source()->value().type() != P2::V_BASIC_BLOCK ||
+        edge.target()->value().type() != P2::V_BASIC_BLOCK)
+        return false;
+
+    if (edge.source()->value().bblock() != src ||
+        edge.target()->value().bblock() != dst)
+        return false;
+
+    return true;
+}
+
+bool
+Base::hasSuppressedFallThroughEdge(const P2::BasicBlock::Ptr &src, const P2::BasicBlock::Ptr &dst, State &state) const {
+    if (src && dst) {
+        if (auto partitioner = state.partitioner()) {
+            auto srcVert = partitioner->findPlaceholder(src->address());
+            ASSERT_require(srcVert != partitioner->cfg().vertices().end());
+            for (const auto &edge: srcVert->outEdges()) {
+                if (suppressFallThroughEdge(edge, src, dst, state))
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
 void
 Base::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
     ASSERT_not_null(bb);
@@ -1714,6 +1901,10 @@ Base::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &b
     } else {
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> edges = orderedBlockPredecessors(state.partitioner(), bb);
         for (P2::ControlFlowGraph::ConstEdgeIterator edge: edges) {
+            if (!settings().bblock.cfg.showingFallThroughEdges &&
+                suppressFallThroughEdge(*edge, state.previousBasicBlock(), bb, state)) {
+                continue;
+            }
 
             if (!state.cfgArrowsPointToInsns()) {
                 // The line were about to emit is the sharp end of the arrow--the arrow's target, and we're emitting arrows
@@ -1767,10 +1958,17 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
         // Get the CFG edges in the order they should be displayed even though we actually emit the basicBlockSuccessors
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> edges = orderedBlockSuccessors(state.partitioner(), bb);
         P2::BasicBlock::Successors successors = state.partitioner()->basicBlockSuccessors(bb);
+
         for (P2::ControlFlowGraph::ConstEdgeIterator edge: edges) {
+            bool suppressEdge = false;
+            if (!settings().bblock.cfg.showingFallThroughEdges &&
+                suppressFallThroughEdge(*edge, bb, state.nextBasicBlock(), state)) {
+                suppressEdge = true;
+            }
+
             Sawyer::Optional<Address> targetVa = edge->target()->value().optionalAddress();
 
-            if (!state.cfgArrowsPointToInsns()) {
+            if (!suppressEdge && !state.cfgArrowsPointToInsns()) {
                 // The line we're about to emit is the nock end of the arrow--the arrow's origin, and we're emitting
                 // arrows that point to/from the "predecessors:" and "successors:" lines. Arrows that point instead to
                 // the instructions of a basic block are handled elsewhere.
@@ -1779,28 +1977,32 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
             }
 
             // Find a matching successor that we haven't emitted yet
-            bool emitted = false;
+            bool emitted = suppressEdge;                // count suppressed edges as being emitted
             for (size_t i=0; i<successors.size(); ++i) {
                 ASSERT_not_null(successors[i].expr());
                 SymbolicExpression::Ptr expr = successors[i].expr()->get_expression();
 
                 if (targetVa && expr->toUnsigned().isEqual(targetVa)) {
                     // Edge to concrete node
-                    state.frontUnparser().emitLinePrefix(out, state);
-                    StyleGuard style(state.styleStack(), settings().comment.line.style);
-                    out <<"\t" <<style.render() <<";; successor: " <<edgeTypeName(successors[i].type()) <<" edge to ";
-                    state.frontUnparser().emitAddress(out, *targetVa, state);
-                    out <<style.restore() <<"\n";
+                    if (!suppressEdge) {
+                        state.frontUnparser().emitLinePrefix(out, state);
+                        StyleGuard style(state.styleStack(), settings().comment.line.style);
+                        out <<"\t" <<style.render() <<";; successor: " <<edgeTypeName(successors[i].type()) <<" edge to ";
+                        state.frontUnparser().emitAddress(out, *targetVa, state);
+                        out <<style.restore() <<"\n";
+                    }
                     successors.erase(successors.begin()+i);
                     emitted = true;
                     break;
 
                 } else if (!targetVa && !expr->isIntegerConstant()) {
                     // Edge to computed address
-                    state.frontUnparser().emitLinePrefix(out, state);
-                    StyleGuard style(state.styleStack(), settings().comment.line.style);
-                    out <<"\t" <<style.render() <<";; successor: " <<edgeTypeName(successors[i].type())
-                        <<" edge to " <<*expr <<style.restore() <<"\n";
+                    if (!suppressEdge) {
+                        state.frontUnparser().emitLinePrefix(out, state);
+                        StyleGuard style(state.styleStack(), settings().comment.line.style);
+                        out <<"\t" <<style.render() <<";; successor: " <<edgeTypeName(successors[i].type())
+                            <<" edge to " <<*expr <<style.restore() <<"\n";
+                    }
                     successors.erase(successors.begin()+i);
                     emitted = true;
                     break;
@@ -1878,6 +2080,24 @@ Base::emitBasicBlockReachability(std::ostream &out, const P2::BasicBlock::Ptr &b
                 out <<"\t" <<style.render() <<";; not reachable" <<style.restore() <<"\n";
             }
         }
+    }
+}
+void
+Base::emitBasicBlockSeparator(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
+    if (nextUnparser()) {
+        nextUnparser()->emitBasicBlockSeparator(out, bb, state);
+    } else if (!settings().bblock.cfg.showingFallThroughEdges) {
+        // Maybe show a separator between this block and the next blocks if there are no fall through edges. If we're not showing
+        // fallthrough edges then it's difficult to tell whether this block falls through to the next. Adding a clear separator when
+        // the block doesn't fall through helps disambiguate the situation.
+        if (state.nextBasicBlock() && !hasSuppressedFallThroughEdge(state.currentBasicBlock(), state.nextBasicBlock(), state)) {
+            state.frontUnparser().emitLinePrefix(out, state);
+            StyleGuard style(state.styleStack(), settings().comment.line.style);
+            out <<"\t" <<style.render() <<";; ════════════════════════════════════════════════════════════";
+            out <<style.restore() <<"\n";
+        }
+    } else {
+        // FIXME[Robb Matzke 2025-04-03]: When no suppressing edges, show a blank line between blocks
     }
 }
 

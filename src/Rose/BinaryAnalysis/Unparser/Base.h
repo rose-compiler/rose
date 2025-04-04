@@ -204,7 +204,7 @@ private:
     Partitioner2::PartitionerConstPtr partitioner_;
     Partitioner2::FunctionCallGraph cg_;
     Partitioner2::FunctionPtr currentFunction_;
-    Partitioner2::BasicBlockPtr currentBasicBlock_;
+    Partitioner2::BasicBlockPtr previousBasicBlock_, currentBasicBlock_, nextBasicBlock_;
     Sawyer::Optional<EdgeArrows::EndpointId> currentPredSuccId_;
     SgAsmExpression *currentExpression_;
     std::string nextInsnLabel_;
@@ -347,8 +347,26 @@ public:
     Partitioner2::FunctionPtr currentFunction() const;
     void currentFunction(const Partitioner2::FunctionPtr&);
 
+    /** Points to a relevant basic block.
+     *
+     *  Tracks the current basic block being emitted, the block that was previously emitted, and the block that we plan to emit
+     *  next.
+     *
+     * @{ */
     Partitioner2::BasicBlockPtr currentBasicBlock() const;
     void currentBasicBlock(const Partitioner2::BasicBlockPtr&);
+    Partitioner2::BasicBlockPtr previousBasicBlock() const;
+    void previousBasicBlock(const Partitioner2::BasicBlockPtr&);
+    Partitioner2::BasicBlockPtr nextBasicBlock() const;
+    void nextBasicBlock(const Partitioner2::BasicBlockPtr&);
+    /** @} */
+
+    /** Rotate the basic block pointers.
+     *
+     *  The current and next basic blocks are set as specified. If the specified current block is equal to the existing next
+     *  block then before assigning the new current block, the existing current block is assigned to the previous block, otherwise
+     *  the previous block is set to null. */
+    void rotateBasicBlocks(const Partitioner2::BasicBlockPtr &current, const Partitioner2::BasicBlockPtr &next);
 
     SgAsmExpression* currentExpression() const;
     void currentExpression(SgAsmExpression*);
@@ -570,6 +588,7 @@ public:
     virtual void emitBasicBlockPrologue(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
     virtual void emitBasicBlockBody(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
     virtual void emitBasicBlockEpilogue(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
+    virtual void emitBasicBlockSeparator(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
 
     virtual void emitBasicBlockSourceLocation(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
     virtual void emitBasicBlockComment(std::ostream&, const Partitioner2::BasicBlockPtr&, State&) const;
@@ -711,6 +730,18 @@ public:
      *  The order is defined by @ref ascendingTargetAddress. */
     static std::vector<Partitioner2::ControlFlowGraph::ConstEdgeIterator>
     orderedBlockSuccessors(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&);
+
+    /** Predicate to test whether a CFG edge is a suppressable fallthrough edge. */
+    virtual bool
+    suppressFallThroughEdge(const Partitioner2::ControlFlowGraph::Edge&, const Partitioner2::BasicBlockPtr &src,
+                                const Partitioner2::BasicBlockPtr &tgt, State&) const;
+
+    /** Test whether there are any fall-through edges between the two specified basic blocks. */
+    bool
+    hasSuppressedFallThroughEdge(const Partitioner2::BasicBlockPtr &src, const Partitioner2::BasicBlockPtr &dst, State&) const;
+
+    /** Compute edge arrows shown in the left margin. */
+    void computeGutterArrows(const Partitioner2::FunctionPtr&, State&) const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
