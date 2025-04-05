@@ -209,14 +209,20 @@ StyleGuard::restore() const {
 
 State::State(const P2::Partitioner::ConstPtr &partitioner, const Architecture::Base::ConstPtr &arch, const Settings &settings,
              const Base &frontUnparser)
-    : partitioner_(partitioner), registerNames_(notnull(arch)->registerDictionary()), frontUnparser_(frontUnparser) {
+    : partitioner_(partitioner), currentExpression_(nullptr), registerNames_(notnull(arch)->registerDictionary()),
+      frontUnparser_(frontUnparser),
+      intraFunctionCfgArrows_(settings.bblock.cfg.showingSuccessors ?
+                              ArrowMargin::CfgEndpoint::Type::CfgEdge : ArrowMargin::CfgEndpoint::Type::CfgVertex,
+                              settings.bblock.cfg.showingPredecessors ?
+                              ArrowMargin::CfgEndpoint::Type::CfgEdge : ArrowMargin::CfgEndpoint::Type::CfgVertex),
+      intraFunctionBlockArrows_(ArrowMargin::CfgEndpoint::Type::CfgVertex, ArrowMargin::CfgEndpoint::Type::CfgVertex),
+      globalBlockArrows_(ArrowMargin::CfgEndpoint::Type::CfgVertex, ArrowMargin::CfgEndpoint::Type::CfgVertex)
+{
     if (settings.function.cg.showing && partitioner)
         cg_ = partitioner->functionCallGraph(P2::AllowParallelEdges::NO);
-    intraFunctionCfgArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
-    intraFunctionBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
-    globalBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
-    globalBlockArrows_.flags.set(ArrowMargin::ALWAYS_RENDER);
-    cfgArrowsPointToInsns_ = !settings.bblock.cfg.showingPredecessors || !settings.bblock.cfg.showingSuccessors;
+    intraFunctionCfgArrows_.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
+    intraFunctionBlockArrows_.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
+    globalBlockArrows_.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     styleStack_.colorization(settings.colorization.merge(CommandLine::genericSwitchArgs.colorization));
 }
 
@@ -394,18 +400,10 @@ State::frontUnparser() const {
 
 void
 State::thisIsBasicBlockFirstInstruction() {
-    if (cfgArrowsPointToInsns())
-        intraFunctionCfgArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_START);
-    intraFunctionBlockArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_START);
-    globalBlockArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_START);
 }
 
 void
 State::thisIsBasicBlockLastInstruction() {
-    if (cfgArrowsPointToInsns())
-        intraFunctionCfgArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_END);
-    intraFunctionBlockArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_END);
-    globalBlockArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_END);
 }
 
 class FunctionGuard {
@@ -457,48 +455,192 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// State::Margin
+// ArrowMargin
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string
-ArrowMargin::render(Sawyer::Optional<EdgeArrows::EndpointId> currentEntity) {
-    // Arrow output only starts after we've seen a START or END and we have our first pointable entity ID
-    if (currentEntity && (flags.isSet(POINTABLE_ENTITY_START) || flags.isSet(POINTABLE_ENTITY_END)))
-        latestEntity = *currentEntity;
+ArrowMargin::~ArrowMargin() {}
 
-    // Generate output if we've seen any pointable entities, even if we're not currently in a pointable entity.
-    if (latestEntity) {
-        if (flags.isSet(POINTABLE_ENTITY_START) && flags.isSet(POINTABLE_ENTITY_END)) {
-            // The caller wants to show the arrow sources and targets both on the same line. We can't render that, so
-            // do just one and delay the other until the next line.
-            flags.clear(POINTABLE_ENTITY_START);
-            if (arrows.nTargets(*latestEntity) > 0) {
-                flags.set(POINTABLE_ENTITY_INSIDE);
-                return arrows.render(*latestEntity, EdgeArrows::FIRST_LINE);
-            } else {
-                flags.clear(POINTABLE_ENTITY_END);
-                flags.clear(POINTABLE_ENTITY_INSIDE);
-                return arrows.render(*latestEntity, EdgeArrows::LAST_LINE);
-            }
+ArrowMargin::ArrowMargin(const CfgEndpoint::Type srcType, const CfgEndpoint::Type dstType)
+    : srcType_(srcType), tgtType_(dstType), nextPart_(EdgeArrows::FIRST_LINE) {}
 
-        } else if (flags.testAndClear(POINTABLE_ENTITY_START)) {
-            flags.set(POINTABLE_ENTITY_INSIDE);
-            return arrows.render(*latestEntity, EdgeArrows::FIRST_LINE);
-
-        } else if (flags.testAndClear(POINTABLE_ENTITY_END)) {
-            flags.clear(POINTABLE_ENTITY_INSIDE);
-            return arrows.render(*latestEntity, EdgeArrows::LAST_LINE);
-
-        } else if (flags.isSet(POINTABLE_ENTITY_INSIDE)) {
-            return arrows.render(*latestEntity, EdgeArrows::MIDDLE_LINE);
-
-        } else {
-            return arrows.render(*latestEntity, EdgeArrows::INTER_LINE);
-        }
-    } else if (flags.isSet(ALWAYS_RENDER)) {
-        return arrows.renderBlank();
+bool
+ArrowMargin::CfgEndpoint::operator<(const CfgEndpoint &other) const {
+    if (cfgId != other.cfgId) {                         // likely
+        return cfgId < other.cfgId;
+    } else if (end != other.end) {
+        return end < other.end;
+    } else {
+        return type < other.type;
     }
-    return "";
+}
+
+void
+ArrowMargin::arrowStyle(EdgeArrows::ArrowStylePreset style, EdgeArrows::ArrowSide side) {
+    arrows_.arrowStyle(style, side);
+}
+
+void
+ArrowMargin::reset() {
+        cfgToArrow_.clear();
+        orderedEndpoints_.clear();
+        arrowGraph_.clear();
+        arrows_.reset();
+        atEndpoint_ = Sawyer::Nothing();
+        latestEndpoint_ = Sawyer::Nothing();
+        nextPart_ = EdgeArrows::FIRST_LINE;
+}
+
+ArrowMargin::CfgEndpoint
+ArrowMargin::makeCfgEndpoint(const CfgEndpoint::End end, const P2::ControlFlowGraph::Edge &edge) {
+    switch (end) {
+        case CfgEndpoint::End::Source: {
+            switch (srcType_) {
+                case CfgEndpoint::Type::CfgEdge: return CfgEndpoint(end, srcType_, edge.id());
+                case CfgEndpoint::Type::CfgVertex: return CfgEndpoint(end, srcType_, edge.source()->id());
+            }
+            ASSERT_not_reachable("invalid arrow source type");
+        }
+        case CfgEndpoint::End::Target: {
+            switch (tgtType_) {
+                case CfgEndpoint::Type::CfgEdge: return CfgEndpoint(end, tgtType_, edge.id());
+                case CfgEndpoint::Type::CfgVertex: return CfgEndpoint(end, tgtType_, edge.target()->id());
+            }
+            ASSERT_not_reachable("invalid arrow target type");
+        }
+    }
+    ASSERT_not_reachable("invalid arrow end");
+}
+
+EdgeArrows::EndpointId
+ArrowMargin::getEndpoint(const CfgEndpoint::End end, const P2::ControlFlowGraph::Edge &edge) {
+    const CfgEndpoint cfgEndpoint = makeCfgEndpoint(end, edge);
+     auto found = cfgToArrow_.find(cfgEndpoint);
+    if (found == cfgToArrow_.end())
+        found = cfgToArrow_.insert(std::make_pair(cfgEndpoint, cfgToArrow_.size())).first;
+    return found->second;
+}
+
+void
+ArrowMargin::maybeInsertArrow(const EdgeArrows::EndpointId src, const EdgeArrows::EndpointId tgt, const size_t arrowId) {
+    if (arrowGraph_.findEdgeValue(arrowId) == arrowGraph_.edges().end())
+        arrowGraph_.insertEdgeWithVertices(src, tgt, arrowId);
+}
+
+void
+ArrowMargin::maybeInsertEndpoint(const EdgeArrows::EndpointId id) {
+    if (!haveEndpointId(id))
+        orderedEndpoints_.push_back(id);
+}
+
+bool
+ArrowMargin::haveEndpointId(const EdgeArrows::EndpointId id) const {
+    return std::find(orderedEndpoints_.begin(), orderedEndpoints_.end(), id) != orderedEndpoints_.end();
+}
+
+Sawyer::Optional<EdgeArrows::EndpointId>
+ArrowMargin::findEndpoint(const CfgEndpoint::End end, const P2::ControlFlowGraph::Edge &edge) const {
+    if ((end == CfgEndpoint::End::Source && srcType_ != CfgEndpoint::Type::CfgEdge) ||
+        (end == CfgEndpoint::End::Target && tgtType_ != CfgEndpoint::Type::CfgEdge)) {
+        return {};
+    } else {
+        CfgEndpoint cfgEndpoint(end, CfgEndpoint::Type::CfgEdge, edge.id());
+        const auto found = cfgToArrow_.find(cfgEndpoint);
+        if (found != cfgToArrow_.end()) {
+            return found->second;
+        } else {
+            return {};
+        }
+    }
+}
+
+Sawyer::Optional<EdgeArrows::EndpointId>
+ArrowMargin::findEndpoint(const CfgEndpoint::End end, const P2::ControlFlowGraph::Vertex &vertex) const {
+    if ((end == CfgEndpoint::End::Source && srcType_ != CfgEndpoint::Type::CfgVertex) ||
+        (end == CfgEndpoint::End::Target && tgtType_ != CfgEndpoint::Type::CfgVertex)) {
+        return {};
+    } else {
+        CfgEndpoint cfgEndpoint(end, CfgEndpoint::Type::CfgVertex, vertex.id());
+        const auto found = cfgToArrow_.find(cfgEndpoint);
+        if (found != cfgToArrow_.end()) {
+            return found->second;
+        } else {
+            return {};
+        }
+    }
+}
+
+ArrowMargin::CfgEndpoint::End
+ArrowMargin::whichEnd(const EdgeArrows::EndpointId endpoint) const {
+    for (const auto &pair: cfgToArrow_) {
+        if (pair.second == endpoint)
+            return pair.first.end;
+    }
+    ASSERT_not_reachable("invalid endpoint");
+}
+
+void
+ArrowMargin::computeLayout() {
+    // Check that the arrow endpoints are all in the ordered list of endpoints. This is a common mistake. An alternative would
+    // be to automatically remove any arrows from the graph if one or both of their endpoints are not going to be emitted.
+    for (const auto &arrow: arrowGraph_.edges()) {
+        ASSERT_require2(haveEndpointId(arrow.source()->value()), "arrow source is not in ordered list of endpoints");
+        ASSERT_require2(haveEndpointId(arrow.target()->value()), "arrow target is not in ordered list of endpoints");
+    }
+
+    arrows_.computeLayout(arrowGraph_, orderedEndpoints_);
+
+#if 0 // [Robb Matzke 2025-04-04] debugging
+    arrows_.debugGraph(std::cout, arrowGraph_);
+    arrows_.debug(std::cout);
+    arrows_.debugLines(std::cout, orderedEndpoints_);
+#endif
+}
+
+void
+ArrowMargin::atPossibleEndpoint(const CfgEndpoint::End end, const P2::ControlFlowGraph::Edge &edge) {
+    if (const auto newEndpoint = findEndpoint(end, edge)) {
+        atEndpoint_ = newEndpoint;
+        if (CfgEndpoint::End::Source == end) {
+            nextPart_ = EdgeArrows::LAST_LINE;          // CFG edge sources are at the end of a basic block
+        } else {
+            ASSERT_require(CfgEndpoint::End::Target == end);
+            nextPart_ = EdgeArrows::FIRST_LINE;         // CFG edge targets are at the beginning of a basic block
+        }
+    }
+}
+
+void
+ArrowMargin::atPossibleEndpoint(const CfgEndpoint::End end, const P2::ControlFlowGraph::Vertex &vertex) {
+    if (const auto newEndpoint = findEndpoint(end, vertex)) {
+        atEndpoint_ = newEndpoint;
+        if (CfgEndpoint::End::Source == end) {
+            nextPart_ = EdgeArrows::LAST_LINE;          // CFG edge sources are at the end of a basic block
+        } else {
+            ASSERT_require(CfgEndpoint::End::Target == end);
+            nextPart_ = EdgeArrows::FIRST_LINE;         // CFG edge targets are at the beginning of a basic block
+        }
+    }
+}
+
+std::string
+ArrowMargin::render() {
+    std::string retval;
+    if (atEndpoint_) {
+        if (whichEnd(*atEndpoint_) == CfgEndpoint::End::Target) {
+            retval = arrows_.render(*atEndpoint_, EdgeArrows::FIRST_LINE); // arrows terminate at the beginning of a basic block
+            nextPart_ = EdgeArrows::MIDDLE_LINE;                           // and now we're inside the basic block
+        } else {
+            retval = arrows_.render(*atEndpoint_, EdgeArrows::LAST_LINE);  // arrows originate at the end of a basic block
+            nextPart_ = EdgeArrows::INTER_LINE;                            // and now we're between basic blocks
+        }
+        latestEndpoint_ = atEndpoint_;
+        atEndpoint_ = Sawyer::Nothing();
+    } else if (latestEndpoint_) {
+        retval = arrows_.render(*latestEndpoint_, nextPart_);               // continue with what we had before
+    } else {
+        retval = arrows_.renderBlank();                                     // we haven't seen any endpoints yet
+    }
+    return retval;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1112,79 +1254,60 @@ Base::unparse(std::ostream &out, SgAsmExpression *expr) const {
 void
 Base::computeGutterArrows(const P2::Function::Ptr &function, State &state) const {
     ASSERT_not_null(function);
-    state.intraFunctionCfgArrows().reset();
+    ArrowMargin &margin = state.intraFunctionCfgArrows();
+    margin.reset();
 
     P2::Partitioner::ConstPtr partitioner = state.partitioner();
-    EdgeArrows::Graph graph;                             // the arrows (edges) and their endpoints (vertices)
-    std::vector<EdgeArrows::EndpointId> edgeEndpointIds; // order that CFG endpoints are emitted by the unparser
 
-    std::vector<Address> bbAddrs(function->basicBlockAddresses().begin(), function->basicBlockAddresses().end());
-    if (state.cfgArrowsPointToInsns()) {
-        for (size_t i = 0; i < bbAddrs.size(); ++i) {
-            const Address sourceVa = bbAddrs[i];
-            P2::BasicBlock::Ptr curBb = partitioner->basicBlockExists(sourceVa);
-            P2::BasicBlock::Ptr nextBb = i + 1 < bbAddrs.size() ?
-                                         partitioner->basicBlockExists(bbAddrs[i+1]) :
-                                         P2::BasicBlock::Ptr();
-            ASSERT_not_null(curBb);
-            P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(sourceVa);
-                ASSERT_require(vertex != partitioner->cfg().vertices().end());
-                for (const auto &edge: vertex->outEdges()) {
-                    const bool suppressOutgoingEdge = !settings().bblock.cfg.showingFallThroughEdges &&
-                                                      suppressFallThroughEdge(edge, curBb, nextBb, state);
+    // Process basic blocks in the order that they will be emitted by the unparser.
+    const std::vector<Address> bbAddrs(function->basicBlockAddresses().begin(), function->basicBlockAddresses().end());
+    for (size_t i = 0; i < bbAddrs.size(); ++i) {
+        const Address bbAddr = bbAddrs[i];
+        const P2::ControlFlowGraph::ConstVertexIterator bbVertex = partitioner->findPlaceholder(bbAddr);
+        ASSERT_require(bbVertex != partitioner->cfg().vertices().end());
+        const P2::BasicBlock::Ptr curBb = bbVertex->value().bblock();
+        ASSERT_not_null(curBb);
 
-                    if (!suppressOutgoingEdge && edge.target()->value().type() == P2::V_BASIC_BLOCK) {
-                        Address targetVa = edge.target()->value().address();
-                        if (function->ownsBasicBlock(targetVa)) // don't use Partitioner::isIntraFunctionEdge; we want all self edges
-                            graph.insertEdgeWithVertices(sourceVa, targetVa, edge.id());
-                    }
-                }
+        const P2::BasicBlock::Ptr prevBb = i > 0 ? partitioner->basicBlockExists(bbAddrs[i-1]) : P2::BasicBlock::Ptr();
+        const P2::BasicBlock::Ptr nextBb = i + 1 < bbAddrs.size() ?
+                                           partitioner->basicBlockExists(bbAddrs[i+1]) : P2::BasicBlock::Ptr();
+
+        //----------------------------------------------------
+        // Arrows coming into the top of this basic block
+        //----------------------------------------------------
+
+        const auto incomingEdges = orderedBlockPredecessors(partitioner, curBb);
+        for (const auto &incomingEdge: incomingEdges) {
+            // We don't care about inter-function edges or suppressed fallthrough edges.
+            const auto sourceAddr = incomingEdge->source()->value().optionalAddress();
+            if (sourceAddr && function->ownsBasicBlock(*sourceAddr) &&
+                !suppressFallThroughEdge(*incomingEdge, prevBb, curBb, state)) {
+                const EdgeArrows::EndpointId arrowSrc = margin.getEndpoint(ArrowMargin::CfgEndpoint::End::Source, *incomingEdge);
+                const EdgeArrows::EndpointId arrowTgt = margin.getEndpoint(ArrowMargin::CfgEndpoint::End::Target, *incomingEdge);
+                margin.maybeInsertArrow(arrowSrc, arrowTgt, incomingEdge->id());
+                margin.maybeInsertEndpoint(arrowTgt);
             }
+        }
 
-    } else {
-        // Arrows point to the edge source and target lines
-        for (size_t i = 0; i < bbAddrs.size(); ++i) {
-            P2::BasicBlock::Ptr curBb = partitioner->basicBlockExists(bbAddrs[i]);
-            P2::BasicBlock::Ptr prevBb = i > 0 ?
-                                         partitioner->basicBlockExists(bbAddrs[i-1]) :
-                                         P2::BasicBlock::Ptr();
-            P2::BasicBlock::Ptr nextBb = i + 1 < bbAddrs.size() ?
-                                         partitioner->basicBlockExists(bbAddrs[i+1]) :
-                                         P2::BasicBlock::Ptr();
-            ASSERT_not_null(curBb);
+        //----------------------------------------------------
+        // Arrows going out of the bottom of this basic block
+        //----------------------------------------------------
 
-            // Incoming edges for the basic block (and we do the arrow at the same time)
-            std::vector<P2::ControlFlowGraph::ConstEdgeIterator> inEdges =
-                Unparser::Base::orderedBlockPredecessors(partitioner, curBb);
-            for (P2::ControlFlowGraph::ConstEdgeIterator inEdge: inEdges) {
-                const bool suppressIncomingEdge = !settings().bblock.cfg.showingFallThroughEdges &&
-                                                  suppressFallThroughEdge(*inEdge, prevBb, curBb, state);
-
-                if (!suppressIncomingEdge) {
-                    edgeEndpointIds.push_back(EdgeArrows::edgeToTargetEndpoint(inEdge->id()));
-
-                    if (inEdge->target()->value().type() == P2::V_BASIC_BLOCK) {
-                        Address sourceVa = inEdge->source()->value().address();
-                        if (function->ownsBasicBlock(sourceVa)) // don't use Partitioner::isIntraFunctionEdge; we want all self edges
-                            graph.insertEdgeWithVertices(EdgeArrows::edgeToSourceEndpoint(inEdge->id()),
-                                                         EdgeArrows::edgeToTargetEndpoint(inEdge->id()),
-                                                         inEdge->id());
-                    }
-                }
-            }
-
-            // Followed by outgoing edges for the basic block
-            std::vector<P2::ControlFlowGraph::ConstEdgeIterator> outEdges =
-                Unparser::Base::orderedBlockSuccessors(partitioner, curBb);
-            for (P2::ControlFlowGraph::ConstEdgeIterator outEdge: outEdges) {
-                const bool suppressOutgoingEdge = !settings().bblock.cfg.showingFallThroughEdges &&
-                                                  suppressFallThroughEdge(*outEdge, curBb, nextBb, state);
-                if (!suppressOutgoingEdge)
-                    edgeEndpointIds.push_back(EdgeArrows::edgeToSourceEndpoint(outEdge->id()));
+        const auto outgoingEdges = orderedBlockSuccessors(partitioner, curBb);
+        for (const auto &outgoingEdge: outgoingEdges) {
+            // We don't care about inter-function edges or suppressed fallthrough edges.
+            const auto targetAddr = outgoingEdge->target()->value().optionalAddress();
+            if (targetAddr && function->ownsBasicBlock(*targetAddr) &&
+                !suppressFallThroughEdge(*outgoingEdge, curBb, nextBb, state)) {
+                const EdgeArrows::EndpointId arrowSrc = margin.getEndpoint(ArrowMargin::CfgEndpoint::End::Source, *outgoingEdge);
+                const EdgeArrows::EndpointId arrowTgt = margin.getEndpoint(ArrowMargin::CfgEndpoint::End::Target, *outgoingEdge);
+                margin.maybeInsertArrow(arrowSrc, arrowTgt, outgoingEdge->id());
+                margin.maybeInsertEndpoint(arrowSrc);
             }
         }
     }
-    state.intraFunctionCfgArrows().arrows.computeLayout(graph, edgeEndpointIds);
+
+    margin.computeLayout();
 }
 
 void
@@ -1747,11 +1870,33 @@ Base::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State
             state.frontUnparser().emitLinePrefix(out, state);
             out <<StringUtility::addrToString(bb->address()) <<": no instructions\n";
         } else {
+            auto bbVertex = state.partitioner()->findPlaceholder(bb->address());
+            ASSERT_require(bbVertex != state.partitioner()->cfg().vertices().end());
+            state.intraFunctionCfgArrows().atPossibleEndpoint(ArrowMargin::CfgEndpoint::End::Target, *bbVertex);
             state.thisIsBasicBlockFirstInstruction();
             state.nextInsnLabel(state.basicBlockLabels().getOrElse(bb->address(), ""));
+            bool arrowsNeedExtraLine = false;
             for (SgAsmInstruction *insn: bb->instructions()) {
-                if (insn == bb->instructions().back())
+                if (insn == bb->instructions().back()) {
                     state.thisIsBasicBlockLastInstruction();
+
+                    // An edge arrow can't originate and terminate on the same line, at least not without using a character like
+                    // \u{21aa}. Anyway, we need to be able to support ASCII-art arrows. Therfore, if a basic block has an arrow
+                    // that originates and terminates at itself and the block has only one instruction, we need to delay the
+                    // outgoing arrows and place them on a line following the last instruction.
+                    //
+                    // We might be able to test whether there's such a self arrow, but the larger problem is there's no way to
+                    // call `atPossibleEndpoint` twice for the same line of output.
+                    ArrowMargin &margin = state.intraFunctionCfgArrows();
+                    if (insn == bb->instructions().front() &&
+                        margin.findEndpoint(ArrowMargin::CfgEndpoint::End::Target, *bbVertex) &&
+                        margin.findEndpoint(ArrowMargin::CfgEndpoint::End::Source, *bbVertex)) {
+                        arrowsNeedExtraLine = true;
+                    } else {
+                        margin.atPossibleEndpoint(ArrowMargin::CfgEndpoint::End::Source, *bbVertex);
+                    }
+                }
+
                 state.frontUnparser().emitInstruction(out, insn, state);
                 out <<"\n";
                 state.nextInsnLabel("");
@@ -1760,6 +1905,11 @@ Base::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State
             // Emit a line after the last instruction if we need to show anything that happens after that instruction.
             if (settings().bblock.showingPostBlock && !bb->instructions().empty() &&
                 (settings().insn.stackDelta.showing || settings().insn.frameDelta.showing)) {
+                if (arrowsNeedExtraLine) {
+                    state.intraFunctionCfgArrows().atPossibleEndpoint(ArrowMargin::CfgEndpoint::End::Source, *bbVertex);
+                    arrowsNeedExtraLine = false;
+                }
+
                 SgAsmInstruction *insn = bb->instructions().back();
                 std::ostringstream ss;
                 state.isPostInstruction(true);
@@ -1774,6 +1924,13 @@ Base::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State
                 }(ss.str());
                 if (hasNonSpace)
                     out <<ss.str() <<"\n";
+            }
+
+            // If arrows still need an extra line
+            if (arrowsNeedExtraLine) {
+                state.intraFunctionCfgArrows().atPossibleEndpoint(ArrowMargin::CfgEndpoint::End::Source, *bbVertex);
+                state.frontUnparser().emitLinePrefix(out, state);
+                out <<"\n";
             }
         }
     }
@@ -1896,23 +2053,18 @@ Base::hasSuppressedFallThroughEdge(const P2::BasicBlock::Ptr &src, const P2::Bas
 void
 Base::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
     ASSERT_not_null(bb);
+    ASSERT_require(settings().bblock.cfg.showingPredecessors);
+
     if (nextUnparser()) {
         nextUnparser()->emitBasicBlockPredecessors(out, bb, state);
     } else {
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> edges = orderedBlockPredecessors(state.partitioner(), bb);
         for (P2::ControlFlowGraph::ConstEdgeIterator edge: edges) {
-            if (!settings().bblock.cfg.showingFallThroughEdges &&
-                suppressFallThroughEdge(*edge, state.previousBasicBlock(), bb, state)) {
+            if (suppressFallThroughEdge(*edge, state.previousBasicBlock(), bb, state))
                 continue;
-            }
 
-            if (!state.cfgArrowsPointToInsns()) {
-                // The line were about to emit is the sharp end of the arrow--the arrow's target, and we're emitting arrows
-                // that point to/from the "predecessors:" and "successors:" lines. Arrows that point instead to the
-                // instructions of a basic block are handled elsewhere.
-                state.currentPredSuccId(EdgeArrows::edgeToTargetEndpoint(edge->id()));
-                state.intraFunctionCfgArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_START); // point end of arrow
-            }
+            // The line we're about to emit might be the target end of an arrow for an intra-function CFG edge
+            state.intraFunctionCfgArrows().atPossibleEndpoint(ArrowMargin::CfgEndpoint::End::Target, *edge);
 
             // Emit the "predecessor:" line
             std::string s = edgeTypeName(edge->value().type()) + " edge";
@@ -1952,6 +2104,9 @@ Base::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &b
 
 void
 Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
+    ASSERT_not_null(bb);
+    ASSERT_require(settings().bblock.cfg.showingSuccessors);
+
     if (nextUnparser()) {
         nextUnparser()->emitBasicBlockSuccessors(out, bb, state);
     } else {
@@ -1960,21 +2115,11 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
         P2::BasicBlock::Successors successors = state.partitioner()->basicBlockSuccessors(bb);
 
         for (P2::ControlFlowGraph::ConstEdgeIterator edge: edges) {
-            bool suppressEdge = false;
-            if (!settings().bblock.cfg.showingFallThroughEdges &&
-                suppressFallThroughEdge(*edge, bb, state.nextBasicBlock(), state)) {
-                suppressEdge = true;
-            }
-
+            bool suppressEdge = suppressFallThroughEdge(*edge, bb, state.nextBasicBlock(), state);
             Sawyer::Optional<Address> targetVa = edge->target()->value().optionalAddress();
 
-            if (!suppressEdge && !state.cfgArrowsPointToInsns()) {
-                // The line we're about to emit is the nock end of the arrow--the arrow's origin, and we're emitting
-                // arrows that point to/from the "predecessors:" and "successors:" lines. Arrows that point instead to
-                // the instructions of a basic block are handled elsewhere.
-                state.currentPredSuccId(EdgeArrows::edgeToSourceEndpoint(edge->id()));
-                state.intraFunctionCfgArrows().flags.set(ArrowMargin::POINTABLE_ENTITY_END);// nock end of arrow
-            }
+            // The line we're about to emit might be the source end of an arrow for an intra-functon CFG edge.
+            state.intraFunctionCfgArrows().atPossibleEndpoint(ArrowMargin::CfgEndpoint::End::Source, *edge);
 
             // Find a matching successor that we haven't emitted yet
             bool emitted = suppressEdge;                // count suppressed edges as being emitted
@@ -3695,20 +3840,19 @@ Base::emitLinePrefix(std::ostream &out, State &state) const {
         StyleGuard style(state.styleStack(), settings().bblock.cfg.arrowStyle);
         out <<style.render();
 
+# if 0 // I'm not sure this is used for anything. In any case, it has problems. [Robb Matzke 2025-04-05]
         Sawyer::Optional<EdgeArrows::EndpointId> arrowVertexId;
         if (state.currentBasicBlock())
             arrowVertexId = state.currentBasicBlock()->address();
         out <<state.globalBlockArrows().render(arrowVertexId);
         out <<state.intraFunctionBlockArrows().render(arrowVertexId);
+#endif
 
-        // CFG arrows point to either the basic bocks or to the "predecessor:" and "successor:" lines.
-        if (settings().bblock.cfg.showingArrows) {
-            if (state.cfgArrowsPointToInsns()) {
-                out <<state.intraFunctionCfgArrows().render(arrowVertexId);
-            } else {
-                out <<state.intraFunctionCfgArrows().render(state.currentPredSuccId());
-            }
-        }
+        // CFG arrows point to either the basic bocks or to the "predecessor:" and "successor:" lines. The
+        // state.currentCfgArrowEndpoint will only be set for actual lines that are endpoints. Therefore, if your endpoints are
+        // instructions, don't set this property for the output lines containing CFG edge information, and vice versa.
+        if (settings().bblock.cfg.showingArrows)
+            out <<state.intraFunctionCfgArrows().render();
 
         out <<style.restore();
     }

@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/StringUtility/Diagnostics.h>
 
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
@@ -151,12 +152,12 @@ EdgeArrows::computeCfgEdgeLayout(const P2::Partitioner::ConstPtr &partitioner, c
         // Incoming edges for the basic block (and we do the arrow at the same time)
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> inEdges = Unparser::Base::orderedBlockPredecessors(partitioner, bb);
         for (P2::ControlFlowGraph::ConstEdgeIterator inEdge: inEdges) {
-            edgeEndpointIds.push_back(edgeToTargetEndpoint(inEdge->id()));
+            edgeEndpointIds.push_back(toTargetEndpoint(inEdge->id()));
 
             if (inEdge->target()->value().type() == P2::V_BASIC_BLOCK) {
                 Address sourceVa = inEdge->source()->value().address();
                 if (function->ownsBasicBlock(sourceVa)) // don't use Partitioner::isIntraFunctionEdge; we want all self edges
-                    graph.insertEdgeWithVertices(edgeToSourceEndpoint(inEdge->id()), edgeToTargetEndpoint(inEdge->id()),
+                    graph.insertEdgeWithVertices(toSourceEndpoint(inEdge->id()), toTargetEndpoint(inEdge->id()),
                                                  inEdge->id());
             }
         }
@@ -164,27 +165,48 @@ EdgeArrows::computeCfgEdgeLayout(const P2::Partitioner::ConstPtr &partitioner, c
         // Followed by outgoing edges for the basic block
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> outEdges = Unparser::Base::orderedBlockSuccessors(partitioner, bb);
         for (P2::ControlFlowGraph::ConstEdgeIterator outEdge: outEdges)
-            edgeEndpointIds.push_back(edgeToSourceEndpoint(outEdge->id()));
+            edgeEndpointIds.push_back(toSourceEndpoint(outEdge->id()));
     }
     computeLayout(graph, edgeEndpointIds);
 }
 
 // class method
 EdgeArrows::EndpointId
-EdgeArrows::edgeToSourceEndpoint(const size_t edgeId) {
-    return 2 * edgeId + 0;
+EdgeArrows::toSourceEndpoint(const size_t someId) {
+    return 2 * someId + 0;
 }
 
 // class method
 EdgeArrows::EndpointId
-EdgeArrows::edgeToTargetEndpoint(const size_t edgeId) {
-    return 2 * edgeId + 1;
+EdgeArrows::toTargetEndpoint(const size_t someId) {
+    return 2 * someId + 1;
 }
 
 // class method
 size_t
-EdgeArrows::edgeFromEndpoint(const EndpointId endpoint) {
+EdgeArrows::fromEndpoint(const EndpointId endpoint) {
     return endpoint / 2;
+}
+    
+// [Robb Matzke 2025-04-04]: deprecated
+// class method.
+EdgeArrows::EndpointId
+EdgeArrows::edgeToSourceEndpoint(const size_t edgeId) {
+    return toSourceEndpoint(edgeId);
+}
+
+// [Robb Matzke 2025-04-04]: deprecated
+// class method
+EdgeArrows::EndpointId
+EdgeArrows::edgeToTargetEndpoint(const size_t edgeId) {
+    return toTargetEndpoint(edgeId);
+}
+
+// [Robb Matzke 2025-04-04]: deprecated
+// class method
+size_t
+EdgeArrows::edgeFromEndpoint(const EndpointId endpoint) {
+    return fromEndpoint(endpoint);
 }
 
 // class method
@@ -225,6 +247,19 @@ EdgeArrows::renderBlank() const {
 }
 
 void
+EdgeArrows::debugGraph(std::ostream &out, const Graph &graph) const {
+    out <<"arrow graph has " <<StringUtility::plural(graph.nVertices(), "endpoints") <<":\n";
+    for (const auto &vertex: graph.vertices())
+        out <<"  endpoint #" <<vertex.value() <<" (" <<StringUtility::addrToString(vertex.value()) <<")\n";
+
+    out <<"arrow graph has " <<StringUtility::plural(graph.nEdges(), "arrows") <<":\n";
+    for (const auto &edge: graph.edges()) {
+        out <<"  arrow #" <<edge.value() <<" (" <<StringUtility::addrToString(edge.value()) <<")"
+            <<" from endpoint " <<edge.source()->value() <<" to " <<edge.target()->value() <<"\n";
+    }
+}
+
+void
 EdgeArrows::debug(std::ostream &out) const {
     out <<"output hull = ";
     if (outputHull_.isEmpty()) {
@@ -233,7 +268,7 @@ EdgeArrows::debug(std::ostream &out) const {
         out <<"lines [" <<outputHull_.least() <<", " <<outputHull_.greatest() <<"]\n";
     }
 
-    out <<"endpoint locations:\n";
+    out <<"endpoint locations; each endpoint occupies 3 lines (first, mid, last) and after:\n";
     for (const EndpointLocations::Node &node: endpointLocations_.nodes()) {
         out <<"  endpoint " <<node.key() <<" (" <<StringUtility::addrToString(node.key()) <<")"
             <<" at lines " <<node.value().least()
@@ -249,6 +284,18 @@ EdgeArrows::debug(std::ostream &out) const {
                 <<" at lines " <<arrow.location.least()
                 <<" through " <<arrow.location.greatest() <<"\n";
         }
+    }
+}
+
+void
+EdgeArrows::debugLines(std::ostream &out, const std::vector<EndpointId> &orderedEndpoints) const {
+    out <<"arrow lines:\n";
+    size_t line = 0;
+    for (const EndpointId endpoint: orderedEndpoints) {
+        out <<render(endpoint, FIRST_LINE)  <<" line " <<++line <<" endpoint " <<endpoint <<" first line\n";
+        out <<render(endpoint, MIDDLE_LINE) <<" line " <<++line <<" endpoint " <<endpoint <<" middle line\n";
+        out <<render(endpoint, LAST_LINE)   <<" line " <<++line <<" endpoint " <<endpoint <<" last line\n";
+        out <<render(endpoint, INTER_LINE)  <<" line " <<++line <<" endpoint " <<endpoint <<" after last\n";
     }
 }
 

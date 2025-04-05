@@ -45,49 +45,125 @@ std::string invalidRegister(SgAsmInstruction*, RegisterDescriptor, const Registe
 // Margins containing arrows
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** State associated with printing arrows in the margin. */
+/** State associated with printing arrows in the margin.
+ *
+ *  Arrows are represented by directed edges in an "arrow graph", and the vertices of that graph represent the endpoints of the
+ *  arrows. Each arrow must have a unique ID (`size_t`) as should each endpoint. Multiple arrows may have the same endpoint, but
+ *  any particular arrow should not have the same endpoint as both its source and target (since drawing such an arrow is not
+ *  always possible, e.g., with ASCII text). Arrow IDs for arrows that correspond to CFG edges are just the CFG edge IDs.
+ *
+ *  Each basic block is optionally prefixed by one line per incoming edge, and optionally suffixed by one line per outgoing
+ *  edge, depending on the unparser settings. When edge lines are present, the arrows originate and/or terminate at these lines,
+ *  otherwise they use the first or last instruction of the basic block.
+ *
+ *  Arrow endpoint IDs are one of two things, depending on whether the endpoint would be a line describing a CFG edge, or a line
+ *  corresponding to a CFG vertex (a basic block). In both cases there are two possible endpoint locations that need to have unique
+ *  IDs for a total of four types, but based on the settings we only ever use two of these types.
+ *
+ *  @li arrow source endpoint is the last line of a basic block; its ID is twice the CFG vertex ID plus one.
+ *  @li arrow source endpoint is the CFG edge source line; its ID is twice the CFG edge ID.
+ *  @li arrow target endpoint is the first line of a basic block; its ID is twice the CFG vertex ID.
+ *  @li arrow target endpoint is the CFG edge target line; its ID is twice the CFG edge ID plus one.
+ *
+ *  These endpoint IDs are obtained from the @ref EdgeArrow::toSourceEndpoint and related functions. */
 class ArrowMargin {
 public:
-    /** Flags controlling the finer aspects of margin arrows. */
-    enum Flags {
-        /** Set this flag when you want the emitLinePrefix function to treat the next possible line as the start of a pointable
-         *  entity. The actual start is delayed until an appropriate state is reached. When the entity does finally start, the
-         *  emitLinePrefix function will clear this flag and set the corresponding EMIT flag instead.  The start of a pointable
-         *  entity serves as the line to which arrows point. */
-        POINTABLE_ENTITY_START = 0x00000001,
 
-        /** Set this flag when you want the emitLinePrefix function to treat the next line as the end of a pointable entity.
-         * The end of an entity is from whence arrows emanate.  The emitLinePrefix will clear this flag at the next
-         * opportunity. */
-        POINTABLE_ENTITY_END    = 0x00000002,
-
-        /** This flag is modified automatically by the emitLinePrefix function. There is no need to adjust it. */
-        POINTABLE_ENTITY_INSIDE = 0x00000004,
-
-        /** If set, then emit the prefix area even if we seem to be generating output that the unparser would otherwise
-         *  consider to be before or after the set of arrows. This flag is not adjusted by the renderer. */
-        ALWAYS_RENDER           = 0x00000008
+    // An arrow endpoint from the assembly listing's perspective is either a line describing the source or target of a CFG edge, or
+    // a line corresponding to the first or last instruction from a CFG basic block vertex.
+    class CfgEndpoint {
+    public:
+        enum class End {Source, Target};
+        enum class Type {CfgEdge, CfgVertex};
+        End end;                                        // which end of the arrow is this?
+        Type type;                                      // is this endpoint at a CFG edge output line, or an instruction?
+        size_t cfgId;                                   // an CFG edge ID or a CFG vertex ID, depending on type
+    public:
+        CfgEndpoint() = delete;
+        CfgEndpoint(const End end, const Type type, const size_t cfgId)
+            : end(end), type(type), cfgId(cfgId) {}
+        bool operator<(const CfgEndpoint&) const;
     };
 
-    EdgeArrows arrows;                                  /**< The arrows to be displayed. */
-    BitFlags<Flags> flags;                              /**< Flags that hold and/or control the output state. */
-    Sawyer::Optional<EdgeArrows::EndpointId> latestEntity; /**< Latest pointable entity that was encountered in the output. */
+private:
+    CfgEndpoint::Type srcType_;                                /**< What are the arrow source endpoints. */
+    CfgEndpoint::Type tgtType_;                                /**< What are the arrow target endpoints. */
+    std::map<CfgEndpoint, EdgeArrows::EndpointId> cfgToArrow_; /**< Map from CFG endpoints to unique arrow endpoints. */
+    std::vector<EdgeArrows::EndpointId> orderedEndpoints_;     /**< IDs for endpoints. */
+    EdgeArrows::Graph arrowGraph_;                             /**< Describes the arrows and their endpoints. */
+    EdgeArrows arrows_;                                        /**< The arrows to be displayed. */
+    Sawyer::Optional<EdgeArrows::EndpointId> atEndpoint_;      /**< Are we currently emitting an endpoint in the output? */
+    Sawyer::Optional<EdgeArrows::EndpointId> latestEndpoint_;  /**< Latest pointable entity that was encountered in the output. */
+    EdgeArrows::OutputPart nextPart_;                          /**< Part to emit on the next line if not overridden. */
 
-    /** Reset the marging arrow state.
+public:
+    ~ArrowMargin();
+    ArrowMargin() = delete;
+    ArrowMargin(const ArrowMargin&) = delete;
+    ArrowMargin& operator=(const ArrowMargin&) = delete;
+    ArrowMargin(CfgEndpoint::Type srcEndpointType, CfgEndpoint::Type dstEndpointType);
+
+    /** Set arrow style. */
+    void arrowStyle(EdgeArrows::ArrowStylePreset, EdgeArrows::ArrowSide);
+
+    /** Reset the margin arrow state.
      *
      *  This should be called near the end of emitting a function, probably just before emitting the function epilogue. */
-    void reset() {
-        arrows.reset();
-        flags = 0;
-        latestEntity = Sawyer::Nothing();
-    }
+    void reset();
 
-    /** Generate the string to print in the margin.
+    /** Get an arrow endpoint.
      *
-     *  The @p currentEntity values are the vertex IDs used to initialize the @ref arrows method of this object. For control flow
-     *  graphs, that's usually the entry address of a basic block. However, the unparser doesn't really care what kind of entities
-     *  are being pointed at by the arrows. */
-    std::string render(Sawyer::Optional<EdgeArrows::EndpointId> currentEntity);
+     *  Given a CFG edge, return an arrow endpoint ID. Arrow endpoint IDs are unique.
+     *
+     *  @{ */
+    CfgEndpoint makeCfgEndpoint(CfgEndpoint::End, const Partitioner2::ControlFlowGraph::Edge&);
+    EdgeArrows::EndpointId getEndpoint(CfgEndpoint::End, const Partitioner2::ControlFlowGraph::Edge&);
+    /** @} */
+
+    /** Insert an arrow into the graph if it isn't already there.
+     *
+     *  The arrow ID should be the same as the CFG edge ID that it represents. */
+    void maybeInsertArrow(EdgeArrows::EndpointId src, EdgeArrows::EndpointId tgt, size_t arrowId);
+
+    /** Insert an arrow endpoint into the ordered list of endpoints.
+     *
+     *  Endpoints should be inserted in the same order they're emitted to the output. It is not necessary to insert endpoints
+     *  before inserting the arrows to which they're attached. */
+    void maybeInsertEndpoint(EdgeArrows::EndpointId);
+
+    /** Test whether we have an endpoint ID. */
+    bool haveEndpointId(EdgeArrows::EndpointId) const;
+
+    /** Test whether we have an endpoint ID for a particular line of output given some info about what's on that line.
+     *
+     * @{ */
+    Sawyer::Optional<EdgeArrows::EndpointId> findEndpoint(CfgEndpoint::End, const Partitioner2::ControlFlowGraph::Edge&) const;
+    Sawyer::Optional<EdgeArrows::EndpointId> findEndpoint(CfgEndpoint::End, const Partitioner2::ControlFlowGraph::Vertex&) const;
+    /** @} */
+
+    /** Test whether an endpoint is the source or target of an arrow. */
+    CfgEndpoint::End whichEnd(EdgeArrows::EndpointId) const;
+
+    /** Compute where arrows go in the margins.
+     *
+     *  Before calling this, you must have inserted some arrows and endpoints. */
+    void computeLayout();
+
+    /** While generating output, indicate what line we're at.
+     *
+     *  The line could be one that describes an endpoint of a CFG edge, or it could be an instruction at the beginning or end of
+     *  a CFG vertex (basic block).
+     *
+     * @{ */
+    void atPossibleEndpoint(CfgEndpoint::End, const Partitioner2::ControlFlowGraph::Edge&);
+    void atPossibleEndpoint(CfgEndpoint::End, const Partitioner2::ControlFlowGraph::Vertex&);
+    /** @} */
+
+    /** Destructively render the arrows for a line of output.
+     *
+     *  If we're at an arrow endpoint in the output (see @ref atPossibleEndpoint) then calling this function advances beyond
+     *  that line of output. */
+    std::string render();
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -205,7 +281,6 @@ private:
     Partitioner2::FunctionCallGraph cg_;
     Partitioner2::FunctionPtr currentFunction_;
     Partitioner2::BasicBlockPtr previousBasicBlock_, currentBasicBlock_, nextBasicBlock_;
-    Sawyer::Optional<EdgeArrows::EndpointId> currentPredSuccId_;
     SgAsmExpression *currentExpression_;
     std::string nextInsnLabel_;
     AddrString basicBlockLabels_;
@@ -216,7 +291,6 @@ private:
     ArrowMargin intraFunctionCfgArrows_;                              // arrows for the intra-function control flow graphs
     ArrowMargin intraFunctionBlockArrows_;                            // user-defined intra-function arrows to/from blocks
     ArrowMargin globalBlockArrows_;                                   // user-defined global arrows to/from blocks
-    bool cfgArrowsPointToInsns_;                                      // arrows point to insns? else predecessor/successor lines
     StyleStack styleStack_;                                           // styles
     bool isPostInstruction_ = false;                                  // show extra information appearing after an instruction
 
@@ -296,28 +370,6 @@ public:
 
     /** Call this when you're about to output the last instruction of a basic block. */
     void thisIsBasicBlockLastInstruction();
-
-    /** Property: ID for CFG edge arrow endpoint.
-     *
-     *  When generating margin arrows that point to the "predecessor:" and "successor:" lines of the output (instead of arrows
-     *  that point to the basic block instructions), this property holds the ID number for the arrow endpoint. See @ref
-     *  EdgeArrows::computeCfgEdgeLayout.
-     *
-     * @{ */
-    Sawyer::Optional<EdgeArrows::EndpointId> currentPredSuccId() const { return currentPredSuccId_; }
-    void currentPredSuccId(Sawyer::Optional<EdgeArrows::EndpointId> id) { currentPredSuccId_ = id; }
-    /** @} */
-
-    /** Property: Whether CFG margin arrows point to instructions.
-     *
-     *  If set, then the CFG arrows in the left margin origin from and point to instructions of basic blocks. If false, they
-     *  originate from "successor:" lines and point to "predecessor:" lines.  If there are no CFG margin arrows then the
-     *  value of this property doesn't matter.
-     *
-     * @{ */
-    bool cfgArrowsPointToInsns() const { return cfgArrowsPointToInsns_; }
-    void cfgArrowsPointToInsns(bool b) { cfgArrowsPointToInsns_ = b; }
-    /** @} */
 
     /** Property: Stack of styles.
      *

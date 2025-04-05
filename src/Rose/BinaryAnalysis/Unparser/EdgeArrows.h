@@ -9,6 +9,8 @@
 #include <Sawyer/IntervalMap.h>
 #include <Sawyer/Map.h>
 #include <Rose/StringUtility.h>
+#include <ROSE_DEPRECATED.h>
+
 #include <ostream>
 #include <vector>
 
@@ -142,7 +144,7 @@ private:
 
 private:
     OutputLocation outputHull_;                         // entire output
-    EndpointLocations endpointLocations_;               // logical location of each endpointin the output
+    EndpointLocations endpointLocations_;               // logical location of each endpoint in the output
     Columns columns_;                                   // columns of arrows
     ArrowStyle arrowStyle_;                             // how to render arrows
     size_t minRenderColumns_ = 0;                       // minimum number of arrow columns to render
@@ -205,21 +207,26 @@ public:
      *  See also, @ref computeCfgBlockLayout */
     void computeCfgEdgeLayout(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
 
-    /** Endpoint IDs related to edge IDs.
+    /** Arrow endpoint IDs related to edge or vertex IDs.
      *
-     *  These functions generate endpoint IDs from edge IDs and vice versa. They're purely here for convenience--you can number your
-     *  endpoints however you like.
+     *  These functions generate arrow endpoint IDs (`EndpointId`) from non-arrow IDs (`size_t`) and vice versa. They're purely here
+     *  for convenience--you can number your endpoints however you like as long as unique endpoints have unique IDs.
      *
      *  The @ref computeCfgEdgeLayout uses the numbering scheme implemented by these functions.
      *
      * @{ */
-    static EndpointId edgeToSourceEndpoint(size_t edgeId);
-    static EndpointId edgeToTargetEndpoint(size_t edgeId);
-    static size_t edgeFromEndpoint(EndpointId);
+    static EndpointId toSourceEndpoint(size_t cfgEdgeOrVertexId);
+    static EndpointId toTargetEndpoint(size_t cfgEdgeOrVertexId);
+    static size_t fromEndpoint(EndpointId);
     static bool isSourceEndpoint(EndpointId);
     static bool isTargetEndpoint(EndpointId);
     static EndpointId otherEndpoint(EndpointId);
     /** @} */
+
+    // [Robb Matzke 2025-04-04]: Deprecated
+    static EndpointId edgeToSourceEndpoint(size_t edgeId) ROSE_DEPRECATED("use toSourceEndpoint");
+    static EndpointId edgeToTargetEndpoint(size_t edgeId) ROSE_DEPRECATED("use toTargetEndpoint");
+    static size_t edgeFromEndpoint(EndpointId) ROSE_DEPRECATED("use fromEndpoint");
 
     /** Tests whether endpoint ID is known.
      *
@@ -310,9 +317,14 @@ public:
      *  you can use this slower function to find the number of arrows that point to the specified endpoint. */
     size_t nTargets(EndpointId) const;
 
-    /** Print implementation-defined debugging information. */
+    /** Print implementation-defined debugging information.
+     *
+     * @{ */
     void debug(std::ostream&) const;
-    
+    void debugGraph(std::ostream&, const Graph&) const;
+    void debugLines(std::ostream&, const std::vector<EndpointId>&) const;
+    /** @} */
+
 private:
     // Append an endpoint to the output. This doesn't actually create any output, it just reserves space for it.
     void appendEndpoint(EndpointId);
