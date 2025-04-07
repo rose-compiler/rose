@@ -428,8 +428,8 @@ isInvalidTarget(Address target, const AddressInterval &targetLimits, const Parti
 
 std::vector<Address>
 scanCodeAddressTable(const Partitioner::ConstPtr &partitioner, AddressInterval &tableLimits /*in,out*/,
-                     const AddressInterval &targetLimits, SwitchSuccessors::EntryType tableEntryType,
-                     size_t tableEntrySizeBytes, Sawyer::Optional<Address> probableStartVa, size_t nSkippable) {
+                     const AddressInterval &targetLimits, const SwitchSuccessors::EntryType tableEntryType,
+                     const size_t tableEntrySizeBytes, const Sawyer::Optional<Address> probableStartVa, const size_t nSkippable) {
     ASSERT_require(tableEntrySizeBytes > 0 && tableEntrySizeBytes <= sizeof(Address));
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     if (debug) {
@@ -446,7 +446,7 @@ scanCodeAddressTable(const Partitioner::ConstPtr &partitioner, AddressInterval &
 
     if (tableLimits.isEmpty() || targetLimits.isEmpty())
         return tableEntries;
-    MemoryMap::Ptr map = partitioner->memoryMap();
+    const MemoryMap::Ptr map = partitioner->memoryMap();
 
     // Look forward from the probable start address, but possibly allow the table to start with some addresses that are out of
     // range (which are skipped and not officially part of the table).
@@ -800,6 +800,60 @@ SwitchSuccessors::matchPattern3(const Partitioner::ConstPtr &partitioner, const 
     return true;
 }
 
+// Match a basic block whose final instruction pointer has a symbolic value matching:
+//     (add[u64] (signextend[u64] 64, v1[u32]) c1[u64])
+// where
+//     v1 is any symbolic variable
+//     c1 is a constant that is inside a section of memory mapped read-only no-execute no-write (typically named ".rodata")
+bool
+SwitchSuccessors::matchPattern4(const Partitioner::ConstPtr &partitioner, const BasicBlock::Ptr &bblock) {
+    ASSERT_not_null(partitioner);
+    ASSERT_not_null(bblock);
+    using namespace SymbolicExpression;
+
+    const BasicBlockSemantics &semantics = bblock->semantics();
+    const InstructionSemantics::BaseSemantics::State::Ptr state = semantics.finalState();
+    if (!semantics.operators || !state)
+        return false;                                   // only works when instruction semantics are enabled
+
+    const RegisterDescriptor IP = partitioner->architecture()->registerDictionary()->instructionPointerRegister();
+    const auto ip = semantics.operators->peekRegister(IP);
+    const auto add = InstructionSemantics::SymbolicSemantics::SValue::promote(ip)->get_expression();
+
+    if (!add || !add->isOperator(OP_ADD) || add->nBits() != 64 || !add->isIntegerExpr())
+        return false;
+
+    const auto sext = add->child(0);
+    if (!sext || !sext->isOperator(OP_SEXTEND) || sext->nBits() != 64)
+        return false;
+
+    const auto sixtyfour = sext->child(0);
+    if (!sixtyfour || sixtyfour->toUnsigned().orElse(0) != 64)
+        return false;
+
+    const auto v1 = sext->child(1);
+    if (!v1 || !v1->isIntegerVariable() || v1->nBits() != 32)
+        return false;
+
+    const auto c1 = add->child(1);
+    if (!c1 || !c1->isIntegerConstant() || c1->nBits() != 64)
+        return false;
+    Address tableAddr = *c1->toUnsigned();
+
+    auto segments = partitioner->memoryMap()->at(tableAddr)
+                    .require(MemoryMap::READABLE)
+                    .prohibit(MemoryMap::WRITABLE | MemoryMap::EXECUTABLE)
+                    .segments();
+    if (segments.begin() == segments.end())
+        return false;                                   // table addr is not mapped, or not read-only
+
+    // Matched
+    tableVa_ = tableAddr;
+    entryType_ = RELATIVE;
+    entrySizeBytes_ = 4;
+    return true;
+}
+
 bool
 SwitchSuccessors::matchPatterns(const Partitioner::ConstPtr &partitioner, const BasicBlock::Ptr &bblock) {
     ASSERT_not_null(bblock);
@@ -830,17 +884,22 @@ SwitchSuccessors::matchPatterns(const Partitioner::ConstPtr &partitioner, const 
     if (matchPattern3(partitioner, bblock, jmp))
         return true;
 
+    // Symbolic expression for instruction pointer:
+    //   (add[u64] (signextend[u64] 0x40[u32] v1[u32]) c1[u64])
+    if (matchPattern4(partitioner, bblock))
+        return true;
+
     // no matching pattern
     return false;
 }
 
 // A "switch" statement is a computed jump consisting of a base address and a register offset.
 bool
-SwitchSuccessors::operator()(bool chain, const Args &args) {
+SwitchSuccessors::operator()(const bool chain, const Args &args) {
     ASSERT_not_null(args.bblock);
     if (!chain)
         return false;
-    size_t nInsns = args.bblock->nInstructions();
+    const size_t nInsns = args.bblock->nInstructions();
     if (nInsns < 1)
         return chain;
     if (!matchPatterns(args.partitioner, args.bblock))
@@ -850,8 +909,8 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
 
     // Set some limits on the location of the target address table, besides those restrictions that will be imposed during the
     // table-reading loop (like table is mapped read-only).
-    size_t wordSizeBytes = args.partitioner->instructionProvider().instructionPointerRegister().nBits() / 8;
-    AddressInterval whole = AddressInterval::hull(0, BitOps::lowMask<Address>(8*wordSizeBytes));
+    const size_t wordSizeBytes = args.partitioner->architecture()->bytesPerWord();
+    const AddressInterval whole = AddressInterval::hull(0, BitOps::lowMask<Address>(8*wordSizeBytes));
     AddressInterval tableLimits;
     SgAsmInstruction *lastInsn = args.bblock->instructions().back();
     if (*tableVa_ > lastInsn->get_address()) {

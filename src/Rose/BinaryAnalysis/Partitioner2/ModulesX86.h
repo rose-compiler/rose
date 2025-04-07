@@ -122,6 +122,7 @@ private:
     bool matchPattern1(SgAsmExpression *jmpArg);
     bool matchPattern2(const BasicBlockPtr&, SgAsmInstruction *jmp);
     bool matchPattern3(const PartitionerConstPtr&, const BasicBlockPtr&, SgAsmInstruction *jmp);
+    bool matchPattern4(const PartitionerConstPtr&, const BasicBlockPtr&);
     bool matchPatterns(const PartitionerConstPtr&, const BasicBlockPtr&);
 };
 
@@ -157,8 +158,9 @@ bool matchPushSi(const PartitionerConstPtr&, SgAsmX86Instruction*);
  *  probableStartVa or the beginning of the @p tableLimits. If @p nSkippable is positive, up to that many invalid entries can
  *  be skipped before actual valid entries are found.  If no entries are skipped and the @p probableStartVa is larger than the
  *  minimum @p tableLimits then we also look backward from the @p probableStartVa to consume as many valid table entries as
- *  possible within the @p tableLimits.  An entry is valid if it exists in read-only memory and its value (the target address)
- *  falls within @p targetLimits.
+ *  possible within the @p tableLimits.  An entry is valid if the target address formed from the table entry falls within
+ *  the @p targetLimits. The target address is either the table entry itself, or the sum of the table start address and the
+ *  table entry, depending on @p tableEntryType.
  *
  *  If valid table entries are found, and the table is some arbitrarily small number of entries, then it can be followed by
  *  zero or more single-byte indexes into the table entries.
