@@ -164,6 +164,9 @@ public:
      *  If we're at an arrow endpoint in the output (see @ref atPossibleEndpoint) then calling this function advances beyond
      *  that line of output. */
     std::string render();
+
+    /** Show some debugging information. */
+    void debug(std::ostream&, const Partitioner2::PartitionerConstPtr&) const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

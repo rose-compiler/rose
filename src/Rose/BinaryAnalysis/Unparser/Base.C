@@ -579,21 +579,92 @@ ArrowMargin::whichEnd(const EdgeArrows::EndpointId endpoint) const {
 }
 
 void
-ArrowMargin::computeLayout() {
-    // Check that the arrow endpoints are all in the ordered list of endpoints. This is a common mistake. An alternative would
-    // be to automatically remove any arrows from the graph if one or both of their endpoints are not going to be emitted.
-    for (const auto &arrow: arrowGraph_.edges()) {
-        ASSERT_require2(haveEndpointId(arrow.source()->value()), "arrow source is not in ordered list of endpoints");
-        ASSERT_require2(haveEndpointId(arrow.target()->value()), "arrow target is not in ordered list of endpoints");
+ArrowMargin::debug(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner) const {
+    namespace ToString = stringify::Rose::BinaryAnalysis::Unparser::ArrowMargin;
+
+    out <<"arrow margin:\n"
+        <<"  source end type: " <<ToString::CfgEndpoint::Type((int64_t)srcType_, "") <<"\n"
+        <<"  target end type: " <<ToString::CfgEndpoint::Type((int64_t)tgtType_, "") <<"\n";
+
+    out <<"  mapping from CFG endpoints to Arrow endpoints:\n";
+    for (const auto &pair: cfgToArrow_) {
+        out <<"    - " <<ToString::CfgEndpoint::Type((int64_t)pair.first.type, "")
+            <<" " <<ToString::CfgEndpoint::End((int64_t)pair.first.end, "")
+            <<" CFG ID #" <<pair.first.cfgId <<"; arrow endpoint ID #" <<pair.second <<"\n";
+        if (partitioner) {
+            if (pair.first.type == CfgEndpoint::Type::CfgEdge) {
+                const auto edge = partitioner->cfg().findEdge(pair.first.cfgId);
+                ASSERT_require(partitioner->cfg().isValidEdge(edge));
+                out <<"      " <<partitioner->edgeName(edge) <<"\n";
+            } else {
+                const auto vertex = partitioner->cfg().findVertex(pair.first.cfgId);
+                ASSERT_require(partitioner->cfg().isValidVertex(vertex));
+                out <<"      " <<partitioner->vertexName(vertex) <<"\n";
+            }
+        }
+
+        out <<"      in arrow graph: ";
+        const auto foundInGraph = arrowGraph_.findVertexValue(pair.second);
+        if (foundInGraph == arrowGraph_.vertices().end()) {
+            out <<"no\n";
+        } else {
+            out <<"vertex #" <<foundInGraph->id() <<"\n";
+        }
+
+        out <<"      in endpoint list: ";
+        const auto foundInList = std::find(orderedEndpoints_.begin(), orderedEndpoints_.end(), pair.second);
+        if (foundInList == orderedEndpoints_.end()) {
+            out <<"no\n";
+        } else {
+            out <<"position " <<(foundInList - orderedEndpoints_.begin()) <<"\n";
+        }
     }
 
-    arrows_.computeLayout(arrowGraph_, orderedEndpoints_);
+    out <<"  ordered list of arrow endpoints (order they appear in output):\n";
+    for (const auto &endpoint: orderedEndpoints_) {
+        out <<"    - arrow endpoint #" <<endpoint;
+        const auto foundInGraph = arrowGraph_.findVertexValue(endpoint);
+        if (foundInGraph == arrowGraph_.vertices().end()) {
+            out <<" not in arrow graph";
+        }
+        out <<"\n";
+    }
 
-#if 0 // [Robb Matzke 2025-04-04] debugging
-    arrows_.debugGraph(std::cout, arrowGraph_);
-    arrows_.debug(std::cout);
-    arrows_.debugLines(std::cout, orderedEndpoints_);
-#endif
+    out <<"  arrow graph:\n"
+        <<"    edges:\n";
+    for (const auto &edge: arrowGraph_.edges()) {
+        out <<"      - edge #" <<edge.id() <<": arrow " <<edge.value()
+            <<" from endpoint " <<edge.source()->value()
+            <<" to endpoint " <<edge.target()->value() <<"\n";
+    }
+    out <<"    vertices:\n";
+    for (const auto &vertex: arrowGraph_.vertices()) {
+        out <<"      - vertex #" <<vertex.id() <<": endpoint " <<vertex.value() <<"\n"
+            <<"        source for " <<StringUtility::plural(vertex.nOutEdges(), "arrows") <<"\n"
+            <<"        target for " <<StringUtility::plural(vertex.nInEdges(), "arrows") <<"\n";
+        const auto foundInList = std::find(orderedEndpoints_.begin(), orderedEndpoints_.end(), vertex.value());
+        if (foundInList == orderedEndpoints_.end()) {
+            out <<"        not in ordered list endpoints\n";
+        } else {
+            out <<"        position " <<(foundInList - orderedEndpoints_.begin()) <<"\n";
+        }
+    }
+    arrows_.debug(out);
+    arrows_.debugLines(out, orderedEndpoints_);
+}
+
+void
+ArrowMargin::computeLayout() {
+    // Remove arrows that don't output both endpoints.
+    std::vector<EdgeArrows::Graph::EdgeIterator> edgesToRemove;
+    for (const auto &edge: arrowGraph_.edges()) {
+        if (!haveEndpointId(edge.source()->value()) || !haveEndpointId(edge.target()->value()))
+            edgesToRemove.push_back(arrowGraph_.findEdge(edge.id()));
+    }
+    for (const auto &edge: edgesToRemove)
+        arrowGraph_.eraseEdgeWithVertices(edge);
+
+    arrows_.computeLayout(arrowGraph_, orderedEndpoints_);
 }
 
 void
