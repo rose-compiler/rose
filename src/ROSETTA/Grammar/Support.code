@@ -5647,8 +5647,8 @@ public:
                e_c90_standard,
                e_c99_standard,
                e_c11_standard,
-               e_c14_standard,
-               e_c18_standard,
+               e_c17_standard,
+               e_c23_standard,
                e_upc_standard,
                e_cxx98_standard,
                e_cxx03_standard,
@@ -5701,17 +5701,17 @@ public:
           bool get_C11_gnu_only (void) const;
           void set_C11_gnu_only (void);
 
-          bool get_C14_only (void) const;
-          void set_C14_only (void);
+          bool get_C17_only (void) const;
+          void set_C17_only (void);
 
-          bool get_C14_gnu_only (void) const;
-          void set_C14_gnu_only (void);
+          bool get_C17_gnu_only (void) const;
+          void set_C17_gnu_only (void);
 
-          bool get_C18_only (void) const;
-          void set_C18_only (void);
+          bool get_C23_only (void) const;
+          void set_C23_only (void);
 
-          bool get_C18_gnu_only (void) const;
-          void set_C18_gnu_only (void);
+          bool get_C23_gnu_only (void) const;
+          void set_C23_gnu_only (void);
 
           bool get_UPC_only (void) const;
           void set_UPC_only (void);
@@ -6271,8 +6271,8 @@ HEADER_APPLICATION_PROJECT_START
           bool get_C99_gnu_only(void) const;
           bool get_C11_only(void) const;
           bool get_C11_gnu_only(void) const;
-          bool get_C14_only(void) const;
-          bool get_C14_gnu_only(void) const;
+          bool get_C17_only(void) const;
+          bool get_C17_gnu_only(void) const;
 
           void set_Cxx_only(bool value);
           bool get_Cxx_only(void) const;
@@ -14129,8 +14129,8 @@ std::string SgFile::display_standard(enum standard_enum e_std)
           case e_c90_standard: s = "e_c90_standard"; break;
           case e_c99_standard: s = "e_c99_standard"; break;
           case e_c11_standard: s = "e_c11_standard"; break;
-          case e_c14_standard: s = "e_c14_standard"; break;
-          case e_c18_standard: s = "e_c18_standard"; break;
+          case e_c17_standard: s = "e_c17_standard"; break;
+          case e_c23_standard: s = "e_c23_standard"; break;
           case e_upc_standard: s = "e_upc_standard"; break;
           case e_cxx98_standard: s = "e_cxx98_standard"; break;
           case e_cxx03_standard: s = "e_cxx03_standard"; break;
@@ -14184,17 +14184,17 @@ void SgFile::set_C11_only (void) { set_C_only(true); set_Cxx_only(false); p_stan
 bool SgFile::get_C11_gnu_only (void) const { return p_standard == e_c11_standard && p_gnu_standard; }
 void SgFile::set_C11_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c11_standard; p_gnu_standard = true; }
 
-bool SgFile::get_C14_only (void) const { return p_standard == e_c14_standard; }
-void SgFile::set_C14_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c14_standard; }
+bool SgFile::get_C17_only (void) const { return p_standard == e_c17_standard; }
+void SgFile::set_C17_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c17_standard; }
 
-bool SgFile::get_C14_gnu_only (void) const { return p_standard == e_c14_standard && p_gnu_standard; }
-void SgFile::set_C14_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c14_standard; p_gnu_standard = true; }
+bool SgFile::get_C17_gnu_only (void) const { return p_standard == e_c17_standard && p_gnu_standard; }
+void SgFile::set_C17_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c17_standard; p_gnu_standard = true; }
 
-bool SgFile::get_C18_only (void) const { return p_standard == e_c18_standard; }
-void SgFile::set_C18_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c18_standard; }
+bool SgFile::get_C23_only (void) const { return p_standard == e_c23_standard; }
+void SgFile::set_C23_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c23_standard; }
 
-bool SgFile::get_C18_gnu_only (void) const { return p_standard == e_c18_standard && p_gnu_standard; }
-void SgFile::set_C18_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c18_standard; p_gnu_standard = true; }
+bool SgFile::get_C23_gnu_only (void) const { return p_standard == e_c23_standard && p_gnu_standard; }
+void SgFile::set_C23_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c23_standard; p_gnu_standard = true; }
 
 bool SgFile::get_UPC_only (void) const { return p_standard == e_upc_standard; }
 void SgFile::set_UPC_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_upc_standard; }
@@ -15999,25 +15999,25 @@ SgProject::get_C11_gnu_only (void) const
    }
 
 bool
-SgProject::get_C14_only (void) const
+SgProject::get_C17_only (void) const
    {
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
-          result = result || (bool) file.get_C14_only();
+          result = result || (bool) file.get_C17_only();
         }
      return result;
    }
 
 bool
-SgProject::get_C14_gnu_only (void) const
+SgProject::get_C17_gnu_only (void) const
    {
      bool result = false;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
-          result = result || (bool) file.get_C14_gnu_only();
+          result = result || (bool) file.get_C17_gnu_only();
         }
      return result;
    }

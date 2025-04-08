@@ -2859,8 +2859,8 @@ SgFile::usage ( int status )
 "                             follow C99 standard, disable C++\n"
 "     -rose:C11_only, -rose:C11\n"
 "                             follow C11 standard, disable C++\n"
-"     -rose:C14_only, -rose:C14\n"
-"                             follow C14 standard, disable C++\n"
+"     -rose:C17_only, -rose:C17\n"
+"                             follow C17 standard, disable C++\n"
 "     -rose:Cxx_only, -rose:Cxx\n"
 "                             follow C++89 standard\n"
 "     -rose:Cxx11_only, -rose:Cxx11\n"
@@ -3699,11 +3699,11 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_C11_gnu_only();
         }
 
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(C14|C14_only)",true) == true )
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(C17|C17_only)",true) == true )
         {
-          printf ("WARNING: Command line option -rose:C14 is deprecated!\n");
+          printf ("WARNING: Command line option -rose:C17 is deprecated!\n");
 
-          set_C14_gnu_only();
+          set_C17_gnu_only();
         }
 
      if ( CommandlineProcessing::isOption(argv,"-rose:","(UPC|UPC_only)",true) ||
@@ -3873,10 +3873,16 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
             set_C11_gnu_only();
 
           } else if ( argv[i] == "-std=c17" || argv[i] == "-std=c18" || argv[i] == "-std=iso9899:2017" || argv[i] == "-std=iso9899:2018" ) {
-            set_C14_only();
+            set_C17_only();
 
           } else if ( argv[i] == "-std=gnu17" || argv[i] == "-std=gnu18" ) {
-            set_C14_gnu_only();
+            set_C17_gnu_only();
+
+          } else if ( argv[i] == "-std=c23" || argv[i] == "-std=iso9899:2024" ) {
+            set_C23_only();
+
+          } else if ( argv[i] == "-std=gnu23" ) {
+            set_C23_gnu_only();
 
           } else if ( argv[i] == "-std=c++98" ) {
             set_Cxx98_only();
@@ -3970,8 +3976,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           case e_c90_standard:
           case e_c99_standard:
           case e_c11_standard:
-          case e_c14_standard:
-          case e_c18_standard: {
+          case e_c17_standard:
+          case e_c23_standard: {
             if (get_sourceFileUsesCppFileExtension() == true) {
                printf ("WARNING: C++ source file name specificed with explicit selection of a C dialect (-rose:C or -std=c)\n");
                set_C_only(false);
@@ -4073,8 +4079,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          case e_c90_standard:   { printf ("C90 mode ON \n");         break; }
          case e_c99_standard:   { printf ("C99 mode ON \n");         break; }
          case e_c11_standard:   { printf ("C11 mode ON \n");         break; }
-         case e_c14_standard:   { printf ("C14 mode ON \n");         break; }
-         case e_c18_standard:   { printf ("C18 mode ON \n");         break; }
+         case e_c17_standard:   { printf ("C17 mode ON \n");         break; }
+         case e_c23_standard:   { printf ("C23 mode ON \n");         break; }
          case e_upc_standard:   { printf ("UPC mode ON \n");         break; }
          case e_cxx98_standard: { printf ("C++98 mode ON \n");       break; }
          case e_cxx03_standard: { printf ("C++03 mode ON \n");       break; }
@@ -5075,7 +5081,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(C99|C99_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx|Cxx_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C11|C11_only)",1);
-     optionCount = sla(argv, "-rose:", "($)", "(C14|C14_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(C17|C17_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx0x|Cxx0x_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx11|Cxx11_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx14|Cxx14_only)",1);
@@ -5311,8 +5317,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // Rasmussen (11/17/2018): ROSE-1584: separated "++" into single characters [+][+] for regex handling.
   // optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx)",1);
   // optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx|c[+][+]98|c[+][+]03|c[+][+]11|c[+][+]14|c[+][+]17|c[+][+]20|c[+][+]23|c[+][+]26)",1);
-  // optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx|c89|c90|c99|c11|c18|c[+][+]98|c[+][+]03|c[+][+]11|c[+][+]14|c[+][+]17|c[+][+]20|c[+][+]23|c[+][+]26)",1);
-     optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx|c89|c90|c99|c9x|c11|c1x|c17|c18|gnu89|gnu90|gnu9x|gnu11|gnu1x|gnu17|gnu18|c[+][+]98|c[+][+]03|c[+][+]11|c[+][+]0x|gnu[+][+]11|gnu[+][+]0x|c[+][+]14|c[+][+]1y|gnu[+][+]14|gnu[+][+]1y|c[+][+]17|c[+][+]1z|gnu[+][+]17|gnu[+][+]1z|c[+][+]20|c[+][+]2a|gnu[+][+]2a|c[+][+]23|c[+][+]26)",1);
+  // optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx|c89|c90|c99|c11|c23|c[+][+]98|c[+][+]03|c[+][+]11|c[+][+]14|c[+][+]17|c[+][+]20|c[+][+]23|c[+][+]26)",1);
+     optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx|c89|c90|c99|c9x|c11|c1x|c17|c23|gnu89|gnu90|gnu9x|gnu11|gnu1x|gnu17|gnu18|c[+][+]98|c[+][+]03|c[+][+]11|c[+][+]0x|gnu[+][+]11|gnu[+][+]0x|c[+][+]14|c[+][+]1y|gnu[+][+]14|gnu[+][+]1y|c[+][+]17|c[+][+]1z|gnu[+][+]17|gnu[+][+]1z|c[+][+]20|c[+][+]2a|gnu[+][+]2a|c[+][+]23|c[+][+]26)",1);
 
 
   // AST I/O
@@ -5854,7 +5860,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
        else
         {
-          if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true || get_C14_only() == true)
+          if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true || get_C17_only() == true)
              {
                if (get_sourceFileUsesCppFileExtension() == true)
                   {
@@ -6039,12 +6045,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
          inputCommandLine.push_back("--c11");
          break;
        }
-       case e_c14_standard: {
-         inputCommandLine.push_back("--c14");
+       case e_c17_standard: {
+         inputCommandLine.push_back("--c17");
          break;
        }
-       case e_c18_standard: {
-         inputCommandLine.push_back("--c17");
+       case e_c23_standard: {
+         inputCommandLine.push_back("--c23");
          break;
        }
        case e_upc_standard: {
@@ -6710,7 +6716,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("   --- get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
      printf ("   --- get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
      printf ("   --- get_C11_only()            = %s \n",(get_C11_only() == true) ? "true" : "false");
-     printf ("   --- get_C14_only()            = %s \n",(get_C14_only() == true) ? "true" : "false");
+     printf ("   --- get_C17_only()            = %s \n",(get_C17_only() == true) ? "true" : "false");
      printf ("   --- get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
      printf ("   --- get_Cxx11_only()          = %s \n",(get_Cxx11_only() == true) ? "true" : "false");
      printf ("   --- get_Cxx14_only()          = %s \n",(get_Cxx14_only() == true) ? "true" : "false");
@@ -6791,8 +6797,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     case e_c90_standard:
                     case e_c99_standard:
                     case e_c11_standard:
-                    case e_c14_standard:
-                    case e_c18_standard:
+                    case e_c17_standard:
+                    case e_c23_standard:
                        {
                          compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
                          break;
@@ -7023,21 +7029,21 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
          }
          break;
        }
-       case e_c14_standard: {
+       case e_c17_standard: {
          if (is_gnu_standard()) {
-           compilerNameString.push_back("-std=gnu14");
+           compilerNameString.push_back("-std=gnu17");
          } else {
-           compilerNameString.push_back("-std=c14");
+           compilerNameString.push_back("-std=c17");
          }
          break;
        }
 
-    // DQ (1/10/2019): Added support for C18 (newest C language standard).
-       case e_c18_standard: {
+    // DQ (1/10/2019): Added support for C23 (newest C language standard).
+       case e_c23_standard: {
          if (is_gnu_standard()) {
-           compilerNameString.push_back("-std=gnu18");
+           compilerNameString.push_back("-std=gnu23");
          } else {
-           compilerNameString.push_back("-std=c18");
+           compilerNameString.push_back("-std=c23");
          }
          break;
        }
@@ -7168,7 +7174,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         {
        // DQ (3/17/2017): It was a problem that C++11 was turned on for Fortran when using the Intel and Clang compilers (this code checks this).
           ROSE_ASSERT(get_C11_only() == false);
-          ROSE_ASSERT(get_C14_only() == false);
+          ROSE_ASSERT(get_C17_only() == false);
           ROSE_ASSERT(get_Cxx11_only() == false);
           ROSE_ASSERT(get_Cxx14_only() == false);
         }
