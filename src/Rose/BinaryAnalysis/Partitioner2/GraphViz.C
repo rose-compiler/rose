@@ -700,13 +700,13 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &ver
             if (isPartOfNoopSequence[i]) {
                 if (versionDate_ >= 20130915) {
                     // Strike out each insn of the no-op sequence
-                    s += "<s>" + htmlEscape(insn->toStringNoAddr()) + "</s><br align=\"left\"/>";
+                    s += "<s>" + htmlEscape(insn->toStringNoAddrNoColor()) + "</s><br align=\"left\"/>";
                 } else {
                     // Put the no-op in parentheses because we graphViz doesn't have strike-through capability
-                    s += "no-op (" + htmlEscape(insn->toStringNoAddr()) + ")<br align=\"left\"/>";
+                    s += "no-op (" + htmlEscape(insn->toStringNoAddrNoColor()) + ")<br align=\"left\"/>";
                 }
             } else {
-                s += htmlEscape(insn->toStringNoAddr()) + "<br align=\"left\"/>";
+                s += htmlEscape(insn->toStringNoAddrNoColor()) + "<br align=\"left\"/>";
             }
         }
 

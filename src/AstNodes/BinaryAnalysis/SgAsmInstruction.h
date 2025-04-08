@@ -397,9 +397,20 @@ public:
 
     /** Converts the instruction to a string.
      *
-     *  The return value is a mnemonic, and arguments. Only one space is used between the parts. */
+     *  The return value is a mnemonic and arguments. Only one space is used between the parts. */
     virtual std::string toStringNoAddr() const;
 
+    /** Converts the instruction to a string without any ANSI color escapes.
+     *
+     *  The return value is an address, colon, mnemonic, and arguments. Only one space is used between the parts. */
+    virtual std::string toStringNoColor() const;
+
+    /** Converts the instruction to a string without address or color.
+     *
+     *  The return value is a mnemonic and arguments. Only one space is used between the parts, and no ANSI CSI commands
+     *  are embedded in the returned string. */
+    virtual std::string toStringNoAddrNoColor() const;
+    
     /** Explicit constants.
      *
      *  Return the set of integer constants that appear explicitly in the instruction's operands. These are called

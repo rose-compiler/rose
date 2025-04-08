@@ -299,7 +299,7 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
                 <<" label=<subgraph " <<subgraphId <<"<br/>" <<GraphViz::htmlEscape(subgraphs[subgraphId]) <<">"
                 <<" ];\n";
         }
-        
+
         for (const DfCfg::Vertex &vertex: dfCfg.vertices()) {
             if (vertex.value().inliningId() == subgraphId) {
                 out <<vertex.id() <<" [";
@@ -310,7 +310,7 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
                 switch (vertex.value().type()) {
                     case DfCfgVertex::BBLOCK:
                         for (SgAsmInstruction *insn: vertex.value().bblock()->instructions())
-                            out <<"<br align=\"left\"/>" <<GraphViz::htmlEscape(insn->toString());
+                            out <<"<br align=\"left\"/>" <<GraphViz::htmlEscape(insn->toStringNoColor());
                         out <<"<br align=\"left\"/>> shape=box fontname=Courier";
                         break;
                     case DfCfgVertex::FAKED_CALL:

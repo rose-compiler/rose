@@ -37,7 +37,7 @@ protected:
     Sawyer::Cached<RegisterDictionaryPtr> registerDictionary_;
     Sawyer::Cached<RegisterDictionaryPtr> interruptDictionary_;
     Sawyer::Cached<CallingConvention::Dictionary> callingConventions_;
-    Sawyer::Cached<Unparser::Base::Ptr> insnToString_, insnToStringNoAddr_;
+    Sawyer::Cached<Unparser::Base::Ptr> insnToString_, insnToStringNoAddr_, insnToStringNoColor_, insnToStringNoAddrNoColor_;
 
 protected:
     Base(const std::string &name, size_t bytesPerWord, ByteOrder::Endianness byteOrder);
@@ -226,6 +226,8 @@ public:
      * @{ */
     virtual std::string toString(const SgAsmInstruction*) const;
     virtual std::string toStringNoAddr(const SgAsmInstruction*) const;
+    virtual std::string toStringNoColor(const SgAsmInstruction*) const;
+    virtual std::string toStringNoAddrNoColor(const SgAsmInstruction*) const;
     /** @} */
 
     /** Unparse an expression to a string.

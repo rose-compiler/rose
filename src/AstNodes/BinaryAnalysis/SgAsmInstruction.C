@@ -236,6 +236,16 @@ SgAsmInstruction::toStringNoAddr() const {
     return architecture()->toStringNoAddr(this);
 }
 
+std::string
+SgAsmInstruction::toStringNoColor() const {
+    return architecture()->toStringNoColor(this);
+}
+
+std::string
+SgAsmInstruction::toStringNoAddrNoColor() const {
+    return architecture()->toStringNoAddrNoColor(this);
+}
+
 std::set<Address>
 SgAsmInstruction::explicitConstants() const {
     std::set<Address> values;
