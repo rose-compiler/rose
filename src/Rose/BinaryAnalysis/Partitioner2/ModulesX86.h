@@ -106,24 +106,48 @@ public:
  *  the "case" labels, adding them as successors to this basic block. */
 class SwitchSuccessors: public BasicBlockCallback {
 public:
-    enum EntryType { ABSOLUTE, RELATIVE };
+    enum EntryType {
+        ABSOLUTE,                                       // table entry is actual target address
+        TABLE_RELATIVE                                  // target is table entry plus table starting address
+    };
 
 private:
     Sawyer::Optional<Address> tableVa_;                 // possible address for jump table
-    EntryType entryType_;                               // type of table entries
-    size_t entrySizeBytes_;                             // size of each table entry
+    EntryType entryType_ = ABSOLUTE;                    // type of table entries
+    size_t entrySizeBytes_ = 4;                         // size of each table entry
+    AddressInterval tableLocation_;                     // location of the full table
+    Address entryOffset_ = 0;                           // value added to every table entry
 
 public:
-    SwitchSuccessors()
-        : entryType_(ABSOLUTE), entrySizeBytes_(4) {}
-    static Ptr instance() { return Ptr(new SwitchSuccessors); } /**< Allocating constructor. */
+    SwitchSuccessors();
+    SwitchSuccessors(Address tableAddr, Address entryOffset, EntryType, size_t entrySizeBytes);
+    static Ptr instance(); /**< Allocating constructor. */
     virtual bool operator()(bool chain, const Args&) override;
+
+    // Load the table data and return the target addresses. The `tableLocation_` is updated as a side effect.
+    std::vector<Address> loadJumpTable(const Args&);
+
+    // Adjust successors and for the basic block, create a data block, and add everything to the partitioner.
+    void addToPartitioner(const Args&, const std::set<Address> &successors) const;
+
 private:
     bool matchPattern1(SgAsmExpression *jmpArg);
     bool matchPattern2(const BasicBlockPtr&, SgAsmInstruction *jmp);
     bool matchPattern3(const PartitionerConstPtr&, const BasicBlockPtr&, SgAsmInstruction *jmp);
     bool matchPattern4(const PartitionerConstPtr&, const BasicBlockPtr&);
     bool matchPatterns(const PartitionerConstPtr&, const BasicBlockPtr&);
+
+    // Basic limits on the location of the jump table.
+    AddressInterval jumpTableLocationLimits(const Args&) const;
+
+    // Limits on the target addresses contained in (or computed from) the table.
+    AddressInterval jumpTableTargetLimits(const Args&) const;
+
+    // Replace basic block's successors with new ones.
+    void replaceBasicBlockSuccessors(const Args&, const std::set<Address>&) const;
+
+    // Create a data block for the offset table and attach it to the basic block
+    void attachTableAsDataBlock(const Args&, const AddressInterval &tableLimits) const;
 };
 
 /** Matches "ENTER x, 0" */
@@ -154,13 +178,13 @@ bool matchPushSi(const PartitionerConstPtr&, SgAsmX86Instruction*);
 
 /** Reads a table of code addresses.
  *
- *  Reads a table of code addresses from within the @p tableLimits memory range starting at either the specified @p
- *  probableStartVa or the beginning of the @p tableLimits. If @p nSkippable is positive, up to that many invalid entries can
- *  be skipped before actual valid entries are found.  If no entries are skipped and the @p probableStartVa is larger than the
- *  minimum @p tableLimits then we also look backward from the @p probableStartVa to consume as many valid table entries as
- *  possible within the @p tableLimits.  An entry is valid if the target address formed from the table entry falls within
- *  the @p targetLimits. The target address is either the table entry itself, or the sum of the table start address and the
- *  table entry, depending on @p tableEntryType.
+ *  Reads a table of code addresses from within the @p tableLimits memory range starting at either the specified @p probableStartVa
+ *  or the beginning of the @p tableLimits. If @p nSkippable is positive, up to that many invalid entries can be skipped before
+ *  actual valid entries are found.  If no entries are skipped and the @p probableStartVa is larger than the minimum @p tableLimits
+ *  then we also look backward from the @p probableStartVa to consume as many valid table entries as possible within the @p
+ *  tableLimits.  An entry is valid if the target address formed from the table entry falls within the @p targetLimits. The target
+ *  address is either the table entry plus the entryOffset, or the table entry plus the @p entryOffset plus the table start address,
+ *  depending on @p tableEntryType.
  *
  *  If valid table entries are found, and the table is some arbitrarily small number of entries, then it can be followed by
  *  zero or more single-byte indexes into the table entries.
@@ -169,9 +193,9 @@ bool matchPushSi(const PartitionerConstPtr&, SgAsmX86Instruction*);
  *  addresses of the optional post-table indexes.  The return value is the valid table entries in the order they occur in the
  *  table. */
 std::vector<Address> scanCodeAddressTable(const PartitionerConstPtr&, AddressInterval &tableLimits /*in,out*/,
-                                          const AddressInterval &targetLimits, SwitchSuccessors::EntryType tableEntryType,
-                                          size_t tableEntrySizeBytes, Sawyer::Optional<Address> probableStartVa = Sawyer::Nothing(),
-                                          size_t nSkippable = 0);
+                                          const AddressInterval &targetLimits, Address entryOffset,
+                                          SwitchSuccessors::EntryType tableEntryType, size_t tableEntrySizeBytes,
+                                          Sawyer::Optional<Address> probableStartVa = Sawyer::Nothing(), size_t nSkippable = 0);
 
 /** Try to match a base+offset expression.
  *

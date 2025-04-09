@@ -428,8 +428,9 @@ isInvalidTarget(Address target, const AddressInterval &targetLimits, const Parti
 
 std::vector<Address>
 scanCodeAddressTable(const Partitioner::ConstPtr &partitioner, AddressInterval &tableLimits /*in,out*/,
-                     const AddressInterval &targetLimits, const SwitchSuccessors::EntryType tableEntryType,
-                     const size_t tableEntrySizeBytes, const Sawyer::Optional<Address> probableStartVa, const size_t nSkippable) {
+                     const AddressInterval &targetLimits, const Address entryOffset,
+                     const SwitchSuccessors::EntryType tableEntryType, const size_t tableEntrySizeBytes,
+                     const Sawyer::Optional<Address> probableStartVa, const size_t nSkippable) {
     ASSERT_require(tableEntrySizeBytes > 0 && tableEntrySizeBytes <= sizeof(Address));
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     if (debug) {
@@ -450,12 +451,13 @@ scanCodeAddressTable(const Partitioner::ConstPtr &partitioner, AddressInterval &
 
     // Look forward from the probable start address, but possibly allow the table to start with some addresses that are out of
     // range (which are skipped and not officially part of the table).
+    const size_t bitsPerWord = partitioner->architecture()->bitsPerWord();
     Address actualStartVa = probableStartVa.orElse(tableLimits.least()); // adjusted later if entries are skipped
     size_t nSkippedEntries = 0;
     while (1) {
         // Read table entry to get target address
         uint8_t bytes[sizeof(Address)];
-        Address tableEntryVa = actualStartVa + tableEntries.size() * tableEntrySizeBytes;
+        const Address tableEntryVa = actualStartVa + tableEntries.size() * tableEntrySizeBytes;
         if (!tableLimits.contains(AddressInterval::baseSize(tableEntryVa, tableEntrySizeBytes))) {
             SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" falls outside table boundary\n";
             break;
@@ -468,17 +470,23 @@ scanCodeAddressTable(const Partitioner::ConstPtr &partitioner, AddressInterval &
         Address target = 0;
         for (size_t i=0; i<tableEntrySizeBytes; ++i)
             target |= bytes[i] << (8*i);                // x86 is little endian
+        SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa)
+                           <<": raw (" <<StringUtility::addrToString(target) <<")"
+                           <<" + base (" <<StringUtility::addrToString(entryOffset) <<")";
         switch (tableEntryType) {
             case SwitchSuccessors::ABSOLUTE:
+                // Target is the table entry plus the table entry constant offset (often zero)
+                target = (BitOps::signExtend<Address>(target, 8*tableEntrySizeBytes) + entryOffset) &
+                         BitOps::lowMask<Address>(bitsPerWord);
                 break;
-            case SwitchSuccessors::RELATIVE:
-                // target is the table entry plus the table address, careful for overflow
-                SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa)
-                                   <<" raw value = " <<StringUtility::addrToString(target) <<"\n";
-                target = (BitOps::signExtend<Address>(target, 8*tableEntrySizeBytes) + actualStartVa) &
-                         BitOps::lowMask<Address>(partitioner->instructionProvider().instructionPointerRegister().nBits());
+            case SwitchSuccessors::TABLE_RELATIVE:
+                // Target is the table entry plus the table entry constant offset (often zero) plus the table start address.
+                SAWYER_MESG(debug) <<" + table(" <<StringUtility::addrToString(actualStartVa) <<")";
+                target = (BitOps::signExtend<Address>(target, 8*tableEntrySizeBytes) + entryOffset + actualStartVa) &
+                         BitOps::lowMask<Address>(bitsPerWord);
                 break;
         }
+        SAWYER_MESG(debug) <<" = " <<StringUtility::addrToString(target) <<"\n";
 
         // Save or skip the table entry
         const char *invalidReason = isInvalidTarget(target, targetLimits, partitioner);
@@ -505,7 +513,7 @@ scanCodeAddressTable(const Partitioner::ConstPtr &partitioner, AddressInterval &
         while (actualStartVa >= tableEntrySizeBytes &&
                tableLimits.contains(AddressInterval::baseSize(actualStartVa-tableEntrySizeBytes, tableEntrySizeBytes))) {
             uint8_t bytes[sizeof(Address)];
-            Address tableEntryVa = actualStartVa - tableEntrySizeBytes;
+            const Address tableEntryVa = actualStartVa - tableEntrySizeBytes;
             if (tableEntrySizeBytes != (map->at(tableEntryVa).limit(tableEntrySizeBytes)
                                         .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size()))
                 break;
@@ -642,6 +650,17 @@ findTableBase(SgAsmExpression *expr) {
     }
 
     return baseVa;
+}
+
+SwitchSuccessors::SwitchSuccessors() {}
+
+SwitchSuccessors::SwitchSuccessors(const Address tableAddr, const Address entryOffset, const EntryType entryType,
+                                   const size_t bytesPerEntry)
+    : tableVa_(tableAddr), entryType_(entryType), entrySizeBytes_(bytesPerEntry), entryOffset_(entryOffset) {}
+
+SwitchSuccessors::Ptr
+SwitchSuccessors::instance() {
+    return Ptr(new SwitchSuccessors);
 }
 
 // Matches:
@@ -795,7 +814,7 @@ SwitchSuccessors::matchPattern3(const Partitioner::ConstPtr &partitioner, const 
     if (!tableVa_)
         return false;
 
-    entryType_ = RELATIVE;
+    entryType_ = TABLE_RELATIVE;
     entrySizeBytes_ = 4;
     return true;
 }
@@ -849,7 +868,7 @@ SwitchSuccessors::matchPattern4(const Partitioner::ConstPtr &partitioner, const 
 
     // Matched
     tableVa_ = tableAddr;
-    entryType_ = RELATIVE;
+    entryType_ = TABLE_RELATIVE;
     entrySizeBytes_ = 4;
     return true;
 }
@@ -893,36 +912,23 @@ SwitchSuccessors::matchPatterns(const Partitioner::ConstPtr &partitioner, const 
     return false;
 }
 
-// A "switch" statement is a computed jump consisting of a base address and a register offset.
-bool
-SwitchSuccessors::operator()(const bool chain, const Args &args) {
-    ASSERT_not_null(args.bblock);
-    if (!chain)
-        return false;
-    const size_t nInsns = args.bblock->nInstructions();
-    if (nInsns < 1)
-        return chain;
-    if (!matchPatterns(args.partitioner, args.bblock))
-        return chain;
-    ASSERT_require(tableVa_);
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
-
-    // Set some limits on the location of the target address table, besides those restrictions that will be imposed during the
-    // table-reading loop (like table is mapped read-only).
+AddressInterval
+SwitchSuccessors::jumpTableLocationLimits(const Args &args) const {
     const size_t wordSizeBytes = args.partitioner->architecture()->bytesPerWord();
     const AddressInterval whole = AddressInterval::hull(0, BitOps::lowMask<Address>(8*wordSizeBytes));
     AddressInterval tableLimits;
     SgAsmInstruction *lastInsn = args.bblock->instructions().back();
     if (*tableVa_ > lastInsn->get_address()) {
         // table is after the jmp instruction
-        tableLimits = AddressInterval::hull(std::min(lastInsn->get_address() + lastInsn->get_size(), *tableVa_), whole.greatest());
+        return AddressInterval::hull(std::min(lastInsn->get_address() + lastInsn->get_size(), *tableVa_), whole.greatest());
     } else {
         // table is before the jmp instruction
-        tableLimits = AddressInterval::hull(0, lastInsn->get_address());
+        return AddressInterval::hull(0, lastInsn->get_address());
     }
+}
 
-    // Set some limits on allowable target addresses contained in the table, besides those restrictions that will be imposed
-    // during the table-reading loop (like targets must be mapped with execute permission).
+AddressInterval
+SwitchSuccessors::jumpTableTargetLimits(const Args &args) const {
     AddressInterval targetLimits = AddressInterval::whole();
     std::vector<Function::Ptr> functions = args.partitioner->functions();
     {
@@ -954,41 +960,87 @@ SwitchSuccessors::operator()(const bool chain, const Args &args) {
             targetLimits = targetLimits & AddressInterval::hull(0, nextFunction->address()-1);
         }
     }
+    return targetLimits;
+}
+
+void
+SwitchSuccessors::replaceBasicBlockSuccessors(const Args &args, const std::set<Address> &addrs) const {
+    ASSERT_not_null(args.bblock);
+    const size_t bitsPerWord = args.partitioner->architecture()->bitsPerWord();
+    args.bblock->successors().clear();
+    for (const Address addr: addrs)
+        args.bblock->insertSuccessor(addr, bitsPerWord);
+}
+
+void
+SwitchSuccessors::attachTableAsDataBlock(const Args &args, const AddressInterval &tableLocation) const {
+    if (!tableLocation.isEmpty()) {
+        const size_t nTableEntries = tableLocation.size() / entrySizeBytes_;
+        SgAsmType *tableEntryType = SageBuilderAsm::buildTypeU(8 * entrySizeBytes_);
+        SgAsmType *tableType = SageBuilderAsm::buildTypeVector(nTableEntries, tableEntryType);
+        DataBlock::Ptr addressTable = DataBlock::instance(tableLocation.least(), tableType);
+        addressTable->comment("x86 'switch' statement's 'case' address table");
+        args.bblock->insertDataBlock(addressTable);
+    }
+}
+
+std::vector<Address>
+SwitchSuccessors::loadJumpTable(const Args &args) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+    // Set some limits on the location of the target address table, besides those restrictions that will be imposed during the
+    // table-reading loop (like table is mapped read-only).
+    tableLocation_ = jumpTableLocationLimits(args);
+
+    // Set some limits on allowable target addresses contained in the table, besides those restrictions that will be imposed
+    // during the table-reading loop (like targets must be mapped with execute permission).
+    AddressInterval targetLimits = jumpTableTargetLimits(args);
     SAWYER_MESG(debug) <<"switch table target limits: " <<StringUtility::addrToString(targetLimits) <<"\n";
     if (targetLimits.isEmpty())
-        return chain;                                   // not even room for one case label
+        return {};                                      // not even room for one case label
 
     // Read the table
     static const size_t maxSkippable = 1;               // max number of invalid table entries to skip; arbitrary
-    std::vector<Address> tableEntries = scanCodeAddressTable(args.partitioner, tableLimits /*in,out*/,
-                                                             targetLimits, entryType_, entrySizeBytes_,
-                                                             *tableVa_, maxSkippable);
-    if (tableEntries.empty())
+    return scanCodeAddressTable(args.partitioner, tableLocation_ /*in,out*/, targetLimits, entryOffset_, entryType_,
+                                entrySizeBytes_, *tableVa_, maxSkippable);
+}
+
+void
+SwitchSuccessors::addToPartitioner(const Args &args, const std::set<Address> &successors) const {
+    replaceBasicBlockSuccessors(args, successors);
+    attachTableAsDataBlock(args, tableLocation_);
+}
+
+// A "switch" statement is a computed jump consisting of a base address and a register offset.
+bool
+SwitchSuccessors::operator()(const bool chain, const Args &args) {
+    ASSERT_not_null(args.bblock);
+    if (!chain)
+        return false;
+    const size_t nInsns = args.bblock->nInstructions();
+    if (nInsns < 1)
+        return chain;
+    if (!matchPatterns(args.partitioner, args.bblock))
+        return chain;
+    ASSERT_require(tableVa_);
+
+    std::vector<Address> table = loadJumpTable(args);
+    if (table.empty())
         return chain;
 
-    // Replace basic block's successors with the new ones we found.
-    std::set<Address> successors(tableEntries.begin(), tableEntries.end());
-    args.bblock->successors().clear();
-    for (Address va: successors)
-        args.bblock->insertSuccessor(va, wordSizeBytes*8);
-
-    // Create a data block for the offset table and attach it to the basic block
-    size_t nTableEntries = tableLimits.size() / entrySizeBytes_;
-    SgAsmType *tableEntryType = SageBuilderAsm::buildTypeU(8*entrySizeBytes_);
-    SgAsmType *tableType = SageBuilderAsm::buildTypeVector(nTableEntries, tableEntryType);
-    DataBlock::Ptr addressTable = DataBlock::instance(tableLimits.least(), tableType);
-    addressTable->comment("x86 'switch' statement's 'case' address table");
-    args.bblock->insertDataBlock(addressTable);
+    std::set<Address> successors(table.begin(), table.end());
+    addToPartitioner(args, successors);
 
     // Debugging
-    if (debug) {
+    if (mlog[DEBUG]) {
         using namespace StringUtility;
+        Sawyer::Message::Stream debug(mlog[DEBUG]);
         debug <<"ModulesX86::SwitchSuccessors: found \"switch\" statement\n";
         debug <<"  basic block: " <<addrToString(args.bblock->address()) <<"\n";
         debug <<"  instruction: " <<args.bblock->instructions()[nInsns-1]->toString() <<"\n";
-        debug <<"  table va:    " <<addrToString(tableLimits.least()) <<"\n";
-        debug <<"  table size:  " <<plural(tableEntries.size(), "entries")
-              <<", " <<plural(tableLimits.size(), "bytes") <<"\n";
+        debug <<"  table va:    " <<addrToString(tableLocation_.least()) <<"\n";
+        debug <<"  table size:  " <<plural(table.size(), "entries")
+              <<", " <<plural(tableLocation_.size(), "bytes") <<"\n";
         debug <<"  successors:  " <<plural(successors.size(), "distinct addresses") <<"\n";
         debug <<"   ";
         for (Address va: successors)
