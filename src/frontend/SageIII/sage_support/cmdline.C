@@ -7142,15 +7142,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
          break;
        }
 
-    // DQ (1/10/2019): Added support for C23 (newest C language standard).
+    // PL (4/9/2025): Added support for C23 (newest C language standard).
        case e_c23_standard: {
          if (is_gnu_standard()) {
-           compilerNameString.push_back("-std=gnu23");
+           compilerNameString.push_back("-std=gnu2x");
          } else {
-           compilerNameString.push_back("-std=c23");
+           compilerNameString.push_back("-std=c2x");
          }
          break;
        }
+
+    // PL (4/9/2025): Added support for C2y (WIP C language standard).
        case e_c2y_standard: {
          if (is_gnu_standard()) {
            compilerNameString.push_back("-std=gnu2y");
@@ -7213,6 +7215,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
          break;
        }
+
+    // PL (4/9/2025): Added support for C++23 (newest C++ language standard).
        case e_cxx23_standard: {
          if (is_gnu_standard()) {
            compilerNameString.push_back("-std=gnu++23");
@@ -7227,11 +7231,13 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
          break;
        }
+
+    // PL (4/9/2025): Added support for C++26/C++2c (WIP C++ language standard).
        case e_cxx26_standard: {
          if (is_gnu_standard()) {
-           compilerNameString.push_back("-std=gnu++26");
+           compilerNameString.push_back("-std=gnu++2c");
          } else {
-           compilerNameString.push_back("-std=c++26");
+           compilerNameString.push_back("-std=c++2c");
          }
 
 #if defined(BACKEND_CXX_IS_GNU_COMPILER)
