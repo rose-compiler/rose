@@ -5649,6 +5649,7 @@ public:
                e_c11_standard,
                e_c17_standard,
                e_c23_standard,
+               e_c2y_standard,
                e_upc_standard,
                e_cxx98_standard,
                e_cxx03_standard,
@@ -5656,6 +5657,8 @@ public:
                e_cxx14_standard,
                e_cxx17_standard,
                e_cxx20_standard,
+               e_cxx23_standard,
+               e_cxx26_standard,
                e_upcxx_standard,
                e_f77_standard,
                e_f90_standard,
@@ -5713,6 +5716,12 @@ public:
           bool get_C23_gnu_only (void) const;
           void set_C23_gnu_only (void);
 
+          bool get_C2y_only (void) const;
+          void set_C2y_only (void);
+
+          bool get_C2y_gnu_only (void) const;
+          void set_C2y_gnu_only (void);
+
           bool get_UPC_only (void) const;
           void set_UPC_only (void);
 
@@ -5751,6 +5760,18 @@ public:
 
           bool get_Cxx20_gnu_only (void) const;
           void set_Cxx20_gnu_only (void);
+
+          bool get_Cxx23_only (void) const;
+          void set_Cxx23_only (void);
+
+          bool get_Cxx23_gnu_only (void) const;
+          void set_Cxx23_gnu_only (void);
+
+          bool get_Cxx26_only (void) const;
+          void set_Cxx26_only (void);
+
+          bool get_Cxx26_gnu_only (void) const;
+          void set_Cxx26_gnu_only (void);
 
           bool get_UPCxx_only (void) const;
           void set_UPCxx_only (void);
@@ -6273,6 +6294,10 @@ HEADER_APPLICATION_PROJECT_START
           bool get_C11_gnu_only(void) const;
           bool get_C17_only(void) const;
           bool get_C17_gnu_only(void) const;
+          bool get_C23_only(void) const;
+          bool get_C23_gnu_only(void) const;
+          bool get_C2y_only(void) const;
+          bool get_C2y_gnu_only(void) const;
 
           void set_Cxx_only(bool value);
           bool get_Cxx_only(void) const;
@@ -6287,6 +6312,12 @@ HEADER_APPLICATION_PROJECT_START
           bool get_Cxx14_gnu_only(void) const;
           bool get_Cxx17_only(void) const;
           bool get_Cxx17_gnu_only(void) const;
+          bool get_Cxx20_only(void) const;
+          bool get_Cxx20_gnu_only(void) const;
+          bool get_Cxx23_only(void) const;
+          bool get_Cxx23_gnu_only(void) const;
+          bool get_Cxx26_only(void) const;
+          bool get_Cxx26_gnu_only(void) const;
 
           void set_Fortran_only (bool value);
           bool get_Fortran_only (void) const;
@@ -14131,6 +14162,7 @@ std::string SgFile::display_standard(enum standard_enum e_std)
           case e_c11_standard: s = "e_c11_standard"; break;
           case e_c17_standard: s = "e_c17_standard"; break;
           case e_c23_standard: s = "e_c23_standard"; break;
+          case e_c2y_standard: s = "e_c2y_standard"; break;
           case e_upc_standard: s = "e_upc_standard"; break;
           case e_cxx98_standard: s = "e_cxx98_standard"; break;
           case e_cxx03_standard: s = "e_cxx03_standard"; break;
@@ -14138,6 +14170,8 @@ std::string SgFile::display_standard(enum standard_enum e_std)
           case e_cxx14_standard: s = "e_cxx14_standard"; break;
           case e_cxx17_standard: s = "e_cxx17_standard"; break;
           case e_cxx20_standard: s = "e_cxx20_standard"; break;
+          case e_cxx23_standard: s = "e_cxx23_standard"; break;
+          case e_cxx26_standard: s = "e_cxx26_standard"; break;
           case e_upcxx_standard: s = "e_upcxx_standard"; break;
           case e_f77_standard: s = "e_f77_standard"; break;
           case e_f90_standard: s = "e_f90_standard"; break;
@@ -14196,6 +14230,12 @@ void SgFile::set_C23_only (void) { set_C_only(true); set_Cxx_only(false); p_stan
 bool SgFile::get_C23_gnu_only (void) const { return p_standard == e_c23_standard && p_gnu_standard; }
 void SgFile::set_C23_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c23_standard; p_gnu_standard = true; }
 
+bool SgFile::get_C2y_only (void) const { return p_standard == e_c2y_standard; }
+void SgFile::set_C2y_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c2y_standard; }
+
+bool SgFile::get_C2y_gnu_only (void) const { return p_standard == e_c2y_standard && p_gnu_standard; }
+void SgFile::set_C2y_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c2y_standard; p_gnu_standard = true; }
+
 bool SgFile::get_UPC_only (void) const { return p_standard == e_upc_standard; }
 void SgFile::set_UPC_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_upc_standard; }
 
@@ -14234,6 +14274,18 @@ void SgFile::set_Cxx20_only (void) { set_C_only(false); set_Cxx_only(true); p_st
 
 bool SgFile::get_Cxx20_gnu_only (void) const { return p_standard == e_cxx20_standard && p_gnu_standard; }
 void SgFile::set_Cxx20_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx20_standard; p_gnu_standard = true; }
+
+bool SgFile::get_Cxx23_only (void) const { return p_standard == e_cxx23_standard; }
+void SgFile::set_Cxx23_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx23_standard; }
+
+bool SgFile::get_Cxx23_gnu_only (void) const { return p_standard == e_cxx23_standard && p_gnu_standard; }
+void SgFile::set_Cxx23_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx23_standard; p_gnu_standard = true; }
+
+bool SgFile::get_Cxx26_only (void) const { return p_standard == e_cxx26_standard; }
+void SgFile::set_Cxx26_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx26_standard; }
+
+bool SgFile::get_Cxx26_gnu_only (void) const { return p_standard == e_cxx26_standard && p_gnu_standard; }
+void SgFile::set_Cxx26_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx26_standard; p_gnu_standard = true; }
 
 bool SgFile::get_UPCxx_only (void) const { return p_standard == e_upcxx_standard; }
 void SgFile::set_UPCxx_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_upcxx_standard; }
@@ -16023,6 +16075,54 @@ SgProject::get_C17_gnu_only (void) const
    }
 
 bool
+SgProject::get_C23_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_C23_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_C23_gnu_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_C23_gnu_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_C2y_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_C2y_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_C2y_gnu_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_C2y_gnu_only();
+        }
+     return result;
+   }
+
+bool
 SgProject::get_Cxx_only (void) const
    {
      bool result = p_Cxx_only;
@@ -16150,6 +16250,78 @@ SgProject::get_Cxx17_gnu_only (void) const
         {
           SgFile & file = get_file(i);
           result = result || (bool) file.get_Cxx17_gnu_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx20_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx20_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx20_gnu_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx20_gnu_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx23_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx23_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx23_gnu_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx23_gnu_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx26_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx26_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_Cxx26_gnu_only (void) const
+   {
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_Cxx26_gnu_only();
         }
      return result;
    }

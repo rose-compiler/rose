@@ -2861,12 +2861,24 @@ SgFile::usage ( int status )
 "                             follow C11 standard, disable C++\n"
 "     -rose:C17_only, -rose:C17\n"
 "                             follow C17 standard, disable C++\n"
+"     -rose:C23_only, -rose:C23\n"
+"                             follow C23 standard, disable C++\n"
+"     -rose:C2y_only, -rose:C2y\n"
+"                             follow C2y standard, disable C++\n"
 "     -rose:Cxx_only, -rose:Cxx\n"
 "                             follow C++89 standard\n"
 "     -rose:Cxx11_only, -rose:Cxx11\n"
 "                             follow C++11 standard\n"
 "     -rose:Cxx14_only, -rose:Cxx14\n"
 "                             follow C++14 standard\n"
+"     -rose:Cxx17_only, -rose:Cxx17\n"
+"                             follow C++17 standard\n"
+"     -rose:Cxx20_only, -rose:Cxx20\n"
+"                             follow C++20 standard\n"
+"     -rose:Cxx23_only, -rose:Cxx23\n"
+"                             follow C++23 standard\n"
+"     -rose:Cxx26_only, -rose:Cxx26\n"
+"                             follow C++26 standard\n"
 "     -rose:java\n"
 "                             compile Java code (work in progress)\n"
 "     -rose:java:cp, -rose:java:classpath, -cp, -classpath\n"
@@ -3706,6 +3718,20 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_C17_gnu_only();
         }
 
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(C23|C23_only)",true) == true )
+        {
+          printf ("WARNING: Command line option -rose:C23 is deprecated!\n");
+
+          set_C23_gnu_only();
+        }
+
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(C2y|C2y_only)",true) == true )
+        {
+          printf ("WARNING: Command line option -rose:C2y is deprecated!\n");
+
+          set_C2y_gnu_only();
+        }
+
      if ( CommandlineProcessing::isOption(argv,"-rose:","(UPC|UPC_only)",true) ||
           CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ||
           CommandlineProcessing::isOption(argv,"-edg:","(upc)",true)
@@ -3737,6 +3763,34 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           printf ("WARNING: Command line option -rose:Cxx14 is deprecated!\n");
 
           set_Cxx14_gnu_only();
+        }
+
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(Cxx17|Cxx17_only)",true) == true )
+        {
+          printf ("WARNING: Command line option -rose:Cxx17 is deprecated!\n");
+
+          set_Cxx17_gnu_only();
+        }
+
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(Cxx20|Cxx20_only)",true) == true )
+        {
+          printf ("WARNING: Command line option -rose:Cxx20 is deprecated!\n");
+
+          set_Cxx20_gnu_only();
+        }
+
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(Cxx23|Cxx23_only)",true) == true )
+        {
+          printf ("WARNING: Command line option -rose:Cxx23 is deprecated!\n");
+
+          set_Cxx23_gnu_only();
+        }
+
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(Cxx26|Cxx26_only)",true) == true )
+        {
+          printf ("WARNING: Command line option -rose:Cxx26 is deprecated!\n");
+
+          set_Cxx26_gnu_only();
         }
 
      if (CommandlineProcessing::isOption(argv,"-rose:","(UPCxx|UPCxx_only)",true))
@@ -3881,6 +3935,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           } else if ( argv[i] == "-std=c23" || argv[i] == "-std=iso9899:2024" ) {
             set_C23_only();
 
+          } else if ( argv[i] == "-std=c2y" ) {
+            set_C2y_only();
+
           } else if ( argv[i] == "-std=gnu23" ) {
             set_C23_gnu_only();
 
@@ -3919,6 +3976,18 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
           } else if ( argv[i] == "-std=gnu++20" || argv[i] == "-std=gnu++2a" ) {
             set_Cxx20_gnu_only();
+
+          } else if ( argv[i] == "-std=c++23" || argv[i] == "-std=c++2b" ) {
+            set_Cxx23_only();
+
+          } else if ( argv[i] == "-std=gnu++23" || argv[i] == "-std=gnu++2b" ) {
+            set_Cxx23_gnu_only();
+
+          } else if ( argv[i] == "-std=c++26" || argv[i] == "-std=c++2c" ) {
+            set_Cxx26_only();
+
+          } else if ( argv[i] == "-std=gnu++26" || argv[i] == "-std=gnu++2c" ) {
+            set_Cxx26_gnu_only();
 
           } else if ( argv[i] == "-std=f77" ) {
             set_F77_only();
@@ -3977,7 +4046,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           case e_c99_standard:
           case e_c11_standard:
           case e_c17_standard:
-          case e_c23_standard: {
+          case e_c23_standard:
+          case e_c2y_standard: {
             if (get_sourceFileUsesCppFileExtension() == true) {
                printf ("WARNING: C++ source file name specificed with explicit selection of a C dialect (-rose:C or -std=c)\n");
                set_C_only(false);
@@ -3994,7 +4064,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           case e_cxx11_standard:
           case e_cxx14_standard:
           case e_cxx17_standard:
-          case e_cxx20_standard: {
+          case e_cxx20_standard:
+          case e_cxx23_standard:
+          case e_cxx26_standard: {
             break; // NOP
           }
           case e_upcxx_standard: {
@@ -4081,6 +4153,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          case e_c11_standard:   { printf ("C11 mode ON \n");         break; }
          case e_c17_standard:   { printf ("C17 mode ON \n");         break; }
          case e_c23_standard:   { printf ("C23 mode ON \n");         break; }
+         case e_c2y_standard:   { printf ("C2y mode ON \n");         break; }
          case e_upc_standard:   { printf ("UPC mode ON \n");         break; }
          case e_cxx98_standard: { printf ("C++98 mode ON \n");       break; }
          case e_cxx03_standard: { printf ("C++03 mode ON \n");       break; }
@@ -4088,6 +4161,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          case e_cxx14_standard: { printf ("C++14 mode ON \n");       break; }
          case e_cxx17_standard: { printf ("C++17 mode ON \n");       break; }
          case e_cxx20_standard: { printf ("C++20 mode ON \n");       break; }
+         case e_cxx23_standard: { printf ("C++23 mode ON \n");       break; }
+         case e_cxx26_standard: { printf ("C++26 mode ON \n");       break; }
          case e_upcxx_standard: { printf ("UPCxx mode ON \n");       break; }
          case e_f77_standard:   { printf ("Fortran77 mode ON \n");   break; }
          case e_f90_standard:   { printf ("Fortran90 mode ON \n");   break; }
@@ -5082,9 +5157,15 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(Cxx|Cxx_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C11|C11_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C17|C17_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(C23|C23_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(C2y|C2y_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx0x|Cxx0x_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx11|Cxx11_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx14|Cxx14_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(Cxx17|Cxx17_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(Cxx20|Cxx20_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(Cxx23|Cxx23_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(Cxx26|Cxx26_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(FailSafe|failsafe)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(output_warnings)",1);
@@ -5318,7 +5399,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx)",1);
   // optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx|c[+][+]98|c[+][+]03|c[+][+]11|c[+][+]14|c[+][+]17|c[+][+]20|c[+][+]23|c[+][+]26)",1);
   // optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx|c89|c90|c99|c11|c23|c[+][+]98|c[+][+]03|c[+][+]11|c[+][+]14|c[+][+]17|c[+][+]20|c[+][+]23|c[+][+]26)",1);
-     optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx|c89|c90|c99|c9x|c11|c1x|c17|c23|gnu89|gnu90|gnu9x|gnu11|gnu1x|gnu17|gnu18|c[+][+]98|c[+][+]03|c[+][+]11|c[+][+]0x|gnu[+][+]11|gnu[+][+]0x|c[+][+]14|c[+][+]1y|gnu[+][+]14|gnu[+][+]1y|c[+][+]17|c[+][+]1z|gnu[+][+]17|gnu[+][+]1z|c[+][+]20|c[+][+]2a|gnu[+][+]2a|c[+][+]23|c[+][+]26)",1);
+     optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx|c89|c90|c99|c9x|c11|c1x|c17|c23|c2y|gnu89|gnu90|gnu9x|gnu11|gnu1x|gnu17|gnu23|gnu2y|c[+][+]98|c[+][+]03|c[+][+]11|c[+][+]0x|gnu[+][+]11|gnu[+][+]0x|c[+][+]14|c[+][+]1y|gnu[+][+]14|gnu[+][+]1y|c[+][+]17|c[+][+]1z|gnu[+][+]17|gnu[+][+]1z|c[+][+]20|c[+][+]2a|gnu[+][+]20|gnu[+][+]2a|c[+][+]23|c[+][+]2b|gnu[+][+]23|gnu[+][+]2b|c[+][+]26|c[+][+]2c|gnu[+][+]26|gnu[+][+]2c)",1);
 
 
   // AST I/O
@@ -5860,7 +5941,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
        else
         {
-          if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true || get_C17_only() == true)
+          if (get_C_only() == true || get_C89_only() == true || get_C99_only() == true || get_C11_only() == true || get_C17_only() == true || get_C23_only() == true || get_C2y_only() == true)
              {
                if (get_sourceFileUsesCppFileExtension() == true)
                   {
@@ -6053,6 +6134,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
          inputCommandLine.push_back("--c23");
          break;
        }
+       case e_c2y_standard: {
+         inputCommandLine.push_back("--c2y");
+         break;
+       }
        case e_upc_standard: {
          inputCommandLine.push_back("--upc");
          break;
@@ -6076,6 +6161,22 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        }
        case e_cxx20_standard: {
          inputCommandLine.push_back("--c++20");
+
+      // DQ (7/26/2020): This macro is required in GNU 10.x header files to gain access to the
+      // coroutine support ("coroutine" header file returns an error with out it).
+         inputCommandLine.push_back("-D__cpp_impl_coroutine");
+         break;
+       }
+       case e_cxx23_standard: {
+         inputCommandLine.push_back("--c++23");
+
+      // DQ (7/26/2020): This macro is required in GNU 10.x header files to gain access to the
+      // coroutine support ("coroutine" header file returns an error with out it).
+         inputCommandLine.push_back("-D__cpp_impl_coroutine");
+         break;
+       }
+       case e_cxx26_standard: {
+         inputCommandLine.push_back("--c++26");
 
       // DQ (7/26/2020): This macro is required in GNU 10.x header files to gain access to the
       // coroutine support ("coroutine" header file returns an error with out it).
@@ -6784,6 +6885,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     case e_cxx14_standard:
                     case e_cxx17_standard:
                     case e_cxx20_standard:
+                    case e_cxx23_standard:
+                    case e_cxx26_standard:
                        {
                       // Don't change the backend compiler.
                          compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
@@ -6799,6 +6902,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     case e_c11_standard:
                     case e_c17_standard:
                     case e_c23_standard:
+                    case e_c2y_standard:
                        {
                          compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
                          break;
@@ -7047,6 +7151,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
          }
          break;
        }
+       case e_c2y_standard: {
+         if (is_gnu_standard()) {
+           compilerNameString.push_back("-std=gnu2y");
+         } else {
+           compilerNameString.push_back("-std=c2y");
+         }
+         break;
+       }
        case e_cxx98_standard: {
          if (is_gnu_standard()) {
            compilerNameString.push_back("-std=gnu++98");
@@ -7092,6 +7204,34 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
            compilerNameString.push_back("-std=gnu++20");
          } else {
            compilerNameString.push_back("-std=c++20");
+         }
+
+#if defined(BACKEND_CXX_IS_GNU_COMPILER)
+      // DQ (7/26/2020): the GNU 10.2 C++20 "coroutine" header file requires GNU to be used with -fcoroutines
+      // using the macro "__cpp_impl_coroutine" to control internal access.
+         compilerNameString.push_back("-fcoroutines");
+#endif
+         break;
+       }
+       case e_cxx23_standard: {
+         if (is_gnu_standard()) {
+           compilerNameString.push_back("-std=gnu++23");
+         } else {
+           compilerNameString.push_back("-std=c++23");
+         }
+
+#if defined(BACKEND_CXX_IS_GNU_COMPILER)
+      // DQ (7/26/2020): the GNU 10.2 C++20 "coroutine" header file requires GNU to be used with -fcoroutines
+      // using the macro "__cpp_impl_coroutine" to control internal access.
+         compilerNameString.push_back("-fcoroutines");
+#endif
+         break;
+       }
+       case e_cxx26_standard: {
+         if (is_gnu_standard()) {
+           compilerNameString.push_back("-std=gnu++26");
+         } else {
+           compilerNameString.push_back("-std=c++26");
          }
 
 #if defined(BACKEND_CXX_IS_GNU_COMPILER)
@@ -7175,8 +7315,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // DQ (3/17/2017): It was a problem that C++11 was turned on for Fortran when using the Intel and Clang compilers (this code checks this).
           ROSE_ASSERT(get_C11_only() == false);
           ROSE_ASSERT(get_C17_only() == false);
+          ROSE_ASSERT(get_C23_only() == false);
+          ROSE_ASSERT(get_C2y_only() == false);
           ROSE_ASSERT(get_Cxx11_only() == false);
           ROSE_ASSERT(get_Cxx14_only() == false);
+          ROSE_ASSERT(get_Cxx17_only() == false);
+          ROSE_ASSERT(get_Cxx20_only() == false);
+          ROSE_ASSERT(get_Cxx23_only() == false);
+          ROSE_ASSERT(get_Cxx26_only() == false);
         }
 #endif
 
