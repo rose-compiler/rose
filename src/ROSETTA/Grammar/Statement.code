@@ -8521,8 +8521,18 @@ SgDeclarationStatement::testForBadGenerateTemplateName( const std::string & name
                   }
                  else
                   {
-                    printf ("This is a rule violation and also not an operator, so this is an error in ROSE \n");
-                    ROSE_ASSERT (false);
+                    // PP (4/10/2025): refined message and commented out ROSE_ASSERT(false)
+                    // example code where this warning is issued:
+                    //   \code
+                    //   template <class...> struct make_void {};
+                    //   struct require_left_shift : make_void<decltype(1 << 1)> {};
+                    //   \endcode
+                    // other example: boost::lexical_cast<std::string>(7);
+                    printf ("WARNING: \"<<\" or \">>\" found in generated name, this could lead to an error in compiling the generated code later\n");
+                    printf ("..... name generated in processing a %s IR node \n",class_name().c_str());
+                    printf ("..... generated name = %s \n",name.c_str());
+                    printf ("** This may be a rule violation, so this is a warning in ROSE **\n");
+                    // ROSE_ASSERT (false);
                   }
             // ROSE_ASSERT (returnName.find("<<") == string::npos);
             // ROSE_ASSERT (returnName.find(">>") == string::npos);
