@@ -536,6 +536,8 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Partitioner2/Function.h					\
 	Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h				\
 	Rose/BinaryAnalysis/Partitioner2/GraphViz.h					\
+	Rose/BinaryAnalysis/Partitioner2/JumpTable.h					\
+	Rose/BinaryAnalysis/Partitioner2/MemoryTable.h					\
 	Rose/BinaryAnalysis/Partitioner2/Modules.h					\
 	Rose/BinaryAnalysis/Partitioner2/ModulesElf.h					\
 	Rose/BinaryAnalysis/Partitioner2/ModulesJvm.h					\

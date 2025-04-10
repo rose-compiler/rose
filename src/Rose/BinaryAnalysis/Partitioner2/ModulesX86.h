@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
+#include <Rose/BinaryAnalysis/Partitioner2/JumpTable.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 
 namespace Rose {
@@ -12,6 +13,10 @@ namespace Partitioner2 {
 
 /** Disassembly and partitioning utilities for Intel x86 and amd64. */
 namespace ModulesX86 {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Classes for matching function prologues
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Matches an x86 function prologue.
  *
@@ -88,6 +93,10 @@ public:
     virtual bool match(const PartitionerConstPtr&, Address anchor) override;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// FunctionReturnDetector for CFG edges at a function return
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Basic block callback to detect function returns.
  *
  *  The architecture agnostic isFunctionReturn test for basic blocks does not detect x86 "RET N" (N!=0) instructions as
@@ -100,55 +109,57 @@ public:
     virtual bool operator()(bool chain, const Args&) override;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SwitchSuccessors for CFG edges from a C `switch` statement or similar
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Basic block callback to detect "switch" statements.
  *
- *  Examines the instructions of a basic block to determine if they are from a C "switch"-like statement and attempts to find
- *  the "case" labels, adding them as successors to this basic block. */
+ *  Examines the instructions of a basic block to determine if they are from a C "switch"-like statement and attempts to find the
+ *  "case" labels, adding them as successors to this basic block.
+ *
+ *  Since this is called during partitioning, we don't have a full CFG or even full basic blocks. Therefore, the analysis it
+ *  performs is restricted to the current (partial) basic block. */
 class SwitchSuccessors: public BasicBlockCallback {
 public:
-    enum EntryType {
-        ABSOLUTE,                                       // table entry is actual target address
-        TABLE_RELATIVE                                  // target is table entry plus table starting address
-    };
-
 private:
+    // These get filled in during the pattern matching phase when we're looking at the content of the basic block in question to try
+    // to figure out if it has a jump table and if so, some characteristics of that table. */
     Sawyer::Optional<Address> tableVa_;                 // possible address for jump table
-    EntryType entryType_ = ABSOLUTE;                    // type of table entries
+    JumpTable::EntryType entryType_ = JumpTable::EntryType::ABSOLUTE;
     size_t entrySizeBytes_ = 4;                         // size of each table entry
-    AddressInterval tableLocation_;                     // location of the full table
     Address entryOffset_ = 0;                           // value added to every table entry
 
+    // These members are initialized after the jump table is loaded and are used to update the successors and attach basic blocks.
+    JumpTable::Ptr mainTable_;
+    std::vector<uint8_t> indexes_;                      // indexes into the main table immediately following the main table
+
 public:
+    ~SwitchSuccessors();
     SwitchSuccessors();
-    SwitchSuccessors(Address tableAddr, Address entryOffset, EntryType, size_t entrySizeBytes);
     static Ptr instance(); /**< Allocating constructor. */
     virtual bool operator()(bool chain, const Args&) override;
 
-    // Load the table data and return the target addresses. The `tableLocation_` is updated as a side effect.
-    std::vector<Address> loadJumpTable(const Args&);
 
     // Adjust successors and for the basic block, create a data block, and add everything to the partitioner.
     void addToPartitioner(const Args&, const std::set<Address> &successors) const;
 
 private:
+    // Pattern matchers that look at
     bool matchPattern1(SgAsmExpression *jmpArg);
     bool matchPattern2(const BasicBlockPtr&, SgAsmInstruction *jmp);
     bool matchPattern3(const PartitionerConstPtr&, const BasicBlockPtr&, SgAsmInstruction *jmp);
     bool matchPattern4(const PartitionerConstPtr&, const BasicBlockPtr&);
+    bool matchPattern5(const PartitionerConstPtr&, const BasicBlockPtr&);
     bool matchPatterns(const PartitionerConstPtr&, const BasicBlockPtr&);
 
-    // Basic limits on the location of the jump table.
-    AddressInterval jumpTableLocationLimits(const Args&) const;
-
-    // Limits on the target addresses contained in (or computed from) the table.
-    AddressInterval jumpTableTargetLimits(const Args&) const;
-
-    // Replace basic block's successors with new ones.
-    void replaceBasicBlockSuccessors(const Args&, const std::set<Address>&) const;
-
-    // Create a data block for the offset table and attach it to the basic block
-    void attachTableAsDataBlock(const Args&, const AddressInterval &tableLimits) const;
+    // Try to parse the jump table. If successful, create a `table` in this object.
+    void parseJumpTable(const Args&);
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Supporting functions used by this module
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Matches "ENTER x, 0" */
 bool matchEnterAnyZero(const PartitionerConstPtr&, SgAsmX86Instruction*);
@@ -175,27 +186,6 @@ bool matchPushBp(const PartitionerConstPtr&, SgAsmX86Instruction*);
 
 /** Matches "PUSH SI" or variant. */
 bool matchPushSi(const PartitionerConstPtr&, SgAsmX86Instruction*);
-
-/** Reads a table of code addresses.
- *
- *  Reads a table of code addresses from within the @p tableLimits memory range starting at either the specified @p probableStartVa
- *  or the beginning of the @p tableLimits. If @p nSkippable is positive, up to that many invalid entries can be skipped before
- *  actual valid entries are found.  If no entries are skipped and the @p probableStartVa is larger than the minimum @p tableLimits
- *  then we also look backward from the @p probableStartVa to consume as many valid table entries as possible within the @p
- *  tableLimits.  An entry is valid if the target address formed from the table entry falls within the @p targetLimits. The target
- *  address is either the table entry plus the entryOffset, or the table entry plus the @p entryOffset plus the table start address,
- *  depending on @p tableEntryType.
- *
- *  If valid table entries are found, and the table is some arbitrarily small number of entries, then it can be followed by
- *  zero or more single-byte indexes into the table entries.
- *
- *  Upon return, the @p tableLimits is adjusted to be the addresses where valid table entries were found unioned with the
- *  addresses of the optional post-table indexes.  The return value is the valid table entries in the order they occur in the
- *  table. */
-std::vector<Address> scanCodeAddressTable(const PartitionerConstPtr&, AddressInterval &tableLimits /*in,out*/,
-                                          const AddressInterval &targetLimits, Address entryOffset,
-                                          SwitchSuccessors::EntryType tableEntryType, size_t tableEntrySizeBytes,
-                                          Sawyer::Optional<Address> probableStartVa = Sawyer::Nothing(), size_t nSkippable = 0);
 
 /** Try to match a base+offset expression.
  *

@@ -730,6 +730,14 @@ using FunctionSet = Sawyer::Container::Set<FunctionPtr>; /**< Set of functions. 
 
 class FunctionError;
 
+class JumpTable;
+using JumpTablePtr = std::shared_ptr<JumpTable>;            /**< Shared-ownership pointer for @ref JumpTable. */
+using JumpTableConstPtr = std::shared_ptr<const JumpTable>; /**< Shared-ownership pointer for @ref JumpTable. */
+
+class MemoryTable;
+using MemoryTablePtr = std::shared_ptr<MemoryTable>;            /**< Shared-ownership pointer for @ref MemoryTable. */
+using MemoryTableConstPtr = std::shared_ptr<const MemoryTable>; /**< Shared-ownership pointer for @ref MemoryTable. */
+
 class Partitioner;
 using PartitionerPtr = Sawyer::SharedPointer<Partitioner>;            /**< Shared-ownership pointer for @ref Partitioner. */
 using PartitionerConstPtr = Sawyer::SharedPointer<const Partitioner>; /**< Shared-ownership pointer for @ref Partitioner. */

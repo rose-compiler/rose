@@ -16,7 +16,9 @@ run $(librose_compile)				\
     FunctionCallGraph.C				\
     FunctionNoop.C				\
     GraphViz.C					\
+    JumpTable.C					\
     MayReturnAnalysis.C				\
+    MemoryTable.C				\
     Modules.C					\
     ModulesElf.C				\
     ModulesJvm.C				\
@@ -49,6 +51,8 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/Partitioner2	\
     Function.h								\
     FunctionCallGraph.h							\
     GraphViz.h								\
+    JumpTable.h								\
+    MemoryTable.h							\
     Modules.h								\
     ModulesElf.h							\
     ModulesJvm.h							\
