@@ -32,7 +32,10 @@ namespace BinaryAnalysis {
     namespace Architecture { void initDiagnostics(); }
     namespace CallingConvention { void initDiagnostics(); }
     namespace Dwarf { void initDiagnostics(); }
-    namespace Partitioner2 { void initDiagnostics(); }
+    namespace Partitioner2 {
+        void initDiagnostics();
+        namespace IndirectControlFlow { void initDiagnostics(); }
+    }
     namespace PointerDetection { void initDiagnostics(); }
     namespace ReturnValueUsed { void initDiagnostics(); }
     namespace StackDelta { void initDiagnostics(); }
@@ -151,6 +154,7 @@ void initialize() {
 #endif
         BinaryAnalysis::NoOperation::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
+        BinaryAnalysis::Partitioner2::IndirectControlFlow::initDiagnostics();
         BinaryAnalysis::PointerDetection::initDiagnostics();
         BinaryAnalysis::Reachability::initDiagnostics();
         BinaryAnalysis::ReturnValueUsed::initDiagnostics();

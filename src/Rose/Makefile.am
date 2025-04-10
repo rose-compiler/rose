@@ -229,6 +229,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Partitioner2/FunctionCallGraph.C					\
 	BinaryAnalysis/Partitioner2/FunctionNoop.C					\
 	BinaryAnalysis/Partitioner2/GraphViz.C						\
+	BinaryAnalysis/Partitioner2/IndirectControlFlow.C				\
 	BinaryAnalysis/Partitioner2/JumpTable.C						\
 	BinaryAnalysis/Partitioner2/MayReturnAnalysis.C					\
 	BinaryAnalysis/Partitioner2/MemoryTable.C					\

@@ -286,6 +286,7 @@ JumpTable::attachTableToBasicBlock(const BasicBlock::Ptr &bb) const {
                 case EntryType::TABLE_RELATIVE:
                     return (perEntryOffset_ + location().least()) & mask;
             }
+            ASSERT_not_reachable("invalid entry type");
         }();
 
         DataBlock::Ptr data = createDataBlock();
