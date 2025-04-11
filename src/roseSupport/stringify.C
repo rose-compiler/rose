@@ -11854,7 +11854,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 2250
+// /src/ROSETTA/src/binaryInstruction.C line 2321
 namespace stringify { namespace SgAsmPESectionTableEntry {
     const char* PESectionFlags(int64_t i) {
         switch (i) {
@@ -12258,7 +12258,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5707
+// /src/ROSETTA/src/binaryInstruction.C line 5821
 namespace stringify { namespace SgAsmNESectionTableEntry {
     const char* NESectionFlags(int64_t i) {
         switch (i) {
@@ -12724,7 +12724,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 7710
+// /src/ROSETTA/src/binaryInstruction.C line 7771
 namespace stringify { namespace SgAsmLESectionTableEntry {
     const char* LESectionFlags(int64_t i) {
         switch (i) {
@@ -12946,7 +12946,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 13029
+// /src/ROSETTA/src/binaryInstruction.C line 13136
 namespace stringify { namespace SgAsmJvmConstantPoolEntry {
     const char* Kind(int64_t i) {
         switch (i) {
@@ -13508,7 +13508,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 19966
+// /src/ROSETTA/src/binaryInstruction.C line 20073
 namespace stringify { namespace SgAsmElfSegmentTableEntry {
     const char* SegmentType(int64_t i) {
         switch (i) {
@@ -13590,7 +13590,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 19994
+// /src/ROSETTA/src/binaryInstruction.C line 20101
 namespace stringify { namespace SgAsmElfSegmentTableEntry {
     const char* SegmentFlags(int64_t i) {
         switch (i) {
@@ -13650,7 +13650,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 20435
+// /src/ROSETTA/src/binaryInstruction.C line 20539
 namespace stringify { namespace SgAsmElfSectionTableEntry {
     const char* SectionType(int64_t i) {
         switch (i) {
@@ -13736,7 +13736,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 20462
+// /src/ROSETTA/src/binaryInstruction.C line 20566
 namespace stringify { namespace SgAsmElfSectionTableEntry {
     const char* SectionFlags(int64_t i) {
         switch (i) {
@@ -24984,56 +24984,6 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Partitioner2/ModulesX86.h line 109
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Partitioner2 { namespace ModulesX86 { namespace SwitchSuccessors {
-    const char* EntryType(int64_t i) {
-        switch (i) {
-            case 0L: return "ABSOLUTE";
-            case 1L: return "RELATIVE";
-            default: return "";
-        }
-    }
-
-    std::string EntryType(int64_t i, const std::string &strip) {
-        std::string s = EntryType(i);
-        if (s.empty())
-            s = "(Rose::BinaryAnalysis::Partitioner2::ModulesX86::SwitchSuccessors::EntryType)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& EntryType() {
-        static const int64_t values[] = {
-            0L,
-            1L
-        };
-        static const std::vector<int64_t> retval(values, values + 2);
-        return retval;
-    }
-
-}}}}}}
-
-namespace Rose {
-    std::string stringifyBinaryAnalysisPartitioner2ModulesX86SwitchSuccessorsEntryType(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::Partitioner2::ModulesX86::SwitchSuccessors::EntryType(i);
-        if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::Partitioner2::ModulesX86::SwitchSuccessors::EntryType)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "Rose::BinaryAnalysis::Partitioner2::ModulesX86::SwitchSuccessors::EntryType::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyBinaryAnalysisPartitioner2ModulesX86SwitchSuccessorsEntryType() {
-        return stringify::Rose::BinaryAnalysis::Partitioner2::ModulesX86::SwitchSuccessors::EntryType();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/Rose/BinaryAnalysis/Partitioner2/DataFlow.h line 32
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Partitioner2 { namespace DataFlow { namespace DfCfgVertex {
     const char* Type(int64_t i) {
@@ -25084,6 +25034,56 @@ namespace Rose {
 
     const std::vector<int64_t>& stringifyBinaryAnalysisPartitioner2DataFlowDfCfgVertexType() {
         return stringify::Rose::BinaryAnalysis::Partitioner2::DataFlow::DfCfgVertex::Type();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/Rose/BinaryAnalysis/Partitioner2/JumpTable.h line 25
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Partitioner2 { namespace JumpTable {
+    const char* EntryType(int64_t i) {
+        switch (i) {
+            case 0L: return "ABSOLUTE";
+            case 1L: return "TABLE_RELATIVE";
+            default: return "";
+        }
+    }
+
+    std::string EntryType(int64_t i, const std::string &strip) {
+        std::string s = EntryType(i);
+        if (s.empty())
+            s = "(Rose::BinaryAnalysis::Partitioner2::JumpTable::EntryType)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& EntryType() {
+        static const int64_t values[] = {
+            0L,
+            1L
+        };
+        static const std::vector<int64_t> retval(values, values + 2);
+        return retval;
+    }
+
+}}}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisPartitioner2JumpTableEntryType(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::Partitioner2::JumpTable::EntryType(i);
+        if (retval.empty()) {
+            retval = "(Rose::BinaryAnalysis::Partitioner2::JumpTable::EntryType)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "Rose::BinaryAnalysis::Partitioner2::JumpTable::EntryType::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyBinaryAnalysisPartitioner2JumpTableEntryType() {
+        return stringify::Rose::BinaryAnalysis::Partitioner2::JumpTable::EntryType();
     }
 }
 
@@ -74049,372 +74049,372 @@ namespace stringify {
             case 700L: return "T_JAVA_PARAM";
             case 701L: return "T_JAVA_WILD";
             case 702L: return "PROCESS_CONTROL_STATEMENT";
-            case 703L: return "SIGNED_CHAR_VAL";
-            case 704L: return "SpecialFunctionModifierTag";
-            case 705L: return "StatementTag";
-            case 706L: return "STATIC_ASSERTION_DECLARATION";
-            case 707L: return "STMT_DECL_STMT";
-            case 708L: return "STMT_EXPR";
-            case 709L: return "TEMP_Statement_Function_Statement";
-            case 710L: return "StorageModifierTag";
-            case 711L: return "STR_CONV";
-            case 712L: return "StringKeyedBidirectionalGraphTag";
-            case 713L: return "STRING_VAL";
-            case 714L: return "StructureModifierTag";
-            case 715L: return "SUBSCRIPT_EXPR";
-            case 716L: return "SUBT_OP";
-            case 717L: return "SupportTag";
-            case 718L: return "SWITCH_STMT";
-            case 719L: return "SymbolTag";
-            case 720L: return "SymbolTableTag";
-            case 721L: return "TemplateArgumentTag";
-            case 722L: return "TemplateArgumentListTag";
-            case 723L: return "TEMPLATE_DECL_STMT";
-            case 724L: return "TEMPLATE_CLASS_DECL_STMT";
-            case 725L: return "TEMPLATE_CLASS_NAME";
-            case 726L: return "TEMPLATE_FUNCTION_DECL_STMT";
-            case 727L: return "TEMPLATE_FUNCTION_REF";
-            case 728L: return "TEMPLATE_FUNC_NAME";
-            case 729L: return "TEMPLATE_MEMBER_FUNCTION_DECL_STMT";
-            case 730L: return "TEMPLATE_MEMBER_FUNCTION_REF";
-            case 731L: return "TEMPLATE_MEMBER_FUNC_NAME";
-            case 732L: return "TEMPLATE_TYPEDEF_DECL_STMT";
-            case 733L: return "TEMPLATE_TYPEDEF_NAME";
-            case 734L: return "TEMPLATE_VARIABLE_DECL_STMT";
-            case 735L: return "TEMPLATE_VARIABLE_NAME";
-            case 736L: return "TEMPLATE_CLASS_DEF_STMT";
-            case 737L: return "TEMPLATE_FUNCTION_DEF_STMT";
-            case 738L: return "TEMPLATE_INST_DECL_STMT";
-            case 739L: return "TEMPLATE_INST_DEFN_STMT";
-            case 740L: return "TEMPLATE_INST_DIRECTIVE_STMT";
-            case 741L: return "TEMPLATE_INST_FUNCTION_DECL_STMT";
-            case 742L: return "TEMPLATE_INST_MEMBER_FUNCTION_DECL_STMT";
-            case 743L: return "TEMPLATE_INST_TYPEDEF_DECL_STMT";
-            case 744L: return "TemplateParameterTag";
-            case 745L: return "TEMPLATE_PARAMETER_VAL";
-            case 746L: return "TemplateParameterListTag";
-            case 747L: return "TEMPLATE_NAME";
-            case 748L: return "T_TEMPLATE";
-            case 749L: return "THIS_NODE";
-            case 750L: return "TYPE_TRAIT_BUILTIN_OPERATOR";
-            case 751L: return "SUPER_NODE";
-            case 752L: return "THROW_OP";
-            case 753L: return "TOKEN";
-            case 754L: return "TRY_STMT";
-            case 755L: return "TUPLE_EXP";
-            case 756L: return "TypeTag";
-            case 757L: return "T_BOOL";
-            case 758L: return "T_CHAR";
-            case 759L: return "T_CHAR16";
-            case 760L: return "T_CHAR32";
-            case 761L: return "T_COMPLEX";
-            case 762L: return "T_DEFAULT";
-            case 763L: return "TYPE_EXPRESSION";
-            case 764L: return "T_LABEL";
-            case 765L: return "T_DOUBLE";
-            case 766L: return "T_ELLIPSE";
-            case 767L: return "T_FIXED";
-            case 768L: return "T_FLOAT";
-            case 769L: return "T_FLOAT128";
-            case 770L: return "T_FLOAT80";
-            case 771L: return "T_GLOBAL_VOID";
-            case 772L: return "TYPEID_OP";
-            case 773L: return "T_IMAGINARY";
-            case 774L: return "T_INT";
-            case 775L: return "T_LONG";
-            case 776L: return "T_LONG_DOUBLE";
-            case 777L: return "T_LONG_LONG";
-            case 778L: return "TypeModifierTag";
-            case 779L: return "T_MATRIX";
-            case 780L: return "T_TUPLE";
-            case 781L: return "T_NULLPTR";
-            case 782L: return "T_TYPEOF_TYPE";
-            case 783L: return "T_SHORT";
-            case 784L: return "T_SIGNED_128BIT_INTEGER";
-            case 785L: return "T_SIGNED_CHAR";
-            case 786L: return "T_SIGNED_INT";
-            case 787L: return "T_SIGNED_LONG";
-            case 788L: return "T_SIGNED_LONG_LONG";
-            case 789L: return "T_SIGNED_SHORT";
-            case 790L: return "T_STRING";
-            case 791L: return "T_UNKNOWN";
-            case 792L: return "T_UNSIGNED_128BIT_INTEGER";
-            case 793L: return "T_UNSIGNED_CHAR";
-            case 794L: return "T_UNSIGNED_INT";
-            case 795L: return "T_UNSIGNED_LONG";
-            case 796L: return "T_UNSIGNED_LONG_LONG";
-            case 797L: return "T_UNSIGNED_SHORT";
-            case 798L: return "T_VOID";
-            case 799L: return "T_WCHAR";
-            case 800L: return "TYPEDEF_STMT";
-            case 801L: return "T_TYPEDEF_SEQ";
-            case 802L: return "TYPEDEF_NAME";
-            case 803L: return "T_TYPEDEF";
-            case 804L: return "UPC_AccessModifierTag";
-            case 805L: return "UNARY_ADD_OP";
-            case 806L: return "UNARY_EXPRESSION";
-            case 807L: return "UNDEF_DIRECTIVE_STMT";
-            case 808L: return "UndirectedGraphEdgeTag";
-            case 809L: return "TEMP_UnknownArrayOrFunctionReference";
-            case 810L: return "UnknownFileTag";
-            case 812L: return "Unparse_InfoTag";
-            case 813L: return "UNSIGNED_CHAR_VAL";
-            case 814L: return "UNSIGNED_INT_VAL";
-            case 815L: return "UNSIGNED_LONG_LONG_INT_VAL";
-            case 816L: return "UNSIGNED_LONG_INT_VAL";
-            case 817L: return "UNSIGNED_SHORT_VAL";
-            case 818L: return "UPC_BARRIER_STMT";
-            case 819L: return "UPC_BLOCK_SIZEOF_EXPR";
-            case 820L: return "UPC_ELEM_SIZEOF_EXPR";
-            case 821L: return "UPC_FENCE_STMT";
-            case 822L: return "UPC_FORALL_STMT";
-            case 823L: return "UPC_LOCAL_SIZEOF_EXPR";
-            case 824L: return "UPC_MYTHREAD";
-            case 825L: return "UPC_NOTIFY_STMT";
-            case 826L: return "UPC_THREADS";
-            case 827L: return "UPC_WAIT_STMT";
-            case 828L: return "USE_STATEMENT";
-            case 829L: return "USER_DEFINED_BINARY_OP";
-            case 830L: return "USER_DEFINED_UNARY_OP";
-            case 831L: return "USING_DECLARATION_STMT";
-            case 832L: return "USING_DIRECTIVE_STMT";
-            case 833L: return "ValueExpTag";
-            case 834L: return "VA_COPY_OP";
-            case 835L: return "VA_END_OP";
-            case 836L: return "VA_OP";
-            case 837L: return "VA_START_ONE_OPERAND_OP";
-            case 838L: return "VA_START_OP";
-            case 839L: return "VAR_REF";
-            case 840L: return "VAR_DECL_STMT";
-            case 841L: return "VAR_DEFN_STMT";
-            case 842L: return "VARIABLE_NAME";
-            case 843L: return "VARIANT_EXPR";
-            case 844L: return "VARIANT_STMT";
-            case 845L: return "VOID_VAL";
-            case 846L: return "WAIT_STATEMENT";
-            case 847L: return "WARNING_DIRECTIVE_STMT";
-            case 848L: return "WITH_STATEMENT";
-            case 849L: return "WCHAR_VAL";
-            case 850L: return "TEMP_Where_Statement";
-            case 851L: return "WHILE_STMT";
-            case 852L: return "WRITE_STATEMENT";
-            case 853L: return "XOR_ASSIGN_OP";
-            case 854L: return "YIELD_EXP";
-            case 855L: return "_File_InfoTag";
-            case 856L: return "T_CAFTEAM";
-            case 857L: return "WITHTEAM_STMT";
-            case 858L: return "COARRAY_REF_EXPR";
-            case 859L: return "CALL_EXPRESSION";
-            case 860L: return "T_CRAY_POINTER";
-            case 861L: return "TEMP_JavaImportStatement";
-            case 862L: return "TEMP_JavaPackageDeclaration";
-            case 863L: return "TEMP_JavaPackageStatement";
-            case 864L: return "JavaImportStatementListTag";
-            case 865L: return "JavaClassDeclarationListTag";
-            case 866L: return "JavaMemberValuePairTag";
-            case 867L: return "JAVA_ANNOTATION";
-            case 868L: return "JAVA_MARKER_ANNOTATION";
-            case 869L: return "JAVA_SINGLE_MEMBER_ANNOTATION";
-            case 870L: return "JAVA_NORMAL_ANNOTATION";
-            case 871L: return "JAVA_TYPE_EXPRESSION";
-            case 872L: return "T_JAVA_QUALIFIED";
-            case 873L: return "CLASS_NODE";
-            case 874L: return "T_JAVA_UNION";
-            case 875L: return "T_JAVA_PARAMETER";
-            case 876L: return "ASYNC_STMT";
-            case 877L: return "FINISH_STMT";
-            case 878L: return "AT_STMT";
-            case 879L: return "ATOMIC_STMT";
-            case 881L: return "WHEN_STMT";
-            case 882L: return "ATEXP_NODE";
-            case 883L: return "FINISHEXP_NODE";
-            case 884L: return "HERE_NODE";
-            case 885L: return "DOTDOT_NODE";
-            case 886L: return "AsmNullInstructionTag";
-            case 887L: return "ADA_COMPONENT_CLAUSE";
-            case 888L: return "AdaIndexConstraintTag";
-            case 889L: return "T_ADA_MODULAR_TYPE";
-            case 890L: return "ADA_REPRESENTATION_CLAUSE";
-            case 891L: return "ADA_FUNCTION_RENAMING_DECL_STMT";
-            case 892L: return "ADA_SELECT_STMT";
-            case 893L: return "ADA_SELECT_ALTERNATIVE_STMT";
-            case 894L: return "ADA_TERMINATE_STMT";
-            case 895L: return "AsmAarch32InstructionTag";
-            case 896L: return "AsmAarch32CoprocessorTag";
-            case 897L: return "ADA_ATTRIBUTE_CLAUSE";
-            case 898L: return "AsmBinaryConcatTag";
-            case 899L: return "AsmByteOrderTag";
-            case 900L: return "T_ADA_DERIVED_TYPE";
-            case 901L: return "ADA_ATTRIBUTE_EXP";
-            case 902L: return "ADA_ENUM_REPRESENTATION_CLAUSE";
-            case 903L: return "AsmBinaryPreupdateTag";
-            case 904L: return "AsmBinaryPostupdateTag";
-            case 905L: return "ADA_OTHERS_EXPR";
-            case 906L: return "ADA_RENAMING_SYMBOL";
-            case 907L: return "ADA_RENAMING_REF";
-            case 908L: return "ADA_GENERIC_DECL";
-            case 909L: return "ADA_GENERIC_DEFN";
-            case 910L: return "T_ADA_FORMAL_TYPE";
-            case 911L: return "ADA_GENERIC_SYMBOL";
-            case 912L: return "ADA_FORMAL_TYPE_DECL_STMT";
-            case 913L: return "ADA_UNIT_REF";
-            case 914L: return "ADA_DISCRIMINATED_TYPE_DECL";
-            case 915L: return "T_ADA_DISCRIMINATED_TYPE";
-            case 916L: return "AdaDiscriminantConstraintTag";
-            case 917L: return "ADA_GENERIC_INSTANCE_DECL";
-            case 918L: return "ADA_UNSCOPED_BLOCK";
-            case 919L: return "ADA_INHERITED_FUNCTION_SYMBOL";
-            case 920L: return "ADA_PROTECTED_BODY";
-            case 921L: return "ADA_PROTECTED_BODY_DECL_STMT";
-            case 922L: return "ADA_PROTECTED_SPEC";
-            case 923L: return "ADA_PROTECTED_SPEC_DECL_STMT";
-            case 924L: return "ADA_PROTECTED_SYMBOL";
-            case 925L: return "ADA_PROTECTED_REF";
-            case 926L: return "T_ADA_PROTECTED_TYPE";
-            case 927L: return "ADA_PROTECTED_TYPE_DECL_STMT";
-            case 928L: return "AdaDigitsConstraintTag";
-            case 929L: return "ADA_ANCESTOR_INIT";
-            case 930L: return "AdaDeltaConstraintTag";
-            case 931L: return "T_ADA_SUBROUTINE_TYPE";
-            case 932L: return "ADA_GENERIC_INSTANCE_SYMBOL";
-            case 933L: return "ADA_FORMAL_PACKAGE_DECL_STMT";
-            case 934L: return "ADA_FORMAL_PACAKGE_SYMBOL";
-            case 935L: return "AsmJvmAttributeTableTag";
-            case 936L: return "AsmJvmMethodTableTag";
-            case 937L: return "AsmJvmFieldTag";
-            case 938L: return "AsmJvmFieldTableTag";
-            case 939L: return "AsmJvmExceptionHandlerTag";
-            case 940L: return "AsmJvmExceptionTableTag";
-            case 941L: return "AsmJvmClassTag";
-            case 942L: return "AsmJvmLineNumberEntryTag";
-            case 943L: return "AsmJvmLineNumberTableTag";
-            case 944L: return "AsmJvmInnerClassesEntryTag";
-            case 945L: return "AsmJvmInnerClassesTag";
-            case 946L: return "AsmCilInstructionTag";
-            case 947L: return "AsmStackExpressionTag";
-            case 948L: return "AsmJvmEnclosingMethodTag";
-            case 949L: return "AdaNullConstraintTag";
-            case 950L: return "AsmJvmModuleMainClassTag";
-            case 951L: return "AsmInstructionListTag";
-            case 952L: return "AsmCilNodeTag";
-            case 953L: return "AsmCilAssemblyTag";
-            case 954L: return "AsmCilAssemblyOSTag";
-            case 955L: return "AsmCilAssemblyProcessorTag";
-            case 956L: return "AsmCilAssemblyRefTag";
-            case 957L: return "AsmCilAssemblyRefOSTag";
-            case 958L: return "AsmCilAssemblyRefProcessorTag";
-            case 959L: return "AsmCilClassLayoutTag";
-            case 960L: return "AsmCilConstantTag";
-            case 961L: return "AsmCilCustomAttributeTag";
-            case 962L: return "AsmCilDeclSecurityTag";
-            case 963L: return "AsmCilEventTag";
-            case 964L: return "AsmCilEventMapTag";
-            case 965L: return "AsmCilExportedTypeTag";
-            case 966L: return "AsmCilFieldTag";
-            case 967L: return "AsmCilFieldLayoutTag";
-            case 968L: return "AsmCilFieldMarshalTag";
-            case 969L: return "AsmCilFieldRVATag";
-            case 970L: return "AsmCilFileTag";
-            case 971L: return "AsmCilGenericParamTag";
-            case 972L: return "AsmCilGenericParamConstraintTag";
-            case 973L: return "AsmCilImplMapTag";
-            case 974L: return "AsmCilInterfaceImplTag";
-            case 975L: return "AsmCilManifestResourceTag";
-            case 976L: return "AsmCilMemberRefTag";
-            case 977L: return "AsmCilMethodDefTag";
-            case 978L: return "AsmCilMethodImplTag";
-            case 979L: return "AsmCilMethodSemanticsTag";
-            case 980L: return "AsmCilMethodSpecTag";
-            case 981L: return "AsmCilModuleTag";
-            case 982L: return "AsmCilModuleRefTag";
-            case 983L: return "AsmCilNestedClassTag";
-            case 984L: return "AsmCilParamTag";
-            case 985L: return "AsmCilPropertyTag";
-            case 986L: return "AsmCilPropertyMapTag";
-            case 987L: return "AsmCilStandAloneSigTag";
-            case 988L: return "AsmCilTypeDefTag";
-            case 989L: return "AsmCilTypeRefTag";
-            case 990L: return "AsmCilTypeSpecTag";
-            case 991L: return "ADA_PARAMETER_LIST";
-            case 992L: return "AsmCilMetadataTag";
-            case 993L: return "AsmCilMetadataRootTag";
-            case 994L: return "AsmCilDataStreamTag";
-            case 995L: return "AsmCilMetadataHeapTag";
-            case 996L: return "AsmCilUint8HeapTag";
-            case 997L: return "AsmCilUint32HeapTag";
-            case 998L: return "AsmCliHeaderTag";
-            case 999L: return "ADA_VARIANT_DECL_STATEMENT";
-            case 1000L: return "ADA_VARIANT_WHEN_STMT";
-            case 1001L: return "AsmCilAssemblyTableTag";
-            case 1002L: return "AsmCilAssemblyOSTableTag";
-            case 1003L: return "AsmCilAssemblyProcessorTableTag";
-            case 1004L: return "AsmCilAssemblyRefTableTag";
-            case 1005L: return "AsmCilAssemblyRefOSTableTag";
-            case 1006L: return "AsmCilAssemblyRefProcessorTableTag";
-            case 1007L: return "AsmCilClassLayoutTableTag";
-            case 1008L: return "AsmCilConstantTableTag";
-            case 1009L: return "AsmCilCustomAttributeTableTag";
-            case 1010L: return "AsmCilDeclSecurityTableTag";
-            case 1011L: return "AsmCilEventTableTag";
-            case 1012L: return "AsmCilEventMapTableTag";
-            case 1013L: return "AsmCilExportedTypeTableTag";
-            case 1014L: return "AsmCilFieldTableTag";
-            case 1015L: return "AsmCilFieldLayoutTableTag";
-            case 1016L: return "AsmCilFieldMarshalTableTag";
-            case 1017L: return "AsmCilFieldRVATableTag";
-            case 1018L: return "AsmCilFileTableTag";
-            case 1019L: return "AsmCilGenericParamTableTag";
-            case 1020L: return "AsmCilGenericParamConstraintTableTag";
-            case 1021L: return "AsmCilImplMapTableTag";
-            case 1022L: return "AsmCilInterfaceImplTableTag";
-            case 1023L: return "AsmCilManifestResourceTableTag";
-            case 1024L: return "AsmCilMemberRefTableTag";
-            case 1025L: return "AsmCilMethodDefTableTag";
-            case 1026L: return "AsmCilMethodImplTableTag";
-            case 1027L: return "AsmCilMethodSemanticsTableTag";
-            case 1028L: return "AsmCilMethodSpecTableTag";
-            case 1029L: return "AsmCilModuleTableTag";
-            case 1030L: return "AsmCilModuleRefTableTag";
-            case 1031L: return "AsmCilNestedClassTableTag";
-            case 1032L: return "AsmCilParamTableTag";
-            case 1033L: return "AsmCilPropertyTableTag";
-            case 1034L: return "AsmCilPropertyMapTableTag";
-            case 1035L: return "AsmCilStandAloneSigTableTag";
-            case 1036L: return "AsmCilTypeDefTableTag";
-            case 1037L: return "AsmCilTypeRefTableTag";
-            case 1038L: return "AsmCilTypeSpecTableTag";
-            case 1039L: return "JvmCompositeTag";
-            case 1040L: return "FORTRAN_CONTINUE_STMT";
-            case 1041L: return "AsmJvmStackMapTableTag";
-            case 1042L: return "AsmJvmStackMapFrameTag";
-            case 1043L: return "AsmJvmStackMapVerificationTypeTag";
-            case 1044L: return "AsmJvmBootstrapMethodTag";
-            case 1045L: return "AsmJvmBootstrapMethodsTag";
-            case 1046L: return "AsmJvmExceptionsTag";
-            case 1047L: return "AsmJvmNestMembersTag";
-            case 1048L: return "AsmJvmNestHostTag";
-            case 1049L: return "JOVIAL_LABEL_DECLARATION";
-            case 1050L: return "AsmJvmLocalVariableEntryTag";
-            case 1051L: return "AsmJvmLocalVariableTableTag";
-            case 1052L: return "AsmJvmLocalVariableTypeEntryTag";
-            case 1053L: return "AsmJvmLocalVariableTypeTableTag";
-            case 1054L: return "AsmUserInstructionTag";
-            case 1055L: return "AsmJvmMethodParametersTag";
-            case 1056L: return "AsmJvmMethodParametersEntryTag";
-            case 1057L: return "AsmVoidTypeTag";
-            case 1058L: return "AsmPointerTypeTag";
-            case 1059L: return "AsmAarch64PStateTag";
-            case 1060L: return "T_RANGE_TYPE";
-            case 1061L: return "AsmCilExceptionDataTag";
-            case 1062L: return "AsmCilMethodDataTag";
-            case 1063L: return "TEMPLATE_VARIABLE_INST_STMT";
-            case 1064L: return "ReferenceExpTag";
-            case 1065L: return "NTYPE_REF";
-            case 1066L: return "SCOPED_REF";
-            case 1067L: return "T_SCOPED_TYPE";
-            case 1068L: return "TYPE_NAME";
-            case 1069L: return "AsmJvmSyntheticTag";
-            case 1070L: return "AsmJvmDeprecatedTag";
+            case 703L: return "SpecialFunctionModifierTag";
+            case 704L: return "StatementTag";
+            case 705L: return "STATIC_ASSERTION_DECLARATION";
+            case 706L: return "STMT_DECL_STMT";
+            case 707L: return "STMT_EXPR";
+            case 708L: return "TEMP_Statement_Function_Statement";
+            case 709L: return "StorageModifierTag";
+            case 710L: return "STR_CONV";
+            case 711L: return "StringKeyedBidirectionalGraphTag";
+            case 712L: return "STRING_VAL";
+            case 713L: return "StructureModifierTag";
+            case 714L: return "SUBSCRIPT_EXPR";
+            case 715L: return "SUBT_OP";
+            case 716L: return "SupportTag";
+            case 717L: return "SWITCH_STMT";
+            case 718L: return "SymbolTag";
+            case 719L: return "SymbolTableTag";
+            case 720L: return "TemplateArgumentTag";
+            case 721L: return "TemplateArgumentListTag";
+            case 722L: return "TEMPLATE_DECL_STMT";
+            case 723L: return "TEMPLATE_CLASS_DECL_STMT";
+            case 724L: return "TEMPLATE_CLASS_NAME";
+            case 725L: return "TEMPLATE_FUNCTION_DECL_STMT";
+            case 726L: return "TEMPLATE_FUNCTION_REF";
+            case 727L: return "TEMPLATE_FUNC_NAME";
+            case 728L: return "TEMPLATE_MEMBER_FUNCTION_DECL_STMT";
+            case 729L: return "TEMPLATE_MEMBER_FUNCTION_REF";
+            case 730L: return "TEMPLATE_MEMBER_FUNC_NAME";
+            case 731L: return "TEMPLATE_TYPEDEF_DECL_STMT";
+            case 732L: return "TEMPLATE_TYPEDEF_NAME";
+            case 733L: return "TEMPLATE_VARIABLE_DECL_STMT";
+            case 734L: return "TEMPLATE_VARIABLE_NAME";
+            case 735L: return "TEMPLATE_CLASS_DEF_STMT";
+            case 736L: return "TEMPLATE_FUNCTION_DEF_STMT";
+            case 737L: return "TEMPLATE_INST_DECL_STMT";
+            case 738L: return "TEMPLATE_INST_DEFN_STMT";
+            case 739L: return "TEMPLATE_INST_DIRECTIVE_STMT";
+            case 740L: return "TEMPLATE_INST_FUNCTION_DECL_STMT";
+            case 741L: return "TEMPLATE_INST_MEMBER_FUNCTION_DECL_STMT";
+            case 742L: return "TEMPLATE_INST_TYPEDEF_DECL_STMT";
+            case 743L: return "TemplateParameterTag";
+            case 744L: return "TEMPLATE_PARAMETER_VAL";
+            case 745L: return "TemplateParameterListTag";
+            case 746L: return "TEMPLATE_NAME";
+            case 747L: return "T_TEMPLATE";
+            case 748L: return "THIS_NODE";
+            case 749L: return "TYPE_TRAIT_BUILTIN_OPERATOR";
+            case 750L: return "SUPER_NODE";
+            case 751L: return "THROW_OP";
+            case 752L: return "TOKEN";
+            case 753L: return "TRY_STMT";
+            case 754L: return "TUPLE_EXP";
+            case 755L: return "TypeTag";
+            case 756L: return "T_BOOL";
+            case 757L: return "T_CHAR";
+            case 758L: return "T_CHAR16";
+            case 759L: return "T_CHAR32";
+            case 760L: return "T_COMPLEX";
+            case 761L: return "T_DEFAULT";
+            case 762L: return "TYPE_EXPRESSION";
+            case 763L: return "T_LABEL";
+            case 764L: return "T_DOUBLE";
+            case 765L: return "T_ELLIPSE";
+            case 766L: return "T_FIXED";
+            case 767L: return "T_FLOAT";
+            case 768L: return "T_FLOAT128";
+            case 769L: return "T_FLOAT80";
+            case 770L: return "T_GLOBAL_VOID";
+            case 771L: return "TYPEID_OP";
+            case 772L: return "T_IMAGINARY";
+            case 773L: return "T_INT";
+            case 774L: return "T_LONG";
+            case 775L: return "T_LONG_DOUBLE";
+            case 776L: return "T_LONG_LONG";
+            case 777L: return "TypeModifierTag";
+            case 778L: return "T_MATRIX";
+            case 779L: return "T_TUPLE";
+            case 780L: return "T_NULLPTR";
+            case 781L: return "T_TYPEOF_TYPE";
+            case 782L: return "T_SHORT";
+            case 783L: return "T_SIGNED_128BIT_INTEGER";
+            case 784L: return "T_SIGNED_CHAR";
+            case 785L: return "T_SIGNED_INT";
+            case 786L: return "T_SIGNED_LONG";
+            case 787L: return "T_SIGNED_LONG_LONG";
+            case 788L: return "T_SIGNED_SHORT";
+            case 789L: return "T_STRING";
+            case 790L: return "T_UNKNOWN";
+            case 791L: return "T_UNSIGNED_128BIT_INTEGER";
+            case 792L: return "T_UNSIGNED_CHAR";
+            case 793L: return "T_UNSIGNED_INT";
+            case 794L: return "T_UNSIGNED_LONG";
+            case 795L: return "T_UNSIGNED_LONG_LONG";
+            case 796L: return "T_UNSIGNED_SHORT";
+            case 797L: return "T_VOID";
+            case 798L: return "T_WCHAR";
+            case 799L: return "TYPEDEF_STMT";
+            case 800L: return "T_TYPEDEF_SEQ";
+            case 801L: return "TYPEDEF_NAME";
+            case 802L: return "T_TYPEDEF";
+            case 803L: return "UPC_AccessModifierTag";
+            case 804L: return "UNARY_ADD_OP";
+            case 805L: return "UNARY_EXPRESSION";
+            case 806L: return "UNDEF_DIRECTIVE_STMT";
+            case 807L: return "UndirectedGraphEdgeTag";
+            case 808L: return "TEMP_UnknownArrayOrFunctionReference";
+            case 809L: return "UnknownFileTag";
+            case 811L: return "Unparse_InfoTag";
+            case 812L: return "UNSIGNED_CHAR_VAL";
+            case 813L: return "UNSIGNED_INT_VAL";
+            case 814L: return "UNSIGNED_LONG_LONG_INT_VAL";
+            case 815L: return "UNSIGNED_LONG_INT_VAL";
+            case 816L: return "UNSIGNED_SHORT_VAL";
+            case 817L: return "UPC_BARRIER_STMT";
+            case 818L: return "UPC_BLOCK_SIZEOF_EXPR";
+            case 819L: return "UPC_ELEM_SIZEOF_EXPR";
+            case 820L: return "UPC_FENCE_STMT";
+            case 821L: return "UPC_FORALL_STMT";
+            case 822L: return "UPC_LOCAL_SIZEOF_EXPR";
+            case 823L: return "UPC_MYTHREAD";
+            case 824L: return "UPC_NOTIFY_STMT";
+            case 825L: return "UPC_THREADS";
+            case 826L: return "UPC_WAIT_STMT";
+            case 827L: return "USE_STATEMENT";
+            case 828L: return "USER_DEFINED_BINARY_OP";
+            case 829L: return "USER_DEFINED_UNARY_OP";
+            case 830L: return "USING_DECLARATION_STMT";
+            case 831L: return "USING_DIRECTIVE_STMT";
+            case 832L: return "ValueExpTag";
+            case 833L: return "VA_COPY_OP";
+            case 834L: return "VA_END_OP";
+            case 835L: return "VA_OP";
+            case 836L: return "VA_START_ONE_OPERAND_OP";
+            case 837L: return "VA_START_OP";
+            case 838L: return "VAR_REF";
+            case 839L: return "VAR_DECL_STMT";
+            case 840L: return "VAR_DEFN_STMT";
+            case 841L: return "VARIABLE_NAME";
+            case 842L: return "VARIANT_EXPR";
+            case 843L: return "VARIANT_STMT";
+            case 844L: return "VOID_VAL";
+            case 845L: return "WAIT_STATEMENT";
+            case 846L: return "WARNING_DIRECTIVE_STMT";
+            case 847L: return "WITH_STATEMENT";
+            case 848L: return "WCHAR_VAL";
+            case 849L: return "TEMP_Where_Statement";
+            case 850L: return "WHILE_STMT";
+            case 851L: return "WRITE_STATEMENT";
+            case 852L: return "XOR_ASSIGN_OP";
+            case 853L: return "YIELD_EXP";
+            case 854L: return "_File_InfoTag";
+            case 855L: return "T_CAFTEAM";
+            case 856L: return "WITHTEAM_STMT";
+            case 857L: return "COARRAY_REF_EXPR";
+            case 858L: return "CALL_EXPRESSION";
+            case 859L: return "T_CRAY_POINTER";
+            case 860L: return "TEMP_JavaImportStatement";
+            case 861L: return "TEMP_JavaPackageDeclaration";
+            case 862L: return "TEMP_JavaPackageStatement";
+            case 863L: return "JavaImportStatementListTag";
+            case 864L: return "JavaClassDeclarationListTag";
+            case 865L: return "JavaMemberValuePairTag";
+            case 866L: return "JAVA_ANNOTATION";
+            case 867L: return "JAVA_MARKER_ANNOTATION";
+            case 868L: return "JAVA_SINGLE_MEMBER_ANNOTATION";
+            case 869L: return "JAVA_NORMAL_ANNOTATION";
+            case 870L: return "JAVA_TYPE_EXPRESSION";
+            case 871L: return "T_JAVA_QUALIFIED";
+            case 872L: return "CLASS_NODE";
+            case 873L: return "T_JAVA_UNION";
+            case 874L: return "T_JAVA_PARAMETER";
+            case 875L: return "ASYNC_STMT";
+            case 876L: return "FINISH_STMT";
+            case 877L: return "AT_STMT";
+            case 878L: return "ATOMIC_STMT";
+            case 880L: return "WHEN_STMT";
+            case 881L: return "ATEXP_NODE";
+            case 882L: return "FINISHEXP_NODE";
+            case 883L: return "HERE_NODE";
+            case 884L: return "DOTDOT_NODE";
+            case 885L: return "AsmNullInstructionTag";
+            case 886L: return "ADA_COMPONENT_CLAUSE";
+            case 887L: return "AdaIndexConstraintTag";
+            case 888L: return "T_ADA_MODULAR_TYPE";
+            case 889L: return "ADA_REPRESENTATION_CLAUSE";
+            case 890L: return "ADA_FUNCTION_RENAMING_DECL_STMT";
+            case 891L: return "ADA_SELECT_STMT";
+            case 892L: return "ADA_SELECT_ALTERNATIVE_STMT";
+            case 893L: return "ADA_TERMINATE_STMT";
+            case 894L: return "AsmAarch32InstructionTag";
+            case 895L: return "AsmAarch32CoprocessorTag";
+            case 896L: return "ADA_ATTRIBUTE_CLAUSE";
+            case 897L: return "AsmBinaryConcatTag";
+            case 898L: return "AsmByteOrderTag";
+            case 899L: return "T_ADA_DERIVED_TYPE";
+            case 900L: return "ADA_ATTRIBUTE_EXP";
+            case 901L: return "ADA_ENUM_REPRESENTATION_CLAUSE";
+            case 902L: return "AsmBinaryPreupdateTag";
+            case 903L: return "AsmBinaryPostupdateTag";
+            case 904L: return "ADA_OTHERS_EXPR";
+            case 905L: return "ADA_RENAMING_SYMBOL";
+            case 906L: return "ADA_RENAMING_REF";
+            case 907L: return "ADA_GENERIC_DECL";
+            case 908L: return "ADA_GENERIC_DEFN";
+            case 909L: return "T_ADA_FORMAL_TYPE";
+            case 910L: return "ADA_GENERIC_SYMBOL";
+            case 911L: return "ADA_FORMAL_TYPE_DECL_STMT";
+            case 912L: return "ADA_UNIT_REF";
+            case 913L: return "ADA_DISCRIMINATED_TYPE_DECL";
+            case 914L: return "T_ADA_DISCRIMINATED_TYPE";
+            case 915L: return "AdaDiscriminantConstraintTag";
+            case 916L: return "ADA_GENERIC_INSTANCE_DECL";
+            case 917L: return "ADA_UNSCOPED_BLOCK";
+            case 918L: return "ADA_INHERITED_FUNCTION_SYMBOL";
+            case 919L: return "ADA_PROTECTED_BODY";
+            case 920L: return "ADA_PROTECTED_BODY_DECL_STMT";
+            case 921L: return "ADA_PROTECTED_SPEC";
+            case 922L: return "ADA_PROTECTED_SPEC_DECL_STMT";
+            case 923L: return "ADA_PROTECTED_SYMBOL";
+            case 924L: return "ADA_PROTECTED_REF";
+            case 925L: return "T_ADA_PROTECTED_TYPE";
+            case 926L: return "ADA_PROTECTED_TYPE_DECL_STMT";
+            case 927L: return "AdaDigitsConstraintTag";
+            case 928L: return "ADA_ANCESTOR_INIT";
+            case 929L: return "AdaDeltaConstraintTag";
+            case 930L: return "T_ADA_SUBROUTINE_TYPE";
+            case 931L: return "ADA_GENERIC_INSTANCE_SYMBOL";
+            case 932L: return "ADA_FORMAL_PACKAGE_DECL_STMT";
+            case 933L: return "ADA_FORMAL_PACAKGE_SYMBOL";
+            case 934L: return "AsmJvmAttributeTableTag";
+            case 935L: return "AsmJvmMethodTableTag";
+            case 936L: return "AsmJvmFieldTag";
+            case 937L: return "AsmJvmFieldTableTag";
+            case 938L: return "AsmJvmExceptionHandlerTag";
+            case 939L: return "AsmJvmExceptionTableTag";
+            case 940L: return "AsmJvmClassTag";
+            case 941L: return "AsmJvmLineNumberEntryTag";
+            case 942L: return "AsmJvmLineNumberTableTag";
+            case 943L: return "AsmJvmInnerClassesEntryTag";
+            case 944L: return "AsmJvmInnerClassesTag";
+            case 945L: return "AsmCilInstructionTag";
+            case 946L: return "AsmStackExpressionTag";
+            case 947L: return "AsmJvmEnclosingMethodTag";
+            case 948L: return "AdaNullConstraintTag";
+            case 949L: return "AsmJvmModuleMainClassTag";
+            case 950L: return "AsmInstructionListTag";
+            case 951L: return "AsmCilNodeTag";
+            case 952L: return "AsmCilAssemblyTag";
+            case 953L: return "AsmCilAssemblyOSTag";
+            case 954L: return "AsmCilAssemblyProcessorTag";
+            case 955L: return "AsmCilAssemblyRefTag";
+            case 956L: return "AsmCilAssemblyRefOSTag";
+            case 957L: return "AsmCilAssemblyRefProcessorTag";
+            case 958L: return "AsmCilClassLayoutTag";
+            case 959L: return "AsmCilConstantTag";
+            case 960L: return "AsmCilCustomAttributeTag";
+            case 961L: return "AsmCilDeclSecurityTag";
+            case 962L: return "AsmCilEventTag";
+            case 963L: return "AsmCilEventMapTag";
+            case 964L: return "AsmCilExportedTypeTag";
+            case 965L: return "AsmCilFieldTag";
+            case 966L: return "AsmCilFieldLayoutTag";
+            case 967L: return "AsmCilFieldMarshalTag";
+            case 968L: return "AsmCilFieldRVATag";
+            case 969L: return "AsmCilFileTag";
+            case 970L: return "AsmCilGenericParamTag";
+            case 971L: return "AsmCilGenericParamConstraintTag";
+            case 972L: return "AsmCilImplMapTag";
+            case 973L: return "AsmCilInterfaceImplTag";
+            case 974L: return "AsmCilManifestResourceTag";
+            case 975L: return "AsmCilMemberRefTag";
+            case 976L: return "AsmCilMethodDefTag";
+            case 977L: return "AsmCilMethodImplTag";
+            case 978L: return "AsmCilMethodSemanticsTag";
+            case 979L: return "AsmCilMethodSpecTag";
+            case 980L: return "AsmCilModuleTag";
+            case 981L: return "AsmCilModuleRefTag";
+            case 982L: return "AsmCilNestedClassTag";
+            case 983L: return "AsmCilParamTag";
+            case 984L: return "AsmCilPropertyTag";
+            case 985L: return "AsmCilPropertyMapTag";
+            case 986L: return "AsmCilStandAloneSigTag";
+            case 987L: return "AsmCilTypeDefTag";
+            case 988L: return "AsmCilTypeRefTag";
+            case 989L: return "AsmCilTypeSpecTag";
+            case 990L: return "ADA_PARAMETER_LIST";
+            case 991L: return "AsmCilMetadataTag";
+            case 992L: return "AsmCilMetadataRootTag";
+            case 993L: return "AsmCilDataStreamTag";
+            case 994L: return "AsmCilMetadataHeapTag";
+            case 995L: return "AsmCilUint8HeapTag";
+            case 996L: return "AsmCilUint32HeapTag";
+            case 997L: return "AsmCliHeaderTag";
+            case 998L: return "ADA_VARIANT_DECL_STATEMENT";
+            case 999L: return "ADA_VARIANT_WHEN_STMT";
+            case 1000L: return "AsmCilAssemblyTableTag";
+            case 1001L: return "AsmCilAssemblyOSTableTag";
+            case 1002L: return "AsmCilAssemblyProcessorTableTag";
+            case 1003L: return "AsmCilAssemblyRefTableTag";
+            case 1004L: return "AsmCilAssemblyRefOSTableTag";
+            case 1005L: return "AsmCilAssemblyRefProcessorTableTag";
+            case 1006L: return "AsmCilClassLayoutTableTag";
+            case 1007L: return "AsmCilConstantTableTag";
+            case 1008L: return "AsmCilCustomAttributeTableTag";
+            case 1009L: return "AsmCilDeclSecurityTableTag";
+            case 1010L: return "AsmCilEventTableTag";
+            case 1011L: return "AsmCilEventMapTableTag";
+            case 1012L: return "AsmCilExportedTypeTableTag";
+            case 1013L: return "AsmCilFieldTableTag";
+            case 1014L: return "AsmCilFieldLayoutTableTag";
+            case 1015L: return "AsmCilFieldMarshalTableTag";
+            case 1016L: return "AsmCilFieldRVATableTag";
+            case 1017L: return "AsmCilFileTableTag";
+            case 1018L: return "AsmCilGenericParamTableTag";
+            case 1019L: return "AsmCilGenericParamConstraintTableTag";
+            case 1020L: return "AsmCilImplMapTableTag";
+            case 1021L: return "AsmCilInterfaceImplTableTag";
+            case 1022L: return "AsmCilManifestResourceTableTag";
+            case 1023L: return "AsmCilMemberRefTableTag";
+            case 1024L: return "AsmCilMethodDefTableTag";
+            case 1025L: return "AsmCilMethodImplTableTag";
+            case 1026L: return "AsmCilMethodSemanticsTableTag";
+            case 1027L: return "AsmCilMethodSpecTableTag";
+            case 1028L: return "AsmCilModuleTableTag";
+            case 1029L: return "AsmCilModuleRefTableTag";
+            case 1030L: return "AsmCilNestedClassTableTag";
+            case 1031L: return "AsmCilParamTableTag";
+            case 1032L: return "AsmCilPropertyTableTag";
+            case 1033L: return "AsmCilPropertyMapTableTag";
+            case 1034L: return "AsmCilStandAloneSigTableTag";
+            case 1035L: return "AsmCilTypeDefTableTag";
+            case 1036L: return "AsmCilTypeRefTableTag";
+            case 1037L: return "AsmCilTypeSpecTableTag";
+            case 1038L: return "JvmCompositeTag";
+            case 1039L: return "FORTRAN_CONTINUE_STMT";
+            case 1040L: return "AsmJvmStackMapTableTag";
+            case 1041L: return "AsmJvmStackMapFrameTag";
+            case 1042L: return "AsmJvmStackMapVerificationTypeTag";
+            case 1043L: return "AsmJvmBootstrapMethodTag";
+            case 1044L: return "AsmJvmBootstrapMethodsTag";
+            case 1045L: return "AsmJvmExceptionsTag";
+            case 1046L: return "AsmJvmNestMembersTag";
+            case 1047L: return "AsmJvmNestHostTag";
+            case 1048L: return "JOVIAL_LABEL_DECLARATION";
+            case 1049L: return "AsmJvmLocalVariableEntryTag";
+            case 1050L: return "AsmJvmLocalVariableTableTag";
+            case 1051L: return "AsmJvmLocalVariableTypeEntryTag";
+            case 1052L: return "AsmJvmLocalVariableTypeTableTag";
+            case 1053L: return "AsmUserInstructionTag";
+            case 1054L: return "AsmJvmMethodParametersTag";
+            case 1055L: return "AsmJvmMethodParametersEntryTag";
+            case 1056L: return "AsmVoidTypeTag";
+            case 1057L: return "AsmPointerTypeTag";
+            case 1058L: return "AsmAarch64PStateTag";
+            case 1059L: return "T_RANGE_TYPE";
+            case 1060L: return "AsmCilExceptionDataTag";
+            case 1061L: return "AsmCilMethodDataTag";
+            case 1062L: return "TEMPLATE_VARIABLE_INST_STMT";
+            case 1063L: return "ReferenceExpTag";
+            case 1064L: return "NTYPE_REF";
+            case 1065L: return "SCOPED_REF";
+            case 1066L: return "T_SCOPED_TYPE";
+            case 1067L: return "TYPE_NAME";
+            case 1068L: return "AsmJvmSyntheticTag";
+            case 1069L: return "AsmJvmDeprecatedTag";
+            case 1070L: return "SIGNED_CHAR_VAL";
             case 1072L: return "Cxx_Grammar_UNKNOWN_GRAMMAR";
             case 1073L: return "Cxx_Grammar_LAST_TAG";
             default: return "";
@@ -75234,7 +75234,7 @@ namespace stringify {
             807L,
             808L,
             809L,
-            810L,
+            811L,
             812L,
             813L,
             814L,
@@ -75302,7 +75302,7 @@ namespace stringify {
             876L,
             877L,
             878L,
-            879L,
+            880L,
             881L,
             882L,
             883L,
@@ -76221,372 +76221,372 @@ namespace stringify {
             case 700L: return "V_SgJavaParameterizedType";
             case 701L: return "V_SgJavaWildcardType";
             case 702L: return "V_SgProcessControlStatement";
-            case 703L: return "V_SgSignedCharVal";
-            case 704L: return "V_SgSpecialFunctionModifier";
-            case 705L: return "V_SgStatement";
-            case 706L: return "V_SgStaticAssertionDeclaration";
-            case 707L: return "V_SgStmtDeclarationStatement";
-            case 708L: return "V_SgStatementExpression";
-            case 709L: return "V_SgStatementFunctionStatement";
-            case 710L: return "V_SgStorageModifier";
-            case 711L: return "V_SgStringConversion";
-            case 712L: return "V_SgStringKeyedBidirectionalGraph";
-            case 713L: return "V_SgStringVal";
-            case 714L: return "V_SgStructureModifier";
-            case 715L: return "V_SgSubscriptExpression";
-            case 716L: return "V_SgSubtractOp";
-            case 717L: return "V_SgSupport";
-            case 718L: return "V_SgSwitchStatement";
-            case 719L: return "V_SgSymbol";
-            case 720L: return "V_SgSymbolTable";
-            case 721L: return "V_SgTemplateArgument";
-            case 722L: return "V_SgTemplateArgumentList";
-            case 723L: return "V_SgTemplateDeclaration";
-            case 724L: return "V_SgTemplateClassDeclaration";
-            case 725L: return "V_SgTemplateClassSymbol";
-            case 726L: return "V_SgTemplateFunctionDeclaration";
-            case 727L: return "V_SgTemplateFunctionRefExp";
-            case 728L: return "V_SgTemplateFunctionSymbol";
-            case 729L: return "V_SgTemplateMemberFunctionDeclaration";
-            case 730L: return "V_SgTemplateMemberFunctionRefExp";
-            case 731L: return "V_SgTemplateMemberFunctionSymbol";
-            case 732L: return "V_SgTemplateTypedefDeclaration";
-            case 733L: return "V_SgTemplateTypedefSymbol";
-            case 734L: return "V_SgTemplateVariableDeclaration";
-            case 735L: return "V_SgTemplateVariableSymbol";
-            case 736L: return "V_SgTemplateClassDefinition";
-            case 737L: return "V_SgTemplateFunctionDefinition";
-            case 738L: return "V_SgTemplateInstantiationDecl";
-            case 739L: return "V_SgTemplateInstantiationDefn";
-            case 740L: return "V_SgTemplateInstantiationDirectiveStatement";
-            case 741L: return "V_SgTemplateInstantiationFunctionDecl";
-            case 742L: return "V_SgTemplateInstantiationMemberFunctionDecl";
-            case 743L: return "V_SgTemplateInstantiationTypedefDeclaration";
-            case 744L: return "V_SgTemplateParameter";
-            case 745L: return "V_SgTemplateParameterVal";
-            case 746L: return "V_SgTemplateParameterList";
-            case 747L: return "V_SgTemplateSymbol";
-            case 748L: return "V_SgTemplateType";
-            case 749L: return "V_SgThisExp";
-            case 750L: return "V_SgTypeTraitBuiltinOperator";
-            case 751L: return "V_SgSuperExp";
-            case 752L: return "V_SgThrowOp";
-            case 753L: return "V_SgToken";
-            case 754L: return "V_SgTryStmt";
-            case 755L: return "V_SgTupleExp";
-            case 756L: return "V_SgType";
-            case 757L: return "V_SgTypeBool";
-            case 758L: return "V_SgTypeChar";
-            case 759L: return "V_SgTypeChar16";
-            case 760L: return "V_SgTypeChar32";
-            case 761L: return "V_SgTypeComplex";
-            case 762L: return "V_SgTypeDefault";
-            case 763L: return "V_SgTypeExpression";
-            case 764L: return "V_SgTypeLabel";
-            case 765L: return "V_SgTypeDouble";
-            case 766L: return "V_SgTypeEllipse";
-            case 767L: return "V_SgTypeFixed";
-            case 768L: return "V_SgTypeFloat";
-            case 769L: return "V_SgTypeFloat128";
-            case 770L: return "V_SgTypeFloat80";
-            case 771L: return "V_SgTypeGlobalVoid";
-            case 772L: return "V_SgTypeIdOp";
-            case 773L: return "V_SgTypeImaginary";
-            case 774L: return "V_SgTypeInt";
-            case 775L: return "V_SgTypeLong";
-            case 776L: return "V_SgTypeLongDouble";
-            case 777L: return "V_SgTypeLongLong";
-            case 778L: return "V_SgTypeModifier";
-            case 779L: return "V_SgTypeMatrix";
-            case 780L: return "V_SgTypeTuple";
-            case 781L: return "V_SgTypeNullptr";
-            case 782L: return "V_SgTypeOfType";
-            case 783L: return "V_SgTypeShort";
-            case 784L: return "V_SgTypeSigned128bitInteger";
-            case 785L: return "V_SgTypeSignedChar";
-            case 786L: return "V_SgTypeSignedInt";
-            case 787L: return "V_SgTypeSignedLong";
-            case 788L: return "V_SgTypeSignedLongLong";
-            case 789L: return "V_SgTypeSignedShort";
-            case 790L: return "V_SgTypeString";
-            case 791L: return "V_SgTypeUnknown";
-            case 792L: return "V_SgTypeUnsigned128bitInteger";
-            case 793L: return "V_SgTypeUnsignedChar";
-            case 794L: return "V_SgTypeUnsignedInt";
-            case 795L: return "V_SgTypeUnsignedLong";
-            case 796L: return "V_SgTypeUnsignedLongLong";
-            case 797L: return "V_SgTypeUnsignedShort";
-            case 798L: return "V_SgTypeVoid";
-            case 799L: return "V_SgTypeWchar";
-            case 800L: return "V_SgTypedefDeclaration";
-            case 801L: return "V_SgTypedefSeq";
-            case 802L: return "V_SgTypedefSymbol";
-            case 803L: return "V_SgTypedefType";
-            case 804L: return "V_SgUPC_AccessModifier";
-            case 805L: return "V_SgUnaryAddOp";
-            case 806L: return "V_SgUnaryOp";
-            case 807L: return "V_SgUndefDirectiveStatement";
-            case 808L: return "V_SgUndirectedGraphEdge";
-            case 809L: return "V_SgUnknownArrayOrFunctionReference";
-            case 810L: return "V_SgUnknownFile";
-            case 812L: return "V_SgUnparse_Info";
-            case 813L: return "V_SgUnsignedCharVal";
-            case 814L: return "V_SgUnsignedIntVal";
-            case 815L: return "V_SgUnsignedLongLongIntVal";
-            case 816L: return "V_SgUnsignedLongVal";
-            case 817L: return "V_SgUnsignedShortVal";
-            case 818L: return "V_SgUpcBarrierStatement";
-            case 819L: return "V_SgUpcBlocksizeofExpression";
-            case 820L: return "V_SgUpcElemsizeofExpression";
-            case 821L: return "V_SgUpcFenceStatement";
-            case 822L: return "V_SgUpcForAllStatement";
-            case 823L: return "V_SgUpcLocalsizeofExpression";
-            case 824L: return "V_SgUpcMythread";
-            case 825L: return "V_SgUpcNotifyStatement";
-            case 826L: return "V_SgUpcThreads";
-            case 827L: return "V_SgUpcWaitStatement";
-            case 828L: return "V_SgUseStatement";
-            case 829L: return "V_SgUserDefinedBinaryOp";
-            case 830L: return "V_SgUserDefinedUnaryOp";
-            case 831L: return "V_SgUsingDeclarationStatement";
-            case 832L: return "V_SgUsingDirectiveStatement";
-            case 833L: return "V_SgValueExp";
-            case 834L: return "V_SgVarArgCopyOp";
-            case 835L: return "V_SgVarArgEndOp";
-            case 836L: return "V_SgVarArgOp";
-            case 837L: return "V_SgVarArgStartOneOperandOp";
-            case 838L: return "V_SgVarArgStartOp";
-            case 839L: return "V_SgVarRefExp";
-            case 840L: return "V_SgVariableDeclaration";
-            case 841L: return "V_SgVariableDefinition";
-            case 842L: return "V_SgVariableSymbol";
-            case 843L: return "V_SgVariantExpression";
-            case 844L: return "V_SgVariantStatement";
-            case 845L: return "V_SgVoidVal";
-            case 846L: return "V_SgWaitStatement";
-            case 847L: return "V_SgWarningDirectiveStatement";
-            case 848L: return "V_SgWithStatement";
-            case 849L: return "V_SgWcharVal";
-            case 850L: return "V_SgWhereStatement";
-            case 851L: return "V_SgWhileStmt";
-            case 852L: return "V_SgWriteStatement";
-            case 853L: return "V_SgXorAssignOp";
-            case 854L: return "V_SgYieldExpression";
-            case 855L: return "V_Sg_File_Info";
-            case 856L: return "V_SgTypeCAFTeam";
-            case 857L: return "V_SgCAFWithTeamStatement";
-            case 858L: return "V_SgCAFCoExpression";
-            case 859L: return "V_SgCallExpression";
-            case 860L: return "V_SgTypeCrayPointer";
-            case 861L: return "V_SgJavaImportStatement";
-            case 862L: return "V_SgJavaPackageDeclaration";
-            case 863L: return "V_SgJavaPackageStatement";
-            case 864L: return "V_SgJavaImportStatementList";
-            case 865L: return "V_SgJavaClassDeclarationList";
-            case 866L: return "V_SgJavaMemberValuePair";
-            case 867L: return "V_SgJavaAnnotation";
-            case 868L: return "V_SgJavaMarkerAnnotation";
-            case 869L: return "V_SgJavaSingleMemberAnnotation";
-            case 870L: return "V_SgJavaNormalAnnotation";
-            case 871L: return "V_SgJavaTypeExpression";
-            case 872L: return "V_SgJavaQualifiedType";
-            case 873L: return "V_SgClassExp";
-            case 874L: return "V_SgJavaUnionType";
-            case 875L: return "V_SgJavaParameterType";
-            case 876L: return "V_SgAsyncStmt";
-            case 877L: return "V_SgFinishStmt";
-            case 878L: return "V_SgAtStmt";
-            case 879L: return "V_SgAtomicStmt";
-            case 881L: return "V_SgWhenStmt";
-            case 882L: return "V_SgAtExp";
-            case 883L: return "V_SgFinishExp";
-            case 884L: return "V_SgHereExp";
-            case 885L: return "V_SgDotDotExp";
-            case 886L: return "V_SgAsmNullInstruction";
-            case 887L: return "V_SgAdaComponentClause";
-            case 888L: return "V_SgAdaIndexConstraint";
-            case 889L: return "V_SgAdaModularType";
-            case 890L: return "V_SgAdaRepresentationClause";
-            case 891L: return "V_SgAdaFunctionRenamingDecl";
-            case 892L: return "V_SgAdaSelectStmt";
-            case 893L: return "V_SgAdaSelectAlternativeStmt";
-            case 894L: return "V_SgAdaTerminateStmt";
-            case 895L: return "V_SgAsmAarch32Instruction";
-            case 896L: return "V_SgAsmAarch32Coprocessor";
-            case 897L: return "V_SgAdaAttributeClause";
-            case 898L: return "V_SgAsmBinaryConcat";
-            case 899L: return "V_SgAsmByteOrder";
-            case 900L: return "V_SgAdaDerivedType";
-            case 901L: return "V_SgAdaAttributeExp";
-            case 902L: return "V_SgAdaEnumRepresentationClause";
-            case 903L: return "V_SgAsmBinaryPreupdate";
-            case 904L: return "V_SgAsmBinaryPostupdate";
-            case 905L: return "V_SgAdaOthersExp";
-            case 906L: return "V_SgAdaRenamingSymbol";
-            case 907L: return "V_SgAdaRenamingRefExp";
-            case 908L: return "V_SgAdaGenericDecl";
-            case 909L: return "V_SgAdaGenericDefn";
-            case 910L: return "V_SgAdaFormalType";
-            case 911L: return "V_SgAdaGenericSymbol";
-            case 912L: return "V_SgAdaFormalTypeDecl";
-            case 913L: return "V_SgAdaUnitRefExp";
-            case 914L: return "V_SgAdaDiscriminatedTypeDecl";
-            case 915L: return "V_SgAdaDiscriminatedType";
-            case 916L: return "V_SgAdaDiscriminantConstraint";
-            case 917L: return "V_SgAdaGenericInstanceDecl";
-            case 918L: return "V_SgAdaUnscopedBlock";
-            case 919L: return "V_SgAdaInheritedFunctionSymbol";
-            case 920L: return "V_SgAdaProtectedBody";
-            case 921L: return "V_SgAdaProtectedBodyDecl";
-            case 922L: return "V_SgAdaProtectedSpec";
-            case 923L: return "V_SgAdaProtectedSpecDecl";
-            case 924L: return "V_SgAdaProtectedSymbol";
-            case 925L: return "V_SgAdaProtectedRefExp";
-            case 926L: return "V_SgAdaProtectedType";
-            case 927L: return "V_SgAdaProtectedTypeDecl";
-            case 928L: return "V_SgAdaDigitsConstraint";
-            case 929L: return "V_SgAdaAncestorInitializer";
-            case 930L: return "V_SgAdaDeltaConstraint";
-            case 931L: return "V_SgAdaSubroutineType";
-            case 932L: return "V_SgAdaGenericInstanceSymbol";
-            case 933L: return "V_SgAdaFormalPackageDecl";
-            case 934L: return "V_SgAdaFormalPackageSymbol";
-            case 935L: return "V_SgAsmJvmAttributeTable";
-            case 936L: return "V_SgAsmJvmMethodTable";
-            case 937L: return "V_SgAsmJvmField";
-            case 938L: return "V_SgAsmJvmFieldTable";
-            case 939L: return "V_SgAsmJvmExceptionHandler";
-            case 940L: return "V_SgAsmJvmExceptionTable";
-            case 941L: return "V_SgAsmJvmClass";
-            case 942L: return "V_SgAsmJvmLineNumberEntry";
-            case 943L: return "V_SgAsmJvmLineNumberTable";
-            case 944L: return "V_SgAsmJvmInnerClassesEntry";
-            case 945L: return "V_SgAsmJvmInnerClasses";
-            case 946L: return "V_SgAsmCilInstruction";
-            case 947L: return "V_SgAsmStackExpression";
-            case 948L: return "V_SgAsmJvmEnclosingMethod";
-            case 949L: return "V_SgAdaNullConstraint";
-            case 950L: return "V_SgAsmJvmModuleMainClass";
-            case 951L: return "V_SgAsmInstructionList";
-            case 952L: return "V_SgAsmCilNode";
-            case 953L: return "V_SgAsmCilAssembly";
-            case 954L: return "V_SgAsmCilAssemblyOS";
-            case 955L: return "V_SgAsmCilAssemblyProcessor";
-            case 956L: return "V_SgAsmCilAssemblyRef";
-            case 957L: return "V_SgAsmCilAssemblyRefOS";
-            case 958L: return "V_SgAsmCilAssemblyRefProcessor";
-            case 959L: return "V_SgAsmCilClassLayout";
-            case 960L: return "V_SgAsmCilConstant";
-            case 961L: return "V_SgAsmCilCustomAttribute";
-            case 962L: return "V_SgAsmCilDeclSecurity";
-            case 963L: return "V_SgAsmCilEvent";
-            case 964L: return "V_SgAsmCilEventMap";
-            case 965L: return "V_SgAsmCilExportedType";
-            case 966L: return "V_SgAsmCilField";
-            case 967L: return "V_SgAsmCilFieldLayout";
-            case 968L: return "V_SgAsmCilFieldMarshal";
-            case 969L: return "V_SgAsmCilFieldRVA";
-            case 970L: return "V_SgAsmCilFile";
-            case 971L: return "V_SgAsmCilGenericParam";
-            case 972L: return "V_SgAsmCilGenericParamConstraint";
-            case 973L: return "V_SgAsmCilImplMap";
-            case 974L: return "V_SgAsmCilInterfaceImpl";
-            case 975L: return "V_SgAsmCilManifestResource";
-            case 976L: return "V_SgAsmCilMemberRef";
-            case 977L: return "V_SgAsmCilMethodDef";
-            case 978L: return "V_SgAsmCilMethodImpl";
-            case 979L: return "V_SgAsmCilMethodSemantics";
-            case 980L: return "V_SgAsmCilMethodSpec";
-            case 981L: return "V_SgAsmCilModule";
-            case 982L: return "V_SgAsmCilModuleRef";
-            case 983L: return "V_SgAsmCilNestedClass";
-            case 984L: return "V_SgAsmCilParam";
-            case 985L: return "V_SgAsmCilProperty";
-            case 986L: return "V_SgAsmCilPropertyMap";
-            case 987L: return "V_SgAsmCilStandAloneSig";
-            case 988L: return "V_SgAsmCilTypeDef";
-            case 989L: return "V_SgAsmCilTypeRef";
-            case 990L: return "V_SgAsmCilTypeSpec";
-            case 991L: return "V_SgAdaParameterList";
-            case 992L: return "V_SgAsmCilMetadata";
-            case 993L: return "V_SgAsmCilMetadataRoot";
-            case 994L: return "V_SgAsmCilDataStream";
-            case 995L: return "V_SgAsmCilMetadataHeap";
-            case 996L: return "V_SgAsmCilUint8Heap";
-            case 997L: return "V_SgAsmCilUint32Heap";
-            case 998L: return "V_SgAsmCliHeader";
-            case 999L: return "V_SgAdaVariantDecl";
-            case 1000L: return "V_SgAdaVariantWhenStmt";
-            case 1001L: return "V_SgAsmCilAssemblyTable";
-            case 1002L: return "V_SgAsmCilAssemblyOSTable";
-            case 1003L: return "V_SgAsmCilAssemblyProcessorTable";
-            case 1004L: return "V_SgAsmCilAssemblyRefTable";
-            case 1005L: return "V_SgAsmCilAssemblyRefOSTable";
-            case 1006L: return "V_SgAsmCilAssemblyRefProcessorTable";
-            case 1007L: return "V_SgAsmCilClassLayoutTable";
-            case 1008L: return "V_SgAsmCilConstantTable";
-            case 1009L: return "V_SgAsmCilCustomAttributeTable";
-            case 1010L: return "V_SgAsmCilDeclSecurityTable";
-            case 1011L: return "V_SgAsmCilEventTable";
-            case 1012L: return "V_SgAsmCilEventMapTable";
-            case 1013L: return "V_SgAsmCilExportedTypeTable";
-            case 1014L: return "V_SgAsmCilFieldTable";
-            case 1015L: return "V_SgAsmCilFieldLayoutTable";
-            case 1016L: return "V_SgAsmCilFieldMarshalTable";
-            case 1017L: return "V_SgAsmCilFieldRVATable";
-            case 1018L: return "V_SgAsmCilFileTable";
-            case 1019L: return "V_SgAsmCilGenericParamTable";
-            case 1020L: return "V_SgAsmCilGenericParamConstraintTable";
-            case 1021L: return "V_SgAsmCilImplMapTable";
-            case 1022L: return "V_SgAsmCilInterfaceImplTable";
-            case 1023L: return "V_SgAsmCilManifestResourceTable";
-            case 1024L: return "V_SgAsmCilMemberRefTable";
-            case 1025L: return "V_SgAsmCilMethodDefTable";
-            case 1026L: return "V_SgAsmCilMethodImplTable";
-            case 1027L: return "V_SgAsmCilMethodSemanticsTable";
-            case 1028L: return "V_SgAsmCilMethodSpecTable";
-            case 1029L: return "V_SgAsmCilModuleTable";
-            case 1030L: return "V_SgAsmCilModuleRefTable";
-            case 1031L: return "V_SgAsmCilNestedClassTable";
-            case 1032L: return "V_SgAsmCilParamTable";
-            case 1033L: return "V_SgAsmCilPropertyTable";
-            case 1034L: return "V_SgAsmCilPropertyMapTable";
-            case 1035L: return "V_SgAsmCilStandAloneSigTable";
-            case 1036L: return "V_SgAsmCilTypeDefTable";
-            case 1037L: return "V_SgAsmCilTypeRefTable";
-            case 1038L: return "V_SgAsmCilTypeSpecTable";
-            case 1039L: return "V_SgJvmComposite";
-            case 1040L: return "V_SgFortranContinueStmt";
-            case 1041L: return "V_SgAsmJvmStackMapTable";
-            case 1042L: return "V_SgAsmJvmStackMapFrame";
-            case 1043L: return "V_SgAsmJvmStackMapVerificationType";
-            case 1044L: return "V_SgAsmJvmBootstrapMethod";
-            case 1045L: return "V_SgAsmJvmBootstrapMethods";
-            case 1046L: return "V_SgAsmJvmExceptions";
-            case 1047L: return "V_SgAsmJvmNestMembers";
-            case 1048L: return "V_SgAsmJvmNestHost";
-            case 1049L: return "V_SgJovialLabelDeclaration";
-            case 1050L: return "V_SgAsmJvmLocalVariableEntry";
-            case 1051L: return "V_SgAsmJvmLocalVariableTable";
-            case 1052L: return "V_SgAsmJvmLocalVariableTypeEntry";
-            case 1053L: return "V_SgAsmJvmLocalVariableTypeTable";
-            case 1054L: return "V_SgAsmUserInstruction";
-            case 1055L: return "V_SgAsmJvmMethodParameters";
-            case 1056L: return "V_SgAsmJvmMethodParametersEntry";
-            case 1057L: return "V_SgAsmVoidType";
-            case 1058L: return "V_SgAsmPointerType";
-            case 1059L: return "V_SgAsmAarch64PState";
-            case 1060L: return "V_SgRangeType";
-            case 1061L: return "V_SgAsmCilExceptionData";
-            case 1062L: return "V_SgAsmCilMethodData";
-            case 1063L: return "V_SgTemplateVariableInstantiation";
-            case 1064L: return "V_SgReferenceExp";
-            case 1065L: return "V_SgTypeRefExp";
-            case 1066L: return "V_SgScopedRefExp";
-            case 1067L: return "V_SgScopedType";
-            case 1068L: return "V_SgTypeSymbol";
-            case 1069L: return "V_SgAsmJvmSynthetic";
-            case 1070L: return "V_SgAsmJvmDeprecated";
+            case 703L: return "V_SgSpecialFunctionModifier";
+            case 704L: return "V_SgStatement";
+            case 705L: return "V_SgStaticAssertionDeclaration";
+            case 706L: return "V_SgStmtDeclarationStatement";
+            case 707L: return "V_SgStatementExpression";
+            case 708L: return "V_SgStatementFunctionStatement";
+            case 709L: return "V_SgStorageModifier";
+            case 710L: return "V_SgStringConversion";
+            case 711L: return "V_SgStringKeyedBidirectionalGraph";
+            case 712L: return "V_SgStringVal";
+            case 713L: return "V_SgStructureModifier";
+            case 714L: return "V_SgSubscriptExpression";
+            case 715L: return "V_SgSubtractOp";
+            case 716L: return "V_SgSupport";
+            case 717L: return "V_SgSwitchStatement";
+            case 718L: return "V_SgSymbol";
+            case 719L: return "V_SgSymbolTable";
+            case 720L: return "V_SgTemplateArgument";
+            case 721L: return "V_SgTemplateArgumentList";
+            case 722L: return "V_SgTemplateDeclaration";
+            case 723L: return "V_SgTemplateClassDeclaration";
+            case 724L: return "V_SgTemplateClassSymbol";
+            case 725L: return "V_SgTemplateFunctionDeclaration";
+            case 726L: return "V_SgTemplateFunctionRefExp";
+            case 727L: return "V_SgTemplateFunctionSymbol";
+            case 728L: return "V_SgTemplateMemberFunctionDeclaration";
+            case 729L: return "V_SgTemplateMemberFunctionRefExp";
+            case 730L: return "V_SgTemplateMemberFunctionSymbol";
+            case 731L: return "V_SgTemplateTypedefDeclaration";
+            case 732L: return "V_SgTemplateTypedefSymbol";
+            case 733L: return "V_SgTemplateVariableDeclaration";
+            case 734L: return "V_SgTemplateVariableSymbol";
+            case 735L: return "V_SgTemplateClassDefinition";
+            case 736L: return "V_SgTemplateFunctionDefinition";
+            case 737L: return "V_SgTemplateInstantiationDecl";
+            case 738L: return "V_SgTemplateInstantiationDefn";
+            case 739L: return "V_SgTemplateInstantiationDirectiveStatement";
+            case 740L: return "V_SgTemplateInstantiationFunctionDecl";
+            case 741L: return "V_SgTemplateInstantiationMemberFunctionDecl";
+            case 742L: return "V_SgTemplateInstantiationTypedefDeclaration";
+            case 743L: return "V_SgTemplateParameter";
+            case 744L: return "V_SgTemplateParameterVal";
+            case 745L: return "V_SgTemplateParameterList";
+            case 746L: return "V_SgTemplateSymbol";
+            case 747L: return "V_SgTemplateType";
+            case 748L: return "V_SgThisExp";
+            case 749L: return "V_SgTypeTraitBuiltinOperator";
+            case 750L: return "V_SgSuperExp";
+            case 751L: return "V_SgThrowOp";
+            case 752L: return "V_SgToken";
+            case 753L: return "V_SgTryStmt";
+            case 754L: return "V_SgTupleExp";
+            case 755L: return "V_SgType";
+            case 756L: return "V_SgTypeBool";
+            case 757L: return "V_SgTypeChar";
+            case 758L: return "V_SgTypeChar16";
+            case 759L: return "V_SgTypeChar32";
+            case 760L: return "V_SgTypeComplex";
+            case 761L: return "V_SgTypeDefault";
+            case 762L: return "V_SgTypeExpression";
+            case 763L: return "V_SgTypeLabel";
+            case 764L: return "V_SgTypeDouble";
+            case 765L: return "V_SgTypeEllipse";
+            case 766L: return "V_SgTypeFixed";
+            case 767L: return "V_SgTypeFloat";
+            case 768L: return "V_SgTypeFloat128";
+            case 769L: return "V_SgTypeFloat80";
+            case 770L: return "V_SgTypeGlobalVoid";
+            case 771L: return "V_SgTypeIdOp";
+            case 772L: return "V_SgTypeImaginary";
+            case 773L: return "V_SgTypeInt";
+            case 774L: return "V_SgTypeLong";
+            case 775L: return "V_SgTypeLongDouble";
+            case 776L: return "V_SgTypeLongLong";
+            case 777L: return "V_SgTypeModifier";
+            case 778L: return "V_SgTypeMatrix";
+            case 779L: return "V_SgTypeTuple";
+            case 780L: return "V_SgTypeNullptr";
+            case 781L: return "V_SgTypeOfType";
+            case 782L: return "V_SgTypeShort";
+            case 783L: return "V_SgTypeSigned128bitInteger";
+            case 784L: return "V_SgTypeSignedChar";
+            case 785L: return "V_SgTypeSignedInt";
+            case 786L: return "V_SgTypeSignedLong";
+            case 787L: return "V_SgTypeSignedLongLong";
+            case 788L: return "V_SgTypeSignedShort";
+            case 789L: return "V_SgTypeString";
+            case 790L: return "V_SgTypeUnknown";
+            case 791L: return "V_SgTypeUnsigned128bitInteger";
+            case 792L: return "V_SgTypeUnsignedChar";
+            case 793L: return "V_SgTypeUnsignedInt";
+            case 794L: return "V_SgTypeUnsignedLong";
+            case 795L: return "V_SgTypeUnsignedLongLong";
+            case 796L: return "V_SgTypeUnsignedShort";
+            case 797L: return "V_SgTypeVoid";
+            case 798L: return "V_SgTypeWchar";
+            case 799L: return "V_SgTypedefDeclaration";
+            case 800L: return "V_SgTypedefSeq";
+            case 801L: return "V_SgTypedefSymbol";
+            case 802L: return "V_SgTypedefType";
+            case 803L: return "V_SgUPC_AccessModifier";
+            case 804L: return "V_SgUnaryAddOp";
+            case 805L: return "V_SgUnaryOp";
+            case 806L: return "V_SgUndefDirectiveStatement";
+            case 807L: return "V_SgUndirectedGraphEdge";
+            case 808L: return "V_SgUnknownArrayOrFunctionReference";
+            case 809L: return "V_SgUnknownFile";
+            case 811L: return "V_SgUnparse_Info";
+            case 812L: return "V_SgUnsignedCharVal";
+            case 813L: return "V_SgUnsignedIntVal";
+            case 814L: return "V_SgUnsignedLongLongIntVal";
+            case 815L: return "V_SgUnsignedLongVal";
+            case 816L: return "V_SgUnsignedShortVal";
+            case 817L: return "V_SgUpcBarrierStatement";
+            case 818L: return "V_SgUpcBlocksizeofExpression";
+            case 819L: return "V_SgUpcElemsizeofExpression";
+            case 820L: return "V_SgUpcFenceStatement";
+            case 821L: return "V_SgUpcForAllStatement";
+            case 822L: return "V_SgUpcLocalsizeofExpression";
+            case 823L: return "V_SgUpcMythread";
+            case 824L: return "V_SgUpcNotifyStatement";
+            case 825L: return "V_SgUpcThreads";
+            case 826L: return "V_SgUpcWaitStatement";
+            case 827L: return "V_SgUseStatement";
+            case 828L: return "V_SgUserDefinedBinaryOp";
+            case 829L: return "V_SgUserDefinedUnaryOp";
+            case 830L: return "V_SgUsingDeclarationStatement";
+            case 831L: return "V_SgUsingDirectiveStatement";
+            case 832L: return "V_SgValueExp";
+            case 833L: return "V_SgVarArgCopyOp";
+            case 834L: return "V_SgVarArgEndOp";
+            case 835L: return "V_SgVarArgOp";
+            case 836L: return "V_SgVarArgStartOneOperandOp";
+            case 837L: return "V_SgVarArgStartOp";
+            case 838L: return "V_SgVarRefExp";
+            case 839L: return "V_SgVariableDeclaration";
+            case 840L: return "V_SgVariableDefinition";
+            case 841L: return "V_SgVariableSymbol";
+            case 842L: return "V_SgVariantExpression";
+            case 843L: return "V_SgVariantStatement";
+            case 844L: return "V_SgVoidVal";
+            case 845L: return "V_SgWaitStatement";
+            case 846L: return "V_SgWarningDirectiveStatement";
+            case 847L: return "V_SgWithStatement";
+            case 848L: return "V_SgWcharVal";
+            case 849L: return "V_SgWhereStatement";
+            case 850L: return "V_SgWhileStmt";
+            case 851L: return "V_SgWriteStatement";
+            case 852L: return "V_SgXorAssignOp";
+            case 853L: return "V_SgYieldExpression";
+            case 854L: return "V_Sg_File_Info";
+            case 855L: return "V_SgTypeCAFTeam";
+            case 856L: return "V_SgCAFWithTeamStatement";
+            case 857L: return "V_SgCAFCoExpression";
+            case 858L: return "V_SgCallExpression";
+            case 859L: return "V_SgTypeCrayPointer";
+            case 860L: return "V_SgJavaImportStatement";
+            case 861L: return "V_SgJavaPackageDeclaration";
+            case 862L: return "V_SgJavaPackageStatement";
+            case 863L: return "V_SgJavaImportStatementList";
+            case 864L: return "V_SgJavaClassDeclarationList";
+            case 865L: return "V_SgJavaMemberValuePair";
+            case 866L: return "V_SgJavaAnnotation";
+            case 867L: return "V_SgJavaMarkerAnnotation";
+            case 868L: return "V_SgJavaSingleMemberAnnotation";
+            case 869L: return "V_SgJavaNormalAnnotation";
+            case 870L: return "V_SgJavaTypeExpression";
+            case 871L: return "V_SgJavaQualifiedType";
+            case 872L: return "V_SgClassExp";
+            case 873L: return "V_SgJavaUnionType";
+            case 874L: return "V_SgJavaParameterType";
+            case 875L: return "V_SgAsyncStmt";
+            case 876L: return "V_SgFinishStmt";
+            case 877L: return "V_SgAtStmt";
+            case 878L: return "V_SgAtomicStmt";
+            case 880L: return "V_SgWhenStmt";
+            case 881L: return "V_SgAtExp";
+            case 882L: return "V_SgFinishExp";
+            case 883L: return "V_SgHereExp";
+            case 884L: return "V_SgDotDotExp";
+            case 885L: return "V_SgAsmNullInstruction";
+            case 886L: return "V_SgAdaComponentClause";
+            case 887L: return "V_SgAdaIndexConstraint";
+            case 888L: return "V_SgAdaModularType";
+            case 889L: return "V_SgAdaRepresentationClause";
+            case 890L: return "V_SgAdaFunctionRenamingDecl";
+            case 891L: return "V_SgAdaSelectStmt";
+            case 892L: return "V_SgAdaSelectAlternativeStmt";
+            case 893L: return "V_SgAdaTerminateStmt";
+            case 894L: return "V_SgAsmAarch32Instruction";
+            case 895L: return "V_SgAsmAarch32Coprocessor";
+            case 896L: return "V_SgAdaAttributeClause";
+            case 897L: return "V_SgAsmBinaryConcat";
+            case 898L: return "V_SgAsmByteOrder";
+            case 899L: return "V_SgAdaDerivedType";
+            case 900L: return "V_SgAdaAttributeExp";
+            case 901L: return "V_SgAdaEnumRepresentationClause";
+            case 902L: return "V_SgAsmBinaryPreupdate";
+            case 903L: return "V_SgAsmBinaryPostupdate";
+            case 904L: return "V_SgAdaOthersExp";
+            case 905L: return "V_SgAdaRenamingSymbol";
+            case 906L: return "V_SgAdaRenamingRefExp";
+            case 907L: return "V_SgAdaGenericDecl";
+            case 908L: return "V_SgAdaGenericDefn";
+            case 909L: return "V_SgAdaFormalType";
+            case 910L: return "V_SgAdaGenericSymbol";
+            case 911L: return "V_SgAdaFormalTypeDecl";
+            case 912L: return "V_SgAdaUnitRefExp";
+            case 913L: return "V_SgAdaDiscriminatedTypeDecl";
+            case 914L: return "V_SgAdaDiscriminatedType";
+            case 915L: return "V_SgAdaDiscriminantConstraint";
+            case 916L: return "V_SgAdaGenericInstanceDecl";
+            case 917L: return "V_SgAdaUnscopedBlock";
+            case 918L: return "V_SgAdaInheritedFunctionSymbol";
+            case 919L: return "V_SgAdaProtectedBody";
+            case 920L: return "V_SgAdaProtectedBodyDecl";
+            case 921L: return "V_SgAdaProtectedSpec";
+            case 922L: return "V_SgAdaProtectedSpecDecl";
+            case 923L: return "V_SgAdaProtectedSymbol";
+            case 924L: return "V_SgAdaProtectedRefExp";
+            case 925L: return "V_SgAdaProtectedType";
+            case 926L: return "V_SgAdaProtectedTypeDecl";
+            case 927L: return "V_SgAdaDigitsConstraint";
+            case 928L: return "V_SgAdaAncestorInitializer";
+            case 929L: return "V_SgAdaDeltaConstraint";
+            case 930L: return "V_SgAdaSubroutineType";
+            case 931L: return "V_SgAdaGenericInstanceSymbol";
+            case 932L: return "V_SgAdaFormalPackageDecl";
+            case 933L: return "V_SgAdaFormalPackageSymbol";
+            case 934L: return "V_SgAsmJvmAttributeTable";
+            case 935L: return "V_SgAsmJvmMethodTable";
+            case 936L: return "V_SgAsmJvmField";
+            case 937L: return "V_SgAsmJvmFieldTable";
+            case 938L: return "V_SgAsmJvmExceptionHandler";
+            case 939L: return "V_SgAsmJvmExceptionTable";
+            case 940L: return "V_SgAsmJvmClass";
+            case 941L: return "V_SgAsmJvmLineNumberEntry";
+            case 942L: return "V_SgAsmJvmLineNumberTable";
+            case 943L: return "V_SgAsmJvmInnerClassesEntry";
+            case 944L: return "V_SgAsmJvmInnerClasses";
+            case 945L: return "V_SgAsmCilInstruction";
+            case 946L: return "V_SgAsmStackExpression";
+            case 947L: return "V_SgAsmJvmEnclosingMethod";
+            case 948L: return "V_SgAdaNullConstraint";
+            case 949L: return "V_SgAsmJvmModuleMainClass";
+            case 950L: return "V_SgAsmInstructionList";
+            case 951L: return "V_SgAsmCilNode";
+            case 952L: return "V_SgAsmCilAssembly";
+            case 953L: return "V_SgAsmCilAssemblyOS";
+            case 954L: return "V_SgAsmCilAssemblyProcessor";
+            case 955L: return "V_SgAsmCilAssemblyRef";
+            case 956L: return "V_SgAsmCilAssemblyRefOS";
+            case 957L: return "V_SgAsmCilAssemblyRefProcessor";
+            case 958L: return "V_SgAsmCilClassLayout";
+            case 959L: return "V_SgAsmCilConstant";
+            case 960L: return "V_SgAsmCilCustomAttribute";
+            case 961L: return "V_SgAsmCilDeclSecurity";
+            case 962L: return "V_SgAsmCilEvent";
+            case 963L: return "V_SgAsmCilEventMap";
+            case 964L: return "V_SgAsmCilExportedType";
+            case 965L: return "V_SgAsmCilField";
+            case 966L: return "V_SgAsmCilFieldLayout";
+            case 967L: return "V_SgAsmCilFieldMarshal";
+            case 968L: return "V_SgAsmCilFieldRVA";
+            case 969L: return "V_SgAsmCilFile";
+            case 970L: return "V_SgAsmCilGenericParam";
+            case 971L: return "V_SgAsmCilGenericParamConstraint";
+            case 972L: return "V_SgAsmCilImplMap";
+            case 973L: return "V_SgAsmCilInterfaceImpl";
+            case 974L: return "V_SgAsmCilManifestResource";
+            case 975L: return "V_SgAsmCilMemberRef";
+            case 976L: return "V_SgAsmCilMethodDef";
+            case 977L: return "V_SgAsmCilMethodImpl";
+            case 978L: return "V_SgAsmCilMethodSemantics";
+            case 979L: return "V_SgAsmCilMethodSpec";
+            case 980L: return "V_SgAsmCilModule";
+            case 981L: return "V_SgAsmCilModuleRef";
+            case 982L: return "V_SgAsmCilNestedClass";
+            case 983L: return "V_SgAsmCilParam";
+            case 984L: return "V_SgAsmCilProperty";
+            case 985L: return "V_SgAsmCilPropertyMap";
+            case 986L: return "V_SgAsmCilStandAloneSig";
+            case 987L: return "V_SgAsmCilTypeDef";
+            case 988L: return "V_SgAsmCilTypeRef";
+            case 989L: return "V_SgAsmCilTypeSpec";
+            case 990L: return "V_SgAdaParameterList";
+            case 991L: return "V_SgAsmCilMetadata";
+            case 992L: return "V_SgAsmCilMetadataRoot";
+            case 993L: return "V_SgAsmCilDataStream";
+            case 994L: return "V_SgAsmCilMetadataHeap";
+            case 995L: return "V_SgAsmCilUint8Heap";
+            case 996L: return "V_SgAsmCilUint32Heap";
+            case 997L: return "V_SgAsmCliHeader";
+            case 998L: return "V_SgAdaVariantDecl";
+            case 999L: return "V_SgAdaVariantWhenStmt";
+            case 1000L: return "V_SgAsmCilAssemblyTable";
+            case 1001L: return "V_SgAsmCilAssemblyOSTable";
+            case 1002L: return "V_SgAsmCilAssemblyProcessorTable";
+            case 1003L: return "V_SgAsmCilAssemblyRefTable";
+            case 1004L: return "V_SgAsmCilAssemblyRefOSTable";
+            case 1005L: return "V_SgAsmCilAssemblyRefProcessorTable";
+            case 1006L: return "V_SgAsmCilClassLayoutTable";
+            case 1007L: return "V_SgAsmCilConstantTable";
+            case 1008L: return "V_SgAsmCilCustomAttributeTable";
+            case 1009L: return "V_SgAsmCilDeclSecurityTable";
+            case 1010L: return "V_SgAsmCilEventTable";
+            case 1011L: return "V_SgAsmCilEventMapTable";
+            case 1012L: return "V_SgAsmCilExportedTypeTable";
+            case 1013L: return "V_SgAsmCilFieldTable";
+            case 1014L: return "V_SgAsmCilFieldLayoutTable";
+            case 1015L: return "V_SgAsmCilFieldMarshalTable";
+            case 1016L: return "V_SgAsmCilFieldRVATable";
+            case 1017L: return "V_SgAsmCilFileTable";
+            case 1018L: return "V_SgAsmCilGenericParamTable";
+            case 1019L: return "V_SgAsmCilGenericParamConstraintTable";
+            case 1020L: return "V_SgAsmCilImplMapTable";
+            case 1021L: return "V_SgAsmCilInterfaceImplTable";
+            case 1022L: return "V_SgAsmCilManifestResourceTable";
+            case 1023L: return "V_SgAsmCilMemberRefTable";
+            case 1024L: return "V_SgAsmCilMethodDefTable";
+            case 1025L: return "V_SgAsmCilMethodImplTable";
+            case 1026L: return "V_SgAsmCilMethodSemanticsTable";
+            case 1027L: return "V_SgAsmCilMethodSpecTable";
+            case 1028L: return "V_SgAsmCilModuleTable";
+            case 1029L: return "V_SgAsmCilModuleRefTable";
+            case 1030L: return "V_SgAsmCilNestedClassTable";
+            case 1031L: return "V_SgAsmCilParamTable";
+            case 1032L: return "V_SgAsmCilPropertyTable";
+            case 1033L: return "V_SgAsmCilPropertyMapTable";
+            case 1034L: return "V_SgAsmCilStandAloneSigTable";
+            case 1035L: return "V_SgAsmCilTypeDefTable";
+            case 1036L: return "V_SgAsmCilTypeRefTable";
+            case 1037L: return "V_SgAsmCilTypeSpecTable";
+            case 1038L: return "V_SgJvmComposite";
+            case 1039L: return "V_SgFortranContinueStmt";
+            case 1040L: return "V_SgAsmJvmStackMapTable";
+            case 1041L: return "V_SgAsmJvmStackMapFrame";
+            case 1042L: return "V_SgAsmJvmStackMapVerificationType";
+            case 1043L: return "V_SgAsmJvmBootstrapMethod";
+            case 1044L: return "V_SgAsmJvmBootstrapMethods";
+            case 1045L: return "V_SgAsmJvmExceptions";
+            case 1046L: return "V_SgAsmJvmNestMembers";
+            case 1047L: return "V_SgAsmJvmNestHost";
+            case 1048L: return "V_SgJovialLabelDeclaration";
+            case 1049L: return "V_SgAsmJvmLocalVariableEntry";
+            case 1050L: return "V_SgAsmJvmLocalVariableTable";
+            case 1051L: return "V_SgAsmJvmLocalVariableTypeEntry";
+            case 1052L: return "V_SgAsmJvmLocalVariableTypeTable";
+            case 1053L: return "V_SgAsmUserInstruction";
+            case 1054L: return "V_SgAsmJvmMethodParameters";
+            case 1055L: return "V_SgAsmJvmMethodParametersEntry";
+            case 1056L: return "V_SgAsmVoidType";
+            case 1057L: return "V_SgAsmPointerType";
+            case 1058L: return "V_SgAsmAarch64PState";
+            case 1059L: return "V_SgRangeType";
+            case 1060L: return "V_SgAsmCilExceptionData";
+            case 1061L: return "V_SgAsmCilMethodData";
+            case 1062L: return "V_SgTemplateVariableInstantiation";
+            case 1063L: return "V_SgReferenceExp";
+            case 1064L: return "V_SgTypeRefExp";
+            case 1065L: return "V_SgScopedRefExp";
+            case 1066L: return "V_SgScopedType";
+            case 1067L: return "V_SgTypeSymbol";
+            case 1068L: return "V_SgAsmJvmSynthetic";
+            case 1069L: return "V_SgAsmJvmDeprecated";
+            case 1070L: return "V_SgSignedCharVal";
             case 1072L: return "V_SgNumVariants";
             default: return "";
         }
@@ -77405,7 +77405,7 @@ namespace stringify {
             807L,
             808L,
             809L,
-            810L,
+            811L,
             812L,
             813L,
             814L,
@@ -77473,7 +77473,7 @@ namespace stringify {
             876L,
             877L,
             878L,
-            879L,
+            880L,
             881L,
             882L,
             883L,

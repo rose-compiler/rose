@@ -2584,7 +2584,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 2250
+// /src/ROSETTA/src/binaryInstruction.C line 2321
 namespace stringify { namespace SgAsmPESectionTableEntry {
     /** Convert SgAsmPESectionTableEntry::PESectionFlags enum constant to a string. */
     const char* PESectionFlags(int64_t);
@@ -2692,7 +2692,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 5707
+// /src/ROSETTA/src/binaryInstruction.C line 5821
 namespace stringify { namespace SgAsmNESectionTableEntry {
     /** Convert SgAsmNESectionTableEntry::NESectionFlags enum constant to a string. */
     const char* NESectionFlags(int64_t);
@@ -2836,7 +2836,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 7710
+// /src/ROSETTA/src/binaryInstruction.C line 7771
 namespace stringify { namespace SgAsmLESectionTableEntry {
     /** Convert SgAsmLESectionTableEntry::LESectionFlags enum constant to a string. */
     const char* LESectionFlags(int64_t);
@@ -2890,7 +2890,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 13029
+// /src/ROSETTA/src/binaryInstruction.C line 13136
 namespace stringify { namespace SgAsmJvmConstantPoolEntry {
     /** Convert SgAsmJvmConstantPoolEntry::Kind enum constant to a string. */
     const char* Kind(int64_t);
@@ -3052,7 +3052,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 19966
+// /src/ROSETTA/src/binaryInstruction.C line 20073
 namespace stringify { namespace SgAsmElfSegmentTableEntry {
     /** Convert SgAsmElfSegmentTableEntry::SegmentType enum constant to a string. */
     const char* SegmentType(int64_t);
@@ -3070,7 +3070,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 19994
+// /src/ROSETTA/src/binaryInstruction.C line 20101
 namespace stringify { namespace SgAsmElfSegmentTableEntry {
     /** Convert SgAsmElfSegmentTableEntry::SegmentFlags enum constant to a string. */
     const char* SegmentFlags(int64_t);
@@ -3088,7 +3088,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 20435
+// /src/ROSETTA/src/binaryInstruction.C line 20539
 namespace stringify { namespace SgAsmElfSectionTableEntry {
     /** Convert SgAsmElfSectionTableEntry::SectionType enum constant to a string. */
     const char* SectionType(int64_t);
@@ -3106,7 +3106,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 20462
+// /src/ROSETTA/src/binaryInstruction.C line 20566
 namespace stringify { namespace SgAsmElfSectionTableEntry {
     /** Convert SgAsmElfSectionTableEntry::SectionFlags enum constant to a string. */
     const char* SectionFlags(int64_t);
@@ -5824,24 +5824,6 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Partitioner2/ModulesX86.h line 109
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Partitioner2 { namespace ModulesX86 { namespace SwitchSuccessors {
-    /** Convert Rose::BinaryAnalysis::Partitioner2::ModulesX86::SwitchSuccessors::EntryType enum constant to a string. */
-    const char* EntryType(int64_t);
-
-    /** Convert Rose::BinaryAnalysis::Partitioner2::ModulesX86::SwitchSuccessors::EntryType enum constant to a string. */
-    std::string EntryType(int64_t, const std::string &strip);
-
-    /** Return all Rose::BinaryAnalysis::Partitioner2::ModulesX86::SwitchSuccessors::EntryType member values as a vector. */
-    const std::vector<int64_t>& EntryType();
-}}}}}}
-
-namespace Rose {
-    std::string stringifyBinaryAnalysisPartitioner2ModulesX86SwitchSuccessorsEntryType(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisPartitioner2ModulesX86SwitchSuccessorsEntryType();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/Rose/BinaryAnalysis/Partitioner2/DataFlow.h line 32
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Partitioner2 { namespace DataFlow { namespace DfCfgVertex {
     /** Convert Rose::BinaryAnalysis::Partitioner2::DataFlow::DfCfgVertex::Type enum constant to a string. */
@@ -5857,6 +5839,24 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Part
 namespace Rose {
     std::string stringifyBinaryAnalysisPartitioner2DataFlowDfCfgVertexType(int64_t n, const char *strip=NULL, bool canonic=false);
     const std::vector<int64_t>& stringifyBinaryAnalysisPartitioner2DataFlowDfCfgVertexType();
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /src/Rose/BinaryAnalysis/Partitioner2/JumpTable.h line 25
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Partitioner2 { namespace JumpTable {
+    /** Convert Rose::BinaryAnalysis::Partitioner2::JumpTable::EntryType enum constant to a string. */
+    const char* EntryType(int64_t);
+
+    /** Convert Rose::BinaryAnalysis::Partitioner2::JumpTable::EntryType enum constant to a string. */
+    std::string EntryType(int64_t, const std::string &strip);
+
+    /** Return all Rose::BinaryAnalysis::Partitioner2::JumpTable::EntryType member values as a vector. */
+    const std::vector<int64_t>& EntryType();
+}}}}}
+
+namespace Rose {
+    std::string stringifyBinaryAnalysisPartitioner2JumpTableEntryType(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisPartitioner2JumpTableEntryType();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -21666,16 +21666,13 @@ namespace stringify {
                     }
                 }
                 /** Stringification. */
-                namespace ModulesX86 {
-                    /** Stringification. */
-                    namespace SwitchSuccessors {
-                    }
-                }
-                /** Stringification. */
                 namespace DataFlow {
                     /** Stringification. */
                     namespace DfCfgVertex {
                     }
+                }
+                /** Stringification. */
+                namespace JumpTable {
                 }
                 /** Stringification. */
                 namespace Inliner {
