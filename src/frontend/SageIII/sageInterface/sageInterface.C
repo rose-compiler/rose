@@ -8058,8 +8058,17 @@ bool SageInterface::templateArgumentEquivalence(SgTemplateArgument * arg1, SgTem
                          {
                            return ((SgUnsignedLongVal*) expr1)->get_value() == ((SgUnsignedLongVal*) expr2)->get_value();
                          }
+                   // PP (4/10/2025): Adding support for another type (from processing ROSE with ROSE)
+                      case V_SgBoolValExp:
+                         {
+                           return static_cast<SgBoolValExp*>(expr1)->get_value() == static_cast<SgBoolValExp*>(expr2)->get_value();
+                         }
                       default: {
-                        printf ("FATAL: In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: expression have the same variant %s but comparison is not NIY!\n", expr1->class_name().c_str());
+                        mlog[Sawyer::Message::Common::FATAL]
+                          << "FATAL: In templateArgumentEquivalence(): case SgTemplateArgument::nontype_argument: expression have the same variant "
+                          << expr1->class_name()
+                          << " but comparison is not NIY!"
+                          << std::endl;
                         ROSE_ABORT();
                       }
                     }
@@ -10262,14 +10271,14 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                   }
 
                 // special handling of inside position
-		          // The surrounding statement will accept the comments. It also preceeds the source statement providing the comments. 
-		          // If it is an enclosing scope statement, the comments should be attached to inside position, not before nor after.
-                // if (  isSgGlobal(destinationStatement) ||  isSgBasicBlock(destinationStatement) )  
-		          // Handle all SgScopeStatement variants. 
+              // The surrounding statement will accept the comments. It also preceeds the source statement providing the comments.
+              // If it is an enclosing scope statement, the comments should be attached to inside position, not before nor after.
+                // if (  isSgGlobal(destinationStatement) ||  isSgBasicBlock(destinationStatement) )
+              // Handle all SgScopeStatement variants.
                 // We do this only for C/C++ language. Otherwise the code may break Jovial and other languages.
                 if (is_C_language() || is_C99_language() || is_Cxx_language() )
                 {
-                  if (SageInterface::isAncestor(destinationStatement, sourceStatement)) 
+                  if (SageInterface::isAncestor(destinationStatement, sourceStatement))
                     (*comments)[*j]->setRelativePosition(PreprocessingInfo::inside);
                 }
                 destinationStatement->addToAttachedPreprocessingInfo((*comments)[*j]);
@@ -10290,7 +10299,7 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
                   {
                  // If is is not before, I hope it can only be after. Sometimes it is end_of, e.g. gitlab-issue-186.jov
                     ASSERT_require((*comments)[*j]->getRelativePosition() == PreprocessingInfo::after||
-		                   (*comments)[*j]->getRelativePosition() == PreprocessingInfo::end_of);
+                       (*comments)[*j]->getRelativePosition() == PreprocessingInfo::end_of);
                     (*comments)[*j]->setRelativePosition(PreprocessingInfo::before);
                   }
                AttachedPreprocessingInfoType* targetInfoList = destinationStatement->getAttachedPreprocessingInfo();
@@ -10363,9 +10372,9 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
 
 
 //! Remove a statement: TODO consider side effects for symbol tables
-// This function is a helper function for SageInterface::removeStatement() to handle preprocessing info. 
+// This function is a helper function for SageInterface::removeStatement() to handle preprocessing info.
 // It should find a suitable destination statement to which we can move the current stmt's preprocessing info to.
-// targetStmt of this function is the source statement to move preprocessing info first, before removing it. 
+// targetStmt of this function is the source statement to move preprocessing info first, before removing it.
 SgStatement*
 SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, bool & surroundingStatementPreceedsTargetStatement)
    {
@@ -10403,8 +10412,8 @@ SageInterface::findSurroundingStatementFromSameFile(SgStatement* targetStmt, boo
             // This is a declaration from the wrong file so go to the next statement.
             // surroundingStatement = (insertBefore == true) ? getNextStatement(surroundingStatement) : getPreviousStatement(surroundingStatement);
             // surroundingStatement = (insertBefore == true) ? getPreviousStatement(surroundingStatement) : getNextStatement(surroundingStatement);
-	    // Liao, 12/26/2024. We should not climb out the current scope when finding the previous statement
-	    // Otherwise, preprocessingInfo may be moved from a child stmt to its parent stmt, causing errors in AST. 
+      // Liao, 12/26/2024. We should not climb out the current scope when finding the previous statement
+      // Otherwise, preprocessingInfo may be moved from a child stmt to its parent stmt, causing errors in AST.
                surroundingStatement = getPreviousStatement(surroundingStatement, false);
 
 #if REMOVE_STATEMENT_DEBUG
@@ -27760,17 +27769,17 @@ void SageInterface::preOrderCollectPreprocessingInfo(SgNode* current, vector<Pre
 
         // put directives with before location into the infoList
         if (info->getRelativePosition () == PreprocessingInfo::before
-	   )
+     )
         {
           infoList.push_back (info);
           infoMap[info] = data;
         }
-	// How about inside position?
-	// why it should be intepreted as the last one after all inner statment's preprocessingInfo?
-	// because if it should be unparsed before all of them,  it should have been attached to the first stmt's before location instead!
+  // How about inside position?
+  // why it should be intepreted as the last one after all inner statment's preprocessingInfo?
+  // because if it should be unparsed before all of them,  it should have been attached to the first stmt's before location instead!
         else if (info->getRelativePosition () == PreprocessingInfo::after
               || info->getRelativePosition () == PreprocessingInfo::inside
-	        )
+          )
         {
           afterList.push_back (info); // if attached to be after, save to afterList
           infoMap[info] = data;
