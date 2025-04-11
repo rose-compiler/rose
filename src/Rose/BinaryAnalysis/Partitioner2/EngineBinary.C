@@ -20,6 +20,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/IndirectControlFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
@@ -1581,6 +1582,11 @@ EngineBinary::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
 
     SAWYER_MESG(where) <<"discovering basic blocks for marked functions\n";
     attachBlocksToFunctions(partitioner);
+
+#if 1 // [Robb Matzke 2025-04-10]
+    std::cerr <<"ROBB: Rose::BinaryAnalysis::Partitioner2::Engine::updateAnalysisResults: analyzing indirect control flow\n";
+    IndirectControlFlow::analyzeFunctions(partitioner);
+#endif
 
     // Additional work
     if (settings().partitioner.findingDeadCode) {
