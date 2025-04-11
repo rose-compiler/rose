@@ -894,6 +894,132 @@ target_link_libraries(rose-compiler ROSE_DLL ${link_with_libraries})
 install(TARGETS rose-compiler DESTINATION bin)
 
 ########################################################################################################################
+# check-core target. Tests a simple program for each language that is enabled
+########################################################################################################################
+add_custom_target(
+  check-core
+  COMMENT "Running check-core")
+add_dependencies(check-core rose-compiler)
+
+#Check that Boost is linked
+add_custom_command(
+  TARGET check-core
+  POST_BUILD
+  COMMENT "  TEST     boost shared linkage [rose-compiler]"
+  COMMAND ${ROSE_TOP_SRC_DIR}/scripts/check_boost_linkage.sh ${PROJECT_BINARY_DIR}/bin/rose-compiler >&2
+  DEPENDS rose-compiler)
+
+#Check that the other links are correct
+add_custom_command(
+  TARGET check-core
+  POST_BUILD
+  COMMENT "  TEST     whether a trivial ROSE program runs [rose-compiler]"
+  COMMAND /bin/sh -c "if ! ${PROJECT_BINARY_DIR}/bin/rose-compiler --version ; then echo \"error: You cannot run a program linked with ROSE. Please be sure that your\" >&2; echo \"error: LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the\" >&2; echo \"error: correct libraries (JVM, Boost, librose.so, etc.)\" >&2; exit 1; fi;"
+  VERBATIM
+  DEPENDS rose-compiler)
+
+#Check that rose-config works
+add_custom_command(
+  TARGET check-core
+  POST_BUILD
+  COMMENT "  TEST     ROSE configuration tool [rose-config]"
+  COMMAND rose-config --version
+  VERBATIM
+  DEPENDS rose-config)
+
+if(ENABLE-C)
+  #Check that we can compile & run a simple C program
+  add_custom_command(
+    TARGET check-core
+    POST_BUILD
+    COMMAND echo "\#include <stdio.h>"               >  hello-world.c
+    COMMAND echo "int main() {"                      >> hello-world.c
+    COMMAND echo "   puts(\"Hello World from C!\");" >> hello-world.c
+    COMMAND echo "   return 0;"                      >> hello-world.c
+    COMMAND echo "}"                                 >> hello-world.c
+    COMMAND rose-compiler -rose:ast:write hello-world-c.ast hello-world.c -o hello-world-c
+    COMMAND ./hello-world-c
+    COMMAND rose-compiler -rose:ast:read hello-world-c.ast
+    COMMAND rm hello-world.c hello-world-c hello-world-c.ast hello-world.o rose_hello-world.c
+      rose_odr_class.log rose_odr_function.log rose_odr_variable.log
+    VERBATIM
+    DEPENDS rose-compiler
+    COMMENT "  TEST     ROSE C compiler")
+
+  #Check that we can compile & run a simple C++ program
+  add_custom_command(
+    TARGET check-core
+    POST_BUILD
+    COMMAND echo "\#include <iostream>"                                     >  hello-world.cpp
+    COMMAND echo "int main() {"                                             >> hello-world.cpp
+    COMMAND echo "    std::cout << \"Hello World from C++!\" << std::endl;" >> hello-world.cpp
+    COMMAND echo "    return 0;"                                            >> hello-world.cpp
+    COMMAND echo "}"                                                        >> hello-world.cpp
+    COMMAND rose-compiler -rose:ast:write hello-world-cxx.ast hello-world.cpp -o hello-world-cpp
+    COMMAND ./hello-world-cpp
+    COMMAND rose-compiler -rose:ast:read hello-world-cxx.ast
+    COMMAND rm hello-world.cpp hello-world-cpp hello-world-cxx.ast hello-world.o hello-world.ti
+      rose_hello-world.cpp rose_odr_class.log rose_odr_function.log rose_odr_variable.log
+    VERBATIM
+    DEPENDS rose-compiler
+    COMMENT "  TEST     ROSE C++ compiler")
+endif()
+
+if(ENABLE_FORTRAN)
+  #Check that we can compile and run a simple fortran program
+  add_custom_command(
+    TARGET check-core
+    POST_BUILD
+    COMMAND echo "program hello"                            >  hello-world.f90
+    COMMAND echo "  print *, \"Hello World from Fortran!\"" >> hello-world.f90
+    COMMAND echo "end program hello"                        >> hello-world.f90
+    COMMAND rose-compiler -rose:ast:write hello-world-f90.ast hello-world.f90 -o hello-world-f90
+    COMMAND ./hello-world-f90
+#    COMMAND rose-compiler -rose:ast:read hello-world-f90.ast
+    VERBATIM
+    DEPENDS rose-compiler
+    COMMENT "  TEST     ROSE Fortran compiler")
+endif()
+
+if(ENABLE_ADA)
+  #Check that we can compile and run a simple ada program
+  add_custom_command(
+    TARGET check-core
+    POST_BUILD
+    COMMAND echo "with Ada.Text_IO;"                        >  hello-world.adb
+    COMMAND echo "procedure Hello_World is"                 >> hello-world.adb
+    COMMAND echo "begin"                                    >> hello-world.adb
+    COMMAND echo "  Ada.Text_IO.Put_Line(\"Hello World\");" >> hello-world.adb
+    COMMAND echo "end Hello_World;"                         >> hello-world.adb
+    COMMAND rose-compiler hello-world.adb
+# just test frontend/backend in ROSE
+#~    COMMAND ./hello-world-f90
+#    COMMAND rose-compiler -rose:ast:read hello-world-f90.ast
+    VERBATIM
+    DEPENDS rose-compiler
+    COMMENT "  TEST     ROSE Ada compiler")
+endif()
+
+if(ENABLE-BINARY-ANALYSIS)
+  #Check that we can perform a simple binary analysis
+  add_custom_command(
+    TARGET check-core
+    POST_BUILD
+    COMMAND  /bin/sh -c "if [ ! -f ${PROJECT_BINARY_DIR}/bin/bat-ana ] ; then echo \"error: bat-ana is not present. Check that you ran 'make tools'.\" >&2; exit 1; fi;"
+    COMMAND echo "\#include <stdio.h>"               >  hello-world.c
+    COMMAND echo "int main() {"                      >> hello-world.c
+    COMMAND echo "   puts(\"Hello World from C!\");" >> hello-world.c
+    COMMAND echo "   return 0;"                      >> hello-world.c
+    COMMAND echo "}"                                 >> hello-world.c
+    COMMAND ${CMAKE_C_COMPILER} -c hello-world.c -o hello-world-c
+    COMMAND ${PROJECT_BINARY_DIR}/bin/bat-ana -o hello-world-ba hello-world-c
+    COMMAND rm hello-world.c hello-world-c hello-world-ba
+    VERBATIM
+    DEPENDS tools
+    COMMENT "  TEST     ROSE Binary analysis")
+endif()
+
+########################################################################################################################
 # rose-config.cfg -- text file that contains various settings for user-level makefiles.
 ########################################################################################################################
 
