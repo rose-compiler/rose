@@ -965,7 +965,7 @@ if(ENABLE-C)
     COMMENT "  TEST     ROSE C++ compiler")
 endif()
 
-if(ENABLE_FORTRAN)
+if(ENABLE-FORTRAN)
   #Check that we can compile and run a simple fortran program
   add_custom_command(
     TARGET check-core
@@ -976,12 +976,13 @@ if(ENABLE_FORTRAN)
     COMMAND rose-compiler -rose:ast:write hello-world-f90.ast hello-world.f90 -o hello-world-f90
     COMMAND ./hello-world-f90
 #    COMMAND rose-compiler -rose:ast:read hello-world-f90.ast
+    COMMAND rm hello-world.f90 hello-world-f90 hello-world-f90.ast hello-world.o rose_hello-world.f90
     VERBATIM
     DEPENDS rose-compiler
     COMMENT "  TEST     ROSE Fortran compiler")
 endif()
 
-if(ENABLE_ADA)
+if(ENABLE-ADA)
   #Check that we can compile and run a simple ada program
   add_custom_command(
     TARGET check-core
@@ -995,6 +996,7 @@ if(ENABLE_ADA)
 # just test frontend/backend in ROSE
 #~    COMMAND ./hello-world-f90
 #    COMMAND rose-compiler -rose:ast:read hello-world-f90.ast
+    COMMAND rm hello-world.adb
     VERBATIM
     DEPENDS rose-compiler
     COMMENT "  TEST     ROSE Ada compiler")
