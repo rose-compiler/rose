@@ -487,7 +487,7 @@ SwitchSuccessors::operator()(const bool chain, const Args &args) {
 
     // Attach data blocks to the basic block
     DataBlock::Ptr addressBlock = mainTable_->createDataBlock();
-    addressBlock->comment("x86 'switch' statement's 'case' address table");
+    addressBlock->comment("x86 'switch' statement's 'case' address table; " + matcherName_);
     args.bblock->insertDataBlock(addressBlock);
     if (!indexes_.empty()) {
         SgAsmType *entryType = SageBuilderAsm::buildTypeU8();
@@ -524,6 +524,7 @@ bool
 SwitchSuccessors::matchPattern1(SgAsmExpression *jmpArg) {
     ASSERT_not_null(jmpArg);
     if ((tableVa_ = findTableBase(jmpArg))) {
+        matcherName_ = "jmp [TBL + ...]";
         entryType_ = JumpTable::EntryType::ABSOLUTE;
         entrySizeBytes_ = jmpArg->get_type()->get_nBytes();
         return true;
@@ -560,6 +561,7 @@ SwitchSuccessors::matchPattern2(const BasicBlock::Ptr &bb, SgAsmInstruction *jmp
 
     // Second argument of move must be [base + ...]
     if ((tableVa_ = findTableBase(movArgs[1]))) {
+        matcherName_ = "mov R1, [TBL + ...]; jmp R1";
         entryType_ = JumpTable::EntryType::ABSOLUTE;
         entrySizeBytes_ = movArgs[1]->get_type()->get_nBytes();
         return true;
@@ -669,6 +671,7 @@ SwitchSuccessors::matchPattern3(const Partitioner::ConstPtr &partitioner, const 
     if (!tableVa_)
         return false;
 
+    matcherName_ = "lea R1, [rip+c1]; nop; movsxd R2, [R1+...]; add R2, R1; jmp R2";
     entryType_ = JumpTable::EntryType::TABLE_RELATIVE;
     entrySizeBytes_ = 4;
     return true;
@@ -722,6 +725,7 @@ SwitchSuccessors::matchPattern4(const Partitioner::ConstPtr &partitioner, const 
         return false;                                   // table addr is not mapped, or not read-only
 
     // Matched
+    matcherName_ = "(add[u64] (sext 64, V1[u32]) TBL[u64])";
     tableVa_ = tableAddr;
     entryType_ = JumpTable::EntryType::TABLE_RELATIVE;
     entrySizeBytes_ = 4;
@@ -768,6 +772,7 @@ SwitchSuccessors::matchPattern5(const Partitioner::ConstPtr &partitioner, const 
         return false;                                   // table addr is not mapped, or not read-only
 
     // Matched
+    matcherName_ = "(add[u32] V1[u32] C1[u32])";
     tableVa_ = tableAddr;
     entryType_ = JumpTable::EntryType::TABLE_RELATIVE;
     entrySizeBytes_ = 4;

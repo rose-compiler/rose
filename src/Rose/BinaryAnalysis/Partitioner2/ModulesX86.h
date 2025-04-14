@@ -125,6 +125,7 @@ public:
 private:
     // These get filled in during the pattern matching phase when we're looking at the content of the basic block in question to try
     // to figure out if it has a jump table and if so, some characteristics of that table. */
+    std::string matcherName_;                           // pattern matcher that matched
     Sawyer::Optional<Address> tableVa_;                 // possible address for jump table
     JumpTable::EntryType entryType_ = JumpTable::EntryType::ABSOLUTE;
     size_t entrySizeBytes_ = 4;                         // size of each table entry
