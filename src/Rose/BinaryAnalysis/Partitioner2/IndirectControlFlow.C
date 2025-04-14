@@ -24,9 +24,8 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics;
 using namespace Sawyer::Message::Common;
 
 using DfCfg = P2DF::DfCfg;
+
 using DfTransfer = P2DF::TransferFunction;
-using DfEngine = P2DF::Engine;
-using DfMerge = P2DF::MergeFunction;
 using DfNotConverging = Rose::BinaryAnalysis::DataFlow::NotConverging;
 
 using Rose::StringUtility::addrToString;
@@ -48,6 +47,69 @@ initDiagnostics() {
         mlog.comment("analyzing indirect control flow");
     }
 }
+
+static RegisterDescriptor
+createPathRegister(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    const unsigned maj = partitioner->architecture()->registerDictionary()->firstUnusedMajor();
+    const unsigned min = partitioner->architecture()->registerDictionary()->firstUnusedMinor(maj);
+    return RegisterDescriptor(maj, min, 0, 1);
+}
+
+class DfMerge: public P2DF::MergeFunction {
+    const RegisterDescriptor PATH, IP;
+    const DfCfg &dfCfg;
+
+public:
+    using Super = P2DF::MergeFunction;
+
+public:
+    explicit DfMerge(const P2::Partitioner::ConstPtr &partitioner, const BS::RiscOperators::Ptr &ops, const DfCfg &dfCfg)
+        : Super(ops),
+          PATH(createPathRegister(partitioner)),
+          IP(partitioner->architecture()->registerDictionary()->instructionPointerRegister()),
+          dfCfg(dfCfg) {}
+
+    bool operator()(size_t dstId, BS::State::Ptr &dst, size_t srcId, const BS::State::Ptr &src) const override {
+        ASSERT_not_null(src);
+        const auto dstVert = dfCfg.findVertex(dstId);
+        ASSERT_require(dfCfg.isValidVertex(dstVert));
+        const auto srcVert = dfCfg.findVertex(dstId);
+        ASSERT_require(dfCfg.isValidVertex(srcVert));
+        const BS::RiscOperators::Ptr ops = notnull(operators());
+
+        // Symbolic expression for the expected successor(s)
+        const auto srcIp = SymbolicSemantics::SValue::promote(src->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()))
+                           ->get_expression();
+
+        // Concrete address of the destination successor--the state we're merging into
+        SymbolicExpression::Ptr dstAddr;
+        if (const auto addr = dstVert->value().address()) {
+            dstAddr = SymbolicExpression::makeIntegerConstant(srcIp->nBits(), *addr);
+        }
+
+        // Initial path constraints for the destination (before merging)
+        SymbolicExpression::Ptr origConstraints;
+        if (dst) {
+            origConstraints = SymbolicSemantics::SValue::promote(dst->peekRegister(PATH, ops->boolean_(true), ops.get()))
+                              ->get_expression();
+        }
+
+        bool retval = Super::operator()(dstId, dst, srcId, src);
+        ASSERT_not_null(dst);
+
+        // New constraints for the destination
+        if (dstAddr) {
+            auto newConstraints = SymbolicExpression::makeEq(srcIp, dstAddr);
+            if (origConstraints)
+                newConstraints = SymbolicExpression::makeOr(newConstraints, origConstraints);
+            auto newConstraintsSVal = SymbolicSemantics::SValue::instance_symbolic(newConstraints);
+            dst->writeRegister(PATH, newConstraintsSVal, ops.get());
+        }
+
+        return retval;
+    }
+};
 
 // Test whether the specified function is one of the x86 get_pc_thunk functions. If so, return the register that gets the
 // program counter for the machine instruction that occurs immediately after the call to this function.
@@ -359,6 +421,50 @@ isMappedAccess(const MemoryMap::Ptr &map, const Address addr, const unsigned req
     return !map->at(addr).require(required).prohibit(prohibited).segments().empty();
 }
 
+// Return jump table target addresses for table entries whose addresses are satisfiable given the path constraints. The
+// `entryAddrExpr` is the symbolic address that was read by the basic block and represents any table entry.
+std::set<Address>
+satisfiableTargets(const JumpTable::Ptr &table, const SymbolicExpression::Ptr &pathConstraint,
+                   const SymbolicExpression::Ptr &entryAddrExpr) {
+    ASSERT_not_null(table);
+    ASSERT_not_null(pathConstraint);
+    std::set<Address> retval;
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+    SmtSolver::Ptr solver = SmtSolver::bestAvailable();
+    ASSERT_not_null(solver);                            // FIXME[Robb Matzke 2025-04-14]
+    solver->insert(pathConstraint);
+
+    using namespace SymbolicExpression;
+    for (size_t i = 0; i < table->nEntries(); ++i) {
+        const Address target = table->targets()[i];
+        const Address entryAddr = table->location().least() + i * table->bytesPerEntry();
+        const auto entryConstraint = makeEq(makeIntegerConstant(entryAddrExpr->nBits(), entryAddr), entryAddrExpr);
+        SAWYER_MESG(debug) <<"    entry #" <<i <<" at " <<addrToString(entryAddr)
+                           <<" has target " <<addrToString(target) <<"\n";
+        solver->push();
+        solver->insert(entryConstraint);
+        const auto isSatisfiable = solver->check();
+        solver->pop();
+
+        switch (isSatisfiable) {
+            case SmtSolver::SAT_UNKNOWN:
+                SAWYER_MESG(debug) <<"      SMT solver failed (assuming satisfiable)\n";
+                // fall through
+            case SmtSolver::SAT_YES: {
+                const Address target = table->targets()[i];
+                SAWYER_MESG(debug) <<"      satisfiable table entry address\n";
+                retval.insert(target);
+                break;
+            }
+            case SmtSolver::SAT_NO:
+                SAWYER_MESG(debug) <<"      entry address is not satisfiable\n";
+                break;
+        }
+    }
+    return retval;
+}
+
 static bool
 useJumpTable(const P2::Partitioner::Ptr &partitioner, const P2::Function::Ptr &function, const P2::BasicBlock::Ptr &bb,
              const BS::RiscOperators::Ptr &ops) {
@@ -375,6 +481,10 @@ useJumpTable(const P2::Partitioner::Ptr &partitioner, const P2::Function::Ptr &f
     const RegisterDescriptor IP = partitioner->architecture()->registerDictionary()->instructionPointerRegister();
     const SymbolicExpression::Ptr ip = SymbolicSemantics::SValue::promote(ops->peekRegister(IP))->get_expression();
     SAWYER_MESG(debug) <<"    ip = " <<*ip <<"\n";
+
+    const RegisterDescriptor PATH = createPathRegister(partitioner);
+    const SymbolicExpression::Ptr path = SymbolicSemantics::SValue::promote(ops->peekRegister(PATH))->get_expression();
+    SAWYER_MESG(debug) <<"    path constraints = " <<*path <<"\n";
 
     // FIXME[Robb Matzke 2025-04-08]: We only handle specific things for now.
     if (as<const Architecture::X86>(partitioner->architecture())) {
@@ -407,18 +517,21 @@ useJumpTable(const P2::Partitioner::Ptr &partitioner, const P2::Function::Ptr &f
                                            <<" within " <<addrToString(table->tableLimits()) <<"\n";
                         table->scan(partitioner->memoryMap()->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE), tableAddr);
                         if (table->location()) {
-                            std::set<Address> successors = table->uniqueTargets();
+                            SAWYER_MESG(debug) <<"    parsed jump table with " <<plural(table->nEntries(), "entries") <<"\n";
+                            std::set<Address> successors = satisfiableTargets(table, path, jumpTableAddrExpr);
                             if (debug) {
-                                debug <<"    parsed jump table with " <<plural(table->nEntries(), "entries")
-                                      <<", " <<successors.size() <<" unique\n"
-                                      <<"    updating basic block successors:\n";
-                                for (const Address target: table->uniqueTargets())
+                                debug <<"    unique targets remaining: " <<successors.size() <<"\n";
+                                for (const Address target: successors) {
                                     debug <<"      target " <<addrToString(target)
                                           <<(functionBlocks.exists(target) ? " present" : " not present") <<"\n";
+                                }
                             }
                             
                             partitioner->detachBasicBlock(bb);
-                            table->replaceBasicBlockSuccessors(partitioner, bb);
+                            bb->successors().clear();
+                            const size_t bitsPerWord = partitioner->architecture()->bitsPerWord();
+                            for (const Address successor: successors)
+                                bb->insertSuccessor(successor, bitsPerWord);
                             table->attachTableToBasicBlock(bb);
                             partitioner->attachBasicBlock(bb);
                             return true;
@@ -474,13 +587,17 @@ analyzeFunction(const P2::Partitioner::Ptr &partitioner, const P2::Function::Ptr
         DfTransfer xfer(cpu);
         xfer.ignoringSemanticFailures(true);
 
+        // Merge function
+        DfMerge merge(partitioner, ops, dfCfg);
+
         // Initial state
         BS::State::Ptr initialState = xfer.initialState();
         ops->currentState(initialState);
         initializeStackPointer(partitioner, ops);
 
         // Dataflow engine
-        DfEngine dfEngine(dfCfg, xfer, DfMerge(cpu));
+        using DfEngine = Rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BS::State::Ptr, DfTransfer, DfMerge>;
+        DfEngine dfEngine(dfCfg, xfer, merge);
         dfEngine.maxIterations(dfCfg.nVertices());
         dfEngine.insertStartingVertex(0, initialState);
 
@@ -514,6 +631,11 @@ analyzeFunctions(const Partitioner::Ptr &partitioner) {
     bool madeChanges = false;
 
     for (const P2::Function::Ptr &function: partitioner->functions()) {
+#if 1 // [Robb Matzke 2025-04-11]
+        if (function->name() != "main")
+            continue;
+#endif
+    
         if (analyzeFunction(partitioner, function))
             madeChanges = true;
     }
