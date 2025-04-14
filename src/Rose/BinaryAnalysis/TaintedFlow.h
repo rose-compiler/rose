@@ -142,7 +142,7 @@ protected:
 protected:
     class MergeFunction {
     public:
-        bool operator()(StatePtr &dst /*in,out*/, const StatePtr &src) const {
+        bool operator()(const size_t /*dstId*/, StatePtr &dst /*in,out*/, const size_t /*srcId*/, const StatePtr &src) const {
             ASSERT_not_null(src);
             if (!dst) {
                 dst = src->copy();

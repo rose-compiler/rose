@@ -16,6 +16,81 @@ using namespace InstructionSemantics;
 
 Sawyer::Message::Facility DataFlow::mlog;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DataFlow::Exception
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DataFlow::Exception::Exception(const std::string &s)
+    : Rose::Exception(s) {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DataFlow::NotConverging
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DataFlow::NotConverging::NotConverging(const std::string &s)
+    : Exception(s) {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DataFlow::DefaultVertexUnpacker
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DataFlow::DefaultVertexUnpacker::Instructions
+DataFlow::DefaultVertexUnpacker::operator()(SgAsmInstruction *insn) {
+    return Instructions(1, insn);
+}
+
+std::vector<SgAsmInstruction*>
+DataFlow::DefaultVertexUnpacker::operator()(SgAsmBlock *blk) {
+    return AST::Traversal::findDescendantsTyped<SgAsmInstruction>(blk);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DataFlow::SemanticsMerge
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DataFlow::SemanticsMerge::~SemanticsMerge() {}
+
+DataFlow::SemanticsMerge::SemanticsMerge(const BaseSemantics::RiscOperators::Ptr &ops)
+    : ops_(ops) {}
+
+DataFlow::SemanticsMerge::SemanticsMerge(const BaseSemantics::DispatcherPtr &cpu)
+    : ops_(cpu->operators()) {}
+
+bool
+DataFlow::SemanticsMerge::operator()(const size_t /*dstId*/, BaseSemantics::StatePtr &dst /*in,out*/,
+                                     const size_t /*srcId*/, const BaseSemantics::StatePtr &src) const {
+    struct PreserveCurrentState {
+        BaseSemantics::RiscOperatorsPtr ops;
+        BaseSemantics::StatePtr state;
+        PreserveCurrentState(const BaseSemantics::RiscOperatorsPtr &ops)
+            : ops(ops), state(ops->currentState()) {}
+        ~PreserveCurrentState() { ops->currentState(state); }
+    } t(ops_);
+
+    if (!dst) {
+        dst = src->clone();
+        return true;
+    } else {
+        ops_->currentState(src);
+        return dst->merge(src, ops_.get(), ops_.get());
+    }
+}
+
+BaseSemantics::RiscOperators::Ptr
+DataFlow::SemanticsMerge::operators() const {
+    return ops_;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DataFlow
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DataFlow::~DataFlow() {}
+
+DataFlow::DataFlow(const BaseSemantics::Dispatcher::Ptr &userDispatcher) {
+    init(userDispatcher);
+}
+
 void
 DataFlow::initDiagnostics() {
     static bool initialized = false;
@@ -31,15 +106,10 @@ DataFlow::init(const BaseSemantics::Dispatcher::Ptr &userDispatcher) {
     ASSERT_not_null(userDispatcher);
     userOps_ = userDispatcher->operators();
     ASSERT_not_null(userOps_);
-    dfOps_ = InstructionSemantics::DataFlowSemantics::RiscOperators::instance(userOps_);
+    dfOps_ = DataFlowSemantics::RiscOperators::instance(userOps_);
     ASSERT_not_null(dfOps_);
     dispatcher_ = userDispatcher->create(dfOps_);       // a new dispatcher but with our operators
     ASSERT_not_null(dispatcher_);
-}
-
-std::vector<SgAsmInstruction*>
-DataFlow::DefaultVertexUnpacker::operator()(SgAsmBlock *blk) {
-    return AST::Traversal::findDescendantsTyped<SgAsmInstruction>(blk);
 }
 
 DataFlow::Graph

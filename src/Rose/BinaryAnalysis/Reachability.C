@@ -707,7 +707,7 @@ struct TransferFunction {
 };
 
 struct MergeFunction {
-    bool operator()(Reachability::ReasonFlags &a, Reachability::ReasonFlags b) {
+    bool operator()(const size_t /*aId*/, Reachability::ReasonFlags &a, const size_t /*bId*/, Reachability::ReasonFlags b) {
         if (a == b)
             return false;
         a.set(b);
