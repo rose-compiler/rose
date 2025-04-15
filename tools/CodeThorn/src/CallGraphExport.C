@@ -25,15 +25,15 @@ namespace progrep = CodeThorn;  // progrep to make the code easily customizable
                                 // for binary analysis.
 namespace
 {
-  std::intptr_t
+  std::string
   uniqueId(progrep::FunctionKeyType key)
   {
     progrep::CompatibilityBridge compat;
 
-    return compat.numericId(key);
+    return compat.uniqueName(key);
   }
 
-  std::intptr_t
+  std::string
   uniqueId(const progrep::CallGraph::Vertex& vertex)
   {
     return uniqueId(vertex.value());
@@ -356,6 +356,10 @@ namespace CodeThorn
              res["id"]      = uniqueId(key);
              res["name"]    = nameOf(key);
              res["defined"] = compat.hasDefinition(key);
+
+             if (auto clazz = compat.classType(key))
+               res["class"]  = typeNameOf(*clazz);
+
              // res["fileid"]  = compat.location(key);
 
              return res;

@@ -16,6 +16,7 @@ set(CODETHORN_SOLO_HEADER_FILES
     HSetMaintainer.h
     Memoizer.h
     ReadWriteData.h
+    Utility.h
     WorkListSeq.h
 )
 

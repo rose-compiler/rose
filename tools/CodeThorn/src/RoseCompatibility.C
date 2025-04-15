@@ -32,17 +32,17 @@ namespace
   struct ConstSymbolTableIterator
   {
       using iterator_category = std::forward_iterator_tag;
-      using value_type = const SgSymbol;
+      using value_type = const SgSymbol&;
       using difference_type = std::ptrdiff_t;
-      using pointer = value_type*;
-      using reference = value_type&;
+      using pointer = const SgSymbol*;
+      using reference = value_type;
 
-      ConstSymbolTableIterator(const SgScopeStatement& s, value_type* el)
+      ConstSymbolTableIterator(const SgScopeStatement& s, const SgSymbol* el)
       : scope(&s), current(el)
       {}
 
-      const value_type& operator*()  const { return *current; }
-      const value_type* operator->() const { return current; }
+      reference operator*()  const { return *current; }
+      pointer   operator->() const { return current; }
 
       ConstSymbolTableIterator& operator++()
       {
@@ -70,7 +70,7 @@ namespace
 
     private:
       sg::NotNull<const SgScopeStatement> scope;
-      value_type*                         current;
+      const SgSymbol*                     current;
   };
 
   ConstSymbolTableIterator
@@ -124,8 +124,9 @@ namespace
 
   bool isVirtual(const SgFunctionDeclaration& dcl)
   {
-    // \note ROSE has isVirtual even when it is not
-    //       explicit in the source code.
+    // \note * ROSE has isVirtual even when it is not
+    //         explicit in the source code.
+    //       * virtual may not be set on the function definition.
     return dcl.get_functionModifier().isVirtual();
   }
 
@@ -168,11 +169,64 @@ namespace
     return &n != clsdef.get_definition();
   }
 
+
+  const SgType&
+  stripDeclType(const SgType& ty)
+  {
+    if (const SgDeclType* dclty = isSgDeclType(&ty))
+      return SG_DEREF(dclty->get_base_type());
+
+    return ty;
+  }
+
+
+  const SgType*
+  stripTypeAlias(const SgType* ty)
+  {
+    if (const SgTypedefType* tydef = isSgTypedefType(ty))
+      return stripTypeAlias(tydef->get_base_type());
+
+    return ty ? &stripDeclType(*ty) : ty;
+  }
+
+  const SgType&
+  stripTypeAlias(const SgType& ty)
+  {
+    return SG_DEREF(stripTypeAlias(&ty));
+  }
+
+
+  const SgType&
+  returnType(const SgFunctionType& ft)
+  {
+    return SG_DEREF(ft.get_return_type());
+  }
+
+
   const SgType&
   typeOfExpr(const SgExpression& n)
   {
     return SG_DEREF(n.get_type());
   }
+
+  const SgClassType*
+  classtypeUnderType(const SgType& n, int otherStrips = 0)
+  {
+    const unsigned char STRIP_TO_CLASS = ( ct::STRIP_MODIFIER_ALIAS
+                                         | SgType::STRIP_REFERENCE_TYPE
+                                         | SgType::STRIP_RVALUE_REFERENCE_TYPE
+                                         | otherStrips
+                                         );
+
+    return isSgClassType(&stripDeclType(SG_DEREF(stripDeclType(n).stripType(STRIP_TO_CLASS))));
+  }
+
+  const SgClassType*
+  classtypeOfExpr(const SgExpression& n, int otherStrips = 0)
+  {
+    return classtypeUnderType(typeOfExpr(n), otherStrips);
+  }
+
 
   struct NodeCollector : ExcludeTemplates
   {
@@ -280,21 +334,21 @@ namespace
       : allClasses(classes)
       {}
 
-      bool underTemplatedAncestor(SgNode* n)
+      const SgNode* underTemplatedAncestor(SgNode* n)
       {
         const bool isRegular  = (  (n == nullptr)
                                 || isSgGlobal(n)
                                 );
 
-        if (isRegular) return false;
+        if (isRegular) return nullptr;
 
-        if (ExcludeTemplates::templated(n)) return true;
+        if (ExcludeTemplates::templated(n)) return n;
 
-        auto res = templatedAncestor.emplace(std::make_pair(n, true));
+        auto res = templatedAncestor.emplace(std::make_pair(n, n));
 
         if (!res.second) return res.first->second;
 
-        const bool underTemplate = underTemplatedAncestor(n->get_parent());
+        const SgNode* underTemplate = underTemplatedAncestor(n->get_parent());
 
         res.first->second = underTemplate;
         return underTemplate;
@@ -306,16 +360,17 @@ namespace
       //~ ~ResetDefinitionsInNonDefiningClassDeclarationsOnMemoryPool() {}
 
     private:
-      ct::ClassAnalysis&      allClasses;
-      std::map<SgNode*, bool> templatedAncestor;
+      ct::ClassAnalysis&                     allClasses;
+      std::map<const SgNode*, const SgNode*> templatedAncestor;
   };
 
   void CollectClassesFromMemoryPool::visit (SgNode* node)
   {
     // For now we just do this for the SgClassDeclaration
     SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
+
     if (classDeclaration == nullptr) return;
-    if (underTemplatedAncestor(classDeclaration)) return;
+    if (/*const SgNode* ancestor =*/ underTemplatedAncestor(classDeclaration)) return;
 
     SgClassDefinition* classDef = classDeclaration->get_definition();
     if (classDef == nullptr) return;
@@ -623,29 +678,12 @@ namespace
       bool          ignoreFunctionReturnType = false;
   };
 
-  const SgType&
-  skipAliasTypes(const SgType& ty)
-  {
-    return SG_DEREF(ty.stripType(SgType::STRIP_TYPEDEF_TYPE));
-  }
-
-  const SgType*
-  skipAliasTypes(const SgType* ty)
-  {
-    return (ty == nullptr) ? ty : &skipAliasTypes(*ty);
-  }
-
-  const SgType&
-  returnType(const SgFunctionType& ft)
-  {
-    return SG_DEREF(ft.get_return_type());
-  }
 
   int
   TypeComparator::compare(const SgType& lhs, const SgType& rhs, bool ptrDecay, bool ignoreFuncReturn)
   {
-    const SgType& llhs = skipAliasTypes(lhs);
-    const SgType& rrhs = skipAliasTypes(rhs);
+    const SgType& llhs = stripTypeAlias(lhs);
+    const SgType& rrhs = stripTypeAlias(rhs);
 
     // types are the same if the type pointers are the same
     if (&llhs == &rrhs) return 0;
@@ -772,6 +810,22 @@ namespace
       return { true, n };
 
     return res;
+  }
+
+  void logPathToGlobal(std::ostream& os, const SgNode* n)
+  {
+    os << "  >" << n->class_name();
+
+    n = n->get_parent();
+
+    while (n && !isSgGlobal(n))
+    {
+      os << "." << n->class_name();
+
+      n = n->get_parent();
+    }
+
+    os << std::endl;
   }
 }
 
@@ -1032,6 +1086,41 @@ RoseCompatibilityBridge::numericId(AnyKeyType id) const
   return std::intptr_t(id);
 }
 
+std::string
+RoseCompatibilityBridge::uniqueName(AnyKeyType id) const
+{
+  // ClassKeyType
+  if (ClassKeyType cls = isSgClassDefinition(id))
+  {
+    sg::NotNull<const SgClassDeclaration> dcl = isSgClassDeclaration(cls->get_parent());
+
+    return dcl->get_mangled_name();
+  }
+
+  // FunctionKeyType
+  if (FunctionKeyType fun = isSgFunctionDeclaration(id))
+    return fun->get_mangled_name();
+
+  // TypeKeyType, FunctionTypeKeyType
+  if (TypeKeyType ty = isSgType(id))
+    return ty->get_mangled();
+
+  // VariableKeyType
+  if (VariableKeyType var = isSgInitializedName(id))
+    return var->get_mangled_name();
+
+  // invalid (null) ID
+  if (id == AnyKeyType{})
+    return "<null>";
+
+  // ExpressionKeyType, CastKeyType
+  if (/*ExpressionKeyType exp =*/ isSgExpression(id))
+    throw std::runtime_error{"Unable to compute unique name for this id."};
+
+  // unexpected types
+  throw std::logic_error{"Internal-ERROR: Unexpected ID type as input to uniqueName."};
+}
+
 namespace
 {
   struct CovarianceChecker : sg::DispatchHandler<RoseCompatibilityBridge::TypeRelation>
@@ -1121,7 +1210,7 @@ namespace
       ReturnType
       check(const SageType& drvTy)
       {
-        baseTy = skipAliasTypes(baseTy);
+        baseTy = stripTypeAlias(baseTy);
 
         if (drvTy.variantT() != SG_DEREF(baseTy).variantT())
           return RoseCompatibilityBridge::unrelated;
@@ -1199,7 +1288,7 @@ namespace
       ReturnType
       check(const T& drvTy)
       {
-        basTy = skipAliasTypes(basTy);
+        basTy = stripTypeAlias(basTy);
 
         // symmetric check for strict type equality
         if (drvTy.variantT() != SG_DEREF(basTy).variantT())
@@ -1681,34 +1770,10 @@ SgClassDefinition* getClassDefOpt(const SgClassType& n)
 
 SgClassDefinition* getClassDefOpt(const SgInitializedName& n)
 {
-  SgType&          ty  = SG_DEREF(n.get_type());
-  SgClassType*     cls = isSgClassType(ty.stripType(STRIP_MODIFIER_ALIAS | SgType::STRIP_ARRAY_TYPE));
+  SgType&            ty  = SG_DEREF(n.get_type());
+  const SgClassType* cls = classtypeUnderType(ty, SgType::STRIP_ARRAY_TYPE);
 
   return (cls == nullptr) ? nullptr : getClassDefOpt(*cls);
-}
-
-
-SgClassDefinition* getClassDefOpt(const SgExpression& n, bool skipUpCasts)
-{
-  static constexpr unsigned char STRIP_TO_CLASS = ( STRIP_MODIFIER_ALIAS
-                                                  | SgType::STRIP_REFERENCE_TYPE
-                                                  | SgType::STRIP_POINTER_TYPE
-                                                  // | SgType::STRIP_ARRAY_TYPE
-                                                  );
-
-  const SgType&    ty  = typeOfExpr(n);
-  SgClassType*     cls = isSgClassType(ty.stripType(STRIP_TO_CLASS));
-
-  if (cls == nullptr) return nullptr;
-  if (!skipUpCasts) return getClassDefOpt(*cls);
-
-  const SgCastExp* castexp = isSgCastExp(&n);
-
-  // \todo also work with other casts, such as const_cast or C-style cast?
-  if ((castexp == nullptr) || (castexp->cast_type() != SgCastExp::e_static_cast))
-    return getClassDefOpt(*cls);
-
-  return getClassDefOpt(SG_DEREF(castexp->get_operand()), true /* continue skipping up casts */);
 }
 
 
@@ -1717,7 +1782,19 @@ SgFunctionDeclaration& keyDecl(SgFunctionDeclaration& fn)
   SgFunctionDeclaration* fKey = isSgFunctionDeclaration(fn.get_firstNondefiningDeclaration());
   SgFunctionDeclaration* res  = fKey ? fKey : &fn;
 
-  ASSERT_require(isVirtual(*res) == isVirtual(fn));
+/*
+  if (isVirtual(*res) != isVirtual(fn))
+  {
+    msgError() << "** " << fn.get_name() << " @" << &fn << " - def: " << fn.get_definition() << "   virt: " << isVirtual(fn)
+               << "\n   " << res->get_name() << " @" << res << " - def: " << res->get_definition() << "   virt: " << isVirtual(*res)
+               << "\n   " << typeid(fn).name()
+               << std::endl;
+
+    logPathToGlobal(msgError(), res);
+  }
+*/
+
+  ASSERT_require(!isVirtual(fn) || isVirtual(*res));
   return *res;
 }
 
@@ -1733,6 +1810,7 @@ namespace
 
       CallData normalCall(const SgFunctionRefExp& n) const;
       CallData objectCall(const SgBinaryOp& n);
+      CallData objectOrLambdaCall(const SgDotExp& n);
       //~ CallData memPtrCall(const SgBinaryOp& n) const;
       CallData memberCall(const SgMemberFunctionRefExp& n) const;
       //~ CallData arrPtrCall(const SgPntrArrRefExp& n) const;
@@ -1747,7 +1825,7 @@ namespace
       void handle(const SgDotStarOp& n)              { res = objectCall(n); }
       void handle(const SgArrowStarOp& n)            { res = objectCall(n); }
 
-      void handle(const SgDotExp& n)                 { res = objectCall(n); }
+      void handle(const SgDotExp& n)                 { res = objectOrLambdaCall(n); }
       void handle(const SgArrowExp& n)               { res = objectCall(n); }
 
       void handle(const SgMemberFunctionRefExp& n)   { res = memberCall(n); }
@@ -1788,29 +1866,58 @@ namespace
   }
 
   CallData
+  AnalyseCallExp::objectOrLambdaCall(const SgDotExp& n)
+  {
+    if (isSgLambdaExp(n.get_lhs_operand()))
+    {
+      receiverKey         = nullptr; // \todo set the lambda type
+      polymorphicReceiver = false;
+
+      return descend(n.get_rhs_operand());
+    }
+
+    if (/*const SgConstructorInitializer* init =*/ isSgConstructorInitializer(n.get_lhs_operand()))
+    {
+      receiverKey         = nullptr; // \todo set the class type
+      polymorphicReceiver = false;
+
+      return descend(n.get_rhs_operand());
+    }
+
+    return objectCall(n);
+  }
+
+
+  CallData
   AnalyseCallExp::objectCall(const SgBinaryOp& n)
   {
+    // only relevant for pointer calls; maybe these could be passed down...
+    const unsigned char             STRIP_PTRS = SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE;
+
     // lhs is the receiver expression
     sg::NotNull<const SgExpression> receiverExpr = n.get_lhs_operand();
-    const SgType&                   receiverType = typeOfExpr(*receiverExpr);
-    const SgClassType*              receiverClss = isSgClassType(receiverType.findBaseType());
+    // sg::NotNull<const SgClassType>  receiverClss = classtypeOfExpr(*receiverExpr);
+    const SgClassType*              receiverClss = classtypeOfExpr(*receiverExpr, STRIP_PTRS);
 
     if (!receiverClss)
     {
-      msgError() << "unable to find class-type in lhs of " << n.unparseToString() << std::endl;
-      throw std::logic_error{"that's it"};
+      msgError() << "unable to find class-type in lhs of " << n.unparseToString()
+                 << " w/ expr-type " << typeid(*receiverExpr).name()
+                 << " + type " << typeid(typeOfExpr(*receiverExpr)).name()
+                 << std::endl;
+      throw std::logic_error{"unable to find class-type - AnalyseCallExp::objectCall"};
     }
-
-    // sg::NotNull<const SgClassType>  receiverClss = isSgClassType(receiverType.findBaseType());
 
     receiverKey = classDefinition_opt(*receiverClss);
     ASSERT_require(receiverKey && *receiverKey);
 
-    SgType* const                   receiverBaseType = receiverType.stripTypedefsAndModifiers();
+    SgType* const                   receiverBaseType = typeOfExpr(*receiverExpr).stripTypedefsAndModifiers();
 
-    polymorphicReceiver = (  isSgPointerType(receiverBaseType)
-                          || isSgReferenceType(receiverBaseType)
+    polymorphicReceiver = (  // objects
+                             isSgReferenceType(receiverBaseType)
                           || isSgRvalueReferenceType(receiverBaseType)
+                             // pointers when the parent is an arrow expression
+                          || isSgPointerType(receiverBaseType)
                           || isSgArrayType(receiverBaseType)
                           );
 
@@ -1820,11 +1927,11 @@ namespace
   CallData
   AnalyseCallExp::memberCall(const SgMemberFunctionRefExp& n) const
   {
-    RoseCompatibilityBridge            compat;
-    const SgMemberFunctionDeclaration* mfn = n.getAssociatedMemberFunctionDeclaration();
+    const SgMemberFunctionDeclaration* mfn     = n.getAssociatedMemberFunctionDeclaration();
+    const FunctionKeyType              mfnkey  = RoseCompatibilityBridge{}.functionId(mfn);
     const bool                         virtualCall = (  polymorphicReceiver
                                                      && (n.get_need_qualifier() == 0)
-                                                     && isVirtualFunction(compat.functionId(mfn))
+                                                     && isVirtualFunction(mfnkey)
                                                      );
 
     Optional<ClassKeyType>             keyCopy = receiverKey;
@@ -1832,10 +1939,10 @@ namespace
     // if not set from context
     // \todo check that receiverKey matches if already set.
     if (!keyCopy)
-      keyCopy = &getClassDefForFunction(SG_DEREF(n.getAssociatedMemberFunctionDeclaration()));
+      keyCopy = &getClassDefForFunction(SG_DEREF(mfn));
 
     ASSERT_require(keyCopy);
-    return { compat.functionId(mfn), &n, keyCopy, ref, virtualCall };
+    return { mfnkey, &n, keyCopy, ref, virtualCall };
   }
 
   bool
@@ -1864,22 +1971,6 @@ namespace
   analyseCallExp(const SgFunctionCallExp& n, const ct::FunctionPredicate& virtualFunctionTest)
   {
     return sg::dispatch(AnalyseCallExp{virtualFunctionTest, n}, n.get_function());
-  }
-
-  void logPathToGlobal(std::ostream& os, const SgNode* n)
-  {
-    os << "  >" << n->class_name();
-
-    n = n->get_parent();
-
-    while (n && !isSgGlobal(n))
-    {
-      os << "." << n->class_name();
-
-      n = n->get_parent();
-    }
-
-    os << std::endl;
   }
 
   CallData
@@ -1918,6 +2009,10 @@ namespace
       : Base(), ExcludeTemplates(), ignoreFunctionRefs(false), isVirtualFunction(virtualFunctionTest)
       {}
 
+      CallDataFinder(CallDataFinder&&)            = default;
+      CallDataFinder& operator=(CallDataFinder&&) = default;
+      ~CallDataFinder()                           = default;
+
       void descend(SgNode& n, bool ignoreFunctionRefExp = false);
       void handleNode(SgNode* n, bool ignoreFunctionRefExp = false);
       void handleFnRefExp( const SgFunctionDeclaration& dcl,
@@ -1929,10 +2024,13 @@ namespace
       template <class SageExpression>
       void handleCallExp(SageExpression& n)
       {
+        std::cerr << "emplace call  " << n.unparseToString() << std::endl;
         res.emplace_back(analyseCallExp(n, *isVirtualFunction));
 
         descend(n, true);
       }
+
+      void handleSelection(SgBinaryOp&);
 
       using ExcludeTemplates::handle;
 
@@ -1955,7 +2053,7 @@ namespace
         ClassKeyType                             key = classDefinition_opt(*cls);
 
         ASSERT_require(key != ClassKeyType{});
-        handleFnRefExp(*dcl, n, key, isVirtual(*dcl));
+        handleFnRefExp(*dcl, n, key, isVirtual(*dcl)); // todo
       }
 
       void handle(SgCommaOpExp& n)
@@ -1963,6 +2061,11 @@ namespace
         handleNode(n.get_lhs_operand(), true /* no effect on comma's lhs */);
         handleNode(n.get_rhs_operand(), ignoreFunctionRefs);
       }
+
+      void handle(SgDotExp& n)      { handleSelection(n); }
+      void handle(SgArrowExp& n)    { handleSelection(n); }
+      void handle(SgDotStarOp& n)   { handleSelection(n); }
+      void handle(SgArrowStarOp& n) { handleSelection(n); }
 
       void handle(SgAddressOfOp& n)
       {
@@ -1972,6 +2075,10 @@ namespace
     private:
       bool                               ignoreFunctionRefs = false;
       sg::NotNull<ct::FunctionPredicate> isVirtualFunction;
+
+      CallDataFinder()                                 = delete;
+      CallDataFinder(const CallDataFinder&)            = delete;
+      CallDataFinder& operator=(const CallDataFinder&) = delete;
   };
 
   void
@@ -1991,6 +2098,15 @@ namespace
   }
 
   void
+  CallDataFinder::handleSelection(SgBinaryOp& n)
+  {
+    // in selection operators like x.f() or (x->*f)() we ignore the function refs
+    //   if they appear in a call expression.
+    handleNode(n.get_lhs_operand(), false);
+    handleNode(n.get_rhs_operand(), ignoreFunctionRefs);
+  }
+
+  void
   CallDataFinder::handleFnRefExp(const SgFunctionDeclaration& dcl, SgExpression& n, Optional<ClassKeyType> typeBound, bool isVirtual)
   {
     if (ignoreFunctionRefs) return;
@@ -1999,6 +2115,7 @@ namespace
     FunctionKeyType         key = compat.functionId(&dcl);
 
     ASSERT_require(key);
+    std::cerr << "emplace fnref " << n.unparseToString() << std::endl;
     res.emplace_back( key, &n, typeBound, nullptr, isVirtual );
   }
 
@@ -2316,6 +2433,16 @@ RoseCompatibilityBridge::specialMemberFunctions(ct::ClassKeyType clazz) const
 
   return ct::SpecialMemberFunctionContainer(resultRange.begin(), resultRange.end());
 }
+
+Optional<ClassKeyType>
+RoseCompatibilityBridge::classType(FunctionKeyType fn) const
+{
+  const SgMemberFunctionDeclaration* mfn = isSgMemberFunctionDeclaration(fn);
+  if (mfn == nullptr) return {};
+
+  return &getClassDefForFunction(*mfn);
+}
+
 
 //
 // SpecialMemberFunction

@@ -459,12 +459,18 @@ struct AnalysesTuple : std::tuple<ClassAnalysis, CastAnalysis>
 
 
 /// collects the class hierarchy and all casts from a project
+/// \note
+///    It is preferred to use analyzeClassesFromMemoryPool, which
+///    returns a complete set of classes in ROSE.
 /// \{
 AnalysesTuple analyzeClassesAndCasts(const CompatibilityBridge& compat, ASTRootType n);
 AnalysesTuple analyzeClassesAndCasts(ASTRootType n);
 /// \}
 
 /// collects the class hierarchy from a project
+/// \note
+///    It is preferred to use analyzeClassesFromMemoryPool, which
+///    returns a complete set of classes in ROSE.
 /// \{
 ClassAnalysis analyzeClasses(const CompatibilityBridge& compat, ASTRootType n);
 ClassAnalysis analyzeClasses(ASTRootType n);

@@ -140,12 +140,82 @@ namespace
           for (ct::OverrideDesc overrider : vfunc.overriders())
             insert(srcpos, overrider.function(), ct::CallEdge::overrider);
         }
-        catch (...)
+        catch (...) // \todo test explicitly if a class has a vtable
         {
         }
       }
     }
   }
+
+#if DEBUG_CODE
+  struct MangledNameGen
+  {
+      using Map = std::map<std::string, std::vector<ct::FunctionKeyType> >;
+
+      void operator()(ct::FunctionKeyType key)
+      {
+        m[compat.uniqueName(key)].emplace_back(key);
+      }
+
+      operator Map() && { return std::move(m); }
+
+    private:
+      ct::CompatibilityBridge compat;
+      Map m = {};
+  };
+
+  struct ParentInfo
+  {
+    const SgFunctionDeclaration* fn;
+  };
+
+  std::ostream& operator<<(std::ostream& os, ParentInfo inf)
+  {
+    if (const SgMemberFunctionDeclaration* mfn = isSgMemberFunctionDeclaration(inf.fn))
+    {
+      const SgDeclarationStatement* dcl = mfn->get_associatedClassDeclaration();
+
+      os << SageInterface::get_name(dcl)
+         << "  " << typeid(*dcl).name()
+         << "  " << dcl
+         ;
+    }
+
+    return os;
+  }
+
+  void checkUniqueMangledNames(const std::vector<ct::FunctionKeyType>& allFun)
+  {
+    MangledNameGen::Map m = std::for_each(allFun.begin(), allFun.end(), MangledNameGen{});
+    std::size_t         num = 0;
+
+    for (const auto& entry : m)
+    {
+      ASSERT_require(entry.second.size());
+
+      if (entry.second.size() == 1) continue;
+
+      ++num;
+      msgError() << "duplicate keys " << entry.first << " " << entry.second.size()
+                 << std::endl;
+
+      for (ct::FunctionKeyType key : entry.second)
+        msgError() << "  " << key << " "
+                   << (key->get_definingDeclaration() != nullptr ? " def   " : " undef ")
+                   << (key == key->get_firstNondefiningDeclaration() ? "   " : " X ")
+                   << " " << key->get_name()
+                   << " " << typeid(*key).name()
+                   << "\n    " << ParentInfo{key}
+                   << std::endl;
+    }
+
+    if (num)
+    {
+      msgError() << "DUPLI " << num << std::endl;
+      throw std::runtime_error("oops, duplicate mangled name..");
+    }
+  }
+#endif /* DEBUG_CODE */
 }
 
 
@@ -160,6 +230,8 @@ namespace CodeThorn
     auto                         insertVertices = [&g](FunctionKeyType key) -> void { g.insertVertex(key); };
     ct::FunctionPredicate        alwaysFalse    = [](FunctionKeyType key) -> bool { return false; };
     ct::FunctionPredicate        isVirtualFunc  = vfa ? vfa->virtualFunctionTest() : alwaysFalse;
+
+    // checkUniqueMangledNames(allFunctions);
 
     std::for_each( allFunctions.begin(), allFunctions.end(),
                    insertVertices

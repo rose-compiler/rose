@@ -1,4 +1,5 @@
 #include "ClassHierarchyAnalysis.h"
+#include "Utility.h"
 
 #include <algorithm>
 #include <unordered_set>
@@ -12,88 +13,9 @@
 namespace ct = CodeThorn;
 namespace adapt = boost::adaptors;
 
+
 namespace
 {
-  /// pseudo type to indicate that an element is not in a sequence
-  struct unavailable_t {};
-
-  template <class First, class Second>
-  auto key(const std::pair<First, Second>& keyval) -> const First&
-  {
-    return keyval.first;
-  }
-
-  template <class... Elems>
-  auto key(const std::tuple<Elems...>& keydata) -> decltype( std::get<0>(keydata) )
-  {
-    return std::get<0>(keydata);
-  }
-
-  auto key(ct::FunctionKeyType keydata) -> ct::FunctionKeyType
-  {
-    return keydata;
-  }
-
-  /// \brief  traverses two ordered associative sequences in order of their elements.
-  ///         The elements in the sequences must be convertible. A merge object
-  ///         is called with sequence elements in order of their keys in [aa1, zz1) and [aa2, zz2).
-  /// \tparam _Iterator1 an iterator of an ordered associative container
-  /// \tparam _Iterator2 an iterator of an ordered associative container
-  /// \tparam BinaryOperator a merge object that provides three operator()
-  ///         functions.
-  ///         - void operator()(_Iterator1::value_type, unavailable_t);
-  ///           called when an element is in sequence 1 but not in sequence 2.
-  ///         - void operator()(unavailable_t, _Iterator2::value_type);
-  ///           called when an element is in sequence 2 but not in sequence 1.
-  ///         - void operator()(_Iterator1::value_type, _Iterator2::value_type);
-  ///           called when an element is in both sequences.
-  /// \tparam Comparator compares elements in sequences.
-  ///         called using both (_Iterator1::key_type, _Iterator2::key_type)
-  //          and (_Iterator2::key_type, _Iterator1::key_type).
-  template <class _Iterator1, class _Iterator2, class BinaryOperator, class Comparator>
-  BinaryOperator
-  merge_keys( _Iterator1 aa1, _Iterator1 zz1,
-              _Iterator2 aa2, _Iterator2 zz2,
-              BinaryOperator binop,
-              Comparator comp
-            )
-  {
-    static constexpr unavailable_t unavail;
-
-    while (aa1 != zz1 && aa2 != zz2)
-    {
-      if (comp(key(*aa1), key(*aa2)))
-      {
-        binop(*aa1, unavail);
-        ++aa1;
-      }
-      else if (comp(key(*aa2), key(*aa1)))
-      {
-        binop(unavail, *aa2);
-        ++aa2;
-      }
-      else
-      {
-        binop(*aa1, *aa2);
-        ++aa1; ++aa2;
-      }
-    }
-
-    while (aa1 != zz1)
-    {
-      binop(*aa1, unavail);
-      ++aa1;
-    }
-
-    while (aa2 != zz2)
-    {
-      binop(unavail, *aa2);
-      ++aa2;
-    }
-
-    return binop;
-  }
-
   [[noreturn]]
   void reportAndThrowError(ct::ClassKeyType key, const ct::ClassAnalysis& m)
   {
@@ -349,7 +271,21 @@ namespace
     auto& elem = lookup(all, curr);
 
     for (ct::ClassKeyType clazz : selector(elem))
-      traversal(all, fn, clazz, selector, explored);
+    {
+      try
+      {
+        traversal(all, fn, clazz, selector, explored);
+      }
+      catch (...)
+      {
+        msgError() << "  .. required from " << ct::typeNameOf(elem.first)
+                   << "\n     and dependency " << ct::typeNameOf(clazz) << " - " << typeid(*clazz).name()
+                   << "\n     CONSIDER: use CodeThorn::analyzeClassesFromMemoryPool to find all classes."
+                   << std::endl;
+
+        throw;
+      }
+    }
 
     fn(elem);
   }
@@ -1114,13 +1050,13 @@ namespace
 
       return res < 0;
     }
-
+/*
     template <class TupleWithFunctionKeyType>
     bool operator()(const TupleWithFunctionKeyType& lhs, const TupleWithFunctionKeyType& rhs) const
     {
       return (*this)(std::get<0>(lhs), std::get<0>(rhs));
     }
-
+*/
     const ct::CompatibilityBridge& compat;
   };
 
@@ -1131,7 +1067,6 @@ namespace
       using ReturnTypeRelation = ct::CompatibilityBridge::TypeRelation;
 
       const ReturnTypeRelation rel = compat.haveSameOrCovariantReturn(classes, bas, drv);
-      ASSERT_require(rel != ct::CompatibilityBridge::unrelated);
 
       if (rel == ct::CompatibilityBridge::unrelated)
       {
@@ -1141,6 +1076,7 @@ namespace
         return;
       }
 
+      ASSERT_require(rel != ct::CompatibilityBridge::unrelated);
       //~ std::cerr << compat.nameOf(drv) << " overrides " << compat.nameOf(bas)
                 //~ << std::endl;
 
@@ -1192,11 +1128,11 @@ namespace
     {
       VirtualFunctionContainer& parentVFunSorted = sortedVFunMap.at(parentDesc.getClass());
 
-      merge_keys( vfunSorted.begin(), vfunSorted.end(),
-                  parentVFunSorted.begin(), parentVFunSorted.end(),
-                  ComputeVFunctionRelation{compat, classes, vfunAnalysis, entry.first, parentDesc.getClass()},
-                  VFNameTypeOrder{compat}
-                );
+      mergeOrderedSequences( vfunSorted.begin(), vfunSorted.end(),
+                             parentVFunSorted.begin(), parentVFunSorted.end(),
+                             ComputeVFunctionRelation{compat, classes, vfunAnalysis, entry.first, parentDesc.getClass()},
+                             VFNameTypeOrder{compat}
+                           );
     }
   }
 }

@@ -189,8 +189,19 @@ class RoseCompatibilityBridge
     /// returns a string representation for \p vid
     std::string nameOf(FunctionKeyType fid) const;
 
-    /// returns a unique numeric number for id
+    /// returns a unique numeric number for \p id
+    /// \details
+    ///    the ID is valid from within a program run; it is not stable across runs
     std::intptr_t numericId(AnyKeyType id) const;
+
+    /// returns a unique string representing the object represented by \p id
+    /// \throw  a runtime exception if no name can be generated for
+    ///         a specific object. For example, CastKeyType and
+    ///         ExpressionKeyType currently do not support
+    ///         uniqueNames.
+    /// \details
+    ///    the unique string is valid and stable across runs
+    std::string uniqueName(AnyKeyType id) const;
 
     /// compares the name of functions \p lhs and \p rhs
     /// \param lhs some function
@@ -312,6 +323,9 @@ class RoseCompatibilityBridge
 
     SpecialMemberFunctionContainer
     specialMemberFunctions(ClassKeyType clazz) const;
+
+    Optional<ClassKeyType>
+    classType(FunctionKeyType fn) const;
 };
 
 /// wrapper class to produce informative debug output about casts
@@ -364,12 +378,6 @@ SgClassDefinition& getClassDef(const SgDeclarationStatement& n);
 
 /// returns the class definition where \p n is defined
 SgClassDefinition& getClassDefForFunction(const SgMemberFunctionDeclaration& n);
-
-/// returns the class definition associated with expression \p n
-/// \details
-///    strips modifiers, aliases, references, and pointers
-/// returns nullptr if a class definition cannot be found
-SgClassDefinition* getClassDefOpt(const SgExpression& n, bool skipUpCasts = false);
 
 /// returns the class definition of \p n
 /// returns nullptr if a class definition cannot be found
