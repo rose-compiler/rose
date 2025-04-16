@@ -361,6 +361,15 @@ private:
 #endif
 };
 
+/** Which analysis is used to discover static jump tables.
+ *
+ *  These are jump tables typically emitted by the compiler for things like C `switch` statements. */
+enum class StaticJumpTableAnalysis {
+    SINGLE_BLOCK,                                       /**< Look only at one block, using pattern matching. */
+    DATAFLOW,                                           /**< Look at multiple blocks using instruction semantics and constraints. */
+    ALL                                                 /**< Try all analyses, saving the result from the first successful one. */
+};
+
 /** Settings that control the engine partitioning.
  *
  *  These switches are used by the engine to control how it partitions addresses into instructions and static data,
@@ -618,12 +627,36 @@ struct PartitionerSettings {
      *  format to a source language format. */
     bool demangleNames = true;
 
+    /** Which analysis is used to discover static jump tables. */
+    StaticJumpTableAnalysis staticJumpTableAnalysis = StaticJumpTableAnalysis::SINGLE_BLOCK;
+
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
     template<class S> void serialize(S&, unsigned version);
 #endif
 };
+
+namespace IndirectControlFlow {
+    /** Settings for indirect control flow recovery. */
+    struct Settings {
+        /** Maximum depth of reverse CFG traversal.
+         *
+         *  The maximum depth of the reverse CFG traversal during the reverse phase of the dataflow graph construction. This
+         *  indicates how far backward we should look from the basic block in question without considering the size of any called
+         *  functions. */
+        size_t maxReversePathLength = 4;
+
+        /** Maximum factor for dataflow iterations.
+         *
+         *  Perform at most `n` iterations where `n` is computed by multiplying the number of vertices in the dataflow graph by this
+         *  factor.  It is common for binary data flow to not reach a fixed point, and this limit guarantees that it will terminate.
+         *  If the dataflow analysis terminates before reaching a fixed point, the indirect control flow recovery will try to use
+         *  the partial results. */
+        size_t maxDataflowIterationFactor = 2;
+    };
+} // namespace
+
 
 /** Settings for controlling the engine behavior.
  *

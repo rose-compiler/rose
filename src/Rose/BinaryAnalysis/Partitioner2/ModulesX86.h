@@ -141,7 +141,6 @@ public:
     static Ptr instance(); /**< Allocating constructor. */
     virtual bool operator()(bool chain, const Args&) override;
 
-
     // Adjust successors and for the basic block, create a data block, and add everything to the partitioner.
     void addToPartitioner(const Args&, const std::set<Address> &successors) const;
 

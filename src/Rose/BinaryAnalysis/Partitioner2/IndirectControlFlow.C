@@ -1,3 +1,6 @@
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Partitioner2/IndirectControlFlow.h>
@@ -40,6 +43,30 @@ initDiagnostics() {
         Rose::Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Partitioner2::IndirectControlFlow");
         mlog.comment("analyzing indirect control flow");
     }
+}
+
+Sawyer::CommandLine::SwitchGroup
+commandLineSwitches(Settings &settings) {
+    using namespace Sawyer::CommandLine;
+
+    SwitchGroup sg("Indirect control flow recovery");
+    sg.name("icf");
+    sg.doc("These switches affect the indirect control flow recovery algorithms primarily used when partitioning a binary specimen "
+           "into instructions, basic blocks, static data blocks, and functions to construct the control flow graph and related "
+           "data structures.");
+
+    sg.insert(Switch("df-max-reverse")
+              .argument("n", nonNegativeIntegerParser(settings.maxReversePathLength))
+              .doc("The maximum depth of the initial, function-skipping, reverse CFG traversal when constructing a dataflow "
+                   "graph. The default is " + plural(settings.maxReversePathLength, "basic blocks") + "."));
+
+    sg.insert(Switch("df-max-iter-factor")
+              .argument("n", nonNegativeIntegerParser(settings.maxDataflowIterationFactor))
+              .doc("Limits the dataflow analysis so it terminates even if the states don't converge to a fixed point. The limit "
+                   "is computed by multiplying the number of vertices in the dataflow graph by @v{n}. The default for @v{n} is " +
+                   boost::lexical_cast<std::string>(settings.maxDataflowIterationFactor) + "."));
+
+    return sg;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -668,17 +695,16 @@ useJumpTable(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, con
     return false;
 }
 
-static bool
-analyzeJumpTables(const Partitioner::Ptr &partitioner) {
+bool
+analyzeAllBlocks(const Settings &settings, const Partitioner::Ptr &partitioner) {
     ASSERT_not_null(partitioner);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    const size_t maxPathLength = 4;                     // arbitrary
     bool madeChanges = false;
 
     for (const auto &cfgVertex: partitioner->cfg().vertices()) {
         if (BasicBlock::Ptr bb = shouldAnalyze(cfgVertex)) {
             SAWYER_MESG(debug) <<"possible jump table for " <<bb->printableName() <<"\n";
-            DfGraph dfGraph = buildDfGraphInReverse(partitioner, cfgVertex, maxPathLength);
+            DfGraph dfGraph = buildDfGraphInReverse(partitioner, cfgVertex, settings.maxReversePathLength);
             if (debug)
                 printGraph(debug, dfGraph);
             if (dfGraph.isEmpty())
@@ -691,7 +717,7 @@ analyzeJumpTables(const Partitioner::Ptr &partitioner) {
             DfMerge merge(partitioner, ops, dfGraph);
             using DfEngine = BinaryAnalysis::DataFlow::Engine<DfGraph, BS::State::Ptr, DfTransfer, DfMerge>;
             DfEngine dfEngine(dfGraph, xfer, merge);
-            dfEngine.maxIterations(dfGraph.nVertices()); // arbitrary
+            dfEngine.maxIterations(dfGraph.nVertices() * settings.maxDataflowIterationFactor);
 
             // Choose dataflow starting points
             for (const auto &vertex: dfGraph.vertices()) {
@@ -718,16 +744,6 @@ analyzeJumpTables(const Partitioner::Ptr &partitioner) {
 }
 
 } // namespace
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Main entry points for this analysis
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool
-analyzeJumpTables(const Partitioner::Ptr &partitioner) {
-    return StaticJumpTable::analyzeJumpTables(partitioner);
-}
-
 } // namespace
 } // namespace
 } // namespace

@@ -154,6 +154,7 @@ EngineBinary::commandLineSwitches() {
     retval.push_back(loaderSwitches(settings().loader));
     retval.push_back(disassemblerSwitches(settings().disassembler));
     retval.push_back(partitionerSwitches(settings().partitioner));
+    retval.push_back(IndirectControlFlow::commandLineSwitches(settings().icf));
     retval.push_back(astConstructionSwitches(settings().astConstruction));
     return retval;
 }
@@ -830,6 +831,29 @@ EngineBinary::partitionerSwitches(PartitionerSettings &settings) {
               .key("demangle-names")
               .intrinsicValue(false, settings.demangleNames)
               .hidden(true));
+
+    sg.insert(Switch("static-jump-tables")
+              .argument("how", enumParser<StaticJumpTableAnalysis>(settings.staticJumpTableAnalysis)
+                        ->with("single", StaticJumpTableAnalysis::SINGLE_BLOCK)
+                        ->with("dataflow", StaticJumpTableAnalysis::DATAFLOW))
+              .doc("Specifies the kind of analysis to use when reconstructing indirect control flow for compiler-generated jump "
+                   "tables, such as are created by the C compiler for `switch` statements.  The choices are:"
+
+                   "@named{single}{The analysis examines only the basic block that contains the indirect jump instruction. This is "
+                   "the original, ROSE jump table analysis that attempts to match instruction patterns. It's fast, and sometimes "
+                   "gives good enough results." +
+                   std::string(StaticJumpTableAnalysis::SINGLE_BLOCK == settings.staticJumpTableAnalysis ?
+                               " This is the default." : "") + "}"
+
+                   "@named{dataflow}{A dataflow analysis is performed on the basic blocks near the indirect jump using instruction "
+                   "semantics in order to discover the jump table adddress. If an SMT solver is available, it's used to help "
+                   "refine the size of the table. This approach is slower but can be more accurate in some situations." +
+                   std::string(StaticJumpTableAnalysis::DATAFLOW == settings.staticJumpTableAnalysis ?
+                               " This is the default." : "") + "}"
+
+                   "@named{all}{Try all analyses and save the results from the first one that succeeds." +
+                   std::string(StaticJumpTableAnalysis::DATAFLOW == settings.staticJumpTableAnalysis ?
+                               " This is the default." : "") + "}"));
 
     return sg;
 }
@@ -1583,11 +1607,6 @@ EngineBinary::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
     SAWYER_MESG(where) <<"discovering basic blocks for marked functions\n";
     attachBlocksToFunctions(partitioner);
 
-#if 1 // [Robb Matzke 2025-04-10]
-    std::cerr <<"ROBB: Rose::BinaryAnalysis::Partitioner2::Engine::updateAnalysisResults: analyzing indirect control flow\n";
-    IndirectControlFlow::analyzeFunctions(partitioner);
-#endif
-
     // Additional work
     if (settings().partitioner.findingDeadCode) {
         SAWYER_MESG(where) <<"attaching dead code to functions\n";
@@ -2191,9 +2210,21 @@ EngineBinary::discoverFunctions(const Partitioner::Ptr &partitioner) {
         // Find as many basic blocks as possible by recursively following the CFG as we build it.
         discoverBasicBlocks(partitioner);
 
+        // Handle static jump tables such as those produced by a C compiler for `switch` statements. This is a dataflow analysis
+        // that examines more than just single basic blocks.
+        switch (settings().partitioner.staticJumpTableAnalysis) {
+            case StaticJumpTableAnalysis::DATAFLOW:
+            case StaticJumpTableAnalysis::ALL:
+                if (IndirectControlFlow::StaticJumpTable::analyzeAllBlocks(settings().icf, partitioner))
+                    continue;
+                break;
+            case StaticJumpTableAnalysis::SINGLE_BLOCK:
+                break;
+        }
+
+        // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's entry
+        // block, so go back and look for more basic blocks again.
         if (!hasCilCodeSection()) {
-            // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's
-            // entry block, so go back and look for more basic blocks again.
             if (nextPrologueVa < partitioner->memoryMap()->hull().greatest()) {
                 std::vector<Function::Ptr> newFunctions =
                     makeNextPrologueFunction(partitioner, nextPrologueVa, nextPrologueVa /*out*/);
@@ -2204,8 +2235,8 @@ EngineBinary::discoverFunctions(const Partitioner::Ptr &partitioner) {
             }
         }
 
-        // Scan inter-function code areas to find basic blocks that look reasonable and process them with instruction semantics
-        // to find calls to functions that we don't know about yet.
+        // Scan inter-function code areas to find basic blocks that look reasonable and process them with instruction semantics to
+        // find calls to functions that we don't know about yet.
         if (settings().partitioner.findingInterFunctionCalls) {
             std::vector<Function::Ptr> newFunctions =
                 makeFunctionFromInterFunctionCalls(partitioner, nextInterFunctionCallVa /*in,out*/);

@@ -504,10 +504,22 @@ X86::functionPrologueMatchers(const Partitioner2::Engine::Ptr &engine) const {
 }
 
 std::vector<Partitioner2::BasicBlockCallback::Ptr>
-X86::basicBlockCreationHooks(const Partitioner2::Engine::Ptr&) const {
+X86::basicBlockCreationHooks(const Partitioner2::Engine::Ptr &engine) const {
+    ASSERT_not_null(engine);
     std::vector<Partitioner2::BasicBlockCallback::Ptr> retval;
+
     retval.push_back(Partitioner2::ModulesX86::FunctionReturnDetector::instance());
-    retval.push_back(Partitioner2::ModulesX86::SwitchSuccessors::instance());
+
+    // Static jump tables
+    switch (engine->settings().partitioner.staticJumpTableAnalysis) {
+        case Partitioner2::StaticJumpTableAnalysis::SINGLE_BLOCK:
+        case Partitioner2::StaticJumpTableAnalysis::ALL:
+            retval.push_back(Partitioner2::ModulesX86::SwitchSuccessors::instance());
+            break;
+        case Partitioner2::StaticJumpTableAnalysis::DATAFLOW:
+            break;
+    }
+
     return retval;
 }
 

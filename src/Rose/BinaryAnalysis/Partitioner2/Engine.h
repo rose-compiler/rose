@@ -170,6 +170,7 @@ public:
         LoaderSettings loader;                          /**< Settings used during specimen loading. */
         DisassemblerSettings disassembler;              /**< Settings for creating the disassembler. */
         PartitionerSettings partitioner;                /**< Settings for creating a partitioner. */
+        IndirectControlFlow::Settings icf;              /**< Settings for indirect control flow recovery. */
         EngineSettings engine;                          /**< Settings that control engine behavior. */
         JvmSettings engineJvm;                          /**< Settings that control behavior specific to EngineJvm. */
         AstConstructionSettings astConstruction;        /**< Settings for constructing the AST. */
