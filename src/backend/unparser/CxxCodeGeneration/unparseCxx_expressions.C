@@ -4469,7 +4469,7 @@ void Unparse_ExprStmt::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
      ASSERT_not_null(typeid_op);
 
      curprint ( "typeid(");
-     if (typeid_op->get_operand_expr() != NULL)
+     if (typeid_op->get_operand_expr() != nullptr && !isSgTypeExpression(typeid_op->get_operand_expr()))
         {
           ASSERT_not_null(typeid_op->get_operand_expr());
 #if 0
@@ -4479,7 +4479,21 @@ void Unparse_ExprStmt::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
         }
        else
         {
-          ASSERT_not_null(typeid_op->get_operand_type());
+          SgType * type;
+
+          if (typeid_op->get_operand_type() != nullptr)
+             {
+               type = typeid_op->get_operand_type();
+             }
+            else
+             {
+               ASSERT_not_null(typeid_op->get_operand_expr());
+               SgTypeExpression * type_expression = isSgTypeExpression(typeid_op->get_operand_expr());
+               ASSERT_not_null(type_expression);
+               type = type_expression->get_type();
+             }
+
+          ASSERT_not_null(type);
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
           info2.set_SkipClassDefinition();
@@ -4494,7 +4508,7 @@ void Unparse_ExprStmt::unparseTypeIdOp(SgExpression* expr, SgUnparse_Info& info)
        // (so detect it here where it is more clear how to fix it, above).
           ROSE_ASSERT(info2.SkipClassDefinition() == info2.SkipEnumDefinition());
 
-          unp->u_type->unparseType(typeid_op->get_operand_type(), info2);
+          unp->u_type->unparseType(type, info2);
         }
 
      curprint ( ")");
