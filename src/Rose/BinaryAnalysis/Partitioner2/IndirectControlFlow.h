@@ -16,6 +16,7 @@ namespace IndirectControlFlow {
 extern Sawyer::Message::Facility mlog;
 void initDiagnostics();
 
+bool analyzeJumpTables(const PartitionerPtr&);
 bool analyzeFunctions(const PartitionerPtr&);
 
 } // namespace

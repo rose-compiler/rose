@@ -16,18 +16,11 @@
 #include <SgAsmMemoryReferenceExpression.h>
 #include <SgAsmX86Instruction.h>
 
-namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace P2DF = Rose::BinaryAnalysis::Partitioner2::DataFlow;
+
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics;
 using namespace Sawyer::Message::Common;
-
-using DfCfg = P2DF::DfCfg;
-
-using DfTransfer = P2DF::TransferFunction;
-using DfNotConverging = Rose::BinaryAnalysis::DataFlow::NotConverging;
-
 using Rose::StringUtility::addrToString;
 using Rose::StringUtility::plural;
 
@@ -38,6 +31,7 @@ namespace IndirectControlFlow {
 
 Sawyer::Message::Facility mlog;
 
+// Called from the ROSE_INITIALIZE macro to configure diagnostics.
 void
 initDiagnostics() {
     static bool initialized = false;
@@ -48,127 +42,30 @@ initDiagnostics() {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Functions for analyzing static jump tables, such as what the C compiler generates for `switch` statements.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+namespace StaticJumpTable {
+
+// Create a special register that is used to store the execution path constraints.
 static RegisterDescriptor
-createPathRegister(const P2::Partitioner::ConstPtr &partitioner) {
+createPathRegister(const Partitioner::ConstPtr &partitioner) {
     ASSERT_not_null(partitioner);
     const unsigned maj = partitioner->architecture()->registerDictionary()->firstUnusedMajor();
     const unsigned min = partitioner->architecture()->registerDictionary()->firstUnusedMinor(maj);
     return RegisterDescriptor(maj, min, 0, 1);
 }
 
-class DfMerge: public P2DF::MergeFunction {
-    const RegisterDescriptor PATH, IP;
-    const DfCfg &dfCfg;
-
-public:
-    using Super = P2DF::MergeFunction;
-
-public:
-    explicit DfMerge(const P2::Partitioner::ConstPtr &partitioner, const BS::RiscOperators::Ptr &ops, const DfCfg &dfCfg)
-        : Super(ops),
-          PATH(createPathRegister(partitioner)),
-          IP(partitioner->architecture()->registerDictionary()->instructionPointerRegister()),
-          dfCfg(dfCfg) {}
-
-    bool operator()(size_t dstId, BS::State::Ptr &dst, size_t srcId, const BS::State::Ptr &src) const override {
-        ASSERT_not_null(src);
-        const auto dstVert = dfCfg.findVertex(dstId);
-        ASSERT_require(dfCfg.isValidVertex(dstVert));
-        const auto srcVert = dfCfg.findVertex(dstId);
-        ASSERT_require(dfCfg.isValidVertex(srcVert));
-        const BS::RiscOperators::Ptr ops = notnull(operators());
-
-        // Symbolic expression for the expected successor(s)
-        const auto srcIp = SymbolicSemantics::SValue::promote(src->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()))
-                           ->get_expression();
-
-        // Concrete address of the destination successor--the state we're merging into
-        SymbolicExpression::Ptr dstAddr;
-        if (const auto addr = dstVert->value().address()) {
-            dstAddr = SymbolicExpression::makeIntegerConstant(srcIp->nBits(), *addr);
-        }
-
-        // Initial path constraints for the destination (before merging)
-        SymbolicExpression::Ptr origConstraints;
-        if (dst) {
-            origConstraints = SymbolicSemantics::SValue::promote(dst->peekRegister(PATH, ops->boolean_(true), ops.get()))
-                              ->get_expression();
-        }
-
-        bool retval = Super::operator()(dstId, dst, srcId, src);
-        ASSERT_not_null(dst);
-
-        // New constraints for the destination
-        if (dstAddr) {
-            auto newConstraints = SymbolicExpression::makeEq(srcIp, dstAddr);
-            if (origConstraints)
-                newConstraints = SymbolicExpression::makeOr(newConstraints, origConstraints);
-            auto newConstraintsSVal = SymbolicSemantics::SValue::instance_symbolic(newConstraints);
-            dst->writeRegister(PATH, newConstraintsSVal, ops.get());
-        }
-
-        return retval;
-    }
-};
-
-// Test whether the specified function is one of the x86 get_pc_thunk functions. If so, return the register that gets the
-// program counter for the machine instruction that occurs immediately after the call to this function.
-static RegisterDescriptor
-isGetPcThunk(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
-    ASSERT_not_null(partitioner);
-    ASSERT_not_null(function);
-
-    // We could use semantics for this, but pattern matching is faster.
-    const auto bbAddrs = function->basicBlockAddresses();
-    if (bbAddrs.size() != 1)
-        return {};
-    const P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(*bbAddrs.begin());
-    if (!bb || bb->nInstructions() != 2)
-        return {};
-
-    if (as<const Architecture::X86>(partitioner->architecture())) {
-        // First instruction must be a "mov R1, ss:[esp]"
-        auto insn1 = as<SgAsmX86Instruction>(bb->instructions()[0]);
-        if (!insn1 || insn1->get_kind() != x86_mov || insn1->nOperands() != 2)
-            return {};
-        auto destReg = as<SgAsmDirectRegisterExpression>(insn1->operand(0));
-        if (!destReg)
-            return {};
-        auto memRef = as<SgAsmMemoryReferenceExpression>(insn1->operand(1));
-        if (!memRef)
-            return {};
-        auto segment = as<SgAsmDirectRegisterExpression>(memRef->get_segment());
-        const RegisterDescriptor SS = partitioner->architecture()->registerDictionary()->find("ss");
-        if (!segment || segment->get_descriptor() != SS)
-            return {};
-        auto memAddr = as<SgAsmDirectRegisterExpression>(memRef->get_address());
-        const RegisterDescriptor SP = partitioner->architecture()->registerDictionary()->stackPointerRegister();
-        if (!SP || !memAddr || memAddr->get_descriptor() != SP)
-            return {};
-
-        // Second instruction must be "ret"
-        auto insn2 = as<SgAsmX86Instruction>(bb->instructions()[1]);
-        if (!insn2 || insn2->get_kind() != x86_ret)
-            return {};
-
-        // Looks good.
-        return destReg->get_descriptor();
-    }
-
-    // Other architectures aren't handled yet
-    return {};
-}
-
 // Initialize the state with a reasonable concrete initial stack pointer.
 static void
-initializeStackPointer(const P2::Partitioner::ConstPtr &partitioner, const BS::RiscOperators::Ptr &ops) {
+initializeStackPointer(const Partitioner::ConstPtr &partitioner, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(partitioner);
     ASSERT_not_null(ops);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     const RegisterDescriptor SP = partitioner->architecture()->registerDictionary()->stackPointerRegister();
     ASSERT_require(SP);
-    
+
     const size_t stackSize = 2 * 1024 * 1024;
     const size_t stackAlignment = 1024 * 1024;
 
@@ -186,88 +83,6 @@ initializeStackPointer(const P2::Partitioner::ConstPtr &partitioner, const BS::R
         SAWYER_MESG(debug) <<"initial state has abstract stack pointer\n";
     }
 }
-
-// Given a function, return the list of basic blocks that have indeterminate outgoing edges and return their starting addresses.
-static Sawyer::Container::Set<Address>
-findBlocksWithIndeterminateBranch(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
-    ASSERT_not_null(partitioner);
-    ASSERT_not_null(function);
-    Sawyer::Container::Set<Address> retval;
-
-    for (const Address bbAddr: function->basicBlockAddresses()) {
-        const auto vertex = partitioner->findPlaceholder(bbAddr);
-        if (partitioner->cfg().isValidVertex(vertex)) {
-            for (const auto &edge: vertex->outEdges()) {
-                if (edge.target()->value().type() == P2::V_INDETERMINATE) {
-                    retval.insert(bbAddr);
-                    break;
-                }
-            }
-        }
-    }
-    return retval;
-}
-
-// Prune away parts of the dataflow graph that are not interesting. A vertex is not interesting if, by recursively following its
-// outgoing edges, we cannot reach any of the `interestingBlocks`.
-static void
-pruneDfCfg(DfCfg &graph, const Sawyer::Container::Set<Address> &interestingBlocks) {
-    if (interestingBlocks.isEmpty()) {
-        graph.clear();
-    } else {
-        // Anything that can reach at least one interesting block is interesting.
-        using namespace Sawyer::Container::Algorithm;
-        using Traversal = DepthFirstForwardGraphTraversal<DfCfg>;
-        std::vector<bool> isInteresting(graph.nVertices(), false);
-        for (Traversal t(graph, graph.findVertex(0), ENTER_VERTEX | LEAVE_EDGE); t; ++t) {
-            switch (t.event()) {
-                case ENTER_VERTEX:
-                    if (const auto addr = t.vertex()->value().address()) {
-                        ASSERT_forbid(isInteresting[t.vertex()->id()]);
-                        isInteresting[t.vertex()->id()] = interestingBlocks.exists(*addr);
-                    }
-                    break;
-                case LEAVE_EDGE:
-                    if (isInteresting[t.edge()->target()->id()])
-                        isInteresting[t.edge()->source()->id()] = true;
-                    break;
-                default:
-                    ASSERT_not_reachable("not handling this kind of traversal event");
-            }
-        }
-
-        // Gather all the vertices that aren't interesting and which should be erased from the graph.
-        std::vector<DfCfg::VertexIterator> toErase;
-        for (const auto &vertex: graph.vertices()) {
-            if (!isInteresting[vertex.id()])
-                toErase.push_back(graph.findVertex(vertex.id()));
-        }
-
-        // Erase all vertices we don't need
-        for (const auto &vertex: toErase)
-            graph.eraseVertex(vertex);
-    }
-}
-
-// The dataflow needs to be partly interprocedural.
-class InterproceduralPredicate: public P2DF::InterproceduralPredicate {
-    P2::Partitioner::ConstPtr partitioner_;
-
-public:
-    InterproceduralPredicate(const P2::Partitioner::ConstPtr &partitioner)
-        : partitioner_(partitioner) {}
-
-    bool operator()(const P2::ControlFlowGraph&, const P2::ControlFlowGraph::ConstEdgeIterator &edge, size_t /*depth*/) override {
-        if (edge->value().type() == P2::E_FUNCTION_CALL) {
-            if (const auto calleeAddr = edge->target()->value().optionalAddress()) {
-                if (P2::Function::Ptr callee = partitioner_->functionExists(*calleeAddr)) {
-                    return isGetPcThunk(partitioner_, callee);
-                }
-            }
-        }
-        return false;
-    }
-};
 
 // matches "(add[u64] (sext 0x40, e1[u32]) c1)" and returns e1 and c1 if matched. If not matched, returns (nullptr, 0).
 static std::pair<SymbolicExpression::Ptr, Address>
@@ -309,7 +124,7 @@ match2(const SymbolicExpression::Ptr &expr) {
     const auto c1 = expr->child(1);
     if (!c1 || c1->nBits() != 32 || !c1->toUnsigned())
         return std::make_pair(Ptr(), 0);
-    
+
     return std::make_pair(e1, *c1->toUnsigned());
 }
 
@@ -465,17 +280,329 @@ satisfiableTargets(const JumpTable::Ptr &table, const SymbolicExpression::Ptr &p
     return retval;
 }
 
+class DfVertex {
+public:
+    const BasicBlock::Ptr bblock;
+    const size_t inlineId = 0;
+
+    DfVertex() = delete;
+
+    DfVertex(const BasicBlock::Ptr &bb, const size_t inlineId)
+        : bblock(notnull(bb)), inlineId(inlineId) {}
+
+    Address address() const {
+        return bblock->address();
+    }
+
+    std::string printableName() const {
+        return bblock->printableName();
+    }
+};
+
+class DfVertexKey {
+public:
+    const Address addr = 0;
+    const size_t inlineId = 0;
+
+    DfVertexKey() = delete;
+
+    DfVertexKey(const DfVertex &vertex)
+        : addr(notnull(vertex.bblock)->address()), inlineId(vertex.inlineId) {}
+
+    bool operator<(const DfVertexKey &other) const {
+        if (addr != other.addr) {
+            return addr < other.addr;
+        } else {
+            return inlineId < other.inlineId;
+        }
+    }
+};
+
+using DfGraph = Sawyer::Container::Graph<
+    DfVertex,
+    size_t,                                             // CFG edge ID
+    DfVertexKey                                         // vertices sorted by basic block starting address
+    >;
+
+class DfInline {
+public:
+    DfGraph::ConstVertexIterator dfCaller;              // dataflow vertex making a function call
+    DfGraph::ConstVertexIterator dfCallRet;             // dataflow vertex where the function call will return
+    ControlFlowGraph::ConstEdgeIterator cfgCall;        // CFG edge representing the function call
+    size_t callerInlineId;                              // basic blocks may appear more than once, distinguished by this field
+
+    DfInline(const DfGraph::ConstVertexIterator dfCaller, const DfGraph::ConstVertexIterator dfCallRet,
+             const ControlFlowGraph::ConstEdgeIterator cfgCall, const size_t callerInlineId)
+        : dfCaller(dfCaller), dfCallRet(dfCallRet), cfgCall(cfgCall), callerInlineId(callerInlineId) {}
+};
+
+class DfTransfer {
+    Partitioner::ConstPtr partitioner_;
+    BS::Dispatcher::Ptr cpu_;
+
+public:
+    DfTransfer(const Partitioner::ConstPtr &partitioner, const BS::Dispatcher::Ptr &cpu)
+        : partitioner_(notnull(partitioner)), cpu_(notnull(cpu)) {}
+
+    std::string toString(const BS::State::Ptr &state) const {
+        if (!state) {
+            return "null state";
+        } else {
+            return boost::lexical_cast<std::string>(*state);
+        }
+    }
+
+    BS::State::Ptr initialState() const {
+        BS::RiscOperators::Ptr ops = cpu_->operators();
+        BS::State::Ptr retval = ops->currentState()->clone();
+        ops->currentState(retval);
+
+        retval->clear();
+        cpu_->initializeState(retval);
+        initializeStackPointer(partitioner_, ops);
+        return retval;
+    }
+
+    BS::State::Ptr operator()(const DfGraph &dfGraph, size_t vertexId, const BS::State::Ptr &incomingState) const {
+        ASSERT_not_null(incomingState);
+
+        BS::State::Ptr retval = incomingState->clone();
+        BS::RiscOperators::Ptr ops = cpu_->operators();
+        ops->currentState(retval);
+
+        BasicBlock::Ptr bb = dfGraph.findVertex(vertexId)->value().bblock;
+        for (SgAsmInstruction *insn: bb->instructions()) {
+            try {
+                cpu_->processInstruction(insn);
+            } catch (const BS::Exception&) {
+            }
+        }
+        return retval;
+    }
+};
+
+class DfMerge: public BinaryAnalysis::DataFlow::SemanticsMerge {
+public:
+    using Super = BinaryAnalysis::DataFlow::SemanticsMerge;
+
+private:
+    const RegisterDescriptor PATH, IP;
+    const DfGraph &dfGraph;
+
+public:
+    explicit DfMerge(const Partitioner::ConstPtr &partitioner, const BS::RiscOperators::Ptr &ops, const DfGraph &dfGraph)
+        : Super(ops),
+          PATH(createPathRegister(partitioner)),
+          IP(partitioner->architecture()->registerDictionary()->instructionPointerRegister()),
+          dfGraph(dfGraph) {}
+
+    bool operator()(size_t dstId, BS::State::Ptr &dst, size_t srcId, const BS::State::Ptr &src) const {
+        using namespace SymbolicExpression;
+
+        ASSERT_not_null(src);
+        const auto dstVert = dfGraph.findVertex(dstId);
+        ASSERT_require(dfGraph.isValidVertex(dstVert));
+        const auto srcVert = dfGraph.findVertex(dstId);
+        ASSERT_require(dfGraph.isValidVertex(srcVert));
+        const BS::RiscOperators::Ptr ops = notnull(operators());
+
+        // Symbolic expression for the expected successor(s)
+        const auto srcIp = SymbolicSemantics::SValue::promote(src->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()))
+                           ->get_expression();
+
+        // Concrete address of the destination successor--the state we're merging into
+        const SymbolicExpression::Ptr dstAddr = makeIntegerConstant(srcIp->nBits(), dstVert->value().address());
+
+        // Initial path constraints for the destination (before merging)
+        SymbolicExpression::Ptr origConstraints;
+        if (dst) {
+            origConstraints = SymbolicSemantics::SValue::promote(dst->peekRegister(PATH, ops->boolean_(true), ops.get()))
+                              ->get_expression();
+        }
+
+        bool retval = Super::operator()(dstId, dst, srcId, src);
+        ASSERT_not_null(dst);
+
+        // New constraints for the destination
+        if (dstAddr) {
+            auto newConstraints = makeEq(srcIp, dstAddr);
+            if (origConstraints)
+                newConstraints = makeOr(newConstraints, origConstraints);
+            auto newConstraintsSVal = SymbolicSemantics::SValue::instance_symbolic(newConstraints);
+            dst->writeRegister(PATH, newConstraintsSVal, ops.get());
+        }
+
+        return retval;
+    }
+};
+
+// Inline into the dataflow graph a function called via CFG edge. Return a list of any new dataflow vertices that have subsequent
+// function calls that were not inlined yet.
+static std::vector<DfInline>
+inlineFunctionCall(DfGraph &graph, const ControlFlowGraph &cfg, const DfInline &call, const size_t calleeInlineId) {
+    std::vector<DfInline> retval;                       // next level for possible inlining
+
+    // Insert the first basic block of the callee and create an edge from the caller to the callee.
+    if (BasicBlock::Ptr entryBb = call.cfgCall->target()->value().bblock()) {
+        auto dfCallee = graph.insertVertex(DfVertex(entryBb, calleeInlineId));
+        graph.insertEdge(call.dfCaller, dfCallee, call.cfgCall->id());
+    } else {
+        return retval;
+    }
+
+    // Insert all the basic blocks for the callee
+    using namespace Sawyer::Container::Algorithm;
+    using Traversal = DepthFirstForwardGraphTraversal<const ControlFlowGraph>;
+    for (Traversal t(cfg, call.cfgCall->target()); t; ++t) {
+        if (t.event() == ENTER_EDGE) {
+            BasicBlock::Ptr src = t.edge()->source()->value().bblock();
+            BasicBlock::Ptr tgt = t.edge()->target()->value().bblock();
+            if (src && tgt && t.edge()->value().type() == E_FUNCTION_CALL) {
+                // The called function makes another function call. Skip this edge, but return the info for further inlining.
+                const auto caller = graph.findVertexValue(DfVertex(src, call.callerInlineId));
+                ASSERT_require(graph.isValidVertex(caller));
+                const auto callret = graph.insertVertexMaybe(DfVertex(tgt, call.callerInlineId));
+                ASSERT_require(graph.isValidVertex(callret));
+                retval.push_back(DfInline(caller, callret, t.edge(), calleeInlineId));
+                t.skipChildren();
+
+            } else if (src && t.edge()->value().type() == E_FUNCTION_RETURN) {
+                // The called function is returning. Create an edge from the returning vertex to the caller's callret vertex.
+                const auto dfReturnFrom = graph.findVertexValue(DfVertex(src, calleeInlineId));
+                ASSERT_require(graph.isValidVertex(dfReturnFrom));
+                graph.insertEdge(dfReturnFrom, call.dfCallRet, t.edge()->id());
+                t.skipChildren();
+
+            } else if (src && tgt && t.edge()->value().type() != E_FUNCTION_CALL) {
+                // Normal intra-function edge to be inlined into the dataflow graph
+                graph.insertEdgeWithVertices(DfVertex(src, calleeInlineId), DfVertex(tgt, calleeInlineId), t.edge()->id());
+
+            } else {
+                t.skipChildren();
+            }
+        }
+    }
+
+    return retval;
+}
+
+static DfGraph::ConstVertexIterator
+findCallRet(const DfGraph &graph, const ControlFlowGraph &cfg, const DfGraph::Vertex &dfVertex) {
+    for (const auto &dfEdge: dfVertex.outEdges()) {
+        const auto cfgEdge = cfg.findEdge(dfEdge.value());
+        ASSERT_require(cfg.isValidEdge(cfgEdge));
+        if (cfgEdge->value().type() == E_CALL_RETURN)
+            return dfEdge.target();
+    }
+    return graph.vertices().end();
+}
+
+// Given a CFG vertex that has an indeterminate edge (i.e., a possible indirect branch), construct a dataflow graph that looks
+// backward from that CFG vertex a certain distance. Return the dataflow graph and its starting vertex IDs.
+static DfGraph
+buildDfGraphInReverse(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph::Vertex &cfgVertex, const size_t maxDepth) {
+    using namespace Sawyer::Container::Algorithm;
+
+    ASSERT_not_null(partitioner);
+    DfGraph graph;
+
+    // Insert the ending vertex first so we're guaranteed that it has ID zero.
+    if (BasicBlock::Ptr bb = cfgVertex.value().bblock()) {
+        graph.insertVertex(DfVertex(bb, 0));
+    } else {
+        return graph;
+    }
+
+    // Work backward from the ending vertex
+    size_t depth = 0;
+    using Traversal = DepthFirstReverseGraphTraversal<const ControlFlowGraph>;
+    for (Traversal t(partitioner->cfg(), partitioner->cfg().findVertex(cfgVertex.id())); t; ++t) {
+        if (t.event() == ENTER_EDGE) {
+            BasicBlock::Ptr src = t.edge()->source()->value().bblock();
+            BasicBlock::Ptr tgt = t.edge()->target()->value().bblock();
+            if (++depth <= maxDepth && src && tgt) {
+                graph.insertEdgeWithVertices(DfVertex(src, 0), DfVertex(tgt, 0), t.edge()->id());
+            } else {
+                t.skipChildren();
+            }
+        } else if (t.event() == LEAVE_EDGE) {
+            ASSERT_require(depth > 0);
+            --depth;
+        }
+    }
+
+    // Find vertices in the dataflow graph that call other functions.
+    std::vector<DfInline> callsToInline;
+    for (const auto &dfVertex: graph.vertices()) {
+        const auto cfgVertex = partitioner->findPlaceholder(dfVertex.value().address());
+        ASSERT_require(partitioner->cfg().isValidVertex(cfgVertex));
+        for (const auto &cfgEdge: cfgVertex->outEdges()) {
+            if (cfgEdge.value().type() == E_FUNCTION_CALL && cfgEdge.target()->value().type() == V_BASIC_BLOCK) {
+                const auto dfCallRet = findCallRet(graph, partitioner->cfg(), dfVertex);
+                if (graph.isValidVertex(dfCallRet)) {
+                    const auto dfCallerIter = graph.findVertex(dfVertex.id());
+                    const auto cfgEdgeIter = partitioner->cfg().findEdge(cfgEdge.id());
+                    callsToInline.push_back(DfInline(dfCallerIter, dfCallRet, cfgEdgeIter, 0));
+                }
+            }
+        }
+    }
+
+    // Inline function calls
+    size_t inlineId = 0;
+    std::cerr <<"ROBB: need to inline calls: " <<callsToInline.size() <<"\n";
+    for (const auto &call: callsToInline) {
+        const auto more = inlineFunctionCall(graph, partitioner->cfg(), call, ++inlineId);
+    }
+
+    // Erase the old call-ret edges that are no longer needed because the inlined functions have function-return edges instead.
+    std::vector<DfGraph::ConstEdgeIterator> toErase;
+    for (const auto &call: callsToInline) {
+        for (const auto &dfEdge: call.dfCaller->outEdges()) {
+            const auto cfgEdge = partitioner->cfg().findEdge(dfEdge.value());
+            ASSERT_require(partitioner->cfg().isValidEdge(cfgEdge));
+            if (cfgEdge->value().type() == E_CALL_RETURN)
+                toErase.push_back(graph.findEdge(dfEdge.id()));
+        }
+    }
+    for (const auto &edge: toErase)
+        graph.eraseEdge(edge);
+    
+    return graph;
+}
+
+static void
+printGraph(std::ostream &out, const DfGraph &graph) {
+    out <<"  vertices:\n";
+    for (const auto &vertex: graph.vertices()) {
+        out <<"    V" <<vertex.id() <<": " <<vertex.value().printableName() <<"\n";
+        for (const auto &edge: vertex.outEdges()) {
+            out <<"      E" <<edge.id() <<": cfg edge #" <<edge.value() <<" to " <<edge.target()->value().printableName() <<"\n";
+        }
+    }
+}
+
+// Test whether the specified vertex should be analyzed
+static BasicBlock::Ptr
+shouldAnalyze(const ControlFlowGraph::Vertex &vertex) {
+    if (BasicBlock::Ptr bb = vertex.value().bblock()) {
+        for (const auto &edge: vertex.outEdges()) {
+            if (edge.target()->value().type() == V_INDETERMINATE &&
+                edge.value().type() != E_FUNCTION_RETURN)
+                return bb;
+        }
+    }
+    return {};
+}
+
 static bool
-useJumpTable(const P2::Partitioner::Ptr &partitioner, const P2::Function::Ptr &function, const P2::BasicBlock::Ptr &bb,
-             const BS::RiscOperators::Ptr &ops) {
+useJumpTable(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(partitioner);
     ASSERT_not_null(bb);
     ASSERT_not_null(ops);
     BS::State::Ptr state = ops->currentState();
     ASSERT_not_null(state);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    const Sawyer::Container::Set<Address> functionBlocks(function->basicBlockAddresses().begin(),
-                                                         function->basicBlockAddresses().end());
 
     SAWYER_MESG(debug) <<"  results for " <<bb->printableName() <<"\n";
     const RegisterDescriptor IP = partitioner->architecture()->registerDictionary()->instructionPointerRegister();
@@ -486,7 +613,7 @@ useJumpTable(const P2::Partitioner::Ptr &partitioner, const P2::Function::Ptr &f
     const SymbolicExpression::Ptr path = SymbolicSemantics::SValue::promote(ops->peekRegister(PATH))->get_expression();
     SAWYER_MESG(debug) <<"    path constraints = " <<*path <<"\n";
 
-    // FIXME[Robb Matzke 2025-04-08]: We only handle specific things for now.
+    // We only handle x86 for now (although this might work for other instruction sets too).
     if (as<const Architecture::X86>(partitioner->architecture())) {
         const auto matched = match(ip);
         const auto jumpTableEntry = matched.first;
@@ -509,8 +636,7 @@ useJumpTable(const P2::Partitioner::Ptr &partitioner, const P2::Function::Ptr &f
                         table->refineLocationLimits(bb, tableAddr);
                         SAWYER_MESG(debug) <<"    table limited to " <<addrToString(table->tableLimits()) <<"\n";
 
-                        //table->targetLimits(partitioner->functionBasicBlockExtent(function).hull());
-                        table->refineTargetLimits(bb);
+                        //table->refineTargetLimits(bb);
                         SAWYER_MESG(debug) <<"    targets limited to " <<addrToString(table->targetLimits()) <<"\n";
 
                         SAWYER_MESG(debug) <<"    scanning table at " <<addrToString(tableAddr)
@@ -521,12 +647,10 @@ useJumpTable(const P2::Partitioner::Ptr &partitioner, const P2::Function::Ptr &f
                             std::set<Address> successors = satisfiableTargets(table, path, jumpTableAddrExpr);
                             if (debug) {
                                 debug <<"    unique targets remaining: " <<successors.size() <<"\n";
-                                for (const Address target: successors) {
-                                    debug <<"      target " <<addrToString(target)
-                                          <<(functionBlocks.exists(target) ? " present" : " not present") <<"\n";
-                                }
+                                for (const Address target: successors)
+                                    debug <<"      target " <<addrToString(target) <<"\n";
                             }
-                            
+
                             partitioner->detachBasicBlock(bb);
                             bb->successors().clear();
                             const size_t bitsPerWord = partitioner->architecture()->bitsPerWord();
@@ -544,102 +668,64 @@ useJumpTable(const P2::Partitioner::Ptr &partitioner, const P2::Function::Ptr &f
     return false;
 }
 
-bool
-analyzeFunction(const P2::Partitioner::Ptr &partitioner, const P2::Function::Ptr &function) {
+static bool
+analyzeJumpTables(const Partitioner::Ptr &partitioner) {
     ASSERT_not_null(partitioner);
-    ASSERT_not_null(function);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
+    const size_t maxPathLength = 4;                     // arbitrary
     bool madeChanges = false;
 
-    Sawyer::Container::Set<Address> interesting = findBlocksWithIndeterminateBranch(partitioner, function);
-    SAWYER_MESG(debug) <<"analyzing indirect control flow for " <<function->printableName() <<"\n";
-    if (debug) {
-        debug <<"  indirect cfg from " <<interesting.size()
-              <<" of " <<plural(function->basicBlockAddresses().size(), "basic blocks") <<"\n";
-        debug <<"  basic blocks with unresolved indirect control flow: " <<plural(interesting.size(), "blocks") <<"\n";
-        for (const auto addr: interesting.values())
-            debug <<"    basic block " <<addrToString(addr) <<"\n";
-    }
+    for (const auto &cfgVertex: partitioner->cfg().vertices()) {
+        if (BasicBlock::Ptr bb = shouldAnalyze(cfgVertex)) {
+            SAWYER_MESG(debug) <<"possible jump table for " <<bb->printableName() <<"\n";
+            DfGraph dfGraph = buildDfGraphInReverse(partitioner, cfgVertex, maxPathLength);
+            if (debug)
+                printGraph(debug, dfGraph);
+            if (dfGraph.isEmpty())
+                continue;
 
-    // Data flow uses the CFG but our CFG is incomplete due to the very missing edges that we're trying to find. Therefore, we can
-    // only analyze up to the first interesting blocks, then add the new edges that we find, then repeat until we make it through
-    // all the interesting blocks.
-    while (!interesting.isEmpty()) {
-        // Control flow graph for dataflow. When building the dataflow graph, stop when we get to any of the interesting blocks
-        // because we don't know where to go after that.
-        const auto functionEntry = partitioner->findPlaceholder(function->address());
-        ASSERT_require(partitioner->cfg().isValidVertex(functionEntry));
-        InterproceduralPredicate ipp(partitioner);
-        DfCfg dfCfg = P2DF::buildDfCfg(partitioner, partitioner->cfg(), functionEntry, ipp);
-        pruneDfCfg(dfCfg, interesting);
+            // Configure the dataflow engine
+            BS::RiscOperators::Ptr ops = partitioner->newOperators();
+            BS::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
+            DfTransfer xfer(partitioner, cpu);
+            DfMerge merge(partitioner, ops, dfGraph);
+            using DfEngine = BinaryAnalysis::DataFlow::Engine<DfGraph, BS::State::Ptr, DfTransfer, DfMerge>;
+            DfEngine dfEngine(dfGraph, xfer, merge);
+            dfEngine.maxIterations(dfGraph.nVertices()); // arbitrary
 
-    #if 1 // [Robb Matzke 2025-04-08]: debugging; remove before commit
-        if (function->name() == "main") {
-            debug <<"  saved dataflow cfg to x.dot\n";
-            std::ofstream dot("x.dot");
-            P2DF::dumpDfCfg(dot, dfCfg);
-        }
-    #endif
+            // Choose dataflow starting points
+            for (const auto &vertex: dfGraph.vertices()) {
+                if (vertex.nInEdges() == 0)
+                    dfEngine.insertStartingVertex(vertex.id(), xfer.initialState());
+            }
 
-        // Transfer function
-        BS::RiscOperators::Ptr ops = partitioner->newOperators();
-        BS::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
-        DfTransfer xfer(cpu);
-        xfer.ignoringSemanticFailures(true);
+            // Run the dataflow
+            try {
+                dfEngine.runToFixedPoint();     // probably won't reach a fixed point due to maxIterations set above
+            } catch (const BinaryAnalysis::DataFlow::NotConverging&) {
+            }
 
-        // Merge function
-        DfMerge merge(partitioner, ops, dfCfg);
-
-        // Initial state
-        BS::State::Ptr initialState = xfer.initialState();
-        ops->currentState(initialState);
-        initializeStackPointer(partitioner, ops);
-
-        // Dataflow engine
-        using DfEngine = Rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BS::State::Ptr, DfTransfer, DfMerge>;
-        DfEngine dfEngine(dfCfg, xfer, merge);
-        dfEngine.maxIterations(dfCfg.nVertices());
-        dfEngine.insertStartingVertex(0, initialState);
-
-        // Run to fixed point if possible
-        try {
-            dfEngine.runToFixedPoint();
-        } catch (const DfNotConverging&) {
-        }
-
-        // Look at the outgoing instruction pointer registers for the interesting basic blocks. Use it to try to recover the indirect
-        // control flow.
-        for (const auto &vertex: dfCfg.vertices()) {
-            if (P2::BasicBlock::Ptr bb = vertex.value().bblock()) {
-                if (interesting.exists(bb->address())) {
-                    interesting.erase(bb->address());
-                    if (BS::State::Ptr state = dfEngine.getFinalState(vertex.id())) {
-                        ops->currentState(state);
-                        if (useJumpTable(partitioner, function, bb, ops))
-                            madeChanges = true;
-                    }
-                }
+            // Examine the outgoing state for the basic block in question (dataflow vertex #0)
+            if (BS::State::Ptr state = dfEngine.getFinalState(0)) {
+                ops->currentState(state);
+                std::cerr <<"ROBB: outgoing state:\n" <<*state;
+                if (useJumpTable(partitioner, bb, ops))
+                    madeChanges = true;
             }
         }
     }
     return madeChanges;
 }
 
-bool
-analyzeFunctions(const Partitioner::Ptr &partitioner) {
-    ASSERT_not_null(partitioner);
-    bool madeChanges = false;
+} // namespace
 
-    for (const P2::Function::Ptr &function: partitioner->functions()) {
-#if 1 // [Robb Matzke 2025-04-11]
-        if (function->name() != "main")
-            continue;
-#endif
-    
-        if (analyzeFunction(partitioner, function))
-            madeChanges = true;
-    }
-    return madeChanges;
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Main entry points for this analysis
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool
+analyzeJumpTables(const Partitioner::Ptr &partitioner) {
+    return StaticJumpTable::analyzeJumpTables(partitioner);
 }
 
 } // namespace
