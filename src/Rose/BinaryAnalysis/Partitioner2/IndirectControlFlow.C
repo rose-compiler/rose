@@ -268,16 +268,18 @@ isMappedAccess(const MemoryMap::Ptr &map, const Address addr, const unsigned req
 std::set<Address>
 satisfiableTargets(const JumpTable::Ptr &table, const SymbolicExpression::Ptr &pathConstraint,
                    const SymbolicExpression::Ptr &entryAddrExpr) {
+    using namespace SymbolicExpression;
     ASSERT_not_null(table);
     ASSERT_not_null(pathConstraint);
-    std::set<Address> retval;
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     SmtSolver::Ptr solver = SmtSolver::bestAvailable();
-    ASSERT_not_null(solver);                            // FIXME[Robb Matzke 2025-04-14]
-    solver->insert(pathConstraint);
+    if (!solver)
+        return std::set<Address>(table->targets().begin(), table->targets().end());
 
-    using namespace SymbolicExpression;
+    std::set<Address> retval;
+    ASSERT_not_null(solver);
+    solver->insert(pathConstraint);
     for (size_t i = 0; i < table->nEntries(); ++i) {
         const Address target = table->targets()[i];
         const Address entryAddr = table->location().least() + i * table->bytesPerEntry();
@@ -713,6 +715,9 @@ analyzeAllBlocks(const Settings &settings, const Partitioner::Ptr &partitioner) 
             // Configure the dataflow engine
             BS::RiscOperators::Ptr ops = partitioner->newOperators();
             BS::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
+            if (!cpu)
+                return false;
+
             DfTransfer xfer(partitioner, cpu);
             DfMerge merge(partitioner, ops, dfGraph);
             using DfEngine = BinaryAnalysis::DataFlow::Engine<DfGraph, BS::State::Ptr, DfTransfer, DfMerge>;
