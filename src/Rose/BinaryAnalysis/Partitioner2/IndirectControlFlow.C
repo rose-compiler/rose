@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/Architecture/X86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
+#include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/StringUtility/Diagnostics.h>
@@ -470,6 +471,64 @@ public:
     }
 };
 
+// Print a dataflow graph in Graphviz format for debugging.
+static void
+toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+
+    const Color::HSV entryColor(0.33, 1.0, 0.9);        // light green
+    const Color::HSV indetColor(0.00, 1.0, 0.8);        // light red
+    const Color::HSV returnColor(0.67, 1.0, 0.9);       // light blue
+
+    // One subgraph per inline ID, and give them names.
+    std::map<size_t, std::string> subgraphs;
+    for (const auto &vertex: graph.vertices()) {
+        auto &name = subgraphs[vertex.value().inlineId];
+        if (name.empty()) {
+            for (Function::Ptr &function: partitioner->functionsOverlapping(vertex.value().address())) {
+                name = "inline #" + boost::lexical_cast<std::string>(vertex.value().inlineId) + " " + function->printableName();
+                break;
+            }
+        }
+    }
+    for (auto &subgraph: subgraphs) {
+        if (subgraph.second.empty())
+            subgraph.second = "inline #" + boost::lexical_cast<std::string>(subgraph.first);
+    }
+
+    out <<"digraph dfCfg {\n";
+    for (const auto &subgraph: subgraphs) {
+        out <<"subgraph cluster_" <<subgraph.first <<" {\n"
+            <<" graph ["
+            <<" label=<subgraph " <<subgraph.first <<"<br/>" <<GraphViz::htmlEscape(subgraph.second) <<">"
+            <<" ];\n";
+
+        for (const auto &dfVertex: graph.vertices()) {
+            if (dfVertex.value().inlineId == subgraph.first) {
+                out <<dfVertex.id() <<" [";
+                if (dfVertex.nInEdges() == 0)
+                    out <<" shape=box style=filled fillcolor=\"" <<entryColor.toHtml() <<"\"";
+
+                out <<" label=<<b>Vertex " <<dfVertex.id() <<"</b>";
+
+                BasicBlock::Ptr bb = partitioner->basicBlockExists(dfVertex.value().address());
+                ASSERT_not_null(bb);
+                for (SgAsmInstruction *insn: bb->instructions())
+                    out <<"<br align=\"left\"/>" <<GraphViz::htmlEscape(insn->toStringNoColor());
+                out <<"<br align=\"left\"/>> shape=box fontname=Courier";
+                out <<" ];\n";
+            }
+        }
+        out <<"}\n";
+    }
+
+    for (const auto &edge: graph.edges()) {
+        out <<edge.source()->id() <<" -> " <<edge.target()->id() <<";\n";
+    }
+
+    out <<"}\n";
+}
+
 // Inline into the dataflow graph a function called via CFG edge. Return a list of any new dataflow vertices that have subsequent
 // function calls that were not inlined yet.
 static std::vector<DfInline>
@@ -719,8 +778,17 @@ analyzeAllBlocks(const Settings &settings, const Partitioner::Ptr &partitioner) 
         if (BasicBlock::Ptr bb = shouldAnalyze(cfgVertex)) {
             SAWYER_MESG(debug) <<"possible jump table for " <<bb->printableName() <<"\n";
             DfGraph dfGraph = buildDfGraphInReverse(settings, partitioner, cfgVertex, settings.maxReversePathLength);
-            if (debug)
+            if (debug) {
                 printGraph(debug, dfGraph);
+                if (!dfGraph.isEmpty()) {
+                    static size_t ncalls = 0;
+                    const std::string fname = "dfgraph-" + addrToString(bb->address()).substr(2) +
+                                              "-" + boost::lexical_cast<std::string>(++ncalls) + ".dot";
+                    std::ofstream file(fname.c_str());
+                    toGraphviz(file, dfGraph, partitioner);
+                    debug <<"  also written to " <<fname <<"\n";
+                }
+            }
             if (dfGraph.isEmpty())
                 continue;
 
