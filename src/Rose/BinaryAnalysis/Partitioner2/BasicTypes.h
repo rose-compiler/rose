@@ -647,6 +647,12 @@ namespace IndirectControlFlow {
          *  functions. */
         size_t maxReversePathLength = 4;
 
+        /** Maximum inlining recursion depth.
+         *
+         *  The maximum depth of function calls during the forward phase of dataflow graph construction. This indicates how
+         *  deeply to inline functions into the graph after the reverse phase. */
+        size_t maxInliningDepth = 1;
+
         /** Maximum factor for dataflow iterations.
          *
          *  Perform at most `n` iterations where `n` is computed by multiplying the number of vertices in the dataflow graph by this
@@ -654,6 +660,7 @@ namespace IndirectControlFlow {
          *  If the dataflow analysis terminates before reaching a fixed point, the indirect control flow recovery will try to use
          *  the partial results. */
         size_t maxDataflowIterationFactor = 2;
+
     };
 } // namespace
 

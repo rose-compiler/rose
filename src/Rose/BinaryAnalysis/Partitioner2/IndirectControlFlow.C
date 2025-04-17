@@ -60,6 +60,11 @@ commandLineSwitches(Settings &settings) {
               .doc("The maximum depth of the initial, function-skipping, reverse CFG traversal when constructing a dataflow "
                    "graph. The default is " + plural(settings.maxReversePathLength, "basic blocks") + "."));
 
+    sg.insert(Switch("df-max-inline")
+              .argument("n", nonNegativeIntegerParser(settings.maxInliningDepth))
+              .doc("Maximum call depth for inlining functions during the forward CFG traversal when constructing a dataflow "
+                   "graph. The default is a maximum depth of " + plural(settings.maxInliningDepth, "function calls") + "."));
+
     sg.insert(Switch("df-max-iter-factor")
               .argument("n", nonNegativeIntegerParser(settings.maxDataflowIterationFactor))
               .doc("Limits the dataflow analysis so it terminates even if the states don't converge to a fixed point. The limit "
@@ -512,6 +517,19 @@ inlineFunctionCall(DfGraph &graph, const ControlFlowGraph &cfg, const DfInline &
         }
     }
 
+    // Erase the old call-return edge(s) that goes from the call vertex to the vertex to which the call returns.
+    std::vector<DfGraph::ConstEdgeIterator> toErase;
+    for (const auto &dfEdge: call.dfCaller->outEdges()) {
+        if (dfEdge.target() == call.dfCallRet) {
+            const auto cfgEdge = cfg.findEdge(dfEdge.value());
+            ASSERT_require(cfg.isValidEdge(cfgEdge));
+            if (cfgEdge->value().type() == E_CALL_RETURN)
+                toErase.push_back(graph.findEdge(dfEdge.id()));
+        }
+    }
+    for (const auto &edge: toErase)
+        graph.eraseEdge(edge);
+
     return retval;
 }
 
@@ -529,7 +547,8 @@ findCallRet(const DfGraph &graph, const ControlFlowGraph &cfg, const DfGraph::Ve
 // Given a CFG vertex that has an indeterminate edge (i.e., a possible indirect branch), construct a dataflow graph that looks
 // backward from that CFG vertex a certain distance. Return the dataflow graph and its starting vertex IDs.
 static DfGraph
-buildDfGraphInReverse(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph::Vertex &cfgVertex, const size_t maxDepth) {
+buildDfGraphInReverse(const Settings &settings, const Partitioner::ConstPtr &partitioner,
+                      const ControlFlowGraph::Vertex &cfgVertex, const size_t maxDepth) {
     using namespace Sawyer::Container::Algorithm;
 
     ASSERT_not_null(partitioner);
@@ -577,26 +596,19 @@ buildDfGraphInReverse(const Partitioner::ConstPtr &partitioner, const ControlFlo
         }
     }
 
-    // Inline function calls
+    // Repeatedly inline function calls to the specified depth. So far, all vertices have an inlineId of zero. Each time we inline
+    // another function we'll use a new inlineId. This ensures that even if the same function is inlined more than once we can
+    // uniquely identify each vertex in the dataflow graph by a combination of address and inlineId.
     size_t inlineId = 0;
-    std::cerr <<"ROBB: need to inline calls: " <<callsToInline.size() <<"\n";
-    for (const auto &call: callsToInline) {
-        const auto more = inlineFunctionCall(graph, partitioner->cfg(), call, ++inlineId);
+    for (size_t i = 0; i < settings.maxInliningDepth && !callsToInline.empty(); ++i) {
+        std::vector<DfInline> nextLevelCalls;
+        for (const auto &call: callsToInline) {
+            const auto next = inlineFunctionCall(graph, partitioner->cfg(), call, ++inlineId);
+            nextLevelCalls.insert(nextLevelCalls.end(), next.begin(), next.end());
+        }
+        callsToInline = nextLevelCalls;
     }
 
-    // Erase the old call-ret edges that are no longer needed because the inlined functions have function-return edges instead.
-    std::vector<DfGraph::ConstEdgeIterator> toErase;
-    for (const auto &call: callsToInline) {
-        for (const auto &dfEdge: call.dfCaller->outEdges()) {
-            const auto cfgEdge = partitioner->cfg().findEdge(dfEdge.value());
-            ASSERT_require(partitioner->cfg().isValidEdge(cfgEdge));
-            if (cfgEdge->value().type() == E_CALL_RETURN)
-                toErase.push_back(graph.findEdge(dfEdge.id()));
-        }
-    }
-    for (const auto &edge: toErase)
-        graph.eraseEdge(edge);
-    
     return graph;
 }
 
@@ -706,7 +718,7 @@ analyzeAllBlocks(const Settings &settings, const Partitioner::Ptr &partitioner) 
     for (const auto &cfgVertex: partitioner->cfg().vertices()) {
         if (BasicBlock::Ptr bb = shouldAnalyze(cfgVertex)) {
             SAWYER_MESG(debug) <<"possible jump table for " <<bb->printableName() <<"\n";
-            DfGraph dfGraph = buildDfGraphInReverse(partitioner, cfgVertex, settings.maxReversePathLength);
+            DfGraph dfGraph = buildDfGraphInReverse(settings, partitioner, cfgVertex, settings.maxReversePathLength);
             if (debug)
                 printGraph(debug, dfGraph);
             if (dfGraph.isEmpty())
