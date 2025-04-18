@@ -940,7 +940,7 @@ if(ENABLE-C)
     COMMAND rose-compiler -rose:ast:write hello-world-c.ast hello-world.c -o hello-world-c
     COMMAND ./hello-world-c
     COMMAND rose-compiler -rose:ast:read hello-world-c.ast
-    COMMAND rm hello-world.c hello-world-c hello-world-c.ast hello-world.o rose_hello-world.c
+    COMMAND rm -f hello-world.c hello-world-c hello-world-c.ast hello-world.o rose_hello-world.c
       rose_odr_class.log rose_odr_function.log rose_odr_variable.log
     VERBATIM
     DEPENDS rose-compiler
@@ -958,7 +958,7 @@ if(ENABLE-C)
     COMMAND rose-compiler -rose:ast:write hello-world-cxx.ast hello-world.cpp -o hello-world-cpp
     COMMAND ./hello-world-cpp
     COMMAND rose-compiler -rose:ast:read hello-world-cxx.ast
-    COMMAND rm hello-world.cpp hello-world-cpp hello-world-cxx.ast hello-world.o hello-world.ti
+    COMMAND rm -f hello-world.cpp hello-world-cpp hello-world-cxx.ast hello-world.o hello-world.ti
       rose_hello-world.cpp rose_odr_class.log rose_odr_function.log rose_odr_variable.log
     VERBATIM
     DEPENDS rose-compiler
@@ -976,7 +976,7 @@ if(ENABLE-FORTRAN)
     COMMAND rose-compiler -rose:ast:write hello-world-f90.ast hello-world.f90 -o hello-world-f90
     COMMAND ./hello-world-f90
 #    COMMAND rose-compiler -rose:ast:read hello-world-f90.ast
-    COMMAND rm hello-world.f90 hello-world-f90 hello-world-f90.ast hello-world.o rose_hello-world.f90
+    COMMAND rm -f hello-world.f90 hello-world-f90 hello-world-f90.ast hello-world.o rose_hello-world.f90
     VERBATIM
     DEPENDS rose-compiler
     COMMENT "  TEST     ROSE Fortran compiler")
@@ -996,7 +996,7 @@ if(ENABLE-ADA)
 # just test frontend/backend in ROSE
 #~    COMMAND ./hello-world-f90
 #    COMMAND rose-compiler -rose:ast:read hello-world-f90.ast
-    COMMAND rm hello-world.adb
+    COMMAND rm -f hello-world.adb
     VERBATIM
     DEPENDS rose-compiler
     COMMENT "  TEST     ROSE Ada compiler")
@@ -1015,7 +1015,7 @@ if(ENABLE-BINARY-ANALYSIS)
     COMMAND echo "}"                                 >> hello-world.c
     COMMAND ${CMAKE_C_COMPILER} -c hello-world.c -o hello-world-c
     COMMAND ${PROJECT_BINARY_DIR}/bin/bat-ana -o hello-world-ba hello-world-c
-    COMMAND rm hello-world.c hello-world-c hello-world-ba
+    COMMAND rm -f hello-world.c hello-world-c hello-world-ba
     VERBATIM
     DEPENDS tools
     COMMENT "  TEST     ROSE Binary analysis")

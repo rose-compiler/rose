@@ -3,7 +3,8 @@
 # on Windows Codethorn/src/ has some .h and .C files that require ifdef macros
 # If we want it to work on Windows in the future
 #
-if(NOT WIN32 AND ENABLE-C STREQUAL "ON")
+option(ENABLE-CODETHORN "Enable CodeThorn program analysis and verification" TRUE)
+if(NOT WIN32 AND ENABLE-CODETHORN AND ENABLE-C STREQUAL "ON")
   if(NOT ENABLE_OPENMP)
     # Codethorn has openmp directives
     find_package(OpenMP QUIET)
