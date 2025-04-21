@@ -609,7 +609,13 @@ buildDfGraph(const Settings &settings, const Partitioner::ConstPtr &partitioner,
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Functions for analyzing static jump tables, such as what the C compiler generates for `switch` statements.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////
+//// ICF Recovery Strategy: Compiler-generated, static, read-only jump tables.
+//// 
+//// Functions for analyzing static jump tables, such as what the C compiler generates for `switch` statements.
+////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace StaticJumpTable {
 
@@ -833,65 +839,77 @@ useJumpTable(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, con
     ASSERT_not_null(state);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
-    SAWYER_MESG(debug) <<"  results for " <<bb->printableName() <<"\n";
-    const RegisterDescriptor IP = partitioner->architecture()->registerDictionary()->instructionPointerRegister();
-    const SymbolicExpression::Ptr ip = SymbolicSemantics::SValue::promote(ops->peekRegister(IP))->get_expression();
-    SAWYER_MESG(debug) <<"    ip = " <<*ip <<"\n";
-
-    const RegisterDescriptor PATH = createPathRegister(partitioner);
-    const SymbolicExpression::Ptr path = SymbolicSemantics::SValue::promote(ops->peekRegister(PATH))->get_expression();
-    SAWYER_MESG(debug) <<"    path constraints = " <<*path <<"\n";
 
     // We only handle x86 for now (although this might work for other instruction sets too).
     if (as<const Architecture::X86>(partitioner->architecture())) {
+        SAWYER_MESG(debug) <<"  possible jump table for " <<bb->printableName() <<"\n";
+        const RegisterDescriptor IP = partitioner->architecture()->registerDictionary()->instructionPointerRegister();
+        const SymbolicExpression::Ptr ip = SymbolicSemantics::SValue::promote(ops->peekRegister(IP))->get_expression();
+        SAWYER_MESG(debug) <<"    ip = " <<*ip <<"\n";
+
+        const RegisterDescriptor PATH = createPathRegister(partitioner);
+        const SymbolicExpression::Ptr path = SymbolicSemantics::SValue::promote(ops->peekRegister(PATH))->get_expression();
+        SAWYER_MESG(debug) <<"    path constraints = " <<*path <<"\n";
+
         const auto matched = match(ip);
         const auto jumpTableEntry = matched.first;
         const Address perEntryOffset = matched.second;
-        if (jumpTableEntry) {
-            SAWYER_MESG(debug) <<"    value read from jump table: " <<*jumpTableEntry <<"\n";
-            if (const auto jumpTableAddrExpr = findAddressContaining(ops, jumpTableEntry)) {
-                SAWYER_MESG(debug) <<"    address from which it was read: " <<*jumpTableAddrExpr <<"\n";
-                const std::set<Address> constants = findInterestingConstants(jumpTableAddrExpr);
-                for (const Address tableAddr: constants) {
-                    if (isMappedAccess(partitioner->memoryMap(), tableAddr, MemoryMap::READABLE, MemoryMap::WRITABLE)) {
-                        SAWYER_MESG(debug) <<"    possible jump table at " <<addrToString(tableAddr) <<"\n"
-                                           <<"    per-entry offset is " <<addrToString(perEntryOffset) <<"\n";
+        if (!jumpTableEntry) {
+            SAWYER_MESG(debug) <<"    jump table IP expression not matched (no jump table)\n";
+            return false;
+        }
+        SAWYER_MESG(debug) <<"    value read from jump table: " <<*jumpTableEntry <<"\n";
 
-                        const auto tableLimits = AddressInterval::whole(); // will be refined
-                        const size_t bytesPerEntry = (jumpTableEntry->nBits() + 7) / 8;
-                        auto table = JumpTable::instance(partitioner, tableLimits, bytesPerEntry, perEntryOffset,
-                                                         JumpTable::EntryType::ABSOLUTE);
-                        table->maxPreEntries(0);
-                        table->refineLocationLimits(bb, tableAddr);
-                        SAWYER_MESG(debug) <<"    table limited to " <<addrToString(table->tableLimits()) <<"\n";
+        const auto jumpTableAddrExpr = findAddressContaining(ops, jumpTableEntry);
+        if (!jumpTableAddrExpr) {
+            SAWYER_MESG(debug) <<"    cannot find jump table entry in memory state\n";
+            return false;
+        }
+        SAWYER_MESG(debug) <<"    address from which it was read: " <<*jumpTableAddrExpr <<"\n";
 
-                        //table->refineTargetLimits(bb);
-                        SAWYER_MESG(debug) <<"    targets limited to " <<addrToString(table->targetLimits()) <<"\n";
-
-                        SAWYER_MESG(debug) <<"    scanning table at " <<addrToString(tableAddr)
-                                           <<" within " <<addrToString(table->tableLimits()) <<"\n";
-                        table->scan(partitioner->memoryMap()->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE), tableAddr);
-                        if (table->location()) {
-                            SAWYER_MESG(debug) <<"    parsed jump table with " <<plural(table->nEntries(), "entries") <<"\n";
-                            std::set<Address> successors = satisfiableTargets(table, path, jumpTableAddrExpr);
-                            if (debug) {
-                                debug <<"    unique targets remaining: " <<successors.size() <<"\n";
-                                for (const Address target: successors)
-                                    debug <<"      target " <<addrToString(target) <<"\n";
-                            }
-
-                            partitioner->detachBasicBlock(bb);
-                            bb->successors().clear();
-                            const size_t bitsPerWord = partitioner->architecture()->bitsPerWord();
-                            for (const Address successor: successors)
-                                bb->insertSuccessor(successor, bitsPerWord);
-                            table->attachTableToBasicBlock(bb);
-                            partitioner->attachBasicBlock(bb);
-                            return true;
-                        }
-                    }
-                }
+        const std::set<Address> constants = findInterestingConstants(jumpTableAddrExpr);
+        for (const Address tableAddr: constants) {
+            SAWYER_MESG(debug) <<"    potential table address " <<addrToString(tableAddr) <<"\n";
+            if (!isMappedAccess(partitioner->memoryMap(), tableAddr, MemoryMap::READABLE, MemoryMap::WRITABLE)) {
+                SAWYER_MESG(debug) <<"      potential table entry is not readable, or is writable\n";
+                continue;
             }
+            SAWYER_MESG(debug) <<"      possible jump table at " <<addrToString(tableAddr) <<"\n"
+                               <<"      per-entry offset is " <<addrToString(perEntryOffset) <<"\n";
+
+            const auto tableLimits = AddressInterval::whole(); // will be refined
+            const size_t bytesPerEntry = (jumpTableEntry->nBits() + 7) / 8;
+            auto table = JumpTable::instance(partitioner, tableLimits, bytesPerEntry, perEntryOffset,
+                                             JumpTable::EntryType::ABSOLUTE);
+            table->maxPreEntries(0);
+            table->refineLocationLimits(bb, tableAddr);
+            SAWYER_MESG(debug) <<"      table limited to " <<addrToString(table->tableLimits()) <<"\n";
+            SAWYER_MESG(debug) <<"      targets limited to " <<addrToString(table->targetLimits()) <<"\n";
+            SAWYER_MESG(debug) <<"      scanning table at " <<addrToString(tableAddr)
+                               <<" within " <<addrToString(table->tableLimits()) <<"\n";
+            table->scan(partitioner->memoryMap()->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE), tableAddr);
+            if (!table->location()) {
+                SAWYER_MESG(debug) <<"      table not found at " <<addrToString(tableAddr) <<"\n";
+                return false;
+            }
+            SAWYER_MESG(debug) <<"      parsed jump table at " <<addrToString(tableAddr)
+                               <<" with " <<plural(table->nEntries(), "entries") <<"\n";
+
+            std::set<Address> successors = satisfiableTargets(table, path, jumpTableAddrExpr);
+            if (debug) {
+                debug <<"      unique targets remaining: " <<successors.size() <<"\n";
+                for (const Address target: successors)
+                    debug <<"        target " <<addrToString(target) <<"\n";
+            }
+
+            partitioner->detachBasicBlock(bb);
+            bb->successors().clear();
+            const size_t bitsPerWord = partitioner->architecture()->bitsPerWord();
+            for (const Address successor: successors)
+                bb->insertSuccessor(successor, bitsPerWord);
+            table->attachTableToBasicBlock(bb);
+            partitioner->attachBasicBlock(bb);
+            return true;
         }
     }
     return false;
@@ -900,7 +918,46 @@ useJumpTable(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, con
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Top level functions employing various strategies
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////
+//// ICF Recovery strategy: final state already has a concrete instruction pointer.
+////
+//// If the dataflow itself can resolve the indirect control flow to a single value, then use that value.
+////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+namespace ConcreteIp {
+
+static bool
+useConcreteIp(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops) {
+    ASSERT_not_null(partitioner);
+    ASSERT_not_null(bb);
+    ASSERT_not_null(ops);
+
+    const RegisterDescriptor IP = partitioner->architecture()->registerDictionary()->instructionPointerRegister();
+    const SymbolicExpression::Ptr ip = SymbolicSemantics::SValue::promote(ops->peekRegister(IP))->get_expression();
+    if (const auto addr = ip->toUnsigned()) {
+        Sawyer::Message::Stream debug(mlog[DEBUG]);
+        SAWYER_MESG(debug) <<"  IP is concrete: " <<*ip <<"\n";
+
+        partitioner->detachBasicBlock(bb);
+        bb->successors().clear();
+        bb->insertSuccessor(*addr, partitioner->architecture()->bitsPerWord());
+        partitioner->attachBasicBlock(bb);
+        return true;
+    }
+
+    return false;
+}
+
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////
+//// Top level functions employing various strategies
+////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Analyze one basic block (and possibly its neighbors in the CFG) to try to resolve indirect control flow for that block. Return
@@ -957,8 +1014,13 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
     // Examine the outgoing state for the basic block in question (dataflow vertex #0)
     if (BS::State::Ptr state = dfEngine.getFinalState(0)) {
         ops->currentState(state);
-        if (StaticJumpTable::useJumpTable(partitioner, bb, ops))
+        if (ConcreteIp::useConcreteIp(partitioner, bb, ops)) {
+            SAWYER_MESG(debug) <<"  resolved indirect control flow using constant IP for " <<bb->printableName() <<"\n";
             return true;
+        } else if (StaticJumpTable::useJumpTable(partitioner, bb, ops)) {
+            SAWYER_MESG(debug) <<"  resolved indirect control flow using static jump table for " <<bb->printableName() <<"\n";
+            return true;
+        }
     }
 
     return false;
