@@ -2215,7 +2215,7 @@ EngineBinary::discoverFunctions(const Partitioner::Ptr &partitioner) {
         switch (settings().partitioner.staticJumpTableAnalysis) {
             case StaticJumpTableAnalysis::DATAFLOW:
             case StaticJumpTableAnalysis::ALL:
-                if (IndirectControlFlow::StaticJumpTable::analyzeAllBlocks(settings().icf, partitioner))
+                if (IndirectControlFlow::analyzeAllBlocks(settings().icf, partitioner))
                     continue;
                 break;
             case StaticJumpTableAnalysis::SINGLE_BLOCK:

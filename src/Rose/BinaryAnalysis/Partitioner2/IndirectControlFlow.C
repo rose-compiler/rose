@@ -85,9 +85,8 @@ commandLineSwitches(Settings &settings) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Functions for analyzing static jump tables, such as what the C compiler generates for `switch` statements.
+// Functions for dataflow
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-namespace StaticJumpTable {
 
 // Create a special register that is used to store the execution path constraints.
 static RegisterDescriptor
@@ -98,33 +97,521 @@ createPathRegister(const Partitioner::ConstPtr &partitioner) {
     return RegisterDescriptor(maj, min, 0, 1);
 }
 
-// Initialize the state with a reasonable concrete initial stack pointer.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Dataflow graph vertices nominally point to basic blocks. If `fakedCall` is not empty then the transfer function handles the
+// vertex in a special way: instead of symbolically executing the basic block's instructions, it pretends that the function does
+// something else entirely and a return-from-function is executed.
+class DfVertex {
+public:
+    const BasicBlock::Ptr bblock;
+    const size_t inlineId = 0;
+    std::string fakedCall;                              // instad of executing the bblock, it represents an entire function
+
+    DfVertex() = delete;
+
+    DfVertex(const BasicBlock::Ptr &bb, const size_t inlineId)
+        : bblock(notnull(bb)), inlineId(inlineId) {}
+
+    Address address() const {
+        return bblock->address();
+    }
+
+    std::string printableName() const {
+        return bblock->printableName();
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Dataflow vertices are indexed by address and inline ID. In a CFG, the basic block starting address is sufficient to uniquely
+// identify a vertex (at least for those vertices that are basic blocks). But the dataflow graph is different in that a function
+// might be inlined (copied) into the graph multiple times. Therefore, each copy of the function will get a unique inlining ID.
+class DfVertexKey {
+public:
+    const Address addr = 0;
+    const size_t inlineId = 0;
+
+    DfVertexKey() = delete;
+
+    DfVertexKey(const DfVertex &vertex)
+        : addr(notnull(vertex.bblock)->address()), inlineId(vertex.inlineId) {}
+
+    bool operator<(const DfVertexKey &other) const {
+        if (addr != other.addr) {
+            return addr < other.addr;
+        } else {
+            return inlineId < other.inlineId;
+        }
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// A dataflow graph contains vertices that nominally point to basic blocks and are sorted by their corresponding DfVertexKey, and
+// edges that nominally reference a CFG edge by mentioning its edge ID.  Not all edges in the dataflow graph correspond to edges in
+// the CFG. For instance, when the dataflow graph contains a faked function, there is probably no CFG edge that points from the
+// first block of the faked function to the vertex to which that function would return.
+using DfGraph = Sawyer::Container::Graph<
+    DfVertex,
+    Sawyer::Optional<size_t>,                           // CFG edge ID
+    DfVertexKey                                         // vertices sorted by basic block starting address
+    >;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Functions can be inlined (copied) into the dataflow graph from the CFG. This class holds information about function calls.
+class DfInline {
+public:
+    DfGraph::ConstVertexIterator dfCaller;              // dataflow vertex making a function call
+    DfGraph::ConstVertexIterator dfCallRet;             // dataflow vertex where the function call will return
+    ControlFlowGraph::ConstEdgeIterator cfgCall;        // CFG edge representing the function call
+    size_t callerInlineId;                              // basic blocks may appear more than once, distinguished by this field
+
+    DfInline(const DfGraph::ConstVertexIterator dfCaller, const DfGraph::ConstVertexIterator dfCallRet,
+             const ControlFlowGraph::ConstEdgeIterator cfgCall, const size_t callerInlineId)
+        : dfCaller(dfCaller), dfCallRet(dfCallRet), cfgCall(cfgCall), callerInlineId(callerInlineId) {}
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// The dataflow transfer function is responsible for taking an incoming state and a dataflow vertex (nominally a basic block) and
+// producing an outgoing state by symbolically executing the instructions of the basic block. Some dataflow vertices serve special
+// purposes known to the transfer function.
+class DfTransfer {
+    Partitioner::ConstPtr partitioner_;
+    BS::Dispatcher::Ptr cpu_;
+
+public:
+    DfTransfer(const Partitioner::ConstPtr &partitioner, const BS::Dispatcher::Ptr &cpu)
+        : partitioner_(notnull(partitioner)), cpu_(notnull(cpu)) {}
+
+    std::string toString(const BS::State::Ptr &state) const {
+        if (!state) {
+            return "null state";
+        } else {
+            return boost::lexical_cast<std::string>(*state);
+        }
+    }
+
+    // Initialize the state with a reasonable concrete initial stack pointer.
+    void initializeStackPointer(const BS::RiscOperators::Ptr &ops) const {
+        ASSERT_not_null(ops);
+        Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+        const RegisterDescriptor SP = partitioner_->architecture()->registerDictionary()->stackPointerRegister();
+        ASSERT_require(SP);
+
+        const size_t stackSize = 2 * 1024 * 1024;
+        const size_t stackAlignment = 1024 * 1024;
+
+        const AddressInterval search = AddressInterval::hull(0x80000000, 0xffffffff);
+        const Sawyer::Optional<Address> stackBottom =
+            partitioner_->memoryMap()->findFreeSpace(stackSize, stackAlignment, search, Sawyer::Container::MATCH_BACKWARD);
+        if (stackBottom) {
+            const AddressInterval stackRegion = AddressInterval::baseSize(*stackBottom, stackSize);
+            const Address stackPtr = *stackBottom + stackSize / 2;
+            SAWYER_MESG(debug) <<"  initial state stack: region = " <<addrToString(stackRegion)
+                               <<"; pointer = " <<addrToString(stackPtr) <<"\n";
+            const BS::SValue::Ptr sp = ops->number_(SP.nBits(), stackPtr);
+            ops->writeRegister(SP, sp);
+        } else {
+            SAWYER_MESG(debug) <<"initial state has abstract stack pointer\n";
+        }
+    }
+
+    BS::State::Ptr initialState() const {
+        BS::RiscOperators::Ptr ops = cpu_->operators();
+        BS::State::Ptr retval = ops->currentState()->clone();
+        ops->currentState(retval);
+
+        retval->clear();
+        cpu_->initializeState(retval);
+        initializeStackPointer(ops);
+        return retval;
+    }
+
+    BS::State::Ptr operator()(const DfGraph &dfGraph, size_t vertexId, const BS::State::Ptr &incomingState) const {
+        ASSERT_not_null(incomingState);
+
+        BS::State::Ptr retval = incomingState->clone();
+        BS::RiscOperators::Ptr ops = cpu_->operators();
+        ops->currentState(retval);
+
+        const auto dfVertex = dfGraph.findVertex(vertexId);
+        ASSERT_require(dfGraph.isValidVertex(dfVertex));
+
+        const size_t bitsPerWord = partitioner_->architecture()->bitsPerWord();
+
+        const CallingConvention::Definition::Ptr cc = [this]() {
+            const auto ccDefs = partitioner_->architecture()->callingConventions();
+            if (ccDefs.empty()) {
+                return CallingConvention::Definition::Ptr();
+            } else {
+                return ccDefs[0];
+            }
+        }();
+
+        if (dfVertex->value().fakedCall.empty()) {
+            // A normal basic block. The new state is created by symbolically executing the block's instructions.
+            BasicBlock::Ptr bb = dfGraph.findVertex(vertexId)->value().bblock;
+            for (SgAsmInstruction *insn: bb->instructions()) {
+                try {
+                    std::cerr <<"ROBB: " <<insn->toString() <<"\n";
+                    cpu_->processInstruction(insn);
+                    std::cerr <<"ROBB: state after insn:\n" <<*retval;
+                } catch (const BS::Exception&) {
+                }
+            }
+
+        } else {
+            // Simulate a function return
+            const RegisterDescriptor IP = partitioner_->architecture()->registerDictionary()->instructionPointerRegister();
+            const RegisterDescriptor SP = partitioner_->architecture()->registerDictionary()->stackPointerRegister();
+            const RegisterDescriptor LR = partitioner_->architecture()->registerDictionary()->callReturnRegister();
+            const BS::SValue::Ptr t = ops->boolean_(true);
+
+            // Compute new instruction pointer and stack pointer values if necessary.
+            BS::SValue::Ptr newIp, newSp;
+            if (LR) {
+                newIp = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+            } else {
+                const auto sp = ops->readRegister(SP, ops->undefined_(SP.nBits()));
+                newIp = ops->readMemory(RegisterDescriptor(), sp, ops->undefined_(IP.nBits()), t);
+                newSp = ops->add(sp, ops->number_(SP.nBits(), SP.nBits()/8));
+            }
+
+            // Clobber registers that the callee is allowed to change. These might include some things we computed above, so we
+            // clobber them before we write the results above.
+            if (cc) {
+                for (const RegisterDescriptor reg: cc->scratchRegisters())
+                    ops->writeRegister(reg, ops->undefined_(reg.nBits()));
+
+                for (const ConcreteLocation &loc: cc->outputParameters()) {
+                    switch (loc.type()) {
+                        case ConcreteLocation::REGISTER:
+                            ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().nBits()));
+                            break;
+
+                        case ConcreteLocation::RELATIVE: {
+                            const auto t = ops->boolean_(true);
+                            const auto base = ops->readRegister(loc.reg(), ops->undefined_(loc.reg().nBits()));
+                            const auto addr = ops->add(base, ops->number_(base->nBits(), loc.offset()));
+                            if (SymbolicSemantics::SValue::promote(addr)->get_expression()->isIntegerConstant())
+                                ops->writeMemory(RegisterDescriptor(), addr, ops->undefined_(bitsPerWord), t);
+                            break;
+                        }
+
+                        case ConcreteLocation::ABSOLUTE: {
+                            const auto t = ops->boolean_(true);
+                            const auto addr = ops->number_(IP.nBits(), loc.address());
+                            ops->writeMemory(RegisterDescriptor(), addr, ops->undefined_(bitsPerWord), t);
+                            break;
+                        }
+
+                        case ConcreteLocation::NO_LOCATION:
+                            break;
+                    }
+                }
+            }
+
+            // Update the stuff we calculated above
+            if (newIp)
+                ops->writeRegister(IP, newIp);
+            if (newSp)
+                ops->writeRegister(SP, newSp);
+        }
+        return retval;
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// The dataflow merge function is responsible for merging two symbolic states when control flow is joined from two or more edges
+// entering a vertex. For instance, an `if` statement flows two directions (the `if` body when the condition is true, and skipping
+// it when the condition is false) and therefore those two states will need to be merged at the block immediately following the `if`
+// statement.
+class DfMerge: public BinaryAnalysis::DataFlow::SemanticsMerge {
+public:
+    using Super = BinaryAnalysis::DataFlow::SemanticsMerge;
+
+private:
+    const RegisterDescriptor PATH, IP;
+    const DfGraph &dfGraph;
+
+public:
+    explicit DfMerge(const Partitioner::ConstPtr &partitioner, const BS::RiscOperators::Ptr &ops, const DfGraph &dfGraph)
+        : Super(ops),
+          PATH(createPathRegister(partitioner)),
+          IP(partitioner->architecture()->registerDictionary()->instructionPointerRegister()),
+          dfGraph(dfGraph) {}
+
+    bool operator()(size_t dstId, BS::State::Ptr &dst, size_t srcId, const BS::State::Ptr &src) const {
+        using namespace SymbolicExpression;
+
+        ASSERT_not_null(src);
+        const auto dstVert = dfGraph.findVertex(dstId);
+        ASSERT_require(dfGraph.isValidVertex(dstVert));
+        const auto srcVert = dfGraph.findVertex(dstId);
+        ASSERT_require(dfGraph.isValidVertex(srcVert));
+        const BS::RiscOperators::Ptr ops = notnull(operators());
+
+        // Symbolic expression for the expected successor(s)
+        const auto srcIp = SymbolicSemantics::SValue::promote(src->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()))
+                           ->get_expression();
+
+        // Concrete address of the destination successor--the state we're merging into
+        const SymbolicExpression::Ptr dstAddr = makeIntegerConstant(srcIp->nBits(), dstVert->value().address());
+
+        // Initial path constraints for the destination (before merging)
+        SymbolicExpression::Ptr origConstraints;
+        if (dst) {
+            origConstraints = SymbolicSemantics::SValue::promote(dst->peekRegister(PATH, ops->boolean_(true), ops.get()))
+                              ->get_expression();
+        }
+
+        bool retval = Super::operator()(dstId, dst, srcId, src);
+        ASSERT_not_null(dst);
+
+        // New constraints for the destination
+        if (dstAddr) {
+            auto newConstraints = makeEq(srcIp, dstAddr);
+            if (origConstraints)
+                newConstraints = makeOr(newConstraints, origConstraints);
+            auto newConstraintsSVal = SymbolicSemantics::SValue::instance_symbolic(newConstraints);
+            dst->writeRegister(PATH, newConstraintsSVal, ops.get());
+        }
+
+        return retval;
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Print a dataflow graph in Graphviz format for debugging.
 static void
-initializeStackPointer(const Partitioner::ConstPtr &partitioner, const BS::RiscOperators::Ptr &ops) {
+toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr &partitioner) {
     ASSERT_not_null(partitioner);
-    ASSERT_not_null(ops);
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
 
-    const RegisterDescriptor SP = partitioner->architecture()->registerDictionary()->stackPointerRegister();
-    ASSERT_require(SP);
+    const Color::HSV entryColor(0.33, 1.0, 0.9);        // light green
+    const Color::HSV indetColor(0.00, 1.0, 0.8);        // light red
+    const Color::HSV returnColor(0.67, 1.0, 0.9);       // light blue
 
-    const size_t stackSize = 2 * 1024 * 1024;
-    const size_t stackAlignment = 1024 * 1024;
+    // One subgraph per inline ID, and give them names.
+    std::map<size_t, std::string> subgraphs;
+    for (const auto &vertex: graph.vertices()) {
+        auto &name = subgraphs[vertex.value().inlineId];
+        if (name.empty()) {
+            for (Function::Ptr &function: partitioner->functionsOverlapping(vertex.value().address())) {
+                name = "inline #" + boost::lexical_cast<std::string>(vertex.value().inlineId) + " " + function->printableName();
+                break;
+            }
+        }
+    }
+    for (auto &subgraph: subgraphs) {
+        if (subgraph.second.empty())
+            subgraph.second = "inline #" + boost::lexical_cast<std::string>(subgraph.first);
+    }
 
-    const AddressInterval search = AddressInterval::hull(0x80000000, 0xffffffff);
-    const Sawyer::Optional<Address> stackBottom =
-        partitioner->memoryMap()->findFreeSpace(stackSize, stackAlignment, search, Sawyer::Container::MATCH_BACKWARD);
-    if (stackBottom) {
-        const AddressInterval stackRegion = AddressInterval::baseSize(*stackBottom, stackSize);
-        const Address stackPtr = *stackBottom + stackSize / 2;
-        SAWYER_MESG(debug) <<"  initial state stack: region = " <<addrToString(stackRegion)
-                           <<"; pointer = " <<addrToString(stackPtr) <<"\n";
-        const BS::SValue::Ptr sp = ops->number_(SP.nBits(), stackPtr);
-        ops->writeRegister(SP, sp);
-    } else {
-        SAWYER_MESG(debug) <<"initial state has abstract stack pointer\n";
+    out <<"digraph dfCfg {\n";
+    for (const auto &subgraph: subgraphs) {
+        out <<"subgraph cluster_" <<subgraph.first <<" {\n"
+            <<" graph ["
+            <<" label=<subgraph " <<subgraph.first <<"<br/>" <<GraphViz::htmlEscape(subgraph.second) <<">"
+            <<" ];\n";
+
+        for (const auto &dfVertex: graph.vertices()) {
+            if (dfVertex.value().inlineId == subgraph.first) {
+                out <<dfVertex.id() <<" [";
+                if (dfVertex.nInEdges() == 0)
+                    out <<" shape=box style=filled fillcolor=\"" <<entryColor.toHtml() <<"\"";
+                out <<" label=<<b>Vertex " <<dfVertex.id() <<"</b>";
+
+                if (dfVertex.value().fakedCall.empty()) {
+                    BasicBlock::Ptr bb = partitioner->basicBlockExists(dfVertex.value().address());
+                    ASSERT_not_null(bb);
+                    for (SgAsmInstruction *insn: bb->instructions())
+                        out <<"<br align=\"left\"/>" <<GraphViz::htmlEscape(insn->toStringNoColor());
+                } else {
+                    out <<"<br align=\"left\"/>faked call to " <<GraphViz::htmlEscape(dfVertex.value().fakedCall);
+                }
+                out <<"<br align=\"left\"/>> shape=box fontname=Courier";
+                out <<" ];\n";
+            }
+        }
+        out <<"}\n";
+    }
+
+    for (const auto &edge: graph.edges()) {
+        out <<edge.source()->id() <<" -> " <<edge.target()->id() <<";\n";
+    }
+
+    out <<"}\n";
+}
+
+// Simple output function for debugging
+static void
+printGraph(std::ostream &out, const DfGraph &graph) {
+    out <<"  vertices:\n";
+    for (const auto &vertex: graph.vertices()) {
+        out <<"    V" <<vertex.id() <<": " <<vertex.value().printableName() <<"\n";
+        for (const auto &edge: vertex.outEdges()) {
+            out <<"      E" <<edge.id() <<": cfg edge #" <<edge.value() <<" to " <<edge.target()->value().printableName() <<"\n";
+        }
     }
 }
+
+// Inline into the dataflow graph a function called via CFG edge. Return a list of any new dataflow vertices that have subsequent
+// function calls that were not inlined yet.
+static std::vector<DfInline>
+inlineFunctionCall(DfGraph &graph, const Partitioner::ConstPtr &partitioner, const DfInline &call, const size_t calleeInlineId) {
+    ASSERT_not_null(partitioner);
+    const ControlFlowGraph &cfg = partitioner->cfg();
+    std::vector<DfInline> retval;                       // next level for possible inlining
+
+    // Insert the first basic block of the callee and create an edge from the caller to the callee.
+    DfGraph::VertexIterator dfCallee = graph.vertices().end();
+    if (BasicBlock::Ptr entryBb = call.cfgCall->target()->value().bblock()) {
+        dfCallee = graph.insertVertex(DfVertex(entryBb, calleeInlineId));
+        graph.insertEdge(call.dfCaller, dfCallee, call.cfgCall->id());
+    } else {
+        return retval;
+    }
+    ASSERT_require(graph.isValidVertex(dfCallee));
+
+    // Handle calls to functions in shared libraries by faking the function.
+    if (Function::Ptr function = partitioner->functionExists(dfCallee->value().address())) {
+        if (boost::ends_with(function->name(), "@plt")) {
+            dfCallee->value().fakedCall = function->name();
+            graph.insertEdge(dfCallee, call.dfCallRet, Sawyer::Nothing());
+        }
+    }
+
+    // Insert all the basic blocks for the callee
+    if (dfCallee->value().fakedCall.empty()) {
+        using namespace Sawyer::Container::Algorithm;
+        using Traversal = DepthFirstForwardGraphTraversal<const ControlFlowGraph>;
+        for (Traversal t(cfg, call.cfgCall->target()); t; ++t) {
+            if (t.event() == ENTER_EDGE) {
+                BasicBlock::Ptr src = t.edge()->source()->value().bblock();
+                BasicBlock::Ptr tgt = t.edge()->target()->value().bblock();
+                if (src && tgt && t.edge()->value().type() == E_FUNCTION_CALL) {
+                    // The called function makes another function call. Skip this edge, but return the info for further inlining.
+                    const auto caller = graph.findVertexValue(DfVertex(src, call.callerInlineId));
+                    ASSERT_require(graph.isValidVertex(caller));
+                    const auto callret = graph.insertVertexMaybe(DfVertex(tgt, call.callerInlineId));
+                    ASSERT_require(graph.isValidVertex(callret));
+                    retval.push_back(DfInline(caller, callret, t.edge(), calleeInlineId));
+                    t.skipChildren();
+
+                } else if (src && t.edge()->value().type() == E_FUNCTION_RETURN) {
+                    // The called function is returning. Create an edge from the returning vertex to the caller's callret vertex.
+                    const auto dfReturnFrom = graph.findVertexValue(DfVertex(src, calleeInlineId));
+                    ASSERT_require(graph.isValidVertex(dfReturnFrom));
+                    graph.insertEdge(dfReturnFrom, call.dfCallRet, t.edge()->id());
+                    t.skipChildren();
+
+                } else if (src && tgt && t.edge()->value().type() != E_FUNCTION_CALL) {
+                    // Normal intra-function edge to be inlined into the dataflow graph
+                    graph.insertEdgeWithVertices(DfVertex(src, calleeInlineId), DfVertex(tgt, calleeInlineId), t.edge()->id());
+
+                } else {
+                    t.skipChildren();
+                }
+            }
+        }
+    }
+
+    // Erase the old call-return edge(s) that goes from the call vertex to the vertex to which the call returns.
+    std::vector<DfGraph::ConstEdgeIterator> toErase;
+    for (const auto &dfEdge: call.dfCaller->outEdges()) {
+        if (dfEdge.target() == call.dfCallRet) {
+            const auto cfgEdge = cfg.findEdge(dfEdge.value().orElse(UNLIMITED));
+            if (cfg.isValidEdge(cfgEdge) && cfgEdge->value().type() == E_CALL_RETURN)
+                toErase.push_back(graph.findEdge(dfEdge.id()));
+        }
+    }
+    for (const auto &edge: toErase)
+        graph.eraseEdge(edge);
+
+    return retval;
+}
+
+static DfGraph::ConstVertexIterator
+findCallRet(const DfGraph &graph, const ControlFlowGraph &cfg, const DfGraph::Vertex &dfVertex) {
+    for (const auto &dfEdge: dfVertex.outEdges()) {
+        const auto cfgEdge = cfg.findEdge(dfEdge.value().orElse(UNLIMITED));
+        if (cfg.isValidEdge(cfgEdge) && cfgEdge->value().type() == E_CALL_RETURN)
+            return dfEdge.target();
+    }
+    return graph.vertices().end();
+}
+
+// Given a CFG vertex that has an indeterminate edge (i.e., a possible indirect branch), construct a dataflow graph that looks
+// backward from that CFG vertex a certain distance. Return the dataflow graph and its starting vertex IDs.
+static DfGraph
+buildDfGraph(const Settings &settings, const Partitioner::ConstPtr &partitioner, const ControlFlowGraph::Vertex &cfgVertex,
+             const size_t maxDepth) {
+    using namespace Sawyer::Container::Algorithm;
+
+    ASSERT_not_null(partitioner);
+    DfGraph graph;
+
+    // Insert the ending vertex first so we're guaranteed that it has ID zero.
+    if (BasicBlock::Ptr bb = cfgVertex.value().bblock()) {
+        graph.insertVertex(DfVertex(bb, 0));
+    } else {
+        return graph;
+    }
+
+    // Work backward from the ending vertex
+    size_t depth = 0;
+    using Traversal = DepthFirstReverseGraphTraversal<const ControlFlowGraph>;
+    for (Traversal t(partitioner->cfg(), partitioner->cfg().findVertex(cfgVertex.id())); t; ++t) {
+        if (t.event() == ENTER_EDGE) {
+            BasicBlock::Ptr src = t.edge()->source()->value().bblock();
+            BasicBlock::Ptr tgt = t.edge()->target()->value().bblock();
+            if (++depth <= maxDepth && src && tgt) {
+                graph.insertEdgeWithVertices(DfVertex(src, 0), DfVertex(tgt, 0), t.edge()->id());
+            } else {
+                t.skipChildren();
+            }
+        } else if (t.event() == LEAVE_EDGE) {
+            ASSERT_require(depth > 0);
+            --depth;
+        }
+    }
+
+    // Find vertices in the dataflow graph that call other functions.
+    std::vector<DfInline> callsToInline;
+    for (const auto &dfVertex: graph.vertices()) {
+        const auto cfgVertex = partitioner->findPlaceholder(dfVertex.value().address());
+        ASSERT_require(partitioner->cfg().isValidVertex(cfgVertex));
+        for (const auto &cfgEdge: cfgVertex->outEdges()) {
+            if (cfgEdge.value().type() == E_FUNCTION_CALL && cfgEdge.target()->value().type() == V_BASIC_BLOCK) {
+                const auto dfCallRet = findCallRet(graph, partitioner->cfg(), dfVertex);
+                if (graph.isValidVertex(dfCallRet)) {
+                    const auto dfCallerIter = graph.findVertex(dfVertex.id());
+                    const auto cfgEdgeIter = partitioner->cfg().findEdge(cfgEdge.id());
+                    callsToInline.push_back(DfInline(dfCallerIter, dfCallRet, cfgEdgeIter, 0));
+                }
+            }
+        }
+    }
+
+    // Repeatedly inline function calls to the specified depth. So far, all vertices have an inlineId of zero. Each time we inline
+    // another function we'll use a new inlineId. This ensures that even if the same function is inlined more than once we can
+    // uniquely identify each vertex in the dataflow graph by a combination of address and inlineId.
+    size_t inlineId = 0;
+    for (size_t i = 0; i < settings.maxInliningDepth && !callsToInline.empty(); ++i) {
+        std::vector<DfInline> nextLevelCalls;
+        for (const auto &call: callsToInline) {
+            const auto next = inlineFunctionCall(graph, partitioner, call, ++inlineId);
+            nextLevelCalls.insert(nextLevelCalls.end(), next.begin(), next.end());
+        }
+        callsToInline = nextLevelCalls;
+    }
+
+    return graph;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Functions for analyzing static jump tables, such as what the C compiler generates for `switch` statements.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+namespace StaticJumpTable {
 
 // matches "(add[u64] (sext 0x40, e1[u32]) c1)" and returns e1 and c1 if matched. If not matched, returns (nullptr, 0).
 static std::pair<SymbolicExpression::Ptr, Address>
@@ -324,501 +811,19 @@ satisfiableTargets(const JumpTable::Ptr &table, const SymbolicExpression::Ptr &p
     return retval;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Dataflow graph vertices nominally point to basic blocks. If `fakedCall` is not empty then the transfer function handles the
-// vertex in a special way: instead of symbolically executing the basic block's instructions, it pretends that the function does
-// something else entirely and a return-from-function is executed.
-class DfVertex {
-public:
-    const BasicBlock::Ptr bblock;
-    const size_t inlineId = 0;
-    std::string fakedCall;                              // instad of executing the bblock, it represents an entire function
-
-    DfVertex() = delete;
-
-    DfVertex(const BasicBlock::Ptr &bb, const size_t inlineId)
-        : bblock(notnull(bb)), inlineId(inlineId) {}
-
-    Address address() const {
-        return bblock->address();
-    }
-
-    std::string printableName() const {
-        return bblock->printableName();
-    }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Dataflow vertices are indexed by address and inline ID. In a CFG, the basic block starting address is sufficient to uniquely
-// identify a vertex (at least for those vertices that are basic blocks). But the dataflow graph is different in that a function
-// might be inlined (copied) into the graph multiple times. Therefore, each copy of the function will get a unique inlining ID.
-class DfVertexKey {
-public:
-    const Address addr = 0;
-    const size_t inlineId = 0;
-
-    DfVertexKey() = delete;
-
-    DfVertexKey(const DfVertex &vertex)
-        : addr(notnull(vertex.bblock)->address()), inlineId(vertex.inlineId) {}
-
-    bool operator<(const DfVertexKey &other) const {
-        if (addr != other.addr) {
-            return addr < other.addr;
-        } else {
-            return inlineId < other.inlineId;
-        }
-    }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// A dataflow graph contains vertices that nominally point to basic blocks and are sorted by their corresponding DfVertexKey, and
-// edges that nominally reference a CFG edge by mentioning its edge ID.  Not all edges in the dataflow graph correspond to edges in
-// the CFG. For instance, when the dataflow graph contains a faked function, there is probably no CFG edge that points from the
-// first block of the faked function to the vertex to which that function would return.
-using DfGraph = Sawyer::Container::Graph<
-    DfVertex,
-    Sawyer::Optional<size_t>,                           // CFG edge ID
-    DfVertexKey                                         // vertices sorted by basic block starting address
-    >;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Functions can be inlined (copied) into the dataflow graph from the CFG. This class holds information about function calls.
-class DfInline {
-public:
-    DfGraph::ConstVertexIterator dfCaller;              // dataflow vertex making a function call
-    DfGraph::ConstVertexIterator dfCallRet;             // dataflow vertex where the function call will return
-    ControlFlowGraph::ConstEdgeIterator cfgCall;        // CFG edge representing the function call
-    size_t callerInlineId;                              // basic blocks may appear more than once, distinguished by this field
-
-    DfInline(const DfGraph::ConstVertexIterator dfCaller, const DfGraph::ConstVertexIterator dfCallRet,
-             const ControlFlowGraph::ConstEdgeIterator cfgCall, const size_t callerInlineId)
-        : dfCaller(dfCaller), dfCallRet(dfCallRet), cfgCall(cfgCall), callerInlineId(callerInlineId) {}
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// The dataflow transfer function is responsible for taking an incoming state and a dataflow vertex (nominally a basic block) and
-// producing an outgoing state by symbolically executing the instructions of the basic block. Some dataflow vertices serve special
-// purposes known to the transfer function.
-class DfTransfer {
-    Partitioner::ConstPtr partitioner_;
-    BS::Dispatcher::Ptr cpu_;
-
-public:
-    DfTransfer(const Partitioner::ConstPtr &partitioner, const BS::Dispatcher::Ptr &cpu)
-        : partitioner_(notnull(partitioner)), cpu_(notnull(cpu)) {}
-
-    std::string toString(const BS::State::Ptr &state) const {
-        if (!state) {
-            return "null state";
-        } else {
-            return boost::lexical_cast<std::string>(*state);
-        }
-    }
-
-    BS::State::Ptr initialState() const {
-        BS::RiscOperators::Ptr ops = cpu_->operators();
-        BS::State::Ptr retval = ops->currentState()->clone();
-        ops->currentState(retval);
-
-        retval->clear();
-        cpu_->initializeState(retval);
-        initializeStackPointer(partitioner_, ops);
-        return retval;
-    }
-
-    BS::State::Ptr operator()(const DfGraph &dfGraph, size_t vertexId, const BS::State::Ptr &incomingState) const {
-        ASSERT_not_null(incomingState);
-
-        BS::State::Ptr retval = incomingState->clone();
-        BS::RiscOperators::Ptr ops = cpu_->operators();
-        ops->currentState(retval);
-
-        const auto dfVertex = dfGraph.findVertex(vertexId);
-        ASSERT_require(dfGraph.isValidVertex(dfVertex));
-
-        const size_t bitsPerWord = partitioner_->architecture()->bitsPerWord();
-
-        const CallingConvention::Definition::Ptr cc = [this]() {
-            const auto ccDefs = partitioner_->architecture()->callingConventions();
-            if (ccDefs.empty()) {
-                return CallingConvention::Definition::Ptr();
-            } else {
-                return ccDefs[0];
-            }
-        }();
-
-        if (dfVertex->value().fakedCall.empty()) {
-            // A normal basic block. The new state is created by symbolically executing the block's instructions.
-            BasicBlock::Ptr bb = dfGraph.findVertex(vertexId)->value().bblock;
-            for (SgAsmInstruction *insn: bb->instructions()) {
-                try {
-                    cpu_->processInstruction(insn);
-                } catch (const BS::Exception&) {
-                }
-            }
-
-        } else {
-            // Simulate a function return
-            const RegisterDescriptor IP = partitioner_->architecture()->registerDictionary()->instructionPointerRegister();
-            const RegisterDescriptor SP = partitioner_->architecture()->registerDictionary()->stackPointerRegister();
-            const RegisterDescriptor LR = partitioner_->architecture()->registerDictionary()->callReturnRegister();
-            const BS::SValue::Ptr t = ops->boolean_(true);
-
-            // Compute new instruction pointer and stack pointer values if necessary.
-            BS::SValue::Ptr newIp, newSp;
-            if (LR) {
-                newIp = ops->readRegister(LR, ops->undefined_(LR.nBits()));
-            } else {
-                const auto sp = ops->readRegister(SP, ops->undefined_(SP.nBits()));
-                newIp = ops->readMemory(RegisterDescriptor(), sp, ops->undefined_(IP.nBits()), t);
-                newSp = ops->add(sp, ops->number_(SP.nBits(), SP.nBits()/8));
-            }
-
-            // Clobber registers that the callee is allowed to change. These might include some things we computed above, so we
-            // clobber them before we write the results above.
-            if (cc) {
-                for (const RegisterDescriptor reg: cc->scratchRegisters())
-                    ops->writeRegister(reg, ops->undefined_(reg.nBits()));
-
-                for (const ConcreteLocation &loc: cc->outputParameters()) {
-                    switch (loc.type()) {
-                        case ConcreteLocation::REGISTER:
-                            ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().nBits()));
-                            break;
-
-                        case ConcreteLocation::RELATIVE: {
-                            const auto t = ops->boolean_(true);
-                            const auto base = ops->readRegister(loc.reg(), ops->undefined_(loc.reg().nBits()));
-                            const auto addr = ops->add(base, ops->number_(base->nBits(), loc.offset()));
-                            if (SymbolicSemantics::SValue::promote(addr)->get_expression()->isIntegerConstant())
-                                ops->writeMemory(RegisterDescriptor(), addr, ops->undefined_(bitsPerWord), t);
-                            break;
-                        }
-
-                        case ConcreteLocation::ABSOLUTE: {
-                            const auto t = ops->boolean_(true);
-                            const auto addr = ops->number_(IP.nBits(), loc.address());
-                            ops->writeMemory(RegisterDescriptor(), addr, ops->undefined_(bitsPerWord), t);
-                            break;
-                        }
-
-                        case ConcreteLocation::NO_LOCATION:
-                            break;
-                    }
-                }
-            }
-
-            // Update the stuff we calculated above
-            if (newIp)
-                ops->writeRegister(IP, newIp);
-            if (newSp)
-                ops->writeRegister(SP, newSp);
-        }
-        return retval;
-    }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// The dataflow merge function is responsible for merging two symbolic states when control flow is joined from two or more edges
-// entering a vertex. For instance, an `if` statement flows two directions (the `if` body when the condition is true, and skipping
-// it when the condition is false) and therefore those two states will need to be merged at the block immediately following the `if`
-// statement.
-class DfMerge: public BinaryAnalysis::DataFlow::SemanticsMerge {
-public:
-    using Super = BinaryAnalysis::DataFlow::SemanticsMerge;
-
-private:
-    const RegisterDescriptor PATH, IP;
-    const DfGraph &dfGraph;
-
-public:
-    explicit DfMerge(const Partitioner::ConstPtr &partitioner, const BS::RiscOperators::Ptr &ops, const DfGraph &dfGraph)
-        : Super(ops),
-          PATH(createPathRegister(partitioner)),
-          IP(partitioner->architecture()->registerDictionary()->instructionPointerRegister()),
-          dfGraph(dfGraph) {}
-
-    bool operator()(size_t dstId, BS::State::Ptr &dst, size_t srcId, const BS::State::Ptr &src) const {
-        using namespace SymbolicExpression;
-
-        ASSERT_not_null(src);
-        const auto dstVert = dfGraph.findVertex(dstId);
-        ASSERT_require(dfGraph.isValidVertex(dstVert));
-        const auto srcVert = dfGraph.findVertex(dstId);
-        ASSERT_require(dfGraph.isValidVertex(srcVert));
-        const BS::RiscOperators::Ptr ops = notnull(operators());
-
-        // Symbolic expression for the expected successor(s)
-        const auto srcIp = SymbolicSemantics::SValue::promote(src->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()))
-                           ->get_expression();
-
-        // Concrete address of the destination successor--the state we're merging into
-        const SymbolicExpression::Ptr dstAddr = makeIntegerConstant(srcIp->nBits(), dstVert->value().address());
-
-        // Initial path constraints for the destination (before merging)
-        SymbolicExpression::Ptr origConstraints;
-        if (dst) {
-            origConstraints = SymbolicSemantics::SValue::promote(dst->peekRegister(PATH, ops->boolean_(true), ops.get()))
-                              ->get_expression();
-        }
-
-        bool retval = Super::operator()(dstId, dst, srcId, src);
-        ASSERT_not_null(dst);
-
-        // New constraints for the destination
-        if (dstAddr) {
-            auto newConstraints = makeEq(srcIp, dstAddr);
-            if (origConstraints)
-                newConstraints = makeOr(newConstraints, origConstraints);
-            auto newConstraintsSVal = SymbolicSemantics::SValue::instance_symbolic(newConstraints);
-            dst->writeRegister(PATH, newConstraintsSVal, ops.get());
-        }
-
-        return retval;
-    }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Print a dataflow graph in Graphviz format for debugging.
-static void
-toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr &partitioner) {
-    ASSERT_not_null(partitioner);
-
-    const Color::HSV entryColor(0.33, 1.0, 0.9);        // light green
-    const Color::HSV indetColor(0.00, 1.0, 0.8);        // light red
-    const Color::HSV returnColor(0.67, 1.0, 0.9);       // light blue
-
-    // One subgraph per inline ID, and give them names.
-    std::map<size_t, std::string> subgraphs;
-    for (const auto &vertex: graph.vertices()) {
-        auto &name = subgraphs[vertex.value().inlineId];
-        if (name.empty()) {
-            for (Function::Ptr &function: partitioner->functionsOverlapping(vertex.value().address())) {
-                name = "inline #" + boost::lexical_cast<std::string>(vertex.value().inlineId) + " " + function->printableName();
-                break;
-            }
-        }
-    }
-    for (auto &subgraph: subgraphs) {
-        if (subgraph.second.empty())
-            subgraph.second = "inline #" + boost::lexical_cast<std::string>(subgraph.first);
-    }
-
-    out <<"digraph dfCfg {\n";
-    for (const auto &subgraph: subgraphs) {
-        out <<"subgraph cluster_" <<subgraph.first <<" {\n"
-            <<" graph ["
-            <<" label=<subgraph " <<subgraph.first <<"<br/>" <<GraphViz::htmlEscape(subgraph.second) <<">"
-            <<" ];\n";
-
-        for (const auto &dfVertex: graph.vertices()) {
-            if (dfVertex.value().inlineId == subgraph.first) {
-                out <<dfVertex.id() <<" [";
-                if (dfVertex.nInEdges() == 0)
-                    out <<" shape=box style=filled fillcolor=\"" <<entryColor.toHtml() <<"\"";
-                out <<" label=<<b>Vertex " <<dfVertex.id() <<"</b>";
-
-                if (dfVertex.value().fakedCall.empty()) {
-                    BasicBlock::Ptr bb = partitioner->basicBlockExists(dfVertex.value().address());
-                    ASSERT_not_null(bb);
-                    for (SgAsmInstruction *insn: bb->instructions())
-                        out <<"<br align=\"left\"/>" <<GraphViz::htmlEscape(insn->toStringNoColor());
-                } else {
-                    out <<"<br align=\"left\"/>faked call to " <<GraphViz::htmlEscape(dfVertex.value().fakedCall);
-                }
-                out <<"<br align=\"left\"/>> shape=box fontname=Courier";
-                out <<" ];\n";
-            }
-        }
-        out <<"}\n";
-    }
-
-    for (const auto &edge: graph.edges()) {
-        out <<edge.source()->id() <<" -> " <<edge.target()->id() <<";\n";
-    }
-
-    out <<"}\n";
-}
-
-// Inline into the dataflow graph a function called via CFG edge. Return a list of any new dataflow vertices that have subsequent
-// function calls that were not inlined yet.
-static std::vector<DfInline>
-inlineFunctionCall(DfGraph &graph, const Partitioner::ConstPtr &partitioner, const DfInline &call, const size_t calleeInlineId) {
-    ASSERT_not_null(partitioner);
-    const ControlFlowGraph &cfg = partitioner->cfg();
-    std::vector<DfInline> retval;                       // next level for possible inlining
-
-    // Insert the first basic block of the callee and create an edge from the caller to the callee.
-    DfGraph::VertexIterator dfCallee = graph.vertices().end();
-    if (BasicBlock::Ptr entryBb = call.cfgCall->target()->value().bblock()) {
-        dfCallee = graph.insertVertex(DfVertex(entryBb, calleeInlineId));
-        graph.insertEdge(call.dfCaller, dfCallee, call.cfgCall->id());
-    } else {
-        return retval;
-    }
-    ASSERT_require(graph.isValidVertex(dfCallee));
-
-    // Handle calls to functions in shared libraries by faking the function.
-    if (Function::Ptr function = partitioner->functionExists(dfCallee->value().address())) {
-        if (boost::ends_with(function->name(), "@plt")) {
-            dfCallee->value().fakedCall = function->name();
-            graph.insertEdge(dfCallee, call.dfCallRet, Sawyer::Nothing());
-        }
-    }
-
-    // Insert all the basic blocks for the callee
-    if (dfCallee->value().fakedCall.empty()) {
-        using namespace Sawyer::Container::Algorithm;
-        using Traversal = DepthFirstForwardGraphTraversal<const ControlFlowGraph>;
-        for (Traversal t(cfg, call.cfgCall->target()); t; ++t) {
-            if (t.event() == ENTER_EDGE) {
-                BasicBlock::Ptr src = t.edge()->source()->value().bblock();
-                BasicBlock::Ptr tgt = t.edge()->target()->value().bblock();
-                if (src && tgt && t.edge()->value().type() == E_FUNCTION_CALL) {
-                    // The called function makes another function call. Skip this edge, but return the info for further inlining.
-                    const auto caller = graph.findVertexValue(DfVertex(src, call.callerInlineId));
-                    ASSERT_require(graph.isValidVertex(caller));
-                    const auto callret = graph.insertVertexMaybe(DfVertex(tgt, call.callerInlineId));
-                    ASSERT_require(graph.isValidVertex(callret));
-                    retval.push_back(DfInline(caller, callret, t.edge(), calleeInlineId));
-                    t.skipChildren();
-
-                } else if (src && t.edge()->value().type() == E_FUNCTION_RETURN) {
-                    // The called function is returning. Create an edge from the returning vertex to the caller's callret vertex.
-                    const auto dfReturnFrom = graph.findVertexValue(DfVertex(src, calleeInlineId));
-                    ASSERT_require(graph.isValidVertex(dfReturnFrom));
-                    graph.insertEdge(dfReturnFrom, call.dfCallRet, t.edge()->id());
-                    t.skipChildren();
-
-                } else if (src && tgt && t.edge()->value().type() != E_FUNCTION_CALL) {
-                    // Normal intra-function edge to be inlined into the dataflow graph
-                    graph.insertEdgeWithVertices(DfVertex(src, calleeInlineId), DfVertex(tgt, calleeInlineId), t.edge()->id());
-
-                } else {
-                    t.skipChildren();
-                }
-            }
-        }
-    }
-
-    // Erase the old call-return edge(s) that goes from the call vertex to the vertex to which the call returns.
-    std::vector<DfGraph::ConstEdgeIterator> toErase;
-    for (const auto &dfEdge: call.dfCaller->outEdges()) {
-        if (dfEdge.target() == call.dfCallRet) {
-            const auto cfgEdge = cfg.findEdge(dfEdge.value().orElse(UNLIMITED));
-            if (cfg.isValidEdge(cfgEdge) && cfgEdge->value().type() == E_CALL_RETURN)
-                toErase.push_back(graph.findEdge(dfEdge.id()));
-        }
-    }
-    for (const auto &edge: toErase)
-        graph.eraseEdge(edge);
-
-    return retval;
-}
-
-static DfGraph::ConstVertexIterator
-findCallRet(const DfGraph &graph, const ControlFlowGraph &cfg, const DfGraph::Vertex &dfVertex) {
-    for (const auto &dfEdge: dfVertex.outEdges()) {
-        const auto cfgEdge = cfg.findEdge(dfEdge.value().orElse(UNLIMITED));
-        if (cfg.isValidEdge(cfgEdge) && cfgEdge->value().type() == E_CALL_RETURN)
-            return dfEdge.target();
-    }
-    return graph.vertices().end();
-}
-
-// Given a CFG vertex that has an indeterminate edge (i.e., a possible indirect branch), construct a dataflow graph that looks
-// backward from that CFG vertex a certain distance. Return the dataflow graph and its starting vertex IDs.
-static DfGraph
-buildDfGraph(const Settings &settings, const Partitioner::ConstPtr &partitioner, const ControlFlowGraph::Vertex &cfgVertex,
-             const size_t maxDepth) {
-    using namespace Sawyer::Container::Algorithm;
-
-    ASSERT_not_null(partitioner);
-    DfGraph graph;
-
-    // Insert the ending vertex first so we're guaranteed that it has ID zero.
-    if (BasicBlock::Ptr bb = cfgVertex.value().bblock()) {
-        graph.insertVertex(DfVertex(bb, 0));
-    } else {
-        return graph;
-    }
-
-    // Work backward from the ending vertex
-    size_t depth = 0;
-    using Traversal = DepthFirstReverseGraphTraversal<const ControlFlowGraph>;
-    for (Traversal t(partitioner->cfg(), partitioner->cfg().findVertex(cfgVertex.id())); t; ++t) {
-        if (t.event() == ENTER_EDGE) {
-            BasicBlock::Ptr src = t.edge()->source()->value().bblock();
-            BasicBlock::Ptr tgt = t.edge()->target()->value().bblock();
-            if (++depth <= maxDepth && src && tgt) {
-                graph.insertEdgeWithVertices(DfVertex(src, 0), DfVertex(tgt, 0), t.edge()->id());
-            } else {
-                t.skipChildren();
-            }
-        } else if (t.event() == LEAVE_EDGE) {
-            ASSERT_require(depth > 0);
-            --depth;
-        }
-    }
-
-    // Find vertices in the dataflow graph that call other functions.
-    std::vector<DfInline> callsToInline;
-    for (const auto &dfVertex: graph.vertices()) {
-        const auto cfgVertex = partitioner->findPlaceholder(dfVertex.value().address());
-        ASSERT_require(partitioner->cfg().isValidVertex(cfgVertex));
-        for (const auto &cfgEdge: cfgVertex->outEdges()) {
-            if (cfgEdge.value().type() == E_FUNCTION_CALL && cfgEdge.target()->value().type() == V_BASIC_BLOCK) {
-                const auto dfCallRet = findCallRet(graph, partitioner->cfg(), dfVertex);
-                if (graph.isValidVertex(dfCallRet)) {
-                    const auto dfCallerIter = graph.findVertex(dfVertex.id());
-                    const auto cfgEdgeIter = partitioner->cfg().findEdge(cfgEdge.id());
-                    callsToInline.push_back(DfInline(dfCallerIter, dfCallRet, cfgEdgeIter, 0));
-                }
-            }
-        }
-    }
-
-    // Repeatedly inline function calls to the specified depth. So far, all vertices have an inlineId of zero. Each time we inline
-    // another function we'll use a new inlineId. This ensures that even if the same function is inlined more than once we can
-    // uniquely identify each vertex in the dataflow graph by a combination of address and inlineId.
-    size_t inlineId = 0;
-    for (size_t i = 0; i < settings.maxInliningDepth && !callsToInline.empty(); ++i) {
-        std::vector<DfInline> nextLevelCalls;
-        for (const auto &call: callsToInline) {
-            const auto next = inlineFunctionCall(graph, partitioner, call, ++inlineId);
-            nextLevelCalls.insert(nextLevelCalls.end(), next.begin(), next.end());
-        }
-        callsToInline = nextLevelCalls;
-    }
-
-    return graph;
-}
-
-static void
-printGraph(std::ostream &out, const DfGraph &graph) {
-    out <<"  vertices:\n";
-    for (const auto &vertex: graph.vertices()) {
-        out <<"    V" <<vertex.id() <<": " <<vertex.value().printableName() <<"\n";
-        for (const auto &edge: vertex.outEdges()) {
-            out <<"      E" <<edge.id() <<": cfg edge #" <<edge.value() <<" to " <<edge.target()->value().printableName() <<"\n";
-        }
-    }
-}
-
-// Test whether the specified vertex should be analyzed
-static BasicBlock::Ptr
-shouldAnalyze(const ControlFlowGraph::Vertex &vertex) {
-    if (BasicBlock::Ptr bb = vertex.value().bblock()) {
-        for (const auto &edge: vertex.outEdges()) {
-            if (edge.target()->value().type() == V_INDETERMINATE &&
-                edge.value().type() != E_FUNCTION_RETURN)
-                return bb;
-        }
-    }
-    return {};
-}
-
+/*  This analysis attempts to resolve the indirect control flow by discovering and using statically created jump tables,
+ *  such as what a C compiler typically creates for `switch` statements.
+ *
+ *  For each such block having an indeterminate outgoing CFG edge, a dataflow graph is created from nearby basic blocks. The
+ *  dataflow analysis uses instruction semantics to update the machine state associated with each dataflow graph vertex. A special
+ *  merge operation merges states when control flow merges, such as at the end of an `if` statement. The analysis examines the final
+ *  outgoing state for the basic block in question to ascertain whether a static jump table was used, what its starting address
+ *  might be, and how entries in the table are used to compute target addresses for the jump instruction.
+ *
+ *  Besides containing the typical symbolic registers and memory, the state also contains constraints imposed by the execution path.
+ *  These constraints are used to limit the size of the jump table. Ideally, even if the compiler emits two consecutive tables for
+ *  two different `switch` statements, the basic block for each `switch` statement will have only successors that are relevant to
+ *  that statement. */
 static bool
 useJumpTable(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(partitioner);
@@ -892,66 +897,100 @@ useJumpTable(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, con
     return false;
 }
 
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Top level functions employing various strategies
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Analyze one basic block (and possibly its neighbors in the CFG) to try to resolve indirect control flow for that block. Return
+// true if the CFG successors are changed for that block.
+bool
+analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb) {
+    ASSERT_not_null(partitioner);
+    ASSERT_not_null(bb);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"analyzing " <<bb->printableName() <<"\n";
+
+    // Build the dataflow graph
+    const ControlFlowGraph::VertexIterator cfgVertex = partitioner->findPlaceholder(bb->address());
+    ASSERT_require(partitioner->cfg().isValidVertex(cfgVertex));
+    DfGraph dfGraph = buildDfGraph(settings, partitioner, *cfgVertex, settings.maxReversePathLength);
+    if (debug) {
+        printGraph(debug, dfGraph);
+        if (!dfGraph.isEmpty()) {
+            static size_t ncalls = 0;
+            const std::string fname = "dfgraph-" + addrToString(bb->address()).substr(2) +
+                                      "-" + boost::lexical_cast<std::string>(++ncalls) + ".dot";
+            std::ofstream file(fname.c_str());
+            toGraphviz(file, dfGraph, partitioner);
+            debug <<"  also written to " <<fname <<"\n";
+        }
+    }
+    if (dfGraph.isEmpty())
+        return false;
+
+    // Configure the dataflow engine
+    BS::RiscOperators::Ptr ops = partitioner->newOperators();
+    BS::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
+    if (!cpu)
+        return false;
+
+    DfTransfer xfer(partitioner, cpu);
+    DfMerge merge(partitioner, ops, dfGraph);
+    using DfEngine = BinaryAnalysis::DataFlow::Engine<DfGraph, BS::State::Ptr, DfTransfer, DfMerge>;
+    DfEngine dfEngine(dfGraph, xfer, merge);
+    dfEngine.maxIterations(dfGraph.nVertices() * settings.maxDataflowIterationFactor);
+
+    // Choose dataflow starting points
+    for (const auto &vertex: dfGraph.vertices()) {
+        if (vertex.nInEdges() == 0)
+            dfEngine.insertStartingVertex(vertex.id(), xfer.initialState());
+    }
+
+    // Run the dataflow
+    try {
+        dfEngine.runToFixedPoint();     // probably won't reach a fixed point due to maxIterations set above
+    } catch (const BinaryAnalysis::DataFlow::NotConverging&) {
+    }
+
+    // Examine the outgoing state for the basic block in question (dataflow vertex #0)
+    if (BS::State::Ptr state = dfEngine.getFinalState(0)) {
+        ops->currentState(state);
+        if (StaticJumpTable::useJumpTable(partitioner, bb, ops))
+            return true;
+    }
+
+    return false;
+}
+
+// Test whether the specified vertex should be analyzed
+static BasicBlock::Ptr
+shouldAnalyze(const ControlFlowGraph::Vertex &vertex) {
+    if (BasicBlock::Ptr bb = vertex.value().bblock()) {
+        for (const auto &edge: vertex.outEdges()) {
+            if (edge.target()->value().type() == V_INDETERMINATE &&
+                edge.value().type() != E_FUNCTION_RETURN)
+                return bb;
+        }
+    }
+    return {};
+}
+
 bool
 analyzeAllBlocks(const Settings &settings, const Partitioner::Ptr &partitioner) {
     ASSERT_not_null(partitioner);
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
     bool madeChanges = false;
 
     for (const auto &cfgVertex: partitioner->cfg().vertices()) {
         if (BasicBlock::Ptr bb = shouldAnalyze(cfgVertex)) {
-            SAWYER_MESG(debug) <<"possible jump table for " <<bb->printableName() <<"\n";
-            DfGraph dfGraph = buildDfGraph(settings, partitioner, cfgVertex, settings.maxReversePathLength);
-            if (debug) {
-                printGraph(debug, dfGraph);
-                if (!dfGraph.isEmpty()) {
-                    static size_t ncalls = 0;
-                    const std::string fname = "dfgraph-" + addrToString(bb->address()).substr(2) +
-                                              "-" + boost::lexical_cast<std::string>(++ncalls) + ".dot";
-                    std::ofstream file(fname.c_str());
-                    toGraphviz(file, dfGraph, partitioner);
-                    debug <<"  also written to " <<fname <<"\n";
-                }
-            }
-            if (dfGraph.isEmpty())
-                continue;
-
-            // Configure the dataflow engine
-            BS::RiscOperators::Ptr ops = partitioner->newOperators();
-            BS::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
-            if (!cpu)
-                return false;
-
-            DfTransfer xfer(partitioner, cpu);
-            DfMerge merge(partitioner, ops, dfGraph);
-            using DfEngine = BinaryAnalysis::DataFlow::Engine<DfGraph, BS::State::Ptr, DfTransfer, DfMerge>;
-            DfEngine dfEngine(dfGraph, xfer, merge);
-            dfEngine.maxIterations(dfGraph.nVertices() * settings.maxDataflowIterationFactor);
-
-            // Choose dataflow starting points
-            for (const auto &vertex: dfGraph.vertices()) {
-                if (vertex.nInEdges() == 0)
-                    dfEngine.insertStartingVertex(vertex.id(), xfer.initialState());
-            }
-
-            // Run the dataflow
-            try {
-                dfEngine.runToFixedPoint();     // probably won't reach a fixed point due to maxIterations set above
-            } catch (const BinaryAnalysis::DataFlow::NotConverging&) {
-            }
-
-            // Examine the outgoing state for the basic block in question (dataflow vertex #0)
-            if (BS::State::Ptr state = dfEngine.getFinalState(0)) {
-                ops->currentState(state);
-                if (useJumpTable(partitioner, bb, ops))
-                    madeChanges = true;
-            }
+            if (analyzeBasicBlock(settings, partitioner, bb))
+                madeChanges = true;
         }
     }
     return madeChanges;
 }
 
-} // namespace
 } // namespace
 } // namespace
 } // namespace

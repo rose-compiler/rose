@@ -26,29 +26,20 @@ void initDiagnostics();
  *  adjusted. */
 Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings&);
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/** Functions for analyzing static jump tables. */
-namespace StaticJumpTable {
-
-/** Attempt to resolve indeterminate jumps related to static jump tables.
+/** Attempt to resolve indirect control flow using a variety of strategies.
  *
  *  Scans through all discovered basic blocks in the CFG and processes each block that has a CFG edge pointing to an indeterminate
- *  address. This analysis attempts to resolve the indirect control flow by discovering and using statically created jump tables,
- *  such as what a C compiler typically creates for `switch` statements.
+ *  address. It then uses various strategies to find concrete CFG successors and updates the successors for the basic block in
+ *  question.
  *
- *  For each such block having an indeterminate outgoing CFG edge, a dataflow graph is created from nearby basic blocks. The
- *  dataflow analysis uses instruction semantics to update the machine state associated with each dataflow graph vertex. A special
- *  merge operation merges states when control flow merges, such as at the end of an `if` statement. The analysis examines the
- *  final outgoing state for the basic block in question to ascertain whether a static jump table was used, what its starting
- *  address might be, and how entries in the table are used to compute target addresses for the jump instruction.
- *
- *  Besides containing the typical symbolic registers and memory, the state also contains constraints imposed by the execution path.
- *  These constraints are used to limit the size of the jump table. Ideally, even if the compiler emits two consecutive tables for
- *  two different `switch` statements, the basic block for each `switch` statement will have only successors that are relevant to
- *  that statement. */
+ *  Some of the strategies use a dataflow analysis. The dataflow graph is constructed in two phases: first, starting at the basic
+ *  block in question, the CFG edges are followed in reverse up to a certain distance without traversing function calls. This
+ *  usually obtains the entry point(s) of the function containing the basic block in question. Second, starting at the dataflow
+ *  vertices that have no incoming edges, a forward traversal inlines function calls to a specified depth, either bringing their
+ *  definitions into the dataflow graph, or inserting a representative vertex for the call. The @ref Settings argument controls
+ *  some of the details for this process. */
 bool analyzeAllBlocks(const Settings&, const PartitionerPtr&);
 
-} // namespace
 } // namespace
 } // namespace
 } // namespace
