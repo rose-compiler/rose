@@ -344,17 +344,19 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
       readunknown = true;
       DebugLocalInfoCollect([&fc](){ return "no interprecedural read info for : " + AstInterface::AstToString(fc) + "adding function call arguments."; });
       AppendReadLoc(fa, AST_UNKNOWN);
+      callee.set_is_unknown_function_call();
   }
- if (callcollect != 0) {
-     DebugLocalInfoCollect([](){ return "invoking collecting call"; });
-     (*callcollect)(callee, fc);
- }
   CollectModRefWrap mod(fa, funcanal, curstmt, readcollect, modcollect);
   if (funcanal == 0 || !funcanal->get_modify( fa, fc, &mod))  {
       DebugLocalInfoCollect([&fc](){ return "no interprecedural mod info for : " + AstInterface::AstToString(fc); });
       AppendFuncCallWrite(fa, fc);
       modunknown = true;
       AppendModLoc(fa, AST_UNKNOWN);
+      callee.set_is_unknown_function_call();
+  }
+  if (callcollect != 0) {
+     DebugLocalInfoCollect([](){ return "invoking collecting call"; });
+     (*callcollect)(callee, fc);
   }
 }
 void StmtSideEffectCollect::

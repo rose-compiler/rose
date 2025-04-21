@@ -968,15 +968,23 @@ std::string AstInterface::unparseToString( const AstNodePtr& n)
 
 std::string AstInterface::AstToString( const AstNodePtr& n, bool withClassName)
 { 
- if (n == AST_NULL) { return "_NULL_"; }
- if (n == AST_UNKNOWN) { return "_UNKNOWN_"; }
-  SgNode* s = (SgNode*)n.get_ptr();
-  if (s == 0) return "";
-  std::string res;
-  if (withClassName)
-    res =  std::string(s->sage_class_name()) + ":";
-  res = res + ::unparseToString(s);
-  return res;
+  switch (n.get_type()) {
+    case AstNodePtr::SpecialAstType::NULL_AST:  return "_NULL_"; 
+    case AstNodePtr::SpecialAstType::UNKNOWN_AST:  return "_UNKNOWN_"; 
+    case AstNodePtr::SpecialAstType::UNKNOWN_FUNCTION_CALL:  return "_UNKNOWN_FUNCTION_CALL_"; 
+    case AstNodePtr::SpecialAstType::SG_AST: {
+      SgNode* s = (SgNode*)n.get_ptr();
+      if (s == 0) return "";
+      std::string res;
+      if (withClassName)
+        res =  std::string(s->sage_class_name()) + ":";
+      res = res + ::unparseToString(s);
+      return res;
+    }
+   default:
+      std::cerr << "Error: Unhandled case." << "\n";
+      assert(0);
+  }
 }
 
 // Return "@line_number:column_number" for an AST node  
@@ -2360,7 +2368,7 @@ IsMemoryFree( const AstNodePtr& s, AstNodeType* exptype, AstNodePtr* variable)
 bool AstInterface::
 IsMemoryAccess( const AstNodePtr& _s)
 {  
-  if (_s == AST_UNKNOWN) 
+  if (_s.is_unknown())
     return true;
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   if (s == 0) return false;

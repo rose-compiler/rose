@@ -16,7 +16,9 @@ class SgType;
 class AstNodePtr {
  public:
   typedef SgNode BaseType;
-  enum class SpecialAstType {SG_AST, UNKNOWN_AST, NULL_AST}; 
+  //! Both SG_AST and UNKNOWN_FUNCTION_CALL have concrete BaseType pointers as their values.
+  //! The other AST types have null as their values.
+  enum class SpecialAstType {SG_AST, UNKNOWN_FUNCTION_CALL, UNKNOWN_AST, NULL_AST}; 
  private:
   BaseType* repr_;
   SpecialAstType nodetype_;
@@ -24,9 +26,10 @@ class AstNodePtr {
   AstNodePtr(BaseType* _repr=0) : repr_(_repr), nodetype_(SpecialAstType::SG_AST) 
     { if (_repr == 0) nodetype_ = SpecialAstType::NULL_AST;  }
   AstNodePtr( const AstNodePtr& that) : repr_(that.repr_), nodetype_(that.nodetype_) {}
-  AstNodePtr(SpecialAstType t) : repr_(0), nodetype_(t) {
+  AstNodePtr(SpecialAstType t, BaseType* repr = 0) : repr_(repr), nodetype_(t) {
       switch (t) {
        case SpecialAstType::UNKNOWN_AST : 
+       case SpecialAstType::UNKNOWN_FUNCTION_CALL : 
        case SpecialAstType::NULL_AST : 
            break;
        default:
@@ -36,7 +39,8 @@ class AstNodePtr {
    }
   ~AstNodePtr() {}
   bool is_null() const { return nodetype_ == SpecialAstType::NULL_AST; }
-  bool is_unknown() const { return nodetype_ == SpecialAstType::UNKNOWN_AST; }
+  bool is_unknown() const { return nodetype_ ==  SpecialAstType::UNKNOWN_AST; }
+  void set_is_unknown_function_call() { nodetype_ = SpecialAstType::UNKNOWN_FUNCTION_CALL; }
   AstNodePtr& operator = (const AstNodePtr &that) 
       { repr_ = that.repr_; nodetype_ = that.nodetype_; return *this; }
   bool operator != (const AstNodePtr &that) const
@@ -54,9 +58,11 @@ class AstNodePtr {
   BaseType* operator -> () const { return repr_; }
   BaseType * get_ptr() const { return repr_; }
   BaseType *& get_ptr() { return repr_; }
+  SpecialAstType get_type() const { return nodetype_; }
 };
 #define AST_NULL AstNodePtr(AstNodePtr::SpecialAstType::NULL_AST)
 #define AST_UNKNOWN AstNodePtr(AstNodePtr::SpecialAstType::UNKNOWN_AST)
+#define AST_UNKNOWN_CALL(x) AstNodePtr(AstNodePtr::SpecialAstType::UNKNOWN_FUNCTION_CALL, x)
 #define TYPE_NULL AstNodeType(AstNodeType::SpecialAstType::NULL_TYPE)
 #define TYPE_UNKNOWN AstNodeType(AstNodeType::SpecialAstType::UNKNOWN_TYPE)
 
