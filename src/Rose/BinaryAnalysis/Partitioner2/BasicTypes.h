@@ -645,7 +645,7 @@ namespace IndirectControlFlow {
          *  The maximum depth of the reverse CFG traversal during the reverse phase of the dataflow graph construction. This
          *  indicates how far backward we should look from the basic block in question without considering the size of any called
          *  functions. */
-        size_t maxReversePathLength = 4;
+        size_t maxReversePathLength = 10;
 
         /** Maximum inlining recursion depth.
          *
