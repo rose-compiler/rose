@@ -387,8 +387,7 @@ toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr 
     ASSERT_not_null(partitioner);
 
     const Color::HSV entryColor(0.33, 1.0, 0.9);        // light green
-    const Color::HSV indetColor(0.00, 1.0, 0.8);        // light red
-    const Color::HSV returnColor(0.67, 1.0, 0.9);       // light blue
+    const Color::HSV targetColor(0.67, 1.0, 0.9);       // light blue
 
     // One subgraph per inline ID, and give them names.
     std::map<size_t, std::string> subgraphs;
@@ -416,8 +415,11 @@ toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr 
         for (const auto &dfVertex: graph.vertices()) {
             if (dfVertex.value().inlineId == subgraph.first) {
                 out <<dfVertex.id() <<" [";
-                if (dfVertex.nInEdges() == 0)
+                if (dfVertex.id() == 0) {
+                    out <<" shape=box style=filled fillcolor=\"" <<targetColor.toHtml() <<"\"";
+                } else if (dfVertex.nInEdges() == 0) {
                     out <<" shape=box style=filled fillcolor=\"" <<entryColor.toHtml() <<"\"";
+                }
                 out <<" label=<<b>Vertex " <<dfVertex.id() <<"</b>";
 
                 if (dfVertex.value().fakedCall.empty()) {
@@ -462,6 +464,28 @@ inlineFunctionCall(DfGraph &graph, const Partitioner::ConstPtr &partitioner, con
     const ControlFlowGraph &cfg = partitioner->cfg();
     std::vector<DfInline> retval;                       // next level for possible inlining
 
+#ifndef NDEBUG
+    {
+        ASSERT_require(graph.isValidVertex(call.dfCaller));
+        ASSERT_require(call.dfCaller->value().inlineId == call.callerInlineId);
+        ASSERT_not_null(call.dfCaller->value().bblock);
+
+        ASSERT_require(graph.isValidVertex(call.dfCallRet));
+        ASSERT_require(call.dfCallRet->value().inlineId == call.callerInlineId);
+        ASSERT_not_null(call.dfCallRet->value().bblock);
+
+        ASSERT_require(cfg.isValidEdge(call.cfgCall));
+        ASSERT_require(call.cfgCall->source()->value().type() == V_BASIC_BLOCK);
+        const auto callerAddr = call.cfgCall->source()->value().optionalAddress();
+        ASSERT_require(callerAddr);
+        const auto callerBb = partitioner->basicBlockExists(*callerAddr);
+        ASSERT_not_null(callerBb);
+        ASSERT_require(callerBb->address() == *callerAddr);
+        const auto callerVertex = graph.findVertexValue(DfVertex(callerBb, call.callerInlineId));
+        ASSERT_require(graph.isValidVertex(callerVertex));
+    }
+#endif
+
     // Insert the first basic block of the callee and create an edge from the caller to the callee.
     DfGraph::VertexIterator dfCallee = graph.vertices().end();
     if (BasicBlock::Ptr entryBb = call.cfgCall->target()->value().bblock()) {
@@ -490,9 +514,9 @@ inlineFunctionCall(DfGraph &graph, const Partitioner::ConstPtr &partitioner, con
                 BasicBlock::Ptr tgt = t.edge()->target()->value().bblock();
                 if (src && tgt && t.edge()->value().type() == E_FUNCTION_CALL) {
                     // The called function makes another function call. Skip this edge, but return the info for further inlining.
-                    const auto caller = graph.findVertexValue(DfVertex(src, call.callerInlineId));
+                    const auto caller = graph.findVertexValue(DfVertex(src, calleeInlineId));
                     ASSERT_require(graph.isValidVertex(caller));
-                    const auto callret = graph.insertVertexMaybe(DfVertex(tgt, call.callerInlineId));
+                    const auto callret = graph.insertVertexMaybe(DfVertex(tgt, calleeInlineId));
                     ASSERT_require(graph.isValidVertex(callret));
                     retval.push_back(DfInline(caller, callret, t.edge(), calleeInlineId));
                     t.skipChildren();
@@ -540,6 +564,27 @@ findCallRet(const DfGraph &graph, const ControlFlowGraph &cfg, const DfGraph::Ve
     return graph.vertices().end();
 }
 
+// Modify the graph by removing all vertices that cannot reach the targetId vertex by any path.
+static void
+removeUnreachableReverse(DfGraph &graph, const size_t targetId) {
+    using namespace Sawyer::Container::Algorithm;
+    using Traversal = DepthFirstReverseGraphTraversal<DfGraph>;
+    std::vector<bool> reachable(graph.nVertices(), false);
+    for (Traversal t(graph, graph.findVertex(targetId)); t; ++t) {
+        if (t.event() == ENTER_VERTEX)
+            reachable[t.vertex()->id()] = true;
+    }
+
+    std::vector<DfGraph::VertexIterator> toRemove;
+    for (size_t vertexId = 0; vertexId < reachable.size(); ++vertexId) {
+        if (!reachable[vertexId])
+            toRemove.push_back(graph.findVertex(vertexId));
+    }
+
+    for (const auto &vertex: toRemove)
+        graph.eraseVertex(vertex);
+}
+
 // Given a CFG vertex that has an indeterminate edge (i.e., a possible indirect branch), construct a dataflow graph that looks
 // backward from that CFG vertex a certain distance. Return the dataflow graph and its starting vertex IDs.
 static DfGraph
@@ -551,8 +596,9 @@ buildDfGraph(const Settings &settings, const Partitioner::ConstPtr &partitioner,
     DfGraph graph;
 
     // Insert the ending vertex first so we're guaranteed that it has ID zero.
-    if (BasicBlock::Ptr bb = cfgVertex.value().bblock()) {
-        graph.insertVertex(DfVertex(bb, 0));
+    BasicBlock::Ptr endBb = cfgVertex.value().bblock();
+    if (endBb) {
+        graph.insertVertex(DfVertex(endBb, 0));
     } else {
         return graph;
     }
@@ -564,7 +610,7 @@ buildDfGraph(const Settings &settings, const Partitioner::ConstPtr &partitioner,
         if (t.event() == ENTER_EDGE) {
             BasicBlock::Ptr src = t.edge()->source()->value().bblock();
             BasicBlock::Ptr tgt = t.edge()->target()->value().bblock();
-            if (++depth <= maxDepth && src && tgt) {
+            if (++depth <= maxDepth && src && tgt && src != endBb) {
                 graph.insertEdgeWithVertices(DfVertex(src, 0), DfVertex(tgt, 0), t.edge()->id());
             } else {
                 t.skipChildren();
@@ -604,6 +650,9 @@ buildDfGraph(const Settings &settings, const Partitioner::ConstPtr &partitioner,
         }
         callsToInline = nextLevelCalls;
     }
+
+    // Remove parts of the graph that can't reach the target vertex (vertex #0)
+    removeUnreachableReverse(graph, 0);
 
     return graph;
 }
