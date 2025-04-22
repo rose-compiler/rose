@@ -19,6 +19,11 @@ void initDiagnostics();
 
 // `struct Settings` is located in <BasicTypes.h>
 
+/** Internal state for these analyses. */
+struct State {
+    std::set<uint64_t> hashedGraphs;                    // hashes for dataflow graphs that have been analyzed
+};
+
 /** Define command-line switches.
  *
  *  Returns a switch group containing definitions for command-line switches related to indirect control flow recovery. The switches

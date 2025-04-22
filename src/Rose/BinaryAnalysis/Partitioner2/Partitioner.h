@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
+#include <Rose/BinaryAnalysis/Partitioner2/IndirectControlFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
@@ -324,6 +325,7 @@ private:
     Unparser::BasePtr unparser_;                        // For unparsing things to pseudo-assembly
     Unparser::BasePtr insnUnparser_;                    // For unparsing single instructions in diagnostics
     Unparser::BasePtr insnPlainUnparser_;               // For unparsing just instruction mnemonic and operands
+    IndirectControlFlow::State icf_;                    // State for various indirect control flow recovery analyses
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -2300,6 +2302,12 @@ public:
      *  See also, @ref elfGot. */
     Sawyer::Optional<Address> elfGotVa() const;
 
+    /** Internal data structures for indirect control flow recovery.
+     *
+     * @{ */
+    const IndirectControlFlow::State& icf() const;
+    IndirectControlFlow::State& icf();
+    /** @} */
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

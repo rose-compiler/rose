@@ -63,7 +63,14 @@ commandLineSwitches(Settings &settings) {
     sg.name("icf");
     sg.doc("These switches affect the indirect control flow recovery algorithms primarily used when partitioning a binary specimen "
            "into instructions, basic blocks, static data blocks, and functions to construct the control flow graph and related "
-           "data structures.");
+           "data structures.\n\n"
+
+           "When analyzing indirect control flow from a particular basic block, the dataflow graph is constructed from the control "
+           "flow graph as follows: first, starting at the basic block in question, CFG edges are followed in reverse up to a "
+           "configurable maximum distance within the same function but skipping over calls to other functions. This step finds "
+           "the starting points for the dataflow analysis. Second, starting from those points, a forward traversal attempts to "
+           "reach the basic block in question, this time inlining called functions into the dataflow graph to a specified depth, "
+           "or inserting a placeholder for the called function.");
 
     sg.insert(Switch("df-max-reverse")
               .argument("n", nonNegativeIntegerParser(settings.maxReversePathLength))
@@ -252,9 +259,9 @@ public:
             BasicBlock::Ptr bb = dfGraph.findVertex(vertexId)->value().bblock;
             for (SgAsmInstruction *insn: bb->instructions()) {
                 try {
-                    std::cerr <<"ROBB: " <<insn->toString() <<"\n";
+                    //std::cerr <<"ROBB: " <<insn->toString() <<"\n";
                     cpu_->processInstruction(insn);
-                    std::cerr <<"ROBB: state after insn:\n" <<*retval;
+                    //std::cerr <<"ROBB: state after insn:\n" <<*retval;
                 } catch (const BS::Exception&) {
                 }
             }
@@ -381,6 +388,52 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Hash the dataflow graph
+static uint64_t
+hashGraph(const DfGraph &graph) {
+    // Hash each vertex individually into the `hashedVertices` list
+    std::vector<std::pair<BasicBlock::Ptr, uint64_t>> hashedVertices;
+    hashedVertices.reserve(graph.nVertices());
+
+    for (const auto &vertex: graph.vertices()) {
+        // Hash this vertex
+        Combinatorics::HasherSha256Builtin hasher;
+        hasher.insert(vertex.value().bblock->address());
+        hasher.insert(vertex.value().bblock->nInstructions());
+
+        // Hash the outgoing edges in order of the target addresses
+        std::vector<BasicBlock::Ptr> targets;
+        targets.reserve(vertex.nOutEdges());
+        for (const auto &edge: vertex.outEdges())
+            targets.push_back(edge.target()->value().bblock);
+        std::sort(targets.begin(), targets.end(), [](const BasicBlock::Ptr &a, const BasicBlock::Ptr &b) {
+            return a->address() < b->address();
+        });
+        for (const auto &target: targets) {
+            hasher.insert(target->address());
+            hasher.insert(target->nInstructions());
+        }
+
+        // Save the results for this vertex because we'll need to process them in order by their address
+        hashedVertices.push_back(std::make_pair(vertex.value().bblock, hasher.make64Bits()));
+    }
+
+    // Combine all the vertex hashes in order by the vertex address
+    std::sort(hashedVertices.begin(), hashedVertices.end(),
+              [](const std::pair<BasicBlock::Ptr, uint64_t> &a, const std::pair<BasicBlock::Ptr, uint64_t> &b) {
+                  return a.first->address() < b.first->address();
+              });
+    Combinatorics::HasherSha256Builtin hasher;
+    for (const auto &pair: hashedVertices) {
+        hasher.insert(pair.first->address());
+        hasher.insert(pair.first->nInstructions());
+        hasher.insert(pair.second);
+    }
+
+    return hasher.make64Bits();
+}
+
 // Print a dataflow graph in Graphviz format for debugging.
 static void
 toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr &partitioner) {
@@ -1022,19 +1075,25 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
     const ControlFlowGraph::VertexIterator cfgVertex = partitioner->findPlaceholder(bb->address());
     ASSERT_require(partitioner->cfg().isValidVertex(cfgVertex));
     DfGraph dfGraph = buildDfGraph(settings, partitioner, *cfgVertex, settings.maxReversePathLength);
+    if (dfGraph.isEmpty()) {
+        SAWYER_MESG(debug) <<"  dataflow graph is empty\n";
+        return false;
+    }
+    const uint64_t hash = hashGraph(dfGraph);
+    if (!partitioner->icf().hashedGraphs.insert(hash).second) {
+        SAWYER_MESG(debug) <<"  previously analyzed this dataflow graph\n";
+        return false;
+    }
     if (debug) {
         printGraph(debug, dfGraph);
         if (!dfGraph.isEmpty()) {
-            static size_t ncalls = 0;
             const std::string fname = "dfgraph-" + addrToString(bb->address()).substr(2) +
-                                      "-" + boost::lexical_cast<std::string>(++ncalls) + ".dot";
+                                      "-H" + addrToString(hash).substr(2) + ".dot";
             std::ofstream file(fname.c_str());
             toGraphviz(file, dfGraph, partitioner);
             debug <<"  also written to " <<fname <<"\n";
         }
     }
-    if (dfGraph.isEmpty())
-        return false;
 
     // Configure the dataflow engine
     BS::RiscOperators::Ptr ops = partitioner->newOperators();
