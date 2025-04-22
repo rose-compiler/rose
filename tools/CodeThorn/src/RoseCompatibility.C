@@ -272,8 +272,10 @@ namespace
       {
         if (SgMemberFunctionDeclaration* memfun = isSgMemberFunctionDeclaration(mem))
         {
-          if (isVirtual(*memfun))
-            entry.second.virtualFunctions().emplace_back(rcb.functionId(memfun));
+          ct::FunctionKeyType mfnid = rcb.functionId(memfun);
+
+          if (isVirtual(*mfnid))
+            entry.second.virtualFunctions().emplace_back(mfnid);
         }
         else if (SgVariableDeclaration* memvar = isSgVariableDeclaration(mem))
         {
@@ -1431,7 +1433,8 @@ SgFunctionDeclaration& keyDecl(SgFunctionDeclaration& fn)
   SgFunctionDeclaration* fKey = isSgFunctionDeclaration(fn.get_firstNondefiningDeclaration());
   SgFunctionDeclaration* res  = fKey ? fKey : &fn;
 
-  ASSERT_require(isVirtual(*res) == isVirtual(fn));
+  // virtual(fn) => virtual(res)
+  ASSERT_require(!isVirtual(fn) || isVirtual(*res));
   return *res;
 }
 
