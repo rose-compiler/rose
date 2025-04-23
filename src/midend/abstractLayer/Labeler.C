@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 #include "CodeThornException.h"
 
@@ -6,7 +5,6 @@
 #include "SgNodeHelper.h"
 #include "sageInterface.h"
 
-//#include "AstTerm.h"
 #include <sstream>
 #include <numeric>
 
@@ -51,7 +49,6 @@ void LabelProperty::initializeIO(VariableIdMapping* variableIdMapping) {
       _ioValue=ot.intVal;
       break;
     case SgNodeHelper::Pattern::OutputTarget::UNKNOWNPRINTF:
-      //cerr<<"WARNING: non-supported output operation:"<<_node->unparseToString()<<endl;
       break;
     case SgNodeHelper::Pattern::OutputTarget::UNKNOWNOPERATION:
       ;//intentionally ignored (filtered)
@@ -68,7 +65,6 @@ void LabelProperty::initializeIO(VariableIdMapping* variableIdMapping) {
 }
 
 string LabelProperty::toString() {
-  //assert(_isValid);
   stringstream ss;
   ss<<_node<<":";
   if(_node) {
@@ -126,7 +122,7 @@ bool LabelProperty::isJoinLabel() { assert(_isValid); return _labelType == LABEL
 bool LabelProperty::isWorkshareLabel() { assert(_isValid); return _labelType == LABEL_WORKSHARE; }
 bool LabelProperty::isBarrierLabel() { assert(_isValid); return _labelType == LABEL_BARRIER; }
 
-void LabelProperty::makeTerminationIrrelevant(bool t) {assert(_isTerminationRelevant); _isTerminationRelevant=false;}
+void LabelProperty::makeTerminationIrrelevant(bool) {assert(_isTerminationRelevant); _isTerminationRelevant=false;}
 bool LabelProperty::isTerminationRelevant() {assert(_isValid); return _isTerminationRelevant;}
 bool LabelProperty::isLTLRelevant() {assert(_isValid); return _isLTLRelevant;}
 /* deprecated */ bool LabelProperty::isStdOutLabel() { assert(_isValid); return  isStdOutVarLabel()||isStdOutConstLabel();}
@@ -147,18 +143,6 @@ void CLabeler::initialize(SgNode* start)
   createLabels(start);
   computeNodeToLabelMapping();
 }
-
-/*
-CLabeler::CLabeler(SgNode* start)
-: CLabeler()
-{
-  // PP 08/26/21
-  // ==> moved to initialize to make work with virtual functions
-  createLabels(start);
-  computeNodeToLabelMapping();
-}
-*/
-
 
 #if OBSOLETE_CODE
 // C++ initializer lists will be normalized
@@ -208,13 +192,11 @@ int CLabeler::numberOfAssociatedLabels(SgNode* node) {
 
   // special case of FunctionCall is matched as : return f(...);
   if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
-    //cout << "DEBUG: Labeler: assigning 3 labels for SgReturnStmt(SgFunctionCallExp)"<<endl;
     return 3;
   }
 
   //special case of FunctionCall is matched as : f(), x=f(); T x=f();
   if(isFunctionCallNode(node)) {
-    //cout << "DEBUG: Labeler: assigning 2 labels for SgFunctionCallExp"<<endl;
     return 2;
   }
 
@@ -324,7 +306,6 @@ void CLabeler::createLabels(SgNode* root) {
       } else if(isSgBasicBlock(*i)) {
         assert(num==1);
         registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKBEGIN));
-        // registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKEND));
       } else if(isSgOmpParallelStatement(*i)){
         assert(num == 2);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_FORK));
@@ -362,8 +343,6 @@ void CLabeler::createLabels(SgNode* root) {
       i.skipChildrenOnForward();
     }
   }
-  //std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
-  //std::cout << "DEBUG: mappingLabelToLabelProperty:\n"<<this->toString()<<std::endl;
 }
 
 string Labeler::labelToString(Label lab) {
@@ -409,7 +388,6 @@ void CLabeler::ensureValidNodeToLabelMapping() {
 
 void CLabeler::computeNodeToLabelMapping() {
   mappingNodeToLabel.clear();
-  //std::cout << "INFO: computing node<->label with map size: "<<mappingLabelToLabelProperty.size()<<std::endl;
   for(Label i=0;i<mappingLabelToLabelProperty.size();++i) {
     SgNode* node=mappingLabelToLabelProperty[i.getId()].getNode();
     assert(node);
@@ -422,7 +400,6 @@ void CLabeler::computeNodeToLabelMapping() {
       continue;
     else
       mappingNodeToLabel[node]=i;
-    //cout << "Mapping: "<<i<<" : "<<node<<SgNodeHelper::nodeToString(node)<<endl;
   }
   _isValidMappingNodeToLabel=true;
 }
@@ -433,7 +410,6 @@ Label CLabeler::getLabel(SgNode* node) {
     return Label();
   if(_isValidMappingNodeToLabel) {
     if(mappingNodeToLabel.count(node)==0) {
-      //cerr<<"WARNING: getLabel: no label associated with node: "<<node<<endl;
       return Label();
     }
     return mappingNodeToLabel[node];
@@ -448,13 +424,6 @@ size_t CLabeler::numberOfLabels() {
   return mappingLabelToLabelProperty.size();
 }
 
-/*
- * replaced with variable isFunctionCallNode
-bool CLabeler::isFunctionCallNode(SgNode* node) const {
-  return SgNodeHelper::Pattern::matchFunctionCall(node);
-}
-*/
-
 void CLabeler::setIsFunctionCallFn(std::function<bool(SgNode*)> fn)
 {
   isFunctionCallNode = std::move(fn);
@@ -465,8 +434,6 @@ Label CLabeler::functionCallLabel(SgNode* node) {
 }
 
 Label CLabeler::functionCallReturnLabel(SgNode* node) {
-  // PP disable assert, since it does not hold for constructors
-  // ROSE_ASSERT(SgNodeHelper::Pattern::matchFunctionCall(node));
   // in its current implementation it is guaranteed that labels associated with the same node
   // are associated as an increasing sequence of labels
   Label lab=getLabel(node);
@@ -721,31 +688,12 @@ void LabelProperty::setExternalFunctionCallLabel() {
   _isExternalFunctionCallLabel=true;
 }
 
-
-
 /*
-  IO Labeler Implementation
-*/
-
-/*
-IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):CLabeler(start) {
-  _variableIdMapping=variableIdMapping;
-  // add IO info to each label property
-  for(LabelToLabelPropertyMapping::iterator i=mappingLabelToLabelProperty.begin();i!=mappingLabelToLabelProperty.end();++i) {
-    (*i).initializeIO(variableIdMapping);
-  }
-}
-*/
-
+ * IO Labeler Implementation
+ */
 IOLabeler::IOLabeler(VariableIdMapping* variableIdMapping)
 : CLabeler(), _variableIdMapping(variableIdMapping)
 {
-/*
-  // add IO info to each label property
-  for(LabelToLabelPropertyMapping::iterator i=mappingLabelToLabelProperty.begin();i!=mappingLabelToLabelProperty.end();++i) {
-    (*i).initializeIO(variableIdMapping);
-  }
-*/
 }
 
 IOLabeler::~IOLabeler() {
