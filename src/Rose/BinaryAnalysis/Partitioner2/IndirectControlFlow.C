@@ -179,6 +179,10 @@ using DfGraph = Sawyer::Container::Graph<
 // Functions can be inlined (copied) into the dataflow graph from the CFG. This class holds information about function calls.
 class DfInline {
 public:
+    enum class Method {                                 // inlining technique
+        FAKE,                                           // inline only the first basic block and mark it as a fake function
+        NORMAL                                          // inline all basic blocks if possible, otherwise fake it
+    };
     DfGraph::ConstVertexIterator dfCaller;              // dataflow vertex making a function call
     DfGraph::ConstVertexIterator dfCallRet;             // dataflow vertex where the function call will return
     ControlFlowGraph::ConstEdgeIterator cfgCall;        // CFG edge representing the function call
@@ -525,7 +529,8 @@ printGraph(std::ostream &out, const DfGraph &graph) {
 // Inline into the dataflow graph a function called via CFG edge. Return a list of any new dataflow vertices that have subsequent
 // function calls that were not inlined yet.
 static std::vector<DfInline>
-inlineFunctionCall(DfGraph &graph, const Partitioner::ConstPtr &partitioner, const DfInline &call, const size_t calleeInlineId) {
+inlineFunctionCall(DfGraph &graph, const Partitioner::ConstPtr &partitioner, const DfInline &call, const size_t calleeInlineId,
+                   const DfInline::Method method) {
     ASSERT_not_null(partitioner);
     const ControlFlowGraph &cfg = partitioner->cfg();
     std::vector<DfInline> retval;                       // next level for possible inlining
@@ -562,16 +567,14 @@ inlineFunctionCall(DfGraph &graph, const Partitioner::ConstPtr &partitioner, con
     }
     ASSERT_require(graph.isValidVertex(dfCallee));
 
-    // Handle calls to functions in shared libraries by faking the function.
-    if (Function::Ptr function = partitioner->functionExists(dfCallee->value().address())) {
-        if (boost::ends_with(function->name(), "@plt")) {
-            dfCallee->value().fakedCall = function->name();
-            graph.insertEdge(dfCallee, call.dfCallRet, Sawyer::Nothing());
-        }
-    }
+    Function::Ptr function = partitioner->functionExists(dfCallee->value().address());
+    if (method == DfInline::Method::FAKE || (function && boost::ends_with(function->name(), "@plt"))) {
+        // Fake the function body by inlining only its first basic block and giving it a non-emtpy name.
+        dfCallee->value().fakedCall = function ? function->name() : addrToString(dfCallee->value().address());
+        graph.insertEdge(dfCallee, call.dfCallRet, Sawyer::Nothing());
 
-    // Insert all the basic blocks for the callee
-    if (dfCallee->value().fakedCall.empty()) {
+    } else {
+        // Insert all the basic blocks for the callee
         using namespace Sawyer::Container::Algorithm;
         using Traversal = DepthFirstForwardGraphTraversal<const ControlFlowGraph>;
         for (Traversal t(cfg, call.cfgCall->target()); t; ++t) {
@@ -711,10 +714,16 @@ buildDfGraph(const Settings &settings, const Partitioner::ConstPtr &partitioner,
     for (size_t i = 0; i < settings.maxInliningDepth && !callsToInline.empty(); ++i) {
         std::vector<DfInline> nextLevelCalls;
         for (const auto &call: callsToInline) {
-            const auto next = inlineFunctionCall(graph, partitioner, call, ++inlineId);
+            const auto next = inlineFunctionCall(graph, partitioner, call, ++inlineId, DfInline::Method::NORMAL);
             nextLevelCalls.insert(nextLevelCalls.end(), next.begin(), next.end());
         }
         callsToInline = nextLevelCalls;
+    }
+
+    // If there are any calls remaining in the graph, replace them with fake function placeholders.
+    for (const auto &call: callsToInline) {
+        const auto next = inlineFunctionCall(graph, partitioner, call, ++inlineId, DfInline::Method::FAKE);
+        ASSERT_always_require(next.empty());            // a fake function has no calls to any other functions
     }
 
     // Remove parts of the graph that can't reach the target vertex (vertex #0)
