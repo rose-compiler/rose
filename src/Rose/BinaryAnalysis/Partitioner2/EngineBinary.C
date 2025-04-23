@@ -86,7 +86,7 @@ EngineBinary::factory() {
 }
 
 bool
-  EngineBinary::matchFactory(const std::vector<std::string> & /*specimen*/) const {
+EngineBinary::matchFactory(const Sawyer::CommandLine::ParserResult &, const std::vector<std::string> &) const {
     // EngineBinary is the default. It treats all inputs as binaries even if they are something else. Therefore,
     // this engine class is usually the first one registered and therefore the last one matched.
     return true;

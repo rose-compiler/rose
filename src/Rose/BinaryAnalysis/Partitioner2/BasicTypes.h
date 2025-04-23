@@ -625,7 +625,7 @@ private:
 #endif
 };
 
-/** Settings for controling the engine behavior.
+/** Settings for controlling the engine behavior.
  *
  *  These settings control the behavior of the engine itself irrespective of how the partitioner is configured. The runtime
  *  descriptions and command-line parser for these switches can be obtained from the @ref Engine::settings property. */
@@ -642,6 +642,27 @@ struct EngineSettings {
      *  user-friendly and professional looking than the uncaught exception message produced by the C++ runtime, the default is
      *  that exceptions are caught.  If a tool needs to perform its own error handling, then it should clear this property. */
     bool exitOnError = true;
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+private:
+    friend class boost::serialization::access;
+    template<class S> void serialize(S&, unsigned version);
+#endif
+};
+
+/** Settings for controlling JVM partitioning behavior.
+ *
+ *  These settings control the behavior of the JVM engine and partitioning behavior. */
+struct JvmSettings {
+    /** JVM classpath.
+     *
+     *  A list of search paths for JVM related jar files and classes. */
+    std::vector<std::string> classPath;
+
+    /** Setting: load-all-classes.
+     *
+     *  If this property is true all classes in all jar files listed on the command line are loaded. */
+    bool loadAllClasses = false;
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:

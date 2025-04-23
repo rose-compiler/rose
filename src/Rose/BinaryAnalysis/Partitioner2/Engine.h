@@ -171,6 +171,7 @@ public:
         DisassemblerSettings disassembler;              /**< Settings for creating the disassembler. */
         PartitionerSettings partitioner;                /**< Settings for creating a partitioner. */
         EngineSettings engine;                          /**< Settings that control engine behavior. */
+        JvmSettings engineJvm;                          /**< Settings that control behavior specific to EngineJvm. */
         AstConstructionSettings astConstruction;        /**< Settings for constructing the AST. */
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
@@ -180,8 +181,8 @@ public:
 #endif
 
     public:
-        ~Settings();
         Settings();
+        ~Settings();
     };
 
     //--------------------------------------------------------------------------------------------------------------------------
@@ -507,7 +508,7 @@ public:
      *  it can handle those strings. For instance, if the @ref EngineJvm can handle a specimen whose name is a class file having the
      *  extension \".class\".
      *
-     *  The versions that takes a command-line switch parser and a an optional command-line positional argument parser attempts to
+     *  The versions that takes a command-line switch parser and an optional command-line positional argument parser and attempts to
      *  parse the command-line to obtain the specimen, which is then passed to the version that takes a specimen. The incoming
      *  parser should not have definitions for switches that adjust the engine settings--they will be added automatically to the
      *  parser before returning. The returned parser will be augmented with switches for all engines so that \"--help\" and friends
@@ -564,8 +565,8 @@ public:
     static EnginePtr forge(int argc, char *argv[], Sawyer::CommandLine::Parser&);
     /** @} */
 
-    /** Predicate for matching a concrete engine factory by settings and specimen. */
-    virtual bool matchFactory(const std::vector<std::string> &specimen) const = 0;
+    /** Predicate for matching a concrete engine factory by parser result and specimen. */
+    virtual bool matchFactory(const Sawyer::CommandLine::ParserResult &result, const std::vector<std::string> &specimen) const = 0;
 
     /** Virtual constructor for factories.
      *

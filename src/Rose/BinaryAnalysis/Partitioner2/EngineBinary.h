@@ -549,7 +549,8 @@ private:
     //                                  Overrides documented in the base class
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual bool matchFactory(const std::vector<std::string> &specimen) const override;
+    /** Predicate for matching a concrete engine factory by command-line parser result and specimen. */
+    virtual bool matchFactory(const Sawyer::CommandLine::ParserResult &result, const std::vector<std::string> &specimen) const override;
     virtual EnginePtr instanceFromFactory(const Settings&) override;
     virtual void reset() override;
 

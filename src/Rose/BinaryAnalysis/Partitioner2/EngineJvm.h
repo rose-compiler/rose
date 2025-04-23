@@ -77,7 +77,9 @@ public:
     //                                  Overrides documented in the base class
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual bool matchFactory(const std::vector<std::string> &specimen) const override;
+    /** Predicate for matching a concrete engine factory by command-line parser result and specimen. */
+    virtual bool matchFactory(const Sawyer::CommandLine::ParserResult &result, const std::vector<std::string> &specimen) const override;
+
     virtual EnginePtr instanceFromFactory(const Settings&) override;
 
     virtual std::list<Sawyer::CommandLine::SwitchGroup> commandLineSwitches() override;
@@ -123,14 +125,12 @@ public:
     //                                  Command-line parsing
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    virtual void checkSettings() override;
 
     /** Command-line switches related to the JVM engine behavior.
      *
      *  The switches are configured to adjust the specified settings object when parsed. */
-    static Sawyer::CommandLine::SwitchGroup engineSwitches(EngineSettings&);
-
-    // Flag to load all classes in jar files listed on the command line
-    static bool loadAllClasses;
+    static Sawyer::CommandLine::SwitchGroup jvmSwitches(JvmSettings&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Container parsing
@@ -225,12 +225,13 @@ public:
      * @{ */
     Address loadClass(uint16_t, SgAsmJvmConstantPool*, SgAsmGenericFileList*, Address);
 
-    /** Path to the given class.
+    /** Path to the given fully qualified class name (FQCN).
      *
-     *  Returns the path to the class (may not exist).
+     *  Returns the path to the class file (with .class extension) by searching loaded jar files.
+     *  If the class file can't be found, an empty path is returned.
      *
      * @{ */
-    boost::filesystem::path pathToClass(const std::string &);
+    boost::filesystem::path pathToClass(const std::string &fqcn);
 
     /** Discover function calls (invoke instructions) made from a method.
      *
@@ -336,6 +337,13 @@ public:
     //                                  Settings and properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Setting: JVM class path
+     *
+     *  The class path is the path that the Java runtime environment searches for classes and other resource files.
+     *
+     * @{ */
+    const std::vector<std::string>& classPath() const;
+
     /** Property: Instruction set architecture name.
      *
      *  The instruction set architecture name is used to obtain a disassembler and overrides the disassembler that would
@@ -385,6 +393,38 @@ bool isJavaClassFile(const boost::filesystem::path&);
  *  Jar files usually have names with a ".jar" extension, although this function actually tries to open the file and parse
  *  the file header to make that determination. */
 bool isJavaJarFile(const boost::filesystem::path&);
+
+/**
+ * @brief Searchs the classpath setting for the path to a fully qualified class name.
+ *
+ * This function takes a fully qualified class name (FQCN) and converts it into
+ * a corresponding filesystem path by replacing the namespace separators ('.')
+ * with directory separators appropriate for the operating system. It then
+ * searches for the class in the classpath setting. If found, the resulting
+ * path can be used to locate the class file within a directory structure, either
+ * in the file system or within a jar file. If the class can't be located, an empty
+ * path is returned.
+ *
+ * @param fqcn The fully qualified class name, e.g., "com.example.MyClass".
+ * @param cp The classpath. A ':' separated list of paths to jar files or directories".
+ * @return A boost::filesystem::path representing the location of the class file,
+ *         e.g., "com/example/MyClass.class".
+ */
+boost::filesystem::path pathToClassFile(const std::string &fqcn, const std::vector<std::string> &cp);
+
+/**
+ * @brief Searchs the path for the presence of a fully qualified class name.
+ *
+ *  Searches all classes and jar files found in the path for the fully qualified class
+ *  name (FQCN).  Namespace separators in the class name may be '.' or '/'.
+ *  Path separator in the classpath is ':'.
+ *
+ * @param fqcn The fully qualified class name, e.g., "com.example.MyClass".
+ * @param path Path to a jar file, class file, or directory.
+ * @return true if the class is found.
+ *
+ **/
+bool present(const std::string &fqcn, const std::string &path);
 
 } // namespace ModulesJvm
 
