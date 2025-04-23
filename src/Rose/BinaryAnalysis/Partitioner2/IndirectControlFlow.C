@@ -13,6 +13,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/CommandLine.h>
 #include <Rose/StringUtility/Diagnostics.h>
 #include <Rose/StringUtility/NumberToString.h>
 
@@ -58,6 +59,7 @@ initDiagnostics() {
 Sawyer::CommandLine::SwitchGroup
 commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
+    using Rose::CommandLine::insertEnableSwitch;
 
     SwitchGroup sg("Indirect control flow recovery");
     sg.name("icf");
@@ -71,6 +73,11 @@ commandLineSwitches(Settings &settings) {
            "the starting points for the dataflow analysis. Second, starting from those points, a forward traversal attempts to "
            "reach the basic block in question, this time inlining called functions into the dataflow graph to a specified depth, "
            "or inserting a placeholder for the called function.");
+
+    insertEnableSwitch(sg, "", "indirect control flow recovery", settings.enabled,
+                       "Indirect control flow (ICF) recovery is a collection of analyses that attempt to discover the control "
+                       "flow graph successors for an instruction (or sequence of instructions) that calculates the successor "
+                       "addresses at runtime. When disabled, none of the other ICF switches have any effect.");
 
     sg.insert(Switch("df-max-reverse")
               .argument("n", nonNegativeIntegerParser(settings.maxReversePathLength))
@@ -87,6 +94,12 @@ commandLineSwitches(Settings &settings) {
               .doc("Limits the dataflow analysis so it terminates even if the states don't converge to a fixed point. The limit "
                    "is computed by multiplying the number of vertices in the dataflow graph by @v{n}. The default for @v{n} is " +
                    boost::lexical_cast<std::string>(settings.maxDataflowIterationFactor) + "."));
+
+    sg.insert(Switch("df-max-vertices")
+              .argument("n", nonNegativeIntegerParser(settings.maxDataflowVertices))
+              .doc("If the dataflow graph contains more than @v{n} vertices then the dataflow is skipped. Either some other "
+                   "analysis will be performed, or the indirect control flow will be represented by a CFG edge that points to "
+                   "an indeterminate address."));
 
     return sg;
 }
@@ -1094,6 +1107,12 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
             debug <<"  also written to " <<fname <<"\n";
         }
     }
+    if (dfGraph.nVertices() > settings.maxDataflowVertices) {
+        SAWYER_MESG(debug) <<"  dataflow graph is too big; "
+                           <<plural(dfGraph.nVertices(), "vertices")
+                           <<" exceeds the limit of " <<settings.maxDataflowVertices <<"\n";
+        return false;
+    }
 
     // Configure the dataflow engine
     BS::RiscOperators::Ptr ops = partitioner->newOperators();
@@ -1150,8 +1169,10 @@ shouldAnalyze(const ControlFlowGraph::Vertex &vertex) {
 bool
 analyzeAllBlocks(const Settings &settings, const Partitioner::Ptr &partitioner) {
     ASSERT_not_null(partitioner);
-    bool madeChanges = false;
+    if (!settings.enabled)
+        return false;
 
+    bool madeChanges = false;
     for (const auto &cfgVertex: partitioner->cfg().vertices()) {
         if (BasicBlock::Ptr bb = shouldAnalyze(cfgVertex)) {
             if (analyzeBasicBlock(settings, partitioner, bb))

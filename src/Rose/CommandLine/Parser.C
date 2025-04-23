@@ -287,5 +287,39 @@ insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std::string &swi
               .hidden(true));
 }
 
+ROSE_DLL_API void
+insertEnableSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std::string &name, const std::string &thing, bool &storageLocation,
+                   const std::string &documentation) {
+    using namespace Sawyer::CommandLine;
+
+    ASSERT_forbid2(boost::starts_with(name, "-"), "specify only the name, not the prefix");
+    ASSERT_forbid2(boost::starts_with(name, "enable") || boost::starts_with(name, "disable"),
+                   "enable/disable is added automatically");
+
+    const std::string enableName = name.empty() ? "enable" : "enable-" + name;
+    const std::string disableName = name.empty() ? "disable" : "disable-" + name;
+    const std::string prologue = (storageLocation ? "Diasble " : "Enable ") + thing + ". ";
+
+    if (storageLocation) {
+        sg.insert(Switch(disableName)
+                  .key(enableName)
+                  .intrinsicValue(false, storageLocation)
+                  .doc("Disable " + thing + ". " + documentation + " The default is that " + thing + " is enabled, which can "
+                       "be made explicit with the @s{" + enableName + "} switch."));
+        sg.insert(Switch(enableName)
+                  .intrinsicValue(true, storageLocation)
+                  .hidden(true));
+    } else {
+        sg.insert(Switch(enableName)
+                  .intrinsicValue(true, storageLocation)
+                  .doc("Enable " + thing + ". " + documentation + " The default is that " + thing + " is disabled, which can be "
+                       "made explicit with the @s{" + disableName + "} switch."));
+        sg.insert(Switch(disableName)
+                  .key(enableName)
+                  .intrinsicValue(false, storageLocation)
+                  .hidden(true));
+    }
+}
+
 } // namespace
 } // namespace

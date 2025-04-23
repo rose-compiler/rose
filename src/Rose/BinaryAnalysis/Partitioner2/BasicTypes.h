@@ -361,15 +361,6 @@ private:
 #endif
 };
 
-/** Which analysis is used to discover static jump tables.
- *
- *  These are jump tables typically emitted by the compiler for things like C `switch` statements. */
-enum class StaticJumpTableAnalysis {
-    SINGLE_BLOCK,                                       /**< Look only at one block, using pattern matching. */
-    DATAFLOW,                                           /**< Look at multiple blocks using instruction semantics and constraints. */
-    ALL                                                 /**< Try all analyses, saving the result from the first successful one. */
-};
-
 /** Settings that control the engine partitioning.
  *
  *  These switches are used by the engine to control how it partitions addresses into instructions and static data,
@@ -627,8 +618,13 @@ struct PartitionerSettings {
      *  format to a source language format. */
     bool demangleNames = true;
 
-    /** Which analysis is used to discover static jump tables. */
-    StaticJumpTableAnalysis staticJumpTableAnalysis = StaticJumpTableAnalysis::SINGLE_BLOCK;
+    /** Use patterns to find jump tables in a simple way.
+     *
+     *  This analysis uses patterns of instructions to try to find compiler-generated jump tables in order to resolve indirect
+     *  control flow edges emanating from a basic block. If such a table can be found, then the control flow edges are updated in
+     *  preference to running any other more expensive analysis. This feature should be disabled in order to use the more expensive
+     *  dataflow-based jump table analysis. */
+    bool naiveJumpTables = true;
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
@@ -640,6 +636,11 @@ private:
 namespace IndirectControlFlow {
     /** Settings for indirect control flow recovery. */
     struct Settings {
+        /** Whether ICF recovery passes are enabled.
+         *
+         *  If disabled, then none of the following settings are used. */
+        bool enabled = false;
+
         /** Maximum depth of reverse CFG traversal.
          *
          *  The maximum depth of the reverse CFG traversal during the reverse phase of the dataflow graph construction. This
@@ -661,6 +662,11 @@ namespace IndirectControlFlow {
          *  the partial results. */
         size_t maxDataflowIterationFactor = 2;
 
+        /** Maximum size for the dataflow graph.
+         *
+         *  If the dataflow graph contains more than the specified number of vertices, then dataflow is not run at all and the
+         *  analysis is skipped, leaving the CFG edge to an indeterminate address. */
+        size_t maxDataflowVertices = 50;
     };
 } // namespace
 

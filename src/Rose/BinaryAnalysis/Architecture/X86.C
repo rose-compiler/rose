@@ -511,14 +511,8 @@ X86::basicBlockCreationHooks(const Partitioner2::Engine::Ptr &engine) const {
     retval.push_back(Partitioner2::ModulesX86::FunctionReturnDetector::instance());
 
     // Static jump tables
-    switch (engine->settings().partitioner.staticJumpTableAnalysis) {
-        case Partitioner2::StaticJumpTableAnalysis::SINGLE_BLOCK:
-        case Partitioner2::StaticJumpTableAnalysis::ALL:
-            retval.push_back(Partitioner2::ModulesX86::SwitchSuccessors::instance());
-            break;
-        case Partitioner2::StaticJumpTableAnalysis::DATAFLOW:
-            break;
-    }
+    if (engine->settings().partitioner.naiveJumpTables)
+        retval.push_back(Partitioner2::ModulesX86::SwitchSuccessors::instance());
 
     return retval;
 }

@@ -832,28 +832,12 @@ EngineBinary::partitionerSwitches(PartitionerSettings &settings) {
               .intrinsicValue(false, settings.demangleNames)
               .hidden(true));
 
-    sg.insert(Switch("static-jump-tables")
-              .argument("how", enumParser<StaticJumpTableAnalysis>(settings.staticJumpTableAnalysis)
-                        ->with("single", StaticJumpTableAnalysis::SINGLE_BLOCK)
-                        ->with("dataflow", StaticJumpTableAnalysis::DATAFLOW))
-              .doc("Specifies the kind of analysis to use when reconstructing indirect control flow for compiler-generated jump "
-                   "tables, such as are created by the C compiler for `switch` statements.  The choices are:"
-
-                   "@named{single}{The analysis examines only the basic block that contains the indirect jump instruction. This is "
-                   "the original, ROSE jump table analysis that attempts to match instruction patterns. It's fast, and sometimes "
-                   "gives good enough results." +
-                   std::string(StaticJumpTableAnalysis::SINGLE_BLOCK == settings.staticJumpTableAnalysis ?
-                               " This is the default." : "") + "}"
-
-                   "@named{dataflow}{A dataflow analysis is performed on the basic blocks near the indirect jump using instruction "
-                   "semantics in order to discover the jump table adddress. If an SMT solver is available, it's used to help "
-                   "refine the size of the table. This approach is slower but can be more accurate in some situations." +
-                   std::string(StaticJumpTableAnalysis::DATAFLOW == settings.staticJumpTableAnalysis ?
-                               " This is the default." : "") + "}"
-
-                   "@named{all}{Try all analyses and save the results from the first one that succeeds." +
-                   std::string(StaticJumpTableAnalysis::DATAFLOW == settings.staticJumpTableAnalysis ?
-                               " This is the default." : "") + "}"));
+    Rose::CommandLine::insertBooleanSwitch(sg, "naive-jump-tables", settings.naiveJumpTables,
+                                           "Perform a pattern-based anaylsis in an attempt to discover indirect control flow "
+                                           "edges emanating from a basic block. This analysis is simple and fast, and if it "
+                                           "detects a jump table then its results are used in preference to more expensive "
+                                           "analysis. This switch should be turned off in order to use the more expensive "
+                                           "dataflow-based jump table analysis.");
 
     return sg;
 }
@@ -2210,17 +2194,9 @@ EngineBinary::discoverFunctions(const Partitioner::Ptr &partitioner) {
         // Find as many basic blocks as possible by recursively following the CFG as we build it.
         discoverBasicBlocks(partitioner);
 
-        // Handle static jump tables such as those produced by a C compiler for `switch` statements. This is a dataflow analysis
-        // that examines more than just single basic blocks.
-        switch (settings().partitioner.staticJumpTableAnalysis) {
-            case StaticJumpTableAnalysis::DATAFLOW:
-            case StaticJumpTableAnalysis::ALL:
-                if (IndirectControlFlow::analyzeAllBlocks(settings().icf, partitioner))
-                    continue;
-                break;
-            case StaticJumpTableAnalysis::SINGLE_BLOCK:
-                break;
-        }
+        // Resolve indirect control flow
+        if (IndirectControlFlow::analyzeAllBlocks(settings().icf, partitioner))
+            continue;
 
         // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's entry
         // block, so go back and look for more basic blocks again.

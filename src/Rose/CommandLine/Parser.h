@@ -128,7 +128,7 @@ ROSE_DLL_API extern GenericSwitchArgs genericSwitchArgs;
  *  An alternative is to use a switch that takes a Boolean argument (e.g., "--foo=yes" or "--foo=no"), but this is more
  *  difficult for users to remember and type than just "--foo" and "--no-foo".
  *
- *  See also, @ref createEmptyParser, @ref createEmptyParserStage.
+ *  See also, @ref createEmptyParser, @ref createEmptyParserStage, @ref insertEnableSwitch.
  *
  * @{ */
 ROSE_DLL_API void insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup&, const std::string &switchName,
@@ -136,6 +136,24 @@ ROSE_DLL_API void insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup&, const s
 ROSE_DLL_API void insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup&, const std::string &switchName,
                                       Sawyer::Optional<bool> &storageLocation, const std::string &documentation);
 /** @} */
+
+/** Convenience for adding enable/disable switches.
+ *
+ *  Inserts a switch for enabling or disabling something. This adds two switches named "enable-{name}" and "disable-{name}" both
+ *  keyed to the "enable-{name}" string. If @p what is the empty string, then the switches are named only "enable" and "disable"
+ *  and the key is "enable".
+ *
+ *  The @p storageLocation contains an initial value and is updated when the parser results are applied. It must outlive the
+ *  parser.
+ *
+ *  Only one of the switches appears in the documentation: if the initial storage location is true, then the "disable" switch is
+ *  documented, otherwise the "enable" switch is documented. In any case, the documented switch mentions the undocumented switch.
+ *  Part of the documentation is generated automatically, and part is supplied by the @p documentation argument. The switch
+ *  documentation will start with a sentence like "Enables {thing}." or "Disables {thing}" depending on the initial value in the
+ *  @p storageLocation (see above). This is followed by the user-supplied @p documentation. Finally a sentence is added to mention
+ *  the opposite switch. The @p thing should be a singular noun or singular noun phrase. */
+ROSE_DLL_API void insertEnableSwitch(Sawyer::CommandLine::SwitchGroup&, const std::string &name, const std::string &thing,
+                                     bool &storageLocation, const std::string &documentation);
 
 } // namespace
 } // namespace
