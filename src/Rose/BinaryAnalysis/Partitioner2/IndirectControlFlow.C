@@ -453,11 +453,11 @@ hashGraph(const DfGraph &graph) {
 
 // Print a dataflow graph in Graphviz format for debugging.
 static void
-toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr &partitioner) {
+toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr &partitioner, const size_t endVertexId) {
     ASSERT_not_null(partitioner);
 
     const Color::HSV entryColor(0.33, 1.0, 0.9);        // light green
-    const Color::HSV targetColor(0.67, 1.0, 0.9);       // light blue
+    const Color::HSV endColor(0.67, 1.0, 0.9);       // light blue
 
     // One subgraph per inline ID, and give them names.
     std::map<size_t, std::string> subgraphs;
@@ -485,8 +485,8 @@ toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr 
         for (const auto &dfVertex: graph.vertices()) {
             if (dfVertex.value().inlineId == subgraph.first) {
                 out <<dfVertex.id() <<" [";
-                if (dfVertex.id() == 0) {
-                    out <<" shape=box style=filled fillcolor=\"" <<targetColor.toHtml() <<"\"";
+                if (dfVertex.id() == endVertexId) {
+                    out <<" shape=box style=filled fillcolor=\"" <<endColor.toHtml() <<"\"";
                 } else if (dfVertex.nInEdges() == 0) {
                     out <<" shape=box style=filled fillcolor=\"" <<entryColor.toHtml() <<"\"";
                 }
@@ -508,9 +508,35 @@ toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr 
     }
 
     for (const auto &edge: graph.edges()) {
-        out <<edge.source()->id() <<" -> " <<edge.target()->id() <<";\n";
+        out <<edge.source()->id() <<" -> " <<edge.target()->id();
+        const auto cfgEdge = edge.value() ? partitioner->cfg().findEdge(*edge.value()) : partitioner->cfg().edges().end();
+        out <<" [ label=<";
+        if (partitioner->cfg().isValidEdge(cfgEdge)) {
+            switch (cfgEdge->value().type()) {
+                case E_NORMAL:
+                    out <<"cfg-" <<*edge.value();
+                    break;
+                case E_FUNCTION_CALL:
+                    out <<"call";
+                    break;
+                case E_FUNCTION_XFER:
+                    out <<"xfer";
+                    break;
+                case E_FUNCTION_RETURN:
+                    out <<"ret";
+                    break;
+                case E_CALL_RETURN:
+                    out <<"cret";
+                    break;
+                case E_USER_DEFINED:
+                    out <<"user";
+                    break;
+            }
+        } else {
+            out <<"df-" <<edge.id();
+        }
+        out <<"> ];\n";
     }
-
     out <<"}\n";
 }
 
