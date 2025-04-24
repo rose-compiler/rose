@@ -432,10 +432,12 @@ NOTES:
         - this likely should happen before this call because ::loadClassFile should have been discovered?
 #endif
 
-    std::string className = path.stem().string();
+    // Drop the extension, hopefully ".class"
+    auto p{path.parent_path() / path.stem()};
+    std::string className = p.string();
 
     // Check to see if the class has already been processed
-    if (classes_.find(path.string()) != classes_.end()) {
+    if (classes_.find(className) != classes_.end()) {
         return baseVa;
     }
 
@@ -484,7 +486,7 @@ NOTES:
 
     auto pool = jfh->get_constant_pool();
 
-    // Fix the class name now that the path has been loaded
+    // Check the class name now that the path has been loaded
     if (className != ByteCode::JvmClass::name(jfh->get_this_class(), pool)) {
         className = ByteCode::JvmClass::name(jfh->get_this_class(), pool);
         if (classes_.find(className) != classes_.end()) {
@@ -492,7 +494,6 @@ NOTES:
             throw std::runtime_error("can't load class twice");
         }
     }
-
     classes_[className] = gf;
 
     fileList->get_files().push_back(gf);
@@ -516,9 +517,9 @@ NOTES:
 
     // Load classes discovered during function call search
     for (auto discovered: discoveredClasses) {
-        auto path = pathToClass(discovered);
-        if (fs::exists(path)) {
-            baseVa = loadClassFile(path, fileList, baseVa);
+        auto p = pathToClass(discovered);
+        if (fs::exists(p)) {
+            baseVa = loadClassFile(p, fileList, baseVa);
         }
     }
 
