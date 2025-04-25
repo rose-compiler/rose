@@ -667,6 +667,9 @@ namespace IndirectControlFlow {
          *  If the dataflow graph contains more than the specified number of vertices, then dataflow is not run at all and the
          *  analysis is skipped, leaving the CFG edge to an indeterminate address. */
         size_t maxDataflowVertices = 50;
+
+        /** Turn on debugging for a particular branch instruction. */
+        Sawyer::Optional<Address> debugAddress;
     };
 } // namespace
 
