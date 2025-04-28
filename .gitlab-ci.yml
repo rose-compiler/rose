@@ -145,18 +145,10 @@ RHEL8-Main:
     tags:
         - workpool:large:rhel9
 
-RHEL7-Main:
-    extends: .develop-base
-    tags:
-        - workpool:large
-
 RHEL9-CMake:
     extends: .develop-base
 
 RHEL8-CMake:
-    extends: .develop-base
-
-RHEL7-CMake:
     extends: .develop-base
 
 WINE:
@@ -399,8 +391,6 @@ SAPOH-Post-Processing:
 Doxygen:
     extends: .release-base 
     stage: Deploy
-    tags:
-        - network
 
 ACATS:
     extends: .release-base
@@ -413,17 +403,17 @@ ACATS:
         - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME $VERSION
     timeout: 12h
 
-RHEL7-Status:
+RHEL8-Status:
     extends: .release-base 
 
-RHEL8-Status:
+RHEL9-Status:
     extends: .release-base 
 
 Status-Post-Processing:
     extends: .release-base 
     needs:
-      - job: RHEL7-Status
       - job: RHEL8-Status
+      - job: RHEL9-Status
 
 Coverage-Analysis:
     extends: .release-base 
