@@ -115,7 +115,7 @@ namespace AstUtilInterface{
     std::string GetVariableSignature(const AstNodePtr& variable);
 
     //! Returns whether the given ref reaches only local data within scope. 
-    bool IsLocalRef(SgNode* ref, SgNode* scope);
+    bool IsLocalRef(SgNode* ref, SgNode* scope, bool* has_ptr_deref = 0);
 
 };
 #endif

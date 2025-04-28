@@ -16,9 +16,9 @@ class SgType;
 class AstNodePtr {
  public:
   typedef SgNode BaseType;
-  //! Both SG_AST and UNKNOWN_FUNCTION_CALL have concrete BaseType pointers as their values.
-  //! The other AST types have null as their values.
-  enum class SpecialAstType {SG_AST, UNKNOWN_FUNCTION_CALL, UNKNOWN_AST, NULL_AST}; 
+  //! The UNKNOWN_AST and NULL_AST types have null as their values.
+  //! The other types have concrete BaseType pointers as their values.
+  enum class SpecialAstType {SG_AST, UNKNOWN_FUNCTION_CALL, UNKNOWN_PTR_REF, UNKNOWN_AST, NULL_AST}; 
  private:
   BaseType* repr_;
   SpecialAstType nodetype_;
@@ -38,9 +38,13 @@ class AstNodePtr {
       }
    }
   ~AstNodePtr() {}
+  bool is_sage_ast() const { return nodetype_ == SpecialAstType::SG_AST; }
   bool is_null() const { return nodetype_ == SpecialAstType::NULL_AST; }
   bool is_unknown() const { return nodetype_ ==  SpecialAstType::UNKNOWN_AST; }
+  bool is_unknown_function_call() const { return nodetype_ ==  SpecialAstType::UNKNOWN_FUNCTION_CALL; }
+  bool is_unknown_reference() const { return nodetype_ ==  SpecialAstType::UNKNOWN_PTR_REF; }
   void set_is_unknown_function_call() { nodetype_ = SpecialAstType::UNKNOWN_FUNCTION_CALL; }
+  void set_is_unknown_reference() { nodetype_ = SpecialAstType::UNKNOWN_PTR_REF; }
   AstNodePtr& operator = (const AstNodePtr &that) 
       { repr_ = that.repr_; nodetype_ = that.nodetype_; return *this; }
   bool operator != (const AstNodePtr &that) const
@@ -164,6 +168,8 @@ public:
   ~AstInterface() {}
   AstInterfaceImpl* get_impl() { return impl; }
 
+  //! Output the type of the AstNodePtr.
+  static std::string AstTypeToString( const AstNodePtr& s);
   static std::string AstToString( const AstNodePtr& s, bool unparseClassName=true);
   static std::string getAstLocation( const AstNodePtr& s);
   static std::string unparseToString( const AstNodePtr& s);
@@ -335,7 +341,9 @@ public:
   //! Check whether $exp$ is a variable reference; If yes, return type, name, scope, and global/local etc.
   static bool IsVarRef( const AstNodePtr& exp, AstNodeType* vartype = 0,
                    std::string* varname = 0, AstNodePtr* scope = 0, 
-                    bool *isglobal = 0, bool use_global_unique_name=false) ;
+                   bool *defined_in_global = 0, 
+                   bool use_global_unique_name=false,
+                   bool *has_ptr_deref = 0) ;
 
   static std::string GetVarName( const AstNodePtr& exp, bool use_global_unique_name = false);
 
@@ -412,7 +420,8 @@ public:
   }
 
   //! Returns whether the given ref reaches only local data within scope. 
-  static bool IsLocalRef(SgNode* ref, SgNode* scope); 
+  //! if has_ptr_deref != 0, it is set to true if ref has pointer deref.
+  static bool IsLocalRef(SgNode* ref, SgNode* scope, bool* has_ptr_deref = 0); 
 
   //! Returns a string that uniquely identifies the given variable.
   static std::string GetVariableSignature(const AstNodePtr& variable);

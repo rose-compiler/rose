@@ -966,25 +966,32 @@ std::string AstInterface::unparseToString( const AstNodePtr& n)
   return ::unparseToString(s);
 }
 
-std::string AstInterface::AstToString( const AstNodePtr& n, bool withClassName)
-{ 
+std::string AstInterface::AstTypeToString( const AstNodePtr& n) {
+  std::string res;
   switch (n.get_type()) {
-    case AstNodePtr::SpecialAstType::NULL_AST:  return "_NULL_"; 
-    case AstNodePtr::SpecialAstType::UNKNOWN_AST:  return "_UNKNOWN_"; 
-    case AstNodePtr::SpecialAstType::UNKNOWN_FUNCTION_CALL:  return "_UNKNOWN_FUNCTION_CALL_"; 
-    case AstNodePtr::SpecialAstType::SG_AST: {
-      SgNode* s = (SgNode*)n.get_ptr();
-      if (s == 0) return "";
-      std::string res;
-      if (withClassName)
-        res =  std::string(s->sage_class_name()) + ":";
-      res = res + ::unparseToString(s);
-      return res;
-    }
+   case AstNodePtr::SpecialAstType::NULL_AST:  res = "_NULL_";  break;
+   case AstNodePtr::SpecialAstType::UNKNOWN_AST:  res = "_UNKNOWN_";  break;
+   case AstNodePtr::SpecialAstType::UNKNOWN_FUNCTION_CALL:  
+        res = "_UNKNOWN_FUNCTION_CALL_"; break;
+   case AstNodePtr::SpecialAstType::UNKNOWN_PTR_REF:  
+        res =  "_UNKNOWN_PTR_REF_"; break; 
+   case AstNodePtr::SpecialAstType::SG_AST: res = ""; break;
    default:
       std::cerr << "Error: Unhandled case." << "\n";
       assert(0);
   }
+  return res;
+}
+
+std::string AstInterface::AstToString( const AstNodePtr& n, bool withClassName)
+{ 
+  std::string res = AstTypeToString(n);
+  SgNode* s = (SgNode*)n.get_ptr();
+  if (s == 0) return res;
+  if (withClassName)
+      res = res + std::string(s->sage_class_name()) + ":";
+  res = res + ::unparseToString(s);
+  return res;
 }
 
 // Return "@line_number:column_number" for an AST node  
@@ -1041,6 +1048,9 @@ bool AstInterface :: get_fileInfo(const AstNodePtr& _n, std:: string* fname, int
 AstNodePtr AstInterface :: CopyAstTree( const AstNodePtr &_orig) 
 {
  SgNode* orig = AstNodePtrImpl(_orig).get_ptr();
+ if (orig == 0) {
+    return _orig;
+ }
  if (orig->variantT() == V_SgInitializedName) {
    AstNodePtrImpl r(ToVarRef(*impl, orig));
    return r;
@@ -1829,7 +1839,8 @@ bool AstInterface::IsMax( const AstNodePtr& _exp)
 /* Does not deal correctly with templates SgNorealExp */
 bool AstInterfaceImpl::
 IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
-          SgNode** _scope, bool *isglobal, bool use_global_unique_name) 
+          SgNode** _scope, bool *defined_in_global, 
+          bool use_global_unique_name, bool *has_ptr_deref) 
 { 
   if (exp == 0) return false;
   SgNode *decl = 0, *scope = 0;
@@ -1928,7 +1939,10 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
       }
       break;
     case V_SgPointerDerefExp:
-       if (IsVarRef(isSgPointerDerefExp(exp)->get_operand(), vartype, varname, _scope, isglobal, use_global_unique_name)) {
+       if (IsVarRef(isSgPointerDerefExp(exp)->get_operand(), vartype, varname, _scope, defined_in_global, use_global_unique_name, has_ptr_deref)) {
+          if (has_ptr_deref != 0) {
+               *has_ptr_deref = true;
+          }
           if (varname != 0) {
              (*varname) = "*" + (*varname);
           }
@@ -1947,6 +1961,9 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
        SgVarRefExp* var2 = isSgVarRefExp(exp1->get_rhs_operand());
        if (var2 == 0)
           return false;
+       if (has_ptr_deref != 0) {
+          *has_ptr_deref = true;
+       }
        SgVariableSymbol *sb2 = var2->get_symbol();
        if (vartype != 0) *vartype = sb2->get_type();
        if (varname != 0) {
@@ -1955,18 +1972,21 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
      }
      break;
     case V_SgArrowExp:
+       if (has_ptr_deref != 0 && !isSgThisExp(isSgBinaryOp(exp)->get_lhs_operand())) {
+          *has_ptr_deref = true;
+       }
     case V_SgDotExp:
      {
        const SgBinaryOp *exp1 = isSgBinaryOp(exp);
        SgNode* lhs = exp1->get_lhs_operand();
        if (isSgThisExp(lhs)!=0) { 
-          if (!IsVarRef(exp1->get_rhs_operand(),vartype,varname,_scope, isglobal, use_global_unique_name)) {
+          if (!IsVarRef(exp1->get_rhs_operand(),vartype,varname,_scope, defined_in_global, use_global_unique_name, has_ptr_deref)) {
               return false;
           }
           return true;
        } 
        std::string varname1;
-       if (!IsVarRef(lhs,0, &varname1, &scope)) {
+       if (!IsVarRef(lhs,0, &varname1, &scope, defined_in_global, use_global_unique_name, has_ptr_deref)) {
           return false;
        }
        SgVarRefExp* var2 = isSgVarRefExp(exp1->get_rhs_operand());
@@ -1983,7 +2003,7 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
   default:
     return false;
   }
-  if (_scope != 0 || isglobal != 0 || use_global_unique_name) {
+  if (_scope != 0 || defined_in_global != 0 || use_global_unique_name) {
     if (scope == 0 && decl != 0) {
       std::cerr << "Both should be defined, or neither should. \n";
        assert(false);
@@ -1991,9 +2011,8 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
     if (_scope != 0 && scope != 0) {
         *_scope =  (isSgScopeStatement(scope)? scope : AstInterfaceImpl::GetScope(scope));
     }
-    bool var_is_global = scope == 0 || (scope->variantT() == V_SgGlobal);
-    if (isglobal != 0)
-       *isglobal = var_is_global;
+    if (defined_in_global != 0)
+       *defined_in_global = (scope == 0 || scope->variantT() == V_SgGlobal);
     if (use_global_unique_name && varname != 0 && (*varname) != "" && scope != 0) {
        DebugVariable([scope,varname](){ return "Variable-scope:" + *varname + AstInterface::AstToString(scope); });
        *varname = AstInterface::GetGlobalUniqueName(scope, *varname);
@@ -2007,13 +2026,14 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
 
 bool AstInterface::
 IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, std::string* varname,
-          AstNodePtr* scope, bool *isglobal, bool use_global_unique_name ) 
+          AstNodePtr* scope, bool *defined_in_global, 
+          bool use_global_unique_name, bool* has_ptr_deref ) 
 { 
   SgNode* exp=AstNodePtrImpl(_exp).get_ptr();
   if (exp == 0) return false;
   SgType** _vartype = (vartype==0)? (SgType**)0 : (SgType**)&vartype->get_ptr();
   SgNode** _scope = (scope==0)? (SgNode**) 0 : (SgNode**)&scope->get_ptr();
-  return AstInterfaceImpl::IsVarRef(exp,_vartype, varname, _scope, isglobal, use_global_unique_name);
+  return AstInterfaceImpl::IsVarRef(exp,_vartype, varname, _scope, defined_in_global, use_global_unique_name, has_ptr_deref);
 }
 
 std::string AstInterface::GetVarName( const AstNodePtr& exp, bool use_global_unique_name)
@@ -4385,10 +4405,11 @@ SgScopeStatement* AstInterfaceImpl::GetScope( SgNode* loc)
 }
 
 std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
-    if (_variable == AST_NULL) return "_NULL_";
-    if (_variable == AST_UNKNOWN) return "_UNKNOWN_";
+    std::string res = AstInterface::AstTypeToString(_variable);
     SgNode* variable = _variable.get_ptr();
-    assert(variable != 0);
+    if (variable == 0) return res;
+    if (res != "") res = res + "::";
+
     SgType* variable_is_type = isSgType(variable);
     if (variable_is_type != 0) {
         std::string variable_name;
@@ -4420,7 +4441,7 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
     AstNodePtr f;
     AstNodeList args;
     if (AstInterface::IsFunctionCall(variable, &f, &args)) {
-       std::string result = GetVariableSignature(f.get_ptr()) + "(";
+       std::string result = res + GetVariableSignature(f.get_ptr()) + "(";
        bool is_first = true;
        for (auto x : args) {
          if (!is_first) { result = result + ","; }
@@ -4432,21 +4453,21 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
     }
     // An empty string will be returned AstInterface::IsVarRef(variable) returns false.
     std::string name = AstInterface::GetVarName(variable, /*use_global_unique_name=*/true);
-    if (name == "") {
+    if (name == "" && res == "") {
         name = "_UNKNOWN_";
     }
     DebugVariable([&variable,&name](){ return "variable is " + AstInterface::AstToString(variable) + " name is " + name; });
-    return name;
+    return res + name;
 }
 
-bool AstInterface::IsLocalRef(SgNode* ref, SgNode* scope) {
+bool AstInterface::IsLocalRef(SgNode* ref, SgNode* scope, bool* has_ptr_deref) {
    std::string scope_name;
    if (! AstInterface::IsBlock(scope, &scope_name)) {
      return false;
    }
    DebugVariable([&ref,&scope_name](){ return "IsLocalRef invoked: var is " + AstInterface::AstToString(ref) + "; scope is " + scope_name; });
    AstNodePtr _cur_scope;
-   if (!AstInterface::IsVarRef(ref, 0, 0, &_cur_scope)) {
+   if (!AstInterface::IsVarRef(ref, 0, 0, &_cur_scope, 0, false, has_ptr_deref)) {
       return false;
    }  
    SgNode* cur_scope = AstNodePtrImpl(_cur_scope).get_ptr(); 
