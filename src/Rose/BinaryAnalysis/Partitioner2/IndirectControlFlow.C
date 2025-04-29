@@ -112,7 +112,12 @@ commandLineSwitches(Settings &settings) {
               .argument("n", nonNegativeIntegerParser(settings.maxDataflowVertices))
               .doc("If the dataflow graph contains more than @v{n} vertices then the dataflow is skipped. Either some other "
                    "analysis will be performed, or the indirect control flow will be represented by a CFG edge that points to "
-                   "an indeterminate address."));
+                   "an indeterminate address. The default is " + plural(settings.maxDataflowVertices, "vertices") + "."));
+
+    sg.insert(Switch("df-max-valueset")
+              .argument("n", nonNegativeIntegerParser(settings.maxDataflowSetSize))
+              .doc("During dataflow, this is the maximum number of distinct values to save in a set when merging states from one "
+                   "or more graph edges. The default is " + plural(settings.maxDataflowSetSize, "values") + "."));
 
     sg.insert(Switch("debug")
               .argument("address", nonNegativeIntegerParser(settings.debugAddress))
@@ -219,10 +224,12 @@ class DfTransfer {
     Partitioner::ConstPtr partitioner_;
     BS::Dispatcher::Ptr cpu_;
     const Debugging debugging_ = Debugging::OFF;
+    const size_t maxSetSize_ = 1;
 
 public:
-    DfTransfer(const Partitioner::ConstPtr &partitioner, const BS::Dispatcher::Ptr &cpu, const Debugging debugging)
-        : partitioner_(notnull(partitioner)), cpu_(notnull(cpu)), debugging_(debugging) {}
+    DfTransfer(const Settings &settings, const Partitioner::ConstPtr &partitioner, const BS::Dispatcher::Ptr &cpu,
+               const Debugging debugging)
+        : partitioner_(notnull(partitioner)), cpu_(notnull(cpu)), debugging_(debugging), maxSetSize_(settings.maxDataflowSetSize) {}
 
     std::string toString(const BS::State::Ptr &state) const {
         if (!state) {
@@ -268,6 +275,11 @@ public:
         retval->clear();
         cpu_->initializeState(retval);
         initializeStackPointer(ops);
+
+        auto merger = SymbolicSemantics::Merger::instance(maxSetSize_);
+        retval->registerState()->merger(merger);
+        retval->memoryState()->merger(merger);
+
         return retval;
     }
 
@@ -784,7 +796,7 @@ buildDfGraph(const Settings &settings, const Partitioner::ConstPtr &partitioner,
         if (t.event() == ENTER_EDGE) {
             BasicBlock::Ptr src = t.edge()->source()->value().bblock();
             BasicBlock::Ptr tgt = t.edge()->target()->value().bblock();
-            if (++depth <= maxDepth && src && tgt && src != endBb && t.edge()->value().type() != E_FUNCTION_CALL) {
+            if (++depth <= maxDepth && src && tgt /*&& src != endBb*/ && t.edge()->value().type() != E_FUNCTION_CALL) {
                 graph.insertEdgeWithVertices(DfVertex(src, 0), DfVertex(tgt, 0), t.edge()->id());
             } else {
                 t.skipChildren();
@@ -1263,14 +1275,21 @@ useConcreteSet(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, c
     if (!ip->isOperator(OP_CONCAT) || ip->nChildren() == 0)
         return false;
 
-    // All bytes must be sets of values, and all must have the same number of elements.
-    const size_t nMembers = ip->child(0)->nChildren();
+    // Not all parts (extractions) of the IP need to be sets, but if there are sets they must all be the same size.
+    size_t nMembers = 0;
     for (const auto &set: ip->children()) {
-        if (!set->isOperator(OP_SET))
-            return false;
-        if (set->nChildren() != nMembers)
-            return false;
+        if (set->isOperator(OP_SET)) {
+            ASSERT_require(set->nChildren() > 0);
+            if (nMembers > 0) {
+                if (set->nChildren() != nMembers)
+                    return false;
+            } else {
+                nMembers = set->nChildren();
+            }
+        }
     }
+    if (nMembers == 0)
+        return false;
     SAWYER_MESG(debug) <<"  IP is a set of " <<plural(nMembers, "addresses") <<"\n";
 
     // Build addresses from the sets of values
@@ -1278,8 +1297,13 @@ useConcreteSet(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, c
     std::vector<Ptr> nonconcrete;
     for (size_t i = 0; i < nMembers; ++i) {
         Ptr addr;
-        for (const auto &set: ip->children())
-            addr = addr ? makeConcat(addr, set->child(i)) : set->child(i);
+        for (const auto &part: ip->children()) {
+            if (part->isOperator(OP_SET)) {
+                addr = addr ? makeConcat(addr, part->child(i)) : part->child(i);
+            } else {
+                addr = addr ? makeConcat(addr, part) : part;
+            }
+        }
         if (const auto a = addr->toUnsigned()) {
             concrete.insert(*a);
         } else {
@@ -1371,7 +1395,7 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
     if (!cpu)
         return false;
 
-    DfTransfer xfer(partitioner, cpu, debugging);
+    DfTransfer xfer(settings, partitioner, cpu, debugging);
     DfMerge merge(partitioner, ops, dfGraph);
     using DfEngine = BinaryAnalysis::DataFlow::Engine<DfGraph, BS::State::Ptr, DfTransfer, DfMerge>;
     DfEngine dfEngine(dfGraph, xfer, merge);
@@ -1394,7 +1418,7 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
     // Examine the outgoing state for the basic block in question.
     if (BS::State::Ptr state = dfEngine.getFinalState(endVertex->id())) {
         if (debug) {
-            debug <<"  dataflow state after " <<bb->printableName() <<":\n";
+            debug <<"  final dataflow state after " <<bb->printableName() <<":\n";
             state->print(debug, "    ");
         }
         ops->currentState(state);

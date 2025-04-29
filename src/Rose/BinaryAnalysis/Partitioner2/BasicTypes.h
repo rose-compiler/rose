@@ -668,6 +668,12 @@ namespace IndirectControlFlow {
          *  analysis is skipped, leaving the CFG edge to an indeterminate address. */
         size_t maxDataflowVertices = 50;
 
+        /** Maximum semantic value set size during dataflow.
+         *
+         *  When states are merged along two or more graph edges, this is the maximum size of the set of values before replacing the
+         *  set with a new symbolic variable. */
+        size_t maxDataflowSetSize = 10;
+
         /** Turn on debugging for a particular branch instruction. */
         Sawyer::Optional<Address> debugAddress;
     };
