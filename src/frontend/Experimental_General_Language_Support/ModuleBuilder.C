@@ -4,6 +4,7 @@
 namespace Rose {
 
 using namespace Rose::Diagnostics;
+namespace fs = boost::filesystem;
 
 void ModuleBuilder::setCurrentProject(SgProject* project)
 {
@@ -12,19 +13,21 @@ void ModuleBuilder::setCurrentProject(SgProject* project)
 
 std::string ModuleBuilder::findFileFromInputDirs(const std::string &basename)
 {
-   std::string dir;
-   std::string name;
-   int sizeArg = inputDirs.size();
-
-   for (int i = 0; i< sizeArg; i++) {
-     dir = inputDirs[i];
-     name = dir+"/"+ basename;
-
-     std::string tmp = name + getModuleFileSuffix();
-     if (boost::filesystem::exists(tmp)) {
-       return name;
+   // First look for module file in search path
+   for (auto dir : inputDirs) {
+     std::string file{dir + "/" + basename};
+     if (fs::exists(file) && fs::is_regular_file(file)) {
+       return file;
      }
    }
+
+   // Next look for any regular file in search path (usage similar to Java CLASSPATH)
+   for (auto file : inputDirs) {
+     if (fs::exists(file) && fs::is_regular_file(file)) {
+       return file;
+     }
+   }
+
    return basename;
 }
 
@@ -44,26 +47,24 @@ std::string ModuleBuilder::namespaceSymbolName(const std::string &name)
 
 void ModuleBuilder::setInputDirs(SgProject* project)
 {
-  std::vector<std::string> args = project->get_originalCommandLineArgumentList();
-  std::string  rmodDir;
+  std::vector<std::string> args{project->get_originalCommandLineArgumentList()};
+  std::string rmodDir;
 
   // Add path to iso_c_binding.rmod. The intrinsic modules have been placed in the
   // 3rdPartyLibraries because they could be compiler dependent. If placed there we could
   // reasonable have multiple versions at some point.
   //
-  // WARNING - this is for Fortran but really not needed for Jovial as not intrinsic compool modules
+  // WARNING - this is for Fortran but really not needed for Jovial as no intrinsic compool modules
   //
   std::string intrinsic_mod_path = findRoseSupportPathFromSource("src/3rdPartyLibraries/fortran-parser", "share/rose");
   inputDirs.push_back(intrinsic_mod_path);
 
-  int sizeArgs = args.size();
-
-  for (int i = 0; i< sizeArgs; i++) {
-    if (args[i].find("-I",0)==0) {
+  for (unsigned i = 0; i < args.size(); i++) {
+    if (args[i].find("-I",0) == 0) {
       rmodDir = args[i].substr(2);
       std::string rmodDir_no_quotes = boost::replace_all_copy(rmodDir, "\"", "");
 
-      if (boost::filesystem::exists(rmodDir_no_quotes.c_str())) {
+      if (fs::exists(rmodDir_no_quotes.c_str())) {
         inputDirs.push_back(rmodDir_no_quotes);
       }
       else {
@@ -77,10 +78,10 @@ void ModuleBuilder::setInputDirs(SgProject* project)
 
 void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::string> &import_names, SgGlobal* file_scope)
 {
-  SgNamespaceDeclarationStatement* namespace_decl = nullptr;
-  SgNamespaceDefinitionStatement*  namespace_defn = nullptr;
-  SgNamespaceSymbol* namespace_symbol = nullptr;
-  SgSymbolTable* namespace_symbols = nullptr;
+  SgNamespaceDeclarationStatement* namespace_decl{nullptr};
+  SgNamespaceDefinitionStatement*  namespace_defn{nullptr};
+  SgNamespaceSymbol* namespace_symbol{nullptr};
+  SgSymbolTable* namespace_symbols{nullptr};
 
   SgSourceFile* source = getModule(module_name);
   ASSERT_not_null(source);
@@ -277,7 +278,7 @@ SgSourceFile* ModuleBuilder::getModule(const std::string &module_name)
   // compiler because the iterator has a template parameter. Find returns a pair so second is used to
   // return the value.
   typename ModuleMapType::iterator mapIterator = moduleNameMap.find(module_name);
-  SgSourceFile* module_file = (mapIterator != moduleNameMap.end()) ? mapIterator->second : NULL;
+  SgSourceFile* module_file = (mapIterator != moduleNameMap.end()) ? mapIterator->second : nullptr;
 
   // No need to read the module file if file was already parsed
   if (module_file) {
@@ -289,14 +290,11 @@ SgSourceFile* ModuleBuilder::getModule(const std::string &module_name)
     return module_file;
   }
 
-  std::string lc_module_name = StringUtility::convertToLowerCase(module_name);
-  std::string file_path = findFileFromInputDirs(lc_module_name);
-
-  // This will run the parser on the module file and load the declarations into global scope
-  module_file = createSgSourceFile(file_path);
+  // Run the parser on the module file and load the declarations into global scope
+  module_file = createSgSourceFile(module_name);
 
   if (module_file == nullptr) {
-    mlog[ERROR] << "ModuleBuilder::getModule: No file found for the module file: " << lc_module_name;
+    mlog[ERROR] << "ModuleBuilder::getModule: No file found for the module: " << module_name;
     ROSE_ABORT();
   }
   else {
@@ -312,10 +310,11 @@ SgSourceFile* ModuleBuilder::createSgSourceFile(const std::string &module_name)
   int errorCode = 0;
   std::vector<std::string> argv;
 
-  // current directory
-  std::string module_filename = boost::algorithm::to_lower_copy(module_name) + getModuleFileSuffix();
+  // Look for file in search paths
+  std::string name = StringUtility::convertToLowerCase(module_name) + getModuleFileSuffix();
+  std::string module_filename = findFileFromInputDirs(name);
 
-  if (boost::filesystem::exists(module_filename) == false) {
+  if (!fs::exists(module_filename)) {
     mlog[ERROR] << "Module file filename = " << module_filename << " NOT FOUND (expected to be present)";
     ROSE_ABORT();
   }
