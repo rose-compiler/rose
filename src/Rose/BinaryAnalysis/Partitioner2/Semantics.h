@@ -318,35 +318,68 @@ MemoryState<Super>::readOrPeekMemory(const InstructionSemantics::BaseSemantics::
                                      InstructionSemantics::BaseSemantics::RiscOperators *valOps,
                                      bool withSideEffects) {
     using namespace InstructionSemantics;
+    ASSERT_require2(8==dflt->nBits(), "multi-byte reads should have been handled above this call");
 
     if (!enabled_)
         return dflt->copy();
 
     addressesRead_.push_back(SValue::promote(addr));
+
+    // Symbolic memory takes precedence over concrete memory when the address is concrete. I.e., reading from concrete address
+    // 0x1234 the first time will return the value stored in concrete memory, say 0 and not make any modifications to the symbolic
+    // state. If the value 1 is then written to 0x1234 it will be written to the symbolic state, not the concrete state (because
+    // changing the concrete state is probably a global side effect unless the entire memory map has been copied). Subsequent reads
+    // from 0x1234 should return the 1 that we wrote, not the 0 that's stored in the concrete memory.
+    BaseSemantics::SValuePtr symbolicDefault = dflt;
     if (map_ && addr->toUnsigned()) {
-        ASSERT_require2(8==dflt->nBits(), "multi-byte reads should have been handled above this call");
-        Address va = addr->toUnsigned().get();
+        Address va = *addr->toUnsigned();
         bool isModifiable = map_->at(va).require(MemoryMap::WRITABLE).exists();
         bool isInitialized = map_->at(va).require(MemoryMap::INITIALIZED).exists();
+
+        // Read the byte from concrete memory if possible.
+        SymbolicExpression::Ptr valueRead;
         if (!isModifiable || isInitialized) {
             uint8_t byte;
-            if (1 == map_->at(va).limit(1).read(&byte).size()) {
-                SymbolicExpression::Ptr expr = SymbolicExpression::makeIntegerConstant(8, byte);
-                if (isModifiable) {
-                    SymbolicExpression::Ptr indet = SymbolicExpression::makeIntegerVariable(8);
-                    expr = SymbolicExpression::makeSet(expr, indet, valOps->solver());
-                }
-                SymbolicSemantics::SValuePtr val = SymbolicSemantics::SValue::promote(valOps->undefined_(8));
-                val->set_expression(expr);
-                return val;
+            if (1 == map_->at(va).limit(1).read(&byte).size())
+                valueRead = SymbolicExpression::makeIntegerConstant(8, byte);
+        }
+
+        // If concrete memory is mutable, then we don't really know the value for sure.
+        if (isModifiable) {
+            const auto indeterminate = SymbolicExpression::makeIntegerVariable(8);
+            if (valueRead) {
+                valueRead = SymbolicExpression::makeSet(valueRead, indeterminate, valOps->solver());
+            } else {
+                valueRead = indeterminate;
             }
+        }
+
+        // Make the value that we read from concrete memory the default for reading from symbolic memory.
+        if (valueRead) {
+            auto val = SymbolicSemantics::SValue::promote(valOps->undefined_(8));
+            val->set_expression(valueRead);
+            symbolicDefault = val;
+        }
+
+        // Read the value from symbolic memory, but the tricky part is that we don't want the symbolic memory to think that we read
+        // an uninitialized value. Therefore, we need to potentially write the value into symbolic memory first.
+        const auto probe = valOps->undefined_(8);
+        if (Super::peekMemory(addr, probe, addrOps, valOps)->mustEqual(probe)) {
+            SgAsmInstruction *addrInsn = addrOps->currentInstruction(); // order is important because addrOps and valOps
+            SgAsmInstruction *valInsn = valOps->currentInstruction();   // might be the same object. Read both of them
+            addrOps->currentInstruction(nullptr);                       // before clearing either of them.
+            valOps->currentInstruction(nullptr);
+            Super::writeMemory(addr, symbolicDefault, addrOps, valOps);
+            addrOps->currentInstruction(addrInsn);
+            valOps->currentInstruction(valInsn);
         }
     }
 
+    // Read from symbolic memory
     if (withSideEffects) {
-        return Super::readMemory(addr, dflt, addrOps, valOps);
+        return Super::readMemory(addr, symbolicDefault, addrOps, valOps);
     } else {
-        return Super::peekMemory(addr, dflt, addrOps, valOps);
+        return Super::peekMemory(addr, symbolicDefault, addrOps, valOps);
     }
 }
 
