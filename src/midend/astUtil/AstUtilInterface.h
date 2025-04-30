@@ -51,10 +51,10 @@ namespace AstUtilInterface{
       SaveOperatorSideEffectIntoVectors(std::vector<AstNodePtr>* readset = 0, std::vector<AstNodePtr>* writeset = 0, std::vector<AstNodePtr>* callset = 0) : readp(readset), writep(writeset), callp(callset), _has_unknown(false) {}
 
        //! Erase existing side effects for the given operator. Do nothing b/c we accumulate.
-       virtual void ClearOperatorSideEffect(SgNode* op) override {} 
+       virtual void ClearOperatorSideEffect(SgNode* /*op*/) override {}
     
        //! The operator op accesses the given memory reference in nature of the given relation.
-       virtual bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* sig = 0) override {
+       virtual bool SaveOperatorSideEffect(SgNode* /*op*/, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* /*sig*/ = 0) override {
            if (varref == AST_UNKNOWN) {
               _has_unknown = true;
            } 
