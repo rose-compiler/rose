@@ -185,7 +185,7 @@ public:
 private:
     std::thread gdbThread_;
     Fifo<std::string> gdbOutput_;
-    boost::asio::io_service ios_;
+    boost::asio::io_context ioctx_;
     boost::process::async_pipe gdbOutputPipe_;
     boost::process::opstream gdbInput_;
     boost::asio::streambuf gdbOutputBuffer_;

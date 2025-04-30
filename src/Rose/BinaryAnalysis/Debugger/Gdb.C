@@ -80,7 +80,7 @@ Gdb::Specimen::remote(const std::string &host, uint16_t port) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Gdb::Gdb()
-    : gdbOutputPipe_(ios_) {}
+    : gdbOutputPipe_(ioctx_) {}
 
 Gdb::~Gdb() {
     if (isAttached())
@@ -102,15 +102,15 @@ Gdb::instance(const Specimen &specimen) {
 // Reads lines of GDB output asynchronously and adds them to a queue of lines in a thread-safe manner.
 class OutputHandler {
 public:
-    boost::asio::io_service &ios_;
+    boost::asio::io_context &ioctx_;
     boost::process::async_pipe &gdbOutputPipe_;
     boost::asio::streambuf &gdbOutputBuffer_;
     Gdb::Fifo<std::string> &lines_;
 
 public:
-    explicit OutputHandler(boost::asio::io_service &ios, boost::process::async_pipe &gdbOutputPipe,
+    explicit OutputHandler(boost::asio::io_context &ioctx, boost::process::async_pipe &gdbOutputPipe,
                            boost::asio::streambuf &gdbOutputBuffer, Gdb::Fifo<std::string> &lines)
-        : ios_(ios), gdbOutputPipe_(gdbOutputPipe), gdbOutputBuffer_(gdbOutputBuffer), lines_(lines) {}
+        : ioctx_(ioctx), gdbOutputPipe_(gdbOutputPipe), gdbOutputBuffer_(gdbOutputBuffer), lines_(lines) {}
 
     void operator()(const boost::system::error_code &ec, size_t /*size*/) {
         if (!ec) {
@@ -242,7 +242,7 @@ gdbIoThread(const std::vector<std::string> &argv, OutputHandler &outputHandler, 
                               boost::process::std_in < gdbInput);
 
     boost::asio::async_read_until(outputHandler.gdbOutputPipe_, outputHandler.gdbOutputBuffer_, "\n", outputHandler);
-    outputHandler.ios_.run();
+    outputHandler.ioctx_.run();
     gdb.wait();
     exitCodePromise.set_value(gdb.exit_code());
 }
@@ -265,7 +265,7 @@ Gdb::attach(const Specimen &specimen) {
     std::promise<int> exitCodePromise;
     exitCodeFuture_ = exitCodePromise.get_future();
     exitCode_ = Sawyer::Nothing();
-    OutputHandler outputHandler(ios_, gdbOutputPipe_, gdbOutputBuffer_, gdbOutput_);
+    OutputHandler outputHandler(ioctx_, gdbOutputPipe_, gdbOutputBuffer_, gdbOutput_);
     gdbThread_ = std::thread(gdbIoThread, argv, std::ref(outputHandler), std::ref(gdbInput_), std::move(exitCodePromise));
     readRequiredResponses();
 
