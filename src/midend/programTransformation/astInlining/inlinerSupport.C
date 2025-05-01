@@ -1,16 +1,11 @@
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "sageBuilder.h"
 
-// DQ (8/1/2005): test use of new static function to create 
-// Sg_File_Info object that are marked as transformations
 #undef SgNULL_FILE
 #define SgNULL_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
 #include "inlinerSupport.h"
 
-// DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
 typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
@@ -63,7 +58,6 @@ void flattenBlocks(SgNode* n) {
 // Internal routine to check whether a given variable declaration is a
 // member variable.
 bool isMemberVariable(const SgNode& in) {
-  //if (!&in) return false;
   SgNode* p = in.get_parent();
   if (isSgClassDefinition(p)) return true;
   if (isSgGlobal(p)) return false;
@@ -86,11 +80,10 @@ class RenameVariablesVisitor: public AstSimpleProcessing
                   {
                     SgInitializedName* n2 = isSgInitializedName(n);
 
-                    ROSE_ASSERT(n2->get_file_info() != NULL);
+                    ASSERT_not_null(n2->get_file_info());
 
                     if (isMemberVariable(*n2)) return;
 
-                 // JW (7/16/2004): Added patch
                     if (isSgVariableDeclaration(n2->get_parent()))
                        {
                          SgVariableDeclaration* decl = isSgVariableDeclaration(n2->get_parent());
@@ -113,9 +106,8 @@ class RenameVariablesVisitor: public AstSimpleProcessing
                     n2symbol->set_parent(symtab);
                     symtab->insert(name, n2symbol);
 
-                 // printf ("RenameVariablesVisitor(): name = %s scope = %p = %s \n",name.str(),savedScope,savedScope->class_name().c_str());
-                    ROSE_ASSERT(n2->get_parent() != NULL);
-                    ROSE_ASSERT(n2->get_file_info() != NULL);
+                    ASSERT_not_null(n2->get_parent());
+                    ASSERT_not_null(n2->get_file_info());
                   }
              }
    };
@@ -126,7 +118,7 @@ void renameVariables(SgNode* n) {
    std::vector<SgNode*> defs = NodeQuery::querySubTree(n, V_SgFunctionDefinition);
    for (size_t i = 0; i < defs.size(); ++i)
       {
-        ROSE_ASSERT(defs[i]->get_parent() != NULL);
+        ASSERT_not_null(defs[i]->get_parent());
         RenameVariablesVisitor().traverse(defs[i]->get_parent(), preorder);
      }
 }
@@ -153,7 +145,6 @@ class RenameLabelsVisitor: public AstSimpleProcessing {
       ROSE_ASSERT (st->find_label(name));
       st->remove(st->find_label(name));
       name << "__" << ++labelRenameCounter;
-      // cout << "Found label " << l->get_label().getString() << " to rename to " << name.getString() << endl;
       l->set_label(name);
       l->set_scope(newScope);
       SgLabelSymbol* lSym = new SgLabelSymbol(l);
@@ -168,12 +159,6 @@ int RenameLabelsVisitor::labelRenameCounter = 0;
 // Rename all labels in a (possibly inlined) function definition.  Gotos to
 // them will be automatically updated as part of unparsing.
 void renameLabels(SgNode* fd, SgFunctionDefinition* enclosingFunctionDefinition) {
-#if 0
-  SgNode* proj = enclosingFunctionDefinition;
-  while (proj && !isSgProject(proj)) proj = proj->get_parent();
-  ROSE_ASSERT (isSgProject(proj));
-  generateAstGraph(isSgProject(proj), 400000);
-#endif
   RenameLabelsVisitor(enclosingFunctionDefinition).traverse(fd, preorder);
 }
 
@@ -280,10 +265,10 @@ bool isPotentiallyModifiedDuringLifeOf(SgBasicBlock* sc,
       result = true;
     }
     delete toCheckSym;
-    toCheckSym = NULL;
-    toCheckVr->set_symbol(NULL);
+    toCheckSym = nullptr;
+    toCheckVr->set_symbol(nullptr);
     delete toCheckVr;
-    toCheckVr = NULL;
+    toCheckVr = nullptr;
     if (result) return true;
 
     if (isSgVariableDeclaration(*i) &&
@@ -311,16 +296,12 @@ class FindReferenceVariablesVisitor: public AstSimpleProcessing {
       copy->get_parent()->get_parent();
       while (!isSgScopeStatement(copyscope_))
           copyscope_ = copyscope_->get_parent();
-      // cout << "copyscope is a " << copyscope_->sage_class_name() << endl;
-      // SgScopeStatement* copyscope = isSgScopeStatement(copyscope_);
       if (isSgAssignInitializer(copyinit)) {
         SgAssignInitializer* init = isSgAssignInitializer(copyinit);
         SgExpression* orig_expr = init->get_operand();
-        // cout << "orig is " << orig_expr->unparseToString() << ", copy is " << copy->get_name().str() << endl;
         bool shouldReplace = false;
         if (isSgVarRefExp(orig_expr)) {
           SgVarRefExp* orig_vr = isSgVarRefExp(orig_expr);
-          // cout << "Found potential copy from " << orig_vr->get_symbol()->get_name().str() << " to " << copy_vr->get_symbol()->get_name().str() << endl;
           SgInitializedName* orig = orig_vr->get_symbol()->get_declaration();
           assert (orig);
 #ifndef NDEBUG
@@ -360,14 +341,12 @@ class FindCopiesVisitor: public AstSimpleProcessing {
         SgAssignInitializer* init = 
           isSgAssignInitializer(copyinit);
         SgExpression* orig_expr = init->get_operand();
-        // cout << "orig is " << orig_expr->unparseToString() << ", copy is " << copy->get_name().str() << endl;
         if (!isPotentiallyModified(copy_vr, copyscope) &&
             !isSgGlobal(copyscope) &&
             !isSgNamespaceDefinitionStatement(copyscope)) {
           bool shouldReplace = false;
           if (isSgVarRefExp(orig_expr)) {
             SgVarRefExp* orig_vr = isSgVarRefExp(orig_expr);
-            // cout << "Found potential copy from " << orig_vr->get_symbol()->get_name().str() << " to " << copy_vr->get_symbol()->get_name().str() << endl;
             SgInitializedName* orig =
               orig_vr->get_symbol()->get_declaration();
             assert (orig);
@@ -384,7 +363,6 @@ class FindCopiesVisitor: public AstSimpleProcessing {
           } else if (isSgValueExp(orig_expr)) {
             shouldReplace = true;
           }
-          // cout << "shouldReplace is " << shouldReplace << endl;
           if (shouldReplace) {
             assert (orig_expr);
             SgExpression* orig_copy = isSgExpression(orig_expr /*->copy(SgTreeCopy()) */);
@@ -392,21 +370,18 @@ class FindCopiesVisitor: public AstSimpleProcessing {
             orig_copy->set_parent(copy_vr->get_parent());
             orig_copy->set_lvalue(copy_vr->get_lvalue());
 
-       ROSE_ASSERT(copy_vr != NULL);
-       ROSE_ASSERT(copy_vr->get_parent() != NULL);
-       // ROSE_ASSERT(isSgExpression(copy_vr->get_parent()) != NULL);
+       ASSERT_not_null(copy_vr);
+       ASSERT_not_null(copy_vr->get_parent());
 
-       // DQ (12/15/2006): Need to handle cases where the parent is a SgStatement or a SgExpression (or make it an error).
-       // isSgExpression(copy_vr->get_parent())->replace_expression(copy_vr, orig_copy);
        SgStatement* statement = isSgStatement(copy_vr->get_parent());
-       if (statement != NULL)
+       if (statement != nullptr)
           {
             statement->replace_expression(copy_vr, orig_copy);
           }
          else
           {
             SgExpression* expression = isSgExpression(copy_vr->get_parent());
-            if (expression != NULL)
+            if (expression != nullptr)
                {
                  expression->replace_expression(copy_vr, orig_copy);
                }
@@ -515,18 +490,9 @@ class RemoveUnusedDeclarationsVisitor: public AstSimpleProcessing {
                     removeVariableDeclaration(*j);
                     --i; // Counteract increment
                     goto iLoopBottom;
-                    // changes = true;
-                    // break;
                   }
                 }
             }
-#if 0
-            if (vars.empty()) {
-              bb->get_statements().erase(i);
-              changes1 = true;
-              break;
-            }
-#endif
           }
 iLoopBottom: ;
         }
@@ -566,12 +532,6 @@ void removeVariableDeclaration(SgInitializedName* initname) {
     if (*i == initname)
       break;
   assert (i != vars.end());
-#if 0
-  vars.erase(i);
-  if (vars.empty()) {
-    myRemoveStatement(parent);
-  }
-#endif
   ROSE_ASSERT (vars.size() == 1);
   SageInterface::myRemoveStatement(parent);
 }
@@ -603,38 +563,25 @@ class MoveDeclarationsToFirstUseVisitor: public AstSimpleProcessing
                        SgExpression* top = initExprStmt->get_expression();
                        if (isSgAssignOp(top)) {
                          SgVarRefExp* vr = isSgVarRefExp(isSgAssignOp(top)->get_lhs_operand());
-                         ROSE_ASSERT(isSgAssignOp(top) != NULL);
+                         ASSERT_not_null(isSgAssignOp(top));
                          SgExpression* newinit = isSgAssignOp(top)->get_rhs_operand();
                          if (!used && vr && vr->get_symbol()->get_declaration() == in) {
-                           ROSE_ASSERT(newinit != NULL);
-                           // printf ("MoveDeclarationsToFirstUseVisitor::visit(): newinit = %p = %s \n",newinit,newinit->class_name().c_str());
-                           ROSE_ASSERT(newinit->get_type() != NULL);
+                           ASSERT_not_null(newinit);
+                           ASSERT_not_null(newinit->get_type());
 
                            SgAssignInitializer* i = new SgAssignInitializer(SgNULL_FILE,newinit,newinit->get_type());
                            i->set_endOfConstruct(SgNULL_FILE);
-                           // printf ("Built a SgAssignInitializer #1 \n");
-
-                        // DQ (4/6/2015): Adding testing of isTransformed flag (testing for consistancy).
-                        // printf ("MoveDeclarationsToFirstUseVisitor: Testing 1: i = %p = %s testing: i->isTransformation() = %s \n",i,i->class_name().c_str(),i->isTransformation() ? "true" : "false");
 
                            vars[vari]->set_initializer(i);
                            stmts[initi] = decl;
                            newinit->set_parent(i);
 
-                           // DQ (6/23/2006): Set the parent and file_info pointers
-                           // printf ("Setting parent of i = %p = %s to parent = %p = %s \n",i,i->class_name().c_str(),in,in->class_name().c_str());
                            i->set_parent(in);
-                           ROSE_ASSERT(i->get_parent() != NULL);
-
-                        // DQ (4/6/2015): We should not need to build another Sg_File_Info object here becasue one was already build in the constructor.
-                        // i->set_file_info(new Sg_File_Info(*(newinit->get_file_info())));
-                           ROSE_ASSERT(i->get_file_info() != NULL);
-
-                        // DQ (4/6/2015): Adding testing of isTransformed flag (testing for consistancy).
-                        // printf ("MoveDeclarationsToFirstUseVisitor: Testing 2: i = %p = %s testing: i->isTransformation() = %s \n",i,i->class_name().c_str(),i->isTransformation() ? "true" : "false");
+                           ASSERT_not_null(i->get_parent());
+                           ASSERT_not_null(i->get_file_info());
 
                            // Assumes only one var per declaration FIXME
-                           ROSE_ASSERT (vars.size() == 1);
+                           ASSERT_require(vars.size() == 1);
                            stmts.erase(stmts.begin() + decli);
                            --decli; // To counteract ++decli in loop header
                            break; // To get out of initi loop
@@ -671,20 +618,14 @@ class SubexpressionExpansionVisitor: public AstSimpleProcessing {
   SgInitializedName* initname;
   SgExpression* initexpr;
   bool needSimpleContext;
-#if 0 // [Robb Matzke 2021-03-17]: unused
-  bool& changes;
-#endif
 
   public:
   SubexpressionExpansionVisitor(SgInitializedName* initname,
                                 SgExpression* initexpr,
                                 bool needSimpleContext,
-                                bool& changes):
+                                bool& /*changes*/):
     initname(initname), initexpr(initexpr), 
     needSimpleContext(needSimpleContext)
-#if 0 // [Robb Matzke 2021-03-17]: unused
-    , changes(changes)
-#endif
         {}
 
   virtual void visit(SgNode* n) {
@@ -727,7 +668,6 @@ void doSubexpressionExpansionSmart(SgInitializedName* initname) {
   SgNode* root = initname->get_parent()->get_parent();
   assert (root);
   int count = countVariableReferences(root, initname);
-  // cout << "Initname " << initname->get_name().str() << " was used " << count << " time(s)" << endl;
   if (count != 1) return;
   bool doExpansion = true;
   SgVariableSymbol* initnameSym = new SgVariableSymbol(initname);
@@ -736,10 +676,10 @@ void doSubexpressionExpansionSmart(SgInitializedName* initname) {
     doExpansion = false;
   }
   delete initnameSym;
-  initnameSym = NULL;
-  initnameVr->set_symbol(NULL);
+  initnameSym = nullptr;
+  initnameVr->set_symbol(nullptr);
   delete initnameVr;
-  initnameVr = NULL;
+  initnameVr = nullptr;
   if (doExpansion) {
     doSubexpressionExpansion(initname, true);
   }
@@ -753,8 +693,6 @@ class FindInitializedNames: public AstSimpleProcessing {
   virtual void visit(SgNode* n) {
      if (isSgInitializedName(n))
      {
-    // DQ (9/25/2007): Moved to use of std::vector instead of std::list uniformally in ROSE
-    // ls.push_front(isSgInitializedName(n));
        ls.insert(ls.begin(),isSgInitializedName(n));
      }
   }
@@ -770,27 +708,18 @@ SgInitializedNamePtrList findInitializedNamesInScope(SgScopeStatement* scope) {
 // variable renaming or block flattening, however.
 void cleanupInlinedCode(SgNode* top) 
    {
-  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
-  // SgGlobal* globalScope = TransformationSupport::getGlobalScope(top);
-  // ROSE_ASSERT(globalScope != NULL);
-     ROSE_ASSERT(isSgProject(top) != NULL);
+     ASSERT_not_null(isSgProject(top));
      checkTransformedFlagsVisitor(top);
 
      simpleCopyAndConstantPropagation(top);
      SageInterface::removeJumpsToNextStatement(top);
      SageInterface::removeUnusedLabels(top);
-
-  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
      checkTransformedFlagsVisitor(top);
 
      RemoveNullStatementsVisitor().traverse(top, postorder);
-
-  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
      checkTransformedFlagsVisitor(top);
 
      MoveDeclarationsToFirstUseVisitor().traverse(top, postorder);
-
-  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
      checkTransformedFlagsVisitor(top);
 
      FindInitializedNames fin;
@@ -799,8 +728,6 @@ void cleanupInlinedCode(SgNode* top)
         {
           doSubexpressionExpansionSmart(*i);
         }
-
-  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
      checkTransformedFlagsVisitor(top);
 
      simpleCopyAndConstantPropagation(top);
@@ -811,8 +738,6 @@ void cleanupInlinedCode(SgNode* top)
     // situations. Since we've introduced new expressions into the AST we need to adjust their p_lvalue according to the
     // operators where they were inserted.
      markLhsValues(top);
-
-  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
      checkTransformedFlagsVisitor(top);
    }
 
@@ -841,28 +766,11 @@ void changeAllMembersToPublic(SgNode* top) {
   ChangeAllMembersToPublicVisitor().traverse(top, preorder);
 }
 
-
 // Find all used variable declarations.
 class CheckTransformedFlagsVisitor: public AstSimpleProcessing 
    {
      public:
-          virtual void visit(SgNode* n) 
-             {
-               SgLocatedNode* locatedNode = isSgLocatedNode(n);
-               if (locatedNode != NULL)
-                  {
-#if 0
-                    printf ("CheckTransformedFlagsVisitor: Found locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
-#endif
-                    if (locatedNode->isTransformation() == true)
-                       {
-#if 0
-                         printf ("Found locatedNode = %p = %s as transformation \n",locatedNode,locatedNode->class_name().c_str());
-                      // ROSE_ASSERT(false);
-#endif
-                       }
-                  }
-             }
+     virtual void visit(SgNode* /*n*/) {}
    };
 
 void checkTransformedFlagsVisitor(SgNode* e) 
@@ -870,4 +778,3 @@ void checkTransformedFlagsVisitor(SgNode* e)
      CheckTransformedFlagsVisitor traversal;
      traversal.traverse(e, preorder);
    }
-
