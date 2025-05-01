@@ -543,6 +543,17 @@ public:
     void insertSuccessor(Address va, size_t nBits, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
     /** @} */
 
+    /** Remove the specified successor if it exists.
+     *
+     *  If a successor exists for this basic block and has the same type and structurally equivalent expression, then it is removed
+     *  and this function returns true. Otherwise no edge is removed and this function returns false. If a confidence is specified
+     *  (either as a dedicated argument or as part of a successor argument) then it must also match the edge being removed.
+     *
+     * @{ */
+    bool eraseSuccessor(const BaseSemantics::SValuePtr&, EdgeType type, Sawyer::Optional<Confidence> = Sawyer::Nothing());
+    bool eraseSuccessor(const BasicBlockSuccessor&);
+    /** @} */
+
     /** Clear all successor information.
      *
      *  Thread safety: This method is thread safe. */

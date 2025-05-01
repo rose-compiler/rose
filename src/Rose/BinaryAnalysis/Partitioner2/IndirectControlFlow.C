@@ -145,42 +145,85 @@ createPathRegister(const Partitioner::ConstPtr &partitioner) {
 // vertex in a special way: instead of symbolically executing the basic block's instructions, it pretends that the function does
 // something else entirely and a return-from-function is executed.
 class DfVertex {
-public:
-    const BasicBlock::Ptr bblock;
-    const size_t inlineId = 0;
-    std::string fakedCall;                              // instad of executing the bblock, it represents an entire function
+    const BasicBlock::Ptr bblock_;                      // null for indeterminate vertices
+    const size_t inlineId_ = 0;
+    std::string fakedCall_;                             // instad of executing the bblock, it represents an entire function
 
     DfVertex() = delete;
 
+public:
+    // Vertex for a particular basic block with a distinct starting address.
     DfVertex(const BasicBlock::Ptr &bb, const size_t inlineId)
-        : bblock(notnull(bb)), inlineId(inlineId) {}
+        : bblock_(notnull(bb)), inlineId_(inlineId) {}
 
-    Address address() const {
-        return bblock->address();
+    // Vertex for an indeterminate basic block at some unknown address.
+    DfVertex(const std::string &name, const size_t inlineId)
+        : inlineId_(inlineId), fakedCall_(name) {
+        ASSERT_forbid(name.empty());
     }
 
+    // Starting address for the vertex if one is known, nothing for vertices with indeterminate addresses.
+    Sawyer::Optional<Address> address() const {
+        if (bblock_) {
+            return bblock_->address();
+        } else {
+            return {};
+        }
+    }
+
+    // Basic block for this vertex if it has one. Indeterminate vertices have no basic block.
+    BasicBlock::Ptr basicBlock() const {
+        return bblock_;
+    }
+
+    // Printable name of this vertex.
     std::string printableName() const {
-        return bblock->printableName();
+        if (bblock_) {
+            return bblock_->printableName();
+        } else {
+            ASSERT_forbid(fakedCall_.empty());
+            return fakedCall_;
+        }
+    }
+
+    // Inline ID for this vertex. The base function has ID zero. Each subsequently inlined function increments the ID.
+    size_t inlineId() const {
+        return inlineId_;
+    }
+
+    // The name for a faked call, or the name for an indeterminate address.
+    const std::string& fakedCall() const {
+        return fakedCall_;
+    }
+
+    // Mark this vertex as a faked call
+    void fakedCall(const std::string &name) {
+        ASSERT_forbid(name.empty());
+        fakedCall_ = name;
     }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Dataflow vertices are indexed by address and inline ID. In a CFG, the basic block starting address is sufficient to uniquely
-// identify a vertex (at least for those vertices that are basic blocks). But the dataflow graph is different in that a function
-// might be inlined (copied) into the graph multiple times. Therefore, each copy of the function will get a unique inlining ID.
+// Dataflow vertices are indexed by address (if they have one, otherwise faked name) and inline ID. In a CFG, the basic block
+// starting address is sufficient to uniquely identify a vertex (at least for those vertices that are basic blocks). But the
+// dataflow graph is different in that a function might be inlined (copied) into the graph multiple times. Therefore, each copy of
+// the function will get a unique inlining ID.
 class DfVertexKey {
 public:
     const Address addr = 0;
     const size_t inlineId = 0;
+    const std::string name;
 
     DfVertexKey() = delete;
 
     DfVertexKey(const DfVertex &vertex)
-        : addr(notnull(vertex.bblock)->address()), inlineId(vertex.inlineId) {}
+        : addr(vertex.address().orElse(0)), inlineId(vertex.inlineId()), name(vertex.fakedCall()) {}
 
     bool operator<(const DfVertexKey &other) const {
         if (addr != other.addr) {
             return addr < other.addr;
+        } else if (name != other.name) {
+            return name < other.name;
         } else {
             return inlineId < other.inlineId;
         }
@@ -307,9 +350,10 @@ public:
             }
         }();
 
-        if (dfVertex->value().fakedCall.empty()) {
+        if (dfVertex->value().fakedCall().empty()) {
             // A normal basic block. The new state is created by symbolically executing the block's instructions.
-            BasicBlock::Ptr bb = dfGraph.findVertex(vertexId)->value().bblock;
+            BasicBlock::Ptr bb = dfGraph.findVertex(vertexId)->value().basicBlock();
+            ASSERT_not_null(bb);
             SAWYER_MESG(debug) <<"    dataflow transfer function for vertex #" <<vertexId <<" " <<bb->printableName() <<"\n";
             for (SgAsmInstruction *insn: bb->instructions()) {
                 try {
@@ -325,7 +369,7 @@ public:
             }
 
         } else {
-            SAWYER_MESG(debug) <<"      faking a function execution and return for function " <<dfVertex->value().fakedCall <<"\n";
+            SAWYER_MESG(debug) <<"      faking a function call and return for function " <<dfVertex->value().fakedCall() <<"\n";
             // Simulate a function return
             const RegisterDescriptor IP = partitioner_->architecture()->registerDictionary()->instructionPointerRegister();
             const RegisterDescriptor SP = partitioner_->architecture()->registerDictionary()->stackPointerRegister();
@@ -381,6 +425,10 @@ public:
                 ops->writeRegister(IP, newIp);
             if (newSp)
                 ops->writeRegister(SP, newSp);
+            if (debug) {
+                debug <<"      state after executing " <<dfVertex->value().printableName() <<"\n";
+                retval->print(debug, "        ");
+            }
         }
         return retval;
     }
@@ -420,9 +468,6 @@ public:
         const auto srcIp = SymbolicSemantics::SValue::promote(src->readRegister(IP, ops->undefined_(IP.nBits()), ops.get()))
                            ->get_expression();
 
-        // Concrete address of the destination successor--the state we're merging into
-        const SymbolicExpression::Ptr dstAddr = makeIntegerConstant(srcIp->nBits(), dstVert->value().address());
-
         // Initial path constraints for the destination (before merging)
         SymbolicExpression::Ptr origConstraints;
         if (dst) {
@@ -434,15 +479,63 @@ public:
         ASSERT_not_null(dst);
 
         // New constraints for the destination
-        if (dstAddr) {
+        if (const auto addr = dstVert->value().address()) {
+            const SymbolicExpression::Ptr dstAddr = makeIntegerConstant(srcIp->nBits(), *addr);
             auto newConstraints = makeEq(srcIp, dstAddr);
             if (origConstraints)
                 newConstraints = makeOr(newConstraints, origConstraints);
             auto newConstraintsSVal = SymbolicSemantics::SValue::instance_symbolic(newConstraints);
             dst->writeRegister(PATH, newConstraintsSVal, ops.get());
+        } else if (origConstraints) {
+            auto newConstraintsSVal = SymbolicSemantics::SValue::instance_symbolic(origConstraints);
+            dst->writeRegister(PATH, newConstraintsSVal, ops.get());
         }
 
         return retval;
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Base functor that tries to resolve indirect control flow from the final dataflow state.
+
+class Resolver {
+public:
+    using Ptr = std::shared_ptr<Resolver>;
+    using AddrAndPath = std::pair<SymbolicExpression::Ptr, SymbolicExpression::Ptr>;
+    using AddrsAndPaths = std::vector<AddrAndPath>;
+
+public:
+    Partitioner::Ptr partitioner;
+    BasicBlock::Ptr bb;
+    BS::RiscOperators::Ptr ops;
+
+public:
+    virtual ~Resolver() {}
+    Resolver(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops)
+        : partitioner(notnull(partitioner)), bb(notnull(bb)), ops(notnull(ops)) {}
+
+    // If the instruction pointer expression is indirect and can be resolved (even if only partially to another simpler indirect
+    // expression) then do so and return the expressions and their path constraints. Otherwise return an empty value.
+    virtual AddrsAndPaths operator()(const SymbolicExpression::Ptr &ip, const SymbolicExpression::Ptr &path,
+                                     Sawyer::Message::Stream &debug) = 0;
+
+    // Sorts pairs by the first element and removes duplicates
+    static void makeUnique(AddrsAndPaths &pairs) {
+        std::sort(pairs.begin(), pairs.end(), [](const AddrAndPath &a, const AddrAndPath &b) {
+            return a.first->hash() < b.first->hash();
+        });
+        pairs.erase(std::unique(pairs.begin(), pairs.end(), [](const AddrAndPath &a, const AddrAndPath &b) {
+            return a.first->hash() == b.first->hash();
+        }), pairs.end());
+    }
+
+    // Returns true if the two arguments are equal. The arguments should be sorted already by `makeUnique`.
+    static bool areEqual(const AddrsAndPaths &a, const AddrsAndPaths &b) {
+        if (a.size() != b.size())
+            return false;
+        return std::equal(a.begin(), a.end(), b.begin(), [](const AddrAndPath &a, const AddrAndPath &b) {
+            return a.first->hash() == b.first->hash();
+        });
     }
 };
 
@@ -452,43 +545,51 @@ public:
 static uint64_t
 hashGraph(const DfGraph &graph) {
     // Hash each vertex individually into the `hashedVertices` list
-    std::vector<std::pair<BasicBlock::Ptr, uint64_t>> hashedVertices;
+    std::vector<std::pair<DfGraph::ConstVertexIterator, uint64_t>> hashedVertices;
     hashedVertices.reserve(graph.nVertices());
 
     for (const auto &vertex: graph.vertices()) {
         // Hash this vertex
         Combinatorics::HasherSha256Builtin hasher;
-        hasher.insert(vertex.value().bblock->address());
-        hasher.insert(vertex.value().bblock->nInstructions());
+        if (const auto bb = vertex.value().basicBlock()) {
+            hasher.insert(bb->address());
+            hasher.insert(bb->nInstructions());
+        } else {
+            hasher.insert(vertex.value().fakedCall());
+        }
+        hasher.insert(vertex.value().inlineId());
 
         // Hash the outgoing edges in order of the target addresses
-        std::vector<BasicBlock::Ptr> targets;
+        std::vector<DfGraph::ConstVertexIterator> targets;
         targets.reserve(vertex.nOutEdges());
         for (const auto &edge: vertex.outEdges())
-            targets.push_back(edge.target()->value().bblock);
-        std::sort(targets.begin(), targets.end(), [](const BasicBlock::Ptr &a, const BasicBlock::Ptr &b) {
-            return a->address() < b->address();
+            targets.push_back(edge.target());
+        std::sort(targets.begin(), targets.end(), [](const DfGraph::ConstVertexIterator &a, const DfGraph::ConstVertexIterator &b) {
+            return DfVertexKey(a->value()) < DfVertexKey(b->value());
         });
         for (const auto &target: targets) {
-            hasher.insert(target->address());
-            hasher.insert(target->nInstructions());
+            if (const auto bb = target->value().basicBlock()) {
+                hasher.insert(bb->address());
+                hasher.insert(bb->nInstructions());
+            } else {
+                hasher.insert(target->value().fakedCall());
+            }
+            hasher.insert(target->value().inlineId());
         }
 
         // Save the results for this vertex because we'll need to process them in order by their address
-        hashedVertices.push_back(std::make_pair(vertex.value().bblock, hasher.make64Bits()));
+        hashedVertices.push_back(std::make_pair(graph.findVertex(vertex.id()), hasher.make64Bits()));
     }
 
     // Combine all the vertex hashes in order by the vertex address
     std::sort(hashedVertices.begin(), hashedVertices.end(),
-              [](const std::pair<BasicBlock::Ptr, uint64_t> &a, const std::pair<BasicBlock::Ptr, uint64_t> &b) {
-                  return a.first->address() < b.first->address();
+              [](const std::pair<DfGraph::ConstVertexIterator, uint64_t> &a,
+                 const std::pair<DfGraph::ConstVertexIterator, uint64_t> &b) {
+                  return DfVertexKey(a.first->value()) < DfVertexKey(b.first->value());
               });
     Combinatorics::HasherSha256Builtin hasher;
-    for (const auto &pair: hashedVertices) {
-        hasher.insert(pair.first->address());
-        hasher.insert(pair.first->nInstructions());
+    for (const auto &pair: hashedVertices)
         hasher.insert(pair.second);
-    }
 
     return hasher.make64Bits();
 }
@@ -504,11 +605,17 @@ toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr 
     // One subgraph per inline ID, and give them names.
     std::map<size_t, std::string> subgraphs;
     for (const auto &vertex: graph.vertices()) {
-        auto &name = subgraphs[vertex.value().inlineId];
+        auto &name = subgraphs[vertex.value().inlineId()];
         if (name.empty()) {
-            for (Function::Ptr &function: partitioner->functionsOverlapping(vertex.value().address())) {
-                name = "inline #" + boost::lexical_cast<std::string>(vertex.value().inlineId) + " " + function->printableName();
-                break;
+            name = "inline #" + boost::lexical_cast<std::string>(vertex.value().inlineId());
+            if (const auto addr = vertex.value().address()) {
+                for (Function::Ptr &function: partitioner->functionsOverlapping(*addr)) {
+                    name += " " + function->printableName();
+                    break;
+                }
+            } else {
+                ASSERT_forbid(vertex.value().fakedCall().empty());
+                name += vertex.value().fakedCall();
             }
         }
     }
@@ -525,7 +632,7 @@ toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr 
             <<" ];\n";
 
         for (const auto &dfVertex: graph.vertices()) {
-            if (dfVertex.value().inlineId == subgraph.first) {
+            if (dfVertex.value().inlineId() == subgraph.first) {
                 out <<dfVertex.id() <<" [";
                 if (dfVertex.id() == endVertexId) {
                     out <<" shape=box style=filled fillcolor=\"" <<endColor.toHtml() <<"\"";
@@ -534,13 +641,14 @@ toGraphviz(std::ostream &out, const DfGraph &graph, const Partitioner::ConstPtr 
                 }
                 out <<" label=<<b>Vertex " <<dfVertex.id() <<"</b>";
 
-                if (dfVertex.value().fakedCall.empty()) {
-                    BasicBlock::Ptr bb = partitioner->basicBlockExists(dfVertex.value().address());
+                if (dfVertex.value().fakedCall().empty()) {
+                    ASSERT_require(dfVertex.value().address());
+                    BasicBlock::Ptr bb = partitioner->basicBlockExists(*dfVertex.value().address());
                     ASSERT_not_null(bb);
                     for (SgAsmInstruction *insn: bb->instructions())
                         out <<"<br align=\"left\"/>" <<GraphViz::htmlEscape(insn->toStringNoColor());
                 } else {
-                    out <<"<br align=\"left\"/>faked call to " <<GraphViz::htmlEscape(dfVertex.value().fakedCall);
+                    out <<"<br align=\"left\"/>faked call to " <<GraphViz::htmlEscape(dfVertex.value().fakedCall());
                 }
                 out <<"<br align=\"left\"/>> shape=box fontname=Courier";
                 out <<" ];\n";
@@ -627,12 +735,12 @@ inlineFunctionCall(DfGraph &graph, const Partitioner::ConstPtr &partitioner, con
 #ifndef NDEBUG
     {
         ASSERT_require(graph.isValidVertex(call.dfCaller));
-        ASSERT_require(call.dfCaller->value().inlineId == call.callerInlineId);
-        ASSERT_not_null(call.dfCaller->value().bblock);
+        ASSERT_require(call.dfCaller->value().inlineId() == call.callerInlineId);
+        ASSERT_not_null(call.dfCaller->value().basicBlock());
 
         ASSERT_require(graph.isValidVertex(call.dfCallRet));
-        ASSERT_require(call.dfCallRet->value().inlineId == call.callerInlineId);
-        ASSERT_not_null(call.dfCallRet->value().bblock);
+        ASSERT_require(call.dfCallRet->value().inlineId() == call.callerInlineId);
+        ASSERT_not_null(call.dfCallRet->value().basicBlock());
 
         ASSERT_require(cfg.isValidEdge(call.cfgCall));
         ASSERT_require(call.cfgCall->source()->value().type() == V_BASIC_BLOCK);
@@ -661,10 +769,10 @@ inlineFunctionCall(DfGraph &graph, const Partitioner::ConstPtr &partitioner, con
     ASSERT_require(graph.isValidVertex(dfCallee));
 
     bool calledFunctionReturns = false;
-    Function::Ptr function = partitioner->functionExists(dfCallee->value().address());
+    Function::Ptr function = partitioner->functionExists(*dfCallee->value().address());
     if (method == DfInline::Method::FAKE || (function && boost::ends_with(function->name(), "@plt"))) {
         // Fake the function body by inlining only its first basic block and giving it a non-emtpy name.
-        dfCallee->value().fakedCall = function ? function->name() : addrToString(dfCallee->value().address());
+        dfCallee->value().fakedCall(function ? function->printableName() : addrToString(dfCallee->value().address()));
         graph.insertEdge(dfCallee, call.dfCallRet, Sawyer::Nothing());
         calledFunctionReturns = true;
 
@@ -721,13 +829,13 @@ inlineFunctionCall(DfGraph &graph, const Partitioner::ConstPtr &partitioner, con
         for (const size_t vid: insertedVertexIds) {
             if (vid != dfCallee->id()) {                // don't erase the entry block of the callee; we need it below
                 const auto vertex = graph.findVertex(vid);
-                if (vertex->value().inlineId == calleeInlineId)
+                if (vertex->value().inlineId() == calleeInlineId)
                     toErase.push_back(graph.findVertex(vid));
             }
         }
         for (const auto &vertex: toErase)
             graph.eraseVertex(vertex);
-        dfCallee->value().fakedCall = function ? function->name() : addrToString(dfCallee->value().address());
+        dfCallee->value().fakedCall(function ? function->printableName() : addrToString(dfCallee->value().address()));
         graph.insertEdge(dfCallee, call.dfCallRet, Sawyer::Nothing());
         calledFunctionReturns = true;
     }
@@ -767,6 +875,34 @@ removeUnreachableReverse(DfGraph &graph, const size_t targetId) {
 
     for (const auto &vertex: toRemove)
         graph.eraseVertex(vertex);
+}
+
+// Replace each call-return edge from vertex A to B with a function-call edge from A to a faked function (new vertex C) and a
+// function-return edge from C to B.
+static void
+replaceCallReturnEdges(DfGraph &graph, const ControlFlowGraph &cfg) {
+    // Find the cret edges and create a faked call for each
+    std::vector<DfGraph::EdgeIterator> cretEdges;
+    std::vector<DfGraph::VertexIterator> fakedFunctions;
+    for (auto dfEdge = graph.edges().begin(); dfEdge != graph.edges().end(); ++dfEdge) {
+        if (dfEdge->value()) {
+            const auto cfgEdge = cfg.findEdge(*dfEdge->value());
+            ASSERT_require(cfg.isValidEdge(cfgEdge));
+            if (cfgEdge->value().type() == E_CALL_RETURN) {
+                cretEdges.push_back(dfEdge);
+                const std::string uniqueVertexName = "indeterminate #" + boost::lexical_cast<std::string>(cfgEdge->id());
+                fakedFunctions.push_back(graph.insertVertex(DfVertex(uniqueVertexName, dfEdge->source()->value().inlineId())));
+            }
+        }
+    }
+    ASSERT_require(cretEdges.size() == fakedFunctions.size());
+
+    // Insert new edges fcall and fret edges that replace the cret edges
+    for (size_t i = 0; i < cretEdges.size(); ++i) {
+        graph.insertEdge(cretEdges[i]->source(), fakedFunctions[i], Sawyer::Nothing());
+        graph.insertEdge(fakedFunctions[i], cretEdges[i]->target(), Sawyer::Nothing());
+        graph.eraseEdge(cretEdges[i]);
+    }
 }
 
 // Given a CFG vertex that has an indeterminate edge (i.e., a possible indirect branch), construct a dataflow graph that looks
@@ -815,15 +951,17 @@ buildDfGraph(const Settings &settings, const Partitioner::ConstPtr &partitioner,
     // Find vertices in the dataflow graph that call other functions.
     std::vector<DfInline> callsToInline;
     for (const auto &dfVertex: graph.vertices()) {
-        const auto cfgVertex = partitioner->findPlaceholder(dfVertex.value().address());
-        ASSERT_require(partitioner->cfg().isValidVertex(cfgVertex));
-        for (const auto &cfgEdge: cfgVertex->outEdges()) {
-            if (cfgEdge.value().type() == E_FUNCTION_CALL && cfgEdge.target()->value().type() == V_BASIC_BLOCK) {
-                const auto dfCallRet = findCallRet(graph, partitioner->cfg(), dfVertex);
-                if (graph.isValidVertex(dfCallRet)) {
-                    const auto dfCallerIter = graph.findVertex(dfVertex.id());
-                    const auto cfgEdgeIter = partitioner->cfg().findEdge(cfgEdge.id());
-                    callsToInline.push_back(DfInline(dfCallerIter, dfCallRet, cfgEdgeIter, 0));
+        if (const auto addr = dfVertex.value().address()) {
+            const auto cfgVertex = partitioner->findPlaceholder(*addr);
+            ASSERT_require(partitioner->cfg().isValidVertex(cfgVertex));
+            for (const auto &cfgEdge: cfgVertex->outEdges()) {
+                if (cfgEdge.value().type() == E_FUNCTION_CALL && cfgEdge.target()->value().type() == V_BASIC_BLOCK) {
+                    const auto dfCallRet = findCallRet(graph, partitioner->cfg(), dfVertex);
+                    if (graph.isValidVertex(dfCallRet)) {
+                        const auto dfCallerIter = graph.findVertex(dfVertex.id());
+                        const auto cfgEdgeIter = partitioner->cfg().findEdge(cfgEdge.id());
+                        callsToInline.push_back(DfInline(dfCallerIter, dfCallRet, cfgEdgeIter, 0));
+                    }
                 }
             }
         }
@@ -858,10 +996,20 @@ buildDfGraph(const Settings &settings, const Partitioner::ConstPtr &partitioner,
         toGraphviz(f, graph, partitioner, endVertex->id());
     }
 
+    // If there are any call-return edges remaining in the graph, replace them with fake function placeholders. This can happen when
+    // the corresponding function-call edge was pruned away early, leaving only the cret edge. We need to add a fake function here
+    // in order to update the state (e.g., for x86 we need to pop the return address that was pushed by the `call` insn.
+    replaceCallReturnEdges(graph, partitioner->cfg());
+    if (debugging == Debugging::ON) {
+        std::string name = "icf-dfgraph-" + addrToString(endBb->address()).substr(2) + "-4-cret.dot";
+        std::ofstream f(name.c_str());
+        toGraphviz(f, graph, partitioner, endVertex->id());
+    }
+
     // Remove parts of the graph that can't reach the target vertex (vertex #0)
     removeUnreachableReverse(graph, 0);
     if (debugging == Debugging::ON) {
-        std::string name = "icf-dfgraph-" + addrToString(endBb->address()).substr(2) + "-4-prune.dot";
+        std::string name = "icf-dfgraph-" + addrToString(endBb->address()).substr(2) + "-5-prune.dot";
         std::ofstream f(name.c_str());
         toGraphviz(f, graph, partitioner, endVertex->id());
     }
@@ -878,465 +1026,442 @@ buildDfGraph(const Settings &settings, const Partitioner::ConstPtr &partitioner,
 ////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-namespace StaticJumpTable {
 
-// matches "(add[u64] (sext 0x40, e1[u32]) c1)" and returns e1 and c1 if matched. If not matched, returns (nullptr, 0).
-static std::pair<SymbolicExpression::Ptr, Address>
-match1(const SymbolicExpression::Ptr &add) {
-    using namespace SymbolicExpression;
-    if (!add || !add->isOperator(OP_ADD) || add->nBits() != 64 || !add->isIntegerExpr())
-        return {};
+// This analysis attempts to resolve the indirect control flow by discovering and using statically created jump tables, such as what
+// a C compiler typically creates for `switch` statements.
+//
+// For each such block having an indeterminate outgoing CFG edge, a dataflow graph is created from nearby basic blocks. The dataflow
+// analysis uses instruction semantics to update the machine state associated with each dataflow graph vertex. A special merge
+// operation merges states when control flow merges, such as at the end of an `if` statement. The analysis examines the final
+// outgoing state for the basic block in question to ascertain whether a static jump table was used, what its starting address might
+// be, and how entries in the table are used to compute target addresses for the jump instruction.
+//
+// Besides containing the typical symbolic registers and memory, the state also contains constraints imposed by the execution path.
+// These constraints are used to limit the size of the jump table. Ideally, even if the compiler emits two consecutive tables for
+// two different `switch` statements, the basic block for each `switch` statement will have only successors that are relevant to
+// that statement.
+class StaticJumpTableResolver: public Resolver {
+protected:
+    StaticJumpTableResolver(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops)
+        : Resolver(partitioner, bb, ops) {}
 
-    const auto sext = add->child(0);
-    if (!sext || !sext->isOperator(OP_SEXTEND) || sext->nBits() != 64)
-        return {};
+public:
+    static Ptr instance(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops) {
+        return Ptr(new StaticJumpTableResolver(partitioner, bb, ops));
+    }
 
-    const auto sixtyfour = sext->child(0);
-    if (!sixtyfour || sixtyfour->toUnsigned().orElse(0) != 64)
-        return {};
+    AddrsAndPaths operator()(const SymbolicExpression::Ptr &ip, const SymbolicExpression::Ptr &path,
+                             Sawyer::Message::Stream &debug) override {
+        BS::State::Ptr state = ops->currentState();
+        ASSERT_not_null(state);
 
-    const auto e1 = sext->child(1);
-    if (!e1 || !e1->isIntegerVariable() || e1->nBits() != 32)
-        return {};
+        // We only handle x86 for now (although this might work for other instruction sets too).
+        if (as<const Architecture::X86>(partitioner->architecture())) {
+            SAWYER_MESG(debug) <<"  possible jump table for " <<bb->printableName() <<"\n";
 
-    const auto c1 = add->child(1);
-    if (!c1 || !c1->isIntegerConstant() || c1->nBits() != 64 || !c1->toUnsigned())
-        return {};
+            const auto matched = match(ip);
+            const auto jumpTableEntry = matched.first;
+            const Address perEntryOffset = matched.second;
+            if (!jumpTableEntry) {
+                SAWYER_MESG(debug) <<"    jump table IP expression not matched (no jump table)\n";
+                return {};
+            }
+            SAWYER_MESG(debug) <<"    value read from jump table: " <<*jumpTableEntry <<"\n";
 
-    return {e1, *c1->toUnsigned()};
-}
+            const auto jumpTableAddrExpr = findAddressContaining(ops, jumpTableEntry);
+            if (!jumpTableAddrExpr) {
+                SAWYER_MESG(debug) <<"    cannot find jump table entry in memory state\n";
+                return {};
+            }
+            SAWYER_MESG(debug) <<"    address from which it was read: " <<*jumpTableAddrExpr <<"\n";
 
-// matches (add[u32] e1[u32] c1[u32]) and returns e1 and c1 if matched. If not matched, returns (nullptr, 0).
-static std::pair<SymbolicExpression::Ptr, Address>
-match2(const SymbolicExpression::Ptr &expr) {
-    using namespace SymbolicExpression;
-    if (!expr || !expr->isOperator(OP_ADD) || expr->nBits() != 32 || !expr->isIntegerExpr())
-        return std::make_pair(Ptr(), 0);
+            const std::set<Address> constants = findInterestingConstants(jumpTableAddrExpr);
+            for (const Address tableAddr: constants) {
+                SAWYER_MESG(debug) <<"    potential table address " <<addrToString(tableAddr) <<"\n";
+                if (!isMappedAccess(partitioner->memoryMap(), tableAddr, MemoryMap::READABLE, MemoryMap::WRITABLE)) {
+                    SAWYER_MESG(debug) <<"      potential table entry is not readable, or is writable\n";
+                    continue;
+                }
+                SAWYER_MESG(debug) <<"      possible jump table at " <<addrToString(tableAddr) <<"\n"
+                                   <<"      per-entry offset is " <<addrToString(perEntryOffset) <<"\n";
 
-    const auto e1 = expr->child(0);
-    if (!e1 || e1->nBits() != 32 || !e1->isIntegerExpr())
-        return std::make_pair(Ptr(), 0);
+                const auto tableLimits = AddressInterval::whole(); // will be refined
+                const size_t bytesPerEntry = (jumpTableEntry->nBits() + 7) / 8;
+                auto table = JumpTable::instance(partitioner, tableLimits, bytesPerEntry, perEntryOffset,
+                                                 JumpTable::EntryType::ABSOLUTE);
+                table->maxPreEntries(0);
+                table->refineLocationLimits(bb, tableAddr);
+                SAWYER_MESG(debug) <<"      table limited to " <<addrToString(table->tableLimits()) <<"\n";
+                SAWYER_MESG(debug) <<"      targets limited to " <<addrToString(table->targetLimits()) <<"\n";
+                SAWYER_MESG(debug) <<"      scanning table at " <<addrToString(tableAddr)
+                                   <<" within " <<addrToString(table->tableLimits()) <<"\n";
+                table->scan(partitioner->memoryMap()->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE), tableAddr);
+                if (!table->location()) {
+                    SAWYER_MESG(debug) <<"      table not found at " <<addrToString(tableAddr) <<"\n";
+                    continue;
+                }
+                SAWYER_MESG(debug) <<"      parsed jump table at " <<addrToString(tableAddr)
+                                   <<" with " <<plural(table->nEntries(), "entries") <<"\n";
 
-    const auto c1 = expr->child(1);
-    if (!c1 || c1->nBits() != 32 || !c1->toUnsigned())
-        return std::make_pair(Ptr(), 0);
+                std::set<Address> successors = satisfiableTargets(table, path, jumpTableAddrExpr, debug);
+                if (debug) {
+                    debug <<"      unique targets remaining: " <<successors.size() <<"\n";
+                    for (const Address target: successors)
+                        debug <<"        target " <<addrToString(target) <<"\n";
+                }
 
-    return std::make_pair(e1, *c1->toUnsigned());
-}
+                // Associate the jump table with the basic block
+                partitioner->detachBasicBlock(bb);
+                table->attachTableToBasicBlock(bb);
+                partitioner->attachBasicBlock(bb);
 
-// matches e1[32] and if so, returns (e1, 0)
-static std::pair<SymbolicExpression::Ptr, Address>
-match3(const SymbolicExpression::Ptr &expr) {
-    return std::make_pair(expr, 0);
-}
-
-// Looks at an instruction pointer and tries to figure out some information about the jump table. It returns the symbolic value
-// read from the jump table, and a constant that needs to be added to each entry in the jump table in order to obtain a target
-// address.
-static std::pair<SymbolicExpression::Ptr, Address>
-match(const SymbolicExpression::Ptr &expr) {
-    const auto m1 = match1(expr);
-    if (m1.first)
-        return m1;
-
-    const auto m2 = match2(expr);
-    if (m2.first)
-        return m2;
-
-    return match3(expr);
-}
-
-// Find the memory address containing the specified value. The value can be more than one byte. The lowest address is returned.
-static SymbolicExpression::Ptr
-findAddressContaining(const BS::RiscOperators::Ptr &ops, const SymbolicExpression::Ptr &searchValue) {
-    ASSERT_not_null(ops);
-    ASSERT_not_null(searchValue);
-    using namespace SymbolicExpression;
-
-    if (auto mem = as<BS::MemoryCellState>(ops->currentState()->memoryState())) {
-        // FIXME[Robb Matzke 2025-04-08]: need to handle big-endian also
-        const auto searchByte = makeExtract(0, 8, searchValue);
-
-        std::vector<SymbolicExpression::Ptr> searchSetMembers;
-        if (searchByte->isOperator(OP_SET)) {
-            for (const auto &child: searchByte->children())
-                searchSetMembers.push_back(child);
+                AddrsAndPaths retval;
+                for (const Address successor: successors)
+                    retval.push_back(std::make_pair(SymbolicExpression::makeIntegerConstant(ip->nBits(), successor), path));
+                return retval;
+            }
         }
+        return {};
+    }
 
-        struct Visitor: public BS::MemoryCell::Visitor {
-            Ptr searchValue, searchByte;
-            Ptr foundAddr;
-            const std::vector<Ptr> &searchSetMembers;
+private:
+    // matches "(add[u64] (sext 0x40, e1[u32]) c1)" and returns e1 and c1 if matched. If not matched, returns (nullptr, 0).
+    static std::pair<SymbolicExpression::Ptr, Address> match1(const SymbolicExpression::Ptr &add) {
+        using namespace SymbolicExpression;
+        if (!add || !add->isOperator(OP_ADD) || add->nBits() != 64 || !add->isIntegerExpr())
+            return {};
 
-            Visitor(const Ptr &searchValue, const Ptr &searchByte, const std::vector<Ptr> &searchSetMembers)
-                : searchValue(notnull(searchValue)), searchByte(notnull(searchByte)), searchSetMembers(searchSetMembers) {}
+        const auto sext = add->child(0);
+        if (!sext || !sext->isOperator(OP_SEXTEND) || sext->nBits() != 64)
+            return {};
 
-            void operator()(BS::MemoryCell::Ptr &cell) {
-                auto cellValue = SymbolicSemantics::SValue::promote(cell->value())->get_expression();
+        const auto sixtyfour = sext->child(0);
+        if (!sixtyfour || sixtyfour->toUnsigned().orElse(0) != 64)
+            return {};
 
-                // Look for the byte expression directly.
-                if (cellValue->isEquivalentTo(searchByte)) {
-                    foundAddr = SymbolicSemantics::SValue::promote(cell->address())->get_expression();
-                    return;
-                }
+        const auto e1 = sext->child(1);
+        if (!e1 || !e1->isIntegerVariable() || e1->nBits() != 32)
+            return {};
 
-                // Look through an "extract" expression if the byte matching above failed. For instance, the needle might be
-                // (extract[u8] 0[u32], 8[u32], expr[u64]) but the value in memory might be (extract[u8] 0[u64], 8[u64], expr[u64])
-                // -- a difference only in the size of the types used to extract the byte. Since memory cell values are almost
-                // always extract expressions, we can also try looking "through" the extract to the value being extracted.
-                if (cellValue->isOperator(OP_EXTRACT) &&
-                    cellValue->child(0)->toUnsigned().orElse(1) == 0 &&
-                    cellValue->child(1)->toUnsigned().orElse(1) == 8 &&
-                    cellValue->child(2)->isEquivalentTo(searchValue)) {
-                    foundAddr = SymbolicSemantics::SValue::promote(cell->address())->get_expression();
-                    return;
-                }
+        const auto c1 = add->child(1);
+        if (!c1 || !c1->isIntegerConstant() || c1->nBits() != 64 || !c1->toUnsigned())
+            return {};
 
-                // If the memory read was ambiguous then the thing we're looking for might be a set of values. In that case the
-                // needle doesn't actually appear directly in memory due to the wildcard variables produced by the code that tries
-                // to resolve memory aliasing.
-                if (cellValue->isOperator(OP_SET)) {
-                    for (const auto &needle: searchSetMembers) {
-                        for (const auto &haystack: cellValue->children()) {
-                            if (haystack->isEquivalentTo(needle)) {
-                                foundAddr = SymbolicSemantics::SValue::promote(cell->address())->get_expression();
-                                return;
+        return {e1, *c1->toUnsigned()};
+    }
+
+    // matches (add[u32] e1[u32] c1[u32]) and returns e1 and c1 if matched. If not matched, returns (nullptr, 0).
+    static std::pair<SymbolicExpression::Ptr, Address> match2(const SymbolicExpression::Ptr &expr) {
+        if (!expr || !expr->isOperator(SymbolicExpression::OP_ADD) || expr->nBits() != 32 || !expr->isIntegerExpr())
+            return std::make_pair(SymbolicExpression::Ptr(), 0);
+
+        const auto e1 = expr->child(0);
+        if (!e1 || e1->nBits() != 32 || !e1->isIntegerExpr())
+            return std::make_pair(SymbolicExpression::Ptr(), 0);
+
+        const auto c1 = expr->child(1);
+        if (!c1 || c1->nBits() != 32 || !c1->toUnsigned())
+            return std::make_pair(SymbolicExpression::Ptr(), 0);
+
+        return std::make_pair(e1, *c1->toUnsigned());
+    }
+
+    // matches e1[32] and if so, returns (e1, 0)
+    static std::pair<SymbolicExpression::Ptr, Address> match3(const SymbolicExpression::Ptr &expr) {
+        return std::make_pair(expr, 0);
+    }
+
+    // Looks at an instruction pointer and tries to figure out some information about the jump table. It returns the symbolic value
+    // read from the jump table, and a constant that needs to be added to each entry in the jump table in order to obtain a target
+    // address.
+    static std::pair<SymbolicExpression::Ptr, Address> match(const SymbolicExpression::Ptr &expr) {
+        const auto m1 = match1(expr);
+        if (m1.first)
+            return m1;
+
+        const auto m2 = match2(expr);
+        if (m2.first)
+            return m2;
+
+        return match3(expr);
+    }
+
+    // Find the memory address containing the specified value. The value can be more than one byte. The lowest address is returned.
+    static SymbolicExpression::Ptr
+    findAddressContaining(const BS::RiscOperators::Ptr &ops, const SymbolicExpression::Ptr &searchValue) {
+        ASSERT_not_null(ops);
+        ASSERT_not_null(searchValue);
+        using namespace SymbolicExpression;
+
+        if (auto mem = as<BS::MemoryCellState>(ops->currentState()->memoryState())) {
+            // FIXME[Robb Matzke 2025-04-08]: need to handle big-endian also
+            const auto searchByte = makeExtract(0, 8, searchValue);
+
+            std::vector<SymbolicExpression::Ptr> searchSetMembers;
+            if (searchByte->isOperator(OP_SET)) {
+                for (const auto &child: searchByte->children())
+                    searchSetMembers.push_back(child);
+            }
+
+            struct Visitor: public BS::MemoryCell::Visitor {
+                SymbolicExpression::Ptr searchValue, searchByte;
+                SymbolicExpression::Ptr foundAddr;
+                const std::vector<SymbolicExpression::Ptr> &searchSetMembers;
+
+                Visitor(const SymbolicExpression::Ptr &searchValue, const SymbolicExpression::Ptr &searchByte,
+                        const std::vector<SymbolicExpression::Ptr> &searchSetMembers)
+                    : searchValue(notnull(searchValue)), searchByte(notnull(searchByte)), searchSetMembers(searchSetMembers) {}
+
+                void operator()(BS::MemoryCell::Ptr &cell) {
+                    auto cellValue = SymbolicSemantics::SValue::promote(cell->value())->get_expression();
+
+                    // Look for the byte expression directly.
+                    if (cellValue->isEquivalentTo(searchByte)) {
+                        foundAddr = SymbolicSemantics::SValue::promote(cell->address())->get_expression();
+                        return;
+                    }
+
+                    // Look through an "extract" expression if the byte matching above failed. For instance, the needle might be
+                    // (extract[u8] 0[u32], 8[u32], expr[u64]) but the value in memory might be (extract[u8] 0[u64], 8[u64],
+                    // expr[u64]) -- a difference only in the size of the types used to extract the byte. Since memory cell values
+                    // are almost always extract expressions, we can also try looking "through" the extract to the value being
+                    // extracted.
+                    if (cellValue->isOperator(OP_EXTRACT) &&
+                        cellValue->child(0)->toUnsigned().orElse(1) == 0 &&
+                        cellValue->child(1)->toUnsigned().orElse(1) == 8 &&
+                        cellValue->child(2)->isEquivalentTo(searchValue)) {
+                        foundAddr = SymbolicSemantics::SValue::promote(cell->address())->get_expression();
+                        return;
+                    }
+
+                    // If the memory read was ambiguous then the thing we're looking for might be a set of values. In that case the
+                    // needle doesn't actually appear directly in memory due to the wildcard variables produced by the code that
+                    // tries to resolve memory aliasing.
+                    if (cellValue->isOperator(OP_SET)) {
+                        for (const auto &needle: searchSetMembers) {
+                            for (const auto &haystack: cellValue->children()) {
+                                if (haystack->isEquivalentTo(needle)) {
+                                    foundAddr = SymbolicSemantics::SValue::promote(cell->address())->get_expression();
+                                    return;
+                                }
                             }
                         }
                     }
                 }
-            }
-        } visitor(searchValue, searchByte, searchSetMembers);
+            } visitor(searchValue, searchByte, searchSetMembers);
 
-        mem->traverse(visitor);
-        return visitor.foundAddr;
+            mem->traverse(visitor);
+            return visitor.foundAddr;
+        }
+
+        return {};
     }
 
-    return {};
-}
+    // Return the set of interesting constants found in an expression. Constants are interesting if:
+    //
+    //   1. The expression itself is a constant
+    //   2. A constant that is an operand of an `add` operation.
+    //
+    // The list may change in the future.
+    static std::set<Address> findInterestingConstants(const SymbolicExpression::Ptr &expr) {
+        using namespace SymbolicExpression;
 
-// Return the set of interesting constants found in an expression. Constants are interesting if:
-//
-//   1. The expression itself is a constant
-//   2. A constant that is an operand of an `add` operation.
-//
-// The list may change in the future.
-static std::set<Address>
-findInterestingConstants(const SymbolicExpression::Ptr &expr) {
-    using namespace SymbolicExpression;
+        if (const auto addr = expr->toUnsigned())
+            return {*addr};
 
-    if (const auto addr = expr->toUnsigned())
-        return {*addr};
+        struct: Visitor {
+            std::set<const Node*> seen;                 // avoid re-processing common subexpressions
+            std::set<Address> found;
 
-    struct: Visitor {
-        std::set<const Node*> seen;                     // avoid re-processing common subexpressions
-        std::set<Address> found;
-
-        VisitAction preVisit(const Node *expr) {
-            if (seen.insert(expr).second) {
-                if (expr->isOperator(OP_ADD)) {
-                    for (const Ptr &child: expr->children()) {
-                        if (const auto n = child->toUnsigned())
-                            found.insert(*n);
+            VisitAction preVisit(const Node *expr) {
+                if (seen.insert(expr).second) {
+                    if (expr->isOperator(OP_ADD)) {
+                        for (const SymbolicExpression::Ptr &child: expr->children()) {
+                            if (const auto n = child->toUnsigned())
+                                found.insert(*n);
+                        }
                     }
+                    return CONTINUE;
+                } else {
+                    return TRUNCATE;
                 }
+            }
+
+            VisitAction postVisit(const Node*) {
                 return CONTINUE;
-            } else {
-                return TRUNCATE;
             }
-        }
-
-        VisitAction postVisit(const Node*) {
-            return CONTINUE;
-        }
-    } visitor;
-    expr->depthFirstTraversal(visitor);
-    return visitor.found;
-}
-
-// True if the address is mapped and has all the required permissions and none of the prohibited permissions.
-static bool
-isMappedAccess(const MemoryMap::Ptr &map, const Address addr, const unsigned required, const unsigned prohibited) {
-    ASSERT_not_null(map);
-    return !map->at(addr).require(required).prohibit(prohibited).segments().empty();
-}
-
-// Return jump table target addresses for table entries whose addresses are satisfiable given the path constraints. The
-// `entryAddrExpr` is the symbolic address that was read by the basic block and represents any table entry.
-std::set<Address>
-satisfiableTargets(const JumpTable::Ptr &table, const SymbolicExpression::Ptr &pathConstraint,
-                   const SymbolicExpression::Ptr &entryAddrExpr, const Debugging debugging) {
-    using namespace SymbolicExpression;
-    ASSERT_not_null(table);
-    ASSERT_not_null(pathConstraint);
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
-    if (debugging == Debugging::ON)
-        debug.enable();
-
-    SmtSolver::Ptr solver = SmtSolver::bestAvailable();
-    if (!solver)
-        return std::set<Address>(table->targets().begin(), table->targets().end());
-
-    std::set<Address> retval;
-    ASSERT_not_null(solver);
-    solver->insert(pathConstraint);
-    for (size_t i = 0; i < table->nEntries(); ++i) {
-        const Address target = table->targets()[i];
-        const Address entryAddr = table->location().least() + i * table->bytesPerEntry();
-        const auto entryConstraint = makeEq(makeIntegerConstant(entryAddrExpr->nBits(), entryAddr), entryAddrExpr);
-        SAWYER_MESG(debug) <<"    entry #" <<i <<" at " <<addrToString(entryAddr)
-                           <<" has target " <<addrToString(target) <<"\n";
-        solver->push();
-        solver->insert(entryConstraint);
-        const auto isSatisfiable = solver->check();
-        solver->pop();
-
-        switch (isSatisfiable) {
-            case SmtSolver::SAT_UNKNOWN:
-                SAWYER_MESG(debug) <<"      SMT solver failed (assuming satisfiable)\n";
-                // fall through
-            case SmtSolver::SAT_YES: {
-                const Address target = table->targets()[i];
-                SAWYER_MESG(debug) <<"      satisfiable table entry address\n";
-                retval.insert(target);
-                break;
-            }
-            case SmtSolver::SAT_NO:
-                SAWYER_MESG(debug) <<"      entry address is not satisfiable\n";
-                break;
-        }
-    }
-    return retval;
-}
-
-/*  This analysis attempts to resolve the indirect control flow by discovering and using statically created jump tables,
- *  such as what a C compiler typically creates for `switch` statements.
- *
- *  For each such block having an indeterminate outgoing CFG edge, a dataflow graph is created from nearby basic blocks. The
- *  dataflow analysis uses instruction semantics to update the machine state associated with each dataflow graph vertex. A special
- *  merge operation merges states when control flow merges, such as at the end of an `if` statement. The analysis examines the final
- *  outgoing state for the basic block in question to ascertain whether a static jump table was used, what its starting address
- *  might be, and how entries in the table are used to compute target addresses for the jump instruction.
- *
- *  Besides containing the typical symbolic registers and memory, the state also contains constraints imposed by the execution path.
- *  These constraints are used to limit the size of the jump table. Ideally, even if the compiler emits two consecutive tables for
- *  two different `switch` statements, the basic block for each `switch` statement will have only successors that are relevant to
- *  that statement. */
-static bool
-useJumpTable(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops,
-             const Debugging debugging) {
-    ASSERT_not_null(partitioner);
-    ASSERT_not_null(bb);
-    ASSERT_not_null(ops);
-    BS::State::Ptr state = ops->currentState();
-    ASSERT_not_null(state);
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
-    if (debugging == Debugging::ON)
-        debug.enable();
-    
-    // We only handle x86 for now (although this might work for other instruction sets too).
-    if (as<const Architecture::X86>(partitioner->architecture())) {
-        SAWYER_MESG(debug) <<"  possible jump table for " <<bb->printableName() <<"\n";
-        const RegisterDescriptor IP = partitioner->architecture()->registerDictionary()->instructionPointerRegister();
-        const SymbolicExpression::Ptr ip = SymbolicSemantics::SValue::promote(ops->readRegister(IP))->get_expression();
-        SAWYER_MESG(debug) <<"    ip = " <<*ip <<"\n";
-
-        const RegisterDescriptor PATH = createPathRegister(partitioner);
-        const SymbolicExpression::Ptr path = SymbolicSemantics::SValue::promote(ops->peekRegister(PATH))->get_expression();
-        SAWYER_MESG(debug) <<"    path constraints = " <<*path <<"\n";
-
-        const auto matched = match(ip);
-        const auto jumpTableEntry = matched.first;
-        const Address perEntryOffset = matched.second;
-        if (!jumpTableEntry) {
-            SAWYER_MESG(debug) <<"    jump table IP expression not matched (no jump table)\n";
-            return false;
-        }
-        SAWYER_MESG(debug) <<"    value read from jump table: " <<*jumpTableEntry <<"\n";
-
-        const auto jumpTableAddrExpr = findAddressContaining(ops, jumpTableEntry);
-        if (!jumpTableAddrExpr) {
-            SAWYER_MESG(debug) <<"    cannot find jump table entry in memory state\n";
-            return false;
-        }
-        SAWYER_MESG(debug) <<"    address from which it was read: " <<*jumpTableAddrExpr <<"\n";
-
-        const std::set<Address> constants = findInterestingConstants(jumpTableAddrExpr);
-        for (const Address tableAddr: constants) {
-            SAWYER_MESG(debug) <<"    potential table address " <<addrToString(tableAddr) <<"\n";
-            if (!isMappedAccess(partitioner->memoryMap(), tableAddr, MemoryMap::READABLE, MemoryMap::WRITABLE)) {
-                SAWYER_MESG(debug) <<"      potential table entry is not readable, or is writable\n";
-                continue;
-            }
-            SAWYER_MESG(debug) <<"      possible jump table at " <<addrToString(tableAddr) <<"\n"
-                               <<"      per-entry offset is " <<addrToString(perEntryOffset) <<"\n";
-
-            const auto tableLimits = AddressInterval::whole(); // will be refined
-            const size_t bytesPerEntry = (jumpTableEntry->nBits() + 7) / 8;
-            auto table = JumpTable::instance(partitioner, tableLimits, bytesPerEntry, perEntryOffset,
-                                             JumpTable::EntryType::ABSOLUTE);
-            table->maxPreEntries(0);
-            table->refineLocationLimits(bb, tableAddr);
-            SAWYER_MESG(debug) <<"      table limited to " <<addrToString(table->tableLimits()) <<"\n";
-            SAWYER_MESG(debug) <<"      targets limited to " <<addrToString(table->targetLimits()) <<"\n";
-            SAWYER_MESG(debug) <<"      scanning table at " <<addrToString(tableAddr)
-                               <<" within " <<addrToString(table->tableLimits()) <<"\n";
-            table->scan(partitioner->memoryMap()->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE), tableAddr);
-            if (!table->location()) {
-                SAWYER_MESG(debug) <<"      table not found at " <<addrToString(tableAddr) <<"\n";
-                continue;
-            }
-            SAWYER_MESG(debug) <<"      parsed jump table at " <<addrToString(tableAddr)
-                               <<" with " <<plural(table->nEntries(), "entries") <<"\n";
-
-            std::set<Address> successors = satisfiableTargets(table, path, jumpTableAddrExpr, debugging);
-            if (debug) {
-                debug <<"      unique targets remaining: " <<successors.size() <<"\n";
-                for (const Address target: successors)
-                    debug <<"        target " <<addrToString(target) <<"\n";
-            }
-
-            partitioner->detachBasicBlock(bb);
-            bb->successors().clear();
-            const size_t bitsPerWord = partitioner->architecture()->bitsPerWord();
-            for (const Address successor: successors)
-                bb->insertSuccessor(successor, bitsPerWord);
-            table->attachTableToBasicBlock(bb);
-            partitioner->attachBasicBlock(bb);
-            return true;
-        }
-    }
-    return false;
-}
-
-} // namespace
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////
-//// ICF Recovery strategy: final state already has a concrete instruction pointer.
-////
-//// If the dataflow itself can resolve the indirect control flow to a single value, then use that value.
-////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-namespace ConcreteIp {
-
-static bool
-useConcreteIp(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops,
-              const Debugging debugging) {
-    ASSERT_not_null(partitioner);
-    ASSERT_not_null(bb);
-    ASSERT_not_null(ops);
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
-    if (debugging == Debugging::ON)
-        debug.enable();
-
-    const RegisterDescriptor IP = partitioner->architecture()->registerDictionary()->instructionPointerRegister();
-    const SymbolicExpression::Ptr ip = SymbolicSemantics::SValue::promote(ops->readRegister(IP))->get_expression();
-    if (const auto addr = ip->toUnsigned()) {
-        SAWYER_MESG(debug) <<"  IP is concrete: " <<*ip <<"\n";
-        partitioner->detachBasicBlock(bb);
-        bb->successors().clear();
-        bb->insertSuccessor(*addr, partitioner->architecture()->bitsPerWord());
-        partitioner->attachBasicBlock(bb);
-        return true;
+        } visitor;
+        expr->depthFirstTraversal(visitor);
+        return visitor.found;
     }
 
-    return false;
-}
+    // True if the address is mapped and has all the required permissions and none of the prohibited permissions.
+    static bool isMappedAccess(const MemoryMap::Ptr &map, const Address addr, const unsigned required, const unsigned prohibited) {
+        ASSERT_not_null(map);
+        return !map->at(addr).require(required).prohibit(prohibited).segments().empty();
+    }
 
-} // namespace
+    // Return jump table target addresses for table entries whose addresses are satisfiable given the path constraints. The
+    // `entryAddrExpr` is the symbolic address that was read by the basic block and represents any table entry.
+    std::set<Address> satisfiableTargets(const JumpTable::Ptr &table, const SymbolicExpression::Ptr &pathConstraint,
+                                         const SymbolicExpression::Ptr &entryAddrExpr, Sawyer::Message::Stream &debug) {
+        using namespace SymbolicExpression;
+        ASSERT_not_null(table);
+        ASSERT_not_null(pathConstraint);
+
+        SmtSolver::Ptr solver = SmtSolver::bestAvailable();
+        if (!solver)
+            return std::set<Address>(table->targets().begin(), table->targets().end());
+
+        std::set<Address> retval;
+        ASSERT_not_null(solver);
+        solver->insert(pathConstraint);
+        for (size_t i = 0; i < table->nEntries(); ++i) {
+            const Address target = table->targets()[i];
+            const Address entryAddr = table->location().least() + i * table->bytesPerEntry();
+            const auto entryConstraint = makeEq(makeIntegerConstant(entryAddrExpr->nBits(), entryAddr), entryAddrExpr);
+            SAWYER_MESG(debug) <<"    entry #" <<i <<" at " <<addrToString(entryAddr)
+                               <<" has target " <<addrToString(target) <<"\n";
+            solver->push();
+            solver->insert(entryConstraint);
+            const auto isSatisfiable = solver->check();
+            solver->pop();
+
+            switch (isSatisfiable) {
+                case SmtSolver::SAT_UNKNOWN:
+                    SAWYER_MESG(debug) <<"      SMT solver failed (assuming satisfiable)\n";
+                    // fall through
+                case SmtSolver::SAT_YES: {
+                    const Address target = table->targets()[i];
+                    SAWYER_MESG(debug) <<"      satisfiable table entry address\n";
+                    retval.insert(target);
+                    break;
+                }
+                case SmtSolver::SAT_NO:
+                    SAWYER_MESG(debug) <<"      entry address is not satisfiable\n";
+                    break;
+            }
+        }
+        return retval;
+    }
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////
-//// ICF Recovery strategy: final state has an instruction pointer that's the concatenation sets of bytes, some of which are
+//// ICF Recovery Strategy: final state has an instruction pointer of the form (ite COND A1 A2) where A1 and/or A2 are concrete
+//// addresses.
+////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class IteResolver: public Resolver {
+protected:
+    IteResolver(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops)
+        : Resolver(partitioner, bb, ops) {}
+
+public:
+    static Ptr instance(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops) {
+        return Ptr(new IteResolver(partitioner, bb, ops));
+    }
+
+    AddrsAndPaths operator()(const SymbolicExpression::Ptr &ip, const SymbolicExpression::Ptr &path,
+                             Sawyer::Message::Stream &debug) override {
+        if (!ip->isOperator(SymbolicExpression::OP_ITE))
+            return {};
+
+        SAWYER_MESG(debug) <<"  IP has two possible values with complementary path constraints:\n"
+                           <<"    path constraint = " <<*path <<"\n"
+                           <<"    ip = " <<*ip <<"\n"
+                           <<"    expr[0] = " <<*ip->child(1) <<"\n"
+                           <<"    expr[1] = " <<*ip->child(2) <<"\n";
+
+        AddrsAndPaths retval;
+        retval.push_back(std::make_pair(ip->child(1), path));
+        retval.push_back(std::make_pair(ip->child(2), SymbolicExpression::makeInvert(path)));
+        return retval;
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////
+//// ICF Recovery Strategy: final state has an instruction pointer that's the concatenation sets of bytes, some of which are
 //// concrete.
 ////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-namespace ConcreteSet {
 
-static bool
-useConcreteSet(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops,
-               const Debugging debugging) {
-    using namespace SymbolicExpression;
+class ValueSetResolver: public Resolver {
+protected:
+    ValueSetResolver(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops)
+        : Resolver(partitioner, bb, ops) {}
 
-    ASSERT_not_null(partitioner);
-    ASSERT_not_null(bb);
-    ASSERT_not_null(ops);
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
-    if (debugging == Debugging::ON)
-        debug.enable();
+public:
+    static Ptr instance(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops) {
+        return Ptr(new ValueSetResolver(partitioner, bb, ops));
+    }
 
-    const RegisterDescriptor IP = partitioner->architecture()->registerDictionary()->instructionPointerRegister();
-    const SymbolicExpression::Ptr ip = SymbolicSemantics::SValue::promote(ops->readRegister(IP))->get_expression();
-    if (!ip->isOperator(OP_CONCAT) || ip->nChildren() == 0)
-        return false;
+    AddrsAndPaths operator()(const SymbolicExpression::Ptr &ip, const SymbolicExpression::Ptr &path,
+                             Sawyer::Message::Stream &debug) override {
 
-    // Not all parts (extractions) of the IP need to be sets, but if there are sets they must all be the same size.
-    size_t nMembers = 0;
-    for (const auto &set: ip->children()) {
-        if (set->isOperator(OP_SET)) {
-            ASSERT_require(set->nChildren() > 0);
-            if (nMembers > 0) {
-                if (set->nChildren() != nMembers)
-                    return false;
-            } else {
-                nMembers = set->nChildren();
+        // A set of expressions expands to those expressions.
+        if (ip->isOperator(SymbolicExpression::OP_SET)) {
+            AddrsAndPaths retval;
+            SAWYER_MESG(debug) <<"  IP is a set with " <<plural(ip->nChildren(), "member expressions") <<"\n"
+                               <<"    path constraint = " <<*path <<"\n"
+                               <<"    ip = " <<*ip <<"\n";
+            for (const auto &expr: ip->children()) {
+                SAWYER_MESG(debug) <<"    expr[" <<retval.size() <<"] = " <<*expr <<"\n";
+                retval.push_back(std::make_pair(expr, path));
             }
-        }
-    }
-    if (nMembers == 0)
-        return false;
-    SAWYER_MESG(debug) <<"  IP is a set of " <<plural(nMembers, "addresses") <<"\n";
+            return retval;
 
-    // Build addresses from the sets of values
-    std::set<Address> concrete;
-    std::vector<Ptr> nonconcrete;
-    for (size_t i = 0; i < nMembers; ++i) {
-        Ptr addr;
-        for (const auto &part: ip->children()) {
-            if (part->isOperator(OP_SET)) {
-                addr = addr ? makeConcat(addr, part->child(i)) : part->child(i);
-            } else {
-                addr = addr ? makeConcat(addr, part) : part;
+        }
+
+        // A concatenation of sets is treated in the inverse: a set of concatenations. This might not fully work since sets are
+        // generally not ordered. I.e., an expression like (concat (set A B) (set C D)) has four possible values {AC, AD, BC, BD},
+        // but we treat this as having only two values {AC, BD}.
+        if (ip->isOperator(SymbolicExpression::OP_CONCAT) || ip->nChildren() == 0) {
+            // Not all parts (extractions) of the IP need to be sets, but if there are sets they must all be the same size.
+            size_t nMembers = 0;
+            for (const auto &set: ip->children()) {
+                if (set->isOperator(SymbolicExpression::OP_SET)) {
+                    ASSERT_require(set->nChildren() > 0);
+                    if (nMembers > 0) {
+                        if (set->nChildren() != nMembers)
+                            return {};
+                    } else {
+                        nMembers = set->nChildren();
+                    }
+                }
             }
+            if (nMembers == 0)
+                return {};
+            SAWYER_MESG(debug) <<"  IP is a set with " <<plural(nMembers, "member expressions") <<"\n"
+                               <<"    path constraint = " <<*path <<"\n"
+                               <<"    ip = " <<*ip <<"\n";
+
+            // Build addresses from the sets of values
+            AddrsAndPaths retval;
+            for (size_t i = 0; i < nMembers; ++i) {
+                SymbolicExpression::Ptr addr;
+                for (const auto &part: ip->children()) {
+                    if (part->isOperator(SymbolicExpression::OP_SET)) {
+                        addr = addr ? makeConcat(addr, part->child(i)) : part->child(i);
+                    } else {
+                        addr = addr ? makeConcat(addr, part) : part;
+                    }
+                }
+                SAWYER_MESG(debug) <<"    expr[" <<i <<"] = " <<*addr <<"\n";
+                retval.push_back(std::make_pair(addr, path));
+            }
+            return retval;
         }
-        if (const auto a = addr->toUnsigned()) {
-            concrete.insert(*a);
-        } else {
-            nonconcrete.push_back(addr);
-        }
+
+        return {};
     }
-
-    // Change the successors for this block
-    if (!concrete.empty()) {
-        partitioner->detachBasicBlock(bb);
-        bb->successors().clear();
-
-        for (const Address c: concrete) {
-            const auto addr = ops->number_(IP.nBits(), c);
-            SAWYER_MESG(debug) <<"    addr = " <<*addr <<"\n";
-            bb->insertSuccessor(addr);
-        }
-
-        for (const auto &expr: nonconcrete) {
-            const auto addr = SymbolicSemantics::SValue::promote(ops->undefined_(expr->nBits()));
-            addr->set_expression(expr);
-            SAWYER_MESG(debug) <<"    addr = " <<*addr <<"\n";
-            bb->insertSuccessor(addr);
-        }
-
-        partitioner->attachBasicBlock(bb);
-        return true;
-    }
-
-    return false;
-}
-
-} // namespace
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1354,6 +1479,20 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
     ASSERT_not_null(bb);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     const Debugging debugging = enableDiagnostics(debug, settings, bb);
+
+#if 1
+    struct R {
+        const bool wasEnabled;
+        R(const Debugging debugging)
+            : wasEnabled(BinaryAnalysis::DataFlow::mlog[DEBUG].enabled()) {
+            if (debugging == Debugging::ON)
+                BinaryAnalysis::DataFlow::mlog[DEBUG].enable();
+        }
+        ~R() {
+            BinaryAnalysis::DataFlow::mlog[DEBUG].enable(wasEnabled);
+        }
+    } r(debugging);
+#endif
 
     SAWYER_MESG(debug) <<"analyzing " <<bb->printableName() <<"\n";
 
@@ -1390,7 +1529,7 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
     }
 
     // Configure the dataflow engine
-    BS::RiscOperators::Ptr ops = partitioner->newOperators();
+    BS::RiscOperators::Ptr ops = partitioner->newOperators(MAP_BASED_MEMORY);
     BS::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
     if (!cpu)
         return false;
@@ -1421,15 +1560,83 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
             debug <<"  final dataflow state after " <<bb->printableName() <<":\n";
             state->print(debug, "    ");
         }
+
+        // Get information about the final state
         ops->currentState(state);
-        if (ConcreteIp::useConcreteIp(partitioner, bb, ops, debugging)) {
-            SAWYER_MESG(debug) <<"  resolved indirect control flow using constant IP for " <<bb->printableName() <<"\n";
-            return true;
-        } else if (ConcreteSet::useConcreteSet(partitioner, bb, ops, debugging)) {
-            SAWYER_MESG(debug) <<"  resolved indirect control flow using constant IP set for " <<bb->printableName() <<"\n";
-            return true;
-        } else if (StaticJumpTable::useJumpTable(partitioner, bb, ops, debugging)) {
-            SAWYER_MESG(debug) <<"  resolved indirect control flow using static jump table for " <<bb->printableName() <<"\n";
+        const RegisterDescriptor IP = partitioner->architecture()->registerDictionary()->instructionPointerRegister();
+        const SymbolicExpression::Ptr ip = SymbolicSemantics::SValue::promote(ops->readRegister(IP))->get_expression();
+        SAWYER_MESG(debug) <<"  IP = " <<*ip <<"\n";
+        const RegisterDescriptor PATH = createPathRegister(partitioner);
+        const SymbolicExpression::Ptr path = SymbolicSemantics::SValue::promote(ops->readRegister(PATH, ops->boolean_(true)))
+                                             ->get_expression();
+        SAWYER_MESG(debug) <<"  path constraint = " <<*path <<"\n";
+
+        // Create the functions we'll use to recursively resolve the instruction pointer.
+        std::vector<Resolver::Ptr> resolvers;
+        resolvers.push_back(IteResolver::instance(partitioner, bb, ops));
+        resolvers.push_back(ValueSetResolver::instance(partitioner, bb, ops));
+        resolvers.push_back(StaticJumpTableResolver::instance(partitioner, bb, ops));
+
+        // Call each handler to give it a chance to examine the instruction pointer expression and refine it, returning zero or more
+        // refined values. Do this repeatedly until nothing changes. For instance, if the IP is the expression '(ite COND EXPR1
+        // EXPR2)' then this might return EXPR1 and EXPR2 and the process is repeated on both of those values. If a value is fully
+        // resolved (i.e., concrete) then we're done with that value.
+        Resolver::AddrsAndPaths successors;
+        successors.push_back(std::make_pair(ip, path)); // start things off with the instruction pointer from the semantic state
+        while (true) {
+            bool changed = false;
+            for (const auto &resolver: resolvers) {
+                Resolver::AddrsAndPaths next;           // the next set of IP expressions over which to iterate.
+                for (const auto &addrAndPath: successors) {
+                    if (addrAndPath.first->toUnsigned()) {
+                        next.push_back(addrAndPath);    // already resolved
+                    } else {
+                        const Resolver::AddrsAndPaths result = (*resolver)(addrAndPath.first, addrAndPath.second, debug);
+                        if (!result.empty()) {
+                            next.insert(next.end(), result.begin(), result.end());
+                        } else {
+                            next.push_back(addrAndPath);
+                        }
+                    }
+                }
+
+                Resolver::makeUnique(next);
+                if (!Resolver::areEqual(next, successors)) {
+                    successors = next;
+                    changed = true;
+                    break;
+                }
+            }
+            if (!changed)
+                break;
+        }
+
+        // Update the basic block successors. The new successors replace the original indeterminate successor and have the same
+        // edge type.
+        ASSERT_forbid(successors.empty());              // we at least need the original IP
+        if (successors.size() > 1 || !successors[0].first->isEquivalentTo(ip) || successors[0].first->toUnsigned()) {
+            partitioner->detachBasicBlock(bb);
+
+            // Remove the indeterminate edges
+            EdgeType edgeType = E_NORMAL;
+            if (bb->successors().isCached()) {
+                for (const auto &successor: bb->successors().get()) {
+                    if (!successor.expr()->get_expression()->toUnsigned()) {
+                        edgeType = successor.type();
+                        bb->eraseSuccessor(successor);
+                        break;
+                    }
+                }
+            }
+
+            // Insert the new successors
+            for (const auto &successor: successors) {
+                auto addr = SymbolicSemantics::SValue::promote(ops->undefined_(successor.first->nBits()));
+                addr->set_expression(successor.first);
+                bb->insertSuccessor(addr, edgeType);
+            }
+
+            partitioner->attachBasicBlock(bb);
             return true;
         }
     } else {

@@ -108,6 +108,29 @@ BasicBlock::insertSuccessor(Address va, size_t nBits, EdgeType type, Confidence 
     return insertSuccessor(ops->number_(nBits, va), type, confidence);
 }
 
+bool
+BasicBlock::eraseSuccessor(const BaseSemantics::SValue::Ptr &successor_, const EdgeType type,
+                           const Sawyer::Optional<Confidence> confidence) {
+    if (successor_ && successors_.isCached()) {
+        const auto successor = Semantics::SValue::promote(successor_);
+        Successors &successors = successors_.get();
+        for (auto exists = successors.begin(); exists != successors.end(); ++exists) {
+            if (exists->type() == type &&
+                exists->expr()->get_expression()->isEquivalentTo(successor->get_expression()) &&
+                exists->confidence() == confidence.orElse(exists->confidence())) {
+                successors.erase(exists);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool
+BasicBlock::eraseSuccessor(const BasicBlockSuccessor &successor) {
+    return eraseSuccessor(successor.expr(), successor.type(), successor.confidence());
+}
+
 SgAsmInstruction*
 BasicBlock::instructionExists(Address startVa) const {
     if (insns_.size() >= bigBlock_) {
