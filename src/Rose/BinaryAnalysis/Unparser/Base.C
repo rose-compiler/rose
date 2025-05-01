@@ -817,7 +817,8 @@ Settings::Settings() {
     bblock.cfg.showingSuccessors = true;
     bblock.cfg.showingSharing = true;
     bblock.cfg.showingArrows = true;
-    bblock.cfg.showingFallThroughEdges = true;
+    bblock.cfg.showingNormalFallThroughEdges = true;
+    bblock.cfg.showingCallReturnFallThroughEdges = true;
     bblock.reach.showingReachability = true;
     bblock.cfg.arrowStyle.foreground = Color::HSV(0.58, 0.90, 0.3); // blue
     bblock.showingPostBlock = true;
@@ -983,8 +984,11 @@ commandLineSwitches(Settings &settings) {
                         "For each basic block, emit the list of functions that own the block in addition to the function "
                         "in which the block is listed.");
 
-    insertBooleanSwitch(sg, "bb-show-fallthrough", settings.bblock.cfg.showingFallThroughEdges,
-                        "Show CFG edges that fall through from one basic block to the next.");
+    insertBooleanSwitch(sg, "bb-show-normal-fallthrough", settings.bblock.cfg.showingNormalFallThroughEdges,
+                        "Show CFG normal edges that fall through from one basic block to the next.");
+
+    insertBooleanSwitch(sg, "bb-show-callret-fallthrough", settings.bblock.cfg.showingCallReturnFallThroughEdges,
+                        "Show CFG call-return edges that fall through from one basic block to the next.");
 
     insertBooleanSwitch(sg, "bb-reachability", settings.bblock.reach.showingReachability,
                         "For each basic block, emit information about whether the block is reachable according to the "
@@ -1510,7 +1514,8 @@ struct EmitBlockVisitor: public boost::static_visitor<> {
           state(state) {}
 
     void operator()(const P2::BasicBlock::Ptr &bb) const {
-        if (state.frontUnparser().settings().bblock.cfg.showingFallThroughEdges) {
+        if (state.frontUnparser().settings().bblock.cfg.showingNormalFallThroughEdges ||
+            state.frontUnparser().settings().bblock.cfg.showingCallReturnFallThroughEdges) {
             state.frontUnparser().emitLinePrefix(out, state);
             out <<"\n";
         }
@@ -2077,18 +2082,21 @@ edgeTypeName(const P2::EdgeType &edgeType) {
 bool
 Base::suppressFallThroughEdge(const P2::ControlFlowGraph::Edge &edge, const P2::BasicBlock::Ptr &src,
                               const P2::BasicBlock::Ptr &dst, State &state) const {
-    if (settings().bblock.cfg.showingFallThroughEdges)
-        return false;
-
     if (!src || !dst)
         return false;
 
     switch (edge.value().type()) {
         case P2::E_NORMAL:
-        case P2::E_CALL_RETURN:
-        case P2::E_FUNCTION_XFER:
+            if (settings().bblock.cfg.showingNormalFallThroughEdges)
+                return false;
             break;
 
+        case P2::E_CALL_RETURN:
+            if (settings().bblock.cfg.showingCallReturnFallThroughEdges)
+                return false;
+            break;
+
+        case P2::E_FUNCTION_XFER:
         case P2::E_FUNCTION_CALL:
         case P2::E_FUNCTION_RETURN:
         case P2::E_USER_DEFINED:
@@ -2302,7 +2310,7 @@ void
 Base::emitBasicBlockSeparator(std::ostream &out, const P2::BasicBlock::Ptr &bb, State &state) const {
     if (nextUnparser()) {
         nextUnparser()->emitBasicBlockSeparator(out, bb, state);
-    } else if (!settings().bblock.cfg.showingFallThroughEdges) {
+    } else if (!settings().bblock.cfg.showingNormalFallThroughEdges || !settings().bblock.cfg.showingCallReturnFallThroughEdges) {
         // Maybe show a separator between this block and the next blocks if there are no fall through edges. If we're not showing
         // fallthrough edges then it's difficult to tell whether this block falls through to the next. Adding a clear separator when
         // the block doesn't fall through helps disambiguate the situation.

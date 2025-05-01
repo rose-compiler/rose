@@ -80,7 +80,8 @@ struct Settings {
             bool showingSharing;                        /**< Show functions when block is shared? */
             bool showingArrows;                         /**< Draw arrows from one block to another. */
             Style arrowStyle;                           /**< Arrow style. */
-            bool showingFallThroughEdges;               /**< Show fall through edges from one block to the next. */
+            bool showingNormalFallThroughEdges;         /**< Show normal fall through edges from one block to the next. */
+            bool showingCallReturnFallThroughEdges;     /**< Show call-return fall through edges from one block to the next. */
         } cfg;                                          /**< Settings for control flow graphs. */
         struct {
             bool showingReachability;                   /**< Show code reachability in the basic block prologue area. */
