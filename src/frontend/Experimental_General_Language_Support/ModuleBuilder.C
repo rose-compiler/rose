@@ -307,12 +307,22 @@ SgSourceFile* ModuleBuilder::getModule(const std::string &module_name)
 
 SgSourceFile* ModuleBuilder::createSgSourceFile(const std::string &module_name)
 {
-  int errorCode = 0;
+  int errorCode{0};
+  std::string module_filename;
   std::vector<std::string> argv;
 
-  // Look for file in search paths
-  std::string name = StringUtility::convertToLowerCase(module_name) + getModuleFileSuffix();
-  std::string module_filename = findFileFromInputDirs(name);
+  // First look for a file in the current directory with a ".cpl" suffix; this seems to be the usage
+  // pattern of users (though perhaps nonstandard). An added benefit is that it removes the need
+  // to first parse the ".cpl" file, then generate and subsequently read a ".rcmp" file.
+  fs::path path = fs::current_path() / (module_name + ".cpl");
+  if (fs::exists(path)) {
+    module_filename = path.string();
+  }
+  else {
+    // Otherwise look for the ".rcmp" file in search paths
+    std::string name = StringUtility::convertToLowerCase(module_name) + getModuleFileSuffix();
+    module_filename = findFileFromInputDirs(name);
+  }
 
   if (!fs::exists(module_filename)) {
     mlog[ERROR] << "Module file filename = " << module_filename << " NOT FOUND (expected to be present)";
