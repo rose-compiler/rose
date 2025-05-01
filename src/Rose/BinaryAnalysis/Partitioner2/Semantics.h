@@ -6,6 +6,7 @@
 #include <Rose/As.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellMap.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
@@ -397,13 +398,30 @@ MemoryState<Super>::writeMemory(const InstructionSemantics::BaseSemantics::SValu
 template<class Super>
 void
 MemoryState<Super>::print(std::ostream &out, InstructionSemantics::BaseSemantics::Formatter &fmt) const {
+    namespace BS = InstructionSemantics::BaseSemantics;
+
+    out <<fmt.get_line_prefix() <<"concrete memory:\n";
     if (map_) {
-        map_->dump(out, fmt.get_line_prefix());
+        map_->dump(out, fmt.get_line_prefix() + "  ");
     } else {
         out <<fmt.get_line_prefix() <<"no memory map\n";
     }
 
-    Super::print(out, fmt);
+    const bool isEmpty = as<const BS::MemoryCellState>(this) ?
+                         as<const BS::MemoryCellState>(this)->allCells().empty() :
+                         false;
+
+    if (as<const BS::MemoryCellMap>(this)) {
+        out <<fmt.get_line_prefix() <<"symbolic memory (map-based):\n";
+    } else {
+        out <<fmt.get_line_prefix() <<"symbolic memory (list-based):\n";
+    }
+    BS::Indent indent(fmt);
+    if (isEmpty) {
+        out <<fmt.get_line_prefix() <<"empty\n";
+    } else {
+        Super::print(out, fmt);
+    }
 }
 
 } // namespace

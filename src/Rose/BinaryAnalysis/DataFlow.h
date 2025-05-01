@@ -423,20 +423,21 @@ public:
                 SAWYER_MESG(mlog[DEBUG]) <<prefix() <<"  forwarding vertex #" <<cfgVertexId <<" output state to "
                                          <<StringUtility::plural(vertex->nOutEdges(), "vertices", "vertex") <<"\n";
                 for (const typename Cfg::Edge &edge: vertex->outEdges()) {
-                    size_t nextVertexId = edge.target()->id();
+                    const size_t nextVertexId = edge.target()->id();
                     if (!isFeasible_(cfg_, edge, state, incomingState_[nextVertexId])) {
                         SAWYER_MESG(mlog[DEBUG]) <<prefix() <<"    path to vertex #" <<nextVertexId
                                                  <<" is not feasible, thus skipped\n";
                     } else if (merge_(nextVertexId, incomingState_[nextVertexId], cfgVertexId, state)) {
                         if (mlog[DEBUG]) {
-                            mlog[DEBUG] <<prefix() <<"    merged with vertex #" <<nextVertexId <<" (which changed as a result)\n";
-                            mlog[DEBUG] <<prefix() <<"    merge state is:\n"
+                            mlog[DEBUG] <<prefix() <<"    merged into vertex #" <<nextVertexId <<" (which changed)\n";
+                            mlog[DEBUG] <<prefix() <<"    new incoming state for vertex #" <<nextVertexId <<" is:\n"
+                                        <<prefix() <<"      "
                                         <<StringUtility::prefixLines(xfer_.toString(incomingState_[nextVertexId]),
                                                                      prefix() + "      ", false) <<"\n";
                         }
                         workList_.pushBack(nextVertexId);
                     } else {
-                        SAWYER_MESG(mlog[DEBUG]) <<prefix() <<"    merged with vertex #" <<nextVertexId <<" (no change)\n";
+                        SAWYER_MESG(mlog[DEBUG]) <<prefix() <<"    merged into vertex #" <<nextVertexId <<" (not changed)\n";
                     }
                 }
             }
