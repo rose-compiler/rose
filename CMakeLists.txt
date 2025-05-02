@@ -607,7 +607,7 @@ if(ENABLE-ADA)
   message(WARNING "Ada Analysis may work and pass compile tests in this setup but one macro is still needed to be defined"
                   "ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION currently causes compilation errors")
   # TODO: Define this 
-  # set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION 1) 
+  set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION ON)
 endif()
 
 # Jovial
@@ -964,6 +964,7 @@ find_path(with-smt-solver smt-solver DOC "Specify the path to an SMT-LIB compati
 find_path(with-wine "bin/wine" DOC "Specify the prefix where Wine is installed")
 if(with-wine)
   set(ROSE_WINE_INCLUDES -I${with-wine}/include)
+  set(ROSE_USE_WINDOWS_ANALYSIS_SUPPORT ON)
 endif()
 
 if((NOT WIN32) AND (ENABLE-BINARY-ANALYSIS))
