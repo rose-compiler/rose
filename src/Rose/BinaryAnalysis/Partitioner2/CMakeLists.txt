@@ -11,7 +11,7 @@ add_dependencies(roseBinaryAnalysisPartitioner2 rosetta_generated)
 install(FILES
   AddressUsageMap.h BasicBlock.h BasicTypes.h CfgPath.h
   Configuration.h ControlFlowGraph.h DataBlock.h DataFlow.h Engine.h EngineBinary.h
-  EngineJvm.h Exception.h Function.h FunctionCallGraph.h GraphViz.h IndirectControlFlow.h JumpTable.C
+  EngineJvm.h Exception.h Function.h FunctionCallGraph.h GraphViz.h IndirectControlFlow.h JumpTable.h
   MemoryTable.h Modules.h ModulesElf.h ModulesJvm.h ModulesLinux.h ModulesM68k.h
   ModulesMips.h ModulesPe.h ModulesPowerpc.h ModulesX86.h Partitioner.h Reference.h
   Semantics.h Thunk.h Utility.h
