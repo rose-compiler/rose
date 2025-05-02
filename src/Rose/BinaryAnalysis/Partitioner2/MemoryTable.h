@@ -54,6 +54,20 @@ public:
         virtual bool maybePrepend(const MemoryTable*, Address entryAddr, const std::vector<uint8_t> &bytes) = 0;
     };
 
+    /** Represents the storage for the table. */
+    class Storage {
+    public:
+        /** Shared-ownership pointer. */
+        using Ptr = std::shared_ptr<Storage>;
+
+        virtual ~Storage() {};
+
+        /** Read some bytes of storage.
+         *
+         *  Reading stops when `nBytes` have been read or if we run out of data, or if we read a byte that is not concrete. */
+        virtual std::vector<uint8_t> read(Address, size_t nBytes) = 0;
+    };
+
 private:
     AddressInterval tableLimits_;                       // limits for where the table could exist
     size_t bytesPerEntry_ = 4;                          // number of bytes in each table entry
@@ -113,8 +127,14 @@ public:
 public:
     /** Scan the table and return its location.
      *
-     *  Its location is also saved in this object and available by calling @ref location. */
+     *  Its location is also saved in this object and available by calling @ref location.
+     *
+     * @{ */
     AddressInterval scan(const MemoryMap::Constraints&, Address probableTableAddr);
+    AddressInterval scan(const PartitionerConstPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
+                         Address probableTableAddr);
+    AddressInterval scan(const Storage::Ptr&, Address probableTableAddr);
+    /** @} */
 
     /** Result: Table location in memory.
      *

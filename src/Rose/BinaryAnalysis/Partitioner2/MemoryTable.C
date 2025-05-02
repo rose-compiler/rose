@@ -3,6 +3,8 @@
 #include <Rose/BinaryAnalysis/Partitioner2/MemoryTable.h>
 
 #include <Rose/Affirm.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Rose/StringUtility/Diagnostics.h>
 #include <Rose/StringUtility/NumberToString.h>
@@ -10,6 +12,7 @@
 using namespace Sawyer::Message::Common;
 using Rose::StringUtility::addrToString;
 using Rose::StringUtility::plural;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -82,8 +85,72 @@ MemoryTable::entries() const {
     return entries_;
 }
 
+class ConcreteStorage: public MemoryTable::Storage {
+    const MemoryMap::Constraints &map_;
+    const AddressInterval tableLimits_;
+
+protected:
+    ConcreteStorage(const MemoryMap::Constraints &map, const AddressInterval tableLimits)
+        : map_(map), tableLimits_(tableLimits) {}
+
+public:
+    static Ptr instance(const MemoryMap::Constraints &map, const AddressInterval tableLimits) {
+        return Ptr(new ConcreteStorage(map, tableLimits));
+    }
+
+    std::vector<uint8_t> read(const Address addr, const size_t nBytes) override {
+        std::vector<uint8_t> retval(nBytes, 0);
+        const size_t n = map_.within(tableLimits_).at(addr).read(retval).size();
+        retval.resize(n);
+        return retval;
+    }
+};
+
 AddressInterval
 MemoryTable::scan(const MemoryMap::Constraints &map, const Address probableTableAddr) {
+    return scan(ConcreteStorage::instance(map, tableLimits_), probableTableAddr);
+}
+
+class SymbolicStorage: public MemoryTable::Storage {
+    const BS::RiscOperators::Ptr &ops_;
+    const size_t bitsPerAddr_;
+protected:
+    SymbolicStorage(const Partitioner::ConstPtr &partitioner, const BS::RiscOperators::Ptr &ops)
+        : ops_(notnull(ops)),
+          bitsPerAddr_(notnull(partitioner)->architecture()->registerDictionary()->instructionPointerRegister().nBits()) {}
+
+public:
+    static Ptr instance(const Partitioner::ConstPtr &partitioner, const BS::RiscOperators::Ptr &ops) {
+        return Ptr(new SymbolicStorage(partitioner, ops));
+    }
+
+    std::vector<uint8_t> read(const Address startAddr, const size_t nBytes) override {
+        const auto t = ops_->boolean_(true);
+        const RegisterDescriptor segreg;
+        std::vector<uint8_t> retval;
+        retval.reserve(nBytes);
+
+        for (size_t i = 0; i < nBytes; ++i) {
+            const auto addr = ops_->number_(bitsPerAddr_, startAddr + i);
+            const auto byteExpr = ops_->readMemory(segreg, addr, ops_->undefined_(8), t);
+            if (const auto byte = byteExpr->toUnsigned()) {
+                retval.push_back(*byte);
+            } else {
+                break;
+            }
+        }
+        return retval;
+    }
+};
+
+AddressInterval
+MemoryTable::scan(const Partitioner::ConstPtr &partitioner, const BS::RiscOperators::Ptr &ops, const Address probableTableAddr) {
+    return scan(SymbolicStorage::instance(partitioner, ops), probableTableAddr);
+}
+
+AddressInterval
+MemoryTable::scan(const Storage::Ptr &storage, const Address probableTableAddr) {
+    ASSERT_not_null(storage);
     ASSERT_require(bytesPerEntry_ > 0);
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -111,10 +178,9 @@ MemoryTable::scan(const MemoryMap::Constraints &map, const Address probableTable
         }
 
         // Read bytes for table entry
-        std::vector<uint8_t> buffer(bytesPerEntry_, 0);
-        const AddressInterval read = map.within(tableLimits_).at(entryAddr).read(buffer);
-        if (read.size() != bytesPerEntry_) {
-            SAWYER_MESG(debug) <<"    entry data read failed (got " <<plural(read.size(), "bytes") <<")\n";
+        const std::vector<uint8_t> buffer = storage->read(entryAddr, bytesPerEntry_);
+        if (buffer.size() != bytesPerEntry_) {
+            SAWYER_MESG(debug) <<"    entry data read failed (got only " <<plural(buffer.size(), "bytes") <<")\n";
             break;
         }
 
@@ -150,10 +216,9 @@ MemoryTable::scan(const MemoryMap::Constraints &map, const Address probableTable
         }
 
         // Read bytes for table entry
-        std::vector<uint8_t> buffer(bytesPerEntry_, 0);
-        const AddressInterval read = map.within(tableLimits_).at(entryAddr).read(buffer);
-        if (read.size() != bytesPerEntry_) {
-            SAWYER_MESG(debug) <<"    entry data read failed (got " <<plural(read.size(), "bytes") <<")\n";
+        const std::vector<uint8_t> buffer = storage->read(entryAddr, bytesPerEntry_);
+        if (buffer.size() != bytesPerEntry_) {
+            SAWYER_MESG(debug) <<"    entry data read failed (got only " <<plural(buffer.size(), "bytes") <<")\n";
             break;
         }
 
