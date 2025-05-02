@@ -1040,14 +1040,14 @@ buildDfGraph(const Settings &settings, const Partitioner::ConstPtr &partitioner,
 // These constraints are used to limit the size of the jump table. Ideally, even if the compiler emits two consecutive tables for
 // two different `switch` statements, the basic block for each `switch` statement will have only successors that are relevant to
 // that statement.
-class StaticJumpTableResolver: public Resolver {
+class JumpTableResolver: public Resolver {
 protected:
-    StaticJumpTableResolver(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops)
+    JumpTableResolver(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops)
         : Resolver(partitioner, bb, ops) {}
 
 public:
     static Ptr instance(const Partitioner::Ptr &partitioner, const BasicBlock::Ptr &bb, const BS::RiscOperators::Ptr &ops) {
-        return Ptr(new StaticJumpTableResolver(partitioner, bb, ops));
+        return Ptr(new JumpTableResolver(partitioner, bb, ops));
     }
 
     AddrsAndPaths operator()(const SymbolicExpression::Ptr &ip, const SymbolicExpression::Ptr &path,
@@ -1075,16 +1075,18 @@ public:
             }
             SAWYER_MESG(debug) <<"    address from which it was read: " <<*jumpTableAddrExpr <<"\n";
 
+            bool isWritable = false;
             const std::set<Address> constants = findInterestingConstants(jumpTableAddrExpr);
             for (const Address tableAddr: constants) {
                 SAWYER_MESG(debug) <<"    potential table address " <<addrToString(tableAddr) <<"\n";
-                if (!isMappedAccess(partitioner->memoryMap(), tableAddr, MemoryMap::READABLE, MemoryMap::WRITABLE)) {
-                    SAWYER_MESG(debug) <<"      potential table entry is not readable, or is writable\n";
-                    continue;
+                if (!isMappedAccess(partitioner->memoryMap(), tableAddr, MemoryMap::NO_ACCESS, MemoryMap::WRITABLE)) {
+                    SAWYER_MESG(debug) <<"      potential table entry is writable\n";
+                    isWritable = true;
                 }
                 SAWYER_MESG(debug) <<"      possible jump table at " <<addrToString(tableAddr) <<"\n"
                                    <<"      per-entry offset is " <<addrToString(perEntryOffset) <<"\n";
 
+                // Configure the table scanner
                 const auto tableLimits = AddressInterval::whole(); // will be refined
                 const size_t bytesPerEntry = (jumpTableEntry->nBits() + 7) / 8;
                 auto table = JumpTable::instance(partitioner, tableLimits, bytesPerEntry, perEntryOffset,
@@ -1093,9 +1095,11 @@ public:
                 table->refineLocationLimits(bb, tableAddr);
                 SAWYER_MESG(debug) <<"      table limited to " <<addrToString(table->tableLimits()) <<"\n";
                 SAWYER_MESG(debug) <<"      targets limited to " <<addrToString(table->targetLimits()) <<"\n";
+
+                // Scan the table
                 SAWYER_MESG(debug) <<"      scanning table at " <<addrToString(tableAddr)
                                    <<" within " <<addrToString(table->tableLimits()) <<"\n";
-                table->scan(partitioner->memoryMap()->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE), tableAddr);
+                table->scan(partitioner, ops, tableAddr);
                 if (!table->location()) {
                     SAWYER_MESG(debug) <<"      table not found at " <<addrToString(tableAddr) <<"\n";
                     continue;
@@ -1103,6 +1107,7 @@ public:
                 SAWYER_MESG(debug) <<"      parsed jump table at " <<addrToString(tableAddr)
                                    <<" with " <<plural(table->nEntries(), "entries") <<"\n";
 
+                // Refine what we scanned
                 std::set<Address> successors = satisfiableTargets(table, path, jumpTableAddrExpr, debug);
                 if (debug) {
                     debug <<"      unique targets remaining: " <<successors.size() <<"\n";
@@ -1115,9 +1120,12 @@ public:
                 table->attachTableToBasicBlock(bb);
                 partitioner->attachBasicBlock(bb);
 
+                // Return the successor information
                 AddrsAndPaths retval;
                 for (const Address successor: successors)
                     retval.push_back(std::make_pair(SymbolicExpression::makeIntegerConstant(ip->nBits(), successor), path));
+                if (isWritable)
+                    retval.push_back(std::make_pair(SymbolicExpression::makeIntegerVariable(ip->nBits()), path));
                 return retval;
             }
         }
@@ -1324,6 +1332,10 @@ private:
                                <<" has target " <<addrToString(target) <<"\n";
             solver->push();
             solver->insert(entryConstraint);
+            if (debug) {
+                for (const auto &assertion: solver->assertions())
+                    debug <<"      constraint: " <<*assertion <<"\n";
+            }
             const auto isSatisfiable = solver->check();
             solver->pop();
 
@@ -1479,21 +1491,6 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
     ASSERT_not_null(bb);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     const Debugging debugging = enableDiagnostics(debug, settings, bb);
-
-#if 1
-    struct R {
-        const bool wasEnabled;
-        R(const Debugging debugging)
-            : wasEnabled(BinaryAnalysis::DataFlow::mlog[DEBUG].enabled()) {
-            if (debugging == Debugging::ON)
-                BinaryAnalysis::DataFlow::mlog[DEBUG].enable();
-        }
-        ~R() {
-            BinaryAnalysis::DataFlow::mlog[DEBUG].enable(wasEnabled);
-        }
-    } r(debugging);
-#endif
-
     SAWYER_MESG(debug) <<"analyzing " <<bb->printableName() <<"\n";
 
     // Build the dataflow graph
@@ -1549,7 +1546,21 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
     // Run the dataflow
     SAWYER_MESG(debug) <<"  performing dataflow analysis...\n";
     try {
-        dfEngine.runToFixedPoint();     // probably won't reach a fixed point due to maxIterations set above
+        // Temporarily turn on the debug stream for the dataflow analysis
+        struct R {
+            const bool wasEnabled;
+            R(const Debugging debugging)
+                : wasEnabled(BinaryAnalysis::DataFlow::mlog[DEBUG].enabled()) {
+                if (debugging == Debugging::ON)
+                    BinaryAnalysis::DataFlow::mlog[DEBUG].enable();
+            }
+            ~R() {
+                BinaryAnalysis::DataFlow::mlog[DEBUG].enable(wasEnabled);
+            }
+        } r(debugging);
+
+        // Probably won't reach a fixed point due to maxIterations set above, in which case it will throw `NotConverging`
+        dfEngine.runToFixedPoint();
     } catch (const BinaryAnalysis::DataFlow::NotConverging&) {
         SAWYER_MESG(debug) <<"  dataflow did not converge\n";
     }
@@ -1575,7 +1586,7 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
         std::vector<Resolver::Ptr> resolvers;
         resolvers.push_back(IteResolver::instance(partitioner, bb, ops));
         resolvers.push_back(ValueSetResolver::instance(partitioner, bb, ops));
-        resolvers.push_back(StaticJumpTableResolver::instance(partitioner, bb, ops));
+        resolvers.push_back(JumpTableResolver::instance(partitioner, bb, ops));
 
         // Call each handler to give it a chance to examine the instruction pointer expression and refine it, returning zero or more
         // refined values. Do this repeatedly until nothing changes. For instance, if the IP is the expression '(ite COND EXPR1
