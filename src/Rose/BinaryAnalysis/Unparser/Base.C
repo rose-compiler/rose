@@ -3992,9 +3992,13 @@ Base::ascendingSourceAddress(P2::ControlFlowGraph::ConstEdgeIterator a, P2::Cont
 // class method
 bool
 Base::ascendingTargetAddress(P2::ControlFlowGraph::ConstEdgeIterator a, P2::ControlFlowGraph::ConstEdgeIterator b) {
-    Sawyer::Optional<Address> aVa = a->source()->value().optionalAddress();
-    Sawyer::Optional<Address> bVa = b->source()->value().optionalAddress();
+    // Edge types are the primary sort key.
+    if (a->value().type() != b->value().type())
+        return a->value().type() < b->value().type();
 
+    // Target addresses are the secondary sort key
+    Sawyer::Optional<Address> aVa = a->target()->value().optionalAddress();
+    Sawyer::Optional<Address> bVa = b->target()->value().optionalAddress();
     if (aVa && bVa) {
         return *aVa < *bVa;
     } else if (aVa) {
