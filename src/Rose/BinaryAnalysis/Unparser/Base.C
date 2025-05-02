@@ -2389,15 +2389,35 @@ Base::emitDataBlockBody(std::ostream &out, const P2::DataBlock::Ptr &db, State &
             fmt.prefix = prefix.str();
             fmt.multiline = true;
 
-            // Read the data in chunks and produce a hexdump
+            // Read the data in chunks and produce a hexdump. The data might not actually exist in the memory map that was provided
+            // to this unparser, so we need to be a bit careful.
+            AddressInterval notMapped;
             while (where) {
                 uint8_t buf[8192];                      // multiple of 16
-                size_t maxSize = std::min(where.size(), (Address)(sizeof buf));
-                AddressInterval read = state.partitioner()->memoryMap()->atOrAfter(where.least()).limit(maxSize).read(buf);
-                hexdump(out, read.least(), buf, read.size(), fmt);
-                if (read.greatest() == where.greatest())
-                    break;                              // avoid possible overflow
-                where = AddressInterval::hull(read.greatest()+1, where.greatest());
+                const size_t maxSize = std::min(where.size(), (Address)(sizeof buf));
+                const AddressInterval read = state.partitioner()->memoryMap()->atOrAfter(where.least()).limit(maxSize).read(buf);
+                if (read) {
+                    if (notMapped) {
+                        out <<fmt.prefix <<"not in memory map: " <<StringUtility::addrToString(notMapped) <<"\n";
+                        notMapped = AddressInterval();
+                    }
+                    hexdump(out, read.least(), buf, read.size(), fmt);
+                    if (read.greatest() == where.greatest())
+                        break;                              // avoid possible overflow
+                    where = AddressInterval::hull(read.greatest()+1, where.greatest());
+                } else {
+                    const auto notRead = AddressInterval::baseSize(where.least(), maxSize);
+                    notMapped = notMapped.hull(notRead);
+                    if (maxSize < where.size()) {
+                        where = AddressInterval::hull(where.least() + maxSize, where.greatest());
+                    } else {
+                        where = AddressInterval();
+                    }
+                }
+            }
+            if (notMapped) {
+                out <<fmt.prefix <<"not in memory map: " <<StringUtility::addrToString(notMapped) <<"\n";
+                notMapped = AddressInterval();
             }
         } else {
             state.frontUnparser().emitLinePrefix(out, state);
