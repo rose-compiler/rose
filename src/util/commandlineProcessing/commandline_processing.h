@@ -79,7 +79,11 @@ namespace CommandlineProcessing
       //! Add another valid source file suffix (warning deprecated as it is not consistently used)
           ROSE_UTIL_API void addCppSourceFileSuffix ( const std::string &suffix );
 
-          ROSE_UTIL_API bool isSourceFilename ( std::string name );
+       // PP (05/05/24): added bool flag to signature, enabling .a suffix if Ada was requested on the command line.
+          /// tests if \p name refers to a source file. \p isAdaProject enables .a to be recognized as Ada source file.
+          /// \details
+          ///    isAdaProject would be enabled if -x ada is specified on the command line.
+          ROSE_UTIL_API bool isSourceFilename ( const std::string& name, bool isAdaProject = false );
 
           ROSE_UTIL_API bool isObjectFilename ( std::string name );
           ROSE_DLL_API bool isExecutableFilename ( std::string name );
@@ -117,7 +121,11 @@ namespace CommandlineProcessing
 
        // DQ (28/8/2017): Adding language support.
           ROSE_UTIL_API bool isCsharpFileNameSuffix ( const std::string & suffix );
-          ROSE_UTIL_API bool isAdaFileNameSuffix    ( const std::string & suffix );
+
+          /// tests if \p suffix refers to a file extension for Ada.
+          /// \param isAdaProject if set enables the suffix .a to be recognized as an Ada file
+          ROSE_UTIL_API bool isAdaFileNameSuffix    ( const std::string & suffix, bool isAdaProject );
+
           ROSE_UTIL_API bool isJovialFileNameSuffix ( const std::string & suffix );
 
        // TV (05/17/2010) Support for CUDA

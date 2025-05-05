@@ -1038,7 +1038,7 @@ determineFileType(vector<string> argv, int & /*nextErrorCode*/, SgProject* proje
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                 }
-                               else if (CommandlineProcessing::isAdaFileNameSuffix(filenameExtension) == true)
+                               else if (CommandlineProcessing::isAdaFileNameSuffix(filenameExtension, Rose::is_Ada_language))
                                 {
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                                    file = sourceFile;

@@ -462,7 +462,7 @@ CommandlineProcessing::generateSourceFilenames(Rose_STL_Container<string> argLis
        // Ignore things that would be obvious options using a "-" or "+" prefix.
           if ( arg.empty() || ((arg[0] != '-') && (arg[0] != '+')) )
             {
-               if (!isSourceFilename(arg) &&
+               if (!isSourceFilename(arg, Rose::is_Ada_language) &&
                        (binaryMode || !isObjectFilename(arg)) &&
                        (binaryMode || isExecutableFilename(arg)))
                  {
@@ -473,7 +473,7 @@ CommandlineProcessing::generateSourceFilenames(Rose_STL_Container<string> argLis
                  }
 
             // Add source files based on file suffix
-               if (!isObjectFilename(arg) && isSourceFilename(arg))
+               if (!isObjectFilename(arg) && isSourceFilename(arg, Rose::is_Ada_language))
                  {
                     sourceFileList.push_back(arg);
                     goto incrementPosition;

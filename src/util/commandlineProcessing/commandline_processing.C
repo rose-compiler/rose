@@ -25,19 +25,6 @@
 #endif
 
 
-#if defined(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION) || defined(ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION)
-
-//~ #include <roseSupport/utility_functions.h>
-// PP (05/29/24)
-// roseSupport/utility_functions.h is difficult to include here => just declare the necessary variable.
-
-namespace Rose
-{
-  extern bool is_Ada_language;
-}
-
-#endif // ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION || ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION
-
 // DQ (12/31/2005): This is allowed in C files where it can not
 // effect the users application (just not in header files).
 using namespace std;
@@ -505,7 +492,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
 #endif
 
 bool
-CommandlineProcessing::isSourceFilename(string name)
+CommandlineProcessing::isSourceFilename(const std::string& name, bool isAdaProject)
 {
     initSourceFileSuffixList();
 
@@ -519,7 +506,7 @@ CommandlineProcessing::isSourceFilename(string name)
       suffix = suffix.substr(1, suffix.size()-1);
     }
 
-    if (CommandlineProcessing::isAdaFileNameSuffix(suffix)) return true;
+    if (CommandlineProcessing::isAdaFileNameSuffix(suffix, isAdaProject)) return true;
     if (CommandlineProcessing::isFortranFileNameSuffix(suffix)) return true;
     if (CommandlineProcessing::isJovialFileNameSuffix(suffix)) return true;
     if (CommandlineProcessing::isJavaFile(name)) return true;
@@ -954,7 +941,7 @@ CommandlineProcessing::isCsharpFileNameSuffix ( const std::string & suffix )
    }
 
 bool
-CommandlineProcessing::isAdaFileNameSuffix ( const std::string & suffix )
+CommandlineProcessing::isAdaFileNameSuffix ( const std::string& suffix, bool isAdaProject )
    {
   // Note that the filename extension is not defined as part of the Ada standard,
   // but GNAT (Gnu Ada) is using "ads" (for the spec) and "adb" (for the body).
@@ -965,14 +952,11 @@ CommandlineProcessing::isAdaFileNameSuffix ( const std::string & suffix )
   //                It can only be turned on selectively if is_Ada_language is
   //                defined, in order to not conflict with .a library files
   //                that need to be passed to the linker.
+  // PP (05/05/25)  pass in isAdaProject to enable Ada processing for files with extension ".a".
+  //                .a files usually need to be chopped before we can process them in ROSE.
+  //                Chopping is not yet implemented.
      static std::initializer_list<std::string> adaSuffixes   = { "adb", "ads", "ada" };
      static std::initializer_list<std::string> adaOnlySuffix = { "a" };
-
-#if defined(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION) || defined(ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION)
-     const bool isAdaProject = Rose::is_Ada_language;
-#else
-     const bool isAdaProject = false;
-#endif
 
   // if !CASE_SENSITIVE_SYSTEM -> update isSuffix to use boost::iequals instead of ==
      auto isSuffix = [&suffix](const std::string& cand) { return suffix == cand; };

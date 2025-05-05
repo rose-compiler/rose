@@ -160,7 +160,7 @@ void ProjectManager::loadProjectState( int argc, char **argv )
         QString projName = s.value("Name").toString();
         ProjectNode * projNode = new ProjectNode(projName);
         rootNode->addChild(projNode);
-        
+
         QStringList l;
         for( int i( 0 ); i < argc; ++i )
             l << argv[i];
@@ -263,7 +263,7 @@ bool ProjectNode::addFile(const QString & file)
 
     qDebug() << "adding file ..." << file;
 
-    if(CommandlineProcessing::isSourceFilename(fileInfo.absoluteFilePath().toStdString()))
+    if(CommandlineProcessing::isSourceFilename(fileInfo.absoluteFilePath().toStdString()), false/*AdaMode*/)
     {
         createSrcFileHeaderNode();
 
@@ -447,7 +447,7 @@ SourceFileNode::SourceFileNode(const QString & _path)
     filename=fileInfo.fileName();
     path=fileInfo.absoluteFilePath();
 
-    Q_ASSERT( CommandlineProcessing::isSourceFilename(filename.toStdString()) );
+    Q_ASSERT( CommandlineProcessing::isSourceFilename(filename.toStdString(), false/*AdaMode*/) );
 }
 
 SourceFileNode::~SourceFileNode()
