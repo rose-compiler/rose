@@ -2081,7 +2081,7 @@ edgeTypeName(const P2::EdgeType &edgeType) {
 
 bool
 Base::suppressFallThroughEdge(const P2::ControlFlowGraph::Edge &edge, const P2::BasicBlock::Ptr &src,
-                              const P2::BasicBlock::Ptr &dst, State &state) const {
+                              const P2::BasicBlock::Ptr &dst, State &/*state*/) const {
     if (!src || !dst)
         return false;
 
