@@ -460,7 +460,7 @@ namespace {
         ada_base_entity lal_defining_name, lal_identifier;
         ada_enum_literal_decl_f_name(&lal_inherited_decl, &lal_defining_name);
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
-        std::string ident = canonical_text_as_string(&lal_identifier);
+        std::string ident = getFullName(&lal_identifier);
 
         // \todo name.ident could be a character literal, such as 'c'
         //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
@@ -719,7 +719,7 @@ namespace {
     } else if(!typeview || lal_type_def_kind == ada_private_type_def || lal_type_def_kind == ada_derived_type_def){ //If it isn't an access, we need to find the original type to see if it's a type, record, or enum
       ada_base_entity lal_base_type_def;
       ada_type_decl_f_type_def(&lal_base_type_decl, &lal_base_type_def);
-      lal_type_def_kind = ada_node_kind(&lal_base_type_def); //TODO If this is ada_dervied_type_def, we might need to go further
+      lal_type_def_kind = ada_node_kind(&lal_base_type_def); //TODO If this is ada_derived_type_def, we might need to go further
 
       // if the ultimate base type is an enum, the derived type also shall be an enum.
       // if not an enum, then an intermediate type decl is created.
@@ -738,6 +738,17 @@ namespace {
 
         ada_type_expr_p_designated_type_decl(&lal_subtype_indication, &lal_base_type_decl);
         if (!ada_node_is_null(&lal_base_type_decl)) {
+
+          //Check what type lal_base_type_decl is
+          ada_node_kind_enum lal_base_type_decl_kind = ada_node_kind(&lal_base_type_decl);
+          while(lal_base_type_decl_kind == ada_subtype_decl){
+            logInfo() << "ada_subtype_decl found, looping to move past it.\n";
+            //ada_subtype_decl does not have a type def, so we need to keep getting the base type until we find a non-subtype
+            ada_subtype_decl_f_subtype(&lal_base_type_decl, &lal_subtype_indication);
+            ada_type_expr_p_designated_type_decl(&lal_subtype_indication, &lal_base_type_decl);
+            lal_base_type_decl_kind = ada_node_kind(&lal_base_type_decl);
+          }
+
           //Found a case in standard (s-osinte.ads) where the designated_type_decl points to the parent in an infinite loop
           //  So, check to make sure the new base_type_def isn't the same as the old
           int old_type_def_hash = hash_node(&lal_base_type_def);
@@ -746,7 +757,6 @@ namespace {
 
           if(hash_node(&lal_base_type_def) == old_type_def_hash){
             SgNode& tyrep = getExprType(&lal_base_type_decl, ctx);
-
             const bool isEnum = si::Ada::baseEnumDeclaration(isSgType(&tyrep)) != nullptr;
 
             lal_type_def_kind = isEnum ? ada_enum_type_def : ada_private_type_def /* anything */;
@@ -1046,7 +1056,7 @@ namespace {
         //Get the name of this decl
         ada_base_entity    lal_identifier;
         ada_defining_name_f_name(&lal_obj, &lal_identifier);
-        const std::string  name = canonical_text_as_string(&lal_identifier);
+        const std::string  name = getFullName(&lal_identifier);
         SgExpression*      init = createInit(lst, initexpr);
         SgInitializedName& dcl  = mkInitializedName(name, dcltype, init);
 
@@ -1256,7 +1266,7 @@ namespace {
           ada_entry_index_spec_f_id(lal_element, &lal_id);
           ada_defining_name_f_name(&lal_id, &lal_id);
 
-          name = canonical_text_as_string(&lal_id);
+          name = getFullName(&lal_id);
           ty   = &getDefinitionType(&lal_subtype, ctx);
         }
 
@@ -2186,7 +2196,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           ada_named_stmt_f_decl(lal_stmt, &lal_decl);
           ada_named_stmt_decl_f_name(&lal_decl, &lal_decl);
           ada_defining_name_f_name(&lal_decl, &lal_decl);
-          std::string label_name = canonical_text_as_string(&lal_decl);
+          std::string label_name = getFullName(&lal_decl);
 
           //Get the stmt
           ada_base_entity lal_named_stmt;
@@ -2350,7 +2360,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           ada_label_f_decl(lal_stmt, &lal_label_decl);
           ada_label_decl_f_name(&lal_label_decl, &lal_ident);
           ada_defining_name_f_name(&lal_ident, &lal_ident);
-          std::string label_name = canonical_text_as_string(&lal_ident);
+          std::string label_name = getFullName(&lal_ident);
 
           //This code is similar to labelIfNeeded/labelStmt
           SgLabelStatement& sgn     = mkLabelStmt(label_name, sgnode, ctx.scope());
@@ -2821,7 +2831,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
     std::string name = "";
     if(!ada_node_is_null(&lal_name)){
       ada_defining_name_f_name(&lal_name, &lal_name);
-      name = canonical_text_as_string(&lal_name);
+      name = getFullName(&lal_name);
     }
 
     //Get the types of exceptions handled
@@ -3056,7 +3066,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_generic_package_decl_f_package_decl(lal_element, &lal_package_internal);
         ada_base_package_decl_f_package_name(&lal_package_internal, &lal_defining_name);
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
-        std::string ident = canonical_text_as_string(&lal_identifier);
+        std::string ident = getFullName(&lal_identifier);
         int hash = hash_node(&lal_defining_name);
 
         //Get the list of formal decls
@@ -3165,7 +3175,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_defining_name, lal_identifier;
         ada_subp_spec_f_subp_name(&lal_subp_spec, &lal_defining_name);
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
-        std::string ident = canonical_text_as_string(&lal_identifier);
+        std::string ident = getFullName(&lal_identifier);
 
         SgScopeStatement&      logicalScope = ctx.scope();
 
@@ -3272,7 +3282,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         const bool              isFunc = subp_kind_kind == ada_subp_kind_function;
         const bool          overriding = (lal_overriding_kind == ada_overriding_overriding); //TODO ada_overriding_unspecified might count?
         SgScopeStatement* parent_scope = &ctx.scope();
-        std::string              ident = canonical_text_as_string(&lal_identifier);
+        std::string              ident = getFullName(&lal_identifier);
         SgType&                rettype = isFunc ? getDeclType(&subp_returns, ctx)
                                                 : mkTypeVoid();
 
@@ -3329,7 +3339,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_subp_spec_f_subp_name(&subp_spec, &lal_identifier);
         ada_defining_name_f_name(&lal_identifier, &lal_identifier);
 
-        std::string             ident        = canonical_text_as_string(&lal_identifier);
+        std::string             ident        = getFullName(&lal_identifier);
         const bool              isFunc       = (subp_kind_kind == ada_subp_kind_function);
         SgScopeStatement*       parent_scope = &ctx.scope();
         SgType&                 rettype      = isFunc ? getDeclType(&subp_returns, ctx)
@@ -3383,7 +3393,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_type_decl_f_name(&lal_type_decl, &lal_defining_name);
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
 
-        std::string          ident = canonical_text_as_string(&lal_identifier);
+        std::string          ident = getFullName(&lal_identifier);
         FormalTypeData          ty = getFormalTypeFoundation(ident, &lal_type_decl, ctx);
         SgScopeStatement&    scope = ctx.scope();
         int                   hash = hash_node(&lal_defining_name);
@@ -3440,7 +3450,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_defining_name, lal_identifier;
         ada_subp_spec_f_subp_name(&lal_subp_spec, &lal_defining_name);
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
-        std::string ident = canonical_text_as_string(&lal_identifier);
+        std::string ident = getFullName(&lal_identifier);
 
         //Get the params & return type
         ada_base_entity lal_params, lal_return_type;
@@ -3472,7 +3482,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_identifier;
         ada_base_type_decl_f_name(lal_element, &lal_identifier);
         ada_defining_name_f_name(&lal_identifier, &lal_identifier);
-        std::string ident = canonical_text_as_string(&lal_identifier);
+        std::string ident = getFullName(&lal_identifier);
 
         //Get the subtype indication
         ada_base_entity lal_subtype_indication;
@@ -3592,7 +3602,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         int                     hash      = hash_node(lal_element);
         int                     decl_hash = hash_node(&lal_decl_defining_name);
-        std::string             ident     = canonical_text_as_string(&lal_identifier);
+        std::string             ident     = getFullName(&lal_identifier);
         SgAdaTaskBody&          tskbody   = mkAdaTaskBody();
         SgDeclarationStatement* ndef      = findFirst(libadalangDecls(), decl_hash);
         SgAdaTaskBodyDecl*      nondef    = isSgAdaTaskBodyDecl(ndef);
@@ -3735,7 +3745,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_subp_spec_f_subp_name(&subp_spec, &lal_identifier);
         ada_defining_name_f_name(&lal_identifier, &lal_identifier);
 
-        std::string             ident        = canonical_text_as_string(&lal_identifier);
+        std::string             ident        = getFullName(&lal_identifier);
         SgScopeStatement*       parent_scope = &ctx.scope();
         SgType&                 rettype      = isFunc ? getDeclType(&subp_returns, ctx)
                                                       : mkTypeVoid();
@@ -3834,7 +3844,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           ada_base_entity lal_renamed_object;
           ada_renaming_clause_f_renamed_object(&lal_renames, &lal_renamed_object);
 
-          std::string        ident   = canonical_text_as_string(&lal_identifier);
+          std::string        ident   = getFullName(&lal_identifier);
           SgExpression&      renamed = getExpr(&lal_renamed_object, ctx);
 
           SgAdaRenamingDecl& sgnode  = mkAdaRenamingDecl(ident, renamed, excty, scope);
@@ -3951,7 +3961,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         const bool                 isFuncRename = (ada_node_kind(&lal_subp_kind) == ada_subp_kind_function);
 
         SgScopeStatement&          outer     = ctx.scope();
-        std::string                ident     = canonical_text_as_string(&lal_identifier);
+        std::string                ident     = getFullName(&lal_identifier);
         int                        hash      = hash_node(&lal_defining_name);
         SgType&                    rettype   = isFuncRename ? getDeclType(&lal_subp_returns, ctx)
                                                             : mkTypeVoid();
@@ -4039,7 +4049,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           ada_generic_subp_instantiation_f_subp_name(lal_element, &lal_defining_name);
         }
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
-        std::string  ident = canonical_text_as_string(&lal_identifier);
+        std::string  ident = getFullName(&lal_identifier);
         int           hash = hash_node(&lal_defining_name);
 
         //Get the decl we are instantiating off of
@@ -4126,7 +4136,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_identifier;
         ada_defining_name_f_name(&lal_for_var, &lal_identifier);
 
-        std::string            ident   = canonical_text_as_string(&lal_identifier);
+        std::string            ident   = getFullName(&lal_identifier);
         SgExpression&          range   = getDefinitionExpr(&lal_iter_expr, ctx);
         SgType&                vartype = si::Ada::typeOfExpr(range).typerep_ref();
         SgInitializedName&     loopvar = mkInitializedName(ident, vartype, &range);
@@ -4220,7 +4230,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_discr;
         ada_task_type_decl_f_discriminants(lal_element, &lal_discr);
 
-        std::string                 ident  = canonical_text_as_string(&lal_identifier);
+        std::string                 ident  = getFullName(&lal_identifier);
 
         //Set up nondef if this isn't the first decl
         ada_base_entity lal_previous_decl;
@@ -4277,7 +4287,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_defining_name, lal_identifier;
         ada_single_protected_decl_f_name(lal_element, &lal_defining_name);
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
-        std::string ident = canonical_text_as_string(&lal_identifier);
+        std::string ident = getFullName(&lal_identifier);
 
         auto spec = getProtectedSpecForSingleProtected(lal_element, ctx);
         SgAdaProtectedSpecDecl& sgnode = mkAdaProtectedSpecDecl(ident, SG_DEREF(spec.first), ctx.scope());
@@ -4305,7 +4315,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_type_decl_f_name(&lal_defining_name, &lal_defining_name);
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
 
-        std::string        ident   = canonical_text_as_string(&lal_identifier);
+        std::string        ident   = getFullName(&lal_identifier);
         int                 hash   = hash_node(&lal_defining_name);
         auto               spec    = getTaskSpecForSingleTask(lal_element, ctx);
         SgAdaTaskSpecDecl& sgnode  = mkAdaTaskSpecDecl(ident, SG_DEREF(spec.first), ctx.scope());
@@ -4336,7 +4346,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_identifier;
         ada_defining_name_f_name(&defining_name, &lal_identifier);
 
-        std::string     ident   = canonical_text_as_string(&lal_identifier);
+        std::string     ident   = getFullName(&lal_identifier);
         int              hash   = hash_node(&defining_name);
 
         //Get the params
@@ -4483,7 +4493,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_defining_name, lal_identifier;
         ada_base_type_decl_f_name(lal_element, &lal_defining_name);
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
-        std::string type_name = canonical_text_as_string(&lal_identifier);
+        std::string type_name = getFullName(&lal_identifier);
         SgScopeStatement*           parentScope = &ctx.scope();
         ada_base_entity             lal_discr;
         ada_type_decl_f_discriminants(lal_element, &lal_discr);
