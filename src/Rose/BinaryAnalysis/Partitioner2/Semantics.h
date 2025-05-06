@@ -362,10 +362,33 @@ MemoryState<Super>::readOrPeekMemory(const InstructionSemantics::BaseSemantics::
             symbolicDefault = val;
         }
 
-        // Read the value from symbolic memory, but the tricky part is that we don't want the symbolic memory to think that we read
-        // an uninitialized value. Therefore, we need to potentially write the value into symbolic memory first.
-        const auto probe = valOps->undefined_(8);
-        if (Super::peekMemory(addr, probe, addrOps, valOps)->mustEqual(probe)) {
+        // Does symbolic memory define this address?
+        const bool isPresentSymbolically = [this, &addr]() {
+            struct CellFinder: BaseSemantics::MemoryCell::Visitor {
+                BaseSemantics::SValue::Ptr needle;
+                bool found = false;
+
+                explicit CellFinder(const BaseSemantics::SValue::Ptr &addr)
+                    : needle(addr) {
+                    ASSERT_not_null(addr);
+                }
+
+                void operator()(BaseSemantics::MemoryCell::Ptr &haystack) override {
+                    ASSERT_not_null(haystack);
+                    if (haystack->address()->mustEqual(needle))
+                        found = true;
+                }
+            } cellFinder(addr);
+            this->traverse(cellFinder);
+            return cellFinder.found;
+        }();
+
+        // Perhaps there is no need to update the symbolic memory.
+        if (!isPresentSymbolically && isInitialized && !isModifiable)
+            return symbolicDefault;
+
+        // But if we do have to update the symbolic memory, do so in a way that makes it look like the value was always there.
+        if (!isPresentSymbolically) {
             SgAsmInstruction *addrInsn = addrOps->currentInstruction(); // order is important because addrOps and valOps
             SgAsmInstruction *valInsn = valOps->currentInstruction();   // might be the same object. Read both of them
             addrOps->currentInstruction(nullptr);                       // before clearing either of them.
