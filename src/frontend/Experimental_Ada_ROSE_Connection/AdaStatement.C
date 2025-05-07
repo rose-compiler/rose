@@ -5909,13 +5909,35 @@ processInheritedSubroutines( SgNamedType& derivedType,
   ctx.storeDeferredUnitCompletion(std::move(deferredSubRoutineProcessing));
 }
 
+
+/// test if a pragma stems from a configuration file or is unavailable.
+/// \details
+///    Under some configuration, gprbuild generates configuration files
+///    containing pragmas that get injected into the AST. In these
+///    cases the Unit_Name only contains the file extension.
+struct PragmaDefinedInUnit
+{
+  bool operator()(Element_ID id)
+  {
+    const Element_Struct* const el  = retrieveElemOpt(elemMap(), id);
+    const bool                  res = el && (std::string{el->Source_Location.Unit_Name}.rfind(".", 0) != 0);
+
+    if (!res)
+      logTrace() << "ignoring configuration pragma without unit file." << std::endl;
+
+    return res;
+  }
+
+  // AstContext ctx;
+};
+
 void processAndPlacePragmas(Pragma_Element_ID_List pragmalst, std::vector<SgScopeStatement*> scopes, AstContext ctx)
 {
   // append all pragmas in pragmalst to the unprocessed pragma list
   ElemIdRange             pragmaRange  = idRange(pragmalst);
   std::vector<Element_ID> pragmaVector;
 
-  std::copy(pragmaRange.first, pragmaRange.second, std::back_inserter(pragmaVector));
+  std::copy_if(pragmaRange.first, pragmaRange.second, std::back_inserter(pragmaVector), PragmaDefinedInUnit{});
   recordPragmasID(std::move(pragmaVector), nullptr /* no available statement */, ctx);
 
   placePragmas(std::move(scopes), ctx);

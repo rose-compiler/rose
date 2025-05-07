@@ -233,13 +233,13 @@ package body Asis_Adapter.Unit is
    begin
       for Compilation_Pragma of Compilation_Pragmas loop
          declare
-            Pragma_Kind : constant Asis.Pragma_Kinds :=
-            Asis.Elements.Pragma_Kind (Compilation_Pragma);
+            Pragma_Kind : constant Asis.Pragma_Kinds := Asis.Elements.Pragma_Kind (Compilation_Pragma);
+
             use all type Asis.Pragma_Kinds;
          begin
-            if Pragma_Kind /= An_Implementation_Defined_Pragma then
-              This.Process_Element_Tree (Compilation_Pragma);
-            end if;
+            This.Process_Element_Tree (Compilation_Pragma);
+         exception
+           when others => null;
          end;
       end loop;
    end Process_Compilation_Pragmas;
