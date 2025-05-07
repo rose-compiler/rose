@@ -1137,6 +1137,7 @@ namespace
   }
 } // anonymous
 
+// \todo we may want to return a variant instead of a pair in C++17
 std::pair<SgInitializedName*, SgAdaRenamingDecl*>
 getExceptionBase(Element_Struct& el, AstContext ctx)
 {
@@ -1148,34 +1149,29 @@ getExceptionBase(Element_Struct& el, AstContext ctx)
   ADA_ASSERT(elem.Element_Kind == An_Expression);
   Expression_Struct& ex  = elem.The_Union.Expression;
 
-  //~ use this if package standard is included
-  //~ return lookupNode(asisExcps(), ex.Corresponding_Name_Definition);
+  // first attempt: look up in user defined exceptions
+  if (SgInitializedName* userex = findFirst(asisExcps(), ex.Corresponding_Name_Definition))
+    return std::make_pair(userex, nullptr);
 
-  // first try: look up in user defined exceptions
-  if (SgInitializedName* ini = findFirst(asisExcps(), ex.Corresponding_Name_Definition))
-    return std::make_pair(ini, nullptr);
-
-  // second try: look up in renamed declarations
-  if (SgDeclarationStatement* dcl = findFirst(asisDecls(), ex.Corresponding_Name_Definition))
+  // second attempt: look up in renamed declarations defined by the user
+  if (SgDeclarationStatement* userdcl = findFirst(asisDecls(), ex.Corresponding_Name_Definition))
   {
-    SgAdaRenamingDecl& rendcl = SG_DEREF(isSgAdaRenamingDecl(dcl));
+    SgAdaRenamingDecl& rendcl = SG_DEREF(isSgAdaRenamingDecl(userdcl));
 
     return std::make_pair(nullptr, &rendcl);
   }
 
-  // third try: look up in exceptions defined in standard
-  if (SgInitializedName* ini = findFirst(adaExcps(), AdaIdentifier{ex.Name_Image}))
-    return std::make_pair(ini, nullptr);
+  // final attempt: look up in exceptions defined in standard
+  SgDeclarationStatement* stddcl = findFirst(adaExcps(), AdaIdentifier{ex.Name_Image});
 
-  // last resort: create a new initialized name representing the exception
-  logError() << "Unknown exception: " << ex.Name_Image << std::endl;
-  ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+  if (SgAdaRenamingDecl* rendcl = isSgAdaRenamingDecl(stddcl))
+    return std::make_pair(nullptr, rendcl);
 
-  // \todo create an SgInitializedName if the exception was not found
-  SgInitializedName& init = mkInitializedName(ex.Name_Image, lookupNode(adaTypes(), AdaIdentifier{"Exception"}), nullptr);
+  SgVariableDeclaration&    vardcl = SG_DEREF(isSgVariableDeclaration(stddcl));
+  SgInitializedNamePtrList& names = vardcl.get_variables();
+  ASSERT_require(names.size() == 1);
 
-  init.set_scope(&ctx.scope());
-  return std::make_pair(&init, nullptr);
+  return { names.front(), nullptr };
 }
 
 
@@ -1423,15 +1419,28 @@ namespace
     return sgnode;
   }
 
-  SgInitializedName&
+  SgVariableDeclaration&
   declareException(const std::string& name, SgType& base, SgAdaPackageSpec& scope)
   {
-    SgInitializedName&              sgnode = mkInitializedName(name, base, nullptr);
-    std::vector<SgInitializedName*> exdecl{ &sgnode };
-    SgVariableDeclaration&          exvar = mkExceptionDecl(exdecl, scope);
+    SgInitializedName&     exname = mkInitializedName(name, base, nullptr);
+    SgVariableDeclaration& sgnode = mkExceptionDecl({ &exname }, scope);
 
-    exvar.set_firstNondefiningDeclaration(&exvar);
-    scope.append_statement(&exvar);
+    sgnode.set_firstNondefiningDeclaration(&sgnode);
+    scope.append_statement(&sgnode);
+    return sgnode;
+  }
+
+  SgAdaRenamingDecl&
+  renameException(const std::string& name, SgVariableDeclaration& other, SgAdaPackageSpec& scope)
+  {
+    SgInitializedNamePtrList& exlist = other.get_variables();
+    ASSERT_require(exlist.size() == 1);
+
+    SgInitializedName&        exname = SG_DEREF(exlist.front());
+    SgExpression&             otherref = mkExceptionRef(exname, scope);
+    SgAdaRenamingDecl&        sgnode = mkAdaRenamingDecl(name, otherref, SG_DEREF(exname.get_type()), scope);
+
+    scope.append_statement(&sgnode);
     return sgnode;
   }
 
@@ -1452,8 +1461,7 @@ namespace
   // declares binary and unary operator declarations
   //   (all arguments are called left, right and right respectively)
   // see https://www.adaic.org/resources/add_content/standards/05rm/html/RM-A-1.html
-  void declareOp(
-                  map_t<OperatorKey, std::vector<OperatorDesc> >& fns,
+  void declareOp( map_t<OperatorKey, std::vector<OperatorDesc> >& fns,
                   //~ map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> >& fns,
                   const std::string& name,
                   SgType& retty,
@@ -1753,10 +1761,13 @@ void initializePkgStandard(SgGlobal& global)
   adaTypes()["WIDE_WIDE_STRING"]    = &adaWideWideStringType;
 
   // Ada standard exceptions
-  adaExcps()["CONSTRAINT_ERROR"]    = &declareException("Constraint_Error", exceptionType, stdspec);
-  adaExcps()["PROGRAM_ERROR"]       = &declareException("Program_Error",    exceptionType, stdspec);
-  adaExcps()["STORAGE_ERROR"]       = &declareException("Storage_Error",    exceptionType, stdspec);
-  adaExcps()["TASKING_ERROR"]       = &declareException("Tasking_Error",    exceptionType, stdspec);
+  SgVariableDeclaration& constraintError = declareException("Constraint_Error", exceptionType, stdspec);
+
+  adaExcps()["CONSTRAINT_ERROR"]    = &constraintError;
+  adaExcps()["PROGRAM_ERROR"]       = &declareException("Program_Error", exceptionType, stdspec);
+  adaExcps()["STORAGE_ERROR"]       = &declareException("Storage_Error", exceptionType, stdspec);
+  adaExcps()["TASKING_ERROR"]       = &declareException("Tasking_Error", exceptionType, stdspec);
+  adaExcps()["NUMERIC_ERROR"]       = &renameException("Numeric_Error", constraintError, stdspec);
 
   // added packages
   adaPkgs()["STANDARD"]             = &stdpkg;

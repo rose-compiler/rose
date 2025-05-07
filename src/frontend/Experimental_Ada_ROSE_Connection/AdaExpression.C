@@ -1399,29 +1399,32 @@ namespace
             AdaIdentifier adaIdent{expr.Name_Image};
 
             // after there was no matching declaration, try to look up declarations in the standard package by name
-            if (SgType* ty = findFirst(adaTypes(), adaIdent))
+            if (SgType* stdty = findFirst(adaTypes(), adaIdent))
             {
-              res = &mkTypeExpression(*ty);
+              res = &mkTypeExpression(*stdty);
             }
             else if (SgInitializedName* fld = queryByNameInDeclarationID(adaIdent, expr.Corresponding_Name_Declaration, ctx))
             {
-              //~ res = sb::buildVarRefExp(fld, &ctx.scope());
+              // looked up in generic context (?)
               res = &mkVarRefExp(*fld);
             }
-            else if (SgInitializedName* var = findFirst(adaVars(), adaIdent))
+            else if (SgInitializedName* stdvar = findFirst(adaVars(), adaIdent))
             {
-              res = &mkVarRefExp(*var);
+              res = &mkVarRefExp(*stdvar);
             }
-            else if (SgInitializedName* exc = findFirst(adaExcps(), adaIdent))
+            else if (SgDeclarationStatement* stdex = findFirst(adaExcps(), adaIdent))
             {
-              res = &mkExceptionRef(*exc, ctx.scope());
+              if (SgAdaRenamingDecl* stdrendcl = isSgAdaRenamingDecl(stdex))
+                res = &mkAdaRenamingRefExp(*stdrendcl);
+              else
+              {
+                SgVariableDeclaration&    stdexdcl = SG_DEREF(isSgVariableDeclaration(stdex));
+                SgInitializedNamePtrList& stdex = stdexdcl.get_variables();
+                ASSERT_require(stdex.size() == 1);
+
+                res = &mkExceptionRef(SG_DEREF(stdex.front()), ctx.scope());
+              }
             }
-/*
-            else if (SgInitializedName* dsc = getRefFromDeclarationContext(expr, adaIdent, ctx))
-            {
-              res = &mkVarRefExp(*dsc);
-            }
-*/
             else
             {
               SgScopeStatement& scope = scopeForUnresolvedNames(ctx);

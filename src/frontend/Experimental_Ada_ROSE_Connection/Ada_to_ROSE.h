@@ -183,7 +183,11 @@ map_t<int, SgBasicBlock*>& asisBlocks();
 map_t<AdaIdentifier, SgType*>& adaTypes();
 
 /// returns a mapping from string to builtin exception types
-map_t<AdaIdentifier, SgInitializedName*>& adaExcps();
+/// \note the DeclarationStatement can either resolve
+///       to an SgVariableDeclaration holding the exception as its first initialized name,
+///       or to an SgAdaRenamingDecl to some other Exception (i.e. Numeric_Error on Ada95+).
+/// \todo consider using an std::variant instead (C++17).
+map_t<AdaIdentifier, SgDeclarationStatement*>& adaExcps();
 
 /// returns a mapping from string to builtin exception types
 map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs();

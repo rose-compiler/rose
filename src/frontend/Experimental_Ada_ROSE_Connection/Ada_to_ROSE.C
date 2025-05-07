@@ -68,7 +68,7 @@ namespace
   map_t<AdaIdentifier, SgType*> adaTypesMap;
 
   /// stores a mapping from string to builtin exception nodes
-  map_t<AdaIdentifier, SgInitializedName*> adaExcpsMap;
+  map_t<AdaIdentifier, SgDeclarationStatement*> adaExcpsMap;
 
   /// stores a mapping from string to builtin exception nodes
   map_t<AdaIdentifier, SgAdaPackageSpecDecl*> adaPkgsMap;
@@ -106,7 +106,7 @@ map_t<int, SgDeclarationStatement*>&                      asisDecls()        { r
 map_t<int, SgDeclarationStatement*>&                      asisTypes()        { return asisTypesMap;       }
 map_t<int, SgBasicBlock*>&                                asisBlocks()       { return asisBlocksMap;      }
 map_t<AdaIdentifier, SgType*>&                            adaTypes()         { return adaTypesMap;        }
-map_t<AdaIdentifier, SgInitializedName*>&                 adaExcps()         { return adaExcpsMap;        }
+map_t<AdaIdentifier, SgDeclarationStatement*>&            adaExcps()         { return adaExcpsMap;        }
 map_t<AdaIdentifier, SgAdaPackageSpecDecl*>&              adaPkgs()          { return adaPkgsMap;         }
 map_t<AdaIdentifier, SgInitializedName*>&                 adaVars()          { return adaVarsMap;         }
 //~ map_t<AdaIdentifier, FunctionVector>&                     adaFuncs()         { return adaFuncsMap;        }

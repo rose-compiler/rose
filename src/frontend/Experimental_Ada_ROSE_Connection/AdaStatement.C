@@ -5480,8 +5480,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Exception_Renaming_Declaration:        // 8.5.2(2)
       {
-        //~ using ExBasePair = std::pair<SgInitializedName*, SgAdaRenamingDecl*>;
-
         logKind("An_Exception_Renaming_Declaration", elem.ID);
 
         NameData           adaname = singleName(decl, ctx);
