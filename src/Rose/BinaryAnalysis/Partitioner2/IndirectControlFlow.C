@@ -460,8 +460,6 @@ public:
         ASSERT_not_null(src);
         const auto dstVert = dfGraph.findVertex(dstId);
         ASSERT_require(dfGraph.isValidVertex(dstVert));
-        const auto srcVert = dfGraph.findVertex(dstId);
-        ASSERT_require(dfGraph.isValidVertex(srcVert));
         const BS::RiscOperators::Ptr ops = notnull(operators());
 
         // Symbolic expression for the expected successor(s)
@@ -1075,10 +1073,11 @@ public:
             }
             SAWYER_MESG(debug) <<"    address from which it was read: " <<*jumpTableAddrExpr <<"\n";
 
-            bool isWritable = false;
             const std::set<Address> constants = findInterestingConstants(jumpTableAddrExpr);
             for (const Address tableAddr: constants) {
                 SAWYER_MESG(debug) <<"    potential table address " <<addrToString(tableAddr) <<"\n";
+
+                bool isWritable = false;
                 if (!isMappedAccess(partitioner->memoryMap(), tableAddr, MemoryMap::NO_ACCESS, MemoryMap::WRITABLE)) {
                     SAWYER_MESG(debug) <<"      potential table entry is writable\n";
                     isWritable = true;
@@ -1124,8 +1123,11 @@ public:
                 AddrsAndPaths retval;
                 for (const Address successor: successors)
                     retval.push_back(std::make_pair(SymbolicExpression::makeIntegerConstant(ip->nBits(), successor), path));
-                if (isWritable)
-                    retval.push_back(std::make_pair(SymbolicExpression::makeIntegerVariable(ip->nBits()), path));
+                if (isWritable) {
+                    const auto indet = SymbolicExpression::makeIntegerVariable(ip->nBits());
+                    SAWYER_MESG(debug) <<"        target " <<*indet <<" (because table is not read-only)\n";
+                    retval.push_back(std::make_pair(indet, path));
+                }
                 return retval;
             }
         }
@@ -1594,7 +1596,8 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
         // resolved (i.e., concrete) then we're done with that value.
         Resolver::AddrsAndPaths successors;
         successors.push_back(std::make_pair(ip, path)); // start things off with the instruction pointer from the semantic state
-        while (true) {
+        for (size_t i = 0; true; ++i) {
+            SAWYER_MESG(debug) <<"  === resolver pass " <<i <<" ===\n";
             bool changed = false;
             for (const auto &resolver: resolvers) {
                 Resolver::AddrsAndPaths next;           // the next set of IP expressions over which to iterate.
@@ -1620,6 +1623,10 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
             }
             if (!changed)
                 break;
+            if (i > 5 /*arbitrary*/) {
+                SAWYER_MESG(mlog[WARN]) <<"possible infinite loop avoided in ICF analyzeBasicBlock\n";
+                break;
+            }
         }
 
         // Update the basic block successors. The new successors replace the original indeterminate successor and have the same
