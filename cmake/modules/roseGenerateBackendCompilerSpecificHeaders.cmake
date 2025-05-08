@@ -93,16 +93,27 @@ foreach(header ${SSE_headers})
     COPYONLY)
 endforeach()
 
-if(VERBOSE)
-  message(STATUS "generating header file for builtin functions...")
-endif()
-execute_process(
-  OUTPUT_FILE ${CMAKE_BINARY_DIR}/include-staging/${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/rose_generated_builtin_functions.h
-  COMMAND ${CMAKE_SOURCE_DIR}/scripts/builtinLlvmFunctions.pl
-    --constexpr=${CMAKE_SOURCE_DIR}/config/constexpr_builtins.def ${CMAKE_SOURCE_DIR}/config/Builtins.def)
+if(PERL_FOUND)
+  if(VERBOSE)
+    message(STATUS "generating header file for builtin functions...")
+  endif()
+  execute_process(
+    OUTPUT_FILE ${CMAKE_BINARY_DIR}/include-staging/${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/rose_generated_builtin_functions.h
+    COMMAND ${CMAKE_SOURCE_DIR}/scripts/builtinLlvmFunctions.pl
+      --constexpr=${CMAKE_SOURCE_DIR}/config/constexpr_builtins.def ${CMAKE_SOURCE_DIR}/config/Builtins.def)
 
-if(VERBOSE)
-  message(STATUS "adding contents of rose_generated_builtin_functions.h to rose_edg_required_macros_and_functions.h...")
+  if(VERBOSE)
+    message(STATUS "adding contents of rose_generated_builtin_functions.h to rose_edg_required_macros_and_functions.h...")
+  endif()
+else()
+  if(VERBOSE)
+    message(STATUS "Perl not found. Using pre-generated builtins")
+  endif()
+
+  file(COPY ${CMAKE_SOURCE_DIR}/cmake/rose_generated_builtin_functions.h.pre
+  DESTINATION ${CMAKE_BINARY_DIR}/include-staging/${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/)
+  file(RENAME ${CMAKE_BINARY_DIR}/include-staging/${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/rose_generated_builtin_functions.h.pre
+              ${CMAKE_BINARY_DIR}/include-staging/${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS/rose_generated_builtin_functions.h)
 endif()
 
 execute_process(

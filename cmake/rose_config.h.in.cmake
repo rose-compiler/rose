@@ -1,25 +1,15 @@
 /* -*- c -*-
  *
- * DQ (10/16/2010): Comment added to clarify how this works and how to set macros.  This is not an automatically generated
- * file, it is checked into git as a regular file. Then it is used to generate the rose_config.h file in the cmake build tree.
- *
  * If new macros are defined they should be defined using either define or cmakedefine.  Define macros will always be defined
  * however they are set in this file, while cmakedefine will be set or left unset based on the cmake configurations step
- * (running cmake before running make within the build process).
+ * (running cmake before running make within the build process). Values should not be hardcoded and should be based on
+ * the cmake configuration. Do not include conditional logic in this file.
  *
- * Since this file is contains name-space pollution (symbols not beginning with "ROSE_") it must be processed in order to
- * create a non-polluting file (rosePublicConfig.h) for inclusion into user code (either directly or via other ROSE public
- * header files). The script that does this (publicConfiguration.pl) reads the rose_config.h file and copies (while renaming)
- * certain "#define" lines. Therefore, don't put the "#define" inside conditional compilation--the conditional compilation
- * will not be copied (and cannot be since the conditions contain polluting symbols).
+ * Since this file is contains name-space pollution (symbols not beginning with "ROSE_") there is a seperate file
+ * (rosePublicConfig.h.in.cmake) to create a non-polluting file (rosePublicConfig.h) for inclusion into user code (either directly 
+ * or via other ROSE public header files). To include a define in both you must edit both files. Defines in rosePublicConfig.h
+ * MUST have "ROSE_" at the start.
  * 
- * TSG (6/26/24) ConfigureChecks.cmake is used to assign the appropriate value for these variables.
- *               We don't wan't to hard code anything in here
- * TSG (2/3/25)  It's best to not put logic in this file 
- *               Almost always do this: #define MYMACRO "@MYMACRO@"
- *               #cmakedefine01 for bool vars 
- *               Almost never do this: #define MYMACRO ${DIFFERENT_CMAKE_VARIABLE} 
- *               This creates potential mismatches and confusion
  */
 
 // VERSIONING 

@@ -176,4 +176,3 @@ add_custom_command(
 
 # a custom target depending on generated rosetta source and header files to trigger the building process
 add_custom_target(rosetta_generated ALL DEPENDS ${ROSETTA_HEADERS} ${ROSETTA_SRC} ${STORAGECLASSES_SRC})
-add_dependencies(rosetta_generated generate_rosePublicConfig)

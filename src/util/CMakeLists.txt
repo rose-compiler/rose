@@ -62,7 +62,6 @@ set(rose_util_src
   rose_strtoull.C)
 
 add_library(util_main OBJECT ${rose_util_src})
-add_dependencies(util_main generate_rosePublicConfig)
 
 add_library(roseUtil INTERFACE)
 target_sources(roseUtil INTERFACE

@@ -687,7 +687,7 @@ include(MacroLibrary)
 include(FindMySQL)
 find_package(OpenSSL)
 
-find_package(Perl REQUIRED)
+find_package(Perl)
 
 ########################################################################################################################
 # Miscellaneous user-selectable features
@@ -950,9 +950,6 @@ if((NOT WIN32) AND (ENABLE-BINARY-ANALYSIS))
 endif()
 
 find_package(FLEX)
-if((NOT FLEX_FOUND) AND (ENABLE-C))
-  message(FATAL_ERROR "Could not find flex command")
-endif()
 
 # Find libm.so, libquadmath.so for C Support on Linux and find librt.so for Linux systems
 if(NOT WIN32 AND NOT APPLE)
@@ -1560,13 +1557,18 @@ endif()
 # This file should not be installed and should not be #include'd into user-level code because it pollutes the global
 # name space.  This needs to be here at the end in order to catch all the variables defined above such as compiler
 # names, versions, etc.
-configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}/rose_config.h)
+configure_file(${ROSE_TOP_SRC_DIR}/cmake/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}/rose_config.h)
 
 # Public configuration file.
 #
-# The rosePublicConfig.h header is generated from rose_config.h by copying certain CPP macros from rose_config.h to
-# rosePublicConfig.h and changing their names so as not to pollute the global name space.  See
-# scripts/publicConfiguration.pl for details.
+# The rosePublicConfig.h header is a subset of config variables prepended with ROSE_ to avoid
+# polluting a users namespace.
+set(ROSE_HAVE_SQLITE3 ${HAVE_SQLITE3})
+set(ROSE_HAVE_PTHREAD_H ${HAVE_PTHREAD_H})
+set(ROSE_USE_CMAKE ${USE_CMAKE})
+set(ROSE_HAVE_BOOST_SERIALIZATION_LIB ${HAVE_BOOST_SERIALIZATION_LIB})
+
+configure_file(${ROSE_TOP_SRC_DIR}/cmake/rosePublicConfig.h.in.cmake ${ROSE_TOP_BINARY_DIR}/rosePublicConfig.h)
 
 ########################################################################################################################
 # Ancillary ROSE components. These are things that are not part of the ROSE library.
