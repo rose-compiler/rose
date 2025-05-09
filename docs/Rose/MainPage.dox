@@ -33,8 +33,12 @@
  *
  * User-oriented ROSE API documentation can also be found at the [ROSE Programming Manual](https://rpm.is/rose).
  *
- * All other documentations of ROSE can be found at [github ROSE wiki](https://github.com/rose-compiler/rose/wiki) . 
+ * All other documentations of ROSE can be found at [github ROSE wiki](https://github.com/rose-compiler/rose/wiki). 
  *
+ * ROSE can now be explored using [DeepWiki](https://deepwiki.com/rose-compiler/rose), which offers several features:
+ *   - AI-generated wiki pages documenting the ROSE code base
+ *   - Visual diagrams of the ROSE architecture and components
+ *   - Interactive question-answering system for any code base inquiries
  *  <!-- Note: The ROSE web-page is listed here intentionally. Even if this Doxygen mainpage ever replaces the front page at
  *       rosecompiler.org, we still want users that generated their own local copy of the website to be able to click on this
  *       link and go to ROSE's public website. [Robb P. Matzke 2015-09-25] -->
