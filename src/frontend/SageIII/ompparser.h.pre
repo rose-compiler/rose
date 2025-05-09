@@ -1,0 +1,205 @@
+/* DO NOT EDIT - DO NOT EDIT - DO NOT EDIT - DO NOT EDIT */
+/* THIS FILE IS AUTO-GENERATED FROM ompparser.yy */
+
+/* A Bison parser, made by GNU Bison 3.7.4.  */
+
+/* Bison interface for Yacc-like parsers in C
+
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Inc.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+/* As a special exception, you may create a larger work that contains
+   part or all of the Bison parser skeleton and distribute that work
+   under terms of your choice, so long as that work isn't itself a
+   parser generator using the skeleton or a modified version thereof
+   as a parser skeleton.  Alternatively, if you modify or redistribute
+   the parser skeleton itself, you may (at your option) remove this
+   special exception, which will cause the skeleton and the resulting
+   Bison output files to be licensed under the GNU General Public
+   License without this special exception.
+
+   This special exception was added by the Free Software Foundation in
+   version 2.2 of Bison.  */
+
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
+#ifndef YY_OMP_EXPORT_TMP_PINNOW2_MINIMAL_ROSE_BUILD_VALIDATE_ALL_SRC_FRONTEND_SAGEIII_OMPPARSER_H_INCLUDED
+# define YY_OMP_EXPORT_TMP_PINNOW2_MINIMAL_ROSE_BUILD_VALIDATE_ALL_SRC_FRONTEND_SAGEIII_OMPPARSER_H_INCLUDED
+/* Debug traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int omp_debug;
+#endif
+
+/* Token kinds.  */
+#ifndef YYTOKENTYPE
+# define YYTOKENTYPE
+  enum yytokentype
+  {
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    OMP = 258,                     /* OMP  */
+    PARALLEL = 259,                /* PARALLEL  */
+    IF = 260,                      /* IF  */
+    NUM_THREADS = 261,             /* NUM_THREADS  */
+    ORDERED = 262,                 /* ORDERED  */
+    SCHEDULE = 263,                /* SCHEDULE  */
+    STATIC = 264,                  /* STATIC  */
+    DYNAMIC = 265,                 /* DYNAMIC  */
+    GUIDED = 266,                  /* GUIDED  */
+    RUNTIME = 267,                 /* RUNTIME  */
+    SECTIONS = 268,                /* SECTIONS  */
+    SINGLE = 269,                  /* SINGLE  */
+    NOWAIT = 270,                  /* NOWAIT  */
+    SECTION = 271,                 /* SECTION  */
+    FOR = 272,                     /* FOR  */
+    MASTER = 273,                  /* MASTER  */
+    CRITICAL = 274,                /* CRITICAL  */
+    BARRIER = 275,                 /* BARRIER  */
+    ATOMIC = 276,                  /* ATOMIC  */
+    FLUSH = 277,                   /* FLUSH  */
+    TARGET = 278,                  /* TARGET  */
+    UPDATE = 279,                  /* UPDATE  */
+    DIST_DATA = 280,               /* DIST_DATA  */
+    BLOCK = 281,                   /* BLOCK  */
+    DUPLICATE = 282,               /* DUPLICATE  */
+    CYCLIC = 283,                  /* CYCLIC  */
+    THREADPRIVATE = 284,           /* THREADPRIVATE  */
+    PRIVATE = 285,                 /* PRIVATE  */
+    COPYPRIVATE = 286,             /* COPYPRIVATE  */
+    FIRSTPRIVATE = 287,            /* FIRSTPRIVATE  */
+    LASTPRIVATE = 288,             /* LASTPRIVATE  */
+    SHARED = 289,                  /* SHARED  */
+    DEFAULT = 290,                 /* DEFAULT  */
+    NONE = 291,                    /* NONE  */
+    REDUCTION = 292,               /* REDUCTION  */
+    COPYIN = 293,                  /* COPYIN  */
+    TASK = 294,                    /* TASK  */
+    TASKWAIT = 295,                /* TASKWAIT  */
+    UNTIED = 296,                  /* UNTIED  */
+    COLLAPSE = 297,                /* COLLAPSE  */
+    AUTO = 298,                    /* AUTO  */
+    DECLARE = 299,                 /* DECLARE  */
+    DATA = 300,                    /* DATA  */
+    DEVICE = 301,                  /* DEVICE  */
+    MAP = 302,                     /* MAP  */
+    ALLOC = 303,                   /* ALLOC  */
+    TO = 304,                      /* TO  */
+    FROM = 305,                    /* FROM  */
+    TOFROM = 306,                  /* TOFROM  */
+    PROC_BIND = 307,               /* PROC_BIND  */
+    CLOSE = 308,                   /* CLOSE  */
+    SPREAD = 309,                  /* SPREAD  */
+    SIMD = 310,                    /* SIMD  */
+    SAFELEN = 311,                 /* SAFELEN  */
+    ALIGNED = 312,                 /* ALIGNED  */
+    LINEAR = 313,                  /* LINEAR  */
+    UNIFORM = 314,                 /* UNIFORM  */
+    INBRANCH = 315,                /* INBRANCH  */
+    NOTINBRANCH = 316,             /* NOTINBRANCH  */
+    MPI = 317,                     /* MPI  */
+    MPI_ALL = 318,                 /* MPI_ALL  */
+    MPI_MASTER = 319,              /* MPI_MASTER  */
+    TARGET_BEGIN = 320,            /* TARGET_BEGIN  */
+    TARGET_END = 321,              /* TARGET_END  */
+    LOGAND = 322,                  /* LOGAND  */
+    LOGOR = 323,                   /* LOGOR  */
+    SHLEFT = 324,                  /* SHLEFT  */
+    SHRIGHT = 325,                 /* SHRIGHT  */
+    PLUSPLUS = 326,                /* PLUSPLUS  */
+    MINUSMINUS = 327,              /* MINUSMINUS  */
+    PTR_TO = 328,                  /* PTR_TO  */
+    LE_OP2 = 329,                  /* LE_OP2  */
+    GE_OP2 = 330,                  /* GE_OP2  */
+    EQ_OP2 = 331,                  /* EQ_OP2  */
+    NE_OP2 = 332,                  /* NE_OP2  */
+    RIGHT_ASSIGN2 = 333,           /* RIGHT_ASSIGN2  */
+    LEFT_ASSIGN2 = 334,            /* LEFT_ASSIGN2  */
+    ADD_ASSIGN2 = 335,             /* ADD_ASSIGN2  */
+    SUB_ASSIGN2 = 336,             /* SUB_ASSIGN2  */
+    MUL_ASSIGN2 = 337,             /* MUL_ASSIGN2  */
+    DIV_ASSIGN2 = 338,             /* DIV_ASSIGN2  */
+    MOD_ASSIGN2 = 339,             /* MOD_ASSIGN2  */
+    AND_ASSIGN2 = 340,             /* AND_ASSIGN2  */
+    XOR_ASSIGN2 = 341,             /* XOR_ASSIGN2  */
+    OR_ASSIGN2 = 342,              /* OR_ASSIGN2  */
+    DEPEND = 343,                  /* DEPEND  */
+    IN = 344,                      /* IN  */
+    OUT = 345,                     /* OUT  */
+    INOUT = 346,                   /* INOUT  */
+    MERGEABLE = 347,               /* MERGEABLE  */
+    LEXICALERROR = 348,            /* LEXICALERROR  */
+    IDENTIFIER = 349,              /* IDENTIFIER  */
+    MIN = 350,                     /* MIN  */
+    MAX = 351,                     /* MAX  */
+    READ = 352,                    /* READ  */
+    WRITE = 353,                   /* WRITE  */
+    CAPTURE = 354,                 /* CAPTURE  */
+    SIMDLEN = 355,                 /* SIMDLEN  */
+    FINAL = 356,                   /* FINAL  */
+    PRIORITY = 357,                /* PRIORITY  */
+    ICONSTANT = 358,               /* ICONSTANT  */
+    EXPRESSION = 359,              /* EXPRESSION  */
+    ID_EXPRESSION = 360            /* ID_EXPRESSION  */
+  };
+  typedef enum yytokentype yytoken_kind_t;
+#endif
+
+/* Value type.  */
+#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+union YYSTYPE
+{
+
+  int itype;
+          double ftype;
+          const char* stype;
+          void* ptype; /* For expressions */
+        
+
+
+
+};
+typedef union YYSTYPE YYSTYPE;
+# define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
+#endif
+
+/* Location type.  */
+#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
+typedef struct YYLTYPE YYLTYPE;
+struct YYLTYPE
+{
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+};
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+#endif
+
+
+extern YYSTYPE omp_lval;
+extern YYLTYPE omp_lloc;
+int omp_parse (void);
+
+#endif /* !YY_OMP_EXPORT_TMP_PINNOW2_MINIMAL_ROSE_BUILD_VALIDATE_ALL_SRC_FRONTEND_SAGEIII_OMPPARSER_H_INCLUDED  */
