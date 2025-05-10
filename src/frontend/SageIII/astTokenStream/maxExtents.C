@@ -1,8 +1,7 @@
 #include "sage3basic.h"
+#include "maxExtents.h"
 
 using namespace std;
-
-#include "maxExtents.h"
 
 MaxSourceExtents::InheritedAttribute::InheritedAttribute(SgSourceFile* input_sourceFile, int input_start_line, int input_start_column, int input_end_line, int input_end_column, bool processed) 
    : processChildNodes(processed),
@@ -12,13 +11,9 @@ MaxSourceExtents::InheritedAttribute::InheritedAttribute(SgSourceFile* input_sou
      start_column = input_start_column;
      end_line     = input_end_line;
      end_column   = input_end_column;
-
-#if 0
-     printf ("In InheritedAttribute constructor: start_line = %d start_column %d end_line = %d end_column = %d \n",start_line,start_column,end_line,end_column);
-#endif
    }
 
-MaxSourceExtents::InheritedAttribute::InheritedAttribute ( const InheritedAttribute & X ) 
+MaxSourceExtents::InheritedAttribute::InheritedAttribute(const InheritedAttribute & X)
    : processChildNodes(X.processChildNodes),
      sourceFile(X.sourceFile)
    {
@@ -28,27 +23,20 @@ MaxSourceExtents::InheritedAttribute::InheritedAttribute ( const InheritedAttrib
      end_column   = X.end_column;
    }
 
-
 MaxSourceExtents::SynthesizedAttribute::SynthesizedAttribute()
    {
-#if 0
-     printf ("In SynthesizedAttribute(): default constructor \n");
-#endif
-     node = NULL;
+     node = nullptr;
    }
 
 MaxSourceExtents::SynthesizedAttribute::SynthesizedAttribute(SgNode* n, int input_start_line, int input_start_column, int input_end_line, int input_end_column)
    {
-     ROSE_ASSERT(n != NULL);
+     ASSERT_not_null(n);
 
      start_line   = input_start_line;
      start_column = input_start_column;
      end_line     = input_end_line;
      end_column   = input_end_column;
 
-#if 0
-     printf ("In SynthesizedAttribute(SgNode* n) constructor: n = %p = %s start_line = %d start_column %d end_line = %d end_column = %d \n",n,n->class_name().c_str(),start_line,start_column,end_line,end_column);
-#endif
      node = n;
    }
 
@@ -60,23 +48,13 @@ MaxSourceExtents::SynthesizedAttribute::SynthesizedAttribute(const SynthesizedAt
      start_column = X.start_column;
      end_line     = X.end_line;
      end_column   = X.end_column;
-
-#if 0
-     printf ("In SynthesizedAttribute(const SynthesizedAttribute & X): copy constructor: n = %p = %s start_line = %d start_column %d end_line = %d end_column = %d \n",X.node,(X.node != NULL) ? X.node->class_name().c_str() : "null",start_line,start_column,end_line,end_column);
-#endif
    }
-
 
 MaxSourceExtents::InheritedAttribute
-MaxSourceExtents::SourceExtentsTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute inheritedAttribute)
+MaxSourceExtents::SourceExtentsTraversal::evaluateInheritedAttribute(SgNode* /*n*/, InheritedAttribute inheritedAttribute)
    {
-#if 0
-     printf ("In SourceExtentsTraversal::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
-#endif
-
      return inheritedAttribute;
    }
-
 
 MaxSourceExtents::SynthesizedAttribute
 MaxSourceExtents::SourceExtentsTraversal::evaluateSynthesizedAttribute (SgNode* n, InheritedAttribute inheritedAttribute, SubTreeSynthesizedAttributes childAttributes )
@@ -90,17 +68,12 @@ MaxSourceExtents::SourceExtentsTraversal::evaluateSynthesizedAttribute (SgNode* 
      const int max_value = 9999999;
 
      SgLocatedNode* this_locatedNode = isSgLocatedNode(n);
-     if (this_locatedNode == NULL) {
+     if (this_locatedNode == nullptr) {
           return SynthesizedAttribute(n,max_value,max_value,0,0);
      }
      bool isInSameFile = this_locatedNode->get_startOfConstruct()->isSameFile(inheritedAttribute.sourceFile);
 #if DEBUG_evaluateSynthesizedAttribute
      printf ("isInSameFile = %s \n",isInSameFile ? "true" : "false");
-#endif
-#if 0
-     if (isInSameFile == false) {
-          printf ("Warning: SourceExtentsTraversal::evaluateSynthesizedAttribute(): skipping processing: (isInSameFile == false) \n");
-     }
 #endif
 
      bool isCompilerGenerated = this_locatedNode->isCompilerGenerated();
@@ -128,18 +101,14 @@ MaxSourceExtents::SourceExtentsTraversal::evaluateSynthesizedAttribute (SgNode* 
 
      for (size_t i = 0; i < childAttributes.size(); i++)
         {
-       // ROSE_ASSERT(childAttributes[i].node != NULL);
-
           string child_name = n->get_traversalSuccessorNamesContainer()[i];
 
-          if (childAttributes[i].node != NULL)
+          if (childAttributes[i].node != nullptr)
              {
 #if DEBUG_evaluateSynthesizedAttribute
                printf ("   ---   --- child = %p = %s = %s \n",childAttributes[i].node,child_name.c_str(),childAttributes[i].node->class_name().c_str());
 #endif
-               ROSE_ASSERT(isSgLocatedNode(childAttributes[i].node));
-
-            // bool child_isCompilerGenerated = child_locatedNode->isCompilerGenerated();
+               ASSERT_require(isSgLocatedNode(childAttributes[i].node));
 
             // Get the child values from the child attribute (not the asociated IR node.
                int child_start_line   = childAttributes[i].start_line;
@@ -238,10 +207,9 @@ MaxSourceExtents::SourceExtentsTraversal::evaluateSynthesizedAttribute (SgNode* 
      return return_attribute;
    }
 
-
 void MaxSourceExtents::computeMaxSourceExtents(SgSourceFile* sourceFile, SgNode* n, int & start_line, int & start_column, int & end_line, int & end_column)
    {
-     ROSE_ASSERT(sourceFile != NULL);
+     ASSERT_not_null(sourceFile);
 
      const int max_value = 9999999;
 
@@ -253,7 +221,6 @@ void MaxSourceExtents::computeMaxSourceExtents(SgSourceFile* sourceFile, SgNode*
      bool processed = true;
 
      InheritedAttribute inheritedAttribute(sourceFile,start_line,start_column,end_line,end_column,processed);
-
      SourceExtentsTraversal traversal;
 
      SynthesizedAttribute return_attribute = traversal.traverse(n,inheritedAttribute);
@@ -262,13 +229,4 @@ void MaxSourceExtents::computeMaxSourceExtents(SgSourceFile* sourceFile, SgNode*
      start_column = return_attribute.start_column;
      end_line     = return_attribute.end_line;
      end_column   = return_attribute.end_column;
-
-#if 0
-     printf ("In computeMaxSourceExtents(): start_line = %d start_column = %d end_line = %d end_column = %d \n",start_line,start_column,end_line,end_column);
-#endif
-#if 0
-     printf ("Exiting as a test in MaxSourceExtents::computeMaxSourceExtents() \n");
-     ROSE_ABORT();
-#endif
    }
-
