@@ -4442,7 +4442,7 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
            printf ("Inside of SgFile::compileOutput() \n");
            printf ("   --- get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
            printf ("***************************************************** \n\n\n");
-	}
+        }
 
   // This function does the final compilation of the unparsed file
   // Remaining arguments from the original compile time are used as well
@@ -4498,8 +4498,8 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
                 if ( debugProjectCompileCommandLineWithArgs )
                    {
                       printf ("In SgFile::compileOutput(): project->get_unparse_in_same_directory_as_input_file() = %s \n",
-	              project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
-		   }
+                      project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
+                   }
                 if (project->get_unparse_in_same_directory_as_input_file() == true)
                    {
                       outputFilename = Rose::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
@@ -4651,8 +4651,8 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
                if ( debugProjectCompileCommandLineWithArgs )
                   {
                      printf ("In SgFile::compileOutput():  addCompileOnlyFlag = %s \n", 
-		        addCompileOnlyFlag ? "true" : "false");
-		  }
+                        addCompileOnlyFlag ? "true" : "false");
+                  }
 
                if (addCompileOnlyFlag == true)
                   {
@@ -4663,7 +4663,7 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
                if ( debugProjectCompileCommandLineWithArgs )
                   {
                      printf ("In SgFile::compileOutput(): get_skipfinalCompileStep() == false: get_compileOnly() == true: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
-		  }
+                  }
              }
 
           if (get_Java_only() == true)
@@ -4687,7 +4687,7 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
        if ( debugProjectCompileCommandLineWithArgs || showBackendCommandLine )
           {
              printf ("In SgFile::compileOutput(): Calling systemFromVector(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
-	  }
+          }
 
        // DQ (2/20/2013): The timer used in TimingPerformance is now fixed to properly record elapsed wall clock time.
        // CAVE3 double check that is correct and shouldn't be compilerCmdLine

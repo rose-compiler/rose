@@ -23,7 +23,7 @@ void CollectDependences::CollectFromFile(std::istream& input_file) {
             while ((input_file >> next_string).good()) {
                 Log.push("reading " + next_string);
                 if (next_string == ";") {
-		   if (source != "") {
+                   if (source != "") {
                      save_dependence(DependenceEntry(dest, source, dep_type, attr));
                      source = attr = "";
                      Log.push( source + "->" + dest + "[" + dep_type + "]");
@@ -79,9 +79,9 @@ void CollectTransitiveDependences:: save_dependence(const DependenceEntry& e) {
 }
 
 void CollectTransitiveDependences:: Compute(
-		const std::string& input, 
-		std::set<std::string>& result, 
-		const std::function<bool(const DependenceEntry&)>* what_to_do) {
+                const std::string& input, 
+                std::set<std::string>& result, 
+                const std::function<bool(const DependenceEntry&)>* what_to_do) {
     DebugLog Log("-debug-dep-table");
     if (result.find(input) != result.end()) {
       // Transitively collect more results only if it hasn't yet been done.
@@ -105,8 +105,8 @@ void CollectTransitiveDependences:: Compute(
 }
 
 void CollectTransitiveDependences :: Compute(const std::vector<std::string>& input,
-		std::set<std::string>* result, 
-		const std::function<bool(const DependenceEntry&)>* what_to_do) {
+                std::set<std::string>* result, 
+                const std::function<bool(const DependenceEntry&)>* what_to_do) {
     DebugLog Log("-debug-dep-table");
     Log.push("Output results of transitive dependence analysis");
     auto from = input;

@@ -4809,7 +4809,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
                case BOOL_VAL:
                case SHORT_VAL:
                case CHAR_VAL:
-	       case SIGNED_CHAR_VAL:
+               case SIGNED_CHAR_VAL:
                case UNSIGNED_CHAR_VAL:
                case WCHAR_VAL:
                case STRING_VAL:

@@ -107,9 +107,9 @@ class CollectTransitiveDependences : public CollectDependences {
     // before invocation. The what_to_do parameter, if given, can skip computing some
     // entries by returning false.
     void Compute(const std::vector<std::string>& input, std::set<std::string>* result = 0, 
-		    const std::function<bool(const DependenceEntry&)>* what_to_do = 0);
+                    const std::function<bool(const DependenceEntry&)>* what_to_do = 0);
     void Compute(const std::string& input, std::set<std::string>& result,
-		    const std::function<bool(const DependenceEntry&)>* what_to_do = 0);
+                    const std::function<bool(const DependenceEntry&)>* what_to_do = 0);
 
     void Output(std::ostream& output, std::set<std::string>* select = 0) {
        for (const auto& from : saved_sources_) {
@@ -162,7 +162,7 @@ class DependenceTable : public CollectDependences, public SaveOperatorSideEffect
     void SaveDependence(const DependenceEntry& e) {
        auto p = saved_dependences_relation_.find(e.first_entry());
        if (p == saved_dependences_relation_.end()) {
-	  saved_dependences_sig_.push_back(e.first_entry());
+          saved_dependences_sig_.push_back(e.first_entry());
        }
        for (const auto& e1 : saved_dependences_relation_[e.first_entry()]) {
           if (e1 == e) { // Duplicate entry.
