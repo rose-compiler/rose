@@ -724,11 +724,11 @@ namespace
 
   template <class ScopePathIterator>
   ScopePathIterator
-  shortenPathForUseDirectives( ScopePathIterator /*remBeg*/,
-                               ScopePathIterator remMin,
-                               ScopePathIterator remLim,
-                               const NameQualificationTraversalAda& /*trav*/
-                             )
+  trimFrontForUseDirectives( ScopePathIterator /*remBeg*/,
+                             ScopePathIterator remMin,
+                             ScopePathIterator remLim,
+                             const NameQualificationTraversalAda& /*trav*/
+                           )
   {
     // right now only handle package Standard ..
     // \todo check if any scope in (remMin, remLim)
@@ -743,6 +743,35 @@ namespace
       return std::next(remMin);
 
     return remMin;
+  }
+
+  template <class ScopePathIterator>
+  ScopePathIterator
+  trimBackForPackageExtensions( ScopePathIterator /*remBeg*/,
+                                ScopePathIterator remMin,
+                                ScopePathIterator remLim,
+                                const NameQualificationTraversalAda& /*trav*/
+                              )
+  {
+    static const std::string PKG_AUX_DEC{"aux_dec"};
+    static const std::string PKG_SYSTEM{"system"};
+
+    // right now handles only System.Aux_DEC
+    // \todo consider tracking Extend_System pragma and shorten for
+    //       all extensions.
+
+    // scopepath cannot be shortened?
+    if (remMin == remLim)
+      return remLim;
+
+    ScopePathIterator const limCand = std::prev(remLim);
+    const bool              systemAuxDec = (  (std::distance(remMin, remLim) == 2)
+                                           && (boost::iequals(scopeName(*limCand).name(), PKG_AUX_DEC))
+                                           && (boost::iequals(scopeName(*std::prev(limCand)).name(), PKG_SYSTEM))
+                                           );
+
+    // shorten path is package System.Aux_Dec
+    return systemAuxDec ? limCand : remLim;
   }
 
   auto
@@ -811,16 +840,19 @@ namespace
     //   and referenced in scope a.d.e:
 
     // 1a determine the first mismatch (mismPos) of the (reversed) scope paths "a.b.c" and "a.d.e"
-    const PathIterator locBeg  = localPath.rbegin();
-    const PathIterator locLim  = localPath.rend();
-    const PathIterator remBeg  = remotePath.rbegin();
-    const PathIterator remLim  = remotePath.rend();
+    PathIterator const locBeg  = localPath.rbegin();
+    PathIterator const locLim  = localPath.rend();
+    PathIterator const remBeg  = remotePath.rbegin();
+    PathIterator       remLim  = remotePath.rend();
 
     // 1b mismPos is  "a|b.c and a|d.e", thus the required scope qualification is b.c
     auto               mismPos = adaPathMismatch(locBeg, locLim, remBeg, remLim);
 
-    // 1c shorten b.c if any scope has a use-directive
-    mismPos.second = shortenPathForUseDirectives(remBeg, mismPos.second, remLim, *this);
+    // 1c trim b.c if any scope has a use-directive
+    mismPos.second = trimFrontForUseDirectives(remBeg, mismPos.second, remLim, *this);
+
+    // 1d shorten b.c if any scope has a use-directive
+    remLim = trimBackForPackageExtensions(remBeg, mismPos.second, remLim, *this);
 
     // 2 extend the path if an overload for front(b.c) exists somewhere in d.e
     const PathIterator remPos  = extendNameQualUntilUnambiguous( remBeg, mismPos.second, remLim,
@@ -2802,7 +2834,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
      ASSERT_not_null(positionStatement);
 
 #define DEBUG_TEMPINSTDECL 0
-     
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NONTERMINATION
      mfprintf(mlog [ WARN ] ) ("11111111111111111111111111111111111111111111111111111111111111111111 \n");
      mfprintf(mlog [ WARN ] ) ("In evaluateTemplateInstantiationDeclaration(): declaration = %p = %s currentScope = %p = %s positionStatement = %p = %s \n",
@@ -2811,7 +2843,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
 #if DEBUG_TEMPINSTDECL
      printf ("11111111111111111111111111111111111111111111111111111111111111111111 \n");
      printf ("In evaluateTemplateInstantiationDeclaration(): declaration = %p = %s currentScope = %p = %s positionStatement = %p = %s \n",
-          declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());     
+          declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());
 #endif
   // DQ (10/31/2015): This code is designed to eliminate the infinite recursion possible in some rare cases of
   // template instantiation (see test2015_105.C extracted from ROSE compiling ROSE header files and the boost
@@ -2868,7 +2900,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
 
   // DQ (5/12/2024): Make sure that we don't have any NULL entries.
      ROSE_ASSERT(MangledNameSupport::visitedTemplateDefinitions.find(NULL) == MangledNameSupport::visitedTemplateDefinitions.end());
-     
+
   // if (MangledNameSupport::visitedTemplateDefinitions.find(nonconst_def) != MangledNameSupport::visitedTemplateDefinitions.end())
      if (forceSkip == true || MangledNameSupport::visitedTemplateDefinitions.find(nonconst_def) != MangledNameSupport::visitedTemplateDefinitions.end())
         {
@@ -13159,7 +13191,7 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
        // Zero out the qualifier.
           qualifier = "";
         }
-#endif     
+#endif
 
   // These may not be important under the newest version of name qualification that uses the qualified
   // name string map to IR nodes that reference the construct using the name qualification.
@@ -14090,7 +14122,7 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                       // "class-name<template-parameter>::class-name<template-parameter>" instead.
                       // Other logic will have to add the template header where these are used (not clear how to
                       // do that if we don't do it here).
-                         
+
 #if DEBUG_NQ_SCOPE
                       // DQ (5/5/2024): Debugging non-termination.
                          printf ("In setNameQualificationSupport(): namespaceDefinition == NULL \n");
