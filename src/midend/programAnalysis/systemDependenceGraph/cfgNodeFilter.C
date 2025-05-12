@@ -3,6 +3,7 @@
  * Author: Cong Hou [hou_cong@gatech.edu]
  */
 
+#include "sage3basic.h"
 #include "cfgNodeFilter.h"
 
 namespace SDG

@@ -3,7 +3,9 @@
  * Author: Cong Hou [hou_cong@gatech.edu]
  */
 
-#include <rose.h>
+namespace VirtualCFG {
+    class CFGNode;
+}
 
 namespace SDG
 {
