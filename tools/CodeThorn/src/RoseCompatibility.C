@@ -1,6 +1,6 @@
+#include <sage3basic.h>
 #include "RoseCompatibility.h"
 
-#include <sage3basic.h>
 #include <sageInterface.h>
 #include <sageInterfaceAda.h>
 #include <sageGeneric.h>

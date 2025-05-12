@@ -1,10 +1,11 @@
+#include "sage3basic.h"
+
 #include <sstream>
 #include <string>
 
 #include "dependence_analysis.h"
 
 #include "CommandOptions.h"
-#include "sage3basic.h"
 #include "AstInterface.h"
 
 namespace AstUtilInterface {

@@ -1,8 +1,6 @@
-#include "CallGraphAnalysis.h"
-
-#include <boost/range/adaptors.hpp>
-
 #include "sage3basic.h"                                 // every librose .C file must start with this
+#include "CallGraphAnalysis.h"
+#include <boost/range/adaptors.hpp>
 #include "Rose/Diagnostics.h"
 #include "sageGeneric.h"
 
