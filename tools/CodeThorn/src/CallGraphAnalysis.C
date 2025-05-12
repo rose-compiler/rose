@@ -97,11 +97,11 @@ namespace
   {
     for (const ct::FunctionCallData& fcd : addressTkn)
     {
-      ct::FunctionKeyType                srckey = std::get<0>(fcd);
+      ct::FunctionKeyType                srckey = fcd.function();
       ct::CallGraph::ConstVertexIterator srcpos = g->findVertexKey(srckey);
       ASSERT_require(g->isValidVertex(srcpos));
 
-      for (ct::CallData cd : std::get<1>(fcd))
+      for (ct::CallData cd : fcd.calls())
       {
         ASSERT_require(cd.callee());
         ct::FunctionKeyType                tgtkey = *cd.callee();
@@ -123,11 +123,11 @@ namespace
 
     for (const ct::FunctionCallData& fcd : virtuals)
     {
-      ct::FunctionKeyType                srckey = std::get<0>(fcd);
+      ct::FunctionKeyType                srckey = fcd.function();
       ct::CallGraph::ConstVertexIterator srcpos = g->findVertexKey(srckey);
       ASSERT_require(g->isValidVertex(srcpos));
 
-      for (ct::CallData cd : std::get<1>(fcd) | adapt::filtered(isVirtualCall))
+      for (ct::CallData cd : fcd.calls() | adapt::filtered(isVirtualCall))
       {
         ASSERT_require(cd.callee());
 

@@ -1060,7 +1060,7 @@ namespace
     const ct::CompatibilityBridge& compat;
   };
 
-  struct ComputeVFunctionRelation
+  struct ComputeVirtualFunctionRelation
   {
     void operator()(ct::FunctionKeyType drv, ct::FunctionKeyType bas) const
     {
@@ -1126,11 +1126,13 @@ namespace
 
     for (const ct::InheritanceDesc& parentDesc : entry.second.ancestors())
     {
+      using ComputeRelation = ComputeVirtualFunctionRelation;
+
       VirtualFunctionContainer& parentVFunSorted = sortedVFunMap.at(parentDesc.getClass());
 
       mergeOrderedSequences( vfunSorted.begin(), vfunSorted.end(),
                              parentVFunSorted.begin(), parentVFunSorted.end(),
-                             ComputeVFunctionRelation{compat, classes, vfunAnalysis, entry.first, parentDesc.getClass()},
+                             ComputeRelation{compat, classes, vfunAnalysis, entry.first, parentDesc.getClass()},
                              VFNameTypeOrder{compat}
                            );
     }
@@ -1245,4 +1247,3 @@ VirtualFunctionAnalysis::virtualFunctionTest() const
          };
 }
 }
-

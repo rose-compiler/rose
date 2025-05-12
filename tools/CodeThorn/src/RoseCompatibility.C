@@ -31,11 +31,13 @@ namespace
   //   SgScopeStatement HOLDS STATE.
   struct ConstSymbolTableIterator
   {
-      using iterator_category = std::forward_iterator_tag;
-      using value_type = const SgSymbol&;
+      using iterator_category = std::input_iterator_tag;
+
+      // \note valuetype: ref is required with older boost versions (e.g., 1.66)
+      using value_type      = const SgSymbol&;
+      using pointer         = const SgSymbol*;
+      using reference       = const SgSymbol&;
       using difference_type = std::ptrdiff_t;
-      using pointer = const SgSymbol*;
-      using reference = value_type;
 
       ConstSymbolTableIterator(const SgScopeStatement& s, const SgSymbol* el)
       : scope(&s), current(el)
@@ -73,12 +75,14 @@ namespace
       const SgSymbol*                     current;
   };
 
+  /// Generates an input iterator to the first symbol
   ConstSymbolTableIterator
   symbolBegin(const SgScopeStatement& scope)
   {
     return ConstSymbolTableIterator{scope, scope.first_any_symbol()};
   }
 
+  /// Generates an iterator to the symbol limit
   ConstSymbolTableIterator
   symbolLimit(const SgScopeStatement& scope)
   {
@@ -179,14 +183,16 @@ namespace
     return ty;
   }
 
-
   const SgType*
   stripTypeAlias(const SgType* ty)
   {
     if (const SgTypedefType* tydef = isSgTypedefType(ty))
       return stripTypeAlias(tydef->get_base_type());
 
-    return ty ? &stripDeclType(*ty) : ty;
+    if (const SgDeclType* dclty = isSgDeclType(ty))
+      return stripTypeAlias(dclty->get_base_type());
+
+    return ty;
   }
 
   const SgType&
@@ -360,8 +366,8 @@ namespace
       //~ ~ResetDefinitionsInNonDefiningClassDeclarationsOnMemoryPool() {}
 
     private:
-      ct::ClassAnalysis&                     allClasses;
-      std::map<const SgNode*, const SgNode*> templatedAncestor;
+      ct::ClassAnalysis&                               allClasses;
+      std::unordered_map<const SgNode*, const SgNode*> templatedAncestor;
   };
 
   void CollectClassesFromMemoryPool::visit (SgNode* node)
@@ -374,6 +380,12 @@ namespace
 
     SgClassDefinition* classDef = classDeclaration->get_definition();
     if (classDef == nullptr) return;
+
+    //~ std::cerr << classDeclaration->get_name()
+              //~ << "  unnamed? " << classDeclaration->get_isUnNamed()
+              //~ << "  explicit_anonymous? " << classDeclaration->get_explicit_anonymous()
+              //~ << "  autonomous? " << classDeclaration->get_isAutonomousDeclaration()
+              //~ << std::endl;
 
     auto emplaced = allClasses.emplace(classDef, ct::ClassData{});
 
@@ -506,14 +518,20 @@ namespace
       ~TypeComparator() = default;
 
       /// unreachable base case (non type nodes) => error
-      void handle2(const SgNode& n, const SgNode&) { SG_UNEXPECTED_NODE(n); }
+      void handle2(const SgNode& n, const SgNode&)                   { SG_UNEXPECTED_NODE(n); }
+
+      /// alias types need to be stripped before comparison
+      /// \{
+      void handle2(const SgDeclType& n, const SgDeclType&)           { SG_UNEXPECTED_NODE(n); }
+      void handle2(const SgTypedefType& n, const SgTypedefType& rhs) { SG_UNEXPECTED_NODE(n); }
+      /// \}
 
       // base case
       //   if we get here than the types must be different
-      //   ==> we need separate handlers for non-shared types
+      //   \todo ==> we need separate handlers for non-shared types
       void handle2(const SgType& lhs, const SgType& rhs)
       {
-        res = cmpValue(&lhs, &rhs);
+        res = cmpValue(&lhs, &rhs); // pointer comparison
       }
 
       void handle2(const SgNamedType& lhs, const SgNamedType& rhs)
@@ -576,6 +594,60 @@ namespace
       /// base handler, should never be reached
       void handleTypes(const SgNode& n, const SgNode& /* tag */) { SG_UNEXPECTED_NODE(n); }
 
+      /// compare types of different IR nodes that are semantically equal in C++
+      int handleSignedTypes(const SgType& lhs, int alt1, int alt2)
+      {
+        VariantT rhsKind = rhs.variantT();
+
+        if ((rhsKind == alt1) || (rhsKind == alt2))
+          return 0;
+
+        return cmpValue(lhs.variantT(), rhsKind);
+      }
+
+
+      void handleTypes(const SgTypeSignedShort& n, const SgTypeSignedShort& /* tag */)
+      {
+        res = handleSignedTypes(n, SgTypeSignedShort::static_variant, SgTypeShort::static_variant);
+      }
+
+      void handleTypes(const SgTypeShort& n, const SgTypeShort& /* tag */)
+      {
+        res = handleSignedTypes(n, SgTypeSignedShort::static_variant, SgTypeShort::static_variant);
+      }
+
+      void handleTypes(const SgTypeSignedInt& n, const SgTypeSignedInt& /* tag */)
+      {
+        res = handleSignedTypes(n, SgTypeSignedInt::static_variant, SgTypeInt::static_variant);
+      }
+
+      void handleTypes(const SgTypeInt& n, const SgTypeInt& /* tag */)
+      {
+        res = handleSignedTypes(n, SgTypeSignedInt::static_variant, SgTypeInt::static_variant);
+      }
+
+      void handleTypes(const SgTypeSignedLong& n, const SgTypeSignedLong& /* tag */)
+      {
+        res = handleSignedTypes(n, SgTypeSignedLong::static_variant, SgTypeLong::static_variant);
+      }
+
+      void handleTypes(const SgTypeLong& n, const SgTypeLong& /* tag */)
+      {
+        res = handleSignedTypes(n, SgTypeSignedLong::static_variant, SgTypeLong::static_variant);
+      }
+
+      void handleTypes(const SgTypeSignedLongLong& n, const SgTypeSignedLongLong& /* tag */)
+      {
+        res = handleSignedTypes(n, SgTypeSignedLongLong::static_variant, SgTypeLongLong::static_variant);
+      }
+
+      void handleTypes(const SgTypeLongLong& n, const SgTypeLongLong& /* tag */)
+      {
+        res = handleSignedTypes(n, SgTypeSignedLongLong::static_variant, SgTypeLongLong::static_variant);
+      }
+
+
+
       /// main handler checking if lhs and rhs dynamic types match
       /// \details
       ///   types of rhs and lhs match:
@@ -585,7 +657,7 @@ namespace
       template <class SageType>
       void handleTypes(const SageType& lhs, const SgType& /* tag */)
       {
-        // typedef types should not be skipped before they are dispatched
+        // typedef, decltype, and auto types should be skipped before they are dispatched
         ASSERT_require(lhs.variantT() != V_SgTypedefType);
         ASSERT_require(rhs.variantT() != V_SgTypedefType);
 
@@ -1086,8 +1158,11 @@ RoseCompatibilityBridge::numericId(AnyKeyType id) const
   return std::intptr_t(id);
 }
 
+
+namespace
+{
 std::string
-RoseCompatibilityBridge::uniqueName(AnyKeyType id) const
+_uniqueName(AnyKeyType id)
 {
   // ClassKeyType
   if (ClassKeyType cls = isSgClassDefinition(id))
@@ -1099,7 +1174,12 @@ RoseCompatibilityBridge::uniqueName(AnyKeyType id) const
 
   // FunctionKeyType
   if (FunctionKeyType fun = isSgFunctionDeclaration(id))
+  {
+    //~ if (fun->get_name().getString().find("mutex_lock") != std::string::npos)
+      //~ fun->get_mangled_name(); // dbg
+
     return fun->get_mangled_name();
+  }
 
   // TypeKeyType, FunctionTypeKeyType
   if (TypeKeyType ty = isSgType(id))
@@ -1119,6 +1199,25 @@ RoseCompatibilityBridge::uniqueName(AnyKeyType id) const
 
   // unexpected types
   throw std::logic_error{"Internal-ERROR: Unexpected ID type as input to uniqueName."};
+}
+
+}
+
+std::string
+RoseCompatibilityBridge::uniqueName(AnyKeyType id) const
+{
+  std::string res = _uniqueName(id);
+  const bool dbgCallAgain = (  (res == "L81qalW4poeeR")
+                            || (res == "L81qalW4poeeR")
+                            );
+
+  if (dbgCallAgain)
+  {
+    std::cerr << "********** " << res << std::endl;
+    _uniqueName(id);
+  }
+
+  return res;
 }
 
 namespace
@@ -2024,7 +2123,7 @@ namespace
       template <class SageExpression>
       void handleCallExp(SageExpression& n)
       {
-        std::cerr << "emplace call  " << n.unparseToString() << std::endl;
+        // std::cerr << "emplace call  " << n.unparseToString() << std::endl;
         res.emplace_back(analyseCallExp(n, *isVirtualFunction));
 
         descend(n, true);
@@ -2115,7 +2214,7 @@ namespace
     FunctionKeyType         key = compat.functionId(&dcl);
 
     ASSERT_require(key);
-    std::cerr << "emplace fnref " << n.unparseToString() << std::endl;
+    //~ std::cerr << "emplace fnref " << n.unparseToString() << std::endl;
     res.emplace_back( key, &n, typeBound, nullptr, isVirtual );
   }
 
@@ -2457,4 +2556,3 @@ bool SpecialMemberFunction::isCopyAssign()  const { return (kind() & cassign) ==
 bool SpecialMemberFunction::isMoveAssign()  const { return (kind() & massign) == massign; }
 
 }
-

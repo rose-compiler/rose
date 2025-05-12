@@ -204,6 +204,11 @@ namespace
       res["source"] = uniqueId(*e.source());
       res["target"] = uniqueId(*e.target());
 
+      if ((e.value() & progrep::CallEdge::overrider) == progrep::CallEdge::overrider)
+      {
+        res["override"] = true;
+      }
+
       return res;
     }
   };
@@ -353,6 +358,12 @@ namespace CodeThorn
              FunctionKeyType     key = v.value();
              CompatibilityBridge compat;
 
+             //~ if (nameOf(key).rfind("_M_construct < pointer >") == 0)
+             //~ {
+               //~ uniqueId(key);
+               //~ std::cerr << ":here you go.. " << std::endl;
+             //~ }
+
              res["id"]      = uniqueId(key);
              res["name"]    = nameOf(key);
              res["defined"] = compat.hasDefinition(key);
@@ -387,4 +398,3 @@ namespace CodeThorn
   }
 
 } // end of namespace CodeThorn
-
