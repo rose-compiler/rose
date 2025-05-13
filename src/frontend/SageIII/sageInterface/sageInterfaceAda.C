@@ -963,6 +963,7 @@ namespace Ada
              && (prgName != "export")
              && (prgName != "priority")
              && (prgName != "volatile")
+             && (prgName != "main_storage")
              );
     }
 
