@@ -19,3 +19,4 @@ add_dependencies(rosebud util_sawyer)
 
 # Link to what librose.so links on Windows, Mac, or Linux using link_with_libraries
 target_link_libraries(rosebud ${link_with_libraries} util_sawyer)
+install(TARGETS rosebud DESTINATION bin)
