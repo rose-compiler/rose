@@ -1684,8 +1684,9 @@ namespace{
                        ; // logTrace() << "liteq: 0 candidates" << std::endl;
                      else if (*typeCandidates.begin() == nullptr)
                        ; // logTrace() << "liteq: null type" << std::endl;
-                     else if (!scopeCheckCallContext(*callexp, **typeCandidates.begin()))
+                     else if (!scopeCheckCallContext(*callexp, **typeCandidates.begin())){
                        decorateWithTypecast(*callexp, **typeCandidates.begin());
+                     }
                    }
                  );
   }

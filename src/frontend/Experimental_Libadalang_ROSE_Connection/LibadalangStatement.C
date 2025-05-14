@@ -2874,6 +2874,84 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
   }
 
 
+namespace {
+  SgExpression* createAspect(ada_base_entity* lal_element, AstContext ctx)
+  {
+    ada_base_entity lal_id, lal_expr;
+
+    ada_aspect_assoc_f_id(lal_element, &lal_id);
+    ada_aspect_assoc_f_expr(lal_element, &lal_expr);
+
+    std::string cxx_markname = getFullName(&lal_id);
+    const char* markname = cxx_markname.c_str();
+
+    if(ada_node_is_null(&lal_id) || cxx_markname == "")
+    {
+      logError() << "Unexpected Aspect mark representation: "
+         << ada_node_kind(&lal_id) << std::endl;
+      return nullptr;
+    }
+
+    SgExpression&                sgdefn = getExpr_opt(&lal_expr, ctx);
+    SgExpression&                sgnode = SG_DEREF(sb::buildActualArgumentExpression(markname, &sgdefn));
+
+    attachSourceLocation(sgnode, lal_element, ctx);
+    return &sgnode;
+  }
+
+
+  void processAspects(ada_base_entity* lal_element, SgDeclarationStatement* sgnode, AstContext ctx)
+  {
+    //Check that this element is of a kind that can have aspects
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+    if(kind < ada_abstract_state_decl || kind > ada_single_task_decl){
+      logFlaw() << "processAspects called on node kind " << kind << " (which cannot have aspects)!\n";
+      return;
+    }
+
+    ada_base_entity lal_aspect_spec;
+    ada_basic_decl_f_aspects(lal_element, &lal_aspect_spec);
+
+    //Check if this element has any aspects
+    if(ada_node_is_null(&lal_aspect_spec)){
+      return;
+    }
+
+    //Get the list of aspects
+    ada_base_entity lal_aspect_assoc_list_deref;
+    ada_aspect_spec_f_aspect_assocs(&lal_aspect_spec, &lal_aspect_assoc_list_deref);
+
+    if (sgnode == nullptr)
+    {
+      logError() << "found aspects w/o corresponding Sage declaration."
+                 << std::endl;
+      return;
+    }
+
+    // aspects use deferred elaboration, so that they can use
+    //   type-bound operations defined later in scope.
+
+    auto deferredAspectCompletion =
+        [sgnode, lal_aspect_assoc_list_deref, ctx]()->void
+        {
+          ada_base_entity lal_aspect_assoc_list = lal_aspect_assoc_list_deref;
+          std::vector<SgExpression*> aspects;
+          int range = ada_node_children_count(&lal_aspect_assoc_list);
+          for(int i = 0; i < range; ++i){
+            ada_base_entity lal_aspect_assoc;
+            if(ada_node_child(&lal_aspect_assoc_list, i, &lal_aspect_assoc) != 0){
+              aspects.push_back(createAspect(&lal_aspect_assoc, ctx.pragmaAspectAnchor(*sgnode)));
+            }
+          }
+          SgExprListExp& asplist = mkExprListExp(aspects);
+
+          sg::linkParentChild(*sgnode, asplist, &SgDeclarationStatement::set_adaAspects);
+        };
+
+    ctx.storeDeferredUnitCompletion( std::move(deferredAspectCompletion) );
+  }
+} //end unnamed namespace
+
 void handlePragma(ada_base_entity* lal_element, SgStatement* stmtOpt, AstContext ctx){
   logWarn() << "handlePragma() is not implemented!\n";
   //ctx.appendStatement(createPragma_common(el, stmtOpt, ctx));
@@ -3273,9 +3351,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_subp_spec_f_subp_returns(&subp_spec, &subp_returns);
 
         //Get the name
-        ada_base_entity lal_identifier;
-        ada_subp_spec_f_subp_name(&subp_spec, &lal_identifier);
-        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_subp_spec_f_subp_name(&subp_spec, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
 
         ada_node_kind_enum lal_overriding_kind = ada_node_kind(&lal_overriding);
 
@@ -3299,7 +3377,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         setAbstractModifier(sgnode, lal_element);
         setOverride(sgnode, overriding);
         int hash = hash_node(lal_element);
+        int defining_name_hash = hash_node(&lal_defining_name);
         recordNode(libadalangDecls(), hash, sgnode);
+        recordNode(libadalangDecls(), defining_name_hash, sgnode);
 
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, lal_element, ctx);
@@ -4548,7 +4628,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       //ADA_ASSERT (!FAIL_ON_ERROR(ctx));
   }
 
-  //processAspects(lal_element, decl, assocdecl, ctx);
+  processAspects(lal_element, assocdecl, ctx);
   //recordPragmasID(std::move(pragmaVector), assocdecl, ctx);
 }
 

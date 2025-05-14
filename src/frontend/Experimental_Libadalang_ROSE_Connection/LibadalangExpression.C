@@ -24,47 +24,6 @@ namespace si = SageInterface;
 namespace Libadalang_ROSE_Translation
 {
 
-/// Handles a single argument provided in a function call
-SgExpression&
-getArg(ada_base_entity* lal_element, AstContext ctx)
-{
-  //Get the kind
-  ada_node_kind_enum kind = ada_node_kind(lal_element);
-
-  LibadalangText kind_name(kind);
-  std::string kind_name_string = kind_name.string_value();
-  logKind(kind_name_string.c_str(), kind);
-
-  ada_base_entity actual_parameter;
-  ada_base_entity formal_parameter;
-  bool has_formal = false;
-
-  //If this is an assoc, get the actual parameter
-  if(kind == ada_param_assoc){
-    ada_param_assoc_f_r_expr(lal_element, &actual_parameter);
-    ada_param_assoc_f_designator(lal_element, &formal_parameter);
-    has_formal = true;
-  } else if(kind == ada_pragma_argument_assoc){
-    ada_pragma_argument_assoc_f_expr(lal_element, &actual_parameter);
-    ada_pragma_argument_assoc_f_id(lal_element, &formal_parameter);
-    has_formal = true; //TODO Test this
-  } else { //TODO What of the other assocs?
-    actual_parameter = *lal_element;
-  }
-
-  SgExpression&       arg        = getExpr(&actual_parameter, ctx);
-
-  if(!has_formal || ada_node_is_null(&formal_parameter)) return arg;
-
-  //If there is a formal parameter, get its name
-  std::string element_name = canonical_text_as_string(&formal_parameter);
-
-  SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression_nfi(element_name, &arg));
-
-  attachSourceLocation(namedArg, lal_element, ctx);
-  return namedArg;
-}
-
 /// Makes an attribute
 SgAdaAttributeExp&
 getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* argRangeSuppl)
@@ -75,7 +34,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
   //Get the name of the attribute
   ada_base_entity lal_attribute;
   ada_attribute_ref_f_attribute(lal_element, &lal_attribute);
-  std::string name = canonical_text_as_string(&lal_attribute);
+  std::string name = getFullName(&lal_attribute);
 
   //Get the prefix
   ada_base_entity lal_prefix;
@@ -244,10 +203,14 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
          || name == "digits"
          || name == "fore"
          || name == "image"
+         || name == "length"
+         || name == "old"
          || name == "pos"
          || name == "read"
+         || name == "result"
          || name == "size"
          || name == "val"
+         || name == "width"
          || name == "write")
       {
         logInfo() << "untested attribute created: " << name
@@ -794,7 +757,7 @@ namespace
   si::Ada::OperatorScopeInfo
   operatorScope(const AdaIdentifier& name, SgTypePtrList argTypes, boost::optional<int> id, AstContext ctx)
   {
-    if (!id) return si::Ada::operatorScope(name, std::move(argTypes));
+    if (id < 1) return si::Ada::operatorScope(name, std::move(argTypes));
 
     SgScopeStatement&        scope = queryScopeOf(*id, ctx);
     si::Ada::DominantArgInfo dom   = si::Ada::operatorArgumentWithNamedRootIfAvail(argTypes);
@@ -1225,6 +1188,47 @@ namespace
 
 } //end unnamed namespace
 
+/// Handles a single argument provided in a function call
+SgExpression&
+getArg(ada_base_entity* lal_element, AstContext ctx)
+{
+  //Get the kind
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+
+  LibadalangText kind_name(kind);
+  std::string kind_name_string = kind_name.string_value();
+  logKind(kind_name_string.c_str(), kind);
+
+  ada_base_entity actual_parameter;
+  ada_base_entity formal_parameter;
+  bool has_formal = false;
+
+  //If this is an assoc, get the actual parameter
+  if(kind == ada_param_assoc){
+    ada_param_assoc_f_r_expr(lal_element, &actual_parameter);
+    ada_param_assoc_f_designator(lal_element, &formal_parameter);
+    has_formal = true;
+  } else if(kind == ada_pragma_argument_assoc){
+    ada_pragma_argument_assoc_f_expr(lal_element, &actual_parameter);
+    ada_pragma_argument_assoc_f_id(lal_element, &formal_parameter);
+    has_formal = true; //TODO Test this
+  } else { //TODO What of the other assocs?
+    actual_parameter = *lal_element;
+  }
+
+  SgExpression&       arg        = getExpr(&actual_parameter, ctx);
+
+  if(!has_formal || ada_node_is_null(&formal_parameter)) return arg;
+
+  //If there is a formal parameter, get its name
+  std::string element_name = canonical_text_as_string(&formal_parameter);
+
+  SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression_nfi(element_name, &arg));
+
+  attachSourceLocation(namedArg, lal_element, ctx);
+  return namedArg;
+}
+
 namespace{
   SgExprListExp& createExprListExpIfNeeded(SgExpression& exp)
   {
@@ -1380,9 +1384,7 @@ namespace{
             logInfo() << "identifier " << name << " is being treated as an enum value.\n";
 
             //Get the hash for the decl
-            ada_base_entity lal_first_corresponding_decl;
-            ada_expr_p_first_corresponding_decl(lal_element, &lal_first_corresponding_decl);
-            int decl_hash = hash_node(&lal_first_corresponding_decl);
+            int decl_hash = hash_node(&corresponding_decl);
 
             //Search libadalangVars for a match (standard TRUE & FALSE are also in libadalangVars, so this should be the only map to check)
             if (SgInitializedName* enumitem = findFirst(libadalangVars(), decl_hash))
@@ -1411,19 +1413,20 @@ namespace{
           //Bool for if we found the corresponding decl
           bool found_decl = true;
 
-          if(ada_node_is_null(&corresponding_decl)){
-            //If first_corresponding_decl isn't there, try referenced_decl
-            logInfo() << "Identifier " << name << " has no first_corresponding_decl, trying referenced_decl instead.\n";
-            int return_value = ada_name_p_referenced_decl(lal_element, 1, &corresponding_decl);
+          //If referenced_decl exists, use it instead of corresponding_decl
+          ada_base_entity lal_referenced_decl;
+          int return_value = ada_name_p_referenced_decl(lal_element, 1, &lal_referenced_decl);
+          if(!ada_node_is_null(&lal_referenced_decl) && return_value != 0){
+             ada_name_p_referenced_decl(lal_element, 1, &corresponding_decl);
+          }
 
-            if(ada_node_is_null(&corresponding_decl) || return_value == 0){
-              //If referenced_decl is also null, just give up
-              logWarn() << "ADDING unresolved name: " << name
-                        << " (decl is null)" << std::endl;
-              SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
-              res = &mkUnresolvedName(name, scope);
-              break;
-            }
+          //If both referenced_decl and corresponding_decl are null, just give up
+          if((ada_node_is_null(&lal_referenced_decl) || return_value == 0) && ada_node_is_null(&corresponding_decl)){
+            logWarn() << "ADDING unresolved name: " << name
+                      << " (decl is null)" << std::endl;
+            SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
+            res = &mkUnresolvedName(name, scope);
+            break;
           }
 
           //Get the kind of the decl
@@ -1474,6 +1477,13 @@ namespace{
           else if(SgDeclarationStatement* dcl = queryDecl(lal_element, hash, ctx))
           {
             res = sg::dispatch(ExprRefMaker{ctx}, dcl);
+            ada_bool lal_is_call;
+            ada_name_p_is_call(lal_element, &lal_is_call);
+            if(lal_is_call && isSgFunctionRefExp(res) != nullptr && !suppl.valid()){
+              //We don't want res to be SgFunctionRefExp, convert to SgFunctionCallExp instead
+              std::vector<SgExpression*> arglist; //Purposefully empty
+              res = sg::dispatch(AdaCallBuilder{lal_element, std::move(arglist), true, false, ctx}, res);
+            }
           }
           else if(SgInitializedName* exc = findFirst(libadalangExcps(), hash))
           {
@@ -1746,7 +1756,19 @@ namespace{
           ada_base_entity lal_refd_decl;
           ada_name_p_referenced_decl(&lal_prefix, 1, &lal_refd_decl);
 
-          int prefix_hash = hash_node(&lal_refd_decl);
+          //If p_referenced_decl is null, fall back to p_first_corresponding_decl
+          if(ada_node_is_null(&lal_refd_decl)){
+            ada_expr_p_first_corresponding_decl(&lal_prefix, &lal_refd_decl);
+          }
+
+          int prefix_hash = 0;
+
+          if(!ada_node_is_null(&lal_refd_decl)){
+            prefix_hash = hash_node(&lal_refd_decl);
+          } else {
+            logFlaw() << "ada_dotted_name with hash " << hash_node(lal_element)
+                      << " has a prefix that does not reference a node.\n";
+          }
 
           suppl.scopeId(prefix_hash);
 

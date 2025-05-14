@@ -2482,7 +2482,8 @@ namespace
     if (SgFunctionType* funty = isSgFunctionType(funref.get_type()))
       return SG_DEREF(funty->get_return_type());
 
-    logWarn() << "unable to get 'result type" << funref.unparseToString()
+    logWarn() << "unable to get 'result type " << funref.unparseToString()
+              << " (type is " << funref.get_type()->class_name() << ")"
               << std::endl;
     return unknownTypeAttr(funref, args);
   }
