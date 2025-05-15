@@ -144,8 +144,8 @@ if(ENABLE-CPP)
     # Set BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH for GNU 
     if(NOT DEFINED BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH)
       set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "g++")
-      set(BACKEND_CXX_COMPILER "gcc")
-      set(ROSE_BACKEND_CXX_COMPILER "gcc") 
+      set(BACKEND_CXX_COMPILER "g++")
+      set(ROSE_BACKEND_CXX_COMPILER "g++") 
     endif() # end GNU for CXX  
 
   # Set With and Without Path for Clang++ 

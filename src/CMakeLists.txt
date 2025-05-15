@@ -1136,6 +1136,8 @@ file(APPEND ${ROSE_CONFIG_FILE} "# Additional items useful to include in Makefil
 file(APPEND ${ROSE_CONFIG_FILE} "ROSE_RPATHS       = -R ${CMAKE_INSTALL_PREFIX}/lib\n")               # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS 
 file(APPEND ${ROSE_CONFIG_FILE} "ROSE_LINK_RPATHS  = -Wl,-rpath ${CMAKE_INSTALL_PREFIX}/lib -Wl,-rpath ${Boost_LIBRARY_DIRS}\n") # SHOULD ONLY NEED BOOST HERE 
 file(APPEND ${ROSE_CONFIG_FILE} "ROSE_VERSION      = ${ROSE_PACKAGE_VERSION}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_BACKEND_C_COMPILER      = ${BACKEND_C_COMPILER}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_BACKEND_CXX_COMPILER    = ${BACKEND_CXX_COMPILER}\n")
 install(FILES ${ROSE_CONFIG_FILE} DESTINATION ${ROSE_LIB_DIR_NAME})
 
 ########### Code for new testing interface #############################################################################
