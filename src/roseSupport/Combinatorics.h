@@ -32,12 +32,11 @@ namespace Combinatorics {
 /** Returns the factorial of @p n. */
 template<typename T>
 static T
-factorial(T n)
-{
+factorial(const T n) {
     T retval = 1;
     while (n>1) {
-        T next = retval * n--;
-        assert(next>retval); // overflow
+        const T next = retval * n--;
+        assert(next > retval); // overflow; signed overflow is UB, so this likely doesn't work right when T is signed
         retval = next;
     }
     return retval;
@@ -46,36 +45,36 @@ factorial(T n)
 /** Simulate flipping a coin. Randomly returns true or false with equal probability. */
 ROSE_DLL_API bool flip_coin();
 
-/** Permute a vector according to the specified permutation number. The permutation number should be between zero (inclusive)
- *  and the factorial of the values size (exclusive).  A permutation number of zero is a no-op; higher permutation numbers
- *  shuffle the values in repeatable ways.  Using swap rather that erase/insert is much faster than the standard Lehmer codes,
- *  but doesn't return permutations in lexicographic order.  This function can perform approx 9.6 million permutations per
- *  second on a vector of 12 64-bit integers on Robb's machine (computing all 12! permutations in about 50 seconds). */
+/** Permute a vector according to the specified permutation number.
+ *
+ *  The permutation number should be between zero (inclusive) and the factorial of the values size (exclusive).  A permutation
+ *  number of zero is a no-op; higher permutation numbers shuffle the values in repeatable ways.  Using swap rather that
+ *  erase/insert is much faster than the standard Lehmer codes, but doesn't return permutations in lexicographic order.  This
+ *  function can perform approx 9.6 million permutations per second on a vector of 12 64-bit integers on Robb's machine (computing
+ *  all 12! permutations in about 50 seconds). */
 template<typename T>
 static void
-permute(std::vector<T> &values/*in,out*/, uint64_t pn, size_t sz = UNLIMITED)
-{
+permute(std::vector<T> &values/*in,out*/, uint64_t pn, const size_t sz = UNLIMITED) {
     if (UNLIMITED == sz)
         sz = values.size();
-    assert(sz<=values.size());
-    assert(pn<factorial(sz));
-    for (size_t i=0; i<sz; ++i) {
+    assert(sz <= values.size());
+    assert(pn < factorial(sz));
+    for (size_t i = 0; i < sz; ++i) {
         uint64_t radix = sz - i;
         uint64_t idx = pn % radix;
-        std::swap(values[i+idx], values[i]);
+        std::swap(values[i + idx], values[i]);
         pn /= radix;
     }
 }
 
 /** Shuffle the values of a vector.
  *
- *  This algorithm randomly shuffles the items in the vector by swapping values at indexes zero through @p limit with
- *  values at randomly selected indexes zero through @p nitems. The defaults for @p nitems and @p limit are the size
- *  of the input @p vector. */
+ *  This algorithm randomly shuffles the items in the vector by swapping values at indexes zero through @p limit with values at
+ *  randomly selected indexes zero through @p nitems. The defaults for @p nitems and @p limit are the size of the input @p
+ *  vector. */
 template<typename T>
 void
-shuffle(std::vector<T> &vector, size_t nitems = UNLIMITED, size_t limit = UNLIMITED)
-{
+shuffle(std::vector<T> &vector, size_t nitems = UNLIMITED, size_t limit = UNLIMITED) {
     nitems = std::min(nitems, vector.size());
     limit = std::min(limit, nitems);
 
@@ -122,19 +121,27 @@ reorder(std::vector<T> &values, const std::vector<size_t> &remap) {
 }
 
 /**
- *  Converts a 64 bit in to base 62 (All letters and numbers).  
- *  This is the most compressed format that can be used for a C++ identifier.  
- *  (Although C++ identifiers can not start with a digit, so to use it for one
- *  you need to prepend a letter or "_")
- **/
-ROSE_DLL_API std::string toBase62String(uint64_t num);
+ *  Converts a 64 bit int to base 62.
+ *
+ *  The symbols in base 62 are the digits '0' through '9', followed by the upper-case letters 'A' through 'Z', followed by the
+ *  lower-case letters 'a' through 'z' (62 symbols in total). Note that this order is not the same as Base64 (RFC 4648).
+ *
+ *  The return value is useful as the non-leading part of a C++ identifier. It cannot serve as the beginning (or complete)
+ *  identifier because the return value might start with characters that are not valid for the start of a C++ identifier (i.e, the
+ *  digits '0' through '9').
+ *
+ *  The return value is not even close to being the most compressed format for an identifier since there are approximately 760 valid
+ *  characters that can occur at the start and within a C++ identifier. But it does return strings that are almost the most compact
+ *  for the set of valid ASCII characters. */
+ROSE_DLL_API std::string toBase62String(uint64_t);
 
-/** Converts a base-62 (All letters and numbers) number to a 64 bit int.  
+/** Converts a base 62 string to a 64 bit int.
+ *
+ *  The symbols in base 62 are the digits '0' through '9', followed by the upper-case letters 'A' through 'Z', followed by the
+ *  lower-case letters 'a' through 'z' (62 symbols in total).
  *  
- *  Base-62 is used to store hashes in the most efficient was that can also 
- *  be a C++ identifier.  Converting back to a uint64 is not generally 
- *  required, but here's a function to do so. 
- **/
+ *  Base 62 is used to store hashes in a way that can also almost be a C++ identifier, although base 62 can start with the digits
+ *  '0' through '9' which are not valid first characters for a C++ identifier. */
 ROSE_DLL_API uint64_t fromBase62String(const std::string& base62);
 
 /** Hash interface.
@@ -193,32 +200,24 @@ public:
     virtual ~Hasher() {}
 
     /** Reset the hasher to its initial state. */
-    virtual void clear() { digest_ = Digest(); }
+    virtual void clear();
 
     /** Return the digest.
      *
-     *  Finalizes the hash function and returns the digest for all the input.  Additional input should not be inserted after
-     *  this function is called since some hash functions don't support this. */
-    virtual const Digest& digest() { return digest_; }
+     *  Finalizes the hash function and returns the digest for all the input.  Additional input should not be inserted after this
+     *  function is called since some hash functions don't support this. */
+    virtual const Digest& digest();
 
     /** Insert data into the digest.
      *
      *  This method inserts data into a digest. Data can only be inserted if the user has not called @ref digest yet.
      *
      * @{ */
-    void insert(const std::string &x) { append((const uint8_t*)x.c_str(), x.size()); }
-    void insert(uint64_t x) { append((uint8_t*)&x, sizeof x); }
-    void insert(const uint8_t *x, size_t size) { append(x, size); }
-    void insert(const std::vector<uint8_t> &v) { append(v.data(), v.size()); }
-    void insert(std::istream &stream) {
-        char buf[4096];                                 // multiple of 64
-        while (stream.good()) {
-            stream.read(buf, sizeof buf);
-            append((const uint8_t*)buf, stream.gcount());
-        }
-        if (!stream.eof())
-            throw Hasher::Exception("failed to read data from file");
-    }
+    void insert(const std::string&);
+    void insert(uint64_t);
+    void insert(const uint8_t *bytes, size_t nBytes);
+    void insert(const std::vector<uint8_t>&);
+    void insert(std::istream&);
     /** @} */
     
     /** Insert data into the digest.
@@ -238,10 +237,9 @@ public:
 
     /** Returns the hash as a 64 bit int.
      *
-     * The return value is computed by a sequence of shift and xor
-     * operations across all bytes of the digest. If the digest is
-     * eight or fewer bytes, then this degenerates to the uint64_t
-     * interpretation of the big-endian digest
+     * The return value is computed by a sequence of shift and xor operations across all bytes of the digest. If the digest is eight
+     * or fewer bytes, then this degenerates to the uint64_t interpretation of the big-endian digest.
+     *
      * @{ */
     uint64_t make64Bits();
     uint64_t make64Bits(const Digest&);
@@ -253,102 +251,84 @@ public:
      *  string, and sends it to the stream. */
     void print(std::ostream&);
 
-    /** 
-     * Common subclass all the classes that construct Hashers (for the HasherFactory)
+    /** Common subclass all the classes that construct Hashers.
      *
-     * Actually, there is only one (templated) class that makes
-     * Hashers.  @ref HasherMaker does it all. 
-     **/
-    class IHasherMaker
-    {
+     *  This is for the HasherFactory.
+     *
+     *  Actually, there is only one (templated) class that makes Hashers.  @ref HasherMaker does it all. */
+    class IHasherMaker {
     public:
         virtual std::shared_ptr<Hasher> create() const = 0;
         virtual ~IHasherMaker() {}
     };
     
-    /** 
-     * Templated to create any Hasher and register it with @ref HasherFactory
+    /** Templated to create any Hasher and register it with @ref HasherFactory.
      *
-     * HasherMaker makes the Hasher named by typename T, and
-     * automatically registers itself with @ref HasherFactory.
-     * If a user creates a new Hasher, In their implemntation file
-     * (.C) they should include a static variable declared and defined
-     * like this: 
-     * static Hasher::HasherMaker<HasherSha256Builtin>  makerSHA256("SHA256");
+     *  @ref HasherMaker makes the @ref Hasher named by `typename T`, and automatically registers itself with @ref HasherFactory.
+     *  If a user creates a new @ref Hasher, In their implemntation file (.C) they should include a static variable declared and
+     *  defined like this
      *
-     * The instantiation of this variable at module load time will
-     * call the HasherMaker constructor, which automatically registers
-     * it with the HasherFactor (and constructs the HasherFactory if
-     * necessary.) 
-     **/
+     *  @code
+     *  static Hasher::HasherMaker<HasherSha256Builtin> makerSHA256("SHA256");
+     *  @endcode
+     *
+     *  The instantiation of this variable at module load time will call the @ref HasherMaker constructor, which automatically
+     *  registers it with the @ref HasherFactory (and constructs the @ref HasherFactory if necessary.) */
     template<typename T>
-    class HasherMaker : public IHasherMaker
-    {
+    class HasherMaker : public IHasherMaker {
     public:
-        /** 
-         * Creates a HasherMaker and registers it with @ref
-         * HasherFactory. Make HasherMakers static variableso so this is
-         * run at module initialization time. 
+        /** Creates a HasherMaker and registers it with @ref HasherFactory.
          *
-         * @param[in] hashType  The name/key of this hasher in the
-         * HasherFactory.  
-         **/
-        HasherMaker(const std::string& hashType)
-        {
+         *  Make @ref HasherMakers static variableso so this is run at module initialization time.
+         *
+         *  @param[in] hashType  The name/key of this hasher in the HasherFactory. */
+        HasherMaker(const std::string& hashType) {
             HasherFactory::Instance().registerMaker(hashType, this);
         }
 
-        /** 
-         * Creates a Hasher (the type of Hasher is determined by the
-         * template T) and returns it as a shared_ptr. 
-         **/
-        virtual std::shared_ptr<Hasher> create() const
-        {
+        /** Creates a Hasher.
+         *
+         *  The type of Hasher is determined by the `typename T` and returns it as a `shared_ptr`. */
+        virtual std::shared_ptr<Hasher> create() const {
             return std::make_shared<T>();
         }
-        
     };
 
-    /** 
-     * HasherFactory is a singleton that creates and returns Hashers
-     * by name
+    /** A singleton that creates and returns Hashers by name.
      *
-     * Hasher factory contains a map of names to @ref HasherMaker .
-     * When createHasher is passed a name, it will attempt to create
-     * the correct Hasher and pass it back.  
-     * Users can add Hashers to HasherFactory using @HasherMaker.
-     * HasherFactory is created when Instance is first called.
-     * Generally this is done at module initialization time.
+     * HasherFactory contains a map of names to @ref HasherMaker .  When createHasher is passed a name, it will attempt to create
+     * the correct @ref Hasher and pass it back.  Users can add hashers to HasherFactory using @ref HasherMaker.  HasherFactory is
+     * created when Instance is first called.  Generally this is done at module initialization time.
      **/
-    class HasherFactory
-    {
+    class HasherFactory {
     public:
+#if 0 // [Robb Matzke 2025-05-16]: reinstate this documentation when the name follows the ROSE naming convention ("instance").
         /** Returns a reference to the HasherFactory singleton.
-         * Creates a HasherFactory if necessary **/
-    static HasherFactory& Instance();
+         *
+         *  Creates a HasherFactory if necessary **/
+#endif
+        static HasherFactory& Instance();
         
         /** Adds a new @HasherMaker to the HasherFactory.
-         *  Ussually called by the HasherMaker constructor **/
-    void registerMaker(const std::string& hashType, IHasherMaker* createHasherPtr);
+         *
+         *  Usually called by the @ref HasherMaker constructor. **/
+        void registerMaker(const std::string& hashType, IHasherMaker* createHasherPtr);
         
         /** Creates a registered Hasher by type from the map 
          *
-         *  @param[in] hashType The type of the Hasher to create.
-         *  e.g. FNV
-         *  @return A Hasher of the correct type in an std::shared_ptr
-         *  @throw  Rose::Combinatorics::Exception if inType names an unsupported type
-         **/
-    std::shared_ptr<Hasher> createHasher(const std::string& hashType) const;
+         *  @param[in] hashType The type of the @ref Hasher to create. e.g. FNV.
+         *  @return A @ref Hasher of the correct type in an `std::shared_ptr`.
+         *  @throw  @ref Rose::Combinatorics::Exception if `hashType` names an unsupported type. */
+        std::shared_ptr<Hasher> createHasher(const std::string& hashType) const;
         
     private:
         HasherFactory() {}
         
-        /** Disable copying **/
-        HasherFactory(const HasherFactory& other); 
-        /** Disable assignment **/
-        HasherFactory& operator=(const HasherFactory& other);
+        // Non-copyable
+        HasherFactory(const HasherFactory&) = delete;
+        HasherFactory& operator=(const HasherFactory&) = delete;
         
-        /** Maps keys to @ref HasherMaker s **/
+        // Maps keys to @ref HasherMaker
         std::map<std::string, IHasherMaker* > hashMakers;
     };
 };

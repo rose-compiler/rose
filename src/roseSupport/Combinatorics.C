@@ -62,6 +62,47 @@ fromBase62String(const std::string& base62) {
 // Hasher base class
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void
+Hasher::clear() {
+    digest_ = Digest();
+}
+
+const Hasher::Digest&
+Hasher::digest() {
+    return digest_;
+}
+
+void
+Hasher::insert(const std::string &x) {
+    append((const uint8_t*)x.c_str(), x.size());
+}
+
+void
+Hasher::insert(const uint64_t x) {
+    append((uint8_t*)&x, sizeof x);
+}
+
+void
+Hasher::insert(const uint8_t *x, const size_t size) {
+    append(x, size);
+}
+
+void
+Hasher::insert(const std::vector<uint8_t> &v) {
+    append(v.data(), v.size());
+}
+
+void
+Hasher::insert(std::istream &stream) {
+    char buf[4096];                                     // multiple of 64
+    while (stream.good()) {
+        stream.read(buf, sizeof buf);
+        append((const uint8_t*)buf, stream.gcount());
+    }
+    if (!stream.eof())
+        throw Hasher::Exception("failed to read data from file");
+}
+
 std::string
 Hasher::toString(const Digest &digest) {
     std::string str;
