@@ -67,7 +67,7 @@ ConcreteLocation::hash() const {
     hasher.insert(reg_.raw());
     if (va_)
         hasher.insert(*va_);
-    return hasher.make64Bits();
+    return hasher.toU64();
 }
 
 std::string

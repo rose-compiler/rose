@@ -576,7 +576,7 @@ hashGraph(const DfGraph &graph) {
         }
 
         // Save the results for this vertex because we'll need to process them in order by their address
-        hashedVertices.push_back(std::make_pair(graph.findVertex(vertex.id()), hasher.make64Bits()));
+        hashedVertices.push_back(std::make_pair(graph.findVertex(vertex.id()), hasher.toU64()));
     }
 
     // Combine all the vertex hashes in order by the vertex address
@@ -589,7 +589,7 @@ hashGraph(const DfGraph &graph) {
     for (const auto &pair: hashedVertices)
         hasher.insert(pair.second);
 
-    return hasher.make64Bits();
+    return hasher.toU64();
 }
 
 // Print a dataflow graph in Graphviz format for debugging.

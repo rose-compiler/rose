@@ -65,7 +65,7 @@ AbstractLocation::hash() const {
     if (addr_)
         addr_->hash(hasher);
     hasher.insert(nBytes_);
-    return hasher.make64Bits();
+    return hasher.toU64();
 }
 
 std::string

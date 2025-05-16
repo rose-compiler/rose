@@ -171,7 +171,7 @@ SourceLocation::hash() const {
     hasher.insert(line_);
     if (column_)
         hasher.insert(*column_);
-    return hasher.make64Bits();
+    return hasher.toU64();
 }
 
 // Returning a reference is okay here. It has the same semantics as if the filename were stored directly in this object;

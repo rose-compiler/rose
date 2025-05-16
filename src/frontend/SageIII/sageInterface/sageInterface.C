@@ -6035,7 +6035,7 @@ SageInterface::addMangledNameToCache( SgNode* astNode, const std::string & oldMa
                    Combinatorics::HasherSha256Builtin hasher;
                    hasher.insert(oldMangledName);
                    hasher.digest();
-                   idNumber = hasher.make64Bits();
+                   idNumber = hasher.toU64();
                    shortMangledNameCache.insert(std::pair<std::string, uint64_t>(oldMangledName, idNumber));
                  }
 

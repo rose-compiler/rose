@@ -11,12 +11,6 @@ flip_coin()
     return Sawyer::fastRandomIndex(2) == 0;
 }
 
-/**
- *  Converts a 64 bit in to base 62 (All letters and numbers).  
- *  This is the most compressed format that can be used for a C++ identifier.  
- *  (Although C++ identifiers can not start with a digit, so to use it for one
- *  you need to prepend a letter or "_")
- **/
 ROSE_DLL_API std::string 
 toBase62String(uint64_t num) {
     const std::string base62_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -33,10 +27,6 @@ toBase62String(uint64_t num) {
 }
 
 
-/**
- *  Converts a base 62 (All letters and numbers) number to a 64 bit int.  
- *  This is the most compressed format that can be used for a C++ identifier.  
- **/
 ROSE_DLL_API uint64_t 
 fromBase62String(const std::string& base62) {
     const std::string base62_chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -118,41 +108,52 @@ Hasher::toString() {
     return toString(digest());
 }
 
+uint64_t
+Hasher::toU64() {
+    return toU64(digest());
+}
+
+uint64_t
+Hasher::toU64(const Digest &digest) {
+    uint64_t retval = 0;
+
+    if (digest.size() <= 8) {
+        // Special case for small digests. Although the end result is identical to the general case below, this might faster.
+        for (const uint8_t byte: digest)
+            retval = (retval << 8) ^ uint64_t(byte);
+    } else {
+        for (const uint8_t byte: digest)
+            retval = BitOps::rotateLeft(retval, 8) ^ uint64_t(byte);
+    }
+
+    return retval;
+}
+
 void
 Hasher::print(std::ostream &out) {
     out <<toString(digest());
 }
 
+// [Robb Matzke 2025-05-16]: deprecated; casts to other types should be named "to<Type>" (as in "toString" above).
 uint64_t 
-Hasher::make64Bits() 
-{
-  return make64Bits(digest());
+Hasher::make64Bits() {
+    return toU64();
 }
   
+// [Robb Matzke 2025-05-16]: deprecated; casts to other types should be named "to<Type>" (as in "toString" above).
 uint64_t
 Hasher::make64Bits(const Digest &digest) {
-  uint64_t outHash64 = 0;
-  if(digest.size() <= 8) {
-    //If hash <= 64bits, just copy it into the 64 bit data.
-    //If the length of the hash was known statically, a cast would be sufficient  
-    for (auto it = digest.begin(); it != digest.end(); ++it) {
-      outHash64 = (outHash64 << 8) ^ uint64_t{*it};
-    }
-    return outHash64;
-  }
-  //Otherwise, compress to 64 bits using XOR.  This is Robb's algorithm.
-  for (uint8_t byte: digest) {
-    outHash64 = BitOps::rotateLeft(outHash64, 8) ^ uint64_t{byte};
-  }
-  return outHash64;
+    return toU64(digest);
 }
 
+// [Robb Matzke 2025-05-16]: deprecated; violates ROSE public function naming convention
+Hasher::HasherFactory& Hasher::HasherFactory::Instance() {
+    return instance();
+}
 
-
-Hasher::HasherFactory& Hasher::HasherFactory::Instance()
-{
-    // So called Meyers Singleton implementation,
-    // In C++ 11 this is in fact thread-safe
+Hasher::HasherFactory&
+Hasher::HasherFactory::instance() {
+    // So called Meyers Singleton implementation. In C++ 11 this is in fact thread-safe
     static HasherFactory factory;
     return factory;
 }

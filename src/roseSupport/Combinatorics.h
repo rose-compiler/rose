@@ -4,6 +4,7 @@
 #include <rosePublicConfig.h>
 
 #include <Rose/Constants.h>
+#include <ROSE_DEPRECATED.h>
 #include <ROSE_UNUSED.h>
 
 #include <algorithm>
@@ -241,9 +242,13 @@ public:
      * or fewer bytes, then this degenerates to the uint64_t interpretation of the big-endian digest.
      *
      * @{ */
-    uint64_t make64Bits();
-    uint64_t make64Bits(const Digest&);
+    uint64_t toU64();
+    uint64_t toU64(const Digest&);
     /** @} */
+
+    // [Robb Matzke 2025-05-16]: deprecated; casting to another type should have "to" in the name, like "toString" above.
+    uint64_t make64Bits() ROSE_DEPRECATED("use toU64");
+    uint64_t make64Bits(const Digest&) ROSE_DEPRECATED("use toU64");
 
     /** Print a hash to a stream.
      *
@@ -283,7 +288,7 @@ public:
          *
          *  @param[in] hashType  The name/key of this hasher in the HasherFactory. */
         HasherMaker(const std::string& hashType) {
-            HasherFactory::Instance().registerMaker(hashType, this);
+            HasherFactory::instance().registerMaker(hashType, this);
         }
 
         /** Creates a Hasher.
@@ -298,16 +303,17 @@ public:
      *
      * HasherFactory contains a map of names to @ref HasherMaker .  When createHasher is passed a name, it will attempt to create
      * the correct @ref Hasher and pass it back.  Users can add hashers to HasherFactory using @ref HasherMaker.  HasherFactory is
-     * created when Instance is first called.  Generally this is done at module initialization time.
+     * created when @ref instance is first called.  Generally this is done at module initialization time.
      **/
     class HasherFactory {
     public:
-#if 0 // [Robb Matzke 2025-05-16]: reinstate this documentation when the name follows the ROSE naming convention ("instance").
         /** Returns a reference to the HasherFactory singleton.
          *
          *  Creates a HasherFactory if necessary **/
-#endif
-        static HasherFactory& Instance();
+        static HasherFactory& instance();
+
+        // [Robb Matzke 2025-05-16]: deprecated; violates ROSE public function naming convention
+        static HasherFactory& Instance() ROSE_DEPRECATED("use instance");
         
         /** Adds a new @HasherMaker to the HasherFactory.
          *
