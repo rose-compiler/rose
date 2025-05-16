@@ -171,7 +171,9 @@ public:
     virtual bool operator>=(const Location&) const override;
     /** @} */
 
+    // Documented in base class.
     virtual bool isValid() const override;
+    virtual uint64_t hash() const override;
 
     /** File name associated with this location.
      *

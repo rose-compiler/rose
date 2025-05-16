@@ -6,6 +6,8 @@
 #include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/StringUtility/NumberToString.h>
 
+#include <Combinatorics.h>                              // rose
+
 #include <sstream>
 
 namespace Rose {
@@ -57,6 +59,15 @@ ConcreteLocation::parse(const std::string&) {
 bool
 ConcreteLocation::isValid() const {
     return reg_ || va_;
+}
+
+uint64_t
+ConcreteLocation::hash() const {
+    Combinatorics::HasherSha256Builtin hasher;
+    hasher.insert(reg_.raw());
+    if (va_)
+        hasher.insert(*va_);
+    return hasher.make64Bits();
 }
 
 std::string

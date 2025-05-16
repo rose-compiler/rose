@@ -163,6 +163,17 @@ SourceLocation::isValid() const {
     return fileName_ != nullptr;
 }
 
+uint64_t
+SourceLocation::hash() const {
+    Combinatorics::HasherSha256Builtin hasher;
+    if (fileName_)
+        hasher.insert(fileName_->string());
+    hasher.insert(line_);
+    if (column_)
+        hasher.insert(*column_);
+    return hasher.make64Bits();
+}
+
 // Returning a reference is okay here. It has the same semantics as if the filename were stored directly in this object;
 // namely, the refered name will exist as long as this object exists (or some other object that references this same name
 // exists).

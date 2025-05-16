@@ -58,6 +58,16 @@ AbstractLocation::isValid() const {
     return isRegister() || isAddress();
 }
 
+uint64_t
+AbstractLocation::hash() const {
+    Combinatorics::HasherSha256Builtin hasher;
+    hasher.insert(reg_.raw());
+    if (addr_)
+        addr_->hash(hasher);
+    hasher.insert(nBytes_);
+    return hasher.make64Bits();
+}
+
 std::string
 AbstractLocation::toString() const {
     return printableName();

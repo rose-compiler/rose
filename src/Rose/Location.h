@@ -1,6 +1,7 @@
 #ifndef ROSE_Location_H
 #define ROSE_Location_H
 #include <RoseFirst.h>
+#include <cstdint>
 #include <ostream>
 #include <string>
 
@@ -102,6 +103,9 @@ public:
         return *this ? false : true;
     }
     /** @} */
+
+    /** Compute a 64-bit hash of this object. */
+    virtual uint64_t hash() const = 0;
 };
 
 inline std::ostream& operator<<(std::ostream &out, const Location &x) {

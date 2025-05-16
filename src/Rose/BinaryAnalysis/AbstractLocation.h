@@ -37,7 +37,7 @@ private:
     RegisterDescriptor reg_;
     Address addr_;
     size_t nBytes_ = 0;                                 // size of memory location, or zero if unknown
-    RegisterDictionaryPtr regdict_;
+    RegisterDictionaryPtr regdict_;                     // not hashed or compared; only used to generate string output
 
 public:
     /** Default constructor.
@@ -71,6 +71,7 @@ public:
     static AbstractLocation parse(const std::string&);
 
     virtual bool isValid() const override;
+    virtual uint64_t hash() const override;
     virtual std::string toString() const override;
     virtual void print(std::ostream&) const override;
     virtual std::string printableName() const override;

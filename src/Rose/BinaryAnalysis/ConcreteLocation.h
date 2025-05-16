@@ -39,7 +39,7 @@ public:
 private:
     RegisterDescriptor reg_;
     Sawyer::Optional<uint64_t> va_;
-    RegisterDictionaryPtr regdict_;
+    RegisterDictionaryPtr regdict_;                     // not hashed or compared; only for generating string output
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     friend class boost::serialization::access;
@@ -88,6 +88,7 @@ public:
 
     // Inherited methods
     virtual bool isValid() const override;
+    virtual uint64_t hash() const override;
     virtual std::string toString() const override;
     virtual void print(std::ostream&) const override;
     virtual std::string printableName() const override;
