@@ -714,7 +714,7 @@ public:
      *  expressions.
      *
      * @{ */
-    void userData(boost::any &data) {
+    void userData(const boost::any &data) {
         userData_ = data;
     }
     const boost::any& userData() const {
