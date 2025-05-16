@@ -52,6 +52,8 @@ ThreadFlowLocation::emit(std::ostream &out) {
             sep = ",";
         }
 
+        Node::emit(out);
+
         out <<"}";
         return true;
     }

@@ -17,7 +17,13 @@ public:
     /** Emit this node and its children as JSON.
      *
      *  Returns true if this node produced (or tried to produce) any output, false if not. */
-    virtual bool emit(std::ostream&) = 0;
+    virtual bool emit(std::ostream&);
+
+private:
+    /** Emit this node's properties bag if present.
+     *
+     *  Returns true if this node produced (or tried to produce) any output, false if not. */
+    bool emitProperties(std::ostream &);
 
 public:
     /** Property: property bag for holding JSON metadata.
@@ -27,7 +33,8 @@ public:
      *  This field is an accessor for the metadata as a key-value map -- for adding new entries, see @ref addProperty.
      *
      *  */
-    [[using Rosebud: accessors(), large]] nlohmann::json properties;
+    [[using Rosebud: accessors(), large]] 
+    nlohmann::json properties;
 
 public:
     /** Add a property to this object's property bag.

@@ -43,6 +43,8 @@ ThreadFlow::emit(std::ostream &out) {
             sep1 = ",";
         }
 
+        Node::emit(out);
+
         out <<"}";
         return true;
     }

@@ -29,6 +29,8 @@ Rule::emit(std::ostream &out) {
             <<"}";
     }
 
+    Node::emit(out);
+
     out <<"}";
     return true;
 }

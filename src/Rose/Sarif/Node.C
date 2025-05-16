@@ -11,7 +11,27 @@ namespace Rose {
 namespace Sarif {
 
 bool
-validate_hierarchical_string(const std::string &str) {
+Node::emit(std::ostream &out) {
+    emitProperties(out);
+    return true;
+}
+
+bool
+Node::emitProperties(std::ostream &out) {
+    const auto &props = properties();
+
+    if (props.is_null())
+        return false;
+
+    ASSERT_always_require2(props.is_object(), "properties set to unexepected (non-object) type in Sarif!!");
+
+    out.width(0);
+    out << ",\"properties\":" << props;
+    return true;
+}
+
+bool
+validateHierarchicalString(const std::string &str) {
 
     std::vector<std::string> elems;
 
@@ -28,7 +48,7 @@ validate_hierarchical_string(const std::string &str) {
 bool
 Node::addProperty(const std::string &name, const nlohmann::json &property) {
 
-    if (!validate_hierarchical_string(name))
+    if (!validateHierarchicalString(name))
         return false;
 
     properties()[name] = property;

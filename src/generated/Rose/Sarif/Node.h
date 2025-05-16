@@ -64,6 +64,12 @@ public:
      *  Returns true if this node produced (or tried to produce) any output, false if not. */
     virtual bool emit(std::ostream&) = 0;
 
+private:
+    /** Emit this node's properties bag if present.
+     *
+     *  Returns true if this node produced (or tried to produce) any output, false if not. */
+    bool emitProperties(std::ostream &);
+
 public:
 
     /** Property: property bag for holding JSON metadata.

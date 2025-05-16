@@ -139,6 +139,8 @@ Result::emit(std::ostream &out) {
         out <<"]";
     }
 
+    Node::emit(out);
+
     out <<"}";
     return true;
 }
