@@ -23,6 +23,7 @@
 #include <Rose/BinaryAnalysis/Concolic.h>
 #include <Rose/BinaryAnalysis/ConcreteLocation.h>
 #include <Rose/BinaryAnalysis/ControlFlow.h>
+#include <Rose/BinaryAnalysis/DataDependence.h>
 #include <Rose/BinaryAnalysis/DataFlow.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/BinaryAnalysis/Demangler.h>

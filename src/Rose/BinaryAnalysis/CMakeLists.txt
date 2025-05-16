@@ -28,6 +28,7 @@ add_library(roseBinaryAnalysis OBJECT
   CodeInserter.C
   ConcreteLocation.C
   ControlFlow.C
+  DataDependence.C
   DataFlow.C
   Demangler.C
   FeasiblePath.C
@@ -90,6 +91,7 @@ install(FILES
   Concolic.h
   ConcreteLocation.h
   ControlFlow.h
+  DataDependence.h
   DataFlow.h
   Debugger.h
   Demangler.h

@@ -34,6 +34,10 @@ if(ENABLE-BINARY-ANALYSIS)
   target_link_libraries(bat-dataflow bat ROSE_DLL)
   install(TARGETS bat-dataflow DESTINATION bin)
 
+  add_executable(bat-ddg bat-ddg.C)
+  target_link_libraries(bat-ddg bat ROSE_DLL)
+  install(TARGETS bat-ddg DESTINATION bin)
+
   add_executable(bat-debug-semantics bat-debug-semantics.C)
   target_link_libraries(bat-debug-semantics bat ROSE_DLL)
   install(TARGETS bat-debug-semantics DESTINATION bin)

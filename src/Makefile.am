@@ -365,6 +365,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Concolic/TestCase.h						\
 	Rose/BinaryAnalysis/Concolic/TestSuite.h					\
 	Rose/BinaryAnalysis/ControlFlow.h						\
+	Rose/BinaryAnalysis/DataDependence.h						\
 	Rose/BinaryAnalysis/DataFlow.h							\
 	Rose/BinaryAnalysis/Debugger.h							\
 	Rose/BinaryAnalysis/Debugger/Base.h						\

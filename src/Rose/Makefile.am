@@ -108,6 +108,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Concolic/Utility.C						\
 	BinaryAnalysis/ConcreteLocation.C						\
 	BinaryAnalysis/ControlFlow.C							\
+	BinaryAnalysis/DataDependence.C							\
 	BinaryAnalysis/DataFlow.C							\
 	BinaryAnalysis/Debugger/Base.C							\
 	BinaryAnalysis/Debugger/Exception.C						\

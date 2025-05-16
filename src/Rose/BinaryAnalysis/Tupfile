@@ -16,6 +16,7 @@ run $(librose_compile)				\
     CodeInserter.C				\
     ConcreteLocation.C				\
     ControlFlow.C				\
+    DataDependence.C				\
     DataFlow.C					\
     Demangler.C					\
     FeasiblePath.C				\
@@ -76,6 +77,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     Concolic.h							\
     ConcreteLocation.h						\
     ControlFlow.h						\
+    DataDependence.h						\
     DataFlow.h							\
     Debugger.h							\
     Demangler.h							\

@@ -32,6 +32,7 @@ namespace BinaryAnalysis {
     namespace Architecture { void initDiagnostics(); }
     namespace CallingConvention { void initDiagnostics(); }
     namespace Cil { void initDiagnostics(); }
+    namespace DataDependence { void initDiagnostics(); }
     namespace Dwarf { void initDiagnostics(); }
     namespace Partitioner2 {
         void initDiagnostics();

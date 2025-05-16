@@ -14,6 +14,7 @@ run $(tool_compile_linkexe) --install -I. bat-cg.C                libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-check-execution.C   libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-container.C         libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-dataflow.C          libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-ddg.C		  libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-debug-semantics.C   libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-delta-bijection.C   libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-dis.C               libbatSupport
@@ -53,6 +54,7 @@ ifeq (@(ENABLE_TESTS),yes)
     run $(test) bat-check-execution   ./bat-check-execution   --self-test --no-error-if-disabled
     run $(test) bat-container         ./bat-container         --self-test --no-error-if-disabled
     run $(test) bat-dataflow          ./bat-dataflow          --self-test --no-error-if-disabled
+    run $(test) bat-ddg		      ./bat-ddg		      --self-test --no-error-if-disabled
     run $(test) bat-debug-semantics   ./bat-debug-semantics   --self-test --no-error-if-disabled
     run $(test) bat-delta-bijection   ./bat-delta-bijection   --self-test --no-error-if-disabled
     run $(test) bat-dis               ./bat-dis               --self-test --no-error-if-disabled
