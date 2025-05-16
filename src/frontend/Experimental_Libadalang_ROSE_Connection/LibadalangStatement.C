@@ -2053,10 +2053,10 @@ queryDecl(ada_base_entity* lal_element, int defining_name_hash, AstContext /*ctx
     decl_hash = hash_node(&corresponding_decl);
   }
 
-  SgDeclarationStatement* res = findFirst(libadalangDecls(), decl_hash, defining_name_hash);
+  SgDeclarationStatement* res = findFirst(libadalangDecls(), defining_name_hash, decl_hash);
 
   if((res == nullptr) && (kind == ada_identifier)){
-    res = findFirst(adaPkgs(), decl_hash, defining_name_hash);
+    res = findFirst(adaPkgs(), defining_name_hash, decl_hash);
   }
 
   return res;
@@ -3463,6 +3463,27 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         assocdecl = &sgnode;
         break;
       }
+    case ada_generic_formal_obj_decl: //12.4
+      {
+        logKind("ada_generic_formal_obj_decl", kind);
+
+        ada_base_entity lal_object_decl;
+        ada_generic_formal_f_decl(lal_element, &lal_object_decl);
+
+        //Get the constant status
+        ada_base_entity lal_has_constant;
+        ada_object_decl_f_has_constant(&lal_object_decl, &lal_has_constant);
+        ada_node_kind_enum lal_has_constant_kind = ada_node_kind(&lal_has_constant);
+
+        //If it is const, call with mkConstType
+        if(lal_has_constant_kind == ada_constant_absent){
+          assocdecl = &handleVarCstDecl(&lal_object_decl, ctx, isPrivate, tyIdentity);
+        } else {
+          assocdecl = &handleVarCstDecl(&lal_object_decl, ctx, isPrivate, mkConstType);
+        }
+
+        break;
+      }
     case ada_generic_formal_type_decl:                // 12.5(2)
       {
         logKind("ada_generic_formal_type_decl", kind);
@@ -4454,16 +4475,53 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       {
         logKind("ada_object_decl", kind);
 
-        //Get the constant status
-        ada_base_entity lal_has_constant;
-        ada_object_decl_f_has_constant(lal_element, &lal_has_constant);
-        ada_node_kind_enum lal_has_constant_kind = ada_node_kind(&lal_has_constant);
+        //Get the renaming clause, if it exists
+        ada_base_entity lal_renaming_clause;
+        ada_object_decl_f_renaming_clause(lal_element, &lal_renaming_clause);
 
-        //If it is const, call with mkConstType
-        if(lal_has_constant_kind == ada_constant_absent){
-          assocdecl = &handleVarCstDecl(lal_element, ctx, isPrivate, tyIdentity);
+        if(!ada_node_is_null(&lal_renaming_clause)){
+          //Get the renamed object
+          ada_base_entity lal_renamed_identifier;
+          ada_renaming_clause_f_renamed_object(&lal_renaming_clause, &lal_renamed_identifier);
+          SgExpression& renamed = getExpr(&lal_renamed_identifier, ctx);
+
+          //Get the name of this object
+          ada_base_entity lal_defining_name, lal_identifier;
+          ada_object_decl_f_ids(lal_element, &lal_defining_name);
+          ada_node_child(&lal_defining_name, 0, &lal_defining_name); //renamings can't have identifier lists, so get the single name
+          int decl_hash = hash_node(&lal_defining_name);
+          ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+          std::string name = getFullName(&lal_identifier);
+
+          //Get the type
+          ada_base_entity lal_subtype_indication;
+          ada_object_decl_f_type_expr(lal_element, &lal_subtype_indication);
+          SgType& ty = getDeclType(&lal_subtype_indication, ctx);
+
+          SgScopeStatement& scope = ctx.scope();
+
+          SgAdaRenamingDecl& sgnode = mkAdaRenamingDecl(name, renamed, ty, scope);
+
+          recordNode(libadalangDecls(), hash_node(lal_element), sgnode);
+          recordNode(libadalangDecls(), decl_hash, sgnode);
+
+          attachSourceLocation(sgnode, lal_element, ctx);
+          privatize(sgnode, isPrivate);
+          ctx.appendStatement(sgnode);
+          assocdecl = &sgnode;
+          
         } else {
-          assocdecl = &handleVarCstDecl(lal_element, ctx, isPrivate, mkConstType);
+          //Get the constant status
+          ada_base_entity lal_has_constant;
+          ada_object_decl_f_has_constant(lal_element, &lal_has_constant);
+          ada_node_kind_enum lal_has_constant_kind = ada_node_kind(&lal_has_constant);
+
+          //If it is const, call with mkConstType
+          if(lal_has_constant_kind == ada_constant_absent){
+            assocdecl = &handleVarCstDecl(lal_element, ctx, isPrivate, tyIdentity);
+          } else {
+            assocdecl = &handleVarCstDecl(lal_element, ctx, isPrivate, mkConstType);
+          }
         }
 
         break;

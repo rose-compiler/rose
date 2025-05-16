@@ -200,15 +200,18 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
          || name == "alignment"
          || name == "base"
          || name == "class"
+         || name == "constrained"
          || name == "digits"
          || name == "fore"
          || name == "image"
          || name == "length"
+         || name == "max"
          || name == "old"
          || name == "pos"
          || name == "read"
          || name == "result"
          || name == "size"
+         || name == "succ"
          || name == "val"
          || name == "width"
          || name == "write")
@@ -320,6 +323,8 @@ namespace
       void mkCall(SgExpression& n)
       {
         SgExprListExp& arglst = mkExprListExp(args);
+
+        computeSourceRangeFromChildren(arglst);
 
         res = &mkFunctionCallExp(n, arglst, !prefixCallSyntax, objectCallSyntax);
       }
@@ -757,7 +762,7 @@ namespace
   si::Ada::OperatorScopeInfo
   operatorScope(const AdaIdentifier& name, SgTypePtrList argTypes, boost::optional<int> id, AstContext ctx)
   {
-    if (id < 1) return si::Ada::operatorScope(name, std::move(argTypes));
+    if (!id) return si::Ada::operatorScope(name, std::move(argTypes));
 
     SgScopeStatement&        scope = queryScopeOf(*id, ctx);
     si::Ada::DominantArgInfo dom   = si::Ada::operatorArgumentWithNamedRootIfAvail(argTypes);
@@ -1554,12 +1559,46 @@ namespace{
 
           //If this is an ada_call_expr, we might want to treat it like a_type_conversion or an_indexed_component instead
           if(kind == ada_call_expr){
-            //Get the f_name, and check if it is a type
+            //Get the full name of the called function (may be identifier, dotted_name, another call_expr, ...)
             ada_base_entity lal_full_name;
             ada_call_expr_f_name(lal_element, &lal_full_name);
+
+            //Get p_is_array_slice
+            ada_bool lal_p_is_array_slice;
+            ada_call_expr_p_is_array_slice(lal_element, &lal_p_is_array_slice);
+
+            if(lal_p_is_array_slice){ //TODO This is repeated code from below, b/c I couldn't get the if conditions to line up
+              //Sometimes, p_is_array_slice is true even if it isn't an array slice???? (a-strunb.ads 507:46-507:61)
+              //  So, we need to check if the suffix is a bin op with op_double_dot
+              ada_base_entity lal_bin_op;
+              ada_call_expr_f_suffix(lal_element, &lal_bin_op);
+              if(!ada_node_is_null(&lal_bin_op) && ada_node_kind(&lal_bin_op) == ada_bin_op){
+                ada_base_entity lal_op;
+                ada_bin_op_f_op(&lal_bin_op, &lal_op);
+                if(!ada_node_is_null(&lal_op) && ada_node_kind(&lal_op) == ada_op_double_dot){
+
+                  logInfo() << " ^Actually an_array_slice\n";
+
+                  //Get the prefix
+                  SgExpression& prefix = getExpr(&lal_full_name, ctx);
+
+                  //Get the slice
+                  std::vector<SgExpression*> idxexpr;
+                  idxexpr.push_back(&getDiscreteRange(&lal_bin_op, ctx));
+
+                  SgExprListExp&             indices = mkExprListExp(idxexpr);
+                  res = &mkPntrArrRefExp(prefix, indices);
+
+                  break;
+                }
+              }
+            }
+
+            //Get the f_name, and check if it is a type
             ada_base_entity lal_name;
             findBaseName(&lal_full_name, lal_name);
             ada_node_kind_enum name_kind = ada_node_kind(&lal_name);
+
             if(name_kind == ada_identifier){
               //Check the decl to see if this name refers to a type
               ada_base_entity lal_decl;
@@ -1588,7 +1627,7 @@ namespace{
                 }
                 break;
               }
-              //Check p_expression_type to see if this name is an array
+              //Check p_expression_type/p_is_array_slice to see if this name is an array
               ada_base_entity lal_expr_type;
               ada_expr_p_expression_type(&lal_name, &lal_expr_type);
               ada_node_kind_enum lal_expr_type_kind = ada_node_kind(&lal_expr_type);
@@ -1596,7 +1635,7 @@ namespace{
                 //Get the type def to see if this type is an array
                 ada_base_entity lal_type_def;
                 ada_type_decl_f_type_def(&lal_expr_type, &lal_type_def);
-                if(ada_node_kind(&lal_type_def) == ada_array_type_def){
+                if(ada_node_kind(&lal_type_def) == ada_array_type_def){ //TODO Find better way to check for indexed_component
                   logInfo() << " ^Actually an_indexed_component\n";
 
                   //lal_name is the prefix, get the indexes
@@ -1604,7 +1643,7 @@ namespace{
                   ada_call_expr_f_suffix(lal_element, &lal_index_list);
                   int count = ada_node_children_count(&lal_index_list);
 
-                  SgExpression&              prefix = getExpr(&lal_name, ctx);
+                  SgExpression&              prefix = getExpr(&lal_full_name, ctx);
                   std::vector<SgExpression*> idxexpr;
 
                   //If the kind of lal_index_list is ada_bin_op, treat it like A_Slice instead
@@ -2206,8 +2245,10 @@ getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx)
       break;
     }
     case ada_subtype_indication:
+    case ada_constrained_subtype_indication:
+    case ada_discrete_subtype_indication:
     {
-      logKind("A_Discrete_Subtype_Definition", kind);
+      logKind("A_Discrete_Subtype_Indication?", kind);
 
       ada_base_entity lal_identifier;
       ada_subtype_indication_f_name(lal_element, &lal_identifier);
