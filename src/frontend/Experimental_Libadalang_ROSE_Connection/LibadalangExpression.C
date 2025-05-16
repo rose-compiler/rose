@@ -1479,7 +1479,7 @@ namespace{
             res = sg::dispatch(ExprRefMaker{ctx}, dcl);
             ada_bool lal_is_call;
             ada_name_p_is_call(lal_element, &lal_is_call);
-            if(lal_is_call && isSgFunctionRefExp(res) != nullptr && !suppl.valid()){
+            if(lal_is_call && isSgFunctionRefExp(res) != nullptr && !suppl.args_valid()){
               //We don't want res to be SgFunctionRefExp, convert to SgFunctionCallExp instead
               std::vector<SgExpression*> arglist; //Purposefully empty
               res = sg::dispatch(AdaCallBuilder{lal_element, std::move(arglist), true, false, ctx}, res);
