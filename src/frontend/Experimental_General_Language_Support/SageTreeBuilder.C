@@ -2253,7 +2253,7 @@ Leave(SgCommonBlock* stmt)
 // name and symbol information so that the variable reference can be cleaned/fixed up when
 // the explicit declaration is seen.
 SgVarRefExp* SageTreeBuilder::
-buildVarRefExp_nfi(const std::string & name)
+buildVarRefExp_nfi(const std::string &name)
 {
    SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
    ASSERT_not_null(var_ref);
@@ -2416,7 +2416,6 @@ reset_forward_var_refs(SgScopeStatement* scope)
          }
        }
        else {
-         mlog[WARN] << "{" << it->first << ": " << it->second << "}\n";
          it++;
        }
      }

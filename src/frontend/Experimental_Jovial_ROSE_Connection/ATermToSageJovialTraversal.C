@@ -6557,7 +6557,7 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
    char* name{nullptr};
 
    // Look for a variable (or could be a function call because of ambiguities)
-   if (ATmatch(term, "<str>" , &name)) {
+   if (ATmatch(term, "<str>", &name)) {
      SgSymbol* symbol = SI::lookupSymbolInParentScopes(name);
 
      var = nullptr;
