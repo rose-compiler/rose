@@ -5000,6 +5000,14 @@ ATbool ATermToSageJovialTraversal::traverse_AssignmentStatement(ATerm term, std:
          // MATCHED Formula
       } else return ATfalse;
 
+      // May need to be converted to a function call
+      if (auto fref = isSgFunctionRefExp(rhs)) {
+         auto params = SageBuilder::buildExprListExp_nfi();
+         auto fcall = SageBuilder::buildFunctionCallExp(fref, params);
+         setSourcePosition(fcall, t_expr);
+         rhs = fcall;
+      }
+
       if (rhs == nullptr) {
          mlog[WARN] << "UNIMPLEMENTED: AssignmentStatement "
                     << "- could be FunctionCall, or StatusConstant, or PointerLiteral, etc.\n";
@@ -6569,16 +6577,7 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
        SI::setOneSourcePositionNull(var);
      }
      else if (isSgFunctionSymbol(symbol)) {
-         var = SageBuilder::buildFunctionRefExp_nfi(isSgFunctionSymbol(symbol));
-     }
-
-     // Next look for a function call because functions need not be declared yet
-     //
-     else if (isSgFunctionSymbol(symbol)) {
-       SgFunctionCallExp* funcCall{nullptr};
-       sage_tree_builder.Enter(funcCall, std::string(name), nullptr);
-       sage_tree_builder.Leave(funcCall);
-       var = funcCall;
+       var = SageBuilder::buildFunctionRefExp_nfi(isSgFunctionSymbol(symbol));
      }
      else if (isSgClassSymbol(symbol) || isSgTypedefSymbol(symbol) || isSgEnumSymbol(symbol)) {
        var = SageBuilder::buildTypeExpression(symbol->get_type());
