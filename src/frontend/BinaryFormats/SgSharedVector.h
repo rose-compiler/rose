@@ -61,7 +61,7 @@ public:
     class iterator {
         public:
             iterator operator++() { return (this->p)++; }
-            bool operator!=( const iterator & x ) const { return (this->p != x->p); }
+            bool operator!=( const iterator & x ) const { return (this->p != x.p); }
             value_type & operator*() const { return *(this->p); }
             iterator(pointer x) : p(x) {}
         private:          
