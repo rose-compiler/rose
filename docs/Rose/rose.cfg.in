@@ -727,6 +727,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/frontend/BinaryFormats \
                          @top_srcdir@/src/midend/abstractHandle \
 			 @top_srcdir@/src/midend/astMatching \
+			 @top_srcdir@/src/midend/astSnippet \
                          @top_srcdir@/src/midend/BinaryAnalysis \
                          @top_srcdir@/src/midend/BinaryAnalysis/libraryIdentification \
                          @top_srcdir@/src/midend/programTransformation/ompLowering \
