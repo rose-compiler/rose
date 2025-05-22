@@ -2200,7 +2200,7 @@ EngineBinary::discoverFunctions(const Partitioner::Ptr &partitioner) {
 
         // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's entry
         // block, so go back and look for more basic blocks again.
-        if (!hasCilCodeSection()) {
+        if (!hasCilCodeSection() && !partitioner->memoryMap()->isEmpty()) {
             if (nextPrologueVa < partitioner->memoryMap()->hull().greatest()) {
                 std::vector<Function::Ptr> newFunctions =
                     makeNextPrologueFunction(partitioner, nextPrologueVa, nextPrologueVa /*out*/);
