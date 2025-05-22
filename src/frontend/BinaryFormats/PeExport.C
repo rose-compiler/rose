@@ -278,7 +278,7 @@ SgAsmPEExportSection::parse()
         /* If export address is within this section then it points to a NUL-terminated forwarder name.
          * FIXME: Is this the proper precondition? [RPM 2009-08-20] */
         SgAsmGenericString *forwarder = NULL;
-        if (*expaddr.va()>=get_mappedActualVa() && *expaddr.va()<get_mappedActualVa()+get_mappedSize()) {
+        if (expaddr.va() && *expaddr.va() >= get_mappedActualVa() && *expaddr.va() < get_mappedActualVa() + get_mappedSize()) {
             std::string s;
             try {
                 s = readContentString(fhdr->get_loaderMap(), *expaddr.va());

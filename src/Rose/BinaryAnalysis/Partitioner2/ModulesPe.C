@@ -102,12 +102,13 @@ findExportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmPEFileHeader 
         for (SgAsmGenericSection *section: peHeader->get_sections()->get_sections()) {
             if (SgAsmPEExportSection *exportSection = isSgAsmPEExportSection(section)) {
                 for (SgAsmPEExportEntry *exportEntry: exportSection->get_exports()->get_exports()) {
-                    Address va = *exportEntry->get_exportRva().va();
-                    if (partitioner->discoverInstruction(va)) {
-                        Function::Ptr function = Function::instance(va, exportEntry->get_name()->get_string(),
-                                                                    SgAsmFunction::FUNC_EXPORT);
-                        if (insertUnique(functions, function, sortFunctionsByAddress))
-                            ++nInserted;
+                    if (const auto va = exportEntry->get_exportRva().va()) {
+                        if (partitioner->discoverInstruction(*va)) {
+                            Function::Ptr function = Function::instance(*va, exportEntry->get_name()->get_string(),
+                                                                        SgAsmFunction::FUNC_EXPORT);
+                            if (insertUnique(functions, function, sortFunctionsByAddress))
+                                ++nInserted;
+                        }
                     }
                 }
             }
