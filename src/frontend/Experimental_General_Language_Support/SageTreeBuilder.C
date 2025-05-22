@@ -2031,20 +2031,25 @@ Enter(SgVariableDeclaration* &varDecl, const std::string &name, SgType* type,
 // Look for a symbol previously implicitly declared and fix the variable reference
    if (forward_var_refs_.find(name) != forward_var_refs_.end()) {
      if (SgVariableSymbol* varSym = SI::lookupVariableSymbolInParentScopes(name)) {
-        SgVarRefExp* prevVarRef = forward_var_refs_[name];
-        SgVariableSymbol* prevVarSym = prevVarRef->get_symbol();
-        ASSERT_not_null(prevVarSym);
+        // Iterate over all variable references associated with this name
+        auto range = forward_var_refs_.equal_range(name);
+        for (auto it = range.first; it != range.second; ++it) {
+          SgVarRefExp* prevVarRef = it->second;
+          SgVariableSymbol* prevVarSym = prevVarRef->get_symbol();
+          ASSERT_not_null(prevVarSym);
 
-        SgInitializedName* prevInitName = prevVarSym->get_declaration();
-        ASSERT_require(prevInitName->get_name() == initName->get_name());
+          SgInitializedName* prevInitName = prevVarSym->get_declaration();
+          ASSERT_require(prevInitName->get_name() == initName->get_name());
 
-     // Reset the symbol for the variable reference to the symbol for the explicit variable declaration
-        prevVarRef->set_symbol(varSym);
-        forward_var_refs_.erase(name); // The dangling variable reference has been fixed
+          // Reset the symbol for the variable reference to the symbol for the explicit variable declaration
+          prevVarRef->set_symbol(varSym);
 
-     // Delete the previous symbol and initialized name
-        delete prevVarSym;
-        delete prevInitName;
+          // Delete the previous symbol and initialized name
+          delete prevVarSym;
+          delete prevInitName;
+        }
+        // Remove all variable refs associated with name
+        forward_var_refs_.erase(name);
      }
    }
 }
@@ -2260,7 +2265,7 @@ buildVarRefExp_nfi(const std::string &name)
    SageInterface::setSourcePosition(var_ref);
 
    if (SageInterface::lookupSymbolInParentScopes(name) == nullptr) {
-      forward_var_refs_[name] = var_ref;
+      forward_var_refs_.insert({name, var_ref});
    }
    return var_ref;
 }
@@ -2415,9 +2420,7 @@ reset_forward_var_refs(SgScopeStatement* scope)
            it++;
          }
        }
-       else {
-         it++;
-       }
+       else it++;
      }
    }
 }

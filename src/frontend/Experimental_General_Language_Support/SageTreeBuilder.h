@@ -251,7 +251,7 @@ private:
    TokenStream* tokens_;
    TraversalContext context_;
    std::istringstream iss_empty_{};
-   std::map<const std::string, SgVarRefExp*> forward_var_refs_;
+   std::multimap<const std::string, SgVarRefExp*> forward_var_refs_;
    std::map<const std::string, SgLabelStatement*> labels_;
    std::multimap<const std::string, SgPointerType*> forward_type_refs_;
 
