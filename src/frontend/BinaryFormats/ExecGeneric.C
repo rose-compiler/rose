@@ -59,9 +59,13 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
             if (!canceled) {
                 BOOST_FOREACH (DataConverter *converter, converters)
                     delete converter;
-                if (ef)
+                if (ef) {
                     delete ef->get_dataConverter();
+                    ef->set_dataConverter(nullptr);
+                }
+#if 0 // [Robb Matzke 2025-05-22]: deleting the AST doesn't work right, so leak it instead
                 SageInterface::deleteAST(ef);
+#endif
             }
         }
     } cleanup(converters, ef);
