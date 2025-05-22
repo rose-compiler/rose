@@ -32,19 +32,32 @@ AbstractLocation::operator=(const AbstractLocation &other) {
     return *this;
 }
 
-AbstractLocation::AbstractLocation(RegisterDescriptor reg)
+AbstractLocation::AbstractLocation(const RegisterDescriptor reg)
     : reg_(reg), nBytes_(0) {
     ASSERT_require(reg);
 }
 
-AbstractLocation::AbstractLocation(RegisterDescriptor reg, const RegisterDictionary::Ptr &regdict)
+AbstractLocation::AbstractLocation(const RegisterDescriptor reg, const RegisterDictionary::Ptr &regdict)
     : reg_(reg), nBytes_(0), regdict_(regdict) {
     ASSERT_require(reg);
 }
 
-AbstractLocation::AbstractLocation(const Address &addr, size_t nBytes)
+AbstractLocation::AbstractLocation(const Address &addr, const size_t nBytes)
     : addr_(addr), nBytes_(nBytes) {
     ASSERT_not_null(addr);
+}
+
+AbstractLocation::AbstractLocation(const RegisterDescriptor reg, const Address &offset, const size_t nBytes)
+    : reg_(reg), addr_(offset), nBytes_(nBytes) {
+    ASSERT_require(reg);
+    ASSERT_not_null(offset);
+}
+
+AbstractLocation::AbstractLocation(const RegisterDescriptor reg, const RegisterDictionary::Ptr &regdict, const Address &offset,
+                                   const size_t nBytes)
+    : reg_(reg), addr_(offset), nBytes_(nBytes), regdict_(regdict) {
+    ASSERT_require(reg);
+    ASSERT_not_null(offset);
 }
 
 AbstractLocation
@@ -78,7 +91,10 @@ AbstractLocation::print(std::ostream &out) const {
     if (isRegister()) {
         out <<RegisterNames()(reg_, regdict_);
     } else if (isAddress()) {
-        out <<*addr_;
+        out <<"mem[";
+        if (isRelativeAddress())
+            out <<RegisterNames()(reg_, regdict_) <<" + ";
+        out <<*addr_ <<"]";
         if (nBytes_ > 0)
             out <<"+" <<StringUtility::plural(nBytes_, "bytes");
     } else {
@@ -200,12 +216,27 @@ AbstractLocation::operator>=(const Location &other_) const {
 
 bool
 AbstractLocation::isRegister() const {
-    return !reg_.isEmpty();
+    return reg_ && addr_ == nullptr;
 }
 
 bool
 AbstractLocation::isAddress() const {
     return addr_ != nullptr;
+}
+
+bool
+AbstractLocation::isAbsoluteAddress() const {
+    return addr_ != nullptr && !reg_;
+}
+
+bool
+AbstractLocation::isRelativeAddress() const {
+    return addr_ != nullptr && reg_;
+}
+
+RegisterDictionary::Ptr
+AbstractLocation::registerDictionary() const {
+    return regdict_;
 }
 
 RegisterDescriptor
@@ -215,7 +246,12 @@ AbstractLocation::getRegister() const {
 
 const AbstractLocation::Address
 AbstractLocation::getAddress() const {
-    return addr_;
+    return isAbsoluteAddress() ? addr_ : Address();
+}
+
+const AbstractLocation::Address
+AbstractLocation::getOffset() const {
+    return isRelativeAddress() ? addr_ : Address();
 }
 
 size_t
@@ -226,10 +262,16 @@ AbstractLocation::nBytes() const {
 
 bool
 AbstractLocation::mayAlias(const AbstractLocation &other, const SmtSolverPtr &solver) const {
+    // This version of mayAlias assumes that offsets from base registers cannot alias one another if the base regisiters are
+    // different. E.g., x86 stack segments (`ss` register) are distinct from data segments (`ds` register) are distinct from code
+    // segments (`cs` register). But this also means that offsets from the stack pointer register never alias offsets from the frame
+    // pointer register, or offsets from x86 `eax` never alias offsets from `rax`, etc.
+    //
+    // See also, `mustAlias`.
     if (isRegister() && other.isRegister()) {
         return reg_ == other.reg_;
-    } else if (isAddress() && other.isAddress()) {
-        return addr_->mayEqual(other.addr_, solver);
+    } else if (isAddress() && other.isAddress()) {      // absolute or relative
+        return reg_ == other.reg_ && addr_->mayEqual(other.addr_, solver);
     } else if (!isValid() && !other.isValid()) {
         return true;
     } else {
@@ -239,10 +281,11 @@ AbstractLocation::mayAlias(const AbstractLocation &other, const SmtSolverPtr &so
 
 bool
 AbstractLocation::mustAlias(const AbstractLocation &other, const SmtSolverPtr &solver) const {
+    // See also, `mayAlias`.
     if (isRegister() && other.isRegister()) {
         return reg_ == other.reg_;
-    } else if (isAddress() && other.isAddress()) {
-        return addr_->mustEqual(other.addr_, solver);
+    } else if (isAddress() && other.isAddress()) {      // absolute or relative
+        return reg_ == other.reg_ && addr_->mustEqual(other.addr_, solver);
     } else if (!isValid() && !other.isValid()) {
         return true;
     } else {
