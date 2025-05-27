@@ -570,8 +570,8 @@
       "Fields": [
         {
           "Doc": "A 4-byte constant.",
-          "Init": "read16bitValue(buf,index)",
-          "Serial": "write16bitValue(get_`Name`(),buf,index)",
+          "Init": "read32bitValue(buf,index)",
+          "Serial": "write32bitValue(get_`Name`(),buf,index)",
           "Name": "RVA",
           "Type": "uint32_t"
         },

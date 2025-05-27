@@ -1312,7 +1312,7 @@ SgAsmCilFieldMarshal::get_NativeType_blob() const
 
 void SgAsmCilFieldRVA::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 {
-  p_RVA = read16bitValue(buf,index);
+  p_RVA = read32bitValue(buf,index);
   p_Field = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_field);
 
   if (TRACE_CONSTRUCTION)
@@ -1324,7 +1324,7 @@ void SgAsmCilFieldRVA::parse(const std::vector<uint8_t>& buf, size_t& index, uin
 
 void SgAsmCilFieldRVA::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
 {
-  write16bitValue(get_RVA(),buf,index);
+  write32bitValue(get_RVA(),buf,index);
   writeValue(get_Field(),buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_field);
 }
 
