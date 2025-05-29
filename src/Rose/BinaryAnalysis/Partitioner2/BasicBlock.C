@@ -131,6 +131,16 @@ BasicBlock::eraseSuccessor(const BasicBlockSuccessor &successor) {
     return eraseSuccessor(successor.expr(), successor.type(), successor.confidence());
 }
 
+bool
+BasicBlock::hasIndirectControlFlow() const {
+    return hasIndirectControlFlow_;
+}
+
+void
+BasicBlock::hasIndirectControlFlow(const bool b) {
+    hasIndirectControlFlow_ = b;
+}
+
 SgAsmInstruction*
 BasicBlock::instructionExists(Address startVa) const {
     if (insns_.size() >= bigBlock_) {

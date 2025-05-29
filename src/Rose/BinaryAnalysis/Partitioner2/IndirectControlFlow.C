@@ -72,6 +72,7 @@ enableDiagnostics(Sawyer::Message::Stream &stream, const Settings &settings, con
 Sawyer::CommandLine::SwitchGroup
 commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
+    using Rose::CommandLine::insertBooleanSwitch;
     using Rose::CommandLine::insertEnableSwitch;
 
     SwitchGroup sg("Indirect control flow recovery");
@@ -119,10 +120,20 @@ commandLineSwitches(Settings &settings) {
               .doc("During dataflow, this is the maximum number of distinct values to save in a set when merging states from one "
                    "or more graph edges. The default is " + plural(settings.maxDataflowSetSize, "values") + "."));
 
+    sg.insert(Switch("max-symbolic-size")
+              .argument("n", nonNegativeIntegerParser(settings.maxSymbolicExprSize))
+              .doc("Maximum number of nodes to permit in a symbolic expression before the expression is folded into a new "
+                   "unconstrained symbolic variable. The default is " + plural(settings.maxSymbolicExprSize, "nodes") + "."));
+
+    insertBooleanSwitch(sg, "reanalyze", settings.reanalyzeSomeBlocks,
+                        "Perform a second pass after the CFG is recurisively constructed. This pass reanalyzes basic blocks that "
+                        "were analyzed by the first phase during CFG construction. The second phase is a single pass over all "
+                        "such blocks whose dataflow graph has changed due to having a more complete CFG available.");
+
     sg.insert(Switch("debug")
               .argument("address", nonNegativeIntegerParser(settings.debugAddress))
               .doc("Turn on extensive debugging for one particular address. The address is the instruction that has the "
-                   "computed control flow."));
+                   "indirect control flow."));
 
     return sg;
 }
@@ -473,13 +484,17 @@ public:
                               ->get_expression();
         }
 
+        // In order to get to the destination, we must have also satisfied the constraints to get to the source state.
+        const auto srcConstraints = SymbolicSemantics::SValue::promote(src->peekRegister(PATH, ops->boolean_(true), ops.get()))
+                                    ->get_expression();
+
         bool retval = Super::operator()(dstId, dst, srcId, src);
         ASSERT_not_null(dst);
 
         // New constraints for the destination
         if (const auto addr = dstVert->value().address()) {
             const SymbolicExpression::Ptr dstAddr = makeIntegerConstant(srcIp->nBits(), *addr);
-            auto newConstraints = makeEq(srcIp, dstAddr);
+            auto newConstraints = makeAnd(srcConstraints, makeEq(srcIp, dstAddr));
             if (origConstraints)
                 newConstraints = makeOr(newConstraints, origConstraints);
             auto newConstraintsSVal = SymbolicSemantics::SValue::instance_symbolic(newConstraints);
@@ -1090,6 +1105,8 @@ public:
                 const size_t bytesPerEntry = (jumpTableEntry->nBits() + 7) / 8;
                 auto table = JumpTable::instance(partitioner, tableLimits, bytesPerEntry, perEntryOffset,
                                                  JumpTable::EntryType::ABSOLUTE);
+                if (debug)
+                    table->showingDebug(true);
                 table->maxPreEntries(0);
                 table->refineLocationLimits(bb, tableAddr);
                 SAWYER_MESG(debug) <<"      table limited to " <<addrToString(table->tableLimits()) <<"\n";
@@ -1332,28 +1349,35 @@ private:
             const auto entryConstraint = makeEq(makeIntegerConstant(entryAddrExpr->nBits(), entryAddr), entryAddrExpr);
             SAWYER_MESG(debug) <<"    entry #" <<i <<" at " <<addrToString(entryAddr)
                                <<" has target " <<addrToString(target) <<"\n";
-            solver->push();
-            solver->insert(entryConstraint);
-            if (debug) {
-                for (const auto &assertion: solver->assertions())
-                    debug <<"      constraint: " <<*assertion <<"\n";
-            }
-            const auto isSatisfiable = solver->check();
-            solver->pop();
 
-            switch (isSatisfiable) {
-                case SmtSolver::SAT_UNKNOWN:
-                    SAWYER_MESG(debug) <<"      SMT solver failed (assuming satisfiable)\n";
-                    // fall through
-                case SmtSolver::SAT_YES: {
-                    const Address target = table->targets()[i];
-                    SAWYER_MESG(debug) <<"      satisfiable table entry address\n";
-                    retval.insert(target);
-                    break;
+            {
+                SmtSolver::Transaction tx(solver);
+                solver->insert(entryConstraint);
+                if (debug) {
+                    for (const auto &assertion: solver->assertions())
+                        debug <<"      constraint: " <<*assertion <<"\n";
                 }
-                case SmtSolver::SAT_NO:
-                    SAWYER_MESG(debug) <<"      entry address is not satisfiable\n";
-                    break;
+                const auto isSatisfiable = solver->check();
+
+                switch (isSatisfiable) {
+                    case SmtSolver::SAT_UNKNOWN:
+                        SAWYER_MESG(debug) <<"      SMT solver failed (assuming satisfiable)\n";
+                        // fall through
+                    case SmtSolver::SAT_YES: {
+                        const Address target = table->targets()[i];
+                        if (debug) {
+                            debug <<"      satisfiable table entry address, when:\n";
+                            const auto evidence = solver->evidence();
+                            for (const auto &pair: evidence.nodes())
+                                debug <<"        " <<*pair.key() <<" = " <<*pair.value() <<"\n";
+                        }
+                        retval.insert(target);
+                        break;
+                    }
+                    case SmtSolver::SAT_NO:
+                        SAWYER_MESG(debug) <<"      entry address is not satisfiable\n";
+                        break;
+                }
             }
         }
         return retval;
@@ -1532,6 +1556,7 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
     BS::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
     if (!cpu)
         return false;
+    SymbolicSemantics::RiscOperators::promote(ops)->trimThreshold(settings.maxSymbolicExprSize);
 
     DfTransfer xfer(settings, partitioner, cpu, debugging);
     DfMerge merge(partitioner, ops, dfGraph);
@@ -1566,6 +1591,8 @@ analyzeBasicBlock(const Settings &settings, const Partitioner::Ptr &partitioner,
     } catch (const BinaryAnalysis::DataFlow::NotConverging&) {
         SAWYER_MESG(debug) <<"  dataflow did not converge\n";
     }
+    if (const size_t nTrimmed = SymbolicSemantics::RiscOperators::promote(ops)->nTrimmed())
+        SAWYER_MESG(debug) <<"  dataflow caused " <<plural(nTrimmed, "symbolic expressions") <<" to be trimmed\n";
 
     // Examine the outgoing state for the basic block in question.
     if (BS::State::Ptr state = dfEngine.getFinalState(endVertex->id())) {
@@ -1686,8 +1713,26 @@ analyzeAllBlocks(const Settings &settings, const Partitioner::Ptr &partitioner) 
     bool madeChanges = false;
     for (const auto &cfgVertex: partitioner->cfg().vertices()) {
         if (BasicBlock::Ptr bb = shouldAnalyze(cfgVertex)) {
+            bb->hasIndirectControlFlow(true);
             if (analyzeBasicBlock(settings, partitioner, bb))
                 madeChanges = true;
+        }
+    }
+    return madeChanges;
+}
+
+bool
+reanalyzeSomeBlocks(const Settings &settings, const Partitioner::Ptr &partitioner) {
+    ASSERT_not_null(partitioner);
+    bool madeChanges = false;
+    if (settings.enabled && settings.reanalyzeSomeBlocks) {
+        for (const auto &cfgVertex: partitioner->cfg().vertices()) {
+            if (BasicBlock::Ptr bb = cfgVertex.value().bblock()) {
+                if (bb->hasIndirectControlFlow()) {
+                    if (analyzeBasicBlock(settings, partitioner, bb))
+                        madeChanges = true;
+                }
+            }
         }
     }
     return madeChanges;

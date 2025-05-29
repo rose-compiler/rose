@@ -65,6 +65,16 @@ MemoryTable::maxPreEntries(const size_t n) {
     maxPreEntries_ = n;
 }
 
+bool
+MemoryTable::showingDebug() const {
+    return showingDebug_;
+}
+
+void
+MemoryTable::showingDebug(const bool b) {
+    showingDebug_ = b;
+}
+
 AddressInterval
 MemoryTable::tableLimits() const {
     return tableLimits_;
@@ -154,6 +164,8 @@ MemoryTable::scan(const Storage::Ptr &storage, const Address probableTableAddr) 
     ASSERT_require(bytesPerEntry_ > 0);
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
+    if (showingDebug_)
+        debug.enable();
     if (debug) {
         debug <<"scan memory table within " <<addrToString(tableLimits_) <<" with " <<bytesPerEntry_ <<"-byte entries\n";
         debug <<"  probable start address: " <<addrToString(probableTableAddr) <<"\n";

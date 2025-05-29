@@ -45,6 +45,9 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings&);
  *  some of the details for this process. */
 bool analyzeAllBlocks(const Settings&, const PartitionerPtr&);
 
+/** Reanalyze all basic blocks that have indirect control flow. */
+bool reanalyzeSomeBlocks(const Settings&, const PartitionerPtr&);
+
 } // namespace
 } // namespace
 } // namespace

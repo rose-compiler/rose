@@ -190,6 +190,7 @@ private:
     static const size_t bigBlock_ = 200;
     typedef Sawyer::Container::Map<Address, size_t> InsnAddrMap;
     InsnAddrMap insnAddrMap_;                           // maps instruction address to index in insns_ vector
+    bool hasIndirectControlFlow_ = false;               // true if block has indirect control flow
 
     // The following members are caches either because their value is seldom needed and expensive to compute, or because
     // the value is best computed at a higher layer than a single basic block (e.g., in the partitioner) yet it makes the
@@ -558,6 +559,13 @@ public:
      *
      *  Thread safety: This method is thread safe. */
     void clearSuccessors();
+
+    /** Property: Tracks whether the block has indirect control flow.
+     *
+     * @{ */
+    bool hasIndirectControlFlow() const;
+    void hasIndirectControlFlow(bool);
+    /** @} */
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

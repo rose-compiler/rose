@@ -80,6 +80,8 @@ bool
 JumpTable::Entries::isValidTarget(const JumpTable *table, const Address target) const {
     ASSERT_not_null(table);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
+    if (table->showingDebug())
+        debug.enable();
 
     SAWYER_MESG(debug) <<"    entry target = " <<addrToString(target) <<"\n";
     if (!table->targetLimits().contains(target)) {

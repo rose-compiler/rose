@@ -674,6 +674,18 @@ namespace IndirectControlFlow {
          *  set with a new symbolic variable. */
         size_t maxDataflowSetSize = 10;
 
+        /** Maximum number of terms in a symbolic expression.
+         *
+         *  Expressions that become larger than this limit are replaced by a new unconstrained symbolic variable. */
+        size_t maxSymbolicExprSize = 10000;
+
+        /** Re-analyze all blocks marked as having indirect control flow.
+         *
+         *  This controls the second phase of analysis. The first phase happens as the CFG is being discovered, and the second phase
+         *  occurs after the CFG is discovered. It consists of a single pass over all basic blocks for which indirect control flow
+         *  was resolved during the first phase. */
+        bool reanalyzeSomeBlocks = true;
+
         /** Turn on debugging for a particular branch instruction. */
         Sawyer::Optional<Address> debugAddress;
     };

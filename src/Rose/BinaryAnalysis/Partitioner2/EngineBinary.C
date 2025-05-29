@@ -1618,6 +1618,8 @@ void
 EngineBinary::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
     Sawyer::Message::Stream where(mlog[WHERE]);
 
+    IndirectControlFlow::reanalyzeSomeBlocks(settings().icf, partitioner);
+
     if (settings().partitioner.splittingThunks) {
         // Splitting thunks off the front of a basic block causes the rest of the basic block to be discarded and then
         // rediscovered. This might also create additional blocks due to the fact that opaque predicate analysis runs only on

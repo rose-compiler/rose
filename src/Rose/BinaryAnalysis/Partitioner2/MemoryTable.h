@@ -69,12 +69,14 @@ public:
     };
 
 private:
+    // Set before parsing
     AddressInterval tableLimits_;                       // limits for where the table could exist
     size_t bytesPerEntry_ = 4;                          // number of bytes in each table entry
     size_t maxSkippable_ = 0;                           // max invalid entries before reaching start of table
     size_t maxPreEntries_ = UNLIMITED;                  // max number of entries prior to initial start of table
+    bool showingDebug_ = false;                         // turn on debugging even if the mlog[DEBUG] is disabled
 
-    // After parsing
+    // Available after parsing
     Entries::Ptr entries_;                              // entries parsed for the table
     AddressInterval tableLocation_;                     // where the table actually exists
     size_t nPreEntries_ = 0;                            // entries before the original table start address
@@ -105,6 +107,16 @@ public:
      * @{ */
     size_t maxPreEntries() const;
     void maxPreEntries(size_t);
+    /** @} */
+
+    /** Property: Enable the debug stream for this object.
+     *
+     *  Debugging output is enabled even if the `mlog[DEBUG]` stream is disabled. This can be used to emit debugging information
+     *  only about specific memory tables instead of all tables.
+     *
+     * @{ */
+    bool showingDebug() const;
+    void showingDebug(bool);
     /** @} */
 
     /** Property: Limits for table location.
