@@ -388,7 +388,7 @@ MemoryState<Super>::readOrPeekMemory(const InstructionSemantics::BaseSemantics::
             return symbolicDefault;
 
         // But if we do have to update the symbolic memory, do so in a way that makes it look like the value was always there.
-        if (!isPresentSymbolically) {
+        if (!isPresentSymbolically && withSideEffects) {
             SgAsmInstruction *addrInsn = addrOps->currentInstruction(); // order is important because addrOps and valOps
             SgAsmInstruction *valInsn = valOps->currentInstruction();   // might be the same object. Read both of them
             addrOps->currentInstruction(nullptr);                       // before clearing either of them.
