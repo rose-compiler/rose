@@ -4683,6 +4683,15 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
                   }
              }
 
+          //AS (5/30/2025): If this is C_only but the suffix indicates C++, add "-x c" to force C compilation
+          string sourceFilename = this->getFileName();
+          string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
+          if (get_C_only() == true && CommandlineProcessing::isCppFileNameSuffix(filenameExtension) == true)
+             {
+               compilerCmdLine.insert(compilerCmdLine.begin()+1, "-x");
+               compilerCmdLine.insert(compilerCmdLine.begin()+2, "c");
+             }
+
        // DQ (3/11/2024): Turn this on for debugging the generated code for unit testing.
        if ( debugProjectCompileCommandLineWithArgs || showBackendCommandLine )
           {

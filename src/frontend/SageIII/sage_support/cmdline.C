@@ -657,6 +657,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           if (tempLanguageSpecificationName == "c")
              {
                set_C_only(true);
+               Rose::is_Cxx_language = false;
              }
             else
              {
@@ -3688,6 +3689,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
           set_C_only(true);
           set_Cxx_only(false);
+          Rose::is_Cxx_language = false;
         }
 
      if ( CommandlineProcessing::isOption(argv,"-rose:","(C89|C89_only)",true) == true )
@@ -3865,6 +3867,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      for (unsigned int i = 1; i < argv.size(); i++) {
           if ( argv[i] == "-std=c" ) {
             set_C_only(true);
+            Rose::is_Cxx_language = false;
 
           } else if ( argv[i] == "-std=gnu" ) {
             set_C_only(true);
@@ -6415,6 +6418,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
              {
             // This is the EDG option "--c" obtained from the ROSE "--edg:c" option
                set_C_only(true);
+               Rose::is_Cxx_language = false;
              }
 
        // DQ (3/28/2013): Added support for specify C89 behavior so that default could be C99 (as in EDG3x branch).
