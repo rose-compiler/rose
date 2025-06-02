@@ -138,6 +138,17 @@ SgAsmCilMethodDef::get_methodData() {
     return p_methodData;
 }
 
+int const&
+SgAsmCilMethodDef::get_bodyState() const {
+    return p_bodyState;
+}
+
+void
+SgAsmCilMethodDef::set_bodyState(int const& x) {
+    this->p_bodyState = x;
+    set_isModified(true);
+}
+
 SgAsmCilMethodDef::~SgAsmCilMethodDef() {
     destructorHelper();
 }
@@ -153,7 +164,8 @@ SgAsmCilMethodDef::SgAsmCilMethodDef()
     , p_initLocals(0)
     , p_stackSize(0)
     , p_hasMoreSections(0)
-    , p_localVarSigTok(0) {}
+    , p_localVarSigTok(0)
+    , p_bodyState(BDY_NOT_PROCESSED) {}
 
 void
 SgAsmCilMethodDef::initializeProperties() {
@@ -168,6 +180,7 @@ SgAsmCilMethodDef::initializeProperties() {
     p_stackSize = 0;
     p_hasMoreSections = 0;
     p_localVarSigTok = 0;
+    p_bodyState = BDY_NOT_PROCESSED;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

@@ -136,7 +136,7 @@ Grammar::isAbstractTreeGrammarSymbol(string s) {
 
 // DQ (9/28/2022): Fixing compiler warning for argument not used.
 #if 1
-Grammar::GrammarSynthesizedAttribute Grammar::CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode, vector<Grammar::GrammarSynthesizedAttribute> v)
+Grammar::GrammarSynthesizedAttribute Grammar::CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode, vector<Grammar::GrammarSynthesizedAttribute> /*v*/)
 #else
 Grammar::GrammarSynthesizedAttribute
 Grammar::CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode )
@@ -152,11 +152,6 @@ Grammar::CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode )
       }
     }  
   }
-
-// DQ (9/28/2022): Fixing compiler warning for argument not used.
-// We cannot remove it since that causes other errors and ultimately it is used in others of these functions.
-// So provide a use to avoid error.
-  v.size();
 
   GrammarSynthesizedAttribute dummy;
   return dummy;

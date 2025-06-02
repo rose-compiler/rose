@@ -42,7 +42,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -50,7 +50,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -34545,6 +34545,12 @@ class SgAsmCilMethodDef: public SgAsmCilMetadata {
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+    AsmCilMethodDef.setDataPrototype(
+        "int", "bodyState", "= BDY_NOT_PROCESSED",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
     DECLARE_OTHERS(AsmCilMethodDef);
 #if defined(SgAsmCilMethodDef_OTHERS) || defined(DOCUMENTATION)
 
@@ -34569,10 +34575,36 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_hasMoreSections);
         s & BOOST_SERIALIZATION_NVP(p_localVarSigTok);
         s & BOOST_SERIALIZATION_NVP(p_methodData);
+        s & BOOST_SERIALIZATION_NVP(p_bodyState);
         debugSerializationEnd("SgAsmCilMethodDef");
     }
 #endif // ROSE_ENABLE_BOOST_SERIALIZATION
+  public:
+    using BodyState = int;
 
+    enum : BodyState {
+      // good states > 0
+      BDY_NOT_AVAILABLE               = 3, ///< RVA is 0 -> body is null
+      BDY_FULLY_DECODED               = 2, ///< decoded successfully
+      BDY_RUNTIME_SUPPORTED           = 1, ///< body is runtime supported (looking for specimen)
+
+      // default == 0
+      BDY_NOT_PROCESSED               = 0, ///< method has not been processed
+
+      // fail states < 0
+      BDY_INVALID_HEADER_BYTE         = -1,  ///< method header leading byte cannot be read
+      BDY_INVALID_HEADER_KIND         = -2,  ///< method header kind is neither tiny nor fat
+      BDY_INVALID_HEADER_ALIGN        = -3,  ///< fat header is improperly aligned
+      BDY_INVALID_CODE_LENGTH         = -4,  ///< could not read all bytes as specified by header
+      BDY_INVALID_INSTRUCTION_LENGTH  = -5,  ///< decoding instructions exceeded body length
+      BDY_INVALID_INSTRUCTION         = -6,  ///< encountered unknown instruction
+      BDY_INVALID_SECTION_ALIGN       = -7,  ///< extra sections are misaligned
+      BDY_INVALID_SECTION_HEADER      = -8,  ///< extra section could not be read completely or is inconsistent
+      BDY_INVALID_CLAUSE_KIND         = -9,  ///< clauses section length and kind do not match
+      BDY_INVALID_CLAUSE_LENGTH       = -10, ///< clause could not be read completely
+    };
+
+  private:
 public:
     /** Property: RVA.
      *
@@ -34693,6 +34725,17 @@ public:
      *  @{ */
     std::vector<SgAsmCilMethodData*> const& get_methodData() const;
     std::vector<SgAsmCilMethodData*>& get_methodData();
+    /** @} */
+
+public:
+    /** Property: status (ROSE extension)
+     *
+     *  status indicates whether the data could be decoded.
+     *  tiny header is used. 
+     *  
+     *  @{ */
+    int const& get_bodyState() const;
+    void set_bodyState(int const&);
     /** @} */
 public:
     void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
