@@ -909,7 +909,8 @@ determineFileType(vector<string> argv, int & /*nextErrorCode*/, SgProject* proje
                   }
                  else
                   {
-                    if (CommandlineProcessing::isCppFileNameSuffix(filenameExtension) == true)
+                    if (CommandlineProcessing::isCppFileNameSuffix(filenameExtension) == true &&
+                       (SageInterface::is_C_language() == false ) )
                        {
                          SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                          file = sourceFile;
@@ -932,7 +933,8 @@ determineFileType(vector<string> argv, int & /*nextErrorCode*/, SgProject* proje
                        {
                       // Liao, 6/6/2008, Assume AST with UPC will be unparsed using the C unparser
                          if ( ( CommandlineProcessing::isCFileNameSuffix(filenameExtension)   == true ) ||
-                              ( CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true ) )
+                              ( CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true ) ||
+                              ( SageInterface::is_C_language() == true ) )
                             {
                               SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                               file = sourceFile;

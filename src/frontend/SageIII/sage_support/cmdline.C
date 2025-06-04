@@ -658,6 +658,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              {
                set_C_only(true);
                Rose::is_Cxx_language = false;
+               Rose::is_C_language = true;
              }
             else
              {
@@ -3683,7 +3684,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
      // Parsing ROSE's C dialect specification
 
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(C|C_only)",true) == true )
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(c|C|C_only)",true) == true )
         {
           printf ("WARNING: Command line option -rose:C is deprecated!\n");
 
@@ -3868,6 +3869,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( argv[i] == "-std=c" ) {
             set_C_only(true);
             Rose::is_Cxx_language = false;
+            Rose::is_C_language = true;
 
           } else if ( argv[i] == "-std=gnu" ) {
             set_C_only(true);
@@ -4033,14 +4035,16 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         switch (get_standard()) {
           case e_default_standard: {
             if (get_Fortran_only() && get_sourceFileUsesFortranFileExtension() == false) {
-               printf ("WARNING: Non Fortran source file name specificed with explicit -rose:Fortran Fortran language option! \n");
+               printf ("WARNING: Non Fortran source file name specified with explicit -rose:Fortran Fortran language option! \n");
                set_Fortran_only(false);
             }
             if (get_C_only() && get_sourceFileUsesCppFileExtension() == false) {
-               printf ("WARNING: C++ source file name specificed with explicit selection of a C dialect (-rose:C or -std=c)\n");
-               set_C_only(false);
-               set_Cxx_only(true);
-               set_default_standard();
+               // AS (6/4/2025): It isn't impossible for a file to contain C code but have a C++ suffix.
+               // If the user specifies a C standard for a C++ suffix file, warn them but try it anyways.
+               printf ("WARNING: C++ source file name specified with explicit selection of a C dialect (-rose:C or -std=c)\n");
+               set_Cxx_only(false);
+               Rose::is_Cxx_language = false;
+               Rose::is_C_language = true;
             }
             break;
           }
@@ -4052,10 +4056,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           case e_c23_standard:
           case e_c2y_standard: {
             if (get_sourceFileUsesCppFileExtension() == true) {
-               printf ("WARNING: C++ source file name specificed with explicit selection of a C dialect (-rose:C or -std=c)\n");
-               set_C_only(false);
-               set_Cxx_only(true);
-               set_default_standard();
+               printf ("WARNING: C++ source file name specified with explicit selection of a C dialect (-rose:C or -std=c)\n");
+               set_Cxx_only(false);
+               Rose::is_Cxx_language = false;
+               Rose::is_C_language = true;
             }
             break;
           }
@@ -5136,7 +5140,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      int integerOption = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(v|verbose)", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)^", "(upc_threads)", &integerOption, 1);
-     optionCount = sla(argv, "-rose:", "($)", "(C|C_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(c|C|C_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(UPC|UPC_only)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(OpenACC|openacc)",1);
@@ -6419,6 +6423,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
             // This is the EDG option "--c" obtained from the ROSE "--edg:c" option
                set_C_only(true);
                Rose::is_Cxx_language = false;
+               Rose::is_C_language = true;
              }
 
        // DQ (3/28/2013): Added support for specify C89 behavior so that default could be C99 (as in EDG3x branch).
