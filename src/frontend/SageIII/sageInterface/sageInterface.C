@@ -11954,6 +11954,152 @@ bool  SageInterface::normalizeForLoopIncrement(SgForStatement* loop)
 
   return true;
 }
+
+/*
+The AST of switch-case statement 
+
+AST using EDG 6.x
+
+|___ *[0] ->@0x7f8d973f0010 SgSwitchStatement  switch-case.C 4:3
+    |--- p_item_selector ->@0x7f8d9738e010 SgExprStatement  switch-case.C 4:10
+    |   |___ p_expression ->@0x7f8d973bd010 SgVarRefExp  switch-case.C 4:10 init name@0x7f8d97757130 symbol name="a"
+    |___ p_body ->@0x7f8d97522168 SgBasicBlock  switch-case.C 5:3
+        |--- *[0] ->@0x7f8d97343010 SgCaseOptionStmt  switch-case.C 6:10
+        |   |___ p_key ->@0x7f8d98d4c090 SgIntVal  switch-case.C 6:10 value=1 valueString=
+        |--- *[1] ->@0x7f8d975222c0 SgBasicBlock  switch-case.C 7:7
+        |   |--- *[0] ->@0x7f8d9738e070 SgExprStatement  switch-case.C 7:8
+        |   |   |___ p_expression ->@0x7f8da76c2010 SgNullExpression compilerGenerated 0:0
+        |   |___ *[1] ->@0x7f8d97308010 SgBreakStmt  switch-case.C 8:9
+        |--- *[2] ->@0x7f8d972c5010 SgDefaultOptionStmt  switch-case.C 10:4
+        |___ *[3] ->@0x7f8d97522418 SgBasicBlock  switch-case.C 11:7
+            |___ *[0] ->@0x7f8d9738e0d0 SgExprStatement  switch-case.C 11:8
+                |___ p_expression ->@0x7f8da76c2060 SgNullExpression compilerGenerated 0:0
+
+AST using EDG 5.x
+└──@0x7fd34c734010 SgSwitchStatement switch-case.cpp 4:3
+    ├──@0x7fd34c6d2010 SgExprStatement switch-case.cpp 4:10
+    │   └──@0x7fd34c701010 SgVarRefExp switch-case.cpp 4:10
+    └──@0x7fd34c866168 SgBasicBlock switch-case.cpp 5:3
+        ├──@0x7fd34c5b2010 SgCaseOptionStmt switch-case.cpp 6:10
+        │   ├──@0x7fd34c5fd010 SgCastExp compilerGenerated 0:0
+        │   │   └──@0x7fd34c63c010 SgBoolValExp switch-case.cpp 6:10
+        │   ├──@0x7fd34c8662c0 SgBasicBlock switch-case.cpp 7:7
+        │   │   └──@0x7fd34c6d2070 SgExprStatement switch-case.cpp 7:8
+        │   │       └──@0x7fd34c6aa010 SgNullExpression compilerGenerated 0:0
+        │   └── NULL 
+        ├──@0x7fd34c5b20a8 SgCaseOptionStmt switch-case.cpp 9:10
+        │   ├──@0x7fd34c5fd090 SgCastExp compilerGenerated 0:0
+        │   │   └──@0x7fd34c63c070 SgBoolValExp switch-case.cpp 9:10
+        │   ├──@0x7fd34c866418 SgBasicBlock switch-case.cpp 10:7
+        │   │   └──@0x7fd34c6d20d0 SgExprStatement switch-case.cpp 10:8
+        │   │       └──@0x7fd34c6aa060 SgNullExpression compilerGenerated 0:0
+        │   └── NULL 
+        └──@0x7fd34c56f010 SgDefaultOptionStmt switch-case.cpp 12:5
+            └──@0x7fd34c866570 SgBasicBlock switch-case.cpp 13:7
+                └──@0x7fd34c6d2130 SgExprStatement switch-case.cpp 13:8
+                    └──@0x7fd34c6aa0b0 SgNullExpression compilerGenerated 0:0
+ 
+*/
+bool SageInterface::normalizeCaseAndDefaultBlocks(SgSwitchStatement* switchStmt) {
+  bool changed = false;
+  // Only act on switch statements
+  if (!switchStmt) return changed;
+
+  // The body of the switch should be a basic block
+  SgBasicBlock* bodyBlock = isSgBasicBlock(switchStmt->get_body());
+  if (!bodyBlock) return changed;
+
+  // Copy the list of statements to allow modification
+  SgStatementPtrList& stmtList = bodyBlock->get_statements();
+  std::vector<SgStatement*> stmts(stmtList.begin(), stmtList.end());
+  int n = static_cast<int>(stmts.size());
+
+  // Walk through statements, detecting case/default labels
+  // Note that this for loop does not have i++! 
+  for (int i = 0; i < n; ) {
+    SgStatement* curr = stmts[i];
+    // We expect curr is either SgCaseOptionStmt or SgDefaultOptionStmt at this point
+    //  
+    // Helper lambda to handle a label statement of either SgCaseOptionStmt or SgDefaultOptionStmt
+    auto processLabel = [&](SgStatement* labelStmt) {
+
+      // set j to next statement after the label statmt
+      int j = i + 1;
+      std::vector<SgStatement*> toWrap;
+      // Collect statements until next case/default or end
+      while (j < n && !isSgCaseOptionStmt(stmts[j]) && !isSgDefaultOptionStmt(stmts[j])) {
+        toWrap.push_back(stmts[j]);
+        ++j;
+      }
+
+      // now the current statement is isSgCaseOptionStmt or isSgDefaultOptionStmt
+      // Single-block case: if we collected exactly one basic-block and label has no body, just move it
+      // I think the AST is constructed improperly
+      if (toWrap.size() == 1
+          && isSgBasicBlock(toWrap[0])
+          && ((isSgCaseOptionStmt(labelStmt) && !isSgBasicBlock(isSgCaseOptionStmt(labelStmt)->get_body()))
+            || (isSgDefaultOptionStmt(labelStmt) && !isSgBasicBlock(isSgDefaultOptionStmt(labelStmt)->get_body()))))
+      {
+#if 0
+        //it seems like the body pointer is no longer used within the connection with EDG 6.x!!
+        SgBasicBlock* moved = static_cast<SgBasicBlock*>(toWrap[0]);
+        removeStatement (moved);
+        if (auto c = isSgCaseOptionStmt(labelStmt)) {
+          c->set_body(moved);
+        } else if (auto d = isSgDefaultOptionStmt(labelStmt)) {
+          d->set_body(moved);
+        }
+        moved->set_parent(labelStmt);
+#endif      
+        // no further wrapping or removal needed
+      }
+      else if (!toWrap.empty()) {
+        // Build a new block around statements
+        // NOTE: wrong code: buildBasicBlock_nfi() version was calleda
+        // It does support vector of stmts. 
+        // But we want to avoid the use of _nfi() version no file info (nfi) 
+        // to avoid set file info. manually.
+        SgBasicBlock* newBlock = buildBasicBlock();
+        insertStatementAfter(labelStmt, newBlock);
+        // Insert block after label
+#if 0                    
+        //it seems like the body pointer is no longer used within the connection with EDG 6.x!!
+        // NOTE: becomes its body
+        newBlock->set_parent(labelStmt); 
+
+        // Attach block as body of the label
+        if (auto caseLabel = isSgCaseOptionStmt(labelStmt)) {
+          caseLabel->set_body(newBlock);
+        } else if (auto defaultLabel = isSgDefaultOptionStmt(labelStmt)) {
+          defaultLabel->set_body(newBlock);
+        }
+#endif      
+        // Remove original flat statements
+        for (auto* w: toWrap) {
+          {
+            // we must first remove it from original location, then append it to new location
+            removeStatement(w);
+            appendStatement(w, newBlock);
+          }
+        }
+        changed = true;
+      }
+      return j; // next index to process
+    };
+
+    // adjust i
+    if (auto caseLabel = isSgCaseOptionStmt(curr)) {
+      i = processLabel(caseLabel);
+    } else if (auto defaultLabel = isSgDefaultOptionStmt(curr)) {
+      i = processLabel(defaultLabel);
+    } else {
+      ++i;
+    }
+  }
+
+  return changed; 
+}
+
 //! Normalize a for loop, part of migrating Qing's loop handling into SageInterface
 // Her loop translation does not pass AST consistency tests so we rewrite some of them here
 // NormalizeCPP.C  NormalizeLoopTraverse::ProcessLoop()
@@ -14401,12 +14547,52 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
        ROSE_ASSERT (false);
      }
 
+#if 0 // it is allowed to have different types of statements inserted after SgCaseOptionStmt
+     if (isSgCaseOptionStmt(targetStmt))
+     {
+         if (!isSgCaseOptionStmt(newStmt))
+         {
+           cerr<<"Target statment is a case option stmt. The new stmt should also be the same type to be a sibling. But it is "<< newStmt->class_name() << " instead. This is not semantically correct." <<endl;
+           ROSE_ASSERT(false);
+         }
+     }
+#endif
      SgNode* parent = targetStmt->get_parent();
      if (parent == NULL)
         {
           cerr << "Empty parent pointer for target statement. May be caused by the wrong order of target and new statements in insertStatement(targetStmt, newStmt)"<<endl;
           ROSE_ASSERT(parent);
         }
+
+     // Issuing an error due to variable initialization inside a switch statement block without enclosing braces {}.
+     //
+     // This is a tricky situation: C++ allows a flat list of statements following case option statement, even though they are indented
+     //case HORIZONTAL_TAB:
+     //   foundHorizontalTab = true;
+     //   break;
+     // case VERTICAL_TAB:
+     //   foundVerticalTab = true;
+     //   break;
+     // ...
+     //
+     // Unparser will flatten them out.
+     // 
+     // when we try to inserat a  variable decl stmt into the list after case option statement, compilers will complain
+     //     error: jump to case label
+     //     crosses initialization of "int variablexyz"
+     //
+     //
+     // if targetStmt's parent is SgCaseOptionStmt, 
+    if (SgCaseOptionStmt * case_opt_stmt = isSgCaseOptionStmt(parent)) 
+    {
+      if (SgVariableDeclaration* var_stmt = isSgVariableDeclaration(newStmt))
+      {
+        cerr<<"Error: you cannot insert a variable declaration stmt inside a case option statement without enclosing brances in between."<<endl;
+        cerr<<"parent of target is a case option stmt:"<<parent <<endl; 
+        cerr<<"new statement is a variable statement:"<<newStmt <<endl; 
+        ROSE_ASSERT (false);
+      }
+    }
 
      if (isSgLabelStatement(parent) != NULL)
         {
@@ -14421,11 +14607,20 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
 
      if (isSgFunctionDefinition(parent) ||
          isSgTypedefDeclaration(parent) ||
+         isSgSwitchStatement(parent) ||
          isSgVariableDeclaration(parent))
      { 
-       string className = targetStmt->class_name();
-       string err_msg = "targetStmt's parent cannot be a " + className + ". This parent does not implement insert() functioin. Please revise your code to avoid inserting a stmt as a sibling of this type of targetStmt.";
+       string className = parent->class_name();
+       string err_msg = "targetStmt's parent cannot be a " + className + ". This parent does not implement insert() function. Please revise your code to avoid inserting a stmt as a child of this type of parent.";
        cerr<<err_msg<<endl;
+       if (SgSwitchStatement * switch_stmt = isSgSwitchStatement(parent))
+       {
+           if (switch_stmt->get_item_selector() == targetStmt)
+           {
+              cerr<<"The target statement is the item selector of a switch statement. You cannot insert any statement before or after it."<<endl;
+           }
+       }
+
        ROSE_ASSERT (false);
      }
 

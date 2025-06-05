@@ -1245,6 +1245,31 @@ ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //! Undo the normalization of for loop's C99 init declaration. Previous record of normalization is used to ease the reverse transformation.
 ROSE_DLL_API bool unnormalizeForLoopInitDeclaration(SgForStatement* loop);
 
+/**
+ * @brief Normalize the structure of `case` and `default` blocks within a switch statement.
+ *
+ * This function examines the body of a given `SgSwitchStatement` and restructures its `case` and
+ * `default` sections to ensure that the associated statements are properly wrapped in basic blocks
+ * (`SgBasicBlock`). This normalization is helpful for consistent transformation and analysis of
+ * switch statements, especially in situations where multiple statements follow a label or where
+ * no explicit block is present.
+ *
+ * The function performs the following actions:
+ * - Iterates over all statements in the switch body.
+ * - Identifies `SgCaseOptionStmt` and `SgDefaultOptionStmt`.
+ * - If the labeled statement has no body and is immediately followed by a single `SgBasicBlock`,
+ *   no changes are made.
+ * - Otherwise, all subsequent statements up to the next label are wrapped into a new `SgBasicBlock`
+ *   that is inserted immediately after the label.
+ *
+ * @param switchStmt Pointer to the switch statement (`SgSwitchStatement*`) to be normalized.
+ *                   Must not be null. If the switch body is not a `SgBasicBlock`, the function
+ *                   will return early.
+ * @return true if normalization happens and AST has been changed.
+ *         false if normalization does not happen and AST is intact.
+ */
+ROSE_DLL_API bool normalizeCaseAndDefaultBlocks (SgSwitchStatement* switchStmt);
+
 //! Normalize a for loop, return true if successful. Generated constants will be fold by default.
 //!
 //! Translations are :
