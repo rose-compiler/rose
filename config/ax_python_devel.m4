@@ -131,7 +131,7 @@ AC_DEFUN([AX_PYTHON_DEVEL],[
         # Check if you have distutils, else fail
         #
         AC_MSG_CHECKING([for the distutils Python package])
-        ac_distutils_result=`$PYTHON -c "import distutils" 2>&1`
+        ac_distutils_result=`$PYTHON -W ignore::DeprecationWarning -c "import distutils" 2>&1`
         if test -z "$ac_distutils_result"; then
             AC_MSG_RESULT([yes])
         else
