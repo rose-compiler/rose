@@ -2,6 +2,7 @@
 
 #include "SymbolicMultiply.h"
 #include "SymbolicPlus.h"
+#include "BooleanOperators.h"
 #include "SymbolicSelect.h"
 #include <ROSE_ABORT.h>
 #include <ROSE_ASSERT.h>
@@ -266,6 +267,18 @@ CodeGenOP( AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const
     }
     return fa.CreateBinaryOP(AstInterface::BOP_PLUS, a1, a2);
  }
+
+AstNodePtr SymbolicAnd::  
+CodeGenOP(AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const  
+{  
+   return fa.CreateBinaryOP(AstInterface::BOP_AND, a1, a2);  
+} 
+
+AstNodePtr SymbolicEq::  
+CodeGenOP(AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const  
+{  
+   return fa.CreateBinaryOP(AstInterface::BOP_EQ, a1, a2);  
+}  
 
 SymbolicVal SymbolicValGenerator::
 GetSymbolicVal( const std::string& sig) {

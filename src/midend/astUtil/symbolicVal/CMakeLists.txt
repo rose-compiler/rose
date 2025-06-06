@@ -7,9 +7,9 @@ include_directories(${CMAKE_SOURCE_DIR}/src/util ${CMAKE_SOURCE_DIR}/src/util/su
 
 ########### install files ###############
 
-install(FILES  SymbolicMultiply.h  SymbolicPlus.h    SymbolicVal.h                     SymbolicExpr.h  SymbolicSelect.h  SymbolicBound.h  DESTINATION ${INCLUDE_INSTALL_DIR})
-
-
+install(FILES SymbolicMultiply.h SymbolicPlus.h BooleanOperators.h
+              SymbolicVal.h SymbolicExpr.h SymbolicSelect.h SymbolicBound.h
+              DESTINATION ${INCLUDE_INSTALL_DIR})
 
 #original Makefile.am contents follow:
 

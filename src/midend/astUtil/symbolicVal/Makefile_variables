@@ -11,6 +11,7 @@ mauSymbolicVal_la_sources=\
 mauSymbolicVal_includeHeaders=\
 	$(mauSymbolicValPath)/SymbolicMultiply.h \
 	$(mauSymbolicValPath)/SymbolicPlus.h \
+	$(mauSymbolicValPath)/BooleanOperators.h \
 	$(mauSymbolicValPath)/SymbolicVal.h \
 	$(mauSymbolicValPath)/SymbolicExpr.h \
 	$(mauSymbolicValPath)/SymbolicSelect.h \

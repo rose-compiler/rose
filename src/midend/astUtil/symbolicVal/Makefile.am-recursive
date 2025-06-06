@@ -22,7 +22,8 @@ distclean-local:
 	rm -rf Templates.DB
 
 include_HEADERS =  SymbolicMultiply.h  SymbolicPlus.h    SymbolicVal.h \
-                   SymbolicExpr.h  SymbolicSelect.h  SymbolicBound.h 
+                   SymbolicExpr.h  SymbolicSelect.h  SymbolicBound.h \
+                   BooleanOperators.h
 
 
 

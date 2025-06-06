@@ -2,7 +2,8 @@
 #define PREPOSTCONDITIONANALYSIS_H
 
 #include <string>
-#include <unordered_set>
+#include <vector>
+#include <utility>
 
 #include "CommandOptions.h"
 #include "sage3.h"
@@ -12,7 +13,7 @@
 
 class PrePostConditionAnalysis {
 public:
-    typedef std::set<PrePostCondition> PrePostConditions;
+    typedef std::vector<PrePostCondition> PrePostConditions;
     
     // Debugging flag for pre, postcondition analysis
     DebugLog DebugPrePostCondition = DebugLog("-debugprepost");
@@ -21,18 +22,20 @@ public:
     PrePostConditionAnalysis(AstInterface& _fa);
 
     const PrePostConditions& analyze(SgNode* input);
+    void analyze(SgNode* input, PrePostConditions& collectedConds);
 
     //Printable output of collected conditions
     std::string toString() const;
 protected:
-    // Helpers to process specific types of expressions
-    void processVariableDeclaration(const AstInterface::AstNodeList& vars, const AstInterface::AstNodeList& inits);
-    void processExpression(SgNode* input);
-    void processConditional(const AstNodePtr& cond, const AstNodePtr& truebody, const AstNodePtr& falsebody);
+    // Helpers to process specific types of expressions--updates collectedConds
+    void processVariableDeclaration(const AstInterface::AstNodeList& vars, const AstInterface::AstNodeList& inits, 
+                                    PrePostConditions& collectedConds);
+    void processExpression(SgNode* input, PrePostConditions& collectedConds);
+    std::pair<PrePostConditions, PrePostConditions> processConditional(const AstNodePtr& cond, 
+                                                    const AstNodePtr& truebody, const AstNodePtr& falsebody, PrePostConditions& collectedConds);
 
 private:
     AstInterface fa;
-    PrePostConditions conditions;
     std::map<SgNode*, PrePostConditions> stmtToConditionsMap;
 };
 

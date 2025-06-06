@@ -2,6 +2,7 @@
 #define PREPOSTCONDITION_H
 
 #include <string>
+#include <functional>
 #include "SymbolicVal.h"
 
 // Class representing preconditions and postconditions

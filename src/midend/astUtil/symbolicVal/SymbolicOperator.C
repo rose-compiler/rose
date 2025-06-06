@@ -2,6 +2,7 @@
 #include "SymbolicExpr.h"
 #include "SymbolicPlus.h"
 #include "SymbolicMultiply.h"
+#include "BooleanOperators.h"
 #include "SymbolicSelect.h"
 #include "CommandOptions.h"
 #include <ROSE_ASSERT.h>
@@ -72,6 +73,22 @@ SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
          std::cerr << "Pow( " << v1.toString() << " , " << v2.toString() << ") = " << r.toString() << std::endl;
       return r;
      }
+  case SYMOP_AND:
+    {
+      AndApplicator op;
+      r = ApplyBinOP(op, v1, v2);
+      if (DebugOp())
+         std::cerr << v1.toString() << " && " << v2.toString() << " = " << r.toString() << std::endl;
+      return r;
+    }
+  case SYMOP_EQ:
+    {
+      EqualApplicator op;
+      r = ApplyBinOP(op, v1, v2);
+      if (DebugOp())
+          std::cerr << v1.toString() << " && " << v2.toString() << " = " << r.toString() << std::endl;
+      return r;
+    }
   default:
     ROSE_ABORT();
   }
