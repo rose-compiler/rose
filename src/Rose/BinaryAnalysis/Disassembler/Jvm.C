@@ -36,9 +36,9 @@ template <class T> size_t
 Jvm::appendOperand(const MemoryMap::Ptr &map, Address va, SgUnsignedCharList &chars, SgAsmOperandList* operands)
 {
   const size_t bufSize{sizeof(T)};
-  uint8_t buf[bufSize];
+  std::unique_ptr<uint8_t[]> buf{new uint8_t[bufSize]};
 
-  size_t nRead = map->at(va).limit(bufSize).require(MemoryMap::READABLE).read(buf).size();
+  size_t nRead = map->at(va).limit(bufSize).require(MemoryMap::READABLE).read(buf.get()).size();
   if (nRead != bufSize) {
 #if TRIALS
     throw Exception("short read", va);
@@ -46,7 +46,7 @@ Jvm::appendOperand(const MemoryMap::Ptr &map, Address va, SgUnsignedCharList &ch
     ROSE_ASSERT(false && "short read");
   }
 
-  unsigned char* cptr{buf}; // work around warning message: "dereferencing type-punned pointer"
+  unsigned char* cptr{buf.get()}; // work around warning message: "dereferencing type-punned pointer"
   T val = beToHost(*reinterpret_cast<T*>(cptr));
   operands->appendOperand(SageBuilderAsm::buildValue(val));
 
@@ -67,9 +67,9 @@ Jvm::appendTableswitch(const MemoryMap::Ptr &map, Address start, SgUnsignedCharL
   ASSERT_require(va >= codeOffset());
   const size_t nPad{(4 - (va - codeOffset())%4)%4};
   const size_t nBuf{nPad + 3*sizeof(int32_t)};
-  uint8_t buf[nBuf];
+  std::unique_ptr<uint8_t[]> buf{new uint8_t[nBuf]};
 
-  size_t nRead = map->at(va).limit(nBuf).require(MemoryMap::READABLE).read(buf).size();
+  size_t nRead = map->at(va).limit(nBuf).require(MemoryMap::READABLE).read(buf.get()).size();
   if (nRead != nBuf) {
     ASSERT_require2(false, "short read");
   }
@@ -79,7 +79,7 @@ Jvm::appendTableswitch(const MemoryMap::Ptr &map, Address start, SgUnsignedCharL
     chars.push_back(buf[i]);
   }
 
-  uint8_t* ptr{buf + nPad};
+  uint8_t* ptr{buf.get() + nPad};
   int32_t def  = beToHost(*(int32_t*) ptr);  ptr += sizeof(int32_t);
   int32_t low  = beToHost(*(int32_t*) ptr);  ptr += sizeof(int32_t);
   int32_t high = beToHost(*(int32_t*) ptr);  ptr += sizeof(int32_t);
@@ -114,9 +114,9 @@ Jvm::appendLookupswitch(const MemoryMap::Ptr &map, Address start, SgUnsignedChar
   ASSERT_require(va >= codeOffset());
   const size_t nPad{(4 - (va - codeOffset())%4)%4};
   const size_t nBuf{nPad + 2*sizeof(int32_t)};
-  uint8_t buf[nBuf];
+  std::unique_ptr<uint8_t[]> buf{new uint8_t[nBuf]};
 
-  size_t nRead = map->at(va).limit(nBuf).require(MemoryMap::READABLE).read(buf).size();
+  size_t nRead = map->at(va).limit(nBuf).require(MemoryMap::READABLE).read(buf.get()).size();
   if (nRead != nBuf) {
     ASSERT_require2(false, "short read");
   }
@@ -126,7 +126,7 @@ Jvm::appendLookupswitch(const MemoryMap::Ptr &map, Address start, SgUnsignedChar
     chars.push_back(buf[i]);
   }
 
-  uint8_t* ptr{buf + nPad};
+  uint8_t* ptr{buf.get() + nPad};
   int32_t def = beToHost(*(int32_t*) ptr);  ptr += sizeof(int32_t);
   int32_t nPairs = beToHost(*(int32_t*) ptr);  ptr += sizeof(int32_t);
 
