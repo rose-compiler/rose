@@ -215,75 +215,6 @@ void filterOutThisNodeDueToMemberFunction(std::set<ReadWriteSets::AccessSetRecor
 
 
 
-
-/**
- * This function attempts to insert a node into a read or writeset
- * or a message explaining why it can't. This can be quite a fraught 
- * process. 
- *
- * \param[in] funcDef: The function definition the read/write was 
- *                     found in.  Mostly used for scope info
- * \param[in] current: The node given as a read or write.  Not always 
- *                     sensible.
- *
- **/
-/*std::string LocalRWSetGenerator::generateAccessNameStrings(SgFunctionDefinition* funcDef, SgInitializedName* coarseName) 
-{
-
-  SgStatement* coarseNameScope = coarseName->get_scope();
-  SgType* coarseType = coarseName->get_type();
-  ROSE_ASSERT(coarseType);
-
-  //global case
-  if(isSgGlobal(coarseNameScope)) {
-    // If it's a class type, need to get the full access string
-    if(isSgClassType(coarseType)) {
-      return "::"+coarseName->unparseToString();
-    } else {
-      return coarseName->get_qualified_name().getString();
-    }
-  } else if(isSgClassDefinition(coarseNameScope)) {
-    
-    SgClassDefinition* clsDef = isSgClassDefinition(coarseNameScope);
-    if(clsDef) {
-      std::string clsName = clsDef->get_qualified_name();
-      return "$" + clsName + "$" + coarseName->unparseToString();
-    } else {
-      return coarseName->get_qualified_name().getString();
-    }
-  
-      
-    //Otherwise, check that it's a local variable or an argument
-  } else {  
-    bool isDefAncestor = isAncestor(funcDef, coarseName);
-    //A little annoying, any parameter arguments will be associated with the declaration attached to
-    //the definition, not the first non-defining declaration.  So get the parameter list that way
-    SgFunctionDeclaration* funcDecl =funcDef->get_declaration();
-    bool isDeclAncestor = isAncestor(funcDecl, coarseName);  //Writing function arguments is OK.
-    if(!isDefAncestor && !isDeclAncestor) {
-      return "!access of non-local variable " + coarseName->get_qualified_name().getString();
-    }
-    if(isSgClassType(coarseType)) {
-      return "@" + VxUtilFuncs::getExpandedFunctionName(funcDecl) + "@" + 
-        coarseName->unparseToString();
-    } else {
-      return "@" + VxUtilFuncs::getExpandedFunctionName(funcDecl) + "@" + 
-        coarseName->get_qualified_name().getString();        
-    }
-  }
-  
-    mlog[Sawyer::Message::Common::ERROR] <<
-    "generateAccessNameStrings: " <<
-    coarseName->get_file_info()->get_filename() << ":" <<
-    coarseName->get_file_info()->get_line() << "-" << coarseName->get_file_info()->get_col()<<std::endl;
-  mlog[Sawyer::Message::Common::ERROR] <<
-    "In generateAccessNameStrings: got to end of function:"  <<
-    coarseName->class_name()<<std::endl;
-  ROSE_ABORT();
-}
-*/
-
-
 /**
  * This function attempts to determine the AccessType of a given access.
  * It has to be done recursively.  For example, if an array is seen,
@@ -332,11 +263,45 @@ VarType LocalRWSetGenerator::determineType(SgType* curType) {
       mlog[WARN] << "In determineType: Unable to get class definition: " << sgClassDecl->get_qualified_name().getString() << std::endl;
       return VARTYPE_UNKNOWN; //If we can't define the class, it's unmockable
     }
+    else if(VxUtilFuncs::isComplexDatastructure(sgClassDef)) {
+        return COMPLEX_DATATYPE;  
+    }
     return STRUCTS;
 
   }
   else if(isSgPointerType(curType)) {
-    //Saw a pointer in class, but it wasn't dereferenced, so it's a primative?
+    SgPointerType* ptrType = isSgPointerType(curType);
+    SgType* pointedToType = extractPointedToType(ptrType);//curType->stripType(SgType::STRIP_MODIFIER_TYPE|STRIP_REFERENCE_TYPE|STRIP_RVALUE_REFERENCE_TYPE|STRIP_POINTER_TYPE|STRIP_ARRAY_TYPE|STRIP_TYPEDEF_TYPE|STRIP_POINTER_MEMBER_TYPE); //VxUtilFuncs::extractPointedToType(ptrType);
+      //curType->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_POINTER_MEMBER_TYPE); //
+
+    SgClassType* pointedToClassType = isSgClassType(pointedToType);
+    if(isSgTypeChar(pointedToType)) {
+      //Special case for char*, we're calling that a primative
+        return PRIMITIVES;
+    }
+    else if(isSgTypeVoid(pointedToType)) {
+      //Special case for void*, we're calling that an opaque
+      return VOID_POINTERS;
+    }
+    else if(pointedToType->isPrimativeType()) {
+      //Special case for pointers to things we think we can build
+      return STD_POINTERS;
+    }
+    else if(pointedToClassType) {
+      if(pointedToClassType->get_qualified_name().getString().find("std::") < 5) {
+        //Special case for pointers to things we think we can build
+        return STD_POINTERS;
+      }
+      SgClassDefinition* pointedToClassDef = VxUtilFuncs::getClassDefinitionFromType(pointedToClassType);
+      if(!pointedToClassDef) {
+        return VARTYPE_UNKNOWN;
+      }
+      if(VxUtilFuncs::isComplexDatastructure(pointedToClassDef)) {
+        return COMPLEX_DATATYPE; 
+      }
+      return POINTERS;
+    }
+      
     return POINTERS;
   }
   else if(curType->isPrimativeType()) {
@@ -402,7 +367,6 @@ VarType LocalRWSetGenerator::determineType(SgType* curType) {
 std::set<ReadWriteSets::AccessSetRecord> LocalRWSetGenerator::recursivelyMakeAccessRecord(SgFunctionDefinition* funcDef, SgNode* current, SgNode* accessOrigin, SgThisExp** thisFuncThis)
 {
     ROSE_ASSERT(current != NULL);
-
     if (isSgInitializedName(current))
     {
       SgInitializedName* curName = isSgInitializedName(current);

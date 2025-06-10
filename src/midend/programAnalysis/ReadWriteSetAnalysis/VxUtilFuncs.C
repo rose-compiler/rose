@@ -68,6 +68,54 @@ SgClassDefinition* VxUtilFuncs::getClassDefinitionFromDeclaration(const SgClassD
   return funcDef;
 }
 
+SgClassDefinition* VxUtilFuncs::getClassDefinitionFromType(const SgClassType* classType) {
+  SgDeclarationStatement * classDeclStmt= classType->getAssociatedDeclaration();
+  SgClassDeclaration* classDecl = isSgClassDeclaration(classDeclStmt);
+  SgClassDeclaration* classDeclDefining = isSgClassDeclaration(classDecl->get_definingDeclaration());
+  SgClassDefinition* classDef = getClassDefinitionFromDeclaration(classDecl);
+  return classDef;
+};
+
+/**
+ * isComplexDatastructure
+ *
+ * A struct that contains a pointer to another struct is considered a likely complex 
+ * datastructure, and therefor difficult to test. 
+ * @return : true if the struct or one of its children contains a pointer to a struct
+ **/
+bool VxUtilFuncs::isComplexDatastructure(const SgClassDefinition* inClassDecl) {
+  // Go through each data member, if it contains a class, recurse into it.
+  // If it contains a pointer to a struct, return true
+  for (SgDeclarationStatement* thisDeclStmt : inClassDecl->get_members()) {
+    SgVariableDeclaration* varDecl = isSgVariableDeclaration(thisDeclStmt);
+    if(varDecl) {
+      for (SgInitializedName* thisInitName : varDecl->get_variables()) {
+        SgType* curType = thisInitName->get_type();
+        if(isSgPointerType(curType)) {
+          //If it points to a class, return true
+          SgPointerType* ptrType = isSgPointerType(curType);
+          SgType* pointedToType = extractPointedToType(ptrType);
+          SgClassType* pointedToClassType = isSgClassType(pointedToType);
+          if(pointedToClassType) {
+            return true;
+          }
+        } else if(isSgClassType(curType)) {
+          //If it contains a struct, (not a pointer to a struct) recurse
+          SgClassType* thisClassType = isSgClassType(curType);
+          SgClassDefinition* classDef = getClassDefinitionFromType(thisClassType);
+          bool thisClassResult = isComplexDatastructure(classDef);
+          if(thisClassResult) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  //Never saw a pointer, so return false
+  return false;
+}
+
+
 /**
  * isHeaderFile
  *
@@ -251,7 +299,12 @@ std::string VxUtilFuncs::getTrueFilePath(SgFunctionDeclaration* inFuncDecl) {
   if(tempIDecl) {  //is template
     SgTemplateFunctionDeclaration* tempDecl = isSgTemplateFunctionDeclaration(tempIDecl->get_templateDeclaration());
     SgFunctionDeclaration* defFuncDecl = isSgTemplateFunctionDeclaration(tempDecl->get_definingDeclaration());
-    filepathStr = defFuncDecl ? defFuncDecl->get_file_info()->get_filename() : tempDecl->get_file_info()->get_filename();
+    if(defFuncDecl) {
+      filepathStr = defFuncDecl->get_file_info()->get_filename();
+    } else {
+      //If defFuncDecl failed for some reason, just go with tempDecl's file?  Shouldn't that usually be compilerGenerated?  Not in the case I'm looking at now...
+      filepathStr = tempDecl->get_file_info()->get_filename();  
+    }
   } else if(tempIMDecl) { //is template member
     SgTemplateMemberFunctionDeclaration* tempDecl = isSgTemplateMemberFunctionDeclaration(tempIMDecl->get_templateDeclaration());
     SgFunctionDeclaration* defFuncDecl = isSgTemplateMemberFunctionDeclaration(tempDecl->get_definingDeclaration());
@@ -421,6 +474,24 @@ std::string VxUtilFuncs::getFuncDeclRelativePath(SgFunctionDeclaration* inFuncDe
    }
    return obj;   
  }
+
+  
+/**
+ * extractPointedToType
+ *
+ * Takes a pointer type, returns the type it points to, shorn of all qualifiers.  
+ * e.g. const char* will return char.
+ **/
+SgType* VxUtilFuncs::extractPointedToType(SgPointerType* pointerType) {
+  SgType* pointedToType = pointerType->get_base_type();
+  while(isSgModifierType(pointedToType)) {
+    SgModifierType* modType = isSgModifierType(pointedToType);
+    pointedToType = modType->get_base_type();
+  }
+
+  return VxUtilFuncs::getTypedefBaseType(pointedToType);
+}
+  
 
  /** 
   * getUniqueDeclaration
@@ -675,7 +746,6 @@ std::string VxUtilFuncs::generateAccessNameStrings(SgInitializedName* coarseName
   SgStatement* coarseNameScope = coarseName->get_scope();
   SgType* coarseType = coarseName->get_type();
   ROSE_ASSERT(coarseType);
-  //mlog[INFO] << coarseNameScope->class_name() << std::endl;
 
   
   //global case

@@ -37,7 +37,25 @@ void initDiagnostics();
  * If you have a class declaration, often you want to get the definition from it.  But that's kind of a pain.
  * Hence this function.
  **/
-  SgClassDefinition* getClassDefinitionFromDeclaration(const SgClassDeclaration* funcDecl);
+  SgClassDefinition* getClassDefinitionFromDeclaration(const SgClassDeclaration* classDecl);
+
+/**
+ * getClassDefinitionFromType
+ *
+ * If you have a classType, often you want to get the definition from it.  But that's kind of a pain.
+ * Hence this function.
+ **/
+  SgClassDefinition* getClassDefinitionFromType(const SgClassType* classType);
+ 
+  bool isInStdNamespace(SgClassDeclaration* classDecl);
+/**
+ * isComplexDatastructure
+ *
+ * A struct that contains a pointer to another struct is considered a likely complex 
+ * datastructure, and therefor difficult to test. 
+ * @return : true if the struct or one of its children contains a pointer to a struct
+ **/
+  bool isComplexDatastructure(const SgClassDefinition* inClassDecl);
 
 
 /**
@@ -208,8 +226,16 @@ void initDiagnostics();
  * parent..
  **/
   SgNode* extractParentFromPossibleCast(SgNode* obj);
-  
 
+  
+/**
+ * extractPointedToType
+ *
+ * Takes a pointer type, returns the type it points to, shorn of all qualifiers.  
+ * e.g. const char* will return char.
+ **/
+  SgType* extractPointedToType(SgPointerType* pointerType);
+  
  /** 
   * getUniqueDeclaration
   *

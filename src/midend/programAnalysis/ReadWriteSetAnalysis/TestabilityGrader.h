@@ -46,14 +46,19 @@ public:
    * \param[record] The function we are evaluating (calledFunctions will be recursed into)
    * \param[out] maxGlobality  : Expected to be 0 during the initial call!
    * \param[out] maxAccessType : Expected to be 0 during the initial call!
+   * \param[in] ignoreFunctions : Functions to ignore when it comes to RWSets because they have issue that are known to not be enlightening.
+   *                              (Example, ... like printLog are UNKNOWN, but don't affect the caller)
+   * \param[inout] localPtrFuncs : Functions that access a local pointer, inside this function we will add functions that call a
+   *                               function that access a local pointer 
    * \param[inout] workingCache: The set of functions seen so far during this recursion, so we don't infinately loop
    **/
   void recursivelyEvaluateFunctionRecords(const ReadWriteSets::FunctionReadWriteRecord& record,
                                           ReadWriteSets::Globality& maxGlobality, 
                                           ReadWriteSets::VarType& maxVarType,
-                                          ReadWriteSets::AccessType& maxAccessType,                                  
-                                          std::unordered_set<ReadWriteSets::FunctionReadWriteRecord, 
-                                          ReadWriteSets::FunctionReadWriteRecord_hash>& workingCache);
+                                          ReadWriteSets::AccessType& maxAccessType,
+                                          const std::set<std::string>& ignoreFunctions,
+                                          std::unordered_set< std::string > localPtrFuncs,
+                                          std::unordered_set<ReadWriteSets::FunctionReadWriteRecord, ReadWriteSets::FunctionReadWriteRecord_hash>& workingCache);
 
 
   /** 

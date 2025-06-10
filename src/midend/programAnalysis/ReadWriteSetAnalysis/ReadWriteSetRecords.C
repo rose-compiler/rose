@@ -23,7 +23,10 @@ const char* ReadWriteSets::varTypeStrings[] = {
   "ARRAYS_OF_STRUCTS",
   "FUNCTIONS",
   "MEMBER_FUNCTIONS",
+  "STD_POINTERS",
+  "COMPLEX_DATATYPE", 
   "POINTERS",
+  "VOID_POINTERS",
   "VARTYPE_END"
 };
 
@@ -82,6 +85,10 @@ ReadWriteSets::VarType ReadWriteSets::varTypeFromString(const std::string& varTy
     initStringToVarTypeMap();
   }
   auto iter = stringToVarTypeMap.find(varTypeStr);
+  if(iter == stringToVarTypeMap.end()) {
+    VxUtilFuncs::mlog[Sawyer::Message::Common::ERROR] << "varTypeFromString failed to understand: " << varTypeStr << std::endl;
+
+  }
   ROSE_ASSERT(iter != stringToVarTypeMap.end());
   return iter->second;
 }
@@ -115,7 +122,10 @@ void ReadWriteSets::initStringToVarTypeMap() {
   stringToVarTypeMap.insert(std::make_pair<std::string, ReadWriteSets::VarType>("ARRAYS_OF_STRUCTS",ARRAYS_OF_STRUCTS));
   stringToVarTypeMap.insert(std::make_pair<std::string, ReadWriteSets::VarType>("FUNCTIONS",FUNCTIONS));
   stringToVarTypeMap.insert(std::make_pair<std::string, ReadWriteSets::VarType>("MEMBER_FUNCTIONS",MEMBER_FUNCTIONS));
+  stringToVarTypeMap.insert(std::make_pair<std::string, ReadWriteSets::VarType>("STD_POINTERS",STD_POINTERS));
+  stringToVarTypeMap.insert(std::make_pair<std::string, ReadWriteSets::VarType>("COMPLEX_DATATYPE",COMPLEX_DATATYPE));
   stringToVarTypeMap.insert(std::make_pair<std::string, ReadWriteSets::VarType>("POINTERS",POINTERS));
+  stringToVarTypeMap.insert(std::make_pair<std::string, ReadWriteSets::VarType>("VOID_POINTERS",VOID_POINTERS));
   stringToVarTypeMap.insert(std::make_pair<std::string, ReadWriteSets::VarType>("VARTYPE_UNKNOWN",VARTYPE_UNKNOWN));
 }
 
@@ -368,14 +378,20 @@ std::set<ReadWriteSets::AccessSetRecord> ReadWriteSets::updateAccessVarTypes(
 
 //! \brief nlohmann's default way to write to json, works with >> operator 
 void ReadWriteSets::to_json(nlohmann::json& funcJson, const ReadWriteSets::FunctionReadWriteRecord& record) {
-  funcJson = nlohmann::json{ 
-    {"filename", record.filename},
-    {"NodeId", record.nodeId },
-    {"globality", globalityToString(record.globality)},
-    {"varType", varTypeToString(record.varType)},
-    {"accessType", accessTypeToString(record.accessType)},
-    {"commandLine", record.commandLine}};
-    
+  if(record.varType == VARTYPE_UNKNOWN && record.globality == GLOBALITY_UNKNOWN && record.accessType == ACCESSTYPE_UNKNOWN) {
+    funcJson = nlohmann::json{ 
+                              {"filename", record.filename},
+                              {"NodeId", record.nodeId },
+                              {"commandLine", record.commandLine}};
+  } else {
+    funcJson = nlohmann::json{ 
+                              {"filename", record.filename},
+                              {"NodeId", record.nodeId },
+                              {"globality", globalityToString(record.globality)},
+                              {"varType", varTypeToString(record.varType)},
+                              {"accessType", accessTypeToString(record.accessType)},
+                              {"commandLine", record.commandLine}};
+  }
   //Output called functions (Name is only useful id?)
   std::vector<std::string> calledFunctionsVec;
   auto calledFuncIt = record.calledFunctions.begin();
@@ -414,16 +430,22 @@ void ReadWriteSets::from_json(const nlohmann::json& funcJson, ReadWriteSets::Fun
   funcJson.at("NodeId").get_to(record.nodeId);
   
   std::string tmpGlobality;
-  funcJson.at("globality").get_to(tmpGlobality);
-  record.globality = globalityFromString(tmpGlobality);
-
+  if(funcJson.contains("globality")) {
+    funcJson.at("globality").get_to(tmpGlobality);
+    record.globality = globalityFromString(tmpGlobality);
+  }
+  
   std::string tmpVarType;  
-  funcJson.at("varType").get_to(tmpVarType);
-  record.varType = varTypeFromString(tmpVarType);
-
+  if(funcJson.contains("varType")) {
+    funcJson.at("varType").get_to(tmpVarType);
+    record.varType = varTypeFromString(tmpVarType);
+  }
+  
   std::string tmpAccessType;  
-  funcJson.at("accessType").get_to(tmpAccessType);
-  record.accessType = accessTypeFromString(tmpAccessType);
+  if(funcJson.contains("accessType")) {
+    funcJson.at("accessType").get_to(tmpAccessType);
+    record.accessType = accessTypeFromString(tmpAccessType);
+  }
   
   funcJson.at("commandLine").get_to(record.commandLine);
 

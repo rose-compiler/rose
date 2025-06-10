@@ -7,6 +7,7 @@
  *
  * TestabilityGrader is normally called with a number of json files that must be merged into one cache for easy access.  
  * This function does the inital merge set.
+ * Note that name collisions are common when functions are defined in .h files.  Just insert anyway.
  *
  * \param[in] inCache : This is the "cache" that was just read from a json file and is to be merged in 
  **/
@@ -16,11 +17,6 @@ void TestabilityGrader::mergeFileIntoCache(const std::unordered_set<ReadWriteSet
     // a Function already exists in the cache, attempt to merge the
     // two functions.  (This happens with functions defined in .h
     // files a lot.)
-    if(isInCache != startCache.end()) {
-      std::cerr << "Function Name collision! Two files contain a matching function name, this shouldn't happen!" << std::endl;
-      std::cerr << "Function Name: " << isInCache->internalFunctionName << " filename: " << isInCache->filename << std::endl;
-      std::cerr << "Function Name: " << thisRecord.internalFunctionName << " filename: " << thisRecord.filename << std::endl;
-    }
 
     startCache.insert(thisRecord);
   }
@@ -44,14 +40,19 @@ void TestabilityGrader::mergeFileIntoCache(const std::unordered_set<ReadWriteSet
  * \param[out] maxGlobality  : Expected to be 0 during the initial call!
  * \param[out] maxVarType : Expected to be 0 during the initial call!
  * \param[out] maxAccessType : Expected to be 0 during the initial call!
+ * \param[in] ignoreFunctions : Functions to ignore when it comes to RWSets because they have issue that are known to not be enlightening.
+ *                              (Example, ... like printLog are UNKNOWN, but don't affect the caller)
+ * \param[inout] localPtrFuncs : Functions that access a local pointer, inside this function we will add functions that call a
+ *                               function that access a local pointer 
  * \param[inout] workingCache: The set of functions seen so far during this recursion, so we don't infinitely loop
  **/
 void TestabilityGrader::recursivelyEvaluateFunctionRecords(const ReadWriteSets::FunctionReadWriteRecord& record,
                                                            ReadWriteSets::Globality& maxGlobality,
                                                            ReadWriteSets::VarType& maxVarType,
                                                            ReadWriteSets::AccessType& maxAccessType,
-                                                           std::unordered_set<ReadWriteSets::FunctionReadWriteRecord, 
-                                                           ReadWriteSets::FunctionReadWriteRecord_hash>& workingCache) {
+                                                           const std::set<std::string>& ignoreFunctions,
+                                                           std::unordered_set< std::string > localPtrFuncs,
+                                                           std::unordered_set<ReadWriteSets::FunctionReadWriteRecord, ReadWriteSets::FunctionReadWriteRecord_hash>& workingCache) {
 
   //NodeId isn't really valid in this context, but if this is a valid record, it will have one.
   //So check to ensure a bad record wasn't passed in by mistake
@@ -84,9 +85,19 @@ void TestabilityGrader::recursivelyEvaluateFunctionRecords(const ReadWriteSets::
   localRecord.accessType = maxAccessType;
   workingCache.insert(localRecord);
 
+  nlohmann::json somejson = localRecord;
   //Need to merge every RWSet entry from the called function into the current record
   
   for(const std::string& calledFuncName : localRecord.calledFunctions) {
+    if(ignoreFunctions.find(calledFuncName) != ignoreFunctions.end()) {
+      continue; //Skip any functions we know we can ignore
+    }
+
+    //If this function calls a localPtrFunc, it is also a localPtrFunc
+    if(localPtrFuncs.find(calledFuncName) != localPtrFuncs.end()) {
+      localPtrFuncs.insert(record.internalFunctionName);
+    }
+    
     //Gotta make a record to lookup in the cache, only internalFunctionName is required for lookup
     ReadWriteSets::FunctionReadWriteRecord tmpRecord;
     tmpRecord.internalFunctionName = calledFuncName;
@@ -98,7 +109,7 @@ void TestabilityGrader::recursivelyEvaluateFunctionRecords(const ReadWriteSets::
     ReadWriteSets::Globality tmpGlobality = ReadWriteSets::LOCALS;
     ReadWriteSets::VarType tmpVarType = ReadWriteSets::PRIMITIVES;
     ReadWriteSets::AccessType tmpAccessType = ReadWriteSets::NORMAL;
-    recursivelyEvaluateFunctionRecords(*startCacheRecord, tmpGlobality, tmpVarType, tmpAccessType, workingCache);
+    recursivelyEvaluateFunctionRecords(*startCacheRecord, tmpGlobality, tmpVarType, tmpAccessType, ignoreFunctions, localPtrFuncs, workingCache);
     if(maxGlobality < tmpGlobality)
       maxGlobality = tmpGlobality;
     if(maxVarType < tmpVarType)

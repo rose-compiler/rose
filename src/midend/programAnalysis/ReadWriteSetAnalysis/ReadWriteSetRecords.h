@@ -47,8 +47,11 @@ namespace ReadWriteSets {
     ARRAYS_OF_STRUCTS = 4,
     FUNCTIONS = 5,
     MEMBER_FUNCTIONS = 6,
-    POINTERS = 7,
-    VARTYPE_UNKNOWN = 8
+    STD_POINTERS = 7,
+    COMPLEX_DATATYPE = 8,
+    POINTERS = 9,  // Will include pointers to complex data types
+    VOID_POINTERS = 10,
+    VARTYPE_UNKNOWN = 11
   };
     
   /** 
@@ -69,7 +72,7 @@ namespace ReadWriteSets {
   extern const char* globalityStrings[8];
 
   //! String names for varType
-  extern const char* varTypeStrings[9];
+  extern const char* varTypeStrings[12];
 
   //! String names for AccessType
   extern const char* accessTypeStrings[8];
