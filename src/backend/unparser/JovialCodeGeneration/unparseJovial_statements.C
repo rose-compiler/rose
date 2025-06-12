@@ -676,7 +676,7 @@ UnparseJovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // Don't unparse control letters (variable declarations are compiler generated)
      SgBasicBlock* loop_body = isSgBasicBlock(for_stmt->get_loop_body());
-     ROSE_ASSERT(loop_body);
+     ASSERT_not_null(loop_body);
 
   // Loop body
   //
@@ -701,7 +701,7 @@ UnparseJovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (!loop_body) {
         loop_body = isSgBasicBlock(for_stmt->get_loop_body());
      }
-     ROSE_ASSERT(loop_body);
+     ASSERT_not_null(loop_body);
 
      unparseStatement(loop_body, info);
      unp->cur.insert_newline(1);
@@ -764,7 +764,7 @@ UnparseJovial::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
      unparseStatement(if_stmt->get_true_body(), info);
 
   // false body
-     if (if_stmt->get_false_body() != NULL) {
+     if (if_stmt->get_false_body() != nullptr) {
         curprint_indented("ELSE\n", info);
         unparseStatement(if_stmt->get_false_body(), info);
      }
@@ -1050,7 +1050,7 @@ UnparseJovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
    // Table DimensionList
       SgExprListExp* dim_info = table_type->get_dim_info();
-     if (dim_info != NULL)
+     if (dim_info != nullptr)
         {
            unparseDimInfo(dim_info, info);
         }
@@ -1091,7 +1091,7 @@ UnparseJovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // Unparse base type or base class name if present
   //
      SgType* table_base_type = table_type->get_base_type();
-     bool has_base_type  = (table_base_type != NULL);
+     bool has_base_type  = (table_base_type != nullptr);
 
      SgBaseClassPtrList base_class_list = table_def->get_inheritances();
      bool has_base_class = (base_class_list.size() > 0);
@@ -1102,7 +1102,7 @@ UnparseJovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
      else if (has_base_class)
         {
-           ROSE_ASSERT (base_class_list.size() == 1);
+           ASSERT_require(base_class_list.size() == 1);
            SgBaseClass* base_class = base_class_list[0];
            ASSERT_not_null(base_class);
            SgClassDeclaration* base_class_decl = base_class->get_base_class();
@@ -1265,14 +1265,14 @@ UnparseJovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initializedN
      else if (var_decl->get_declarationModifier().get_storageModifier().isPackingDense()) curprint("D ");
 
   // Unparse the LocationSpecifier if present
-     if (var_decl->get_bitfield() != NULL)
+     if (var_decl->get_bitfield() != nullptr)
         {
            SgExpression* bitfield = var_decl->get_bitfield();
            SgExprListExp* sg_location_specifier = isSgExprListExp(bitfield);
            ASSERT_not_null(sg_location_specifier);
 
            SgExpressionPtrList & location_exprs = sg_location_specifier->get_expressions();
-           ROSE_ASSERT(location_exprs.size() == 2);
+           ASSERT_require(location_exprs.size() == 2);
 
            curprint(" POS(");
            unparseExpression(location_exprs[0], info);
@@ -1302,7 +1302,7 @@ UnparseJovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initializedN
         }
 
   // Initialization
-     if (init != NULL)
+     if (init != nullptr)
         {
            curprint(" = ");
            SgInitializer* initializer = isSgInitializer(init);

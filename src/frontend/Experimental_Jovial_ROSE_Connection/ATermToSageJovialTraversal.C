@@ -1210,9 +1210,9 @@ ATbool ATermToSageJovialTraversal::traverse_CharacterLiteral(ATerm term, std::st
 
    // The string is enclosed in single quotes, they need to be removed and added back
    // during unparsing.
-   ROSE_ASSERT(str_literal.size() >= 2);
-   ROSE_ASSERT(str_literal.at(0) == '\'');
-   ROSE_ASSERT(str_literal.at(str_literal.size()-1) == '\'');
+   ASSERT_require(str_literal.size() >= 2);
+   ASSERT_require(str_literal.at(0) == '\'');
+   ASSERT_require(str_literal.at(str_literal.size()-1) == '\'');
 
    str_literal = str_literal.substr(1, str_literal.size()-2);
 
@@ -1691,7 +1691,15 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 
    SgClassDefinition* def = def_decl->get_definition();
    ASSERT_not_null(def);
-   ROSE_ASSERT(def->isCaseInsensitive());
+   ASSERT_require(def->isCaseInsensitive());
+
+// Status/enum declarations must be added to the class definition
+   if (auto enum_type = isSgEnumType(base_type)) {
+      if (auto enum_decl = enum_type->get_declaration()) {
+         def->append_member(enum_decl);
+         enum_decl->set_parent(def);
+      }
+   }
 
 // Jovial block and table members are visible in parent scope so create an alias
 // to the symbol if needed.
@@ -1794,7 +1802,7 @@ traverse_TableDescriptionName(ATerm term, std::string &type_name, SgType* &type,
       } else return ATfalse;
 
    // The name should be useful
-      ROSE_ASSERT(type_name.length() > 0);
+      ASSERT_require(type_name.length() > 0);
 
    // This type should have already been created by a type declaration statement
       SgSymbol* symbol = SI::lookupSymbolInParentScopes(type_name, SB::topScopeStack());
@@ -1832,14 +1840,12 @@ traverse_TableDescriptionType(ATerm term, SgType* &type, SgExpression* &preset,
    ATerm t_struct_spec, t_entry_spec;
    std::string type_name;
 
-// TODO
-   LocationSpecifier location_spec;
-
-   StructureSpecifier& struct_spec = table_spec.struct_spec;
+   LocationSpecifier location_spec; // TODO
+   StructureSpecifier& struct_spec{table_spec.struct_spec};
 
    if (ATmatch(term, "TableDescription(<term>,<term>)", &t_struct_spec, &t_entry_spec)) {
 
-   // This is an EntrySpecifier without a body
+   // This is an EntrySpecifier without a body, although STATUS/enum is a complex type
       if (traverse_EntrySpecifierType(t_entry_spec, type, location_spec, preset, attr_list, table_spec)) {
          // MATCHED EntrySpecifierType
       } else return ATfalse;
@@ -2093,16 +2099,14 @@ traverse_OrdinaryEntrySpecifierType(ATerm term, SgType* &type, SgExpression* &pr
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OrdinaryEntrySpecifierType: %s\n", ATwriteToString(term));
 #endif
-
    ATerm t_pack_spec, t_item_desc, t_preset;
 
    type = nullptr;
    preset = nullptr;
 
    Sawyer::Optional<SgExpression*> status_size;
-   SgEnumDeclaration* enum_decl = nullptr;
-
-   std::string label = "";
+   SgEnumDeclaration* enum_decl{nullptr};
+   std::string label{""};
 
    if (ATmatch(term, "OrdinaryEntrySpecifier(<term>,<term>,<term>)", &t_pack_spec, &t_item_desc, &t_preset)) {
 
@@ -2111,15 +2115,29 @@ traverse_OrdinaryEntrySpecifierType(ATerm term, SgType* &type, SgExpression* &pr
       } else return ATfalse;
 
       if (traverse_ItemTypeDescription(t_item_desc, type)) {
-         // MATCHED StatusItemDescription without StatusItemDescription and found a base type
-         // for the table (not inheritance, likely a primitive type similar to an SgArrayType)
+         // MATCHED ItemTypeDescription found a base type
       }
-      else if (traverse_StatusItemDescription(t_item_desc, enum_decl, status_size)) {
+      else if (match_StatusItemDescription(t_item_desc)) {
          // MATCHED StatusItemDescription
+         Sawyer::Optional<SgExpression*> status_size;
 
-         // status item declarations have to be handled differently than other ItemTypeDescription terms
-         mlog[WARN] << "UNIMPLEMENTED: OrdinaryEntrySpecifierType with StatusItemDescription\n";
-         ROSE_ABORT();
+         // Pick a number to use in making a unique anonymous name
+         std::string id{Rose::StringUtility::numberToString(reinterpret_cast<uintptr_t>(term))};
+
+         // Create an SgEnumDeclaration with associated SgEnumType to receive status items.
+         enum_decl = SageBuilder::buildEnumDeclaration_nfi(mangleAnonymousName(id), SB::topScopeStack());
+         setSourcePosition(enum_decl, t_item_desc);
+
+         // The enum declaration can be retrieved from the type in later processing
+         type = enum_decl->get_type();
+
+         if (traverse_StatusItemDescription(t_item_desc, enum_decl, status_size)) {
+            // MATCHED StatusItemDescription
+            if (status_size) {
+               SgTypeInt* field_type = SageBuilder::buildIntType(*status_size);
+               enum_decl->set_field_type(field_type);
+            }
+         }
       }
       else return ATfalse;
 
@@ -2223,10 +2241,8 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
       } else return ATfalse;
 
       if (match_StatusItemDescription(t_item_desc)) {
-         // Build EnumDecl so that StatusItemDescription traversal has it to use
+         // Build an SgEnumDeclaration so that the StatusItemDescription traversal has it available
 
-         // This status variable declaration has an anonymous type declaration
-         // TODO: test to see if this holds if a type name is used for the item/variable type
          is_anonymous = true;
          std::string anon_type_name = mangleAnonymousName(name);
 
@@ -2239,9 +2255,7 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
          // MATCHED ItemTypeDescription without StatusItemDescription
       }
       else if (traverse_StatusItemDescription(t_item_desc, enum_decl, status_size)) {
-         // MATCHED StatusItemDescription: Note that they are handled differently
-         // than other ItemTypeDescriptions because they require different arguments
-
+         // MATCHED StatusItemDescription
          if (status_size) {
             SgType* field_type = SageBuilder::buildIntType(*status_size);
             enum_decl->set_field_type(field_type);
@@ -2805,7 +2819,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
          // MATCHED BlockTypeName
       } else return ATfalse;
 
-      ROSE_ASSERT(block_type_name.length() > 0);
+      ASSERT_require(block_type_name.length() > 0);
 
       // This type should have already been created by a type declaration statement
       SgClassSymbol* class_symbol = SI::lookupClassSymbolInParentScopes(block_type_name, SB::topScopeStack());
@@ -3415,7 +3429,7 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
       ASSERT_not_null(base_class_decl);
       
    // DQ (12/26/2011): The non defining declaration should not have a valid pointer to the class definition.
-      ROSE_ASSERT(base_class_decl->get_definition() == nullptr);
+      ASSERT_require(base_class_decl->get_definition() == nullptr);
 
       SgClassDefinition* derived_class_def = table_decl->get_definition();
       ASSERT_not_null(derived_class_def);
@@ -3739,8 +3753,8 @@ ATbool ATermToSageJovialTraversal::traverse_DefineString(ATerm term, std::string
    // here.
    //
    unsigned int len = def_string.length();
-   ROSE_ASSERT(len > 1);
-   ROSE_ASSERT(def_string[0] == '?' && def_string[len-1] == '?');
+   ASSERT_require(len > 1);
+   ASSERT_require(def_string[0] == '?' && def_string[len-1] == '?');
 
    def_string[0]     = '"';
    def_string[len-1] = '"';
@@ -5150,7 +5164,7 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
       else {
          loop_type_enum = SgJovialForThenStatement::e_for_only_stmt;
       }
-      ROSE_ASSERT(loop_type_enum != SgJovialForThenStatement::e_unknown);
+      ASSERT_require(loop_type_enum != SgJovialForThenStatement::e_unknown);
       ASSERT_not_null(for_stmt);
 
       for_stmt->set_initialization(initialization);
@@ -5462,7 +5476,7 @@ ATbool ATermToSageJovialTraversal::traverse_CaseStatement(ATerm term)
 
       if (traverse_LabelList(t_labels2, labels2, locations2)) {
          // MATCHED LabelList
-         ROSE_ASSERT(locations2.size() == 0);  // TODO
+         ASSERT_require(locations2.size() == 0);  // TODO
       } else return ATfalse;
    }
    else return ATfalse;
@@ -6153,7 +6167,8 @@ ATbool ATermToSageJovialTraversal::traverse_BinaryExpression(ATerm term, SgExpre
     // MATCHED rhs
   } else return ATfalse;
 
-  ROSE_ASSERT(lhs && rhs);
+  ASSERT_not_null(lhs);
+  ASSERT_not_null(rhs);
 
   switch (op) {
     // Arithmetic operators
@@ -7236,7 +7251,7 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
    else if (isSgTypedefSymbol(symbol)) {
       SgCastExp* cast_expr = nullptr;
 
-      ROSE_ASSERT(expr_list->get_expressions().size() == 1);
+      ASSERT_require(expr_list->get_expressions().size() == 1);
       SgExpression* cast_operand = expr_list->get_expressions()[0];
       ASSERT_not_null(cast_operand);
 
@@ -7250,7 +7265,7 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
    else if (isSgEnumSymbol(symbol)) {
       SgCastExp* cast_expr = nullptr;
 
-      ROSE_ASSERT(expr_list->get_expressions().size() == 1);
+      ASSERT_require(expr_list->get_expressions().size() == 1);
       SgExpression* cast_operand = expr_list->get_expressions()[0];
       ASSERT_not_null(cast_operand);
 
@@ -7550,7 +7565,10 @@ ATbool ATermToSageJovialTraversal::traverse_BitFunction(ATerm term, SgFunctionCa
    }
    else return ATfalse;
 
-   ROSE_ASSERT(bit_formula && first_bit && length && return_type);
+   ASSERT_not_null(bit_formula);
+   ASSERT_not_null(first_bit);
+   ASSERT_not_null(length);
+   ASSERT_not_null(return_type);
 
    // build the parameter list
    SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
@@ -8599,7 +8617,7 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
 
 // Remove single quotes
    unsigned int len = compool_name.length();
-   ROSE_ASSERT(len > 2);
+   ASSERT_require(len > 2);
    if (compool_name[0] == '\'' && compool_name[len-1] == '\'') {
       compool_name = compool_name.substr(1,len-2);
    }

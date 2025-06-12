@@ -282,7 +282,7 @@ UnparseJovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info& 
   // it is anonymous (where again, there won't be a proper name)
      SgNamedType* named_type = isSgNamedType(base_type);
 
-     if (info.inVarDecl() && named_type)
+     if (info.inVarDecl() && named_type && !isSgEnumType(base_type))
         {
           curprint(named_type->get_name());
         }
