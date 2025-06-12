@@ -214,6 +214,28 @@ void filterOutThisNodeDueToMemberFunction(std::set<ReadWriteSets::AccessSetRecor
 }
 
 
+/**
+ * \function stringToForceInstantiation
+ *
+ * The string to force an instantiation is just something like "template class MyClass<int>".  
+ * On a SgTemplateInstantiationDecl, unparseToString will return "template<> class MyClass<int>".
+ * So, I think I just need to remove "<>"
+ *
+ * NOTE: the unparser doesn't always fully qualify namespaces, so, unfortunatley, the string may not always work as-is
+ *
+ * \param[in] templateInstantiationDecl : The Declaration to instantiate
+ **/
+std::string stringToForceInstantiation(const SgTemplateInstantiationDecl* templateInstantiationDecl) {
+  std::string result = templateInstantiationDecl->unparseToString();
+  std::string to_remove = "<>";
+  size_t pos;
+  while ((pos = result.find(to_remove)) != std::string::npos) {
+    result.erase(pos, to_remove.length());
+  }
+  return result;
+}
+
+
 
 /**
  * This function attempts to determine the AccessType of a given access.
@@ -260,15 +282,19 @@ VarType LocalRWSetGenerator::determineType(SgType* curType) {
     ROSE_ASSERT(sgClassDecl);
     SgClassDefinition* sgClassDef = getClassDefinitionFromDeclaration(sgClassDecl);
     if(sgClassDef == NULL) {
-      mlog[WARN] << "In determineType: Unable to get class definition: " << sgClassDecl->get_qualified_name().getString() << std::endl;
-      return VARTYPE_UNKNOWN; //If we can't define the class, it's unmockable
-    }
-    else if(VxUtilFuncs::isComplexDatastructure(sgClassDef)) {
-        return COMPLEX_DATATYPE;  
+      if(isSgTemplateInstantiationDecl(sgClassDecl)) {
+        std::string instantiateString = stringToForceInstantiation(isSgTemplateInstantiationDecl(sgClassDecl));
+        mlog[WARN] << "Template needs a forced instatiation: " <<  instantiateString << std::endl;
+        requiredTemplateInstantiations.insert(instantiateString);
+      } else {
+        mlog[WARN] << "In determineType: Unable to get class definition: " << sgClassDecl->get_qualified_name().getString() << std::endl;
+      }
+      return VARTYPE_UNKNOWN;
     }
     return STRUCTS;
 
   }
+
   else if(isSgPointerType(curType)) {
     SgPointerType* ptrType = isSgPointerType(curType);
     SgType* pointedToType = extractPointedToType(ptrType);//curType->stripType(SgType::STRIP_MODIFIER_TYPE|STRIP_REFERENCE_TYPE|STRIP_RVALUE_REFERENCE_TYPE|STRIP_POINTER_TYPE|STRIP_ARRAY_TYPE|STRIP_TYPEDEF_TYPE|STRIP_POINTER_MEMBER_TYPE); //VxUtilFuncs::extractPointedToType(ptrType);
@@ -292,12 +318,9 @@ VarType LocalRWSetGenerator::determineType(SgType* curType) {
         //Special case for pointers to things we think we can build
         return STD_POINTERS;
       }
-      SgClassDefinition* pointedToClassDef = VxUtilFuncs::getClassDefinitionFromType(pointedToClassType);
-      if(!pointedToClassDef) {
-        return VARTYPE_UNKNOWN;
-      }
-      if(VxUtilFuncs::isComplexDatastructure(pointedToClassDef)) {
-        return COMPLEX_DATATYPE; 
+      VarType classVarType = determineType(pointedToClassType);
+      if(classVarType > POINTERS) {
+        return classVarType;
       }
       return POINTERS;
     }

@@ -194,7 +194,9 @@ public:
    **/
   const std::set<ReadWriteSets::AccessSetRecord>& getWriteSet(SgFunctionDeclaration* sgFunctionDeclaration);
 
-
+  const std::unordered_set<std::string>& getRequiredTemplateInstantiations() const {
+    return requiredTemplateInstantiations;
+  }
 
 
 private:
@@ -243,6 +245,16 @@ private:
   std::unordered_set<ReadWriteSets::FunctionReadWriteRecord, ReadWriteSets::FunctionReadWriteRecord_hash> rwSetCache;
 
 
+  /**
+   *  In C++, a template usage by pointer or reference may not require that the template actually be instantiated.  
+   *  When that happens, we can't classify the type, or unit test the function properly.  We can force a template to be
+   *  instantated with a declaration like "template class MyClass<int>"
+   *
+   *  But these cases can be detected by LocalRWSetGenerator, so when they are seen, a properly instantiation will be saved 
+   *  here, and later written to a file so it can be placed in total_headers.hh, and be useful.
+   **/
+  std::unordered_set<std::string> requiredTemplateInstantiations;
+  
   //! \brief command line used to generate all this.  Needs to match for NodeIds to be valid.
   std::string commandLine;
 

@@ -39,6 +39,7 @@ struct Settings {
     
     std::string rwSetsFilename      = "";
     std::string rwSetsTestFilename      = "";
+    std::string templateInstantiationFilename  = "template-Instantiation.hpp";
     std::string applicationRootDir  = "";
     bool force_stdout = false;
 
@@ -47,6 +48,7 @@ struct Settings {
                 include_empties(false),
                 rwSetsFilename(""),
                 rwSetsTestFilename(""),
+                templateInstantiationFilename("template-Instantiation.hpp"),
                 applicationRootDir(""),
                 force_stdout(false)
     {
@@ -78,6 +80,7 @@ void readConfigFile(Settings& settings)
 
         settings.include_empties = config["include-empties"].As<bool>(settings.include_empties);  //How global reads are allowed to be
         settings.rwSetsFilename = config["rwSets-filename"].As<std::string>(settings.rwSetsFilename);  //How global reads are allowed to be
+        settings.templateInstantiationFilename = config["template-instantiation-filename"].As<std::string>(settings.templateInstantiationFilename);  
         settings.applicationRootDir = config["app-root"].As<std::string>(settings.applicationRootDir);  //How global reads are allowed to be
         settings.force_stdout = config["force-stdout"].As<bool>(settings.force_stdout);
     }
@@ -130,6 +133,10 @@ main(int argc, char *argv[]) {
     localRWSetGeneratorSwitches.insert(Switch("rwSets-test-filename")
                                   .argument("filename", anyParser(settings.rwSetsTestFilename))
                                   .doc("Filename to output a second test the list of read/write sets to.  If not present, writes to stdout."));
+    localRWSetGeneratorSwitches.insert(Switch("template-Instantiation-filename")
+                                  .argument("filename", anyParser(settings.templateInstantiationFilename))
+                                  .doc("Filename to output any required template instantions to. Default is template-Instantiation.hpp"));
+    
     localRWSetGeneratorSwitches.insert(Switch("include-empties", 'e')
                                   .shortName('e')
                                   .intrinsicValue(true, settings.include_empties)
@@ -160,6 +167,16 @@ main(int argc, char *argv[]) {
     LocalRWSetGenerator rwSetGen(combinedCommandLine);
     rwSetGen.collectReadWriteSets(root);
 
+    // First just output any required template instantations to get it out of the way
+    if(rwSetGen.getRequiredTemplateInstantiations().size() > 0) {
+      //Open for append, so we don't overwrite requests from other compilation units
+      std::ofstream templateFile(settings.templateInstantiationFilename, std::ios::app);
+      for(const std::string& instantiationString : rwSetGen.getRequiredTemplateInstantiations()) {
+        templateFile << instantiationString << std::endl;
+      }
+      templateFile.close();
+    }
+    
     if(settings.rwSetsFilename == "" || settings.force_stdout) {
       std::cout << rwSetGen;
     }
