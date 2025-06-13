@@ -4,7 +4,7 @@
 # If we want it to work on Windows in the future
 #
 option(ENABLE-CODETHORN "Enable CodeThorn program analysis and verification" TRUE)
-if(NOT WIN32 AND ENABLE-CODETHORN AND ENABLE-C STREQUAL "ON")
+if(NOT WIN32 AND ENABLE-CODETHORN AND NOT ENABLE-CLANG-FRONTEND AND ENABLE-C STREQUAL "ON")
   if(NOT ENABLE_OPENMP)
     # Codethorn has openmp directives
     find_package(OpenMP QUIET)
