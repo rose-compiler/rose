@@ -891,7 +891,9 @@ find_yices()
 include(FindZlib)
 find_zlib()
 
-# DWARF library
+# ELF and DWARF libraries (elf must be found before trying to find dwarf)
+include(FindElf)
+find_elf()
 include(FindDwarf)
 find_dwarf()
 

@@ -437,3 +437,7 @@
 
 /* Define to 1 if you have the <mach/mach_time.h> header file. */
 #cmakedefine HAVE_MACH_MACH_TIME_H @HAVE_MACH_MACH_TIME_H@ 
+
+/* Define if dwarf is available, and the location of dwarf library. */
+#cmakedefine ROSE_HAVE_LIBDWARF
+#define ROSE_LIBDWARF_LIBRARY "@DWARF_LIBRARY@"

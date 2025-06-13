@@ -156,3 +156,7 @@
 /* Simple preprocessor as default in ROSE -- dont delete me */
 //AS Need configure option to allow wave to be default
 #define ROSE_WAVE_DEFAULT false 
+
+/* Define if dwarf is available, and the location of dwarf library. */
+#cmakedefine ROSE_HAVE_LIBDWARF
+#define ROSE_LIBDWARF_LIBRARY "@DWARF_LIBRARY@"
