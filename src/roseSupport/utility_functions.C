@@ -37,6 +37,9 @@
 #ifdef ROSE_HAVE_DLIB
 #   include <dlib/revision.h>
 #endif
+#ifdef ROSE_HAVE_LIBDWARF
+#   include <libdwarf.h> // the one from the libdwarf package, not the libelf package which also installs a "dwarf.h"
+#endif
 #ifdef ROSE_HAVE_LIBGCRYPT
 #   include <gcrypt.h>
 #endif
@@ -370,18 +373,86 @@ std::string version_message() {
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
     ss <<"  --- binary analysis:            enabled\n";
 
+    // ------------------------------ features ------------------------------
+    ss <<"  ---         === Binary Features ===\n";
+
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     ss <<"  ---   object serialization:     enabled\n";
 #else
     ss <<"  ---   object serialization:     disabled\n";
 #endif
 
+#ifdef ROSE_ENABLE_DEBUGGER_LINUX
+    ss <<"  ---   Linux PTRACE debugging    enabled\n";
+#else
+    ss <<"  ---   Linux PTRACE debugging    disabled\n";
+#endif
+
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
+    ss <<"  ---   concolic testing:         enabled\n";
+#else
+    ss <<"  ---   concolic testing:         disabled\n";
+#if !defined(__linux__)
+    ss <<"  ---     this is not Linux\n";
+#endif
+#if !defined(ROSE_HAVE_SQLITE3) && !defined(ROSE_HAVE_LIBPQXX)
+    ss <<"  ---     no SQL database driver\n";
+#endif
+#if BOOST_VERSION < 106400
+    ss <<"  ---     Boost library is too old\n";
+#endif
+#if !defined(ROSE_ENABLE_BOOST_SERIALIZATION)
+    ss <<"  ---     Boost serialization is not available\n";
+#endif
+#if !defined(ROSE_ENABLE_DEBUGGER_LINXU)
+    ss <<"  ---     PTRACE facility is not available\n";
+#endif
+#endif
+
+#ifdef ROSE_ENABLE_DEBUGGER_GDB
+    ss <<"  ---   GDB debugger interface    enabled\n";
+#else
+    ss <<"  ---   GDB debugger interface    disabled\n";
+    ss <<"          Boost version is too old\n";
+#endif
+
+#ifdef ROSE_ENABLE_LIBRARY_IDENTIFICATION
+    ss <<"  ---   fast lib identification   enabled\n";
+#else
+    ss <<"  ---   fast lib identification   disabled\n";
+#if !defined(ROSE_HAVE_SQLITE3) && !defined(ROSE_HAVE_LIBPQXX)
+    ss <<"  ---     no SQL database driver\n";
+#endif
+#if defined(__APPLE__) || defined(__MACH__)
+    ss <<"  ---     not supported on macOS\n";
+#endif
+#endif
+
+#ifdef ROSE_ENABLE_MODEL_CHECKER
+    ss <<"  ---   model checking            enabled\n";
+#else
+    ss <<"  ---   model checking            disabled\n";
+#if !defined(_REENTRANT)
+    ss <<"  ---     multi-threading is disabled\n";
+#endif
+#endif
+
+#if defined(ROSE_HAVE_LIBDWARF) // library that was detected during configuration
+    ss <<"  ---   dwarf parsing:            enabled\n";
+#else
+    ss <<"  ---   dwarf parsing:            disabled\n"
+       <<"  ---     libdwarf or libelf not found\n";
+#endif
+
+    // ------------------------------ instruction sets ------------------------------
+    ss <<"  ---         === Binary Instructions ===\n";
+
 #ifdef ROSE_ENABLE_ASM_AARCH32
     ss <<"  ---   ARM AArch32 (A32/T32):    enabled\n";
 #else
     ss <<"  ---   ARM AArch32 (A32/T32):    disabled\n";
 #if !defined(ROSE_HAVE_CAPSTONE)
-    ss <<"          missing capstone library\n";
+    ss <<"  ---     missing capstone library\n";
 #endif
 #endif
 
@@ -399,80 +470,53 @@ std::string version_message() {
     ss <<"  ---   PowerPC (be and le):      enabled\n";
     ss <<"  ---   Intel x86 (i386):         enabled\n";
     ss <<"  ---   Intel x86-64 (amd64):     enabled\n";
+    ss <<"  ---   JVM bytecode:             enabled\n";
+    ss <<"  ---   CIL bytecode:             enabled\n";
 
-#ifdef ROSE_ENABLE_CONCOLIC_TESTING
-    ss <<"  ---   concolic testing:         enabled\n";
-#else
-    ss <<"  ---   concolic testing:         disabled\n";
-#if !defined(__linux__)
-    ss <<"          this is not Linux\n";
-#endif
-#if !defined(ROSE_HAVE_SQLITE3) && !defined(ROSE_HAVE_LIBPQXX)
-    ss <<"          no SQL database driver\n";
-#endif
-#if BOOST_VERSION < 106400
-    ss <<"          Boost library is too old\n";
-#endif
-#if !defined(ROSE_ENABLE_BOOST_SERIALIZATION)
-    ss <<"          Boost serialization is not available\n";
-#endif
-#if !defined(ROSE_ENABLE_DEBUGGER_LINXU)
-    ss <<"          PTRACE facility is not available\n";
-#endif
-#endif
-
-#ifdef ROSE_ENABLE_DEBUGGER_LINUX
-    ss <<"  ---   Linux PTRACE debugging    enabled\n";
-#else
-    ss <<"  ---   Linux PTRACE debugging    disabled\n";
-#endif
-
-#ifdef ROSE_ENABLE_DEBUGGER_GDB
-    ss <<"  ---   GDB debugger interface    enabled\n";
-#else
-    ss <<"  ---   GDB debugger interface    disabled\n";
-    ss <<"          Boost version is too old\n";
-#endif
-
-#ifdef ROSE_ENABLE_LIBRARY_IDENTIFICATION
-    ss <<"  ---   fast lib identification   enabled\n";
-#else
-    ss <<"  ---   fast lib identification   disabled\n";
-#if !defined(ROSE_HAVE_SQLITE3) && !defined(ROSE_HAVE_LIBPQXX)
-    ss <<"          no SQL database driver\n";
-#endif
-#if defined(__APPLE__) || defined(__MACH__)
-    ss <<"          not supported on macOS\n";
-#endif
-#endif
-
-#ifdef ROSE_ENABLE_MODEL_CHECKER
-    ss <<"  ---   model checking            enabled\n";
-#else
-    ss <<"  ---   model checking            disabled\n";
-#if !defined(_REENTRANT)
-    ss <<"          multi-threading is disabled\n";
-#endif
-#endif
+    // ------------------------------ libraries --------------------------------
+    ss <<"  ---         === Binary Libraries ===\n";
 
 #ifdef ROSE_HAVE_CAPSTONE
-    ss <<"  ---   capstone library:         " <<CS_VERSION_MAJOR <<"." <<CS_VERSION_MINOR <<"." <<CS_VERSION_EXTRA <<"\n";
+    ss <<"  ---   capstone library:         " <<CS_VERSION_MAJOR <<"." <<CS_VERSION_MINOR <<"." <<CS_VERSION_EXTRA;
+#ifdef ROSE_CAPSTONE_LIBRARY
+    ss <<" (" <<ROSE_CAPSTONE_LIBRARY <<")";
+#endif
+    ss <<"\n";
 #else
     ss <<"  ---   capstone library:         unused\n";
 #endif
 
-#if !defined(ROSE_HAVE_DLIB)
-    ss <<"  ---   dlib library:             unused\n";
-#elif defined(DLIB_PATCH_VERSION)
-    ss <<"  ---   dlib library:             " <<DLIB_MAJOR_VERSION <<"." <<DLIB_MINOR_VERSION <<"." <<DLIB_PATCH_VERSION <<"\n";
+#ifdef ROSE_HAVE_DLIB
+    ss <<"  ---   dlib library:             ";
+#if defined(DLIB_PATCH_VERSION)
+    ss <<DLIB_MAJOR_VERSION <<"." <<DLIB_MINOR_VERSION <<"." <<DLIB_PATCH_VERSION;
 #elif defined(DLIB_MINOR_VERSION)
-    ss <<"  ---   dlib library:             " <<DLIB_MAJOR_VERSION <<"." <<DLIB_MINOR_VERSION <<"\n";
+    ss <<DLIB_MAJOR_VERSION <<"." <<DLIB_MINOR_VERSION;
 #else
-    ss <<"  ---   dlib library:             unknown version\n";
+    ss <<"unknown version";
+#endif
+#ifdef ROSE_DLIB_LIBRARY
+    ss <<" (" <<ROSE_DLIB_LIBRARY <<")";
+#endif
+    ss <<"\n";
+#endif
+
+#ifdef ROSE_HAVE_LIBDWARF
+    ss <<"  ---   dwarf library:            " <<dwarf_package_version();
+#if defined(ROSE_LIBDWARF_LIBRARY)
+    ss <<" (" <<ROSE_LIBDWARF_LIBRARY <<")";
+#endif
+    ss <<"\n";
+#else
+    ss <<"  ---   dwarf library:            unused\n";
 #endif
 
 #ifdef ROSE_HAVE_LIBGCRYPT
-    ss <<"  ---   gcrypt library:           " <<GCRYPT_VERSION <<"\n";
+    ss <<"  ---   gcrypt library:           " <<GCRYPT_VERSION;
+#ifdef ROSE_LIBGCRYPT_LIBRARY
+    ss <<" (" <<ROSE_LIBGCRYPT_LIBRARY <<")";
+#endif
+    ss <<"\n";
 #else
     ss <<"  ---   gcrypt library:           unused\n";
 #endif
@@ -490,23 +534,44 @@ std::string version_message() {
 #endif
 
 #ifdef ROSE_HAVE_SQLITE3
-    ss <<"  ---   sqlite library:           " <<SQLITE_VERSION <<"\n";
+    ss <<"  ---   sqlite library:           " <<SQLITE_VERSION;
+#ifdef ROSE_SQLITE3_LIBRARY
+    ss <<" (" <<ROSE_SQLITE3_LIBRARY <<")";
+#endif
+    ss <<"\n";
 #else
     ss <<"  ---   sqlite library:           unused\n";
 #endif
 
 #ifdef ROSE_HAVE_YAMLCPP
-    ss <<"  ---   yaml-cpp library:         unknown version\n"; // not provided by the library or headers
+    ss <<"  ---   yaml-cpp library:         unknown version"; // not provided by the library or headers
+#ifdef ROSE_YAMLCPP_LIBRARY
+    ss <<" (" <<ROSE_YAMLCPP_LIBRARY <<")";
+#endif
+    ss <<"\n";
 #else
     ss <<"  ---   yaml-cpp library:         unused\n";
 #endif
 
-#ifdef Z3_FULL_VERSION
-    ss <<"  ---   z3 library:               " <<Z3_FULL_VERSION <<" (" <<ROSE_Z3 <<")\n";
-#elif defined(ROSE_HAVE_Z3)
-    ss <<"  ---   z3 library:               unknown version (" <<ROSE_Z3 <<")\n";
+#ifdef ROSE_HAVE_Z3
+    ss <<"  ---   z3 library:               ";
+#if defined(Z3_FULL_VERSION)
+    ss <<Z3_FULL_VERSION;
+#else
+    ss "unknown version";
+#endif
+#ifdef ROSE_Z3_LIBRARY
+    ss <<" (" <<ROSE_Z3_LIBRARY <<")";
+#endif
+    ss <<"\n";
 #else
     ss <<"  ---   z3 library:               unused\n";
+#endif
+
+#if defined(ROSE_HAVE_Z3) && defined(ROSE_Z3_EXECUTABLE)
+    ss <<"  ---   z3 tool:                  " <<ROSE_Z3_EXECUTABLE <<"\n";
+#else
+    ss <<"  ---   z3 tool:                  unused\n";
 #endif
 
 #else

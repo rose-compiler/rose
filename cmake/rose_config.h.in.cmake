@@ -65,6 +65,8 @@
 
 /* Define if Z3 library is available */
 #cmakedefine ROSE_HAVE_Z3 @ROSE_HAVE_Z3@
+#define ROSE_Z3_LIBRARY "@Z3_LIBRARY@"
+#define ROSE_Z3_EXECUTABLE "@Z3_EXECUTABLE@"
 
 /* Location of Z3 executable */
 #cmakedefine ROSE_Z3 "@ROSE_Z3@"
@@ -74,15 +76,19 @@
 
 /* Define if libgcrypt is available. */
 #cmakedefine ROSE_HAVE_LIBGCRYPT @ROSE_HAVE_LIBGCRYPT@
+#define ROSE_LIBGCRYPT_LIBRARY "@GCRYPT_LIBRARY@"
 
 /* Define if YAML-CPP library is available. */
 #cmakedefine ROSE_HAVE_YAMLCPP @ROSE_HAVE_YAMLCPP@
+#define ROSE_YAMLCPP_LIBRARY "@YAMLCPP_LIBRARY@"
 
 /* Define if Dlib is available. */
 #cmakedefine ROSE_HAVE_DLIB @ROSE_HAVE_DLIB@
+#define ROSE_DLIB_LIBRARY "@DLIB_LIBRARY@"
 
 /* Define if Capstone is available. */
 #cmakedefine ROSE_HAVE_CAPSTONE @ROSE_HAVE_CAPSTONE@
+#define ROSE_CAPSTONE_LIBRARY "@CAPSTONE_LIBRARY@"
 
 /* Define if Cereal is available. */
 #cmakedefine ROSE_HAVE_CEREAL @ROSE_HAVE_CEREAL@
@@ -239,6 +245,7 @@
 
 /* Have the SQLITE3 library */
 #cmakedefine HAVE_SQLITE3
+#define ROSE_SQLITE3_LIBRARY "@SQLITE3_LIBRARY@"
 
 /* Define to 1 if you have the POSIX.1003 header file, <pthread.h> */
 #cmakedefine HAVE_PTHREAD_H 
