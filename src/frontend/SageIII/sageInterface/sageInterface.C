@@ -81,6 +81,8 @@ using namespace Rose::Frontend::Java::Ecj;
 
 #endif
 
+// We need this so that USE_CMAKE and ROSE_USE_CLANG_FRONTEND will be seen (set via configure).
+#include "rose_config.h"
 
 // DQ (11/5/2019): Added to support SageInterface::statementCanBeTransformed().
 namespace EDG_ROSE_Translation
@@ -109,8 +111,6 @@ namespace SageInterface {
    #include "transformationSupport.h"
 #endif
 
-// We need this so that USE_CMAKE will be seen (set via configure).
-#include "rose_config.h"
 
 // DQ (3/4/2014): We need this feature to support the function: isStructurallyEquivalentAST().
 #include "RoseAst.h"

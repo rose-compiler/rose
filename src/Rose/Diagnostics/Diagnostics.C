@@ -71,6 +71,8 @@ namespace EDG_ROSE_Translation
 // #include "unparseLanguageIndependentConstructs.h"
 #include "unparser.h"
 #include "sageBuilder.h"
+// rose_config.h is needed for ROSE_USE_CLANG_FRONTEND
+#include "rose_config.h"
 
 #include <cstdarg>
 
