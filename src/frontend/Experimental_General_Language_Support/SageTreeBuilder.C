@@ -2432,9 +2432,8 @@ reset_forward_var_refs(SgScopeStatement* scope)
 void SageTreeBuilder::
 injectAliasSymbol(const std::string &name)
 {
-   auto top_scope = SB::topScopeStack();
-   auto class_def = isSgClassDefinition(top_scope);
-   if (class_def) {
+   auto top_scope{SB::topScopeStack()};
+   if (auto class_def = isSgClassDefinition(top_scope)) {
       auto var_sym = SI::lookupVariableSymbolInParentScopes(SgName{name}, top_scope);
       ASSERT_not_null(var_sym);
 

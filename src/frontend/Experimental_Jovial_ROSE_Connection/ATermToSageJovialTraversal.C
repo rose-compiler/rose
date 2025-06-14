@@ -6670,9 +6670,8 @@ ATbool ATermToSageJovialTraversal::traverse_VariableList(ATerm term, std::vector
 
    // Because of ambiguities in the grammar the lvalue member must be set here, it can't be
    // set in traverse_ByteFunctionVariable or traverse_BitFunctionVariable (perhaps in BitFunctionVariable)
-      SgFunctionCallExp* func_call = isSgFunctionCallExp(var);
-      if (func_call) {
-        func_call->set_lvalue(true);
+      if (auto func_call = isSgFunctionCallExp(var)) {
+         func_call->set_lvalue(true);
       }
    }
    else return ATfalse;
