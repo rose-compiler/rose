@@ -18,6 +18,7 @@ public:
     const SymbolicVal& getPrecondition() const { return precondition; }
     const SymbolicVal& getPostcondition() const { return postcondition; }
 
+    bool hasConditions();
     std::string toString() const;
 };
 

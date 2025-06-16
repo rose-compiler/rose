@@ -333,6 +333,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
   AstNodePtr s1, s2;
   AstInterface::AstNodeList l;
   AstInterface::OperatorEnum opr = (AstInterface::OperatorEnum)0;
+
   if (fa.IsConstInt(exp, &val)) {
      return new SymbolicConst( val );
   }
@@ -345,9 +346,11 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
          return v1 + v2;
      case AstInterface::BOP_MINUS:
          return v1 - v2;
+     case AstInterface::BOP_MOD:
+         return new SymbolicFunction(opr, "%", v1, v2);
      case AstInterface::BOP_DOT_ACCESS:
      case AstInterface::BOP_ARROW_ACCESS:
-        return new SymbolicAstWrap(exp);
+         return new SymbolicAstWrap(exp);
      case AstInterface::BOP_DIVIDE:
         return new SymbolicFunction( opr, "/", v1,v2);
      case AstInterface::BOP_EQ:
@@ -391,7 +394,7 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
     case AstInterface::UOP_NOT:
         return new SymbolicFunction( opr, "!", v);
     case AstInterface::UOP_CAST:
-        return new SymbolicFunction( opr, "cast", v);
+        return v;
     case AstInterface::UOP_DECR1:
         return new SymbolicFunction( opr, "--", v);
     case AstInterface::UOP_INCR1:

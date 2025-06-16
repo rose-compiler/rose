@@ -16,6 +16,10 @@ void PrePostCondition::addPostcondition(const SymbolicVal& cond){
     }
 }
 
+bool PrePostCondition::hasConditions() {
+    return !precondition.IsNIL() || !postcondition.IsNIL();
+}
+
 std::string PrePostCondition::toString() const{
     std::string constraints;
     constraints.append("\n=== Conditions ===");

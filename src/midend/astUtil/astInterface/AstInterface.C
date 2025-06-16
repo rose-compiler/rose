@@ -1601,6 +1601,7 @@ IsAssignment( SgNode* s, SgNode** lhs, SgNode** rhs, bool *readlhs)
    } 
   SgExprStatement *n = isSgExprStatement(s);
   SgExpression *exp = (n != 0)? n->get_expression() : isSgExpression(s);
+
   if (exp != 0) {
     switch (exp->variantT()) {
     case V_SgPlusAssignOp:
@@ -1624,7 +1625,7 @@ IsAssignment( SgNode* s, SgNode** lhs, SgNode** rhs, bool *readlhs)
         if (lhs != 0) *lhs = s2->get_lhs_operand();
         if (rhs != 0) {
           SgNode* init = s2->get_rhs_operand();
-          if ( init->variantT() == V_SgAssignInitializer) 
+          if ( init->variantT() == V_SgAssignInitializer)
             init = isSgAssignInitializer(init)->get_operand();
           *rhs = init;
         }
@@ -1643,7 +1644,10 @@ IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *read
   SgNode* s = AstNodePtrImpl(_s).get_ptr(); 
   SgNode** _lhs = (lhs == 0)? ((SgNode**)0) : (SgNode**)&(lhs->get_ptr());
   SgNode** _rhs = (rhs == 0)? ((SgNode**)0) : (SgNode**)&(rhs->get_ptr());
-  return AstInterfaceImpl::IsAssignment(s, _lhs, _rhs, readlhs);
+  bool result = AstInterfaceImpl::IsAssignment(s, _lhs, _rhs, readlhs);
+  if (lhs) *lhs = AstNodePtr(*_lhs);
+  if (rhs) *rhs = AstNodePtr(*_rhs);
+  return result;
 }
 
 //! Check if $_s$ is a variable declaration node; 
@@ -1652,6 +1656,7 @@ bool AstInterface::
 IsVariableDecl(const AstNodePtr& _s, AstNodeList* vars, AstNodeList* init)
 {
   SgNode* s = AstNodePtrImpl(_s).get_ptr(); 
+
   if (s == 0) return false;
    SgVariableDeclaration *decl = isSgVariableDeclaration(s);
    if (decl != 0) {
@@ -1662,8 +1667,9 @@ IsVariableDecl(const AstNodePtr& _s, AstNodeList* vars, AstNodeList* init)
             p != names.end(); ++p) {
          SgInitializedName* var = (*p);
          SgExpression* def = var->get_initializer();
-         if (def != 0 && def->variantT() == V_SgAssignInitializer)
-            def = isSgAssignInitializer(def)->get_operand();
+         if (def != 0 && def->variantT() == V_SgAssignInitializer){
+           def = isSgAssignInitializer(def)->get_operand();
+         }
          if (vars != 0) vars->push_back(var);
          if (init != 0) init->push_back(def);
      }

@@ -4,7 +4,7 @@
 PrePostConditionAnalysis::PrePostConditionAnalysis(AstInterface& _fa)
     : fa(_fa) {}
 
-const PrePostConditionAnalysis::PrePostConditions& PrePostConditionAnalysis::analyze(SgNode* input){
+const PrePostConditionAnalysis::PrePostConditions& PrePostConditionAnalysis::analyze(const AstNodePtr& input) {
     AstInterface::AstNodeList params, children, vars, inits;
     std::string functionName;
     AstNodePtr functionBody, cond, truebody, falsebody;
@@ -15,19 +15,19 @@ const PrePostConditionAnalysis::PrePostConditions& PrePostConditionAnalysis::ana
     // Compute function-level conditions
     if (AstInterface::IsFunctionDefinition(input, &functionName, &params, 0, &functionBody, 0, 0, true) && functionBody != 0) {
         //TODO: Add type-based preconditions for params
-        analyze(functionBody.get_ptr(), collectedConds);
-        stmtToConditionsMap[input] = collectedConds;
+        analyze(functionBody, collectedConds);
+        stmtToConditionsMap[input.get_ptr()] = collectedConds;
         collectedConds.clear();
     }else if (AstInterface::IsBlock(input, 0, &children)) {
         for (AstInterface::AstNodeList::const_iterator p = children.begin(); p != children.end(); ++p) {
             AstNodePtr current = *p;
-            analyze(current.get_ptr(), collectedConds);
+            analyze(current, collectedConds);
         };
     }
     return collectedConds;
 }
 
-void PrePostConditionAnalysis::analyze(SgNode* input, PrePostConditionAnalysis::PrePostConditions& collectedConds){
+void PrePostConditionAnalysis::analyze(const AstNodePtr& input, PrePostConditionAnalysis::PrePostConditions& collectedConds){
     AstInterface::AstNodeList params, children, vars, inits;
     std::string functionName;
     AstNodePtr functionBody, cond, truebody, falsebody;
@@ -36,24 +36,25 @@ void PrePostConditionAnalysis::analyze(SgNode* input, PrePostConditionAnalysis::
 
     if (AstInterface::IsFunctionDefinition(input, &functionName, &params, 0, &functionBody, 0, 0, true) && functionBody != 0) {
         //TODO: Add type-based preconditions for params
-        analyze(functionBody.get_ptr(), collectedConds);
-        stmtToConditionsMap[input] = collectedConds;
+        analyze(functionBody, collectedConds);
+        stmtToConditionsMap[input.get_ptr()] = collectedConds;
         collectedConds.clear();
     }else if (AstInterface::IsBlock(input, 0, &children)) {
         for (AstInterface::AstNodeList::const_iterator p = children.begin(); p != children.end(); ++p) {
             AstNodePtr current = *p;
-            analyze(current.get_ptr(), collectedConds);
+            analyze(current, collectedConds);
         };
     } else if (fa.IsVariableDecl(input, &vars, &inits)) {
         processVariableDeclaration(vars, inits, collectedConds);
     } else if (AstInterface::IsIf(input, &cond, &truebody, &falsebody)) {
         auto conditions = processConditional(cond, truebody, falsebody, collectedConds);
         stmtToConditionsMap[cond.get_ptr()] = conditions.first;
-        // stmtToConditionsMap[cond.get_ptr()] = conditions.second; //TODO: Save negated cond and falsebody conditions in map
+        //TODO: Save negated cond and collected conditions from falsebody in map
+        // stmtToConditionsMap[cond.get_ptr()] = conditions.second; 
     } else if (AstInterface::IsExpression(input,0,0)) {
         processExpression(input, collectedConds);
     } else {
-        // TODO: Enumerate and process other types of nodes
+        DebugPrePostCondition([&input](){ return "Warning: Unhandled type of node"; });
     }
 }
 
@@ -61,64 +62,86 @@ void PrePostConditionAnalysis::processVariableDeclaration(const AstInterface::As
     AstInterface::AstNodeList::const_iterator pv = vars.begin();
     AstInterface::AstNodeList::const_iterator pi = inits.begin();
     PrePostCondition cond;
+
     while (pv != vars.end()) {
         AstNodePtr lhs = *pv;
-        AstNodePtr rhs = (pi != inits.end()) ? *pi : nullptr;
-
-        cond.addPostcondition(ApplyBinOP(SYMOP_EQ, SymbolicValGenerator::GetSymbolicVal(fa, lhs), SymbolicValGenerator::GetSymbolicVal(fa, rhs)));
-
-        pv++;
-        if (pi != inits.end()) {
-            pi++;
-        };
+        AstNodePtr rhs = *pi;
+        if(rhs != AstInterface::AST_NULL){
+            cond.addPostcondition(ApplyBinOP(SYMOP_EQ, SymbolicValGenerator::GetSymbolicVal(fa, lhs), SymbolicValGenerator::GetSymbolicVal(fa, rhs)));
+        }
+        ++pv;
+        ++pi;
     }
-    collectedConds.push_back(cond);
+    if(cond.hasConditions()){
+        collectedConds.push_back(cond);
+    }
 }
 
-void PrePostConditionAnalysis::processExpression(SgNode* input, PrePostConditionAnalysis::PrePostConditions& collectedConds) {
-    AstNodePtr lhs, rhs;
+void PrePostConditionAnalysis::processExpression(const AstNodePtr& input, PrePostConditionAnalysis::PrePostConditions& collectedConds) {
+    AstNodePtr lhs, rhs, strippedExp;
     PrePostCondition cond;
     bool readlhs = false;
+
+    if(!AstInterface::IsExpression(input,0,&strippedExp)){
+        ROSE_ABORT();
+    }
+    
     if(fa.IsAssignment(input, &lhs, &rhs, &readlhs)){
+        DebugPrePostCondition([&lhs](){return "Processing assignment -- lhs: " + AstInterface::AstToString(lhs);});
+        DebugPrePostCondition([&rhs](){return "rhs: " + AstInterface::AstToString(rhs);});
         cond.addPostcondition(ApplyBinOP(SYMOP_EQ, SymbolicValGenerator::GetSymbolicVal(fa, lhs), SymbolicValGenerator::GetSymbolicVal(fa, rhs)));
     }
-    collectedConds.push_back(cond);
+    
+    if(cond.hasConditions()){
+        collectedConds.push_back(cond);
+    }
 }
 
 std::pair<PrePostConditionAnalysis::PrePostConditions, PrePostConditionAnalysis::PrePostConditions> 
     PrePostConditionAnalysis::processConditional(const AstNodePtr& cond, const AstNodePtr& truebody, const AstNodePtr& falsebody, PrePostConditionAnalysis::PrePostConditions& collectedConds) {
-    PrePostConditionAnalysis::PrePostConditions trueConds, falseConds;
+    // Store conditions for true and false branches
+    PrePostConditionAnalysis::PrePostConditions trueBodyConds, falseBodyConds; 
+    PrePostCondition trueCond, falseCond; // Test condition for the true and false branches
+
+    if(cond != 0){
+        AstNodePtr strippedCond;
+        if(AstInterface::IsExpression(cond, 0, &strippedCond)){
+            DebugPrePostCondition([&strippedCond](){return "Condition: " + AstInterface::AstToString(strippedCond);});
+            trueCond.addPrecondition(SymbolicValGenerator::GetSymbolicVal(fa, strippedCond));
+            
+            //TODO: Negate strippedCond and insert to falseCond as a precondition
+            falseCond.addPrecondition(SymbolicValGenerator::GetSymbolicVal(fa, strippedCond));
+        }
+    }
     if(truebody != 0){
         DebugPrePostCondition([&truebody](){return "true: " + AstInterface::AstToString(truebody);});
-        PrePostCondition t;
-        t.addPrecondition(SymbolicValGenerator::GetSymbolicVal(fa, cond));
-        trueConds.push_back(t);
-        analyze(truebody.get_ptr(), trueConds);
-        collectedConds.insert(collectedConds.end(), trueConds.begin(), trueConds.end());
+        trueBodyConds.push_back(trueCond);
+        analyze(truebody, trueBodyConds);
+        collectedConds.insert(collectedConds.end(), trueBodyConds.begin(), trueBodyConds.end());
     }
     if(falsebody != 0){
         DebugPrePostCondition([&falsebody](){return "false: " + AstInterface::AstToString(falsebody);});
-        PrePostCondition f;
-        //TODO: Need to negate cond -- add SYMOP_NOT operator
-        f.addPrecondition(SymbolicValGenerator::GetSymbolicVal(fa, cond));
-        falseConds.push_back(f);
-        analyze(falsebody.get_ptr(), falseConds);
-        collectedConds.insert(collectedConds.end(), falseConds.begin(), falseConds.end());
+        
+        falseBodyConds.push_back(falseCond);
+        analyze(falsebody, falseBodyConds);
+        collectedConds.insert(collectedConds.end(), falseBodyConds.begin(), falseBodyConds.end());
     }
-    return std::make_pair(trueConds, falseConds);
+    return std::make_pair(trueBodyConds, falseBodyConds);
 }
 
 std::string PrePostConditionAnalysis::toString() const {  
     std::ostringstream oss;
-    for (auto it = stmtToConditionsMap.cbegin(); it != stmtToConditionsMap.cend(); ) {  
-        // oss << AstInterface::AstToString(it->first) << "\n" << it->second.toString();
-        oss << AstInterface::AstToString(it->first) << "\n";
+    for (auto it = stmtToConditionsMap.cbegin(); it != stmtToConditionsMap.cend(); ) {
+        oss << "\n=======================================\n" 
+        << AstInterface::AstToString(it->first) 
+        << "\n=======================================";
         for (const auto& element : it->second) {  
             oss << element.toString();  
         }
         if (++it != stmtToConditionsMap.cend()) {  
             oss << "\n";  
         }  
-    } 
+    }
+    oss << "\n";
     return oss.str();  
 }

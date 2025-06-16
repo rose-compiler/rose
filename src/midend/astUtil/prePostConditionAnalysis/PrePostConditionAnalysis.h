@@ -21,8 +21,8 @@ public:
     // Constructor
     PrePostConditionAnalysis(AstInterface& _fa);
 
-    const PrePostConditions& analyze(SgNode* input);
-    void analyze(SgNode* input, PrePostConditions& collectedConds);
+    const PrePostConditions& analyze(const AstNodePtr& input);
+    void analyze(const AstNodePtr& input, PrePostConditions& collectedConds);
 
     //Printable output of collected conditions
     std::string toString() const;
@@ -30,7 +30,7 @@ protected:
     // Helpers to process specific types of expressions--updates collectedConds
     void processVariableDeclaration(const AstInterface::AstNodeList& vars, const AstInterface::AstNodeList& inits, 
                                     PrePostConditions& collectedConds);
-    void processExpression(SgNode* input, PrePostConditions& collectedConds);
+    void processExpression(const AstNodePtr& input, PrePostConditions& collectedConds);
     std::pair<PrePostConditions, PrePostConditions> processConditional(const AstNodePtr& cond, 
                                                     const AstNodePtr& truebody, const AstNodePtr& falsebody, PrePostConditions& collectedConds);
 
