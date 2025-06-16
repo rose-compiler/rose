@@ -656,7 +656,7 @@ mangleQualifiersToString (const SgScopeStatement* scope)
      std::size_t dot_loc = mangled_name.find('.');
      while(dot_loc != std::string::npos)
      {
-         mangled_name = mangled_name.substr(0, dot_loc) + "_dot_" + mangled_name.substr(dot_loc + 1); 
+         mangled_name = mangled_name.substr(0, dot_loc) + "_dot_" + mangled_name.substr(dot_loc + 1);
          dot_loc = mangled_name.find('.');
      }
 
@@ -1185,8 +1185,7 @@ mangleTemplateFunction (const string& templ_name,
                         const SgFunctionType* func_type,
                         const SgScopeStatement* scope)
   {
-    string mangled = mangleTemplateFunctionToString (templ_name, templ_args, func_type, scope);
-    return SgName (mangled.c_str());
+    return mangleTemplateFunctionToString (templ_name, templ_args, func_type, scope);
   }
 
 /*! Mangles a value expression.
@@ -1493,7 +1492,10 @@ mangleExpression (const SgExpression* expr)
         }
         case V_SgFunctionCallExp: {
           const SgFunctionCallExp* e = isSgFunctionCallExp (expr);
-          mangled_name << "_bFunctionCallExp_" << mangleExpression (e->get_function()) << "__" << mangleExpression (e->get_args()) << "_eFunctionCallExp_";
+          std::string mangledFn = mangleExpression (e->get_function());
+          std::string mangledArgs = mangleExpression (e->get_args());
+
+          mangled_name << "_bFunctionCallExp_" << mangledFn << "__" << mangledArgs << "_eFunctionCallExp_";
           break;
         }
         case V_SgConstructorInitializer: {

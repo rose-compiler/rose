@@ -2227,7 +2227,6 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(
 
      setOneSourcePositionNull(type_decl);
 
-     SgName mangled_name = type_decl->get_mangled_name();
      setTemplateArgumentsInDeclaration(type_decl,&templateArgumentsList);
 
      ROSE_ASSERT(type_decl->get_firstNondefiningDeclaration() != NULL);
@@ -2695,7 +2694,7 @@ SageBuilder::buildPointerMemberType(SgType* base_type, SgType* classType)
 SgType * SageBuilder::buildOpaqueType(std::string const name, SgScopeStatement * scope)
 {
   // we require users to specify a target scope
-  ROSE_ASSERT(scope);
+  ASSERT_not_null(scope);
   SgTypedefDeclaration* type_decl = NULL;
   SgTypedefType* result = NULL;
 
@@ -2707,7 +2706,9 @@ SgType * SageBuilder::buildOpaqueType(std::string const name, SgScopeStatement *
   if (type_symbol == NULL)
   {
     type_decl =  new SgTypedefDeclaration(name,buildIntType(),NULL, NULL, NULL);
-    ROSE_ASSERT(type_decl);
+    ASSERT_not_null(type_decl);
+
+    type_decl->set_scope(scope); // PP (05/29/25): set the scope of the decl
 
   // DQ (2/27/2018): Add this call here to reflect change to the constructor semantics.
      type_decl->set_type(SgTypedefType::createType(type_decl));
@@ -2725,14 +2726,14 @@ SgType * SageBuilder::buildOpaqueType(std::string const name, SgScopeStatement *
     // Hide it from unparser
     Sg_File_Info* file_info = type_decl->get_file_info();
     file_info->unsetOutputInCodeGeneration ();
-    result = new SgTypedefType(type_decl);
+    result = new SgTypedefType(type_decl);  // QUESTION: PP: why do not we return type_decl->get_type()?
   }
   else
   {
     type_decl = type_symbol->get_declaration();
     result = type_decl->get_type();
   }
-  ROSE_ASSERT(result);
+  ASSERT_not_null(result);
   return result;
 }
 
@@ -17636,8 +17637,8 @@ SageBuilder::fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* insertio
                            // DQ (3/6/2014): Set the scope of the SgInitializedName IR node.
                               initializedName_copy->set_scope(targetScope);
 
-                              SgName mangledName = variableSymbol->get_mangled_name();
 #if 0
+                              SgName mangledName = variableSymbol->get_mangled_name();
                               printf ("initializedName_copy: mangledName = %s \n",mangledName.str());
 #endif
                            // DQ (3/2/2014): Make sure this is true (I think it should be, but I don't see that it was explicitly set).
@@ -19767,7 +19768,7 @@ SgType * instantiateNonrealTypes(
               std::cout << "      tplarg->get_templateDeclaration() = " << std::hex << tplarg->get_templateDeclaration() << " : " << ( tplarg->get_templateDeclaration() ? tplarg->get_templateDeclaration()->class_name() : "" ) << std::endl;
 #endif
               ROSE_ABORT(); // TODO
-            } 
+            }
             case  SgTemplateArgument::start_of_pack_expansion_argument: {
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
               std::cout << "      start_of_pack_expansion_argument" << std::endl;
@@ -19809,13 +19810,13 @@ SgType * instantiateNonrealTypes(
 #endif
       ROSE_ASSERT(depth > 0);
       ROSE_ASSERT(position > 0);
-      if (depth <= tpl_args.size() && position <= tpl_args[depth-1].size()) {
+      if (std::size_t(depth) <= tpl_args.size() && std::size_t(position) <= tpl_args[depth-1].size()) {
         SgType * res = tpl_args[depth-1][position-1]->get_type();
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
         std::cout << "  tpl_args[" << std::dec << depth-1 << "][" << std::dec << position-1 << "]->get_type() = " << std::dec << res << std::endl;
 #endif
         return res;
-      } else if (depth <= tpl_params.size() && position <= tpl_params[depth-1].size()) {
+      } else if (std::size_t(depth) <= tpl_params.size() && std::size_t(position) <= tpl_params[depth-1].size()) {
         SgType * dft_tpl_arg = tpl_params[depth-1][position-1]->get_defaultTypeParameter();
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
         std::cout << "  tpl_params[" << std::dec << depth-1 << "][" << std::dec << position-1 << "]->get_type() = " << std::dec << dft_tpl_arg << std::endl;
@@ -19870,4 +19871,3 @@ SgType * instantiateNonrealTypes(
 }
 
 } } }
-

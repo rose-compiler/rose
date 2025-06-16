@@ -9506,7 +9506,7 @@ symbolFilter(ReturnSymbolType* symbol, SgTemplateParameterPtrList* templateParam
    }
 
 bool
-isSubset(const std::vector<SgNode*>& a_vector, const std::unordered_set<SgNode*>& b_set)
+isSubset(const std::vector<SgNode*>& a_vector, const SgUnorderedNodeSet& b_set)
    {
   // DQ (7/12/2014): I am not aware of a faster algorithm for this. Using the shorter
   // vector (from the SgAliasSymbol) first will generally reduce the complexity for
@@ -10611,7 +10611,6 @@ SgSymbolTable::maxCollisions()
 bool SgSymbolTable::p_force_search_of_base_classes = false;
 
 // DQ (7/12/2014): Declaration of space for static data member.
-// SgNodeSet SgSymbolTable::p_aliasSymbolCausalNodeSet;
 SgUnorderedNodeSet SgSymbolTable::p_aliasSymbolCausalNodeSet;
 
 bool
@@ -18685,7 +18684,7 @@ SgTemplateArgument::get_mangled_name (void) const
           case SgTemplateArgument::type_argument:
              {
                const SgType* type = get_type();
-               assert (type != NULL);
+               ASSERT_not_null (type);
 #if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
                mprintf ("In SgTemplateArgument::get_mangled_name(): type = %p = %s = %s \n",type,type->class_name().c_str(),type->unparseToString().c_str());
 #endif
@@ -18715,7 +18714,8 @@ SgTemplateArgument::get_mangled_name (void) const
 #if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
                     mprintf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::type_argument: templateClassInstantiationDeclaration = %p name = %s \n",templateClassInstantiationDeclaration,templateClassInstantiationDeclaration->get_name().str());
 #endif
-                    mangled_type += Rose::StringUtility::numberToString(templateClassInstantiationDeclaration);
+                 // PP (05/05/25) produces unstable mangled names
+                 // mangled_type += Rose::StringUtility::numberToString(templateClassInstantiationDeclaration);
 
                  // DQ (12/26/2012): This assert fails for copyAST_tests/copytest2007_40.C, but I think it is unreasonable
                  // to expect it to always be true.  So I have made it a warning for now.

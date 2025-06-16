@@ -913,7 +913,7 @@ SgTypeFixed::get_mangled (void) const
            if (value != NULL)
               {
                  mangled_name += string("_") + value->get_constant_folded_value_as_string();
-                 std::cout << "--> added scale " << mangled_name << std::endl;
+                 //~ std::cout << "--> added scale " << mangled_name << std::endl;
               }
         }
      if (get_fraction() != NULL)
@@ -922,7 +922,7 @@ SgTypeFixed::get_mangled (void) const
            if (value != NULL)
               {
                  mangled_name += string("_") + value->get_constant_folded_value_as_string();
-                 std::cout << "--> added fraction " << mangled_name << std::endl;
+                 //~ std::cout << "--> added fraction " << mangled_name << std::endl;
               }
         }
 
@@ -2428,7 +2428,6 @@ SgDeclType::get_mangled (void) const
      mangled_name << "__bdecltype__"
                   << mangleExpression(p_base_expression)
                   << "__edecltype__";
-
 
      return mangled_name;
    }
@@ -4191,7 +4190,7 @@ $CLASSNAME::createType(SgExpression* optional_fortran_type_kind)
 
      SgName name = temp_type->get_mangled();
 
-     ROSE_ASSERT(get_globalTypeTable() != NULL);
+     ASSERT_not_null(get_globalTypeTable());
 
      SgType* t = get_globalTypeTable()->lookup_type(name);
      if (t == NULL)
@@ -4215,9 +4214,9 @@ $CLASSNAME::createType(SgExpression* optional_fortran_type_kind)
 
        // Reuse this tempType variable so we can use the same code below.
           temp_type = is$CLASSNAME(t);
-          ASSERT_not_null(temp_type);
         }
 
+     ASSERT_not_null(temp_type);
      return temp_type;
    }
 
@@ -4243,17 +4242,15 @@ SOURCE_CREATE_TYPE_FOR_TYPEDEF_TYPE_START
 SgTypedefType*
 SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_fortran_type_kind)
    {
-     assert(decl != NULL);
+     ASSERT_not_null(decl);
 
   // DQ (10/4/2010): I don't think this type can have a fortran type kind parameter.
      ROSE_ASSERT(optional_fortran_type_kind == nullptr);
 
      if (decl->get_type() == NULL)
         {
-          assert(decl->get_base_type() != NULL);
-
-          ROSE_ASSERT (decl->get_base_type() != NULL);
-          ROSE_ASSERT (decl->get_base_type()->p_typedefs != NULL);
+          ASSERT_not_null (decl->get_base_type());
+          ASSERT_not_null (decl->get_base_type()->p_typedefs);
 
           SgTypePtrList::iterator i = ((decl->get_base_type()->p_typedefs)->get_typedefs().begin());
           while (i != ((decl->get_base_type()->p_typedefs)->get_typedefs().end()))
@@ -4272,9 +4269,13 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
        // We have to build the type before we can generate a mangle name for it.
           SgTypedefType* tempType = new SgTypedefType(decl, decl->get_parent_scope());
           SgName name = tempType->get_mangled();
-          ROSE_ASSERT(name.is_null() == false);
+          ASSERT_require(name.is_null() == false);
 
           SgScopeStatement* currentScope = getCurrentScope();
+          if (currentScope == nullptr)
+            currentScope = decl->get_scope();
+
+          ASSERT_not_null(currentScope);
 
        // ROSE_ASSERT(currentScope != NULL);
           if (currentScope != NULL)
@@ -4290,7 +4291,7 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
                  else
                   {
                  // If it is already present in the type table then delete the type (so that it will remain unique).
-                    ROSE_ASSERT(t != tempType);
+                    ASSERT_require(t != tempType);
 
 #if ALLOW_DELETE_OF_EXPLORATORY_NODE
                  // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
@@ -4305,20 +4306,19 @@ SgTypedefType::createType(SgTypedefDeclaration *decl, SgExpression* optional_for
                   }
              }
 
-          ROSE_ASSERT (tempType != NULL);
+          ASSERT_not_null(tempType);
           decl->set_type(tempType);
 
-          ROSE_ASSERT (decl->get_type() != NULL);
-          ROSE_ASSERT (decl->get_base_type() != NULL);
-          ROSE_ASSERT (decl->get_base_type()->p_typedefs != NULL);
+          ASSERT_not_null (decl->get_type());
+          ASSERT_not_null (decl->get_base_type());
+          ASSERT_not_null (decl->get_base_type()->p_typedefs);
 
           (decl->get_base_type()->p_typedefs)->get_typedefs().push_back(decl->get_type());
         }
 
-     ROSE_ASSERT(decl != NULL);
-     ROSE_ASSERT(decl->get_type() != NULL);  // I think we can assert this!
-
-     ROSE_ASSERT ((decl->get_base_type()->p_typedefs)->get_typedefs().size() > 0);
+     ASSERT_not_null (decl);
+     ASSERT_not_null (decl->get_type());  // I think we can assert this!
+     ASSERT_require ((decl->get_base_type()->p_typedefs)->get_typedefs().size() > 0);
 
      return decl->get_type();
    }
@@ -5068,6 +5068,7 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
      SgDeclType* newType = new SgDeclType(base_expression);
+/*
      assert(newType != NULL);
 
      SgName name = newType->get_mangled();
@@ -5079,7 +5080,7 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
      } else {
        get_globalTypeTable()->insert_type(name,newType);
      }
-
+*/
      return newType;
    }
 

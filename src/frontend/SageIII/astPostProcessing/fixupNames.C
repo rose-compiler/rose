@@ -14,7 +14,7 @@ entryInClassSymbolMemoryPool( SgClassSymbol* classSymbol )
    {
   // This function traverses the memory pool for an IR node and
   // returns the position of the input IR node in the list.
-  // The function is clearly linear in complexity, but is only 
+  // The function is clearly linear in complexity, but is only
   // required to help us rename un-named declarations.
 
      int count = 0;
@@ -115,15 +115,14 @@ ResetEmptyNames::visit(SgNode* node)
              }
 #endif
        // DQ (2/11 & 23/2007): I think we need to reset the names stored in all the declarations (defining and non-defining!
-       // Only reset names where the defining declarations exists, then reuse that name from the defining declaaration 
-       // for the other declarations, this force the name change to happen only once so that the mangled names of data 
+       // Only reset names where the defining declarations exists, then reuse that name from the defining declaaration
+       // for the other declarations, this force the name change to happen only once so that the mangled names of data
        // member are not using the new name in any subsequent renaming of the same declaration's non-defining declaration.
 
        // DQ (3/11/2007): test2006_59.C demonstrates use of "typedef struct {} a,*b;" which requires that SgClassDeclaration
        // in typedefs be renames (no special exemption just for being in a typedef).
        // DQ (3/10/2007): Ignore this problem for un-named declarations defined in a SgTypedefDeclaration
        // if (definingDeclaration != NULL && (definingDeclaration->get_name().is_null() == true) )
-          if (definingDeclaration != NULL)
        // if ( (definingDeclaration != NULL) && (isSgTypedefDeclaration(definingDeclaration->get_parent()) == NULL) )
           if (definingDeclaration != NULL)
              {
@@ -139,9 +138,9 @@ ResetEmptyNames::visit(SgNode* node)
 #endif
 
                  // DQ (3/11/2007): The case of "typedef struct {} a,*b;" invalidates this argument!
-                 // DQ (3/10/2007): Note un-named class declarations appearing in typedef declarations should not be changed since they cannot 
-                 // be referenced more than the one time they appear and as un-named class and enum declarations they can appear in 
-                 // multiple typedef declarations (repeated).  So make sure this is not an un-name class declaration or enum 
+                 // DQ (3/10/2007): Note un-named class declarations appearing in typedef declarations should not be changed since they cannot
+                 // be referenced more than the one time they appear and as un-named class and enum declarations they can appear in
+                 // multiple typedef declarations (repeated).  So make sure this is not an un-name class declaration or enum
                  // declaration in a typedef.
                  // ROSE_ASSERT(isSgTypedefDeclaration(definingDeclaration->get_parent()) == NULL);
 
@@ -171,7 +170,7 @@ ResetEmptyNames::visit(SgNode* node)
                          definingDeclaration->get_scope()->remove_symbol(classSymbol);
                        }
 #if 0
-                 // DQ (2/9/2007): This technique for generating names causes the same name in different 
+                 // DQ (2/9/2007): This technique for generating names causes the same name in different
                  // files to be different which is not so great when we try to do the AST merge.
 
                  // Rename the declaration
@@ -190,7 +189,7 @@ ResetEmptyNames::visit(SgNode* node)
 
                  // DQ (2/21/2007): This has been moved back to the generateUniqueName() function.
                  // DQ (2/21/2007): Modified to use the position of the SgClassSymbol in the memory pool.
-                 // Using the statement position would have been more complex since it would have been 
+                 // Using the statement position would have been more complex since it would have been
                  // difficult to handle function pointers that can generate multiple declarations.
                  // DQ (2/21/2007): We need to make the name in the declaration unique (can't be done dynamically
                  // since the manipulation of the symbol table will cause the name to be computed inconsistantly).
@@ -262,7 +261,7 @@ ResetEmptyNames::visit(SgNode* node)
 
                  // Liao 11/29/2012. Now we enforce non-defining declaration's existence. We have to set its name also
                     SgClassDeclaration* non_definingDeclaration = isSgClassDeclaration(definingDeclaration->get_firstNondefiningDeclaration ());
-                    if (non_definingDeclaration) 
+                    if (non_definingDeclaration)
                     {
                        non_definingDeclaration->set_name(new_name);
                        non_definingDeclaration->set_isUnNamed(true);
@@ -309,7 +308,7 @@ ResetEmptyNames::visit(SgNode* node)
                  else
                   {
                  // DQ (3/3/2007): We might have a problem if the non-defining declaration were to be visited before the defining declaration.
-                 // So the assert at least makes sure that the defining declaration name has been reset, but that would just cause us to end 
+                 // So the assert at least makes sure that the defining declaration name has been reset, but that would just cause us to end
                  // in an assertion not get the name changed and the symbol unloaded and loaded into the associated symbol table correctly.
                  // Actually this is not a problem since the defining declaration is reset independent of the order in which the declarations are visited.
                     ROSE_ASSERT(definingDeclaration != NULL);
@@ -324,7 +323,7 @@ ResetEmptyNames::visit(SgNode* node)
 #endif
                       // DQ (2/23/2007): In case it was a different declaration (there are defining and non-defining
                       // and there can be multiple non-defining declarations) search for the old symbol and remove it.
-                      // It might not have been removed when the name was changed, because we used the wrong declaration 
+                      // It might not have been removed when the name was changed, because we used the wrong declaration
                       // to lookup the symbol.
                          SgSymbol* symbol = declaration->get_symbol_from_symbol_table();
                          SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
@@ -402,9 +401,9 @@ ResetEmptyNames::visit(SgNode* node)
                     printf ("ResetEmptyNames::visit(): definingDeclaration->get_name() = %s \n",definingDeclaration->get_name().str());
 #endif
 
-                 // DQ (3/10/2007): Note un-named class declarations appearing in typedef declarations should not be changed since they cannot 
-                 // be referenced more than the one time they appear and as un-named class and enum declarations they can appear in 
-                 // multiple typedef declarations (repeated).  So make sure this is not an un-name class declaration or enum 
+                 // DQ (3/10/2007): Note un-named class declarations appearing in typedef declarations should not be changed since they cannot
+                 // be referenced more than the one time they appear and as un-named class and enum declarations they can appear in
+                 // multiple typedef declarations (repeated).  So make sure this is not an un-name class declaration or enum
                  // declaration in a typedef.
                     ROSE_ASSERT(isSgTypedefDeclaration(definingDeclaration->get_parent()) == NULL);
 
@@ -489,7 +488,7 @@ ResetEmptyNames::visit(SgNode* node)
 
                  // DQ (2/21/2007): This has been moved back to the generateUniqueName() function.
                  // DQ (2/21/2007): Modified to use the position of the SgClassSymbol in the memory pool.
-                 // Using the statement position would have been more complex since it would have been 
+                 // Using the statement position would have been more complex since it would have been
                  // difficult to handle function pointers that can generate multiple declarations.
                  // DQ (2/21/2007): We need to make the name in the declaration unique (can't be done dynamically
                  // since the manipulation of the symbol table will cause the name to be computed inconsistantly).
@@ -550,7 +549,7 @@ ResetInconsistantNames::visit(SgNode* node)
   // there can be numerous non-defining declarations.  Sometimes these additional non-defining
   // declaration can hold the wrong name (e.g. "typedef struct { int state;} my_struct_typedef;"
   // where an added non-defining class declaration has the name "my_struct_typedef" instead of
-  // being empty.  This screws up the AST merge since then non-definining declarations of the 
+  // being empty.  This screws up the AST merge since then non-definining declarations of the
   // same declaration will not merge to the same declaration.
      SgDeclarationStatement* declaration = isSgDeclarationStatement(node);
 
@@ -571,7 +570,7 @@ ResetInconsistantNames::visit(SgNode* node)
 #endif
                     if (definingDeclaration == NULL)
                        {
-                      // The defining declaration of the current IR node (declaration) will be set later 
+                      // The defining declaration of the current IR node (declaration) will be set later
                       // in the AST post-processing, but for now we want to get the name if it is available.
                          if (nondefiningDeclaration != NULL && nondefiningDeclaration->get_definingDeclaration() != NULL)
                             {

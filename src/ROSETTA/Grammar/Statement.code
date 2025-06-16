@@ -3178,6 +3178,9 @@ HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_START
        // DQ (2/28/2018): Added function
           virtual SgSymbol* get_symbol_from_symbol_table() const override;
 
+       // PP (7/29/2025): Added function
+          SgName get_mangled_name() const override;
+
 HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_END
 
 
@@ -11935,11 +11938,12 @@ SgFunctionDeclaration::get_mangled_name() const
           printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
 #endif
 
-// #if 1
        // printf ("TEMP: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionDeclaration*>(this),mangledName);
        // printf ("TEMP RETURN: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
-#if 0
+
+
+#if DISABLED_1
        // DQ (6/21/2022): This redundantly appends the mangled name for the parameter to the end and
        // results in a compressed version of the string that is not translation unit independent.
        // This results in infinite recursion in the evaluation.
@@ -11948,7 +11952,6 @@ SgFunctionDeclaration::get_mangled_name() const
           SgName mangledParameterList = parameterList->get_mangled_name();
           mangledName += "__" + mangledParameterList;
        // printf ("Inside of SgFunctionDeclaration::get_mangled_name(): after adding parameter list mangledName = %s \n",mangledName.str());
-// #endif
 
 #if 0
           printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledParameterList = %s \n",mangledParameterList.str());
@@ -11956,7 +11959,7 @@ SgFunctionDeclaration::get_mangled_name() const
        // Reset the mangled name in the map.
        // p_globalMangledNameMap[function] = mangledName;
           SgNode::get_globalMangledNameMap()[const_cast<SgFunctionDeclaration*>(this)] = mangledName;
-#endif
+#endif /* DISABLED_1 */
 
 #if DEBUG_FUNCDECL_MANGLED_NAMES
           printf ("Inside of SgFunctionDeclaration::get_mangled_name(): after resetting mangledName = %s \n",mangledName.str());
@@ -11964,12 +11967,11 @@ SgFunctionDeclaration::get_mangled_name() const
 
        // DQ (7/24/2012): Added test for template brackets that are caught later in AstConsistencyTests.
        // Make sure that there is no template specific syntax included in the mangled name
-          string mangled_name = mangledName;
-          if ( mangled_name.find('<') != string::npos )
-             {
-               printf ("In get_mangled_name(): this = %p = %s check mangled class name = %s \n",this,this->class_name().c_str(),mangled_name.c_str());
-             }
-          ROSE_ASSERT(mangled_name.find('<') == string::npos);
+          //if ( mangledName.getString().find('<') != string::npos )
+          //   {
+          //     printf ("In get_mangled_name(): this = %p = %s check mangled class name = %s \n",this,this->class_name().c_str(),mangledName.getString().c_str());
+          //   }
+          ROSE_ASSERT(mangledName.getString().find('<') == string::npos);
 
 #if DEBUG_FUNCDECL_MANGLED_NAMES
        // DQ (7/24/2012): Output the mangled name being generated for debugging.
@@ -15160,6 +15162,8 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
 #endif
    }
 
+
+
 void
 SgTemplateInstantiationDecl::set_definition( SgTemplateInstantiationDefn* definition )
    {
@@ -18058,6 +18062,8 @@ SgTemplateTypedefDeclaration::post_construction_initialization()
 
 
 
+
+
 // DQ (12/29/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
 // As a result we need a function definition (but we need only call the base class version of the function).
 SgDeclarationStatement *
@@ -18138,6 +18144,22 @@ SgTemplateInstantiationTypedefDeclaration::post_construction_initialization()
   // DQ (11/4/2014): I don't think we need to do anything here.
    }
 #endif
+
+SgName
+SgTemplateInstantiationTypedefDeclaration::get_mangled_name() const
+{
+  SgTemplateInstantiationTypedefDeclaration* thisNonConst = const_cast<SgTemplateInstantiationTypedefDeclaration*>(this);
+  std::string mangledName = SageInterface::getMangledNameFromCache(thisNonConst);
+
+  if (mangledName.empty())
+  {
+    mangledName = mangleTemplate(get_templateName(), get_templateArguments(), get_scope());
+    mangledName = SageInterface::addMangledNameToCache(thisNonConst,mangledName);
+  }
+
+  return mangledName;
+}
+
 
 void
 SgTemplateInstantiationTypedefDeclaration::post_construction_initialization()

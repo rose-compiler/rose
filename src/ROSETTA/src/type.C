@@ -1156,7 +1156,7 @@ Grammar::setUpTypes ()
      Type.setSubTreeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      Type.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
-  // Use a different get_mangled member function for the PointerType and ReferenceType objects
+  // Use a different get_mangled member function for the PointerType, ReferenceType, and TypeComplex objects
      PointerType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      PointerType.setFunctionSource ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
 
@@ -1165,6 +1165,9 @@ Grammar::setUpTypes ()
 
      RvalueReferenceType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      RvalueReferenceType.setFunctionSource ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
+
+     TypeComplex.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     TypeComplex.setFunctionSource ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
 
   // DQ (8/2/2014): Adding support for C++11 decltype().
      DeclType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
