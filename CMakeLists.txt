@@ -1493,34 +1493,35 @@ if(ENABLE-C)
   set(C_INCLUDE_STRING "{\"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS\"")
   set(CXX_INCLUDE_STRING "{\"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS\"")
   find_program(shell sh)
-  if(shell AND CMAKE_COMPILER_IS_GNUCXX)
+  if(shell)
+    # find C includes and put them in this order: directory includes, compiler header includes, then /usr/include
     execute_process(
       COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/dirincludes "./include-staging/" "${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS"
       OUTPUT_VARIABLE C_includeString)
     string(STRIP "${C_includeString}" C_includeString)
-
+    set(C_INCLUDE_STRING "${C_INCLUDE_STRING} ${C_includeString}")
+    #HACK the get_compiler_header_dirs script does the same thing if the compiler vendor is gnu or clang, so just pass "gnu" every time
     execute_process(
-      COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/dirincludes "./include-staging/" "${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS"
-      OUTPUT_VARIABLE CXX_includeString)
-    string(STRIP "${CXX_includeString}" CXX_includeString)
-
-    set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING} ${CXX_includeString}")
-    execute_process(
-      COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs gcc c gnu
+      COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH} c gnu
       OUTPUT_VARIABLE C_backend_includes)
-
-    execute_process(
-      COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs g++ c++ gnu
-      OUTPUT_VARIABLE CXX_backend_includes)
     string(REPLACE "\n" ";" C_backend_includes "${C_backend_includes}")
-    string(REPLACE "\n" ";" CXX_backend_includes "${CXX_backend_includes}")
-
     foreach(C_include_dir ${C_backend_includes})
       string(STRIP "${C_include_dir}" C_include_dir)
       set(C_INCLUDE_STRING "${C_INCLUDE_STRING}, \"${C_include_dir}\"")
     endforeach()
-    set(C_INCLUDE_STRING "${C_INCLUDE_STRING} ${C_includeString}, \"/usr/include\"")
+    set(C_INCLUDE_STRING "${C_INCLUDE_STRING}, \"/usr/include\"")
 
+    # find CXX includes and put them in this order: directory includes, compiler header includes, then /usr/include
+    execute_process(
+      COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/dirincludes "./include-staging/" "${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS"
+      OUTPUT_VARIABLE CXX_includeString)
+    string(STRIP "${CXX_includeString}" CXX_includeString)
+    set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING} ${CXX_includeString}")
+    #HACK the get_compiler_header_dirs script does the same thing if the compiler vendor is gnu or clang, so just pass "gnu" every time
+    execute_process(
+      COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH} c++ gnu
+      OUTPUT_VARIABLE CXX_backend_includes)
+    string(REPLACE "\n" ";" CXX_backend_includes "${CXX_backend_includes}")
     foreach(CXX_include_dir ${CXX_backend_includes})
       string(STRIP "${CXX_include_dir}" CXX_include_dir)
       set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}, \"${CXX_include_dir}\"")

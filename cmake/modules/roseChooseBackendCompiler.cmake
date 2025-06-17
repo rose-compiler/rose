@@ -160,10 +160,10 @@ if(ENABLE-CPP)
     endif()
     # Set BACKEND_CXX_COMPILER_WITHOUT_PATH for Clang++ 
     if(NOT DEFINED BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH)
-        message(STATUS "Setting BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH to clang++")
-        set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "clang++")
-        set(BACKEND_CXX_COMPILER "clang")
-       set(ROSE_BACKEND_CXX_COMPILER "clang++")
+      message(STATUS "Setting BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH to clang++")
+      set(BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH "clang++")
+      set(BACKEND_CXX_COMPILER "clang++")
+      set(ROSE_BACKEND_CXX_COMPILER "clang++")
     endif() # end Clang for CXX 
   endif() # end Set With and Without 
   # Can Set Apple Case here 

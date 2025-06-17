@@ -12,13 +12,12 @@ message(STATUS "LLVM -I ${LLVM_INCLUDE_DIRS}") # ${CLANG_INCLUDE_DIRS} is the sa
 include_directories(.  ${LLVM_INCLUDE_DIRS} ${ROSE_INCLUDES}) 
 add_definitions(${LLVM_DEFINITIONS})
 
-  # Extra libraries for the Clang frontend tools
-  set(CLANG_LIBRARIES
-    clangFrontend clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
-    clangStaticAnalyzerCore clangIndex clangFrontend clangCodeGen
-    clangARCMigrate clangRewrite clangSerialization clangDriver
-    clangParse clangSema clangAnalysis clangAST clangLex clangBasic
-)
+# Extra libraries for the Clang frontend tools
+set(CLANG_LIBRARIES
+  clangFrontend clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
+  clangStaticAnalyzerCore clangIndex clangFrontend clangCodeGen
+  clangARCMigrate clangRewrite clangSerialization clangDriver
+  clangParse clangSema clangAnalysis clangAST clangLex clangBasic)
 
 # Source files of roseClangFrontend 
 set(roseClangFrontend_SOURCE_FILES clang-frontend.cpp 
@@ -44,6 +43,8 @@ add_library(roseClangFrontend OBJECT ${roseClangFrontend_SOURCE_FILES})
 add_dependencies(roseClangFrontend rosetta_generated)
 
 target_link_libraries(roseClangFrontend ${CLANG_LIBRARIES})
+
+install(FILES clang-builtin-c.h clang-builtin-cpp.hpp clang-builtin-cuda.hpp clang-builtin-opencl.h DESTINATION ${INCLUDE_INSTALL_DIR}/../clang/)
 
 # Install rules   
 install(TARGETS roseClangFrontend
