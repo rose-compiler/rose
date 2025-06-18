@@ -165,10 +165,8 @@ namespace ELF{
  * space. This makes it impossible for a user to include both ROSE's configuration results in conjunction with the
  * configuration results of any other package.
  *
- * If a ROSE public header file truly needs to know a configuration result, then modify scripts/publicConfiguration.pl
- * to include the name of the symbol you need (e.g., HAVE_PTHREAD_H).   Then config.status (which is run as part of the
- * configuration process) will create a file named "rosePublicConfig.h" with properly scoped CPP symbols (e.g.,
- * "ROSE_HAVE_PTHREAD_H).
+ * If a ROSE public header file truly needs to know a configuration result, then add it to rosePublicConfig.h and make sure
+ * the macro name starts with "ROSE_".
  *
  * For legacy code that includes "rose_config.h" followed by "rose.h", simply undefine CONFIG_ROSE between those two
  * includes. It is safe to do this because CONFIG_ROSE is not used for any other purpose.

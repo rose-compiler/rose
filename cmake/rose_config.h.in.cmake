@@ -7,23 +7,11 @@
  *
  * Since this file is contains name-space pollution (symbols not beginning with "ROSE_") there is a seperate file
  * (rosePublicConfig.h.in.cmake) to create a non-polluting file (rosePublicConfig.h) for inclusion into user code (either directly 
- * or via other ROSE public header files). To include a define in both you must edit both files. Defines in rosePublicConfig.h
- * MUST have "ROSE_" at the start.
+ * or via other ROSE public header files). Defines in rosePublicConfig.h MUST have "ROSE_" at the start.
  * 
  */
 
-// VERSIONING 
-/* Git SCM version information for ROSE: commit identifier. */
-#cmakedefine ROSE_SCM_VERSION_ID "@ROSE_SCM_VERSION_ID@"
-
-/* Git SCM version information for ROSE: commit date (Unix timestamp). */
-#cmakedefine ROSE_VERSION @ROSE_VERSION@
-
-/* Define user-friendly ROSE version */
-#cmakedefine ROSE_PACKAGE_VERSION "@ROSE_PACKAGE_VERSION@"
-
-/* Whether the OS release is Red Hat Enterprise Linux. */
-#cmakedefine ROSE_HOST_OS_IS_RHEL @ROSE_HOST_OS_IS_RHEL@
+#include <rosePublicConfig.h>                           // CPP macros that start with "ROSE_" so we don't have to repeat them here
 
 // REQUIRED LIBS that should be found in CMakeLists.txt -- find_package() */ 
 /* Define to 1 if you have the `dl' library (-ldl). */
@@ -63,39 +51,6 @@
 /* Define if the boost::serialization library is available */
 #cmakedefine HAVE_BOOST_SERIALIZATION_LIB @Boost_SERIALIZATION_FOUND@
 
-/* Define if Z3 library is available */
-#cmakedefine ROSE_HAVE_Z3 @ROSE_HAVE_Z3@
-#define ROSE_Z3_LIBRARY "@Z3_LIBRARY@"
-#define ROSE_Z3_EXECUTABLE "@Z3_EXECUTABLE@"
-
-/* Location of Z3 executable */
-#cmakedefine ROSE_Z3 "@ROSE_Z3@"
-
-/* Define if z3_version.h is available. */
-#cmakedefine ROSE_HAVE_Z3_VERSION_H @ROSE_HAVE_Z3_VERSION_H@
-
-/* Define if libgcrypt is available. */
-#cmakedefine ROSE_HAVE_LIBGCRYPT @ROSE_HAVE_LIBGCRYPT@
-#define ROSE_LIBGCRYPT_LIBRARY "@GCRYPT_LIBRARY@"
-
-/* Define if YAML-CPP library is available. */
-#cmakedefine ROSE_HAVE_YAMLCPP @ROSE_HAVE_YAMLCPP@
-#define ROSE_YAMLCPP_LIBRARY "@YAMLCPP_LIBRARY@"
-
-/* Define if Dlib is available. */
-#cmakedefine ROSE_HAVE_DLIB @ROSE_HAVE_DLIB@
-#define ROSE_DLIB_LIBRARY "@DLIB_LIBRARY@"
-
-/* Define if Capstone is available. */
-#cmakedefine ROSE_HAVE_CAPSTONE @ROSE_HAVE_CAPSTONE@
-#define ROSE_CAPSTONE_LIBRARY "@CAPSTONE_LIBRARY@"
-
-/* Define if Cereal is available. */
-#cmakedefine ROSE_HAVE_CEREAL @ROSE_HAVE_CEREAL@
-
-/* Define if libreadline is available. */
-#cmakedefine ROSE_HAVE_LIBREADLINE @ROSE_HAVE_LIBREADLINE@
-  
 /* HEADERS_TO_CHECK 
  * These variables are defined to 1 if the respective header file is found
  * See headers_to_check in cmake/ConfigureChecks.cmake
@@ -131,9 +86,6 @@
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #cmakedefine HAVE_STDLIB_H @HAVE_STDLIB_H@
-
-/* Define to 1 if you have the <sys/personality.h> header file. */
-#cmakedefine ROSE_HAVE_SYS_PERSONALITY_H @ROSE_HAVE_SYS_PERSONALITY_H@
 
 /* Define to 1 if you have the <sys/time.h> header file. */
 #cmakedefine HAVE_SYS_TIME_H @HAVE_SYS_TIME_H@
@@ -185,15 +137,11 @@
 // defines for cmdline.C
 #cmakedefine BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH "@BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH@"
 
-// defines for sage_support.C, SageTreeBuilder.C, and utility_functions.C 
-#cmakedefine ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION 
-
 /* Define if building with Ada support */ 
 #cmakedefine BACKEND_ADA_COMPILER_NAME_WITH_PATH "@BACKEND_ADA_COMPILER_NAME_WITH_PATH@"
 #cmakedefine ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION 
 
 /* Define this to "no" typically */ 
-#cmakedefine ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME "@ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME@" 
 #cmakedefine BACKEND_FORTRAN_IS_GNU_COMPILER @BACKEND_FORTRAN_IS_GNU_COMPILER@
 
 /* Backend C and C++ (CXX) Macros */
@@ -245,7 +193,6 @@
 
 /* Have the SQLITE3 library */
 #cmakedefine HAVE_SQLITE3
-#define ROSE_SQLITE3_LIBRARY "@SQLITE3_LIBRARY@"
 
 /* Define to 1 if you have the POSIX.1003 header file, <pthread.h> */
 #cmakedefine HAVE_PTHREAD_H 
@@ -255,22 +202,6 @@
 
 /* Path to JVM executable */
 #define JAVA_JVM_PATH "${JAVA_RUNTIME}"
-
-/* Location (unquoted) of Boost specified on configure line. */
-#define ROSE_BOOST_PATH "${BOOST_ROOT}"
-
-/* Location of ROSE Compile Tree. */
-#define ROSE_COMPILE_TREE_PATH "@ROSE_COMPILE_TREE_PATH@"
-
-/* Location of ROSE Source Tree. */
-#define ROSE_SOURCE_TREE_PATH "@ROSE_SOURCE_TREE_PATH@"
-
-/* PATH on Windows, LD_LIBRARY_PATH everywhere else. */
-#define ROSE_SHLIBPATH_VAR "${ROSE_SHLIBPATH_VAR}"
-
-/* Use Valgrind calls in ROSE */
-//AS Don't know what to do with this
-#cmakedefine ROSE_USE_VALGRIND
 
 // Using define always defines as opposed to cmakedefine (conditional)
 /* The size of `char', as computed by sizeof. */
@@ -351,21 +282,6 @@
 # endif
 #endif
 
-/* DQ (10/16/2010): Added OFP required macros as part of move to exclude
- * rose_config.h from the ROSE header files.
- */
-#define ROSE_OFP_MAJOR_VERSION_NUMBER 0
-#define ROSE_OFP_MINOR_VERSION_NUMBER 8
-#define ROSE_OFP_PATCH_VERSION_NUMBER 3
-
-#define ROSE_OFP_VERSION_NUMBER "@ROSE_OFP_VERSION_NUMBER@"
-
-/* EDG major version number */
-#define ROSE_EDG_MAJOR_VERSION_NUMBER @EDG_MAJOR_VERSION@
-
-/* EDG minor version number */
-#define ROSE_EDG_MINOR_VERSION_NUMBER @EDG_MINOR_VERSION@
-
 /* Controls if EDG Union/Struct debugging support is to be used. */
 #cmakedefine01 USE_ROSE_EDG_DEBUGGING_SUPPORT
 
@@ -379,60 +295,16 @@
 /* -D options to hand to EDG C++ front-end. */
 #define CXX_SPEC_DEF {"-D__GNUG__=${BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER}", "-D__GNUC__=${BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER}", "-D__GNUC_MINOR__=${BACKEND_C_COMPILER_MINOR_VERSION_NUMBER}", "-D__GNUC_PATCHLEVEL__=${BACKEND_C_COMPILER_PATCH_LEVEL_NUMBER}", "--preinclude", "rose_edg_required_macros_and_functions.h"}
 
-#cmakedefine01 ROSE_USE_EDG_QUAD_FLOAT 
-
 /* Defined if we're building using CMake */
 #cmakedefine USE_CMAKE @USE_CMAKE@
 
-/* Build ROSE to support the Binary Analysis */
-#cmakedefine ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-
-/* Build ROSE to support the Cuda langauge */
-#cmakedefine ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
-
-/* Build ROSE to support the C++ langauge */
-#cmakedefine ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-
-/* Build ROSE to support the C langauge */
-#cmakedefine ROSE_BUILD_C_LANGUAGE_SUPPORT
-
-/* Build ROSE to support the C preprocessor. */
-#cmakedefine ROSE_BUILD_CPP_LANGUAGE_SUPPORT
-
-/* Build ROSE to support the Fortran langauge */
-#cmakedefine ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-
 /* Build ROSE to support the Java langauge */
-#cmakedefine ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 #cmakedefine USE_ROSE_INTERNAL_JAVA_SUPPORT
-
-/* Build ROSE to support the OpenCL langauge */
-#cmakedefine ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT
-
-/* Build ROSE to support the PHP langauge */
-#cmakedefine ROSE_BUILD_PHP_LANGUAGE_SUPPORT
-
-/* Build ROSE to support the Python langauge */
-#cmakedefine ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
-
-/* Support for an advanced uniform warning level for ROSE development */
-#cmakedefine ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT
-
-#cmakedefine ROSE_SUPPORT_GNU_EXTENSIONS
-#cmakedefine ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-#cmakedefine ROSE_SUPPORT_MICROSOFT_EXTENSIONS
 
 /* Detect whether our compilers are GNU or not */
 #cmakedefine CMAKE_COMPILER_IS_GNUCC
 #cmakedefine CMAKE_COMPILER_IS_GNUCXX
 #cmakedefine CMAKE_COMPILER_IS_GNUG77
-
-/* Create the configuration synopsis token for use by Rose::initialize */
-#define ROSE_CONFIG_TOKEN "@ROSE_CONFIG_TOKEN@"
-
-/* Simple preprocessor as default in ROSE -- dont delete me */
-//AS Need configure option to allow wave to be default
-#define ROSE_WAVE_DEFAULT false 
 
 #define SAGE_TRANSFORM 1
 
@@ -445,6 +317,5 @@
 /* Define to 1 if you have the <mach/mach_time.h> header file. */
 #cmakedefine HAVE_MACH_MACH_TIME_H @HAVE_MACH_MACH_TIME_H@ 
 
-/* Define if dwarf is available, and the location of dwarf library. */
-#cmakedefine ROSE_HAVE_LIBDWARF
-#define ROSE_LIBDWARF_LIBRARY "@DWARF_LIBRARY@"
+// Define to indicate that "rose_config.h" has been included and is polluting the global name space.
+#define CONFIG_ROSE 1

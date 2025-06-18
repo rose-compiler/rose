@@ -6,8 +6,7 @@
  * the cmake configuration. Do not include conditional logic in this file.
  *
  * This is the pubic configuration file for generating the public config (rosePublicConfig.h). This file have "ROSE_" at the 
- * start of names to avoid polluting the namespace. Anything added to this file should also be added to the internal config file 
- * (rose_config.h) gnerated from (rose_config.h.in.cmake).
+ * start of names to avoid polluting the namespace.
  * 
  */
 
@@ -29,11 +28,13 @@
 
 /* Define if Z3 library is available */
 #cmakedefine ROSE_HAVE_Z3 @ROSE_HAVE_Z3@
+#define ROSE_Z3_LIBRARY "@Z3_LIBRARY@"
+#define ROSE_Z3_EXECUTABLE "@Z3_EXECUTABLE@"
 
-/* Location of Z3 executable */
-#cmakedefine ROSE_Z3 "@ROSE_Z3@"
+/* Deprecated [Robb Matzke 2025-06-18]: remove after autotools is no longer supported */
+#define ROSE_Z3 ROSE_Z3_EXECUTABLE
 
-/* Define if z3_version.h is available. */
+/* Define if z3_version.h is available (old Z3 releases don't have this header and have no way of getting the version). */
 #cmakedefine ROSE_HAVE_Z3_VERSION_H @ROSE_HAVE_Z3_VERSION_H@
 
 /* Define if libgcrypt is available. */
@@ -43,7 +44,6 @@
 /* Define if YAML-CPP library is available. */
 #cmakedefine ROSE_HAVE_YAMLCPP @ROSE_HAVE_YAMLCPP@
 #define ROSE_YAMLCPP_LIBRARY "@YAMLCPP_LIBRARY@"
-#define ROSE_Z3_LIBRARY "@ROSE_Z3_LIBRARY@"
 
 /* Define if Dlib is available. */
 #cmakedefine ROSE_HAVE_DLIB @ROSE_HAVE_DLIB@
@@ -65,9 +65,7 @@
 // defines for sage_support.C, SageTreeBuilder.C, and utility_functions.C 
 #cmakedefine ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION 
 
-/* Define this to "no" typically */ 
 #cmakedefine ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME "@ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME@" 
-#cmakedefine BACKEND_FORTRAN_IS_GNU_COMPILER @BACKEND_FORTRAN_IS_GNU_COMPILER@
 
 /* Have the SQLITE3 library */
 #cmakedefine ROSE_HAVE_SQLITE3
@@ -138,7 +136,6 @@
 
 /* Build ROSE to support the Java langauge */
 #cmakedefine ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
-#cmakedefine USE_ROSE_INTERNAL_JAVA_SUPPORT
 
 /* Build ROSE to support the OpenCL langauge */
 #cmakedefine ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT

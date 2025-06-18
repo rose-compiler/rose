@@ -3,9 +3,6 @@ include_rules
 # rose_config.h is not installed because it is a private header file. See rosePublicConfig.h below.
 : |> ^o GEN %o^ cp -p @(AUTOTOOLS_STASH)/rose_config.h . |> rose_config.h
 
-# The rosePublicConfig.h is pretty much just the rose_config.h file but with "ROSE_" prependend
-# to any symbols that didn't already start with that.
-: rose_config.h |> ^o GEN %o^ $(ROSE)/scripts/publicConfiguration.pl <%f >%o  |> rosePublicConfig.h
 run $(public_header) rosePublicConfig.h
 
 # Write some Tupfile varaibles to a file for debugging
