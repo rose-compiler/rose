@@ -1289,20 +1289,23 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgExpress
    expr = nullptr;
 
    if (ATmatch(term, "StatusConstant(<str>)", &name)) {
-      std::string constant_name{mangleStatusConstantName(name)};
+      std::string constantName{mangleStatusConstantName(name)};
 
-      // An enumerator in Jovial is scoped! Therefore we have to worry about finding the correct one.
-      // I think we don't have to worry about it here, perhaps only when using pointers?
+      auto symbol = SI::lookupSymbolInParentScopes(constantName, SB::topScopeStack());
+      auto enumFieldSymbol = isSgEnumFieldSymbol(symbol);
+      ASSERT_not_null(enumFieldSymbol);
 
-      // Would be nice to have a lookupEnumFieldSymbol in SageInterface
-      SgSymbol* symbol = SI::lookupSymbolInParentScopes(constant_name, SB::topScopeStack());
-      SgEnumFieldSymbol* enum_field_symbol = isSgEnumFieldSymbol(symbol);
-      ASSERT_not_null(enum_field_symbol);
+      SgInitializedName* initName = enumFieldSymbol->get_declaration();
+      SgAssignInitializer* initializer = isSgAssignInitializer(initName->get_initializer());
 
-      SgInitializedName* init_name = enum_field_symbol->get_declaration();
-      SgAssignInitializer* initializer = isSgAssignInitializer(init_name->get_initializer());
+      // Create a new enum val, there is no need to share it
+      if (auto enumVal = isSgEnumVal(initializer->get_operand())) {
+         auto val = enumVal->get_value();
+         auto decl = enumVal->get_declaration();
+         enumVal = SB::buildEnumVal_nfi(val, decl, enumVal->get_name());
+         expr = enumVal;
+      }
 
-      expr = isSgEnumVal(initializer->get_operand());
       if (expr == nullptr) {
         // Could be a cast (see regression test gitlab-issue-261.jov)
         expr = isSgCastExp(initializer->get_operand());
@@ -3288,10 +3291,8 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDeclaration(ATerm term)
 
    ATerm t_name, t_type_desc;
    std::string name;
-
-   SgType* declared_type = nullptr;
-
-   std::string label = "";
+   std::string label{""};
+   SgType* declared_type{nullptr};
 
    if (ATmatch(term, "ItemTypeDeclaration(<term>,<term>)", &t_name, &t_type_desc)) {
 
@@ -5350,6 +5351,7 @@ ATbool ATermToSageJovialTraversal::traverse_Phrase(ATerm term, SgExpression* &ex
          phrase_enum = Jovial_ROSE_Translation::e_while_phrase_expr;
       } else return ATfalse;
    }
+   ASSERT_not_null(expr);
 
    return ATtrue;
 }
@@ -5741,7 +5743,7 @@ ATbool ATermToSageJovialTraversal::traverse_ActualParameterList(ATerm term, SgEx
 #endif
 
    ATerm t_param_list, t_output;
-   SgExpression* param = nullptr;
+   SgExpression* param{nullptr};
 
    if (ATmatch(term, "no-actual-parameter-list()")) {
       // MATCHED no-actual-parameter-list
@@ -5758,6 +5760,7 @@ ATbool ATermToSageJovialTraversal::traverse_ActualParameterList(ATerm term, SgEx
          ASSERT_not_null(param);
          param_list->get_expressions().push_back(param);
          param->set_parent(param_list);
+         param = nullptr;
       }
 
       if (traverse_ActualOutputParameters(t_output, param_list)) {
@@ -6023,6 +6026,8 @@ ATbool ATermToSageJovialTraversal::traverse_Formula(ATerm term, SgExpression* &e
    } else return ATfalse;
 
    //  TableFormula                -> Formula
+
+   ASSERT_not_null(expr);
 
    return ATtrue;
 }
@@ -6469,9 +6474,8 @@ ATbool ATermToSageJovialTraversal::traverse_StatusFormula(ATerm term, SgExpressi
 #endif
 
    ATerm t_expr, t_conv, t_formula;
-
-   SgExpression* cast_formula = nullptr;
-   SgType* conv_type = nullptr;
+   SgType* conv_type{nullptr};
+   SgExpression* cast_formula{nullptr};
 
    if (ATmatch(term, "StatusFormula(<term>)", &t_expr)) {
       if (traverse_StatusConstant(t_expr, expr)) {
@@ -6565,6 +6569,8 @@ ATbool ATermToSageJovialTraversal::traverse_PointerFormula(ATerm term, SgExpress
       setSourcePosition(castExpr, term);
       expr = castExpr;
    } else return ATfalse;
+
+   ASSERT_not_null(expr);
 
    return ATtrue;
 }
@@ -6758,6 +6764,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
    if (derefVar) {
       var = SageBuilder::buildAtOp_nfi(var, derefVar);
    }
+   ASSERT_not_null(var);
    setSourcePosition(var, term);
 
    return ATtrue;
@@ -6885,6 +6892,7 @@ ATbool ATermToSageJovialTraversal::traverse_Dereference(ATerm term, SgExpression
    else {
      expr = formula;
    }
+   ASSERT_not_null(expr);
 
    return ATtrue;
 }
@@ -6987,7 +6995,6 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunctionVariable(ATerm term, SgE
    //          Fbyte ',' Nbyte ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable"), prefer}
    //  'BYTE' '(' Formula ','
    //          Fbyte ',' Nbyte ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable")}
-
 
    // Grammar (this may be an lvalue call expression! or an rvalue depending on ambiguous context)
    //  'BYTE' '(' CharacterFormula/Variable ',' FirstByte ',' Length ')' -> ByteFunctionVariable
@@ -8466,6 +8473,8 @@ ATbool ATermToSageJovialTraversal::traverse_PointerLiteral(ATerm term, SgExpress
       expr = SageBuilder::buildNullptrValExp_nfi();
    } else return ATfalse;
 
+   ASSERT_not_null(expr);
+
    return ATtrue;
 }
 
@@ -8726,8 +8735,8 @@ ATbool ATermToSageJovialTraversal::traverse_LinkageDirective(ATerm term)
 
    ATerm t_symbol;
    SgJovialDirectiveStatement* directive_stmt = nullptr;
-   std::string str = "";
-   SgExpression* expr = nullptr;
+   std::string str{""};
+   SgExpression* expr{nullptr};
 
    if (ATmatch(term, "LinkageDirective(<term>)", &t_symbol)) {
       // MATCHED LinkageDirective
