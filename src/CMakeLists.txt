@@ -768,6 +768,14 @@ if(CAPSTONE_FOUND)
   add_library_dependency(${CAPSTONE_LIBRARY})
 endif()
 
+# libdwarf and libelf are used to parse DWARF (debugging) information from ELF files. The libelf library is a dependency of
+# the libdwarf library, but is not used directly by ROSE (ROSE has its own ELF parser).
+if(DWARF_FOUND)
+  target_link_libraries(ROSE_DLL ${DWARF_LIBRARY} ${ELF_LIBRARY})
+  add_library_dependency(${DWARF_LIBRARY})
+  add_library_dependency(${ELF_LIBRARY})
+endif()
+
 # If readline was found.
 if(ENABLE-READLINE AND READLINE_FOUND)
   target_link_libraries(ROSE_DLL ${READLINE_LIBRARY})

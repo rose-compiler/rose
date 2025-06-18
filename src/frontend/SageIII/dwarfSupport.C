@@ -17,17 +17,13 @@
 
 #include <stringify.h>
 
-#ifdef ROSE_HAVE_LIBDWARF
-#include <dwarf.h>
-#include <libdwarf.h>
-#endif
-
 using namespace Rose::Diagnostics;
 
 // This function implements the factory pattern.
 SgAsmDwarfConstruct*
 SgAsmDwarfConstruct::createDwarfConstruct(int tag, int nesting_level, uint64_t offset, uint64_t overall_offset) {
 #ifdef ROSE_HAVE_LIBDWARF
+    using namespace Rose::BinaryAnalysis::Dwarf;
     switch (tag) {
         case DW_TAG_array_type:
             return new SgAsmDwarfArrayType(nesting_level,offset, overall_offset);

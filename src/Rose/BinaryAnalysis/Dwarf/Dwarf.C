@@ -25,6 +25,11 @@
 
 #include <stringify.h>
 
+#ifdef ROSE_HAVE_LIBDWARF
+#include <dwarf.h>
+#include <libdwarf.h>
+#endif
+
 using namespace Rose::Diagnostics;
 
 namespace Rose {
@@ -49,8 +54,6 @@ initDiagnostics() {
 // This is controled by using the --with-dwarf configure command line option.
 #ifdef ROSE_HAVE_LIBDWARF
 
-#include <dwarf.h>
-#include <libdwarf.h>
 
 #define DIE_STACK_SIZE 300
 static Dwarf_Die die_stack[DIE_STACK_SIZE];
