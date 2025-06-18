@@ -104,9 +104,9 @@ is_debug_build() {
     local is_debug=yes has_g=
     for switch in $(echo "$switches" |sed 's/[ \t]\+/\n/g'); do
 	case "$switch" in
-	    -g)          has_g=yes ;;
-	    -Os|-O0|-O1) is_debug=yes ;;
-	    -O*)         is_debug= ;;
+	    -g)              has_g=yes ;;
+	    -Os|-O0|-O1|-Og) is_debug=yes ;;
+	    -O*)             is_debug= ;;
 	esac
     done
 
