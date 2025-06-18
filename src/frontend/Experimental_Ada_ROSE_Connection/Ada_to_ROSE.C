@@ -1302,9 +1302,11 @@ namespace
 
   using OverloadSet = std::vector<SgFunctionSymbol*>;
 
-  struct OverloadInfo : std::tuple<SgFunctionSymbol*, OverloadSet, bool>
+  using OverloadInfoBase = std::tuple<SgFunctionSymbol*, OverloadSet, bool, bool>;
+
+  struct OverloadInfo : OverloadInfoBase
   {
-    using base = std::tuple<SgFunctionSymbol*, OverloadSet, bool>;
+    using base = OverloadInfoBase;
     using base::base;
 
     /// the symbol which was originally in place
@@ -1316,12 +1318,11 @@ namespace
     const OverloadSet& ovlset() const   { return std::get<1>(*this); }
     /// \}
 
-    /// \todo reconsider whether foldable is needed ..
-    /// true, iff all arguments are literals or calls to literal-equivalent functions
-    /// \{
           bool&        literalEquivalent()       { return std::get<2>(*this); }
     const bool&        literalEquivalent() const { return std::get<2>(*this); }
-    /// \}
+
+          bool&        systemAddressBased()       { return std::get<3>(*this); }
+    const bool&        systemAddressBased() const { return std::get<3>(*this); }
   };
 
   using OverloadMap = std::map<SgFunctionRefExp*, OverloadInfo>;
@@ -1388,7 +1389,22 @@ namespace
                       //~ );
   }
 
-  bool isLiteralEquivalent(const OverloadMap& m, const SgFunctionCallExp& call, const SgFunctionRefExp& fnref)
+  bool hasSystemAddressType(const SgExpression* e)
+  {
+    // memoize the system address type
+    static SgType* systemAddressType = nullptr;
+
+    // system address may be unknown up until the package system is processed
+    if (systemAddressType == nullptr)
+      systemAddressType = si::Ada::findType("system", "address");
+
+    return (  e
+           && systemAddressType
+           && si::Ada::typeOfExpr(e).typerep() == systemAddressType
+           );
+  }
+
+  bool callWithLiteralEqArgs(const OverloadMap& m, const SgFunctionCallExp& call, const SgFunctionRefExp& fnref)
   {
     // function has been compiler generated
     //   and has no definition ...
@@ -1407,21 +1423,35 @@ namespace
     // all arguments are literals or literal equivalent
     const SgExprListExp&         args   = SG_DEREF(call.get_args());
     const SgExpressionPtrList&   arglst = args.get_expressions();
-    auto  isLitEquCall = [&m](SgFunctionRefExp* r) -> bool
-                         {
-                           if (r == nullptr) return false;
+    auto  withLiteralEqArgs =
+                [&m](SgFunctionRefExp* r) -> bool
+                {
+                  if (r == nullptr) return false;
 
-                           auto pos = m.find(r);
+                  auto pos = m.find(r);
 
-                           return (pos != m.end()) && pos->second.literalEquivalent();
-                         };
+                  return (pos != m.end()) && pos->second.literalEquivalent();
+                };
 
-    auto  isLiteralEquExp = [isLitEquCall](SgExpression* e)-> bool
-                            {
-                              return isAdaLiteralExp(e) || isLitEquCall(isSgFunctionRefExp(e));
-                            };
+    auto  hasLiteralEq =
+                 [withLiteralEqArgs](SgExpression* e)-> bool
+                 {
+                   ASSERT_not_null(e);
 
-    return std::all_of(arglst.begin(), arglst.end(), isLiteralEquExp);
+                   return (  isAdaLiteralExp(e)
+                          || withLiteralEqArgs(isSgFunctionRefExp(e))
+                          );
+                 };
+
+    return std::all_of(arglst.begin(), arglst.end(), hasLiteralEq);
+  }
+
+  bool callWithSystemAddress(const OverloadMap& m, const SgFunctionCallExp& call, const SgFunctionRefExp& fnref)
+  {
+    const SgExprListExp&         args   = SG_DEREF(call.get_args());
+    const SgExpressionPtrList&   arglst = args.get_expressions();
+
+    return std::any_of(arglst.begin(), arglst.end(), hasSystemAddressType);
   }
 
 
@@ -1465,7 +1495,10 @@ namespace
                         }
                       );
 
-        m.emplace(fnref, OverloadInfo{fnsym, std::move(overloads), isLiteralEquivalent(m, *call, *fnref)});
+        const bool litEq      = callWithLiteralEqArgs(m, *call, *fnref);
+        const bool withSysAdr = callWithSystemAddress(m, *call, *fnref);
+
+        m.emplace(fnref, OverloadInfo{fnsym, std::move(overloads), litEq, withSysAdr});
         //~ logTrace() << "adding " << fnref << std::endl;
       }
 
@@ -1494,6 +1527,8 @@ namespace
   {
     WorkItems res;
 
+    // note, this adds the iterators to the items in the overloadmap
+    //       and DOES NOT copy the values.
     for (WorkItem pos = m.begin(), lim = m.end(); pos != lim; ++pos)
       res.add(pos);
 
@@ -2027,15 +2062,23 @@ namespace
     std::string       opname   = si::Ada::convertRoseOperatorNameToAdaOperator(rosename);
     SgScopeStatement* expScope = si::Ada::operatorScope(opname, &ty);
     SgScopeStatement* typScope = si::Ada::operatorScope(opname, si::Ada::typeOfExpr(exp).typerep());
-    const bool        res      = si::Ada::sameCanonicalScope(expScope, typScope);
 
-    //~ logTrace() << "liteq: scope " << res
-               //~ << "(" << expScope << " | " << typScope << ") " << exp.unparseToString()
-               //~ << std::endl;
-    return res;
+    return si::Ada::sameCanonicalScope(expScope, typScope);
   }
 
-  void decorateWithTypecast(SgFunctionCallExp& exp, const SgType& ty)
+  void decorateWithTypeCast(SgExpression& exp, const SgType& ty)
+  {
+    SgNullExpression& dummy = mkNullExpression();
+
+    si::replaceExpression(&exp, &dummy, true /* keep exp */);
+
+    SgType&    castty = SG_DEREF( ty.stripType(SgType::STRIP_MODIFIER_TYPE) );
+    SgCastExp& castex = mkCastExp(exp, castty);
+
+    si::replaceExpression(&dummy, &castex, false /* delete dummy */);
+  }
+
+  void decorateCallWithTypecast(SgFunctionCallExp& exp, const SgType& ty)
   {
     // Another alternative would be to place the operator into a different
     //   scope. This seems to be more appropriate because it would
@@ -2051,54 +2094,87 @@ namespace
       if (fnsym->get_scope() != si::Ada::pkgStandardScope())
         return;
 
-    SgNullExpression& dummy = mkNullExpression();
-
-    si::replaceExpression(&exp, &dummy, true /* keep exp */);
-
-    SgType&    castty = SG_DEREF( ty.stripType(SgType::STRIP_MODIFIER_TYPE) );
-    SgCastExp& castex = mkCastExp(exp, castty);
-
-    si::replaceExpression(&dummy, &castex, false /* delete dummy */);
+    decorateWithTypeCast(exp, ty);
   }
 
-  void typecastLiteralEquivalentFunctionsIfNeeded(const OverloadMap& m)
+  void decorateSystemAddressArgsWithTypecast(SgFunctionCallExp& exp, const SgType& ty)
   {
-    std::for_each( m.begin(), m.end(),
-                   [](const OverloadMap::value_type& el) -> void
+    // Adds type casts to arithmetic operations on expression of type system.address.
+    //   see issue #660, https://rosecompiler2.llnl.gov/gitlab/main/rose-compiler/rose/-/issues/660
+
+    // just process enabled integral operators in package standard and
+    //   not legitimate operators in package system.
+    if (SgFunctionSymbol* fnsym = exp.getAssociatedFunctionSymbol())
+      if (fnsym->get_scope() != si::Ada::pkgStandardScope())
+        return;
+
+    SgExprListExp&             args = SG_DEREF(exp.get_args());
+    const SgExpressionPtrList& arglst = args.get_expressions();
+
+    auto replacer = [&ty](SgExpression* exp) -> void
+                    {
+                      if (hasSystemAddressType(exp))
+                      {
+                        ASSERT_not_null(exp);
+                        decorateWithTypeCast(*exp, ty);
+                      }
+                    };
+
+    std::for_each( arglst.begin(), arglst.end(), replacer );
+  }
+
+  using TypeCastPredicate = std::function<bool(const OverloadMap::value_type&)>;
+  using TypeCastFunction  = std::function<void(SgFunctionCallExp& callexp, const SgType&)>;
+
+  void typeCastIf(const OverloadMap& m, TypeCastPredicate pred, TypeCastFunction action)
+  {
+    auto applyIf = [pred, action](const OverloadMap::value_type& el) -> void
                    {
                      if (el.first == nullptr)
-                     {
-                       //~ logWarn() << "liteq: null" << std::endl;
                        return;
-                     }
 
-                     if (!el.second.literalEquivalent())
-                     {
-                       //~ logTrace() << "liteq: " << el.first->unparseToString()
-                                  //~ << " - " << el.second.literalEquivalent()
-                                  //~ << std::endl;
+                     if (!pred(el))
                        return;
-                     }
 
                      SgFunctionCallExp* callexp = isSgFunctionCallExp(el.first->get_parent());
                      if (callexp == nullptr)
-                     {
-                       //~ logTrace() << "liteq: " << typeid(*el.first->get_parent()).name() << std::endl;
                        return;
-                     }
 
                      std::set<const SgType*> typeCandidates = expectedTypes(callexp);
 
-                     if (typeCandidates.size() > 1)
-                       ; // logTrace() << "liteq: multiple type candidates" << std::endl;
-                     else if (typeCandidates.size() == 0)
-                       ; // logTrace() << "liteq: 0 candidates" << std::endl;
-                     else if (*typeCandidates.begin() == nullptr)
-                       ; // logTrace() << "liteq: null type" << std::endl;
-                     else if (!scopeCheckCallContext(*callexp, **typeCandidates.begin()))
-                       decorateWithTypecast(*callexp, **typeCandidates.begin());
-                   }
-                 );
+                     const bool skipTypeCasting = (  (typeCandidates.size() > 1)
+                                                  || (typeCandidates.size() == 0)
+                                                  || (*typeCandidates.begin() == nullptr)
+                                                  || (scopeCheckCallContext(*callexp, **typeCandidates.begin()))
+                                                  );
+
+                     if (skipTypeCasting)
+                       return;
+
+                     action(*callexp, **typeCandidates.begin());
+                   };
+
+    std::for_each(m.begin(), m.end(), applyIf);
+  }
+
+  void typecastLiteralEquivalentFunctions(const OverloadMap& m)
+  {
+    auto isLiteralEq = [](const OverloadMap::value_type& el) -> bool
+                       {
+                         return el.second.systemAddressBased();
+                       };
+
+    typeCastIf(m, isLiteralEq, decorateCallWithTypecast);
+  }
+
+  void typecastSystemAddressArguments(const OverloadMap& m)
+  {
+    auto hasSystemAddress = [](const OverloadMap::value_type& el) -> bool
+                            {
+                              return el.second.systemAddressBased();
+                            };
+
+    typeCastIf(m, hasSystemAddress, decorateSystemAddressArgsWithTypecast);
   }
 
 
@@ -2238,7 +2314,8 @@ namespace
       }
     }
 
-    typecastLiteralEquivalentFunctionsIfNeeded(allrefs);
+    typecastLiteralEquivalentFunctions(allrefs);
+    typecastSystemAddressArguments(allrefs);
   }
 
   bool hasValidFileInfo(const Sg_File_Info& fi)

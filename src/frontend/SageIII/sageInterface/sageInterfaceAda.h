@@ -711,6 +711,16 @@ namespace Ada
   /// do not use, this is temporary
   SgScopeStatement* pkgStandardScope();
 
+  /// returns the scope of a package spec
+  SgAdaPackageSpec* findPackageSpec(const std::string& s);
+
+  /// returns the type representation of a type named \p typeName in scope \p scope.
+  SgType* findType(const SgScopeStatement& scope, const std::string& typeName);
+
+  /// returns the type representation of a type named \p typeName in a top-level
+  /// scope named \p scopeName.
+  SgType* findType(const std::string& scopeName, const std::string& typeName);
+
   /// takes a function name as used in ROSE and converts it to a name in Ada
   ///   (i.e., '"' + operator_text + '"').
   ///   if \p nameInRose does not name an operator, then the name is returned as is.

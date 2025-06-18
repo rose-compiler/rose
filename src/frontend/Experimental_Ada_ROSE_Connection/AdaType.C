@@ -21,15 +21,6 @@
 #pragma GCC diagnostic warning "-Wextra"
 
 
-// workaround: set internal variable before the frontend starts
-namespace SageInterface
-{
-namespace Ada
-{
-extern SgAdaPackageSpecDecl* stdpkg;
-}
-}
-
 namespace sb = SageBuilder;
 namespace si = SageInterface;
 
@@ -1878,10 +1869,6 @@ void initializePkgStandard(SgGlobal& global)
 
   declareOp(opsMap, "=",   adaBoolType, { &adaAccessType, &adaAccessType   }, stdspec);
   declareOp(opsMap, "/=",  adaBoolType, { &adaAccessType, &adaAccessType   }, stdspec);
-
-  // set the standard package in the SageInterface::ada namespace
-  // \todo this should go away for a cleaner interface
-  si::Ada::stdpkg = &stdpkg;
 }
 
 
@@ -1919,6 +1906,3 @@ ExHandlerTypeCreator::operator SgType&() &&
 }
 
 }
-
-
-

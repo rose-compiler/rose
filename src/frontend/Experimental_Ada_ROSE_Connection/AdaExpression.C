@@ -442,8 +442,8 @@ namespace
     return SG_DEREF(adaTypes().at("BOOLEAN"));
   }
 
-  OperatorCallSupplement
-  createSupplement(SgTypePtrList types, SgType* result)
+  std::tuple<OperatorCallSupplement, si::Ada::OperatorScopeInfo>
+  createSupplement(SgTypePtrList types, SgType* result, si::Ada::OperatorScopeInfo scopeInfo)
   {
     static constexpr int MAX_PARAMS = 2;
     static const std::string parmNames[MAX_PARAMS] = { "Left", "Right" };
@@ -456,24 +456,30 @@ namespace
       args.emplace_back(parmNames[++parmNameIdx], ty);
     }
 
-    return { std::move(args), result };
+    return { { std::move(args), result }, std::move(scopeInfo) };
   }
 
 
-  /// Takes available operator information that was computed from argument types and computes the signature of
-  /// a generatable operator.
+  /// Takes available operator information that was computed from argument types
+  /// and computes the signature and scope of a generatable operator.
   /// \param  name operator name (w/o si::Ada::roseOperatorPrefix)
   /// \param  suppl the available argument type information
-  /// \param  domArgPos the dominant argument position
+  /// \param  scopeInfo information on scope and dominant argument position
   /// \param  ctx the translator context
-  /// \return an adjusted operator call supplement
+  /// \return a revised OperatorCallSupplement and OperatorScopeInfo
   /// \note
   ///   since we rely on a solid frontend, we may not need to check all the requirements
-  OperatorCallSupplement
-  operatorSignature(AdaIdentifier name, const OperatorCallSupplement& suppl, std::size_t domArgPos, AstContext ctx)
+  std::tuple<OperatorCallSupplement, si::Ada::OperatorScopeInfo>
+  operatorSignature( AdaIdentifier name,
+                     OperatorCallSupplement suppl,
+                     si::Ada::OperatorScopeInfo scopeInfo,
+                     AstContext ctx
+                   )
   {
     // see https://www.adaic.com/resources/add_content/standards/05rm/html/RM-4-5-2.html
     // see https://www.adaic.com/resources/add_content/standards/05rm/html/RM-4-4.html
+
+    std::size_t const domArgPos = scopeInfo.argpos();
 
     if (name == "&")
     {
@@ -493,10 +499,10 @@ namespace
       }
 
       ADA_ASSERT(resTy != nullptr);
-      return { suppl.args(), resTy };
+      return { { suppl.args(), resTy }, std::move(scopeInfo) };
     }
 
-    SgType* const domTy = suppl.args().at(domArgPos).type();
+    SgType* domTy = suppl.args().at(domArgPos).type();
 
     if (name == "=")
     {
@@ -506,7 +512,7 @@ namespace
       //          && equalArgumentTypes(suppl, ctx)     // will be adjusted
       //          && resultTypeIsBool(suppl, ctx)       // will be adjusted
       //          )
-      return createSupplement( {domTy, domTy}, &boolType(ctx) );
+      return createSupplement( {domTy, domTy}, &boolType(ctx), std::move(scopeInfo) );
     }
 
     if (name == "/=" && !anonAccessType(suppl, ctx))
@@ -517,7 +523,7 @@ namespace
       //          && equalArgumentTypes(suppl, ctx) // will be adjusted
       //          && resultTypeIsBool(suppl, ctx)   // will be adjusted
       //          );
-      return createSupplement( {domTy, domTy}, &boolType(ctx) );
+      return createSupplement( {domTy, domTy}, &boolType(ctx), std::move(scopeInfo) );
     }
 
 
@@ -538,10 +544,10 @@ namespace
                     << std::endl;
         }
 
-        return OperatorCallSupplement{};
+        return { OperatorCallSupplement{}, std::move(scopeInfo) };
       }
 
-      return createSupplement( {domTy, domTy}, &boolType(ctx) );
+      return createSupplement( {domTy, domTy}, &boolType(ctx), std::move(scopeInfo) );
     }
 
     if (name == "AND" || name == "OR" || name == "XOR")
@@ -549,7 +555,7 @@ namespace
       // requires (  equalArgumentTypes(suppl, ctx) // will be adjusted
       //          && (si::Ada::isBooleanType(domTy) || si::Ada::isModularType(domTy) || (isBoolArray(domTy)))
       //          )
-      return createSupplement( {domTy, domTy}, domTy );
+      return createSupplement( {domTy, domTy}, domTy, std::move(scopeInfo) );
     }
 
     if ( (  name == "+"   || name == "-"   || name == "*"
@@ -558,13 +564,25 @@ namespace
          )
        )
     {
-      if (suppl.args().size() == 1)
-        return createSupplement( { domTy }, domTy );
+      SgScopeStatement* scope = scopeInfo.scope();
 
-      return createSupplement( {domTy,domTy}, domTy );
+      try
+      {
+        if (domTy == si::Ada::findType("system", "address"))
+        {
+          scope = si::Ada::pkgStandardScope();
+          domTy = si::Ada::findType(*scope, "integer");
+        }
+      }
+      catch (const std::runtime_error&) {}
+
+      if (suppl.args().size() == 1)
+        return createSupplement( { domTy }, domTy, si::Ada::OperatorScopeInfo{scope, domArgPos} );
+
+      return createSupplement( {domTy,domTy}, domTy, si::Ada::OperatorScopeInfo{scope, domArgPos} );
     }
 
-    return OperatorCallSupplement{};
+    return { OperatorCallSupplement{}, std::move(scopeInfo) };
   }
 
 
@@ -668,9 +686,8 @@ namespace
     sortByArgumentName(suppl.args());
 
     si::Ada::OperatorScopeInfo scopeinfo = operatorScope(name, extractTypes(suppl.args()), suppl.scopeId(), ctx);
-    SgScopeStatement&          scope     = SG_DEREF(scopeinfo.scope());
 
-    suppl = operatorSignature(name, std::move(suppl), scopeinfo.argpos(), ctx);
+    std::tie(suppl, scopeinfo) = operatorSignature(name, std::move(suppl), std::move(scopeinfo), ctx);
 
     // \todo add support for other operators
     if (!suppl.valid())
@@ -678,6 +695,8 @@ namespace
       logWarn() << "oper " << name << " not generatable" << std::endl;
       return nullptr;
     }
+
+    SgScopeStatement&          scope     = SG_DEREF(scopeinfo.scope());
 
     if (SgFunctionDeclaration* fndcl = findExistingOperator(name, scope, suppl))
       return &mkFunctionRefExp(*fndcl);

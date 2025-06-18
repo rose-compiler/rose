@@ -21,13 +21,13 @@
 
 
 // workaround: set internal variable before the frontend starts
-namespace SageInterface
-{
-namespace Ada
-{
-extern SgAdaPackageSpecDecl* stdpkg;
-}
-}
+//~ namespace SageInterface
+//~ {
+//~ namespace Ada
+//~ {
+//~ extern SgAdaPackageSpecDecl* stdpkg;
+//~ }
+//~ }
 
 namespace sb = SageBuilder;
 namespace si = SageInterface;
@@ -1765,7 +1765,7 @@ void initializePkgStandard(SgGlobal& global, ada_base_entity* lal_root)
 
   // set the standard package in the SageInterface::ada namespace
   // \todo this should go away for a cleaner interface
-  si::Ada::stdpkg = &stdpkg;
+  // si::Ada::stdpkg = &stdpkg;
 }
 
 /// Creates a reference to a previously declared exception that \ref lal_element refers to

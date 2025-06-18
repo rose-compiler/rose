@@ -17,16 +17,6 @@
 namespace si = SageInterface;
 namespace sb = SageBuilder;
 
-namespace SageInterface
-{
-namespace Ada
-{
-  // workaround to get the scope of package standard more easily
-  //   set in AdaType.C:initializePkgStandard
-  SgAdaPackageSpecDecl* stdpkg          = nullptr;
-}
-}
-
 
 namespace
 {
@@ -62,18 +52,22 @@ namespace
     return attr && isRangeAttribute(*attr);
   }
 
-
-  /// the dominant declaration of a typedef type is the defining declaration,
-  ///   if not present the declaration associated with the typedef type.
   const SgTypedefDeclaration&
-  dominant_declaration(const SgTypedefType& n)
+  dominantTypedefDecl(const SgTypedefDeclaration& n)
   {
-    const SgTypedefDeclaration* dcl    = isSgTypedefDeclaration(n.get_declaration());
-    ASSERT_not_null(dcl);
+    const SgTypedefDeclaration* dcl = &n;
     const SgTypedefDeclaration* defdcl = isSgTypedefDeclaration(dcl->get_definingDeclaration());
 
     if (defdcl != nullptr) dcl = defdcl;
     return *dcl;
+  }
+
+  /// the dominant declaration of a typedef type is the defining declaration,
+  ///   if not present the declaration associated with the typedef type.
+  const SgTypedefDeclaration&
+  dominantTypedefDecl(const SgTypedefType& n)
+  {
+    return dominantTypedefDecl(SG_DEREF(isSgTypedefDeclaration(n.get_declaration())));
   }
 
   /// queries the base type from the dominant declaration
@@ -82,7 +76,7 @@ namespace
   ///          the dominant declaration.
   SgType& base_type(const SgTypedefType& n)
   {
-    return SG_DEREF(dominant_declaration(n).get_base_type());
+    return SG_DEREF(dominantTypedefDecl(n).get_base_type());
   }
 
 
@@ -2276,7 +2270,7 @@ namespace Ada
                     //~ << std::endl;
 
           if (useThisDecl)
-            res = dominant_declaration(n).get_scope();
+            res = dominantTypedefDecl(n).get_scope();
           else
             res = find(basety);
         }
@@ -2367,11 +2361,89 @@ namespace Ada
           res = ReturnType{ nameOf(n), n.get_decl(), n.get_decl(), &n};
         }
     };
+
+    struct PackageSpecFinder : ROSE_VisitTraversal
+    {
+        using base = ROSE_VisitTraversal;
+
+        explicit
+        PackageSpecFinder(const std::string& thePkgName)
+        : base(), pkgName(thePkgName)
+        {}
+
+        void visit (SgNode* node) override;
+        const SgAdaPackageSpecDecl* find() &&;
+
+      private:
+        const std::string&          pkgName;
+        const SgAdaPackageSpecDecl* res = nullptr;
+    };
+
+    void PackageSpecFinder::visit (SgNode* n)
+    {
+      if (const SgAdaPackageSpecDecl* pkg = isSgAdaPackageSpecDecl(n))
+      {
+        const bool isTopLevelScopeNamed = (  isSgGlobal(pkg->get_scope())
+                                          && boost::iequals(pkg->get_name().getString(), pkgName)
+                                          );
+
+        if (isTopLevelScopeNamed) res = pkg;
+      }
+    }
+
+    const SgAdaPackageSpecDecl* PackageSpecFinder::find() &&
+    {
+      SgAdaPackageSpecDecl::traverseMemoryPoolNodes(*this);
+
+      return res;
+    }
   } // end anonymous namespace
+
+
+  SgAdaPackageSpec* findPackageSpec(const std::string& pkgName)
+  {
+    SgAdaPackageSpec* res = nullptr;
+
+    if (const SgAdaPackageSpecDecl* pkgdcl = PackageSpecFinder{pkgName}.find())
+      res = pkgdcl->get_definition();
+
+    return res;
+  }
+
+  /// returns the type representation of a type named \p typeName in scope \p scope.
+  SgType* findType(const SgScopeStatement& scope, const std::string& typeName)
+  {
+    SgType* res = nullptr;
+
+    if (SgTypedefSymbol* tysy = scope.lookup_typedef_symbol("address"))
+    {
+      const SgTypedefDeclaration& tydcl = dominantTypedefDecl(SG_DEREF(tysy->get_declaration()));
+
+      res = tydcl.get_type();
+      ASSERT_require(res);
+    }
+
+    return res;
+  }
+
+  SgType* findType(const std::string& scopeName, const std::string& typeName)
+  {
+    SgType* res = nullptr;
+
+    if (const SgScopeStatement* pkg = findPackageSpec(scopeName))
+      res = findType(*pkg, typeName);
+
+    return res;
+  }
 
   SgScopeStatement* pkgStandardScope()
   {
-    return SG_DEREF(stdpkg).get_definition();
+    static SgAdaPackageSpec* stdscope = nullptr;
+
+    if (stdscope == nullptr)
+      stdscope = findPackageSpec("standard");
+
+    return stdscope;
   }
 
   bool systemPackage(const SgScopeStatement& n)

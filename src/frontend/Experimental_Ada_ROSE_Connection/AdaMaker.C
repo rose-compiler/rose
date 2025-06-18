@@ -2438,10 +2438,10 @@ mkEnumeratorRef(SgEnumDeclaration& enumdecl, SgInitializedName& enumitem)
   using rose_rep_t = decltype(std::declval<SgEnumVal>().get_value());
 
   const long long int enumval = getIntegralValue(enumitem);
-  ROSE_ASSERT(  (enumval >= std::numeric_limits<rose_rep_t>::min())
-             && (enumval <= std::numeric_limits<rose_rep_t>::max())
-             && ("integral value over-/underflow during conversion")
-             );
+  ASSERT_require(  (enumval >= std::numeric_limits<rose_rep_t>::min())
+                && (enumval <= std::numeric_limits<rose_rep_t>::max())
+                && ("integral value over-/underflow during conversion")
+                );
 
   return SG_DEREF( sb::buildEnumVal(enumval, &enumdecl, enumitem.get_name()) );
 }
@@ -2457,6 +2457,13 @@ namespace
   SgType& integralTypeAttr(SgExpression&, SgExprListExp&)
   {
     return mkIntegralType();
+  }
+
+  SgType& systemAddressTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    static SgType& res = SG_DEREF(si::Ada::findType("system", "address"));
+
+    return res;
   }
 
   SgType& realTypeAttr(SgExpression&, SgExprListExp&)
@@ -2593,7 +2600,7 @@ namespace
     using TypeCalc  = std::map<std::string, TypeMaker, ILess>;
 
     static const TypeCalc typecalc = { { "access",               &accessTypeAttr }
-                                     , { "address",              &integralTypeAttr }
+                                     , { "address",              &systemAddressTypeAttr }
                                      , { "address_size",         &integralTypeAttr }
                                      , { "adjacent",             &argTypeAttr }
                                      , { "aft",                  &integralTypeAttr }
