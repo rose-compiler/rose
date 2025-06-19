@@ -190,7 +190,6 @@ namespace Libadalang_ROSE_Translation
   /// completes any block with exception handlers and pragmas attached
   void completeHandledBlock( ada_base_entity* lal_stmts,
                              ada_base_entity* lal_exceptions,
-                             ada_base_entity* lal_pragmas,
                              BlockHandler blockHandler,
                              ExceptionHandlerHandler exhandlerHandler,
                              SgScopeStatement& dominantBlock,
@@ -211,27 +210,22 @@ namespace Libadalang_ROSE_Translation
     ScopeSequence     activeScopes = { &dominantBlock };
 
     if (&dominantBlock != &stmtblk)
+    {
       activeScopes.push_back(&stmtblk);
+    }
 
     blockHandler(lal_stmts, stmtblk, pragmaCtx);
 
     if (trystmt)
     {
       exhandlerHandler(lal_exceptions, dominantBlock, *trystmt, pragmaCtx);
-
-      //computeSourceRangeFromChildren(SG_DEREF(trystmt->get_body()));
-      //computeSourceRangeFromChildren(SG_DEREF(trystmt->get_catch_statement_seq_root()));
-      //computeSourceRangeFromChildren(*trystmt);
     }
-
-    //processAndPlacePragmas(lal_pragmas, std::move(activeScopes), pragmaCtx.scope(dominantBlock));
   }
 
   /// completes any block with declarative items and exception handlers and pragmas attached
   void completeDeclarationsWithHandledBlock( ada_base_entity* lal_decls,
                                              ada_base_entity* lal_stmts,
                                              ada_base_entity* lal_exceptions,
-                                             ada_base_entity* lal_pragmas,
                                              BlockHandler blockHandler,
                                              ExceptionHandlerHandler exhandlerHandler,
                                              SgScopeStatement& dominantBlock,
@@ -257,7 +251,6 @@ namespace Libadalang_ROSE_Translation
 
     completeHandledBlock( lal_stmts,
                           lal_exceptions,
-                          lal_pragmas,
                           blockHandler,
                           exhandlerHandler,
                           dominantBlock,
@@ -271,7 +264,7 @@ namespace Libadalang_ROSE_Translation
   void completeRoutineBody(ada_base_entity* lal_decl, SgBasicBlock& declblk, AstContext ctx)
   {
     //Get the decls, stmts, exceptions, & pragmas of this routine body
-    ada_base_entity lal_decls, lal_stmts, lal_exceptions, lal_pragmas;
+    ada_base_entity lal_decls, lal_stmts, lal_exceptions;
 
     ada_node_kind_enum kind;
     kind = ada_node_kind(lal_decl);
@@ -283,7 +276,6 @@ namespace Libadalang_ROSE_Translation
         ada_subp_body_f_stmts(lal_decl, &lal_handled_stmts);
         ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
         ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
-        //lal_pragmas = ???; //TODO pragmas
     } else if(kind == ada_entry_body){
         ada_entry_body_f_decls(lal_decl, &lal_decls); //lal_decls should now be an ada_declarative_part
         ada_declarative_part_f_decls(&lal_decls, &lal_decls); //lal_decls should now be the list of decls
@@ -291,16 +283,14 @@ namespace Libadalang_ROSE_Translation
         ada_entry_body_f_stmts(lal_decl, &lal_handled_stmts);
         ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
         ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
-        //lal_pragmas = ???; //TODO pragmas
     } else {
         //TODO
         logWarn() << "Unknown kind " << kind << " in completeRoutineBody!\n";
     }
 
     completeDeclarationsWithHandledBlock( &lal_decls,
-                                          &lal_stmts, //lal_stmts sometimes breaks here??????????
+                                          &lal_stmts,
                                           &lal_exceptions,
-                                          &lal_pragmas,
                                           routineBlockHandler,
                                           routineExceptionBlockHandler,
                                           declblk,
@@ -367,6 +357,66 @@ namespace {
 
   // may need special processing for pragmas in body
   using DeferredPragmaBodyCompletion = std::function<void(AstContext::PragmaContainer)>;
+  //
+  // pragma handling
+
+  SgPragmaDeclaration&
+  createPragma_common(ada_base_entity* lal_element, SgStatement* stmtOpt, AstContext ctx)
+  {
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+    if(kind != ada_pragma_node){
+      logError() << "createPragma_common called on node of kind " << kind << " (not an ada_pragma_node)!\n";
+    }
+    logKind("ada_pragma_node", kind);
+
+    if(false){ //TODO Test p_associated_decls more to see if it might be of use in placing pragmas
+      ada_ada_node_array associated_decls;
+      ada_pragma_node_p_associated_decls(lal_element, &associated_decls);
+      for(int i = 0; i < associated_decls->n; ++i){
+        ada_base_entity associated_decl = associated_decls->items[i];
+        if(!ada_node_is_null(&associated_decl)){
+          logInfo() << "  Associated decl " << i << " is at " << dot_ada_full_sloc(&associated_decl) << std::endl;
+          logInfo() << "    " << ada_node_kind(&associated_decl) << std::endl;
+        }
+      }
+    }
+
+    //Pragma nodes don't use defining_name, so just hash the ada_pragma_node itself?
+    int hash = hash_node(lal_element);
+
+    //Get the name
+    ada_base_entity lal_id;
+    ada_pragma_node_f_id(lal_element, &lal_id);
+    std::string                name = getFullName(&lal_id);
+
+    //Get the args
+    ada_base_entity lal_args;
+    ada_pragma_node_f_args(lal_element, &lal_args);
+    SgExprListExp&             arglist  = mkExprListExp();
+    SgPragmaDeclaration&       sgnode   = mkPragmaDeclaration(name, arglist, stmtOpt);
+
+    sgnode.set_parent(&ctx.scope()); // set fictitious parent (will be overwritten when pragma is actually placed)
+    //TODO I removed all the stuff about placing pragmas, but it still seems to work? Might need to set parent better.
+
+    std::vector<SgExpression*> args;
+    int count = ada_node_children_count(&lal_args);
+    for(int i = 0; i < count; ++i){
+      ada_base_entity lal_param;
+      if(ada_node_child(&lal_args, i, &lal_param) != 0){
+        args.push_back(&getArg(&lal_param, ctx.pragmaAspectAnchor(sgnode)));
+      }
+    }
+
+    arglist.get_expressions().reserve(args.size());
+    for (SgExpression* arg : args) arglist.append_expression(arg);
+
+    // \todo do we need to privatize pragmas in the private section?
+    attachSourceLocation(sgnode, lal_element, ctx);
+    attachSourceLocation(SG_DEREF(sgnode.get_pragma()), lal_element, ctx);
+    recordNode(libadalangDecls(), hash, sgnode);
+
+    return sgnode;
+  }
 
   // following proc is public and located at the bottom of the file
   //   void
@@ -1448,7 +1498,7 @@ namespace {
 
   void nothingToComplete(AstContext::PragmaContainer pragmas)
   {
-     //ADA_ASSERT(pragmas.empty());
+     ROSE_ASSERT(pragmas.empty());
   }
 
   /// Handle a task, and the pragmas associated with it
@@ -1499,49 +1549,6 @@ namespace {
         }
       }
     }
-
-    /*auto deferred = [ctx,nodePtr,&task_def](AstContext::PragmaContainer pragmas) -> void
-                    {
-                      AstContext pragmaCtx = ctx.pragmas(pragmas);
-
-                      // visible items
-                      {
-                        //Get the public_part
-                        ada_base_entity public_part;
-                        ada_task_def_f_public_part(&task_def, &public_part);
-                        ada_declarative_part_f_decls(&public_part, &public_part);
-
-                        if(!ada_node_is_null(&public_part)){
-                          int range = ada_node_children_count(&public_part);
-                          for(int i =0; i < range; ++i){
-                             ada_base_entity lal_entry;
-                             if(ada_node_child(&public_part, i, &lal_entry) != 0){
-                               handleElement(&lal_entry, pragmaCtx.scope(*nodePtr));
-                             }
-                          }
-                        }
-                      }
-
-                      // private items
-                      {
-                        //Get the private_part
-                        ada_base_entity private_part;
-                        ada_task_def_f_private_part(&task_def, &private_part);
-                        ada_declarative_part_f_decls(&private_part, &private_part);
-
-                        if(!ada_node_is_null(&private_part)){
-                          int range = ada_node_children_count(&private_part);
-                          for(int i =0; i < range; ++i){
-                             ada_base_entity lal_entry;
-                             if(ada_node_child(&private_part, i, &lal_entry) != 0){
-                               handleElement(&lal_entry, pragmaCtx.scope(*nodePtr), true /* private items *//*);
-                             }
-                          }
-                        }
-                      }
-
-                      //placePragmas({ nodePtr }, pragmaCtx.scope(*nodePtr)); //TODO pragmas
-                    };*/
 
     //return std::make_pair(&sgnode, deferred);
     return std::make_pair(&sgnode, nothingToComplete);
@@ -1597,47 +1604,6 @@ namespace {
     SgAdaProtectedSpec*     nodePtr  = &sgnode;
 
     sgnode.set_hasPrivate(!ada_node_is_null(&lal_private_list) && ada_node_children_count(&lal_private_list) > 0);
-
-    /*auto deferred = [ctx,nodePtr,protectedNode](AstContext::PragmaContainer pragmas) -> void
-                    {
-                      AstContext pragmaCtx = ctx.pragmas(pragmas);
-
-                      // visible items
-                      {
-                        //Get the public part
-                        ada_base_entity lal_public_part;
-                        ada_protected_def_f_public_part(lal_element, &lal_public_part);
-                        ada_declarative_part_f_decls(&lal_public_part, &lal_public_part);
-                        int count = ada_node_children_count(&lal_public_part);
-
-                        //Call getElement on each public decl
-                        for(int i = 0; i < count; ++i){
-                          ada_base_entity lal_decl;
-                          if(ada_node_child(&lal_public_part, i, &lal_decl) != 0){
-                            handleElement(&lal_decl, pragmaCtx.scope(*nodePtr));
-                          }
-                        }
-                      }
-
-                      // private items
-                      {
-                        //Get the private part
-                        ada_base_entity lal_private_part;
-                        ada_protected_def_f_private_part(lal_element, &lal_private_part);
-                        ada_declarative_part_f_decls(&lal_private_part, &lal_private_part);
-                        int count = ada_node_children_count(&lal_private_part);
-
-                        //Call getElement on each private decl
-                        for(int i = 0; i < count; ++i){
-                          ada_base_entity lal_decl;
-                          if(ada_node_child(&lal_private_part, i, &lal_decl) != 0){
-                            handleElement(&lal_decl, pragmaCtx.scope(*nodePtr), true /* private items *//*);
-                          }
-                        }
-                      }
-
-                      placePragmas({ nodePtr }, pragmaCtx.scope(*nodePtr));
-                    };*/ //TODO pragmas
 
     //Get the public part
     ada_base_entity lal_public_part;
@@ -2073,12 +2039,13 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
     std::string kind_name_string = kind_name.string_value();
     logTrace() << "handleStmt called on a " << kind_name_string << std::endl;
 
-    SgStatement*            assocstmt = nullptr;
-    //Statement_Struct&       stmt = elem.The_Union.Statement; //Same as lal_stmt now
-    //ElemIdRange             pragmaRange  = idRange(stmt.Corresponding_Pragmas);
-    //std::vector<Element_ID> pragmaVector;
+    if(kind == ada_pragma_node)
+    {
+      handlePragma(lal_stmt, nullptr, ctx);
+      return;
+    }
 
-    //std::copy(pragmaRange.first, pragmaRange.second, std::back_inserter(pragmaVector));
+    SgStatement*            assocstmt = nullptr;
 
     switch(kind){
       case ada_null_stmt:                    // 5.1
@@ -2228,11 +2195,6 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           completeStmt(sgnode, lal_stmt, ctx, lblname);
           recordNode(ctx.labelsAndLoops().libadalangLoops(), hash, sgnode);
 
-          /*PragmaContainer pendingPragmas;
-          AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
-
-          traverseIDs(adaStmts, elemMap(), StmtCreator{pragmaCtx.scope(block)});
-          processAndPlacePragmas(stmt.Pragmas, { &block }, pragmaCtx); // pragmaCtx.scope(block) ?*/ //TODO Pragmas
           //Call handleStmt for each stmt in the loop
           int count = ada_node_children_count(&lal_loop_stmt_list);
           for(int i = 0; i < count; ++i){
@@ -2261,11 +2223,6 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           int hash = hash_node(lal_stmt);
           recordNode(ctx.labelsAndLoops().libadalangLoops(), hash, sgnode);
 
-          /*PragmaContainer pendingPragmas;
-          AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
-
-          traverseIDs(adaStmts, elemMap(), StmtCreator{pragmaCtx.scope(block)});
-          processAndPlacePragmas(stmt.Pragmas, { &block }, pragmaCtx); // pragmaCtx.scope(block) ?*/ //TODO Pragmas
           //Call handleStmt for each stmt in the loop
           int count = ada_node_children_count(&lal_loop_stmt_list);
           for(int i = 0; i < count; ++i){
@@ -2323,17 +2280,6 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           int hash = hash_node(lal_stmt);
           recordNode(ctx.labelsAndLoops().libadalangLoops(), hash, sgnode);
 
-          /*PragmaContainer pendingPragmas;
-          AstContext      pragmaCtx = ctx.pragmas(pendingPragmas);
-
-          // loop body
-          {
-            ElemIdRange            loopStmts = idRange(stmt.Loop_Statements);
-
-            traverseIDs(loopStmts, elemMap(), StmtCreator{pragmaCtx.scope(block)});
-          }
-
-          processAndPlacePragmas(stmt.Pragmas, { &block }, pragmaCtx); // pragmaCtx.scope(block) ?*/ //TODO pragmas
           //Call handleStmt for each stmt in the loop
           int count = ada_node_children_count(&lal_loop_stmt_list);
           for(int i = 0; i < count; ++i){
@@ -2404,7 +2350,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           completeStmt(sgnode, lal_stmt, ctx, lblname);
 
           //Get the decls, stmts, exceptions, & pragmas of this block body
-          ada_base_entity lal_decls, lal_stmts, lal_exceptions, lal_pragmas;
+          ada_base_entity lal_decls, lal_stmts, lal_exceptions;
 
           if(kind == ada_decl_block){
             ada_decl_block_f_decls(lal_stmt, &lal_decls); //lal_decls should now be an ada_declarative_part
@@ -2423,7 +2369,6 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           completeDeclarationsWithHandledBlock( &lal_decls,
                                                 &lal_stmts,
                                                 &lal_exceptions,
-                                                &lal_pragmas,
                                                 simpleBlockHandler,
                                                 simpleExceptionBlockHandler,
                                                 sgnode,
@@ -2616,14 +2561,12 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
             sg::linkParentChild(sgnode, as<SgStatement>(block), &SgAdaAcceptStmt::set_body);
 
            //Get the stmts, exceptions, and pragmas for this package
-            ada_base_entity lal_stmts, lal_exceptions, lal_pragmas;
+            ada_base_entity lal_stmts, lal_exceptions;
             ada_handled_stmts_f_stmts(&handled_stmts, &lal_stmts);
             ada_handled_stmts_f_exceptions(&handled_stmts, &lal_exceptions);
-            //TODO lal_pragmas
 
             completeHandledBlock( &lal_stmts,
                                   &lal_exceptions,
-                                  &lal_pragmas,
                                   simpleBlockHandler,
                                   simpleExceptionBlockHandler,
                                   block,
@@ -2855,10 +2798,6 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
     sgnode.set_trystmt(&tryStmt);
     sgnode.set_parent(tryStmt.get_catch_statement_seq_root());
 
-    /*PragmaContainer pendingPragmas;
-    AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
-
-    traverseIDs(range, elemMap(), StmtCreator{pragmaCtx.scope(body)});*/ //TODO Pragmas
     //Handle the stmts for this excp
     int count = ada_node_children_count(&lal_stmts);
     for(int i = 0; i < count; ++i){
@@ -2870,7 +2809,6 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
 
     computeSourceRangeFromChildren(body);
     attachSourceLocation(sgnode, lal_element, ctx);
-    //processAndPlacePragmas(ex.Pragmas, { &body }, pragmaCtx); // pragmaCtx.scope(body) ?
   }
 
 
@@ -2953,8 +2891,7 @@ namespace {
 } //end unnamed namespace
 
 void handlePragma(ada_base_entity* lal_element, SgStatement* stmtOpt, AstContext ctx){
-  logWarn() << "handlePragma() is not implemented!\n";
-  //ctx.appendStatement(createPragma_common(el, stmtOpt, ctx));
+  ctx.appendStatement(createPragma_common(lal_element, stmtOpt, ctx));
 }
 
 void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
@@ -3102,7 +3039,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ctx.appendStatement(sgnode);
 
         //Get the stmts, decls, exceptions, and pragmas for this package
-        ada_base_entity lal_decls, lal_stmts, lal_exceptions, lal_pragmas;
+        ada_base_entity lal_decls, lal_stmts, lal_exceptions;
 
         ada_package_body_f_decls(lal_element, &lal_decls); //lal_decls should now be an ada_declarative_part
         ada_declarative_part_f_decls(&lal_decls, &lal_decls); //lal_decls should now be the list of decls
@@ -3119,12 +3056,10 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           ada_package_body_f_stmts(lal_element, &lal_stmts); //Force lal_stmts and lal_exceptions to be null instead of undefined
           ada_package_body_f_stmts(lal_element, &lal_exceptions);
         }
-        //TODO lal_pragmas
 
         completeDeclarationsWithHandledBlock( &lal_decls,
                                               &lal_stmts,
                                               &lal_exceptions,
-                                              &lal_pragmas,
                                               routineBlockHandler,
                                               routineExceptionBlockHandler,
                                               pkgbody,
@@ -3221,13 +3156,11 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
             for(int i = 0; i < count; ++i){
               ada_base_entity lal_private_part;
               if(ada_node_child(&lal_private_list, i, &lal_private_part) != 0){
-                handleElement(&lal_private_part, pragmaCtx.scope(pkgspec), true);
+                handleElement(&lal_private_part, pragmaCtx.scope(pkgspec), true /* private items */);
               }
             }
           }
         }
-
-        //processAndPlacePragmas(decl.Pragmas, { &pkgspec }, pragmaCtx.scope(pkgspec)); //TODO Pragmas
 
         assocdecl = &sgnode;
         break;
@@ -3664,17 +3597,6 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           }
         }
 
-        /*PragmaContainer pendingPragmas;
-        AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
-
-        {
-          ElemIdRange decls = idRange(decl.Protected_Operation_Items);
-
-          traverseIDs(decls, elemMap(), StmtCreator{pragmaCtx.scope(pobody)});
-        }
-
-        processAndPlacePragmas(decl.Pragmas, { &pobody }, pragmaCtx.scope(pobody));*/ //TODO pragmas
-
         assocdecl = &sgnode;
         break;
       }
@@ -3720,8 +3642,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         recordNode(libadalangDecls(), hash, sgnode);
 
-        //Get the stmts, decls, exceptions, and pragmas for this package
-        ada_base_entity lal_decls, lal_stmts, lal_exceptions, lal_pragmas;
+        //Get the stmts, decls, and exceptions for this package
+        ada_base_entity lal_decls, lal_stmts, lal_exceptions;
 
         ada_task_body_f_decls(lal_element, &lal_decls); //lal_decls should now be an ada_declarative_part
         ada_declarative_part_f_decls(&lal_decls, &lal_decls); //lal_decls should now be the list of decls
@@ -3729,12 +3651,10 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_task_body_f_stmts(lal_element, &lal_handled_stmts);
         ada_handled_stmts_f_stmts(&lal_handled_stmts, &lal_stmts);
         ada_handled_stmts_f_exceptions(&lal_handled_stmts, &lal_exceptions);
-        //TODO lal_pragmas
 
         completeDeclarationsWithHandledBlock( &lal_decls,
                                               &lal_stmts,
                                               &lal_exceptions,
-                                              &lal_pragmas,
                                               routineBlockHandler,
                                               routineExceptionBlockHandler,
                                               tskbody,
@@ -4209,10 +4129,13 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         privatize(sgnode, isPrivate);
         ctx.appendStatement(sgnode);
 
+        //LAL_REP_ISSUE: Libadalang's first_corresponding_decl points to the generic,
+        //  whereas ASIS' Corresponding_Declaration points to a compiler generated instance (which Libadalang does not have).
+        //  Not sure how to translate this to Libadalang.
         /*// PP (4/1/22): fill in the declaration
         handleDeclaration( retrieveElem(elemMap(), decl.Corresponding_Declaration),
                            ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope()))
-                         );*/ //TODO Not sure Libadalang creates a corresponding decl?
+                         );*/
 
         // mark whole subtree under sgnode.get_instantiatedScope() as instantiated
         si::Ada::setSourcePositionInSubtreeToCompilerGenerated(sgnode.get_instantiatedScope());
@@ -4309,10 +4232,6 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           assocdecl = discr;
         }
 
-        //AstContext::PragmaContainer protectedPragmas = splitOfPragmas(pragmaVector, protectedDeclPragmas, ctx); //TODO pragmas
-
-        //spec.second(std::move(protectedPragmas)); // complete the body
-
         break;
       }
     case ada_task_type_decl:                  // 9.1(2)
@@ -4374,10 +4293,6 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           assocdecl = discr;
         }
 
-        //AstContext::PragmaContainer taskPragmas = splitOfPragmas(pragmaVector, taskDeclPragmas, ctx); //TODO Pragmas
-
-        //spec.second(std::move(taskPragmas)); // complete the body
-
          break;
       }
     case ada_single_protected_decl:           // 3.3.1(2):9.4(2)
@@ -4399,10 +4314,6 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         int hash = hash_node(&lal_defining_name);
         recordNode(libadalangDecls(), hash, sgnode);
 
-        /*AstContext::PragmaContainer protectedPragmas = splitOfPragmas(pragmaVector, protectedDeclPragmas, ctx);
-
-        spec.second(std::move(protectedPragmas)); // complete the body*/ //TODO pragmas
-
         assocdecl = &sgnode;
         break;
       }
@@ -4417,7 +4328,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
 
         std::string        ident   = getFullName(&lal_identifier);
-        int                 hash   = hash_node(&lal_defining_name);
+        int                hash    = hash_node(&lal_defining_name);
         auto               spec    = getTaskSpecForSingleTask(lal_element, ctx);
         SgAdaTaskSpecDecl& sgnode  = mkAdaTaskSpecDecl(ident, SG_DEREF(spec.first), ctx.scope());
 
@@ -4427,10 +4338,6 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         //~ recordNode(libadalangTypes(), hash, sgnode);
         recordNode(libadalangDecls(), hash, sgnode);
-
-        //AstContext::PragmaContainer taskPragmas = splitOfPragmas(pragmaVector, taskDeclPragmas, ctx); //TODO Pragmas
-
-        //spec.second(std::move(taskPragmas)); // complete the body
 
         assocdecl = &sgnode;
         break;
@@ -5045,13 +4952,6 @@ void handleClause(ada_base_entity* lal_element, AstContext ctx)
             createComponentClause(&lal_component_clause, ctx.scope(components));
           }
         }
-
-        /*PragmaContainer pendingPragmas; //TODO Pragmas
-        AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
-
-        traverseIDs(range, elemMap(), ComponentClauseCreator{pragmaCtx.scope(components)});
-
-        processAndPlacePragmas(repclause.Pragmas, { &components }, pragmaCtx.scope(components));*/
 
         break;
       }

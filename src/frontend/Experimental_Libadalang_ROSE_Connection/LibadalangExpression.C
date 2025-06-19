@@ -1568,7 +1568,7 @@ namespace{
             ada_call_expr_p_is_array_slice(lal_element, &lal_p_is_array_slice);
 
             if(lal_p_is_array_slice){ //TODO This is repeated code from below, b/c I couldn't get the if conditions to line up
-              //Sometimes, p_is_array_slice is true even if it isn't an array slice???? (a-strunb.ads 507:46-507:61)
+              //LAL_REP_ISSUE: Sometimes, p_is_array_slice is true even if it isn't an array slice???? (a-strunb.ads 507:46-507:61)
               //  So, we need to check if the suffix is a bin op with op_double_dot
               ada_base_entity lal_bin_op;
               ada_call_expr_f_suffix(lal_element, &lal_bin_op);
