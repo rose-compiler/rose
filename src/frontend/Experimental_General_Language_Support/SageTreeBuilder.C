@@ -1111,20 +1111,74 @@ Leave(SgExprStatement* exprStmt, std::vector<std::string> &labels)
    SageInterface::appendStatement(stmt, SB::topScopeStack());
 }
 
+// Modify expr type to match given type if possible
+bool SageTreeBuilder::
+matchExprType(SgType* matchType, SgExpression* &origExpr) {
+   // Only attempt to match enum types at the moment (they are the problem child)
+   auto origEnumVal{isSgEnumVal(origExpr)};
+   auto matchEnumType{isSgEnumType(matchType)};
+
+   if (!origEnumVal || !matchEnumType) return false;
+
+   auto origEnumFieldName{origEnumVal->get_name()};
+   auto origExprTypeName{origEnumVal->get_declaration()->get_name()};
+   auto matchTypeName{matchEnumType->get_name()};
+
+   if (origExprTypeName == matchTypeName) return true;
+
+   auto enumScope{origEnumVal->get_declaration()->get_scope()};
+   auto symbolTable{enumScope->get_symbol_table()};
+
+   SgEnumFieldSymbol* firstField{symbolTable->find_enum_field(origEnumFieldName)};
+   SgEnumFieldSymbol* nextField{firstField};
+   while (nextField) {
+      if (auto namedType = isSgNamedType(nextField->get_declaration()->get_type())) {
+         if (namedType->get_name() != matchTypeName) {
+            nextField = symbolTable->next_enum_field();
+         }
+         else {
+            SgInitializedName* initName = nextField->get_declaration();
+            SgAssignInitializer* initializer = isSgAssignInitializer(initName->get_initializer());
+
+            if (!isSgEnumVal(initializer->get_operand())) {
+               // Could be a cast (see regression test gitlab-issue-261.jov)
+               origExpr = isSgCastExp(initializer->get_operand());
+            }
+            ASSERT_not_null(origExpr);
+
+            if (isSgEnumVal(origExpr) && origExpr->get_parent() == nullptr) {
+               // Create a new enum val
+               auto enumVal = isSgEnumVal(initializer->get_operand());
+               auto val = enumVal->get_value();
+               auto decl = enumVal->get_declaration();
+               enumVal = SageBuilder::buildEnumVal_nfi(val, decl, enumVal->get_name());
+
+               // No parent so we can delete
+               delete origExpr;
+               origExpr = enumVal;
+            }
+
+            return true;
+         }
+      }
+   }
+
+   return false;
+}
+
 void SageTreeBuilder::
-Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* params)
+Enter(SgFunctionCallExp* &funcCall, const std::string &name, SgExprListExp* params)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionCallExp* &, ...) \n";
 
-   func_call = nullptr;
+   funcCall = nullptr;
 
    // Function calls are ambiguous with arrays in Fortran (and type casts and the replication operator
    // in Jovial).  Start out by assuming it's a function call if another symbol doesn't exist.
+   SgFunctionSymbol* funcSymbol = SI::lookupFunctionSymbolInParentScopes(name, SB::topScopeStack());
 
-   SgFunctionSymbol* func_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name, SageBuilder::topScopeStack());
-
-   if (func_symbol == nullptr) {
-      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
+   if (funcSymbol == nullptr) {
+      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SB::topScopeStack());
       if (symbol || isInitializationContext()) {
          // There is a symbol (but not a function symbol) or name that could be part of an
          // initialization expression, punt and let variable handling take care of it.
@@ -1132,16 +1186,16 @@ Enter(SgFunctionCallExp* &func_call, const std::string &name, SgExprListExp* par
       }
       else {
          // Assume a void return type.
-         SgType* return_type = SageBuilder::buildVoidType();
-         func_call = SB::buildFunctionCallExp(SgName(name), return_type, params, SageBuilder::topScopeStack());
+         SgType* returnType = SageBuilder::buildVoidType();
+         funcCall = SB::buildFunctionCallExp(SgName(name), returnType, params, SageBuilder::topScopeStack());
       }
    }
    else {
-      func_call = SageBuilder::buildFunctionCallExp(func_symbol, params);
+      funcCall = SageBuilder::buildFunctionCallExp(funcSymbol, params);
    }
 
-   ASSERT_not_null(func_call);
-   SageInterface::setSourcePosition(func_call);
+   ASSERT_not_null(funcCall);
+   SageInterface::setSourcePosition(funcCall);
 }
 
 void SageTreeBuilder::

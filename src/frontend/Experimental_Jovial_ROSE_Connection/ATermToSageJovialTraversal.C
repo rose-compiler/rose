@@ -6175,6 +6175,9 @@ ATbool ATermToSageJovialTraversal::traverse_BinaryExpression(ATerm term, SgExpre
   ASSERT_not_null(lhs);
   ASSERT_not_null(rhs);
 
+  // Ensure the type of the rhs is compatible with the lhs (primarily for StatusConstants)
+  sage_tree_builder.matchExprType(lhs->get_type(), rhs);
+
   switch (op) {
     // Arithmetic operators
     case e_operator_add:
@@ -6252,9 +6255,8 @@ ATbool ATermToSageJovialTraversal::traverse_NumericConversion(ATerm term, SgExpr
 #endif
 
    ATerm t_formula, t_conversion;
-
-   SgExpression* cast_formula = nullptr;
-   SgType* conv_type = nullptr;
+   SgType* conv_type{nullptr};
+   SgExpression* cast_formula{nullptr};
 
    expr = nullptr;
 
@@ -6423,8 +6425,8 @@ ATbool ATermToSageJovialTraversal::traverse_CharacterFormula(ATerm term, SgExpre
    ATerm t_literal, t_formula, t_conv_type;
 
    std::string str_literal;
-   SgExpression* cast_formula = nullptr;
-   SgType* conv_type = nullptr;
+   SgType* conv_type{nullptr};
+   SgExpression* cast_formula{nullptr};
 
    expr = nullptr;
 
@@ -6983,10 +6985,10 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunctionVariable(ATerm term, SgE
 
    ATerm t_variable, t_var, t_fbyte, t_nbyte;
 
-   SgExpression* variable = nullptr;
-   SgExpression* first_byte = nullptr;
-   SgExpression* length = nullptr;
-   SgType* return_type = nullptr;
+   SgExpression* variable{nullptr};
+   SgExpression* first_byte{nullptr};
+   SgExpression* length{nullptr};
+   SgType* return_type{nullptr};
 
    func_call = nullptr;
 
@@ -7073,8 +7075,8 @@ ATbool ATermToSageJovialTraversal::traverse_RepFunctionVariable(ATerm term, SgEx
    ATerm t_rep, t_name, t_subscript;
    char* name;
    std::vector<SgExpression*> subscript;
-   SgExpression* var_ref = nullptr;
-   bool has_subscript = false;
+   SgExpression* var_ref{nullptr};
+   bool has_subscript{false};
 
    func_call = nullptr;
 
@@ -7197,8 +7199,8 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 #endif
 
    ATerm t_name, t_param_list;
-   std::string name;
-   SgExprListExp* expr_list = nullptr;
+   std::string name{};
+   SgExprListExp* expr_list{nullptr};
 
    expr = nullptr;
 
@@ -8404,7 +8406,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitLiteral(ATerm term, SgExpression*
 
    ATerm t_bead_size, t_bead;
    char * bead_size, *bead;
-   std::string literal = "";
+   std::string literal{""};
 
    expr = nullptr;
 

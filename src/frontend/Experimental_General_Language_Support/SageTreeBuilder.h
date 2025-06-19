@@ -296,11 +296,22 @@ public:
         return (std::find(lst.begin(), lst.end(), item) != lst.end());
      }
 
-// Builder function manages implicitly declared variable references
-   SgVarRefExp* buildVarRefExp_nfi(const std::string & name);
+/** Builder function manages implicitly declared variable references. */
+SgVarRefExp* buildVarRefExp_nfi(const std::string & name);
 
-// Builder function manages pointer references to undeclared types
-   SgPointerType* buildPointerType(const std::string &base_type_name, SgType* base_type);
+/** Builder function manages pointer references to undeclared types. */
+SgPointerType* buildPointerType(const std::string &base_type_name, SgType* base_type);
+
+/**
+ * @brief Converts the given expression (`expr`) to the target type (`type`).
+ *
+ * This method is primarily used to convert SgEnumVal expressions because
+ * multiple symbols for SgEnumField(s) can exist with the same enumerator name.
+ *
+ * @param type The type to convert to.
+ * @param expr The expression whose type should be converted, if possible.
+ */
+bool matchExprType(SgType* type, SgExpression* &expr);
 
 // Symbols (Jovial specific, should this go in SageInterface?)
    void injectAliasSymbol(const std::string &name);
