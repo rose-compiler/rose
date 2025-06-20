@@ -1146,15 +1146,23 @@ matchExprType(SgType* matchType, SgExpression* &origExpr) {
             }
             ASSERT_not_null(origExpr);
 
-            if (isSgEnumVal(origExpr) && origExpr->get_parent() == nullptr) {
-               // Create a new enum val
+            auto parent = origExpr->get_parent();
+
+            // Predicate for creating a new SgEnumVal
+            //   1. The original expression must be an SgEnumVal
+            //   2. Parent of original must be:
+            //      a. SgExprListExp* : caller responsible for replacing the original
+            //      b. nullptr : delete the original
+            //
+            if (isSgEnumVal(origExpr) && (isSgExprListExp(parent) || parent == nullptr)) {
+               // Create a new enum value
                auto enumVal = isSgEnumVal(initializer->get_operand());
                auto val = enumVal->get_value();
                auto decl = enumVal->get_declaration();
                enumVal = SageBuilder::buildEnumVal_nfi(val, decl, enumVal->get_name());
 
-               // No parent so we can delete
-               delete origExpr;
+               // Cleanup
+               if (!parent) delete origExpr;
                origExpr = enumVal;
             }
 
@@ -1162,7 +1170,6 @@ matchExprType(SgType* matchType, SgExpression* &origExpr) {
          }
       }
    }
-
    return false;
 }
 
@@ -1175,10 +1182,34 @@ Enter(SgFunctionCallExp* &funcCall, const std::string &name, SgExprListExp* para
 
    // Function calls are ambiguous with arrays in Fortran (and type casts and the replication operator
    // in Jovial).  Start out by assuming it's a function call if another symbol doesn't exist.
+
    SgFunctionSymbol* funcSymbol = SI::lookupFunctionSymbolInParentScopes(name, SB::topScopeStack());
 
+   // First fix actual arguments to match formal parameter types
+   if (funcSymbol) {
+      auto funcDecl{funcSymbol->get_declaration()};
+      auto funcArgs{funcDecl->get_parameterList()->get_args()};
+      SgExpressionPtrList& paramList{params->get_expressions()};
+
+      ASSERT_require(funcArgs.size() == paramList.size());
+
+      for (uint i = 0; i < funcArgs.size(); i++) {
+         SgExpression* origExpr{paramList[i]};
+         SgExpression* newExpr{origExpr};
+
+         if (matchExprType(funcArgs[i]->get_type(), newExpr)) {
+            if (newExpr != origExpr) {
+               // Replace list entry
+               paramList[i] = newExpr;
+               newExpr->set_parent(params);
+               delete origExpr;
+            }
+         }
+      }
+   }
+
    if (funcSymbol == nullptr) {
-      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SB::topScopeStack());
+      SgSymbol* symbol = SI::lookupSymbolInParentScopes(name, SB::topScopeStack());
       if (symbol || isInitializationContext()) {
          // There is a symbol (but not a function symbol) or name that could be part of an
          // initialization expression, punt and let variable handling take care of it.
@@ -1186,12 +1217,12 @@ Enter(SgFunctionCallExp* &funcCall, const std::string &name, SgExprListExp* para
       }
       else {
          // Assume a void return type.
-         SgType* returnType = SageBuilder::buildVoidType();
+         SgType* returnType = SB::buildVoidType();
          funcCall = SB::buildFunctionCallExp(SgName(name), returnType, params, SageBuilder::topScopeStack());
       }
    }
    else {
-      funcCall = SageBuilder::buildFunctionCallExp(funcSymbol, params);
+      funcCall = SB::buildFunctionCallExp(funcSymbol, params);
    }
 
    ASSERT_not_null(funcCall);
