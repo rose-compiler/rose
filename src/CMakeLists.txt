@@ -1027,6 +1027,11 @@ if(Threads_FOUND OR "${Boost_LIBRARIES}" MATCHES "Boost::thread")
   set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -pthread")
 endif()
 
+# Include Z3
+if(Z3_FOUND_LIB)
+  set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I${Z3_HEADER_PATH}")
+endif()
+
 # Fix double slashes in rose-config
 if("${Boost_INCLUDE_DIRS}" MATCHES "^/")
   # this var starts with a slash so we dont append another one after the -I 
