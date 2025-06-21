@@ -11,6 +11,7 @@ install(FILES
   DispatcherPowerpc.h
   DispatcherX86.h
   IntervalSemantics.h
+  LlvmSemantics.h
   MultiSemantics.h
   NativeSemantics.h
   NullSemantics.h

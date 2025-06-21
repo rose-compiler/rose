@@ -11,6 +11,6 @@ add_dependencies(roseDisassemblers rosetta_generated)
 
 install(
   FILES
-    Assembler.h AssemblerX86.h AssemblerX86Init.h
+    Assembler.h BitPattern.h AssemblerX86.h AssemblerX86Init.h
     x86InstructionProperties.h
   DESTINATION ${INCLUDE_INSTALL_DIR})
