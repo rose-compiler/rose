@@ -8209,38 +8209,31 @@ SgSymbolTable::find_aliased_symbol(const SgName & nm, SgSymbol *sp)
      return NULL;
    }
 
-
-// DQ (1/31/2007): New functions that will replace the deprecated find() member function
 bool
 SgSymbolTable::exists ( const SgName & nm ) const
    {
-     ROSE_ASSERT(p_table != NULL);
+     ASSERT_not_null(p_table);
      return p_table->find(nm) != p_table->end();
    }
 
-// DQ (1/31/2007): New functions that will replace the deprecated find() member function
 bool
 SgSymbolTable::exists ( const SgSymbol *sp ) const
    {
   // DQ (3/10/2007): We can now use the stored p_symbolSet (STL set of SgNode*) to do this test more efficiently.
-  // return p_symbolSet.find(sp) != p_symbolSet.end();
      return p_symbolSet.find(const_cast<SgSymbol*>(sp)) != p_symbolSet.end();
    }
 
-// DQ (1/31/2007): New functions that will replace the deprecated find() member function
 bool
 SgSymbolTable::exists ( const SgName & nm, SgSymbol *sp ) const
    {
   // DQ (3/10/2007): We can now use the stored p_symbolSet (STL set of SgNode*) to do this test more efficiently.
   // Since we if we find the symbol it exists, we can test the name separately
-  // bool returnValue = false;
 
   // Test if the symbol is in the set, else the name is not relavant to the existence
      if (p_symbolSet.find(sp) != p_symbolSet.end())
         {
        // Now look to make sure that we have an entry with the correct name (and pointer value)
           hash_iterator p_iterator = p_table->find(nm);
-       // while (p_iterator != p_table->end() && p_iterator->first == nm)
           while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
              {
                if ( p_iterator->second == sp )
@@ -9660,9 +9653,6 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
   // DQ (9/30/2008): If we have not found a symbol from the current scope, search for symbols
   // injected from other scopes using the Fortran "use" statment (or in a future implementation
   // the C++ "using" directive or "using" declaration).
-  // p_iterator = save_original_iterator;
-  // while(p_iterator != p_table->end() && (*p_iterator).first==nm)
-  // while(p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,nm))
 
   // Reset the range so we can look for SgAliasSymbols.
      range = save_original_range;
@@ -9672,7 +9662,6 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
         {
           p_iterator = i;
 
-       // mprintf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
           SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
           if (aliasedSymbol != NULL)
              {
@@ -10076,34 +10065,32 @@ SgSymbolTable::find_template()
 SgSymbol*
 SgSymbolTable::next_any()
    {
-     ROSE_ASSERT(p_table != NULL);
-     if(p_table)
+     ASSERT_not_null(p_table);
+     if (p_table)
         {
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
           while( p_iterator != p_table->end() )
              {
-            // if( p_no_name || (*p_iterator).first == p_name )
                if( p_no_name || get_table()->key_eq()((*p_iterator).first,p_name) )
                     return (SgSymbol *) p_iterator->second;
                p_iterator++;
              }
         }
 
-     return NULL;
+     return nullptr;
    }
 
 SgVariableSymbol*
 SgSymbolTable::next_variable()
    {
-     ROSE_ASSERT(p_table != NULL);
-     if (p_table != NULL)
+     ASSERT_not_null(p_table);
+     if (p_table)
         {
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-       // while (p_iterator != p_table->end() && (p_no_name || (*p_iterator).first==p_name))
           while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgVariableSymbol((*p_iterator).second))
@@ -10112,19 +10099,18 @@ SgSymbolTable::next_variable()
              }
         }
 
-     return NULL;
+     return nullptr;
    }
 
 SgClassSymbol*
 SgSymbolTable::next_class()
    {
-     ROSE_ASSERT(p_table != NULL);
-     if(p_table)
+     ASSERT_not_null(p_table);
+     if (p_table)
         {
           p_iterator++; // go to next one
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
           while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgClassSymbol((*p_iterator).second))
@@ -10133,19 +10119,18 @@ SgSymbolTable::next_class()
              }
         }
 
-     return NULL;
+     return nullptr;
    }
 
 SgFunctionSymbol*
 SgSymbolTable::next_function()
    {
-     ROSE_ASSERT(p_table != NULL);
-     if(p_table)
+     ASSERT_not_null(p_table);
+     if (p_table)
         {
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
           while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgFunctionSymbol((*p_iterator).second))
@@ -10154,19 +10139,18 @@ SgSymbolTable::next_function()
              }
         }
 
-     return NULL;
+     return nullptr;
    }
 
 SgTypedefSymbol*
 SgSymbolTable::next_typedef()
    {
-     ROSE_ASSERT(p_table != NULL);
-     if (p_table != NULL)
+     ASSERT_not_null(p_table);
+     if (p_table)
         {
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
           while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgTypedefSymbol((*p_iterator).second))
@@ -10175,21 +10159,19 @@ SgSymbolTable::next_typedef()
              }
         }
 
-     return NULL;
+     return nullptr;
    }
 
 
-// DQ (1/30/2007): Added this as a new member function.
 SgEnumSymbol*
 SgSymbolTable::next_enum()
    {
-     ROSE_ASSERT(p_table != NULL);
-     if(p_table)
+     ASSERT_not_null(p_table);
+     if (p_table)
         {
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
           while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgEnumSymbol((*p_iterator).second))
@@ -10198,20 +10180,18 @@ SgSymbolTable::next_enum()
              }
         }
 
-     return NULL;
+     return nullptr;
    }
 
-// DQ (1/30/2007): Added this as a new member function.
 SgEnumFieldSymbol*
 SgSymbolTable::next_enum_field()
    {
-     ROSE_ASSERT(p_table != NULL);
-     if(p_table)
+     ASSERT_not_null(p_table);
+     if (p_table)
         {
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
           while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if(isSgEnumFieldSymbol((*p_iterator).second))
@@ -10226,13 +10206,12 @@ SgSymbolTable::next_enum_field()
 SgLabelSymbol*
 SgSymbolTable::next_label()
    {
-     ROSE_ASSERT(p_table != NULL);
-     if (p_table != NULL)
+     ASSERT_not_null(p_table);
+     if (p_table)
         {
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
           while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgLabelSymbol((*p_iterator).second))
@@ -10241,19 +10220,18 @@ SgSymbolTable::next_label()
              }
         }
 
-     return NULL;
+     return nullptr;
    }
 
 SgNamespaceSymbol*
 SgSymbolTable::next_namespace()
    {
-     ROSE_ASSERT(p_table != NULL);
-     if (p_table != NULL)
+     ASSERT_not_null(p_table);
+     if (p_table)
         {
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
           while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgNamespaceSymbol((*p_iterator).second))
@@ -10262,19 +10240,18 @@ SgSymbolTable::next_namespace()
              }
         }
 
-     return NULL;
+     return nullptr;
    }
 
 SgTemplateSymbol*
 SgSymbolTable::next_template()
    {
-     ROSE_ASSERT(p_table != NULL);
-     if (p_table != NULL)
+     ASSERT_not_null(p_table);
+     if (p_table)
         {
           p_iterator++;
 
        // DQ (10/8/2007): Is there a use of find that would be O(log n) and be a faster way to return the next matching entry?
-       // while( p_iterator != p_table->end() && (p_no_name || (*p_iterator).first == p_name))
           while (p_iterator != p_table->end() && (p_no_name || get_table()->key_eq()((*p_iterator).first,p_name)))
              {
                if (isSgTemplateSymbol((*p_iterator).second))
@@ -10283,15 +10260,14 @@ SgSymbolTable::next_template()
              }
         }
 
-     return NULL;
+     return nullptr;
    }
-
 
 // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
 int
 SgSymbolTable::size() const
    {
-     ROSE_ASSERT(p_table != NULL);
+     ASSERT_not_null(p_table);
      return p_table->size();
    }
 
@@ -10299,15 +10275,14 @@ SgSymbolTable::size() const
 int
 SgSymbolTable::count(const SgName & nm) const
    {
-  // DQ (1/30/2007): assertion added
-     ROSE_ASSERT(p_table != NULL);
+     ASSERT_not_null(p_table);
      return p_table->count(nm);
    }
 
 int
 SgSymbolTable::count_aliases(const SgName & nm) const
    {
-     ROSE_ASSERT(p_table != NULL);
+     ASSERT_not_null(p_table);
 
   // This is the fastest way (that I know of) to iterate over just those entries that match the key.
      std::pair<hash_iterator,hash_iterator> range = p_table->equal_range(nm);
@@ -10339,7 +10314,6 @@ void
 SgSymbolTable::print( std::string label, VariantT nodeType )
    {
      printf ("Printing out the data within the symbol table (p_table = %p,label = %s size = %d): \n",p_table,label.c_str(),size());
-
      printf ("Internal static data: p_no_name: %s p_name = %s \n",(p_no_name == true) ? "true" : "false",p_name.str());
 
      SgNode* parentNode = get_parent();
@@ -10347,22 +10321,17 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
      printf ("Symbol table has parent = %p = %s \n",parentNode,parentNode->class_name().c_str());
 
      ASSERT_not_null(p_table);
-     if (p_table != nullptr)
+     if (p_table)
         {
-       // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
-       // SgSymbolHashBase::iterator i = p_table->begin();
           hash_iterator i = p_table->begin();
 
           int idx = 0;
           while (i != p_table->end())
              {
-            // DQ: removed SgName casting operator to char*
-            // cout << "[" << idx << "] " << (*i).first;
-            // cout << "[" << idx << "] " << (*i).first.str();
-               ROSE_ASSERT ( isSgSymbol( (*i).second ) != NULL );
+               ASSERT_not_null ( isSgSymbol( (*i).second ) );
 
                SgSymbol* symbol = isSgSymbol((*i).second);
-               ROSE_ASSERT ( symbol != NULL );
+               ASSERT_not_null(symbol);
                SgType* type = symbol->get_type();
 
                SgNamedType* namedType = isSgNamedType(type);
@@ -10373,7 +10342,6 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                   }
                  else
                   {
-                 // DQ (5/7/2004): modified to allow for get_type() to return NULL
                     if (type != nullptr)
                        {
                          nameOfType = type->sage_class_name();
@@ -11327,7 +11295,7 @@ SgInitializedName::operator< (const SgInitializedName&) const
 SgType*
 SgInitializedName::get_type() const
    {
-     assert(this != NULL);
+     ASSERT_not_null(this);
      return p_typeptr;
    }
 
@@ -11345,23 +11313,17 @@ SgInitializedName::set_type(SgType *t)
 SgInitializer*
 SgInitializedName::get_initializer() const
    {
-  // DQ (12/17/2006): These should be able to be generated by ROSETTA!
-  // The semantics of p_is_initializer appears to not be required.
-
-     assert(this != NULL);
+     ASSERT_not_null(this);
      if (p_is_initializer)
           return p_initptr;
        else
-          return NULL;
+          return nullptr;
    }
 
 void
 SgInitializedName::set_initializer(SgInitializer* i)
    {
-  // DQ (12/17/2006): These should be able to be generated by ROSETTA!
-  // The semantics of p_is_initializer appears to not be required.
-
-     assert(this != NULL);
+     ASSERT_not_null(this);
 
   // DQ (4/14/2015): Added call to set_isModified() function to record change to this IR node.
      set_isModified(true);
@@ -11480,7 +11442,7 @@ SgInitializedName::get_declaration() const
              }
         }
 
-     return NULL;
+     return nullptr;
    }
 
 SgDeclarationStatement*
@@ -14354,26 +14316,21 @@ SgProject*
 SgFile::get_project()
    {
   // If the project is a parent of the current SgFile then we find it, else return NULL.
-
      SgNode* parent = get_parent();
-
-  // DQ (7/12/2005): The parent is NULL if we have only built a single file (e.g. within the rewrite mechanism)
-  // assert(parent != NULL);
-
      SgProject* project = NULL;
 
   // DQ (7/12/2005): The parent is NULL if we have only built a single file (e.g. within the rewrite mechanism)
   // Just return NULL in this case!
-     if (parent != NULL)
+     if (parent)
         {
           project = isSgProject(parent);
-          while ( project == NULL && parent->get_parent() != NULL )
+          while ( project == nullptr && parent->get_parent() != nullptr )
              {
                parent = parent->get_parent();
-               assert(parent != NULL);
+               ASSERT_not_null(parent);
                project = isSgProject(parent);
              }
-          assert ( project != NULL );
+          ASSERT_not_null(project);
         }
 
      return project;
@@ -18696,7 +18653,6 @@ SgTemplateArgument::get_mangled_name (void) const
 
           default:
              {
-            // mangled_name << "UNKNOWN";
                mprintf ("ERROR: In SgTemplateArgument::get_mangled_name(): default reached in switch: get_argumentType() = %d \n",get_argumentType());
                ROSE_ASSERT(false);
                break;
@@ -18719,24 +18675,22 @@ SgTemplateArgument::get_mangled_name (void) const
      return str_mangled_name;
    }
 
-
 // DQ (6/9/2007): Some template arguments have a concept of scope, this is required to get the name qualification correct.
 SgScopeStatement*
 SgTemplateArgument::get_scope () const
    {
   // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
-
      const SgNode* parentNode = this;
-     ROSE_ASSERT(parentNode != NULL);
+     ASSERT_not_null(parentNode);
 
      while ( (isSgScopeStatement(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
         {
-          ROSE_ASSERT(parentNode != NULL);
+          ASSERT_not_null(parentNode);
           parentNode = parentNode->get_parent();
-          ROSE_ASSERT(parentNode != NULL);
+          ASSERT_not_null(parentNode);
         }
 
-     ROSE_ASSERT(parentNode != NULL);
+     ASSERT_not_null(parentNode);
 
   // Check to see if we made it back to the root (current root is SgProject).
   // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
@@ -18749,39 +18703,34 @@ SgTemplateArgument::get_scope () const
           if (templateInstantiation != NULL)
              {
                mprintf ("templateInstantiation->get_name() = %s \n",templateInstantiation->get_name().str());
-
-            // DQ (8/23/2012): This is not defined for a SgTemplateInstantiationDecl (which is not a template).
-            // mprintf ("templateInstantiation->get_template_name() = %s \n",templateInstantiation->get_template_name().str());
                templateInstantiation->get_startOfConstruct()->display("Error in SgTemplateArgument::get_scope()");
              }
 
-          if (parentNode->get_parent() == NULL)
+          if (parentNode->get_parent() == nullptr)
              {
                mprintf ("Error: parent not set for parentNode = %p = %s \n",parentNode,parentNode->class_name().c_str());
              }
 
-          ROSE_ASSERT(parentNode->get_parent() != NULL);
+          ASSERT_not_null(parentNode->get_parent());
 
-          return NULL;
+          return nullptr;
         }
        else
         {
-          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+          if (dynamic_cast<const SgType*>(parentNode) != nullptr || dynamic_cast<const SgSymbol*>(parentNode) != nullptr)
              {
                mprintf ("Error: can't locate an associated SgStatement from SgTemplateArgument = %p \n",this);
-               return NULL;
+               return nullptr;
              }
         }
 
   // Make sure we have a SgStatement node
      const SgScopeStatement* scopeStatement = isSgScopeStatement(parentNode);
-     assert (scopeStatement != NULL);
+     ASSERT_not_null(scopeStatement);
 
-  // return statement;
      return const_cast<SgScopeStatement*>(scopeStatement);
    }
 
-// DQ (2/10/2019): Debugging information
 std::string
 SgTemplateArgument::template_argument_kind () const
    {
@@ -18792,11 +18741,11 @@ SgTemplateArgument::template_argument_kind () const
           case SgTemplateArgument::type_argument:
              {
                const SgType* type = get_type();
-               assert (type != NULL);
+               ASSERT_not_null(type);
                const SgNamedType* namedType = isSgNamedType(type);
-               if (namedType != NULL)
+               if (namedType)
                   {
-                    assert(namedType->get_declaration() != NULL);
+                    ASSERT_not_null(namedType->get_declaration());
                   }
                kindOfTemplateArgument = "type_argument";
                break;
@@ -18804,7 +18753,7 @@ SgTemplateArgument::template_argument_kind () const
 
           case SgTemplateArgument::nontype_argument:
              {
-               if (get_expression() == NULL)
+               if (get_expression() == nullptr)
                   {
                     mprintf ("NOTE: In SgTemplateArgument::template_argument_kind(): case SgTemplateArgument::nontype_argument: get_expression() == NULL: what is this? \n");
                     mprintf (" --- get_type()                = %p \n",get_type());
@@ -18949,8 +18898,7 @@ SgTemplateArgument::get_qualified_name_prefix() const
      if (nameQualifier.get_length() > 10000)
         {
           this->display("Exiting because the type has exceeded a reasonable length");
-          printf ("Exiting because the type has exceeded a reasonable length: %zu \n",nameQualifier.get_length());
-       // ROSE_ASSERT(nameQualifier.get_length() <= 500);
+          printf ("Exiting because the type has exceeded a reasonable length: %u \n",nameQualifier.get_length());
           flush(cout);
           ROSE_ASSERT(false);
         }
