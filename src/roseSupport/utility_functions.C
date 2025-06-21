@@ -558,7 +558,7 @@ std::string version_message() {
 #if defined(Z3_FULL_VERSION)
     ss <<Z3_FULL_VERSION;
 #else
-    ss "unknown version";
+    ss << "unknown version";
 #endif
 #ifdef ROSE_Z3_LIBRARY
     ss <<" (" <<ROSE_Z3_LIBRARY <<")";
