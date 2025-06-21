@@ -771,14 +771,13 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
    ATerm t_name, t_alloc, t_type, t_preset;
    char* name;
 
-   SgType* declared_type = nullptr;
-   SgExpression* preset = nullptr;
+   std::string label{};
+   bool is_anon{false};
+   SgType* declared_type{nullptr};
+   SgExpression* preset{nullptr};
+   SgEnumDeclaration* enum_decl{nullptr};
    Sawyer::Optional<SgExpression*> status_size;
    Sawyer::Optional<LanguageTranslation::ExpressionKind> modifier_enum;
-   SgEnumDeclaration* enum_decl = nullptr;
-   bool is_anonymous = false;
-
-   std::string label = "";
 
    if (ATmatch(term, "ItemDeclaration(<term>,<term>,<term>,<term>)", &t_name,&t_alloc,&t_type,&t_preset)) {
       if (ATmatch(t_name, "<str>", &name)) {
@@ -791,7 +790,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
 
       if (match_StatusItemDescription(t_type)) {
          // Build EnumDecl so that StatusItemDescription traversal has it to use
-         is_anonymous = true;
+         is_anon = true;
          std::string anon_type_name = mangleAnonymousName(name);
 
       // Begin SageTreeBuilder
@@ -850,7 +849,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
 // to the symbol if needed.
    sage_tree_builder.injectAliasSymbol(std::string(name));
 
-   if (is_anonymous) {
+   if (is_anon) {
       SgEnumType* enum_type = isSgEnumType(declared_type);
       ASSERT_not_null(enum_type);
       SgEnumDeclaration* decl = isSgEnumDeclaration(enum_type->get_declaration());
