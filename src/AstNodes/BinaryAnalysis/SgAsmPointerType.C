@@ -7,7 +7,7 @@
 using namespace Rose;
 
 SgAsmPointerType::SgAsmPointerType(Rose::BinaryAnalysis::ByteOrder::Endianness sex, size_t nBits, SgAsmType *subtype)
-    : SgAsmScalarType(sex, nBits) {
+    : SgAsmScalarType(sex, nBits), p_subtype{nullptr} {
     ASSERT_not_null(subtype);
     initializeProperties();
     set_subtype(subtype);
