@@ -187,8 +187,8 @@ SgAsmPEImportDirectory::parse_ilt_iat(const RelativeVirtualAddress &table_start,
     if (0==table_start.rva())
         return;                 // no ILT/IAT present
 
-
-    Address entry_va=*table_start.va(), entry_size=fhdr->get_wordSize();
+    Address entry_va = table_start.va().orElse(table_start.rva() + fhdr->get_baseVa());
+    const Address entry_size = fhdr->get_wordSize();
     uint64_t by_ordinal_bit = 1ull << (8*entry_size-1);
 
     for (size_t idx=0; 1; ++idx, entry_va+=entry_size) {
