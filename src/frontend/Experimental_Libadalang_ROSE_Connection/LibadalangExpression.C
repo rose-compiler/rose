@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 
 #include <vector>
+#include <unordered_set>
 #include <boost/algorithm/string.hpp>
 
 #include "sageGeneric.h"
@@ -28,7 +29,6 @@ namespace Libadalang_ROSE_Translation
 SgAdaAttributeExp&
 getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* argRangeSuppl)
 {
-
   SgAdaAttributeExp* res = nullptr;
 
   //Get the name of the attribute
@@ -41,206 +41,152 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
   ada_attribute_ref_f_prefix(lal_element, &lal_prefix);
   SgExpression&      obj = getExpr(&lal_prefix, ctx);
 
-    // attributes with optional expression list argument
-    /*case A_First_Attribute:            // 3.5(12), 3.6.2(3), K(68), K(70)
-    case A_Length_Attribute:           // 3.6.2(9), K(117)
-    case An_Unknown_Attribute:          // Unknown to ASIS
-    case An_Implementation_Defined_Attribute:  // Reference Manual, Annex M //TODO How can we recognize impl attributes in lal?
-    case A_Last_Attribute:            // 3.5(13), 3.6.2(5), K(102), K(104)
-    case A_Range_Attribute:            // 3.5(14), 3.6.2(7), K(187), ú(189)*/
+  // attributes that we can handle
+  std::unordered_set<std::string> known_attrs{
+    "access",                       // 3.10.2(24), 3.10.2(32), K(2), K(4)
+    "address",                      // 13.3(11), J.7.1(5), K(6)
+    "address_size",                 // GNAT-specific attribute
+    "adjacent",                     // A.5.3(48), K(8)
+    "aft",                          // 3.5.10(5), K(12)
+    "alignment",                    // 13.3(23), K(14)
+    "base",                         // 3.5(15), K(17)
+    "bit_order",                    // 13.5.3(4), K(19)
+    "body_version",                 // E.3(4), K(21)
+    "callable",                     // 9.9(2), K(23)
+    "caller",                       // C.7.1(14), K(25)
+    "ceiling",                      // A.5.3(33), K(27)
+    "class",                        // 3.9(14), 7.3.1(9), K(31), K(34)
+    "component_size",               // 13.3(69), K(36)
+    "compose",                      // A.5.3(24), K(38)
+    "constrained",                  // 3.7.2(3), J.4(2), K(42)
+    "count",                        // 9.9(5), K(48)
+    "copy_sign",                    // A.5.3(51), K(44)
+    "denorm",                       // A.5.3(9), K(54)
+    "definite",                     // 12.5.1(23), K(50)
+    "delta",                        // 3.5.10(3), K(52)
+    "digits",                       // 3.5.8(2), 3.5.10(7), K(56), K(58)
+    "emax",                         // GNAT-specific attribute (Ada83 3.5.8)
+    "epsilon",                      // GNAT-specific attribute (Ada83 3.5.8)
+    "exponent",                     // A.5.3(18), K(60)
+    "external_tag",                 // 13.3(75), K(64)
+    "first",                        // 3.5(12), 3.6.2(3), K(68), K(70)
+    "first_bit",                    // 13.5.2(3), K(72)
+    "floor",                        // A.5.3(30), K(74)
+    "fore",                         // 3.5.10(4), K(78)
+    "fraction",                     // A.5.3(21), K(80)
+    "has_access_values",            // GNAT-specific attribute
+    "has_discriminants",            // GNAT-specific attribute
+    "has_tagged_values",            // GNAT-specific attribute
+    "identity",                     // 11.4.1(9), C.7.1(12), K(84), K(86)
+    "image",                        // 3.5(35), K(88)
+    "img",                          // GNAT-specific attribute
+    "input",                        // 13.13.2(22), 13.13.2(32), K(92), K(96)
+    "last",                         // 3.5(13), 3.6.2(5), K(102), K(104)
+    "last_bit",                     // 13.5.2(4), K(106)
+    "large",                        // GNAT-specific attribute (Ada83 3.5.8)
+    "leading_part",                 // A.5.3(54), K(108)
+    "length",                       // 3.6.2(9), K(117)
+    "machine",                      // A.5.3(60), K(119)
+    "machine_emax",                 // A.5.3(8), K(123)
+    "machine_emin",                 // A.5.3(7), K(125)
+    "machine_mantissa",             // A.5.3(6), K(127)
+    "machine_overflows",            // A.5.3(12), A.5.4(4), K(129), K(131)
+    "machine_radix",                // A.5.3(2), A.5.4(2), K(133), K(135)
+    "machine_rounding",             // A.5.3(41), K(136)
+    "machine_rounds",               // A.5.3(11), A.5.4(3), K(137), K(139)
+    "mantissa",                     // GNAT-specific attribute (Ada83 3.5.8)
+    "max",                          // 3.5(19), K(141)
+    "max_alignment_for_allocation", // 13.11.1(4), K(144)
+    "max_integer_size",             // GNAT-specific attribute
+    "max_size_in_storage_elements", // 13.11.1(3), K(145)
+    "min",                          // 3.5(16), K(147)
+    "mod",                          // 3.5.4(16), K(150)
+    "model",                        // A.5.3(68), G.2.2(7), K(151)
+    "model_emin",                   // A.5.3(65), G.2.2(4), K(155)
+    "model_epsilon",                // A.5.3(66), K(157)
+    "model_mantissa",               // A.5.3(64), G.2.2(3), K(159)
+    "model_small",                  // A.5.3(67), K(161)
+    "modulus",                      // 3.5.4(17), K(163)
+    "old",                          // 6.1.1(26)
+    "output",                       // 13.13.2(19), 13.13.2(29), K(165), K(169)
+    "overlaps_storage",             // 13.3(73), K(172)
+    "partition_id",                 // E.1(9), K(173)
+    "pos",                          // 3.5.5(2), K(175)
+    "position",                     // 13.5.2(2), K(179)
+    "pred",                         // 3.5(25), K(181)
+    "priority",                     // D.5.2(3), K(184) //TODO This is not handled right in AdaMaker b/c it returns a System.Any_Priority
+    "range",                        // 3.5(14), 3.6.2(7), K(187), ú(189)
+    "read",                         // 13.13.2(6), 13.13.2(14), K(191), K(195)
+    "remainder",                    // A.5.3(45), K(199)
+    "result",                       // 6.1.1(29), K(202)
+    "round",                        // 3.5.10(12), K(203)
+    "rounding",                     // A.5.3(36), K(207)
+    "scale",                        // 3.5.10(11), K(215)
+    "scaling",                      // A.5.3(27), K(217)
+    "safe_emax",                    // GNAT-specific attribute (Ada83 3.5.8)
+    "safe_first",                   // A.5.3(71), G.2.2(5), K(211)
+    "safe_large",                   // GNAT-specific attribute (Ada83 3.5.8)
+    "safe_last",                    // A.5.3(72), G.2.2(6), K(213)
+    "safe_small",                   // GNAT-specific attribute (Ada83 3.5.8)
+    "signed_zeros",                 // A.5.3(13), K(221)
+    "size",                         // 13.3(40), 13.3(45), K(223), K(228)
+    "small",                        // 3.5.10(2), K(230)
+    "storage_pool",                 // 13.11(13), K(232)
+    "storage_size",                 // 13.3(60), 13.11(14), J.9(2), K(234), K(236)
+    "storage_unit",                 // GNAT-specific attribute
+    "stream_size",                  // 13.13.2(1), K(237)
+    "succ",                         // 3.5(22), K(238)
+    "tag",                          // 3.9(16), 3.9(18), K(242), K(244)
+    "terminated",                   // 9.9(3), K(246)
+    "truncation",                   // A.5.3(42), K(248)
+    "unbiased_rounding",            // A.5.3(39), K(252)
+    "unchecked_access",             // 13.10(3), H.4(18), K(256)
+    "unconstrained_array",          // GNAT-specific attribute
+    "unrestricted_access",          // GNAT-specific attribute
+    "val",                          // 3.5.5(5), K(258)
+    "valid",                        // 13.9.2(3), H(6), K(262)
+    "value",                        // 3.5(52), K(264)
+    "version",                      // E.3(3), K(268)
+    "wide_image",                   // 3.5(28), K(270)
+    "wide_value",                   // 3.5(40), K(274)
+    "wide_wide_image",              // 3.5(27), K(277)
+    "wide_wide_value",              // 3.5(39), K(277)
+    "wide_wide_width",              // 2.5(37), K(277)
+    "wide_width",                   // 3.5(38), K(278)
+    "width",                        // 3.5(39), K(280)
+    "word_size",                    // GNAT-specific attribute
+    "write",                        // 13.13.2(3), 13.13.2(11), K(282), K(286)
+  };
+  /* Unhandled cases:
+  case An_Unknown_Attribute:          // lal doesn't have a generic unknown, unlike ASIS.
+  case An_Implementation_Defined_Attribute:  // Reference Manual, Annex M //TODO Have to do all impl attrs separately?*/
 
-  if(name == "range"
-  || name == "first"
-  || name == "last"
-  || name == "img"
-  || name == "length")
-    {
-      //Get the list of args
-      ada_base_entity lal_arg_list;
-      ada_attribute_ref_f_args(lal_element, &lal_arg_list);
-      int range = ada_node_children_count(&lal_arg_list);
+  //Check if we can handle this attribute
+  if(known_attrs.find(name) != known_attrs.end())
+  {
+    std::vector<SgExpression*> exprs;
 
-      std::vector<SgExpression*> exprs;
-
-      if(range <= 0){
-        if(argRangeSuppl != nullptr && !ada_node_is_null(argRangeSuppl)){
-          //Call getArg on each child node
-          int count = ada_node_children_count(argRangeSuppl);
-          for(int i = 0; i < count; ++i){
-            ada_base_entity lal_arg;
-            if(ada_node_child(argRangeSuppl, i, &lal_arg) != 0){
-              exprs.push_back(&getArg(&lal_arg, ctx));
-            }
-          }
-        }
-      } else {
-        for(int i = 0; i < range; ++i){
-          ada_base_entity lal_arg;
-          if(ada_node_child(&lal_arg_list, i, &lal_arg) != 0){
-            ada_node_kind_enum lal_arg_kind = ada_node_kind(&lal_arg);
-            if(lal_arg_kind == ada_param_assoc){
-              ada_base_entity lal_param;
-              ada_param_assoc_f_r_expr(&lal_arg, &lal_param);
-              exprs.push_back(&getExpr(&lal_param, ctx));
-            } else {
-              //TODO Will this ever happen? Are args always ada_param_assoc?
-              logFlaw() << "Unknown attribute argument kind " << lal_arg_kind << " in getAttributeExpr.\n";
-            }
-          }
-        }
+    if(argRangeSuppl != nullptr && !ada_node_is_null(argRangeSuppl)){
+      //Call getArg on each child node
+      int count = ada_node_children_count(argRangeSuppl);
+      for(int i = 0; i < count; ++i){
+        ada_base_entity lal_arg;
+        ada_node_child(argRangeSuppl, i, &lal_arg);
+        exprs.push_back(&getArg(&lal_arg, ctx));
       }
-
-      res = &mkAdaAttributeExp(obj, name, mkExprListExp(exprs));
     }
+    SgExprListExp&             args  = mkExprListExp(exprs);
 
-    // attributes with empty expression list argument
+    res = &mkAdaAttributeExp(obj, name, args);
+  }
+  //failure kinds
+  else
+  {
+    logError() << "Unknown expression attribute: " << name
+               << std::endl;
 
-    /*case An_Access_Attribute:          // 3.10.2(24), 3.10.2(32), K(2), K(4)
-    case An_Address_Attribute:         // 13.3(11), J.7.1(5), K(6)
-    case An_Adjacent_Attribute:        // A.5.3(48), K(8)
-    case An_Aft_Attribute:            // 3.5.10(5), K(12)
-    case An_Alignment_Attribute:       // 13.3(23), K(14)
-    case A_Base_Attribute:            // 3.5(15), K(17)
-    case A_Bit_Order_Attribute:        // 13.5.3(4), K(19)
-    case A_Body_Version_Attribute:      // E.3(4), K(21)
-    case A_Callable_Attribute:         // 9.9(2), K(23)
-    case A_Caller_Attribute:           // C.7.1(14), K(25)
-    case A_Ceiling_Attribute:          // A.5.3(33), K(27)
-    case A_Class_Attribute:            // 3.9(14), 7.3.1(9), K(31), K(34)
-    case A_Component_Size_Attribute:    // 13.3(69), K(36)
-    case A_Compose_Attribute:          // A.5.3(24), K(38)
-    case A_Constrained_Attribute:      // 3.7.2(3), J.4(2), K(42)
-    case A_Copy_Sign_Attribute:        // A.5.3(51), K(44)
-    case A_Count_Attribute:            // 9.9(5), K(48)
-    case A_Definite_Attribute:         // 12.5.1(23), K(50)
-    case A_Delta_Attribute:            // 3.5.10(3), K(52)
-    case A_Denorm_Attribute:           // A.5.3(9), K(54)
-    case A_Digits_Attribute:           // 3.5.8(2), 3.5.10(7), K(56), K(58)
-    case An_Exponent_Attribute:        // A.5.3(18), K(60)
-    case An_External_Tag_Attribute:     // 13.3(75), K(64)
-    case A_First_Bit_Attribute:        // 13.5.2(3), K(72)
-    case A_Floor_Attribute:            // A.5.3(30), K(74)
-    case A_Fore_Attribute:            // 3.5.10(4), K(78)
-    case A_Fraction_Attribute:         // A.5.3(21), K(80)
-    case An_Identity_Attribute:        // 11.4.1(9), C.7.1(12), K(84), K(86)
-    case An_Image_Attribute:           // 3.5(35), K(88)
-    case An_Input_Attribute:           // 13.13.2(22), 13.13.2(32), K(92), K(96)
-    case A_Last_Bit_Attribute:         // 13.5.2(4), K(106)
-    case A_Leading_Part_Attribute:      // A.5.3(54), K(108)
-    case A_Machine_Attribute:          // A.5.3(60), K(119)
-    case A_Machine_Emax_Attribute:      // A.5.3(8), K(123)
-    case A_Machine_Emin_Attribute:      // A.5.3(7), K(125)
-    case A_Machine_Mantissa_Attribute:  // A.5.3(6), K(127)
-    case A_Machine_Overflows_Attribute: // A.5.3(12), A.5.4(4), K(129), K(131)
-    case A_Machine_Radix_Attribute:     // A.5.3(2), A.5.4(2), K(133), K(135)
-    case A_Machine_Rounds_Attribute:    // A.5.3(11), A.5.4(3), K(137), K(139)
-    case A_Max_Attribute:             // 3.5(19), K(141)
-    case A_Max_Size_In_Storage_Elements_Attribute: //   13.11.1(3), K(145)
-    case A_Min_Attribute:             // 3.5(16), K(147)
-    case A_Model_Attribute:            // A.5.3(68), G.2.2(7), K(151)
-    case A_Model_Emin_Attribute:       // A.5.3(65), G.2.2(4), K(155)
-    case A_Model_Epsilon_Attribute:     // A.5.3(66), K(157)
-    case A_Model_Mantissa_Attribute:    // A.5.3(64), G.2.2(3), K(159)
-    case A_Model_Small_Attribute:      // A.5.3(67), K(161)
-    case A_Modulus_Attribute:          // 3.5.4(17), K(163)
-    case An_Output_Attribute:          // 13.13.2(19), 13.13.2(29), K(165), K(169)
-    case A_Partition_ID_Attribute:      // E.1(9), K(173)
-    case A_Pos_Attribute:             // 3.5.5(2), K(175)
-    case A_Position_Attribute:         // 13.5.2(2), K(179)
-    case A_Pred_Attribute:            // 3.5(25), K(181)
-    case A_Read_Attribute:            // 13.13.2(6), 13.13.2(14), K(191), K(195)
-    case A_Remainder_Attribute:        // A.5.3(45), K(199)
-    case A_Round_Attribute:            // 3.5.10(12), K(203)
-    case A_Rounding_Attribute:         // A.5.3(36), K(207)
-    case A_Safe_First_Attribute:       // A.5.3(71), G.2.2(5), K(211)
-    case A_Safe_Last_Attribute:        // A.5.3(72), G.2.2(6), K(213)
-    case A_Scale_Attribute:            // 3.5.10(11), K(215)
-    case A_Scaling_Attribute:          // A.5.3(27), K(217)
-    case A_Signed_Zeros_Attribute:      // A.5.3(13), K(221)
-    case A_Size_Attribute:            // 13.3(40), 13.3(45), K(223), K(228)
-    case A_Small_Attribute:            // 3.5.10(2), K(230)
-    case A_Storage_Pool_Attribute:      // 13.11(13), K(232)
-    case A_Storage_Size_Attribute:      // 13.3(60), 13.11(14), J.9(2), K(234),
-                                       //                             K(236)
-    case A_Succ_Attribute:            // 3.5(22), K(238)
-    case A_Tag_Attribute:             // 3.9(16), 3.9(18), K(242), K(244)
-    case A_Terminated_Attribute:       // 9.9(3), K(246)
-    case A_Truncation_Attribute:       // A.5.3(42), K(248)
-    case An_Unbiased_Rounding_Attribute: // A.5.3(39), K(252)
-    case An_Unchecked_Access_Attribute:  // 13.10(3), H.4(18), K(256)
-    case A_Val_Attribute:              // 3.5.5(5), K(258)
-    case A_Valid_Attribute:            // 13.9.2(3), H(6), K(262)
-    case A_Value_Attribute:            // 3.5(52), K(264)
-    case A_Version_Attribute:           // E.3(3), K(268)
-    case A_Wide_Image_Attribute:        // 3.5(28), K(270)
-    case A_Wide_Value_Attribute:        // 3.5(40), K(274)
-    case A_Wide_Width_Attribute:        // 3.5(38), K(278)
-    case A_Width_Attribute:            // 3.5(39), K(280)
-    case A_Write_Attribute:            // 13.13.2(3), 13.13.2(11), K(282), K(286)
-
-    //  |A2005 start
-    //  New Ada 2005 attributes. To be alphabetically ordered later
-    case A_Machine_Rounding_Attribute:
-    case A_Mod_Attribute:
-    case A_Priority_Attribute:
-    case A_Stream_Size_Attribute:
-    case A_Wide_Wide_Image_Attribute:
-    case A_Wide_Wide_Value_Attribute:
-    case A_Wide_Wide_Width_Attribute:
-    //  |A2005 end
-
-    //  |A2012 start
-    //  New Ada 2012 attributes. To be alphabetically ordered later
-    case A_Max_Alignment_For_Allocation_Attribute:
-    case An_Overlaps_Storage_Attribute:
-    //  |A2012 end*/
-    else if(name == "access"
-         || name == "address"
-         || name == "aft"
-         || name == "alignment"
-         || name == "base"
-         || name == "class"
-         || name == "constrained"
-         || name == "digits"
-         || name == "fore"
-         || name == "image"
-         || name == "length"
-         || name == "max"
-         || name == "old"
-         || name == "pos"
-         || name == "read"
-         || name == "result"
-         || name == "size"
-         || name == "succ"
-         || name == "val"
-         || name == "width"
-         || name == "write")
-      {
-        logInfo() << "untested attribute created: " << name
-                  << std::endl;
-        std::vector<SgExpression*> exprs;
-        if(argRangeSuppl != nullptr && !ada_node_is_null(argRangeSuppl)){
-          //Call getArg on each child node
-          int count = ada_node_children_count(argRangeSuppl);
-          for(int i = 0; i < count; ++i){
-            ada_base_entity lal_arg;
-            ada_node_child(argRangeSuppl, i, &lal_arg);
-            exprs.push_back(&getArg(&lal_arg, ctx));
-          }
-        }
-        SgExprListExp&             args  = mkExprListExp(exprs);
-
-        res = &mkAdaAttributeExp(obj, name, args);
-      }
-
-    // failure kinds
-    else
-      {
-        logError() << "unknown expression attribute: " << name
-                   << std::endl;
-
-        res = &mkAdaAttributeExp(obj, "ErrorAttr: " + name, mkExprListExp());
-      }
+    res = &mkAdaAttributeExp(obj, "ErrorAttr: " + name, mkExprListExp());
+  }
 
   return SG_DEREF(res);
 }

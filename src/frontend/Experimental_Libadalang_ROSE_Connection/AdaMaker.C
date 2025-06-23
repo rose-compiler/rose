@@ -270,6 +270,11 @@ mkAdaDerivedType(SgType& basetype)
   return mkNonSharedTypeNode<SgAdaDerivedType>(&basetype);
 }
 
+SgRangeType&
+mkRangeType(SgType& basetype)
+{
+  return mkTypeNode<SgRangeType>(&basetype);
+}
 
 SgAdaModularType&
 mkAdaModularType(SgExpression& modexpr)
@@ -2477,6 +2482,11 @@ namespace
     return SG_DEREF(exp.get_type());
   }
 
+  SgType& rangeTypeAttr(SgExpression& n, SgExprListExp&)
+  {
+    return mkRangeType(SG_DEREF(n.get_type()));
+  }
+
   SgType& funTypeAttr(SgExpression& funref, SgExprListExp& args)
   {
     if (SgFunctionType* funty = isSgFunctionType(funref.get_type()))
@@ -2521,6 +2531,8 @@ namespace
                                      , { "denorm",               &boolTypeAttr }
                                      , { "definite",             &boolTypeAttr }
                                      , { "digits",               &integralTypeAttr }
+                                     , { "emax",                 &integralTypeAttr }
+                                     , { "epsilon",              &realTypeAttr }
                                      , { "exponent",             &integralTypeAttr }
                                      //~ , { "external_tag",         &tagTypeAttr }
                                      , { "fraction",             &argTypeAttr }
@@ -2541,6 +2553,7 @@ namespace
                                      , { "last",                 &firstLastTypeAttr }
                                      , { "last_valid",           &exprTypeAttr }
                                      , { "last_bit",             &integralTypeAttr }
+                                     , { "large",                &realTypeAttr }
                                      , { "leading_part",         &argTypeAttr }
                                      , { "length",               &integralTypeAttr }
                                      , { "machine",              &argTypeAttr }
@@ -2551,7 +2564,10 @@ namespace
                                      , { "machine_rounds",       &boolTypeAttr }
                                      , { "machine_rounding",     &argTypeAttr }
                                      , { "machine_overflows",    &boolTypeAttr }
+                                     , { "mantissa",             &integralTypeAttr }
                                      , { "max",                  &argTypeAttr }
+                                     , { "max_alignment_for_allocation", &integralTypeAttr }
+                                     , { "max_size_in_storage_elements", &integralTypeAttr }
                                      , { "maximum_alignment",    &integralTypeAttr }
                                      , { "min",                  &argTypeAttr }
                                      , { "model",                &argTypeAttr }
@@ -2563,29 +2579,34 @@ namespace
                                      , { "old",                  &exprTypeAttr }
                                      , { "object_size",          &integralTypeAttr }
                                      , { "overlaps_storage",     &boolTypeAttr }
+                                     , { "partition_id",         &integralTypeAttr }
                                      , { "pos",                  &integralTypeAttr }
                                      , { "position",             &integralTypeAttr }
                                      //~ , { "pred",                 &argTypeAttr }
                                      , { "pred",                 &exprTypeAttr }   // Type'Pred may have no arguments when it is passed as function
+                                     , { "range",                &rangeTypeAttr }
                                      , { "remainder",            &argTypeAttr }
                                      , { "result",               &funTypeAttr }
                                      , { "rounding",             &argTypeAttr }
-                                     //~ , { "range",                &unknownTypeAttr }   // \todo consider creating a range type
                                      //~ , { "output",               &unknownTypeAttr }   // ???
                                      //~ , { "read",                 &unknownTypeAttr }   // ???
+                                     , { "safe_emax",            &integralTypeAttr }
                                      , { "safe_first",           &realTypeAttr }
+                                     , { "safe_large",           &realTypeAttr }
                                      , { "safe_last",            &realTypeAttr }
                                      , { "safe_small",           &realTypeAttr }
+                                     , { "scale",                &integralTypeAttr }
                                      , { "scaling",              &argTypeAttr }
                                      , { "scalar_storage_order", &voidTypeAttr }
                                      , { "small",                &realTypeAttr }
-                                     , { "storage_pool",         &voidTypeAttr }
-                                     , { "storage_size",         &integralTypeAttr }
                                      //~ , { "succ",                 &argTypeAttr }
                                      , { "succ",                 &exprTypeAttr }  // Type'Succ may have no arguments when it is passed as function
                                      , { "signed_zeros",         &boolTypeAttr }
                                      , { "size",                 &integralTypeAttr }
+                                     , { "storage_pool",         &voidTypeAttr }
+                                     , { "storage_size",         &integralTypeAttr }
                                      , { "storage_unit",         &integralTypeAttr }
+                                     , { "stream_size",          &integralTypeAttr }
                                      //~ , { "tag",                  &tagTypeAttr }
                                      , { "terminated",           &boolTypeAttr }
                                      , { "truncation",           &argTypeAttr }
@@ -2597,11 +2618,14 @@ namespace
                                      , { "val",                  &exprTypeAttr }
                                      , { "valid",                &boolTypeAttr }
                                      , { "value",                &exprTypeAttr }
+                                     , { "version",              &stringTypeAttr }
                                      , { "wchar_t_size",         &integralTypeAttr }
                                      //~ , { "write",                &unknownTypeAttr }
                                      , { "wide_identity",        &wideStringTypeAttr } // should be Ada.Task_ID (which is a string)
+                                     , { "wide_image",           &wideStringTypeAttr }
                                      , { "wide_value",           &exprTypeAttr } // should be Ada.Task_ID
                                      , { "wide_wide_identity",   &wideWideStringTypeAttr } // should be Ada.Task_ID
+                                     , { "wide_wide_image",      &wideWideStringTypeAttr }
                                      , { "wide_wide_value",      &exprTypeAttr } // should be Ada.Task_ID
                                      , { "width",                &integralTypeAttr }
                                      , { "wide_width",           &integralTypeAttr }
