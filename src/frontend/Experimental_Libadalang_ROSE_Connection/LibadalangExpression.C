@@ -27,7 +27,7 @@ namespace Libadalang_ROSE_Translation
 
 /// Makes an attribute
 SgAdaAttributeExp&
-getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* argRangeSuppl)
+getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
 {
   SgAdaAttributeExp* res = nullptr;
 
@@ -40,6 +40,10 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
   ada_base_entity lal_prefix;
   ada_attribute_ref_f_prefix(lal_element, &lal_prefix);
   SgExpression&      obj = getExpr(&lal_prefix, ctx);
+
+  //Get the args, if they exist
+  ada_base_entity lal_args;
+  ada_attribute_ref_f_args(lal_element, &lal_args);
 
   // attributes that we can handle
   std::unordered_set<std::string> known_attrs{
@@ -166,12 +170,12 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* 
   {
     std::vector<SgExpression*> exprs;
 
-    if(argRangeSuppl != nullptr && !ada_node_is_null(argRangeSuppl)){
+    if(!ada_node_is_null(&lal_args)){
       //Call getArg on each child node
-      int count = ada_node_children_count(argRangeSuppl);
+      int count = ada_node_children_count(&lal_args);
       for(int i = 0; i < count; ++i){
         ada_base_entity lal_arg;
-        ada_node_child(argRangeSuppl, i, &lal_arg);
+        ada_node_child(&lal_args, i, &lal_arg);
         exprs.push_back(&getArg(&lal_arg, ctx));
       }
     }
@@ -1782,9 +1786,6 @@ namespace{
         {
           logKind("ada_attribute_ref", kind);
 
-          //Get the args, if they exist
-          ada_base_entity lal_args;
-          ada_attribute_ref_f_args(lal_element, &lal_args);
 
           if(ada_node_is_null(&lal_args)){
             res = &getAttributeExpr(lal_element, ctx);

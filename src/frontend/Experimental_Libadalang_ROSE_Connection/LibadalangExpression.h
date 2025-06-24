@@ -50,9 +50,8 @@ namespace Libadalang_ROSE_Translation
   /// returns an expression for attribute defined in expr
   /// \param lal_element   the representative libadalang node
   /// \param ctx           the translation context
-  /// \param argRangeSuppl an optional argument to inject the arguments from a function call
   SgAdaAttributeExp&
-  getAttributeExpr(ada_base_entity* lal_element, AstContext ctx, ada_base_entity* argRangeSuppl = nullptr);
+  getAttributeExpr(ada_base_entity* lal_element, AstContext ctx);
 
   /// returns the ROSE representation of the Libadalang expression \ref elem
   SgExpression&
