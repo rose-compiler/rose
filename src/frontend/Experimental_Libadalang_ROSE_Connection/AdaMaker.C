@@ -848,9 +848,9 @@ mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope)
 SgAdaGenericInstanceDecl&
 mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendecl, SgScopeStatement& scope)
 {
-  ROSE_ASSERT(  isSgAdaGenericDecl(&gendecl)
-             || isSgAdaRenamingDecl(&gendecl)
-             );
+  ASSERT_require(  isSgAdaGenericDecl(&gendecl)
+                || isSgAdaRenamingDecl(&gendecl)
+                );
 
   //~ SgDeclarationScope&       dclscope = mkDeclarationScope(scope);
   SgScopeStatement&         dclscope = mkBasicBlock();
@@ -873,9 +873,9 @@ mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendec
 SgAdaFormalPackageDecl&
 mkAdaFormalPackageDecl(const std::string& name, SgDeclarationStatement& gendecl, SgExprListExp& args, SgScopeStatement& scope)
 {
-  ROSE_ASSERT(  isSgAdaGenericDecl(&gendecl)
-             || isSgAdaRenamingDecl(&gendecl)
-             );
+  ASSERT_require(  isSgAdaGenericDecl(&gendecl)
+                || isSgAdaRenamingDecl(&gendecl)
+                );
 
   SgAdaFormalPackageDecl& sgnode = mkLocatedNode<SgAdaFormalPackageDecl>(name, &gendecl, &args);
   //~ SgScopeStatement&       dclscope = mkDeclarationScope(scope);
@@ -1126,7 +1126,7 @@ mkAdaTaskBodyDecl( SgDeclarationStatement& tskdecl,
                  )
 {
   // \todo what is the relationship beteen nondef and tskbody_opt?
-  // ROSE_ASSERT((nondef != nullptr) == (tskbody_opt != nullptr)) ;
+  // ASSERT_require((nondef != nullptr) == (tskbody_opt != nullptr)) ;
 
   TaskDeclInfoResult specinfo = sg::dispatch(TaskDeclInfo{}, &tskdecl);
   SgAdaTaskBodyDecl& sgnode   = mkLocatedNode<SgAdaTaskBodyDecl>(specinfo.name, &tskdecl, &tskbody);
@@ -2381,10 +2381,10 @@ mkEnumeratorRef(SgEnumDeclaration& enumdecl, SgInitializedName& enumitem)
   using rose_rep_t = decltype(std::declval<SgEnumVal>().get_value());
 
   const long long int enumval = getIntegralValue(enumitem);
-  ROSE_ASSERT(  (enumval >= std::numeric_limits<rose_rep_t>::min())
-             && (enumval <= std::numeric_limits<rose_rep_t>::max())
-             && ("integral value over-/underflow during conversion")
-             );
+  ASSERT_require(  (enumval >= std::numeric_limits<rose_rep_t>::min())
+                && (enumval <= std::numeric_limits<rose_rep_t>::max())
+                && ("integral value over-/underflow during conversion")
+                );
 
   return SG_DEREF( sb::buildEnumVal_nfi(enumval, &enumdecl, enumitem.get_name()) );
 }

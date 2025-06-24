@@ -749,7 +749,7 @@ namespace
   {
     static constexpr bool findFirstOf = false;
 
-    ROSE_ASSERT(!ada_node_is_null(lal_expr));
+    ASSERT_require(!ada_node_is_null(lal_expr));
 
     //Get the kind of this node
     ada_node_kind_enum kind = ada_node_kind(lal_expr);

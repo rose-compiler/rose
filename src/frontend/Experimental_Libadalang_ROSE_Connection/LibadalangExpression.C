@@ -46,7 +46,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
   ada_attribute_ref_f_args(lal_element, &lal_args);
 
   // attributes that we can handle
-  std::unordered_set<std::string> known_attrs{
+  static const std::unordered_set<std::string> known_attrs{
     "access",                       // 3.10.2(24), 3.10.2(32), K(2), K(4)
     "address",                      // 13.3(11), J.7.1(5), K(6)
     "address_size",                 // GNAT-specific attribute
@@ -1741,7 +1741,7 @@ namespace{
           ada_dotted_name_f_prefix(lal_element, &lal_prefix);
           ada_dotted_name_f_suffix(lal_element, &lal_suffix);
 
-          ROSE_ASSERT(!ada_node_is_null(&lal_prefix));
+          ASSERT_require(!ada_node_is_null(&lal_prefix));
           ada_base_entity lal_refd_decl;
           ada_name_p_referenced_decl(&lal_prefix, 1, &lal_refd_decl);
 
@@ -1786,12 +1786,8 @@ namespace{
         {
           logKind("ada_attribute_ref", kind);
 
+          res = &getAttributeExpr(lal_element, ctx);
 
-          if(ada_node_is_null(&lal_args)){
-            res = &getAttributeExpr(lal_element, ctx);
-          } else {
-            res = &getAttributeExpr(lal_element, ctx, &lal_args);
-          }
           break;
         }
 

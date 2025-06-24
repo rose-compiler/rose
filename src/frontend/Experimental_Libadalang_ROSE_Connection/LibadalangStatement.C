@@ -780,7 +780,7 @@ namespace {
         //If this is a derived type, get the type it is derived from
         ada_base_entity lal_subtype_indication;
         ada_derived_type_def_f_subtype_indication(&lal_base_type_def, &lal_subtype_indication);
-        ROSE_ASSERT(!ada_node_is_null(&lal_subtype_indication));
+        ASSERT_require(!ada_node_is_null(&lal_subtype_indication));
 
         logTrace() << "kind = " << ada_node_kind(&lal_subtype_indication)
                    << "   hash = " << hash_node(&lal_subtype_indication)
@@ -803,7 +803,7 @@ namespace {
           //  So, check to make sure the new base_type_def isn't the same as the old
           int old_type_def_hash = hash_node(&lal_base_type_def);
           ada_type_decl_f_type_def(&lal_base_type_decl, &lal_base_type_def);
-          ROSE_ASSERT(!ada_node_is_null(&lal_base_type_def));
+          ASSERT_require(!ada_node_is_null(&lal_base_type_def));
 
           if(hash_node(&lal_base_type_def) == old_type_def_hash){
             SgNode& tyrep = getExprType(&lal_base_type_decl, ctx);
@@ -1498,7 +1498,7 @@ namespace {
 
   void nothingToComplete(AstContext::PragmaContainer pragmas)
   {
-     ROSE_ASSERT(pragmas.empty());
+     ASSERT_require(pragmas.empty());
   }
 
   /// Handle a task, and the pragmas associated with it
@@ -1905,7 +1905,7 @@ namespace {
     SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fnsym, derivedType, ctx.scope());
     const auto inserted = inheritedSymbols().insert(std::make_pair(InheritedSymbolKey{fn, &derivedType}, &sgnode));
 
-    ROSE_ASSERT(inserted.second);
+    ASSERT_require(inserted.second);
   }
 
   /// Returns the hash for the label referenced by \ref lal_element
