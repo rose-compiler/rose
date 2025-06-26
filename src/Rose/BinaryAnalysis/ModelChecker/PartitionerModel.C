@@ -562,6 +562,17 @@ RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner::Co
     stackLimits_ = semantics_->stackRegion();
 }
 
+RiscOperators::RiscOperators(
+    const RiscOperators &other, const BS::SValue::Ptr &protoval, const SmtSolver::Ptr &solver
+) :
+    Super(protoval, solver), settings_(other.settings_), partitioner_(notnull(other.partitioner_)),
+    semantics_(notnull(as<PartitionerModel::SemanticCallbacks>(other.semantics_))), gvars_(other.gvars_),
+    variableFinder_unsync(notnull(other.variableFinder_unsync)), stackLimits_(other.stackLimits_) {
+        
+    (void)SValue::promote(protoval);
+    name("PartitionerModel");
+}
+
 RiscOperators::~RiscOperators() {}
 
 RiscOperators::Ptr

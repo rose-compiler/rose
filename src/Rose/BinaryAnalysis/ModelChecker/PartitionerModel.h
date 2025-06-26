@@ -309,6 +309,10 @@ protected:
                   const InstructionSemantics::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&,
                   const Variables::VariableFinderPtr&, const Variables::GlobalVariables&);
 
+    RiscOperators(
+        const RiscOperators &, const InstructionSemantics::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &
+    );
+
 public: // Standard public construction-like functions
     ~RiscOperators();
 
