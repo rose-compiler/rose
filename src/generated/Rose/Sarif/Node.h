@@ -62,7 +62,7 @@ public:
     /** Emit this node and its children as JSON.
      *
      *  Returns true if this node produced (or tried to produce) any output, false if not. */
-    virtual bool emit(std::ostream&) = 0;
+    virtual bool emit(std::ostream&);
 
 private:
     /** Emit this node's properties bag if present.
@@ -80,10 +80,10 @@ public:
      *
      *  
      *  @{ */
-private:
+public:
     // Automatically generated; do not modify!
     nlohmann::json const& properties() const;
-private:
+public:
     // Automatically generated; do not modify!
     nlohmann::json& properties();
 public:

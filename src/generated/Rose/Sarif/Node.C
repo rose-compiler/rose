@@ -31,17 +31,20 @@ namespace Sarif {
 
 // Automatically generated; do not modify!
 auto Node::properties() const -> nlohmann::json const& {
+    ASSERT_not_null(properties_P7928_);
     return properties_P7928_;
 }
 
 // Automatically generated; do not modify!
 auto Node::properties() -> nlohmann::json& {
+    ASSERT_not_null(properties_P7928_);
     return properties_P7928_;
 }
 
 // Automatically generated; do not modify!
 void
 Node::properties(nlohmann::json const& x) {
+    ASSERT_not_null2(x, "property cannot be set to null");
     this->properties_P7928_ = x;
 }
 

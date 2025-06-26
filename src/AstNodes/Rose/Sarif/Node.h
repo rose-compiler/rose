@@ -26,6 +26,7 @@ private:
     bool emitProperties(std::ostream &);
 
 public:
+
     /** Property: property bag for holding JSON metadata.
      *
      *
@@ -33,7 +34,7 @@ public:
      *  This field is an accessor for the metadata as a key-value map -- for adding new entries, see @ref addProperty.
      *
      *  */
-    [[using Rosebud: accessors(), large]] 
+    [[using Rosebud: large, not_null]] 
     nlohmann::json properties;
 
 public:
