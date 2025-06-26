@@ -25277,6 +25277,40 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 // #include <nlohmann/detail/macro_unscope.hpp>
 
 
+#include <featureTests.h>
+// Boost serialization by way of CBOR
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/split_member.hpp>
+#include <boost/serialization/vector.hpp>
+
+BOOST_SERIALIZATION_SPLIT_FREE(nlohmann::json);
+
+namespace boost {
+namespace serialization {
+
+template <class Archive>
+void
+save(Archive &ar, const nlohmann::json &t, unsigned int) {
+    ar << nlohmann::json::to_cbor(t);
+}
+
+template <class Archive>
+void
+load(Archive &ar, nlohmann::json &t, unsigned int) {
+    std::vector<uint8_t> result;
+    ar >> result;
+
+    t = nlohmann::json::from_cbor(result);
+}
+
+} // namespace serialization
+} // namespace boost
+
+#endif
+
+
 // restore GCC/clang diagnostic settings
 #if defined(__clang__) || defined(__GNUC__) || defined(__GNUG__)
     #pragma GCC diagnostic pop
