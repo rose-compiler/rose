@@ -55,6 +55,15 @@ SgArrowStarOp::get_type() const
                someType = modifierType->get_base_type();
                goto keepStripping;
              }
+
+          // PP: adding missing cases
+          case V_SgTypeUnknown:
+          case V_SgNonrealType:
+             {
+               returnType = SgTypeUnknown::createType();
+               break;
+             }
+
           default:
              {
 #if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
