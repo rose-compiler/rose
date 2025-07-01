@@ -10,56 +10,149 @@ AC_DEFUN([ROSE_SUPPORT_DWARF],
              The default is the empty prefix, in which case the headers and library must be installed in a
              place where they will be found. Saying "no" for the prefix is the same as saying
              "--without-dwarf". See also, --with-elf which is a prerequisite for --with-dwarf.]),
-            [],
-            [with_dwarf=no])
+            [with_dwarf=$withval],
+            [with_dwarf=yes])
 
-    # Find the dwarf library
-    ROSE_HAVE_LIBDWARF=
-    if test "$with_dwarf" = yes -o "$with_dwarf" = ""; then
-        LIBDWARF_PREFIX=
-        AC_CHECK_LIB(dwarf, dwarf_child,
-                     [AC_DEFINE(ROSE_HAVE_LIBDWARF, [], [Defined when libdwarf is available.])
-                      ROSE_HAVE_LIBDWARF=system
-                      LIBDWARF_CPPFLAGS=
-                      LIBDWARF_LDFLAGS="-ldwarf"])
-    elif test -n "$with_dwarf" -a "$with_dwarf" != no; then
-        LIBDWARF_PREFIX="$with_dwarf"
-        # ROSE requires the use of a shared library for libdwarf
-        AC_CHECK_FILE(["$LIBDWARF_PREFIX/lib/libdwarf.so"],
-                      [AC_DEFINE(ROSE_HAVE_LIBDWARF, [], [Defined when libdwarf is available.])
-                       ROSE_HAVE_LIBDWARF="$LIBDWARF_PREFIX"
-                       LIBDWARF_CPPFLAGS="-I$LIBDWARF_PREFIX/include"
-                       LIBDWARF_LDFLAGS="-L$LIBDWARF_PREFIX/lib -ldwarf"
-                       ])
-        AC_CHECK_FILE(["$LIBDWARF_PREFIX/lib64/libdwarf.so"],
-                      [AC_DEFINE(ROSE_HAVE_LIBDWARF, [], [Defined when libdwarf is available.])
-                       ROSE_HAVE_LIBDWARF="$LIBDWARF_PREFIX"
-                       LIBDWARF_CPPFLAGS="-I$LIBDWARF_PREFIX/include"
-                       LIBDWARF_LDFLAGS="-L$LIBDWARF_PREFIX/lib64 -ldwarf"
-                       ])
+    AC_ARG_WITH(
+        [dwarf-include],
+        AS_HELP_STRING(
+            [--with-dwarf-include=PREFIX],
+            [if the  dwarf include directory was specified,
+            use this dwarf include directory]),
+            [with_dwarf_include=$withval],
+            [with_dwarf-include=no])
+
+    AC_ARG_WITH(
+        [dwarf-lib],
+        AS_HELP_STRING(
+            [--with-dwarf-lib=PREFIX],
+            [if the  dwarf library directory was specified,
+            use this dwarf library directory]),
+            [with_dwarf_lib=$withval],
+            [with_dwarf-lib=no])
+
+    LIBDWARF_CPPFLAGS=""
+    LIBDWARF_LDFLAGS=""
+    LIBDWARF_LIBS=""
+    dwarf_found=no
+
+    # Set up the results
+    if test "$with_dwarf" = "no"; then
+      AC_MSG_RESULT([disabled])
+      dwarf_found=no
+    else
+      #Priority 1: Use --with-dwarf-include and --with-dwarf-lib if both are provided
+      if test -n "$with_dwarf_include" && test -n "$with_dwarf_lib"; then
+        AC_MSG_RESULT([using specified include and lib paths])
+        
+        dnl Set up include path
+        if test -d "$with_dwarf_include"; then
+          LIBDWARF_CPPFLAGS="-I$with_dwarf_include"
+        else
+          AC_MSG_ERROR([DWARF include directory $with_dwarf_include does not exist])
+        fi
+        
+        #Set up library path
+        if test -d "$with_dwarf_lib"; then
+          LIBDWARF_LDFLAGS="-L$with_dwarf_lib"
+        else
+          AC_MSG_ERROR([DWARF library directory $with_dwarf_lib does not exist])
+        fi
+        
+        # Test for libdwarf
+        save_CPPFLAGS="$CPPFLAGS"
+        save_LDFLAGS="$LDFLAGS"
+        CPPFLAGS="$CPPFLAGS $LIBDWARF_CPPFLAGS"
+        LDFLAGS="$LDFLAGS $LIBDWARF_LDFLAGS"
+        
+        AC_CHECK_HEADER([libdwarf.h], [dwarf_header_found=yes], [dwarf_header_found=no])
+        AC_CHECK_LIB([dwarf], [dwarf_init], [dwarf_lib_found=yes], [dwarf_lib_found=no])
+        
+        if test "$dwarf_header_found" = "yes" && test "$dwarf_lib_found" = "yes"; then
+          LIBDWARF_LIBS="-ldwarf"
+          dwarf_found=yes
+        else
+          AC_MSG_ERROR([Could not find libdwarf in specified include ($with_dwarf_include) and lib ($with_dwarf_lib) directories])
+        fi
+        
+        CPPFLAGS="$save_CPPFLAGS"
+        LDFLAGS="$save_LDFLAGS"
+        
+      #Priority 2: Use --with-dwarf if provided (default lookup behavior)
+      else
+        AC_MSG_RESULT([using default lookup with prefix])
+        
+        if test "$with_dwarf" = "yes"; then
+          dwarf_search_paths="/usr /usr/local /opt/local"
+        else
+          dnl Use the specified prefix
+          dwarf_search_paths="$with_dwarf"
+        fi
+        
+        # Search for DWARF in the specified paths
+        for dwarf_path in $dwarf_search_paths; do
+          if test -d "$dwarf_path"; then
+            for include_subdir in include include/libdwarf; do
+              for lib_subdir in lib lib64; do
+                if test -f "$dwarf_path/$include_subdir/libdwarf.h" && \
+                   test -f "$dwarf_path/$lib_subdir/libdwarf.a" -o -f "$dwarf_path/$lib_subdir/libdwarf.so"; then
+                  
+                  LIBDWARF_CPPFLAGS="-I$dwarf_path/$include_subdir"
+                  LIBDWARF_LDFLAGS="-L$dwarf_path/$lib_subdir"
+                  
+                  save_CPPFLAGS="$CPPFLAGS"
+                  save_LDFLAGS="$LDFLAGS"
+                  CPPFLAGS="$CPPFLAGS $LIBDWARF_CPPFLAGS"
+                  LDFLAGS="$LDFLAGS $LIBDWARF_LDFLAGS"
+                  
+                  AC_CHECK_HEADER([libdwarf.h], [dwarf_header_found=yes], [dwarf_header_found=no])
+                  AC_CHECK_LIB([dwarf], [dwarf_init], [dwarf_lib_found=yes], [dwarf_lib_found=no])
+                  
+                  if test "$dwarf_header_found" = "yes" && test "$dwarf_lib_found" = "yes"; then
+                    LIBDWARF_LIBS="-ldwarf"
+                    dwarf_found=yes
+                    break 3  # Break out of all three loops
+                  fi
+                  
+                  CPPFLAGS="$save_CPPFLAGS"
+                  LDFLAGS="$save_LDFLAGS"
+                fi
+              done
+            done
+          fi
+        done
+        
+        if test "$dwarf_found" = "no"; then
+          if test "$with_dwarf" = "yes"; then
+            AC_MSG_WARN([Could not find DWARF library in standard locations. DWARF support will be disabled.])
+          else
+            AC_MSG_ERROR([Could not find DWARF library in specified location: $with_dwarf])
+          fi
+        fi
+      fi
     fi
 
-    # Sanity check: if the user told us to use libdwarf then we must find the library
-    if test "$with_dwarf" != no -a -z "$ROSE_HAVE_LIBDWARF"; then
-        AC_MSG_ERROR([did not find libdwarf but --with-dwarf was specified])
+    # Set up the results
+    if test "$dwarf_found" = "yes"; then
+      AC_DEFINE([ROSE_HAVE_LIBDWARF], [1], [Define if libdwarf is available])
+      AC_MSG_NOTICE([DWARF support enabled])
+      AC_MSG_NOTICE([  LIBDWARF_CPPFLAGS = $LIBDWARF_CPPFLAGS])
+      AC_MSG_NOTICE([  LIBDWARF_LDFLAGS  = $LIBDWARF_LDFLAGS])
+      AC_MSG_NOTICE([  LIBDWARF_LIBS     = $LIBDWARF_LIBS])
+    else
+      AC_MSG_NOTICE([DWARF support disabled])
     fi
-    if test "$with_dwarf" != no -a "$ROSE_HAVE_LIBDWARF" = yes -a "$ROSE_HAVE_LIBELF" != yes; then
-        AC_MSG_ERROR([libdwarf depends on libelf, so you must specify --with-libelf also])
-    fi
-
-
-    # Results
-    #    ROSE_HAVE_LIBDWARF -- shell variable, non-empty when libdwarf is available
-    #    ROSE_HAVE_LIBDWARF -- automake conditional, true when libdwarf is available
-    #    ROSE_HAVE_LIBDWARF -- CPP symbol defined when libdwarf is available (see above)
-    #    LIBDWARF_PREFIX    -- name of the directory where dwarf library and headers are installed
-    #    LIBDWARF_CPPFLAGS  -- C preprocessor flags, such as -I
-    #    LIBDWARF_LDFLAGS   -- Loader flags, such as -L and -l
-    AM_CONDITIONAL(ROSE_HAVE_LIBDWARF, [test -n "$ROSE_HAVE_LIBDWARF"])
-    AC_SUBST(LIBDWARF_PREFIX)
+    
+    dnl Export the variables
     AC_SUBST(LIBDWARF_CPPFLAGS)
     AC_SUBST(LIBDWARF_LDFLAGS)
+    AC_SUBST(LIBDWARF_LIBS)
+    
+    dnl Set up Automake conditional
+    AM_CONDITIONAL([ROSE_HAVE_LIBDWARF], [test "$dwarf_found" = "yes"])
 ])
+    
+
 
 
 # OLD VARIABLES NO LONGER USED
