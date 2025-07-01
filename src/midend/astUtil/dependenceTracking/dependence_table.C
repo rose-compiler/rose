@@ -6,56 +6,123 @@
 
 namespace AstUtilInterface {
 
+std::string CollectDependences::local_read_string(std::istream& input_file) {
+    std::string next_string;
+    char c ;
+    while ((input_file >> c).good()) {
+       switch (c) {
+       case '\"': 
+          next_string.push_back(c);
+          while ((input_file >> c).good() && c != '\"') {
+             next_string.push_back(c);
+          }
+          next_string.push_back(c);
+          Log.push("reading quoted string " + next_string);
+          return next_string;
+       case ' ':
+       case '\n':
+       case '\r':
+            if (next_string != "") {
+              // This starts a new token. Return the current one.
+              Log.push("Seeing separator. Finished reading token " + next_string);
+              return next_string;
+            } 
+            // Skip empty space.
+            break;
+       case ':': {
+          // Make sure read double "::" as part of a name.
+          char c1 = input_file.peek();
+          if (c1 == ':') {
+             input_file >> c1;
+             next_string += "::";
+             Log.push("Seeing `::'. continue reading token " + next_string);
+             break;
+          } 
+          // Otherwise, seeing a single ':'
+          [[fallthrough]]; // Explicitly indicates intentional fall-through 
+         }
+       case '[':
+       case ']':
+       case '{':
+       case '}':
+       case ';':
+       case '=':
+            if (next_string != "") {
+              // This starts a new token. Return the current one.
+              input_file.putback(c);
+              Log.push("Seeing separator. Finished reading token " + next_string);
+            } else {
+             // Found a token. Return it.
+             next_string.push_back(c);
+             Log.push("reading separator token " + next_string);
+            }
+            return next_string;
+       default: 
+             next_string.push_back(c);
+             break;
+      }
+    }
+    Log.push("Return Next token  " + next_string);
+    return next_string;
+}
+
 void CollectDependences::CollectFromFile(std::istream& input_file) {
     Log.push("Constructing DependenceTable");
     while (input_file.good()) {
-        std::string next_string;
         // Each line starts with the name of a component in the software.
-        if (input_file >> next_string) {
-            Log.push("reading " + next_string);
-            std::string dest = next_string;
-            input_file >> next_string;
-            if (next_string != ":") {
-                Log.fatal("Expecting `:' after dependence destination " + dest + " " + next_string);
-            }
-            std::string source, dep_type, attr;
-            // Read and process all the components that `dest' depends on immediately.
-            while ((input_file >> next_string).good()) {
-                Log.push("reading " + next_string);
-                if (next_string == ";") {
-                   if (source != "") {
-                     save_dependence(DependenceEntry(dest, source, dep_type, attr));
-                     source = attr = "";
-                     Log.push( source + "->" + dest + "[" + dep_type + "]");
-                   }
-                   break;
-                }
-                else if (next_string == "[") {
-                    if (!(input_file >> next_string).good()) {
-                       Log.fatal("Expecting strings after `[' but get " + next_string);
-                    }
-                    dep_type = next_string;
-                    if (!(input_file >> next_string).good() || next_string != "]") {
+        std::string dest = local_read_string(input_file);
+        if (dest == "")  break;
+        if (dest == "}" || dest == ";") continue;
+        Log.push("Destination name: " + dest);
+        std::string next_string, source, dep_type, attr;
+        // Read and process all the components that `dest' depends on immediately.
+        while ((next_string = local_read_string(input_file)) != "") {
+             if (next_string == ";") {
+               if (source != "") {
+                  save_dependence(DependenceEntry(dest, source, dep_type, attr));
+                  Log.push( "Saving " + source + "->" + dest + "[" + dep_type + "]");
+               }
+               Log.push("Done reading line\n");
+               break;
+            } else if (next_string == "->") {
+               source = dest;
+               Log.push("Setting source = " + source);
+               dest = local_read_string(input_file); 
+               Log.push("Setting dest = " + dest);
+            } else if (next_string == ":") {
+               source = local_read_string(input_file); 
+               if (source == "[") {
+                  while ((next_string = local_read_string(input_file)) != "]") {
+                    dep_type += next_string;
+                    if (next_string == "") {
                        Log.fatal("Expecting \"]\" but get " + next_string);
                     }
-                } else if (next_string == "<-" || next_string == "->" || next_string == "=") {
-                    if (!(input_file >> next_string).good()) {
-                       Log.fatal("Expecting strings after `=' but get " + next_string);
-                    }
-                    attr = next_string;
-                } else if (attr == "") {
-                   source = source + next_string;
-                } else {
-                   attr = attr + next_string;
-                }
+                  }
+                  source = local_read_string(input_file); 
+               }
+               Log.push("Setting source = " + source);
+            } else if (next_string == "=") {
+               attr = "";
+               while ((next_string = local_read_string(input_file)) != "") {
+                  if (next_string == ";" || next_string == "}") 
+                      break;
+                  attr += next_string;
+               }
+               if (next_string == ";") {
+                  input_file.putback(';');
+               }
+               Log.push("Setting attr:  " + attr);
+            } else if (next_string == "{") {
+               Log.push("Skipping graph configuration: " + dest + " " + next_string);
+               break;
+            } else {
+               Log.fatal("Unexpected token " + next_string);
             }
-            if (next_string != ";") {
-                Log.fatal("Expecting `;' but getting " + next_string);
-            }
+        }
+        if (next_string != ";" && next_string != "}" && next_string != "{") {
+            Log.fatal("Expecting `;' or `}' but getting " + next_string);
         } else if (input_file.peek() == EOF) {
             break;
-        } else {
-            Log.fatal("Unexpected token: " + next_string);
         }
     }
     Log.push("Done Constructing DependenceTable");
@@ -121,7 +188,6 @@ void CollectTransitiveDependences :: Compute(const std::vector<std::string>& inp
     } 
 }
 
-
 void DependenceTable :: OutputDependences(std::ostream& output) {
     Log.push("Output results of dependence analysis");
     for (auto op : saved_dependences_sig_) {
@@ -138,6 +204,20 @@ void DependenceTable :: OutputDataDependences(std::ostream& output) {
         e.output_data_dependence(output);
       }
     }
+}
+
+std::ostream& operator << (std::ostream& output, const DependenceEntry& e) { 
+        output << e.first_entry() << " : " ;
+        if (e.type_entry() != "") {
+            output << "[ " << e.type_entry() << " ] ";
+        }
+        output << e.second_entry();
+        if (e.attr_entry() != "") {
+             output << " = " << e.attr_entry()  << " ;";
+        } else {
+             output << " ;";
+        }
+        return output;
 }
 
 
@@ -200,8 +280,11 @@ void DependenceTable :: OutputDependencesInGUI(std::ostream& output) {
     auto edge_to_string = [&output](const std::string& s) {
        std::string color = "black";
        if (s == "modify") color = "red";
-       if (s == "read") color = "green";
-       return "[ label=" + s + ", color=" + color + "]";
+       else if (s == "read") color = "green";
+       if (s != ""){
+          return "[ label=\"" + s + "\", color=" + color + "]";
+       }
+       return "[ color=" + color + "]";
     };
     // Output clustering of nodes in different namespaces.
     std::function<void(const std::string&)> output_cluster = [&wrap_string, &functions, &clusters,&output_cluster, &output, this]

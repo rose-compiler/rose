@@ -26,13 +26,13 @@ class DependenceEntry {
       std::string second_entry() const { return second_; }
       std::string type_entry() const { return deptype_; }
       std::string attr_entry() const { return attr_; }
-      std::string to_string() const { return first_ + " : " + " [ " + deptype_ + " ] " + second_ + " = " + attr_; }
       bool operator == (const DependenceEntry& e2) const { 
            return first_ == e2.first_ && second_ == e2.second_ && deptype_ == e2.deptype_; 
        }
       bool operator < (const DependenceEntry& e2) const 
         { return first_ < e2.first_ || (first_ == e2.first_ && second_ < e2.second_) ||
                  (first_ == e2.first_ && second_ == e2.second_ && deptype_ < e2.deptype_); }
+      std::string to_string() const { return first_ + " : " + " [ " + deptype_ + " ] " + second_ + " = " + attr_; }
       bool first_is_function() const { return true; }
       bool second_is_function() const { return type_entry() == "call"; }
       bool output_data_dependence(std::ostream& output) {
@@ -42,24 +42,10 @@ class DependenceEntry {
           }
           return false;
       }
+
 };
 
-inline std::ostream& operator << (std::ostream& output, const DependenceEntry& e) { 
-        output << e.first_entry() << " : [ " << e.type_entry() << " ] " << e.second_entry();
-        if (e.attr_entry() != "") {
-           if (e.type_entry() == "modify") {
-             output << " <- " << e.attr_entry()  << " ;";
-           }
-           else if (e.type_entry() == "read") {
-             output << " -> " << e.attr_entry()  << " ;";
-           } else {
-             output << " = " << e.attr_entry()  << " ;";
-           }
-        } else {
-             output << " ;";
-        }
-        return output;
-}
+std::ostream& operator << (std::ostream& output, const DependenceEntry& e);
 
 // Read a table that records the dependences among all the components of a software.
 // The syntax for specifying a dependence is x1 : y1 y2 ... ym; which
@@ -68,6 +54,7 @@ inline std::ostream& operator << (std::ostream& output, const DependenceEntry& e
 class CollectDependences{
   protected:
     virtual void save_dependence(const DependenceEntry& e) = 0;
+    std::string local_read_string(std::istream& input_file);
   public:
     DebugLog Log = DebugLog("-debug-dep-table");
     CollectDependences() {}
