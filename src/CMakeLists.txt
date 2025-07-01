@@ -694,17 +694,6 @@ endif()
 
 set(rose_LIB_SRC_FILES dummyCppFileForLibrose.C)
 
-#foreach(_object IN LISTS rose_LIB_OBJS)
-#  list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:${_object}>)
-#  get_target_property(_sources ${_object} SOURCES)
-#  get_target_property(_sources_dir ${_object} SOURCE_DIR)
-#  foreach(_file IN LISTS _sources)
-#    list(APPEND rose_LIB_SRC_FILES ${_sources_dir}/${_file})
-#  endforeach()
-#endforeach()
-
-#list(LENGTH rose_LIB_SRC_FILES list_length)
-
 ########################################################################################################################
 # The ROSE library itself (librose.so, librose.a, librose.dll)
 ########################################################################################################################
@@ -731,11 +720,6 @@ install(
 if(ENABLE-JOVIAL)
   install(FILES ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/jovial-parser/share/rose/Jovial.tbl DESTINATION share/rose)
 endif()
-
-#cmake_host_system_information(RESULT Ncpu QUERY NUMBER_OF_PHYSICAL_CORES)
-#blt_add_code_checks(PREFIX "rosecheck"
-#                    SOURCES ${rose_LIB_SRC_FILES}
-#                    CPPCHECK_FLAGS "-j${Ncpu}")
 
 ########################################################################################################################
 # Dependencies of the ROSE library. librose depends on additional libraries.
