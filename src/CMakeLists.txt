@@ -724,8 +724,8 @@ endif()
 ########################################################################################################################
 # Dependencies of the ROSE library. librose depends on additional libraries.
 ########################################################################################################################
-# TODO This may not be needed for CMake 
-set(rose_library_dir_list "${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}")
+# rose_library_dir_list contains libraries required at runtime, these may be added to RPATH
+set(rose_library_dir_list "")
 set(lib_dir "")
 macro(add_library_dependency lib)
   get_filename_component(lib_dir ${lib} DIRECTORY)
@@ -1005,7 +1005,7 @@ endif()
 ########## Build cppflags for ROSE tools ###############################################################################
 set(rose_config_installed_cppflags "-I${CMAKE_INSTALL_PREFIX}/include/rose ")
 
-list(APPEND rose_library_dir_list "${rose_library_dir_list};${Boost_LIBRARY_DIRS}")
+list(APPEND rose_library_dir_list "${Boost_LIBRARY_DIRS}")
 if(NOT ${ATERM_LIBRARY} STREQUAL "ATERM_LIBRARY-NOTFOUND")
   if(NOT ${ATERM_LIBRARY} STREQUAL "")
     add_library_dependency(${ATERM_LIBRARY})
@@ -1105,17 +1105,19 @@ endif()
 
 set(ROSE_LIBDIRS "")
 set(ROSE_LINK_RPATHS "")
+set(ROSE_RPATHS "")
 
-list(REMOVE_DUPLICATES rose_library_dir_list)
 foreach(X IN LISTS rose_library_dir_list)
   set(ROSE_LIBDIRS "${ROSE_LIBDIRS} ${X}")
   set(ROSE_LINK_RPATHS "${ROSE_LINK_RPATHS} -Wl,-rpath ${X}")
+  set(ROSE_RPATHS "${ROSE_RPATHS} -R ${X}")
 endforeach()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug") 
   message(STATUS "rose_library_dir_list: ${rose_library_dir_list}")
   message(STATUS "ROSE_LIBDIRS: ${ROSE_LIBDIRS}")
   message(STATUS "ROSE_LINK_RPATHS: ${ROSE_LINK_RPATHS}")
+  message(STATUS "ROSE_RPATHS: ${ROSE_RPATHS}")
 endif() 
 
 # CMake should handle this for us by default with CMAKE_CXX_STANDARD 
@@ -1133,11 +1135,11 @@ file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CPPFLAGS     = ${rose_config_installed_cpp
 file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CFLAGS       = ${CMAKE_C_FLAGS}\n")
 file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CXXFLAGS     = ${CMAKE_CXX_FLAGS}\n")
 file(APPEND ${ROSE_CONFIG_FILE} "ROSE_LDFLAGS      = ${rose_config_installed_ldflags}\n")
-file(APPEND ${ROSE_CONFIG_FILE} "ROSE_LIBDIRS      = ${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}\n") # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS  
-file(APPEND ${ROSE_CONFIG_FILE} "ROSE_PREFIX       = ${CMAKE_INSTALL_PREFIX}\n")                      # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS 
-file(APPEND ${ROSE_CONFIG_FILE} "# Additional items useful to include in Makefiles\n")  
-file(APPEND ${ROSE_CONFIG_FILE} "ROSE_RPATHS       = -R ${CMAKE_INSTALL_PREFIX}/lib\n")               # HAS TO BE INSTALL PREFIX OR BOOST WILL MISMATCH WITH TOOLS 
-file(APPEND ${ROSE_CONFIG_FILE} "ROSE_LINK_RPATHS  = -Wl,-rpath ${CMAKE_INSTALL_PREFIX}/lib -Wl,-rpath ${Boost_LIBRARY_DIRS}\n") # SHOULD ONLY NEED BOOST HERE 
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_LIBDIRS      = ${ROSE_LIBDIRS}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_PREFIX       = ${CMAKE_INSTALL_PREFIX}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "# Additional items useful to include in Makefiles\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_RPATHS       = ${ROSE_RPATHS}\n")
+file(APPEND ${ROSE_CONFIG_FILE} "ROSE_LINK_RPATHS  = ${ROSE_LINK_RPATHS}\n")
 file(APPEND ${ROSE_CONFIG_FILE} "ROSE_VERSION      = ${ROSE_PACKAGE_VERSION}\n")
 file(APPEND ${ROSE_CONFIG_FILE} "ROSE_BACKEND_C_COMPILER      = ${BACKEND_C_COMPILER}\n")
 file(APPEND ${ROSE_CONFIG_FILE} "ROSE_BACKEND_CXX_COMPILER    = ${BACKEND_CXX_COMPILER}\n")
