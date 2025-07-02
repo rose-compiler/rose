@@ -108,6 +108,32 @@ throwError(Dwarf_Debug, const std::string &mesg, int /*dwarf_code*/, Dwarf_Error
     throw Rose::BinaryAnalysis::Dwarf::Exception(mesg);
 }
 
+// An easier way to handle the results from a dwarf C function.
+//
+// If `result` (dwarf function return value) is DW_DLV_OK then simply return it.
+//
+// If `result` is DW_DLV_ERROR then throw an error using the specified name and debug context.
+//
+// If `result` is DW_DLV_NO_ENTRY then assign the `dflt` value to the `save` location, which is usually also one of the arguments
+// for the dwarf function call that produced the result, and return DW_DLV_NO_ENTRY.
+//
+// For any other result, do nothing but return the result.
+//
+template<typename T>
+static int presentOr(const int result,
+                     const char *name, T &save, const T dflt, const Dwarf_Debug debug, const Dwarf_Error error) {
+    switch (result) {
+        case DW_DLV_ERROR:
+            throwError(debug, name, DW_DLV_ERROR, error);
+            ASSERT_not_reachable("throwError should not have returned");
+
+        case DW_DLV_NO_ENTRY:
+            save = dflt;
+            break;
+    }
+    return result;
+}
+
 char *
 makename(char *s) {
     if (char *newstr = s ? strdup(s) : strdup(""))
@@ -257,8 +283,8 @@ get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char **sr
     char small_buf[100];
 
     // DQ: Added these here instead of in global scope
-    Dwarf_Off fde_offset_for_cu_low = DW_DLV_BADOFFSET;
-    Dwarf_Off fde_offset_for_cu_high = DW_DLV_BADOFFSET;
+    Dwarf_Off fde_offset_for_cu_low = DW_DLE_BADOFF;
+    Dwarf_Off fde_offset_for_cu_high = DW_DLE_BADOFF;
 
     fres = dwarf_whatform(attrib, &theform, &rose_dwarf_error);
     /* depending on the form and the attribute, process the form */
@@ -298,7 +324,8 @@ get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char **sr
         case DW_FORM_ref4:
         case DW_FORM_ref8:
         case DW_FORM_ref_udata: {
-            bres = dwarf_formref(attrib, &off, &rose_dwarf_error);
+            Dwarf_Bool isInfo = false;
+            bres = dwarf_formref(attrib, &off, &isInfo, &rose_dwarf_error);
             if (bres != DW_DLV_OK) {
                 throwError(dbg, "ref formwith no ref?!", bres, rose_dwarf_error);
             }
@@ -318,7 +345,7 @@ get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char **sr
                 } else if (wres == DW_DLV_NO_ENTRY) {
                 }
                 if (attr == DW_AT_type) {
-                    dres = dwarf_offdie(dbg, cu_offset + off,&die_for_check, &rose_dwarf_error);
+                    dres = dwarf_offdie_b(dbg, cu_offset + off, isInfo, &die_for_check, &rose_dwarf_error);
                     type_offset_result.checks++;
                     if (dres != DW_DLV_OK) {
                         type_offset_result.errors++;
@@ -494,7 +521,7 @@ get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char **sr
             }
             if (cu_name_flag) {
                 if (attr == DW_AT_MIPS_fde) {
-                    if (fde_offset_for_cu_low == DW_DLV_BADOFFSET) {
+                    if (fde_offset_for_cu_low == DW_DLE_BADOFF) {
                         fde_offset_for_cu_low
                             = fde_offset_for_cu_high = tempud;
                     } else if (tempud < fde_offset_for_cu_low) {
@@ -908,11 +935,11 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
 
 
 
-/* recursively follow the die tree */
-SgAsmDwarfConstruct*
-build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, char **srcfiles, Dwarf_Signed cnt,
-                                          SgAsmDwarfConstruct* parentDwarfConstruct) {
-    // NOTE: The first time this function is called the parentDwarfConstruct is NULL.
+// recursively follow the die tree
+static SgAsmDwarfConstruct*
+buildDwarfIrNodeFromDieAndChildren(Dwarf_Debug dbg, Dwarf_Die in_die_in, char **srcfiles, Dwarf_Signed cnt,
+                                   SgAsmDwarfConstruct* parentDwarfConstruct, bool isInfo) {
+    // NOTE: The first time this function is called the parentDwarfConstruct is null.
 
     Dwarf_Die child;
     Dwarf_Die sibling;
@@ -920,7 +947,7 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
     int cdres;
     Dwarf_Die in_die = in_die_in;
 
-    SgAsmDwarfConstruct* astDwarfConstruct = NULL;
+    SgAsmDwarfConstruct* astDwarfConstruct = nullptr;
 
     for (;;) {
         PUSH_DIE_STACK(in_die);
@@ -930,7 +957,7 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
         // DQ (11/4/2008): This is the location were we will have to generate IR nodes using each debug info entry (die)
 
         /* here to pre-descent processing of the die */
-        astDwarfConstruct = build_dwarf_IR_node_from_print_one_die(dbg, in_die, /* info_flag */ true, srcfiles, cnt /* , asmDwarfCompilationUnit */ );
+        astDwarfConstruct = build_dwarf_IR_node_from_print_one_die(dbg, in_die, isInfo, srcfiles, cnt /* , asmDwarfCompilationUnit */ );
 
         if (parentDwarfConstruct != NULL && astDwarfConstruct != NULL) {
             // When this work we know that we have the child support for Dwarf IR nodes in place (in all the right places).
@@ -953,7 +980,7 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
 
             // Ignore the return result (children are added to the parent).
             if (astDwarfConstruct != NULL)
-                build_dwarf_IR_node_from_die_and_children(dbg, child, srcfiles, cnt, astDwarfConstruct);
+                buildDwarfIrNodeFromDieAndChildren(dbg, child, srcfiles, cnt, astDwarfConstruct, isInfo);
             indent_level--;
 
             if (indent_level == 0)
@@ -966,7 +993,7 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
             }
         }
 
-        cdres = dwarf_siblingof(dbg, in_die, &sibling, &err);
+        cdres = dwarf_siblingof_b(dbg, in_die, isInfo, &sibling, &err);
         if (cdres == DW_DLV_OK) {
             /* print_die_and_children(dbg, sibling, srcfiles, cnt); We
                loop around to actually print this, rather than
@@ -1000,237 +1027,98 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
     return astDwarfConstruct;
 }
 
+static void
+buildDwarfLineNumbersThisCu(Dwarf_Debug debug, Dwarf_Die cuDie, SgAsmDwarfCompilationUnit *asmDwarfCompilationUnit) {
+    ASSERT_not_null(asmDwarfCompilationUnit);
 
-void
-build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit)
-{
-    // This function build the IR nodes in the AST that hold the mappings of instruction addresses
-    // to source line and column numbers.  From this we generate STL maps and higher level interfaces
-    // that make the information easier to use.
-
-    Dwarf_Signed linecount = 0;
-    Dwarf_Line *linebuf = NULL;
-    Dwarf_Signed i = 0;
-    Dwarf_Addr pc = 0;
-    Dwarf_Unsigned lineno = 0;
-    Dwarf_Signed column = 0;
-    char* filename;
-
-    int lres = 0;
-    int sres = 0;
-    int ares = 0;
-    int lires = 0;
-    int cores = 0;
-
-    ASSERT_require(asmDwarfCompilationUnit->get_line_info() == nullptr);
-    SgAsmDwarfLineList* asmDwarfLineList = new SgAsmDwarfLineList();
+    // Attach an empty line list to the compilation unit.
+    ASSERT_require(!asmDwarfCompilationUnit->get_line_info());
+    auto asmDwarfLineList = new SgAsmDwarfLineList();
     asmDwarfCompilationUnit->set_line_info(asmDwarfLineList);
     asmDwarfLineList->set_parent(asmDwarfCompilationUnit);
-    ASSERT_not_null(asmDwarfCompilationUnit->get_line_info());
 
-#if 0
-    if (verbose > 1)
+    // Get the line context
+    Dwarf_Unsigned version = 0;
+    Dwarf_Small tableCount = 0;
+    Dwarf_Line_Context lineContext;
+    Dwarf_Error error;
+    presentOr(dwarf_srclines_b(cuDie, &version, &tableCount, &lineContext, &error),
+              "dwarf_srclines_b", tableCount, Dwarf_Small(0), debug, error);
+
+    // Get all the lines for the line context
+    Dwarf_Line *lines = nullptr;
+    Dwarf_Signed lineCount = 0;
+    presentOr(dwarf_srclines_from_linecontext(lineContext, &lines, &lineCount, &error),
+              "dwarf_srclines_from_linecontext", lineCount, Dwarf_Signed(0), debug, error);
+
+    // Build the SgAsmDwarfLine objects and attach them to the AST
+    for (Dwarf_Signed i = 0; i < lineCount; ++i) {
+        // Address
+        Dwarf_Addr addr = 0;
+        presentOr(dwarf_lineaddr(lines[i], &addr, &error),
+                  "dwarf_lineaddr", addr, Dwarf_Addr(0), debug, error);
+
+        // File name
+        int fileNameId = -1;
         {
-            print_source_intro(cu_die);
-            build_dwarf_IR_node_from_print_one_die(dbg, cu_die, /* print_information= */ 1,/* srcfiles= */ 0, /* cnt= */ 0 /* , asmDwarfCompilationUnit */ );
-
-            lres = dwarf_print_lines(cu_die, &rose_dwarf_error);
-            if (lres == DW_DLV_ERROR)
-                {
-                    throwError(dbg, "dwarf_srclines details", lres, rose_dwarf_error);
-                }
-
-            printf ("Exiting print_line_numbers_this_cu prematurely! \n");
-            return;
+            char *fileName = nullptr;                   // docs say "Do not dealloc or free the string."
+            presentOr(dwarf_linesrc(lines[i], &fileName, &error),
+                      "dwarf_linesrc", fileName, (char*)"<unknown>", debug, error);
+            fileNameId = Sg_File_Info::addFilenameToMap(fileName);
         }
-#endif
 
-    lres = dwarf_srclines(cu_die, &linebuf, &linecount, &rose_dwarf_error);
-    if (lres == DW_DLV_ERROR) {
-        throwError(dbg, "dwarf_srclines", lres, rose_dwarf_error);
-    } else {
-        if (lres == DW_DLV_NO_ENTRY) {
-            /* no line information is included */
-        } else {
-#if 0
-            // Suppress output!
-            print_source_intro(cu_die);
-            if (verbose)
-                {
-                    build_dwarf_IR_node_from_print_one_die(dbg, cu_die, /* print_information= */ 1,/* srcfiles= */ 0, /* cnt= */ 0 /* , asmDwarfCompilationUnit */ );
-                }
-#endif
-            // Output a header for the data
-            for (i = 0; i < linecount; i++) {
-                Dwarf_Line line = linebuf[i];
+        // Line number
+        Dwarf_Unsigned lineNumber = 0;
+        presentOr(dwarf_lineno(lines[i], &lineNumber, &error),
+                  "dwarf_lineno", lineNumber, Dwarf_Unsigned(0), debug, error);
 
-                sres = dwarf_linesrc(line, &filename, &rose_dwarf_error);
-                ares = dwarf_lineaddr(line, &pc, &rose_dwarf_error);
+        // Column number
+        Dwarf_Unsigned columnNumber = 0;
+        presentOr(dwarf_lineoff_b(lines[i], &columnNumber, &error),
+                  "dwarf_lineoff_b", columnNumber, Dwarf_Unsigned(0), debug, error);
 
-                if (sres == DW_DLV_ERROR) {
-                    throwError(dbg, "dwarf_linesrc", sres, rose_dwarf_error);
-                }
-
-                if (sres == DW_DLV_NO_ENTRY) {
-                    filename = strdup("<unknown>");
-                }
-
-                if (ares == DW_DLV_ERROR) {
-                    throwError(dbg, "dwarf_lineaddr", ares, rose_dwarf_error);
-                }
-
-                if (ares == DW_DLV_NO_ENTRY) {
-                    pc = 0;
-                }
-
-                lires = dwarf_lineno(line, &lineno, &rose_dwarf_error);
-                if (lires == DW_DLV_ERROR) {
-                    throwError(dbg, "dwarf_lineno", lires, rose_dwarf_error);
-                }
-
-                if (lires == DW_DLV_NO_ENTRY) {
-                    lineno = -1LL;
-                }
-
-                cores = dwarf_lineoff(line, &column, &rose_dwarf_error);
-                if (cores == DW_DLV_ERROR) {
-                    throwError(dbg, "dwarf_lineoff", cores, rose_dwarf_error);
-                }
-
-                if (cores == DW_DLV_NO_ENTRY) {
-                    column = -1LL;
-                }
-
-                // Build an IR node to represent the instruction address for each line.
-                // This uses the static maps in the Sg_File_Info to support a table similar
-                // to Dwarf's and which maps filenames to integers and back.  This avoids
-                // building and deleting a Sg_File_Info object.
-                int filename_id = Sg_File_Info::addFilenameToMap(filename);
-
-                // Now build the IR node to store the raw information from dwarf.
-                SgAsmDwarfLine* lineInfo = new SgAsmDwarfLine(pc, filename_id, lineno, column);
-
-                asmDwarfLineList->get_line_list().push_back(lineInfo);
-
-                if (sres == DW_DLV_OK)
-                    dwarf_dealloc(dbg, filename, DW_DLA_STRING);
-
-#if 0
-                // DQ: The remainer of this code block is the output of information that sumarizes the previous entry.
-
-                Dwarf_Bool newstatement = 0;
-                Dwarf_Bool lineendsequence = 0;
-                Dwarf_Bool new_basic_block = 0;
-                int nsres;
-
-                nsres = dwarf_linebeginstatement(line, &newstatement, &rose_dwarf_error);
-                if (nsres == DW_DLV_OK)
-                    {
-#if 0
-                        // Suppress output!
-                        if (newstatement)
-                            {
-                                printf("\t// new statement");
-                            }
-#endif
-                    }
-                else
-                    if (nsres == DW_DLV_ERROR)
-                        {
-                            throwError(dbg, "linebeginstatment failed", nsres,rose_dwarf_error);
-                        }
-
-                nsres = dwarf_lineblock(line, &new_basic_block, &rose_dwarf_error);
-                if (nsres == DW_DLV_OK)
-                    {
-#if 0
-                        // Suppress output!
-                        if (new_basic_block)
-                            {
-                                printf("\t// new basic block");
-                            }
-#endif
-                    }
-                else
-                    if (nsres == DW_DLV_ERROR)
-                        {
-                            throwError(dbg, "lineblock failed", nsres, rose_dwarf_error);
-                        }
-
-                nsres = dwarf_lineendsequence(line, &lineendsequence, &rose_dwarf_error);
-                if (nsres == DW_DLV_OK)
-                    {
-#if 0
-                        // Suppress output!
-                        if (lineendsequence)
-                            {
-                                printf("\t// end of text sequence");
-                            }
-#endif
-                    }
-                else
-                    if (nsres == DW_DLV_ERROR)
-                        {
-                            throwError(dbg, "lineblock failed", nsres, rose_dwarf_error);
-                        }
-#endif
-
-#if 0
-                // Suppress output!
-                printf("\n");
-#endif
-            }
-
-            dwarf_srclines_dealloc(dbg, linebuf, linecount);
-        }
+        // Create the AST node for the Dwarf line and link it into the AST
+        auto asmDwarfLine = new SgAsmDwarfLine(addr, fileNameId, lineNumber, columnNumber);
+        asmDwarfLineList->get_line_list().push_back(asmDwarfLine);
+        asmDwarfLine->set_parent(asmDwarfLineList);
     }
 
-    // printf ("Now generate the static maps to use to lookup the instruction address to source position mappings \n");
+    dwarf_srclines_dealloc_b(lineContext);
+
     asmDwarfLineList->buildInstructionAddressSourcePositionMaps(asmDwarfCompilationUnit);
 
-#if 0
-    // Run a second time to test that the maps are not regenerated (this is just a test)
-    printf ("Run a second time to test that the maps are not regenerated ... \n");
-    DwarfInstructionSourceMapReturnType returnValue = asmDwarfLineList->buildInstructionAddressSourcePositionMaps();
-    printf ("DONE: Run a second time to test that the maps are not regenerated ... \n");
-#endif
-
-#if 1
-    // Output the line information from the generated maps (debugging information).
-    if (SgProject::get_verbose() > 0) {
-        asmDwarfLineList->display("Inside of build_dwarf_line_numbers_this_cu()");
-    }
-#endif
+    if (SgProject::get_verbose() > 0)
+        asmDwarfLineList->display("Inside of buildDwarfLineNumbersThisCu()");
 }
 
-
-/* process each compilation unit in .debug_info */
-void
-build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file) {
-    Dwarf_Unsigned cu_header_length = 0;
-    Dwarf_Unsigned abbrev_offset = 0;
-    Dwarf_Half version_stamp = 0;
-    Dwarf_Half address_size = 0;
-    Dwarf_Die cu_die = NULL;
-    Dwarf_Unsigned next_cu_offset = 0;
-    int nres = DW_DLV_OK;
-
+// Process each compilation unit in ".debug_info".
+static void
+buildDwarfIrNodes(Dwarf_Debug dbg, SgAsmGenericFile* file, const Dwarf_Bool isInfo) {
     ASSERT_require(file->get_dwarf_info() == nullptr);
     SgAsmDwarfCompilationUnitList* asmDwarfCompilationUnitList = new SgAsmDwarfCompilationUnitList();
     file->set_dwarfInfo(asmDwarfCompilationUnitList);
     asmDwarfCompilationUnitList->set_parent(file);
 
     /* Loop until it fails.  */
-    while ((nres = dwarf_next_cu_header(dbg, &cu_header_length, &version_stamp, &abbrev_offset, &address_size, &next_cu_offset,
-                                        &rose_dwarf_error)) == DW_DLV_OK) {
-
-        // error status variable
-        int sres = 0;
-        ASSERT_require(cu_name_flag == false);
-
+    Dwarf_Unsigned cu_header_length = 0;
+    Dwarf_Half version_stamp = 0;
+    Dwarf_Unsigned abbrev_offset = 0;
+    Dwarf_Half address_size = 0;
+    Dwarf_Half length_size = 0;
+    Dwarf_Half extension_size = 0;
+    Dwarf_Sig8 type_signature;
+    memset(&type_signature, 0, sizeof type_signature);
+    Dwarf_Unsigned type_offset = 0;
+    Dwarf_Unsigned next_cu_header_offset = 0;
+    Dwarf_Half header_cu_type = 0;
+    Dwarf_Error error = 0;
+    int nres = DW_DLV_OK;
+    while ((nres = dwarf_next_cu_header_d(dbg, isInfo, &cu_header_length, &version_stamp, &abbrev_offset, &address_size,
+                                          &length_size, &extension_size, &type_signature, &type_offset, &next_cu_header_offset,
+                                          &header_cu_type, &error)) == DW_DLV_OK) {
         /* process a single compilation unit in .debug_info. */
-        sres = dwarf_siblingof(dbg, NULL, &cu_die, &rose_dwarf_error);
-
+        Dwarf_Die cu_die = nullptr;
+        const int sres = dwarf_siblingof_b(dbg, nullptr, isInfo, &cu_die, &error);
         switch (sres) {
             case DW_DLV_OK: {
                 Dwarf_Signed cnt = 0;
@@ -1239,7 +1127,7 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file) {
                 // We need to call this function so that we can generate filenames to support the line number mapping below.  The call
                 // to dwarf_srcfiles fails if the compilation unit `cu_die` does not have associated source file information, or if an
                 // out-of-memory condition was encountered.
-                const int srcf = dwarf_srcfiles(cu_die, &srcfiles, &cnt, &rose_dwarf_error);
+                const int srcf = dwarf_srcfiles(cu_die, &srcfiles, &cnt, &error);
                 if (srcf != DW_DLV_OK) {
                     mlog[WARN] <<"dwarf_srcfiles call failed\n";
                     srcfiles = nullptr;
@@ -1250,7 +1138,8 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file) {
                 // within this function we will generate the IR nodes specific to Dwarf. This
                 // should define an course view of the AST which can be used to relate the binary
                 // to the source code.
-                SgAsmDwarfConstruct* asmDwarfConstruct = build_dwarf_IR_node_from_die_and_children(dbg, cu_die, srcfiles, cnt, NULL);
+                SgAsmDwarfConstruct* asmDwarfConstruct =
+                    buildDwarfIrNodeFromDieAndChildren(dbg, cu_die, srcfiles, cnt, nullptr, isInfo);
                 ASSERT_not_null(asmDwarfConstruct);
 
                 // Handle the case of many Dwarf Compile Units
@@ -1270,7 +1159,7 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file) {
                 bool line_flag = true;
 
                 if (line_flag) {
-                    build_dwarf_line_numbers_this_cu(dbg, cu_die, asmDwarfCompilationUnit);
+                    buildDwarfLineNumbersThisCu(dbg, cu_die, asmDwarfCompilationUnit);
                 } else {
                     mlog[INFO] << "Skipping line number <--> instruction address mapping information\n";
                 }
@@ -1282,15 +1171,15 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file) {
                 break;
 
             default:
-                throwError(dbg, "Regetting cu_die", sres, rose_dwarf_error);
+                throwError(dbg, "Regetting cu_die", sres, error);
         }
 
-        cu_offset = next_cu_offset;
+        cu_offset = next_cu_header_offset;
     }
 
     if (nres == DW_DLV_ERROR) {
-        std::string errmsg = dwarf_errmsg(rose_dwarf_error);
-        Dwarf_Unsigned myerr = dwarf_errno(rose_dwarf_error);
+        std::string errmsg = dwarf_errmsg(error);
+        Dwarf_Unsigned myerr = dwarf_errno(error);
         mlog[FATAL] << "DWARF error : " << errmsg << " (" << (unsigned long)myerr << ")\n";
     }
 }
@@ -1433,30 +1322,23 @@ commentOutEvertythingButDwarf (SgNode* node) {
 }
 
 void
-readDwarf ( SgAsmGenericFile* asmFile ) {
-    ASSERT_not_null(asmFile);
+readDwarf(SgAsmGenericFile *file) {
+    ASSERT_not_null(file);
+    const int fileDescriptor = file->get_fd();
+    Dwarf_Debug debug;
+    Dwarf_Error error;
+    const Dwarf_Bool isInfo = true;
 
-    SgAsmGenericFile* genericFile = asmFile;
-    ASSERT_not_null(genericFile);
+    // DQ (3/13/2009): This function gets a lot of surrounding debugging information because it is the first dwarf function call and
+    // is a special problem in the compatability between Intel Pin and ROSE over the use of Dwarf.
+    const int dwarfInitStatus = dwarf_init_b(fileDescriptor, DW_GROUPNUMBER_ANY, nullptr, nullptr, &debug, &error);
+    if (dwarfInitStatus == DW_DLV_OK) {
+        // Dwarf information in a specimen is attached to the specimen's file as a whole.  It is not attached to an interpretation
+        // since the relationship between SgAsmGenericFile and SgAsmInterpretation is many-to-many.
+        buildDwarfIrNodes(debug, file, isInfo);
 
-    int fileDescriptor = genericFile->get_fd();
-    Dwarf_Debug rose_dwarf_dbg;
-    Dwarf_Error rose_dwarf_error;
-
-    // DQ (3/13/2009): This function gets a lot of surrounding debugging information because it is
-    // the first dwarf function call and is a special problem in the compatability between Intel Pin
-    // and ROSE over the use of Dwarf.
-    // int dwarf_init_status = dwarf_init (fileDescriptor, DW_DLC_READ, NULL, NULL, &rose_dwarf_dbg, &rose_dwarf_error);
-    int dwarf_init_status = dwarf_init (fileDescriptor, DW_DLC_READ, NULL, NULL, &rose_dwarf_dbg, &rose_dwarf_error);
-
-    // Test if the call to dwarf_init worked!
-    if (dwarf_init_status == DW_DLV_OK) {
-        // Dwarf information in a specimen is attached to the specimen's file as a whole.  It is not attached to an
-        // interpretation since the relationship between SgAsmGenericFile and SgAsmInterpretation is many-to-many.
-        build_dwarf_IR_nodes(rose_dwarf_dbg, asmFile);
-
-        int dwarf_finish_status = dwarf_finish( rose_dwarf_dbg, &rose_dwarf_error);
-        ASSERT_always_require(dwarf_finish_status == DW_DLV_OK);
+        const int dwarfFinishStatus = dwarf_finish(debug);
+        ASSERT_always_require(dwarfFinishStatus == DW_DLV_OK);
     } else {
         // This might be a PE file (or just non-ELF)
         if (SgProject::get_verbose() > 0) {
@@ -1464,20 +1346,19 @@ readDwarf ( SgAsmGenericFile* asmFile ) {
         }
     }
 
-    // DQ (11/10/2008): Added support to permit symbols to be removed from the DOT graph generation.
-    // This make the DOT files easier to manage since there can be thousands of symbols.  This also
-    // makes it easer to debug the ROSE dwarf AST.
-    if (SgBinaryComposite* binary = SageInterface::getEnclosingNode<SgBinaryComposite>(asmFile)) {
+    // DQ (11/10/2008): Added support to permit symbols to be removed from the DOT graph generation.  This makes the DOT files
+    // easier to manage since there can be thousands of symbols.  This also makes it easer to debug the ROSE dwarf AST.
+    if (SgBinaryComposite* binary = SageInterface::getEnclosingNode<SgBinaryComposite>(file)) {
         // This is used to reduce the size of the DOT file to simplify debugging Dwarf stuff.
-        if (binary->get_visualize_executable_file_format_skip_symbols() == true) {
+        if (binary->get_visualize_executable_file_format_skip_symbols()) {
             mlog[DEBUG] <<"calling commentOutSymbolsFromDotGraph() for visualization of binary file format withouth symbols\n";
-            commentOutSymbolsFromDotGraph(asmFile);
+            commentOutSymbolsFromDotGraph(file);
         }
 
         // Nothing but dwarf!
-        if (binary->get_visualize_dwarf_only() == true) {
+        if (binary->get_visualize_dwarf_only()) {
             mlog[DEBUG] <<"calling commentOutEvertythingButDwarf() for visualization of Dwarf)\n";
-            commentOutEvertythingButDwarf(asmFile);
+            commentOutEvertythingButDwarf(file);
         }
     }
 }
