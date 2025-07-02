@@ -18,7 +18,7 @@
 #    Z3_VERSION_H   -- Boolean: whether the z3_version.h file exists
 #    Z3_LIBRARIES   -- String:  names of libraries necessary to use Z3
 #    Z3_HEADER_PATH -- String:  location of z3 headers, suitable for including via -I
-include(CheckIncludeFileCXX) 
+include(CheckIncludeFiles) 
 macro(find_z3)
   if("${Z3_ROOT}" STREQUAL "no")
     # Do not use Z3, and therefore do not even search for it. Make sure all outputs are cleared to avoid problems with
@@ -86,10 +86,10 @@ macro(find_z3)
       if (Z3_HEADER_PATH)
         set(CMAKE_REQUIRED_INCLUDES ${Z3_HEADER_PATH})
       endif()
-      check_include_file_cxx("z3_version.h" Z3_VERSION_H)
+      check_include_file("z3_version.h" Z3_VERSION_H)
     else()
       include_directories("${Z3_ROOT}/include")
-      check_include_files("${Z3_ROOT}/include/z3_version.h" Z3_VERSION_H)
+      check_include_file("${Z3_ROOT}/include/z3_version.h" Z3_VERSION_H)
     endif()
     if(Z3_VERSION_H AND NOT Z3_VERSION)
       message(FATAL_ERROR "Z3 version from z3_version.h not implemented in cmake yet")
