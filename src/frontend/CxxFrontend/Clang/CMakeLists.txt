@@ -1,6 +1,3 @@
-find_package(LLVM REQUIRED CONFIG) # Use CONFIG mode to find the modern CMake LLVM package
-find_package(Clang REQUIRED CONFIG) # Similar for Clang
-
 message(STATUS "Building libroseClangFrontend") 
 message(STATUS "Boost_INCLUDE_DIR ${Boost_INCLUDE_DIR}") 
 message(STATUS "Building with Clang frontend")
@@ -14,10 +11,22 @@ add_definitions(${LLVM_DEFINITIONS})
 
 # Extra libraries for the Clang frontend tools
 set(CLANG_LIBRARIES
-  clangFrontend clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
+  clangFrontendTool clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
   clangStaticAnalyzerCore clangIndex clangFrontend clangCodeGen
   clangARCMigrate clangRewrite clangSerialization clangDriver
-  clangParse clangSema clangAnalysis clangAST clangLex clangBasic)
+  clangParse clangSema clangAnalysis clangAST clangBasic clangEdit clangLex)
+
+if(${CLANG_VERSION_MAJOR} GREATER_EQUAL 15)
+  list(APPEND CLANG_LIBRARIES clangSupport)
+endif()
+
+if(${CLANG_VERSION_MAJOR} GREATER_EQUAL 16)
+  list(APPEND CLANG_LIBRARIES clangCrossTU clangASTMatchers)
+endif()
+
+if(${CLANG_VERSION_MAJOR} GREATER_EQUAL 18)
+  list(APPEND CLANG_LIBRARIES clangAPINotes clangTooling)
+endif()
 
 # Source files of roseClangFrontend 
 set(roseClangFrontend_SOURCE_FILES clang-frontend.cpp 

@@ -682,7 +682,7 @@ if(ENABLE-CPP)
   else()                         # USE CLANG
     message(STATUS "ROSE will be using Clang for the CXX Frontend")
     list(APPEND rose_LIB_OBJS roseClangFrontend)
-    set(BACKEND_CXX_IS_CLANG_COMPILER 1) 
+    set(BACKEND_CXX_IS_CLANG_COMPILER TRUE)
   endif()
 endif()
 

@@ -113,6 +113,9 @@
 
 #cmakedefine01 ROSE_USE_EDG_QUAD_FLOAT 
 
+/* Use Clang for parsing C/C++-like languages */
+#cmakedefine ROSE_USE_CLANG_FRONTEND
+
 /* Defined if we're building using CMake */
 #cmakedefine ROSE_USE_CMAKE @USE_CMAKE@
 

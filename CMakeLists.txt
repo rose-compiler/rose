@@ -632,6 +632,19 @@ if(ENABLE-CLANG-FRONTEND)
   # Define macro which is used by source code
   set(ROSE_USE_CLANG_FRONTEND 1)
   set(EDG_COMPILE OFF)
+  # Honor LLVM_HOME environment variable if it exists
+  if(DEFINED ENV{LLVM_HOME})
+    set(LLVM_ROOT "$ENV{LLVM_HOME}")
+    set(Clang_ROOT "$ENV{LLVM_HOME}")
+  endif()
+  find_package(LLVM REQUIRED)
+  find_package(Clang REQUIRED)
+  # find_package may stomp on CLANG_VERSION_MAJOR, so it must be after. At the moment, the package
+  # sets CLANG_VERSION_MAJOR to 0, but they may correct it in the future, which would make the
+  # script unnecessary
+  # also, assuming that you must use clang to compile the clang frontend,
+  # we could perhaps use BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER instead of this script
+  execute_process(COMMAND "${CMAKE_SOURCE_DIR}/config/getClangMajorVersionNumber.sh" OUTPUT_VARIABLE CLANG_VERSION_MAJOR)
 endif()
 
 # Default EDG version
