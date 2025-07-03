@@ -796,7 +796,7 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/midend/programAnalysis/OAWrap/*" \
         "$(top_srcdir)/src/midend/programAnalysis/OpenAnalysis/*" \
         "$(top_srcdir)/src/midend/programAnalysis/genericDataflow/*" \
-        "$(top_srcdir)/src/frontend/CxxFrontend/EDG/EDG_4.9/*" \
+        "$(top_srcdir)/src/frontend/CxxFrontend/EDG/EDG_6.5/*" \
         "$(top_srcdir)/src/midend/astRewriteMechanism/*" \
         "$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis/*" \
         "$(top_srcdir)/src/midend/programAnalysis/pointerAnal/*" \
@@ -815,6 +815,8 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/frontend/SageIII/astVisualization/*" \
         "$(top_srcdir)/src/midend/astProcessing/AstProcessing.h" \
         "$(top_srcdir)/src/frontend/SageIII/sageInterface/sageGeneric.h" \
+        "$(top_srcdir)/src/3rdPartyLibraries/json*" \
+        "$(top_srcdir)/src/roseSupport/*" \
          -o librose-lcov.info
 
 # Note: astVisualization is only approriate for small ASTs and for debugging so excluded from code coverage analysis.

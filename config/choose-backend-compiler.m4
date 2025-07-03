@@ -922,6 +922,28 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
   fi
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_10_3, [test "x$gcc_version_later_10_3" = "xyes"])
 
+  gcc_version_later_10_4=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x10; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "4"; then
+        AC_MSG_NOTICE([we have identified version 10.4+ of gcc])
+        gcc_version_later_10_4=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "10"; then
+        gcc_version_later_10_4=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_10_4, [test "x$gcc_version_later_10_4" = "xyes"])
+
+  gcc_version_later_10_5=no
+  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x10; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "5"; then
+        AC_MSG_NOTICE([we have identified version 10.5+ of gcc])
+        gcc_version_later_10_5=yes
+     fi
+  elif test "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER" -gt "10"; then
+        gcc_version_later_10_5=yes
+  fi
+  AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_10_5, [test "x$gcc_version_later_10_5" = "xyes"])
+
 # echo "Exiting after test of backend version number support ..."
 # exit 1
 

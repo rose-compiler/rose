@@ -364,20 +364,15 @@ OMP-Runtime:
 GPU:
     extends: .release-base 
     
-Klocwork:
-    extends: .release-base 
-    tags:
-        - klocwork
-
 Plumhall-CVS:
     extends: .release-base 
     script:
-        - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME 103 #Second arg is EXPECTED_FAILS
+        - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME 17 #Second arg is EXPECTED_FAILS
     
 Plumhall-XVS:
     extends: .release-base 
     script:
-        - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME 3660 #Second arg is EXPECTED_SUCCESS
+        - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME 3977 #Second arg is EXPECTED_SUCCESS
 
 SAPOH-Autoconf:
     extends: .release-base 
@@ -432,3 +427,18 @@ Status-Post-Processing:
 Coverage-Analysis:
     extends: .release-base 
     timeout: 12h
+
+Coverage-Analysis-Ada:
+    extends: .release-base 
+    timeout: 6h
+
+Coverage-Analysis-Libadalang:
+    extends: .release-base 
+    timeout: 6h
+
+Coverage-Analysis-Combine:
+    extends: .release-base 
+    needs:
+      - job: Coverage-Analysis
+      - job: Coverage-Analysis-Ada
+      - job: Coverage-Analysis-Libadalang
