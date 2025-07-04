@@ -66,7 +66,7 @@ AC_DEFUN([ROSE_SUPPORT_DWARF],
         LDFLAGS="$LDFLAGS $LIBDWARF_LDFLAGS"
         
         AC_CHECK_HEADER([libdwarf.h], [dwarf_header_found=yes], [dwarf_header_found=no])
-        AC_CHECK_LIB([dwarf], [dwarf_init], [dwarf_lib_found=yes], [dwarf_lib_found=no])
+        AC_CHECK_LIB([dwarf], [dwarf_init_b], [dwarf_lib_found=yes], [dwarf_lib_found=no])
         
         if test "$dwarf_header_found" = "yes" && test "$dwarf_lib_found" = "yes"; then
           LIBDWARF_LIBS="-ldwarf"
@@ -134,12 +134,14 @@ AC_DEFUN([ROSE_SUPPORT_DWARF],
 
     # Set up the results
     if test "$dwarf_found" = "yes"; then
+      ROSE_HAVE_LIBDWARF="yes"
       AC_DEFINE([ROSE_HAVE_LIBDWARF], [1], [Define if libdwarf is available])
       AC_MSG_NOTICE([DWARF support enabled])
       AC_MSG_NOTICE([  LIBDWARF_CPPFLAGS = $LIBDWARF_CPPFLAGS])
       AC_MSG_NOTICE([  LIBDWARF_LDFLAGS  = $LIBDWARF_LDFLAGS])
       AC_MSG_NOTICE([  LIBDWARF_LIBS     = $LIBDWARF_LIBS])
     else
+      ROSE_HAVE_LIBDWARF="no"
       AC_MSG_NOTICE([DWARF support disabled])
     fi
     
