@@ -221,17 +221,20 @@ namespace
            };
   }
 
+  using BoostEdgeRange = boost::iterator_range<progrep::CallGraph::ConstEdgeIterator>;
+
   void
   edgesAsJsonArrayWithDuplicates( JsonCreator& creator,
-                                  boost::iterator_range<progrep::CallGraph::ConstEdgeIterator> range,
-                                  progrep::VertexPredicate pred
+                                  BoostEdgeRange range,
+                                  progrep::VertexPredicate pred,
+                                  progrep::EdgeToJsonConverter conv
                                 )
   {
     namespace adapt = boost::adaptors;
 
     creator.array( "links",
                    range | adapt::filtered(validEdges(std::move(pred)))
-                         | adapt::transformed(EdgeToJson{})
+                         | adapt::transformed(conv)
                  );
   }
 
@@ -246,17 +249,31 @@ namespace
   };
 
 
+  using WeightedEdgeBase = std::tuple<const progrep::CallGraph::Edge*, std::size_t>;
+
+  struct WeightedEdge : WeightedEdgeBase
+  {
+    using base = WeightedEdgeBase;
+    using base::base;
+
+    const progrep::CallGraph::Edge& edge()   const { return *std::get<0>(*this); }
+    std::size_t                     weight() const { return std::get<1>(*this); }
+
+    void inc() { ++std::get<1>(*this); }
+  };
+
+
   struct ComputeEdgeWeights
   {
       // use unordered_map for speed up on large graphs
       //   requires std::hash<VertexPair> to be defined.
-      using WeightedEdges = std::map<VertexPair, std::size_t>;
+      using WeightedEdges = std::map<VertexPair, WeightedEdge>;
 
       void operator()(const progrep::CallGraph::Edge& e)
       {
-        const auto res = edges.insert({{&*e.source(), &*e.target()}, 0});
+        const auto res = edges.insert({{&*e.source(), &*e.target()}, {&e, 0}});
 
-        ++(res.first->second); // increment the counter
+        res.first->second.inc(); // increment the counter
       }
 
       operator WeightedEdges() && { return std::move(edges); }
@@ -265,25 +282,11 @@ namespace
       WeightedEdges     edges;
   };
 
-  struct WeightedEdgeToJson
-  {
-    json::json
-    operator()(const ComputeEdgeWeights::WeightedEdges::value_type& e) const
-    {
-      json::json res;
-
-      res["source"] = uniqueId(*e.first.source());
-      res["target"] = uniqueId(*e.first.target());
-      res["weight"] = e.second;
-
-      return res;
-    }
-  };
-
   void
   edgesAsJsonArrayWithWeights( JsonCreator& creator,
                                boost::iterator_range<progrep::CallGraph::ConstEdgeIterator> range,
-                               progrep::VertexPredicate pred
+                               progrep::VertexPredicate pred,
+                               progrep::EdgeToJsonConverter conv
                              )
   {
     namespace adapt = boost::adaptors;
@@ -294,10 +297,21 @@ namespace
                                            ComputeEdgeWeights{}
                                          );
 
-    creator.array("links", edges | adapt::transformed(WeightedEdgeToJson{}));
+    auto weightedToJson =
+      [baseConverter = std::move(conv)]
+      (const ComputeEdgeWeights::WeightedEdges::value_type& e) -> json::json
+      {
+        json::json res = baseConverter(e.second.edge());
+
+        res["weight"] = e.second.weight();
+        return res;
+      };
+
+    creator.array("links", edges | adapt::transformed(weightedToJson));
   }
 
-  std::function<void(JsonCreator& creator, boost::iterator_range<progrep::CallGraph::ConstEdgeIterator>, progrep::VertexPredicate)>
+
+  std::function<void(JsonCreator& creator, BoostEdgeRange, progrep::VertexPredicate, progrep::EdgeToJsonConverter)>
   edgesAsJsonArray(bool useWeightForMultiEdges)
   {
     return useWeightForMultiEdges ? edgesAsJsonArrayWithWeights : edgesAsJsonArrayWithDuplicates;
@@ -308,15 +322,16 @@ namespace
                  const progrep::CallGraph& cg,
                  bool useWeightForMultiEdges,
                  progrep::VertexPredicate pred,
-                 progrep::VertexToJsonConverter conv
+                 progrep::VertexToJsonConverter vertexConv,
+                 progrep::EdgeToJsonConverter edgeConv
                )
   {
     output.field("directed", true);
     output.field("multigraph", !useWeightForMultiEdges);
     output.field("graph", json::json::object());
 
-    verticesAsJsonArray(output, cg.vertices(), pred, std::move(conv));
-    edgesAsJsonArray(useWeightForMultiEdges)(output, cg.edges(), pred);
+    verticesAsJsonArray(output, cg.vertices(), pred, vertexConv);
+    edgesAsJsonArray(useWeightForMultiEdges)(output, cg.edges(), pred, edgeConv);
   }
 }
 
@@ -358,12 +373,6 @@ namespace CodeThorn
              FunctionKeyType     key = v.value();
              CompatibilityBridge compat;
 
-             //~ if (nameOf(key).rfind("_M_construct < pointer >") == 0)
-             //~ {
-               //~ uniqueId(key);
-               //~ std::cerr << ":here you go.. " << std::endl;
-             //~ }
-
              res["id"]      = uniqueId(key);
              res["name"]    = nameOf(key);
              res["defined"] = compat.hasDefinition(key);
@@ -371,29 +380,38 @@ namespace CodeThorn
              if (auto clazz = compat.classType(key))
                res["class"]  = typeNameOf(*clazz);
 
-             // res["fileid"]  = compat.location(key);
-
              return res;
            };
   }
 
 
   json::json
-  toJson(const CallGraph& cg, bool useWeightForMultiEdges, VertexPredicate pred, VertexToJsonConverter conv)
+  toJson( const CallGraph& cg,
+          bool useWeightForMultiEdges,
+          VertexPredicate pred,
+          VertexToJsonConverter vertexConv,
+          EdgeToJsonConverter edgeConv
+        )
   {
     JsonObjectCreator objCreator;
 
-    convertToJson(objCreator, cg, useWeightForMultiEdges, std::move(pred), std::move(conv));
+    convertToJson(objCreator, cg, useWeightForMultiEdges, pred, vertexConv, edgeConv);
     return std::move(objCreator).result();
   }
 
   void
-  writeJson(std::ostream& os, const CallGraph& cg, bool useWeightForMultiEdges, VertexPredicate pred, VertexToJsonConverter conv)
+  writeJson( std::ostream& os,
+             const CallGraph& cg,
+             bool useWeightForMultiEdges,
+             VertexPredicate pred,
+             VertexToJsonConverter vertexConv,
+             EdgeToJsonConverter edgeConv
+           )
   {
     JsonFileCreator jsonFile(os);
 
     os << '{';
-    convertToJson(jsonFile, cg, useWeightForMultiEdges, std::move(pred), std::move(conv));
+    convertToJson(jsonFile, cg, useWeightForMultiEdges, pred, vertexConv, edgeConv);
     os << '}';
   }
 

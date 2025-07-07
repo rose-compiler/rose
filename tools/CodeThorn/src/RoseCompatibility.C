@@ -183,6 +183,25 @@ namespace
     return ty;
   }
 
+  // this will skip empty modifier type objects.
+  //   in large code bases roughly 10% of SgModifierType objects
+  //   do not have meaningful content.
+  const SgType*
+  stripVacuousModifierType(const SgModifierType& ty)
+  {
+    const SgTypeModifier&          tymod = ty.get_typeModifier();
+    const SgConstVolatileModifier& cvmod = tymod.get_constVolatileModifier();
+    const bool                     hasCxxRelevantModifier = cvmod.isConst() || cvmod.isVolatile();
+
+    // ignoring restrict
+    //   and OpenCl and UPC modifiers ..
+
+    if (hasCxxRelevantModifier)
+      return &ty;
+
+    return ty.get_base_type();
+  }
+
   const SgType*
   stripTypeAlias(const SgType* ty)
   {
@@ -191,6 +210,14 @@ namespace
 
     if (const SgDeclType* dclty = isSgDeclType(ty))
       return stripTypeAlias(dclty->get_base_type());
+
+    if (const SgModifierType* modty = isSgModifierType(ty))
+    {
+      const SgType* stripped = stripVacuousModifierType(*modty);
+
+      if (stripped != ty)
+        return stripTypeAlias(stripped);
+    }
 
     return ty;
   }
@@ -1206,18 +1233,32 @@ _uniqueName(AnyKeyType id)
 std::string
 RoseCompatibilityBridge::uniqueName(AnyKeyType id) const
 {
-  std::string res = _uniqueName(id);
-  const bool dbgCallAgain = (  (res == "L81qalW4poeeR")
-                            || (res == "L81qalW4poeeR")
-                            );
+  return _uniqueName(id);
+}
 
-  if (dbgCallAgain)
+namespace
+{
+  SourceLocation _location(const SgFunctionDeclaration& fn)
   {
-    std::cerr << "********** " << res << std::endl;
-    _uniqueName(id);
-  }
+    const Sg_File_Info* start = fn.get_startOfConstruct();
+    ASSERT_not_null(start);
+    const Sg_File_Info* limit = fn.get_endOfConstruct();
+    ASSERT_not_null(limit);
 
-  return res;
+    return { start->get_filenameString(), start->get_line(), start->get_col(), limit->get_line(), limit->get_col() };
+  }
+}
+
+
+SourceLocation RoseCompatibilityBridge::location(FunctionKeyType fid) const
+{
+  if (fid == FunctionKeyType{})
+    return {"", 0, 0, 0, 0};
+
+  if (const SgFunctionDeclaration* fndef = isSgFunctionDeclaration(fid->get_definingDeclaration()))
+    return _location(*fndef);
+
+  return _location(*fid);
 }
 
 namespace
@@ -2137,6 +2178,15 @@ namespace
 
       void handle(SgFunctionCallExp& n)        { handleCallExp(n); }
       void handle(SgConstructorInitializer& n) { handleCallExp(n); }
+
+      // skip function calls in default parameter value expressions.
+      //   Those function calls could be added in though...
+      //   However:
+      //   - adding such calls will not be consistent, as the
+      //     default could be specified on an earlier function declaration.
+      //   - the default should be added at a call site, if needed (\todo).
+      //   - also causes inconsistencies in template instantiations.
+      void handle(SgFunctionParameterList&) {}
 
       void handle(SgFunctionRefExp& n)
       {

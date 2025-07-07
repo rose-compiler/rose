@@ -15,6 +15,7 @@ namespace CodeThorn
 {
   using VertexPredicate       = std::function<bool(const CallGraph::Vertex&)>;
   using VertexToJsonConverter = std::function<nlohmann::json(const CallGraph::Vertex&)>;
+  using EdgeToJsonConverter   = std::function<nlohmann::json(const CallGraph::Edge&)>;
 
   /// returns a predicate that that is true for any vertex
   VertexPredicate anyFunction();
@@ -25,8 +26,12 @@ namespace CodeThorn
   /// returns a converter generating node ID and name
   VertexToJsonConverter basicVertexConverter();
 
-  /// returns a converter generating node ID, name, definition status
+  /// returns a converter generating basicVertexConverter + definition status, class member
   VertexToJsonConverter detailedVertexConverter();
+
+  /// returns a converter generating node ID and name
+  EdgeToJsonConverter basicEdgeConverter();
+
 
 
   /// Generates a networkx compatible json object from the control flow graph.
@@ -36,13 +41,15 @@ namespace CodeThorn
   ///                               exists multiple times.
   /// \param pred                   a filter that returns true if a vertex should be included in the
   ///                               JSON object.
-  /// \param conv                   a function that creates a JSON representation from a vertex
+  /// \param vertexConv             a function that creates a JSON representation from a Sawyer Vertex
+  /// \param edgeConv               a function that creates a JSON representation from a Sawyer Edge
   /// \result                       a JSON object representing the entire call graph.
   nlohmann::json
   toJson( const CallGraph& cg,
           bool useWeightForMultiEdges = false,
           VertexPredicate pred = anyFunction(),
-          VertexToJsonConverter conv = basicVertexConverter()
+          VertexToJsonConverter vertexConv = basicVertexConverter(),
+          EdgeToJsonConverter edgeConv = basicEdgeConverter()
         );
 
   /// Writes a networkx compatible json object to the stream \p os,
@@ -53,13 +60,15 @@ namespace CodeThorn
   ///                               exists multiple times.
   /// \param pred                   a filter that returns true if a vertex should be included in the
   ///                               JSON object.
-  /// \param conv                   a function that creates a JSON representation from a vertex
+  /// \param vertexConv             a function that creates a JSON representation from a Sawyer Vertex
+  /// \param edgeConv               a function that creates a JSON representation from a Sawyer Edge
   void
   writeJson( std::ostream& os,
              const CallGraph& cg,
              bool useWeightForMultiEdges = false,
              VertexPredicate pred = anyFunction(),
-             VertexToJsonConverter conv = basicVertexConverter()
+             VertexToJsonConverter vertexConv = basicVertexConverter(),
+             EdgeToJsonConverter edgeConv = basicEdgeConverter()
            );
 } // end of namespace CodeThorn
 

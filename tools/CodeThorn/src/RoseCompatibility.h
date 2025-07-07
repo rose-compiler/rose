@@ -9,6 +9,8 @@
 
 #include <string>
 #include <functional>
+#include <boost/optional/optional.hpp>
+#include <boost/utility/string_view.hpp>
 
 namespace CodeThorn
 {
@@ -46,6 +48,8 @@ class CastAnalysis;
 template <class T>
 using Optional = boost::optional<T>;
 
+using StringView = boost::string_view;
+
 using CallDataBase = std::tuple< Optional<FunctionKeyType>,
                                  ExpressionKeyType, // \todo may need optional since it is not present in ctor inits
                                  Optional<ClassKeyType>,
@@ -78,6 +82,19 @@ struct DataMemberType : DataMemberTypeBase
   bool         hasReference()   const { return std::get<2>(*this); }
   bool         hasArray()       const { return std::get<3>(*this); }
   bool         hasInitializer() const { return std::get<4>(*this); }
+};
+
+using SourceLocationBase = std::tuple<StringView, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t>;
+struct SourceLocation : SourceLocationBase
+{
+  using base = SourceLocationBase;
+  using base::base;
+
+  StringView    file()      const { return std::get<0>(*this); }
+  std::uint32_t startLine() const { return std::get<1>(*this); }
+  std::uint32_t startCol()  const { return std::get<2>(*this); }
+  std::uint32_t limitLine() const { return std::get<3>(*this); }
+  std::uint32_t limitCol()  const { return std::get<4>(*this); }
 };
 
 
@@ -202,6 +219,10 @@ class RoseCompatibilityBridge
     /// \details
     ///    the unique string is valid and stable across runs
     std::string uniqueName(AnyKeyType id) const;
+
+    /// returns the location of function implementation \p fid if available
+    ///   otherwise returns the location of the first non-defining declaration.
+    SourceLocation location(FunctionKeyType fid) const;
 
     /// compares the name of functions \p lhs and \p rhs
     /// \param lhs some function

@@ -1241,9 +1241,9 @@ VirtualFunctionAnalysis::at(const VirtualFunctionAnalysis::key_type& k) const
 FunctionPredicate
 VirtualFunctionAnalysis::virtualFunctionTest() const
 {
-  return [self = *this](FunctionKeyType key) -> bool
+  return [self = this](FunctionKeyType key) -> bool
          {
-           return self.find(key) != self.end();
+           return self->count(key) != 0;
          };
 }
 }
