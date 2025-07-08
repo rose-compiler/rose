@@ -11,6 +11,11 @@ std::string CollectDependences::local_read_string(std::istream& input_file) {
     char c ;
     while ((input_file >> c).good()) {
        switch (c) {
+       case '\\':
+          next_string.push_back(c);
+          if (!(input_file >> c).good()) 
+              return next_string;  
+          break; 
        case '\"': 
           next_string.push_back(c);
           while ((input_file >> c).good() && c != '\"') {
@@ -104,7 +109,7 @@ void CollectDependences::CollectFromFile(std::istream& input_file) {
             } else if (next_string == "=") {
                attr = "";
                while ((next_string = local_read_string(input_file)) != "") {
-                  if (next_string == ";" || next_string == "}") 
+                  if (next_string == ";" || next_string == "\n") 
                       break;
                   attr += next_string;
                }
@@ -441,28 +446,29 @@ bool DependenceTable::
   std::string prefix, attr;
   bool save_annot = false;
   switch (relation) {
-    case AstUtilInterface::OperatorSideEffect::Modify: prefix = "modify"; save_annot=true; break;
-    case AstUtilInterface::OperatorSideEffect::Read:  prefix = "read"; save_annot=true; break;
-    case AstUtilInterface::OperatorSideEffect::Call:  prefix = "call"; break;
-    case AstUtilInterface::OperatorSideEffect::Parameter:  
-             prefix = "parameter"; break;
-    case AstUtilInterface::OperatorSideEffect::Return:  
-             prefix = "return"; break;
+    case AstUtilInterface::OperatorSideEffect::Modify: save_annot=true; break;
+    case AstUtilInterface::OperatorSideEffect::Read:   save_annot=true; break;
+    case AstUtilInterface::OperatorSideEffect::Call:   break;
+    case AstUtilInterface::OperatorSideEffect::Parameter: break;
+    case AstUtilInterface::OperatorSideEffect::Return:   break;
     case AstUtilInterface::OperatorSideEffect::Kill:  return false; 
-    case AstUtilInterface::OperatorSideEffect::Decl:  prefix = "construct_destruct"; break;
-    case AstUtilInterface::OperatorSideEffect::Allocate:  prefix = "allocate"; break;
-    case AstUtilInterface::OperatorSideEffect::Free:  prefix = "free"; break;
+    case AstUtilInterface::OperatorSideEffect::Decl:  break;
+    case AstUtilInterface::OperatorSideEffect::Allocate:  break;
+    case AstUtilInterface::OperatorSideEffect::Free:  break;
     default:
      std::cerr << "Unexpected case:" << relation << "\n";
      assert(0);
   }
+
+
   if (save_annot) {
      AstUtilInterface::AddOperatorSideEffectAnnotation(op, varref, relation);
   }
   if (details != 0) {
        attr = AstUtilInterface::GetVariableSignature(details);
   }
-  DependenceEntry e(AstUtilInterface::GetVariableSignature(op), AstUtilInterface::GetVariableSignature(varref), prefix, attr); 
+  DependenceEntry e(AstUtilInterface::GetVariableSignature(op), AstUtilInterface::GetVariableSignature(varref), 
+                                    AstUtilInterface::OperatorSideEffectName(relation), attr); 
   Log.push("saving dependence: " + e.to_string());
   SaveDependence(e);
   return true;

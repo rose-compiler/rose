@@ -3006,7 +3006,10 @@ GetTypeInfo(SgType* t, std::string *tname, std::string* stripname, int* size, bo
   std::string r1 = ::StripGlobalQualifier(typeName);
   std::string result = "";
   for (size_t i = 0; i < r1.size(); ++i) {
-    if (r1[i] != ' ')
+    if (r1[i] == '[' || r1[i] == ']' || r1[i] == '{' || r1[i] == '}' || r1[i] == ',') {
+      result.push_back('_');
+    }
+    else if (r1[i] != ' ')
       result.push_back(r1[i]);
     else if (i + 2 < r1.size() && r1[i+1]==':' && r1[i+2]==':') {
         i+= 2; 

@@ -98,12 +98,15 @@ class CollectTransitiveDependences : public CollectDependences {
     void Compute(const std::string& input, std::set<std::string>& result,
                     const std::function<bool(const DependenceEntry&)>* what_to_do = 0);
 
-    void Output(std::ostream& output, std::set<std::string>* select = 0) {
+    void Output(std::ostream& output, std::set<std::string>* select = 0, 
+                     const std::function<bool(const DependenceEntry&)>* what_to_do = 0) {
        for (const auto& from : saved_sources_) {
           if (select == 0  || select->find(from) != select->end()) {
           for (const auto& e2 : dependence_map_[from]) {
-             output << e2 << "\n";
-          }
+             if (what_to_do == 0 || (*what_to_do)(e2)) {
+                output << e2 << "\n";
+             }
+           }
           }
        }
     }
