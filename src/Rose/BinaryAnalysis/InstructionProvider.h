@@ -67,7 +67,8 @@ public:
     /** Allocating Constructor.
      *
      *  Caches instructions for the specified architecture. If a memory map is provided then it will also decode instructions and
-     *  add them to the cache if a query is made for an instruction that doesn't exist.
+     *  add them to the cache if a query is made for an instruction that doesn't exist. If a memory map is not provided then
+     *  querying an address for which no instruction has been inserted will return a null pointer.
      *
      *  If a memory map is provided, the map should be configured so that all segments that potentially contain instructions have
      *  execute permission.  Any readable/nonwritable segments will be considered to be constant for the life of the specimen.  For
@@ -75,19 +76,34 @@ public:
      *  non-writable so that indirect jumps through the table will result in concrete execution addresses. */
     static Ptr instance(const Architecture::BaseConstPtr&, const MemoryMapPtr&);
 
+    /** Property: Architecture.
+     *
+     *  The architecture specified during construction. */
+    Architecture::BaseConstPtr architecture() const;
+
     /** Enable or disable the disassembler.
      *
      *  When the disassembler is disabled then it is not called when a new instruction is needed, but rather a null instruction
-     *  pointer is returned (and cached). */
+     *  pointer is returned (and cached). The disassembler is enabled if a memory map was provided to the constructor. */
     bool isDisassemblerEnabled() const;
 
     /** Returns the instruction at the specified virtual address, or null.
      *
-     *  If the virtual address is non-executable then a null pointer is returned, otherwise either a valid instruction or an
-     *  "unknown" instruction is returned.  An "unknown" instruction is used for cases where a valid instruction could not be
-     *  disassembled, including the case when the first byte of a multi-byte instruction is executable but the remaining bytes
-     *  are not executable. */
-    SgAsmInstruction* operator[](Address va) const;
+     *  If an instruction has been inserted for the specified address, then that instruction is returned.
+     *
+     *  Otherwise, if no memory map was provided to the constructor, then a null instruction pointer is returned and the cache is
+     *  not modified.
+     *
+     *  Otherwise, if the virtual address does not exist or is not executable then a null pointer is returned.
+     *
+     *  Otherwise, either a valid instruction or an "unknown" instruction is returned.  An "unknown" instruction is used for cases
+     *  where a valid instruction could not be disassembled, including the case when the first byte of a multi-byte instruction is
+     *  executable but the remaining bytes are not executable.
+     *
+     * @{ */
+    SgAsmInstruction* operator[](Address) const;
+    SgAsmInstruction* at(Address) const;
+    /** @} */
 
     /** Insert an instruction into the cache.
      *
@@ -97,8 +113,7 @@ public:
 
     /** Returns the disassembler.
      *
-     *  Returns the disassembler pointer provided in the constructor.  The disassembler is not owned by this instruction
-     *  provider, but must not be freed until after the instruction provider is destroyed. */
+     *  Returns the disassembler pointer provided in the constructor. */
     Disassembler::BasePtr disassembler() const;
 
     /** Returns number of cached starting addresses.

@@ -19,10 +19,8 @@ InstructionProvider::InstructionProvider() {
 InstructionProvider::InstructionProvider(const Architecture::Base::ConstPtr &arch, const MemoryMap::Ptr &map)
     : architecture_(arch), memMap_(map) {
     ASSERT_not_null(architecture_);
-    if (map) {
-        disassembler_ = arch->newInstructionDecoder();
-        ASSERT_not_null(disassembler_);
-    }
+    disassembler_ = arch->newInstructionDecoder();
+    ASSERT_not_null(disassembler_);
 
     // Start off with a large map to reduce early rehashing. There will probably be a lot of instructions.
     insnMap_.rehash(1000000);
@@ -35,36 +33,46 @@ InstructionProvider::instance(const Architecture::Base::ConstPtr &arch, const Me
     return Ptr(new InstructionProvider(arch, map));
 }
 
+Architecture::Base::ConstPtr
+InstructionProvider::architecture() const {
+    return architecture_;
+}
+
 bool
 InstructionProvider::isDisassemblerEnabled() const {
     return memMap_ != nullptr;
 }
 
 SgAsmInstruction*
-InstructionProvider::operator[](Address va) const {
+InstructionProvider::at(const Address addr) const {
     SgAsmInstruction *insn = nullptr;
-    if (!insnMap_.getOptional(va).assignTo(insn)) {
-        if (memMap_ && memMap_->at(va).require(MemoryMap::EXECUTABLE).exists()) {
+    if (!insnMap_.getOptional(addr).assignTo(insn)) {
+        if (memMap_ && memMap_->at(addr).require(MemoryMap::EXECUTABLE).exists()) {
             ASSERT_not_null(disassembler_);
             try {
-                insn = disassembler_->disassembleOne(memMap_, va);
+                insn = disassembler_->disassembleOne(memMap_, addr);
             } catch (const Disassembler::Exception &e) {
                 insn = disassembler_->makeUnknownInstruction(e);
                 ASSERT_not_null(insn);
-                ASSERT_require(insn->get_address()==va);
+                ASSERT_require(insn->get_address() == addr);
                 if (0 == insn->get_size()) {
                     uint8_t byte;
-                    if (1==memMap_->at(va).limit(1).require(MemoryMap::EXECUTABLE).read(&byte).size())
+                    if (1 == memMap_->at(addr).limit(1).require(MemoryMap::EXECUTABLE).read(&byte).size())
                         insn->set_rawBytes(SgUnsignedCharList(1, byte));
-                    ASSERT_require(insn->get_size()==1);
+                    ASSERT_require(insn->get_size() == 1);
                 }
             }
             ASSERT_not_null(insn);
-            ASSERT_require(insn->get_address() == va);
-            insnMap_.insert(va, insn);
+            ASSERT_require(insn->get_address() == addr);
+            insnMap_.insert(addr, insn);
         }
     }
     return insn;
+}
+
+SgAsmInstruction*
+InstructionProvider::operator[](Address addr) const {
+    return at(addr);
 }
 
 void
