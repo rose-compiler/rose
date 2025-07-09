@@ -17,7 +17,10 @@
 #endif
 
 /* DQ (9/28/2012): define away __restrict as a test for C support (temporary nginx application handling). */
+/* PL (7/9/2025): EDG supports __restrict now, this define just makes the __restrict qualifier get erroneously ignored. */
+#if 0
 #define __restrict
+#endif
 
 /* This macro can be defined using "-DSKIP_ROSE_BUILTIN_DECLARATIONS" to avoid ROSE
    builtin functions required for compatability with the user selected backend compiler 
