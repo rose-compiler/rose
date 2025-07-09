@@ -706,9 +706,12 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Partitioner2 \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Unparser \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Variables \
-			 @top_srcdir@/src/Rose/CodeGen \
 			 @top_srcdir@/src/Rose/CommandLine \
 			 @top_srcdir@/src/Rose/Sarif \
+			 @top_srcdir@/src/Rose/SourceCode \
+			 @top_srcdir@/src/Rose/SourceCode/AST \
+			 @top_srcdir@/src/Rose/SourceCode/Analysis \
+			 @top_srcdir@/src/Rose/SourceCode/CodeGen \
 			 @top_srcdir@/src/Rose/StringUtility \
 			 @top_srcdir@/src/Rose/Traits \
 			 @top_srcdir@/src/Rosebud \

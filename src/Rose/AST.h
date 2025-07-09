@@ -6,9 +6,6 @@ namespace Rose {
 namespace AST {}
 }
 
-#include <Rose/AST/IO.h>
-#include <Rose/AST/Defect.h>
-#include <Rose/AST/Checker.h>
 #include <Rose/AST/Utility.h>
 #include <Rose/AST/NodeId.h>
 #include <Rose/AST/Traversal.h>

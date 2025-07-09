@@ -27,18 +27,6 @@ BUILT_SOURCES = CommandLine/LicenseString.h
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = librose_partial.la
 librose_partial_la_SOURCES =								\
-	AST/checker/checker.C								\
-	AST/checker/cmdline.C								\
-	AST/checker/integrity_declarations.C						\
-	AST/checker/integrity_edges.C							\
-	AST/checker/integrity_symbols.C							\
-	AST/checker/integrity_types.C							\
-	AST/graphviz.C									\
-	AST/io/delete.C									\
-	AST/io/link.C									\
-	AST/io/load.C									\
-	AST/io/merge.C									\
-	AST/io/share.C									\
 	AST/NodeId.C									\
 	AST/Traversal.C									\
 	AST/Utility.C									\
@@ -290,10 +278,6 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Variables/VariableFinder.C					\
 	BinaryAnalysis/VxworksTerminal.C						\
 	BinaryAnalysis/Z3Solver.C							\
-	CodeGen/SymbolScanner.C								\
-	CodeGen/API.C									\
-	CodeGen/Driver.C								\
-	CodeGen/Factory.C								\
 	Color/Color.C									\
 	CommandLine/DurationParser.C							\
 	CommandLine/License.C								\
@@ -317,6 +301,25 @@ librose_partial_la_SOURCES =								\
 	Sarif/Rule.C									\
 	Sarif/ThreadFlow.C								\
 	Sarif/ThreadFlowLocation.C							\
+	SourceCode/Analysis/Analyzer.C								\
+	SourceCode/Analysis/Visitor.C								\
+	SourceCode/AST/checker/checker.C								\
+	SourceCode/AST/checker/cmdline.C								\
+	SourceCode/AST/checker/integrity_declarations.C						\
+	SourceCode/AST/checker/integrity_edges.C							\
+	SourceCode/AST/checker/integrity_symbols.C							\
+	SourceCode/AST/checker/integrity_types.C							\
+	SourceCode/AST/graphviz.C									\
+	SourceCode/AST/io/delete.C									\
+	SourceCode/AST/io/link.C									\
+	SourceCode/AST/io/load.C									\
+	SourceCode/AST/io/merge.C									\
+	SourceCode/AST/io/share.C									\
+	SourceCode/CodeGen/SymbolScanner.C								\
+	SourceCode/CodeGen/API.C									\
+	SourceCode/CodeGen/Driver.C								\
+	SourceCode/CodeGen/Factory.C								\
+	SourceCode/Sarif.C								\
 	SourceLocation.C								\
 	StringUtility/Convert.C								\
 	StringUtility/Diagnostics.C							\

@@ -15,7 +15,6 @@ run $(public_header) -o include/rose/Rose	\
     BinaryAnalysis.h				\
     BitFlags.h					\
     BitOps.h					\
-    CodeGen.h					\
     Color.h					\
     CommandLine.h				\
     Constants.h					\
@@ -31,6 +30,7 @@ run $(public_header) -o include/rose/Rose	\
     Progress.h					\
     RecursionCounter.h				\
     Sarif.h					\
+    SourceCode.h					\
     SourceLocation.h				\
     StringUtility.h				\
     Traits.h					\

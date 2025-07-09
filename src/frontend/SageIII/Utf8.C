@@ -142,11 +142,11 @@ int Utf8::getUnicodeValue(const char *bytes) {
 /**
  * Convert a unicode character into its Utf8 representation.
  */
-string Utf8::getUtf8String(int value) {
+std::string Utf8::getUtf8String(int value) {
     if (value < 0x0000 || value > 0xFFFF) // restrict this to UTF-16 for now!
         throw bad_unicode_exception;
 
-    string result;
+    std::string result;
 
     if (value == 0) {
          result = (char) 0xC0;
@@ -170,11 +170,11 @@ string Utf8::getUtf8String(int value) {
 /**
  * Convert the Unicode "value" into a printable Unicode character.
  */
-string Utf8::getPrintableJavaUnicodeCharacter(int value) {
+std::string Utf8::getPrintableJavaUnicodeCharacter(int value) {
     if (value < 0x0000 || value > 0xFFFF) // restrict this to UTF-16 for now!
         throw bad_unicode_exception;
 
-    string result;
+    std::string result;
 
     if (value < 0x0100) { // Extended Ascii characters:   00..FF ?
         if (value == '\b') {
@@ -205,19 +205,19 @@ string Utf8::getPrintableJavaUnicodeCharacter(int value) {
             result = (char) value;
         }
         else {
-            ostringstream octal; // stream used for the conversion
+            std::ostringstream octal; // stream used for the conversion
             octal.fill('0');
             octal.width(3);
-            octal << oct << value; // compute the octal character representation of the value
+            octal << std::oct << value; // compute the octal character representation of the value
             result = "\\";
             result += octal.str();
         }
     }
     else {
-        ostringstream hexadecimal; // stream used for the conversion
+        std::ostringstream hexadecimal; // stream used for the conversion
         hexadecimal.fill('0');
         hexadecimal.width(4);
-        hexadecimal << hex << value; // compute the Unicode character representation of the value
+        hexadecimal << std::hex << value; // compute the Unicode character representation of the value
         result = "\\u";
         result += hexadecimal.str();
     }
@@ -228,8 +228,8 @@ string Utf8::getPrintableJavaUnicodeCharacter(int value) {
 /**
  * Construct a printable unicode string from a given Utf8 string of characters.
  */
-string Utf8::getPrintableJavaUnicodeString(const char *str) {
-    string result = "";
+std::string Utf8::getPrintableJavaUnicodeString(const char *str) {
+    std::string result = "";
 
 // TODO: Remove this !
 /*

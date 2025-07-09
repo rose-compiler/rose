@@ -8,7 +8,6 @@
 
 #include <exception>
 #include "rosedll.h"
-using namespace std;
 
 class ROSE_DLL_API Utf8 {
 private:
@@ -24,7 +23,7 @@ public:
     /**
      * Class thrown when a Unicode character is encountered.
      */
-    class BadUnicodeException : public exception {
+    class BadUnicodeException : public std::exception {
         virtual const char* what() const throw() {
             return "Invalid Unicode character encountered";
         }
@@ -38,7 +37,7 @@ public:
     /**
      * Class thrown when a bad Utf8 sequence is encountered.
      */
-    class BadUtf8CodeException : public exception {
+    class BadUtf8CodeException : public std::exception {
         virtual const char* what() const throw() {
             return "Invalid Utf8 sequence encountered";
         }
@@ -64,18 +63,18 @@ public:
     /**
      * Convert a unicode character into its Utf8 representation.
      */
-    static string getUtf8String(int value);
+    static std::string getUtf8String(int value);
 
     /**
      * Convert the Unicode "value" into a printable Unicode character.
      *
      */
-    static string getPrintableJavaUnicodeCharacter(int value);
+    static std::string getPrintableJavaUnicodeCharacter(int value);
 
     /**
      * Construct a printable unicode string for Java from a given Utf8 string of characters.
      */
-    static string getPrintableJavaUnicodeString(const char *str);
+    static std::string getPrintableJavaUnicodeString(const char *str);
 };
 
 #endif

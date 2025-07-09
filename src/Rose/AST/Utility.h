@@ -51,4 +51,4 @@ void repairParentPointers(SgNode *root);
 
 } } }
 
-#endif
+#endif /* ROSE_AST_Utility_H */

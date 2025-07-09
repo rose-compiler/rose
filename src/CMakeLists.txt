@@ -610,6 +610,7 @@ set(rose_LIB_OBJS
   roseAstNodesBinaryAnalysis
   roseAstNodesExpression
   roseNamespace
+  roseAST
   roseBinaryAnalysis
   roseBinaryAnalysisArchitecture
   roseBinaryAnalysisByteCode
@@ -632,9 +633,11 @@ set(rose_LIB_OBJS
   roseDiagnostics
   roseFileSystem
   roseSarif
+  roseSourceCode
+  roseSourceCodeAnalysis
+  roseSourceCodeAST
+  roseSourceCodeCodegen
   roseStringUtility
-  RoseAST
-  roseCodegen
   roseGeneratedBinaryAnalysis
   roseGeneratedJovial
   mstl

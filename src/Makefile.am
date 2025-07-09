@@ -269,11 +269,7 @@ pkginclude_HEADERS = \
 nobase_pkginclude_HEADERS=								\
 	Rose/Affirm.h									\
 	Rose/As.h									\
-	Rose/AST.h									\
-	Rose/AST/Checker.h								\
-	Rose/AST/cmdline.h								\
-	Rose/AST/Defect.h								\
-	Rose/AST/IO.h									\
+	Rose/AST.h								\
 	Rose/AST/NodeId.h								\
 	Rose/AST/Traversal.h								\
 	Rose/AST/Utility.h								\
@@ -603,20 +599,6 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Z3Solver.h							\
 	Rose/BitFlags.h									\
 	Rose/BitOps.h									\
-	Rose/CodeGen.h									\
-	Rose/CodeGen/SymbolScanner.h							\
-	Rose/CodeGen/SymbolScanner.txx							\
-	Rose/CodeGen/API.h								\
-	Rose/CodeGen/API.txx								\
-	Rose/CodeGen/Driver.h								\
-	Rose/CodeGen/Factory.h								\
-	Rose/CodeGen/factory/factory.txx						\
-	Rose/CodeGen/factory/classes.txx						\
-	Rose/CodeGen/factory/functions.txx						\
-	Rose/CodeGen/factory/namespaces.txx						\
-	Rose/CodeGen/factory/typedefs.txx						\
-	Rose/CodeGen/factory/variables.txx						\
-	Rose/CodeGen/Object.h								\
 	Rose/Color.h									\
 	Rose/CommandLine.h								\
 	Rose/CommandLine/DurationParser.h						\
@@ -643,6 +625,29 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Sarif.h									\
 	Rose/Sarif/BasicTypes.h								\
 	Rose/Sarif/Exception.h								\
+	Rose/SourceCode/Analysis.h									\
+	Rose/SourceCode/Analysis/Analyzer.h									\
+	Rose/SourceCode/Analysis/Visitor.h									\
+	Rose/SourceCode/AST.h									\
+	Rose/SourceCode/AST/Checker.h								\
+	Rose/SourceCode/AST/cmdline.h								\
+	Rose/SourceCode/AST/Defect.h								\
+	Rose/SourceCode/AST/IO.h									\
+	Rose/SourceCode/CodeGen.h									\
+	Rose/SourceCode/CodeGen/SymbolScanner.h							\
+	Rose/SourceCode/CodeGen/SymbolScanner.txx							\
+	Rose/SourceCode/CodeGen/API.h								\
+	Rose/SourceCode/CodeGen/API.txx								\
+	Rose/SourceCode/CodeGen/Driver.h								\
+	Rose/SourceCode/CodeGen/Factory.h								\
+	Rose/SourceCode/CodeGen/factory/factory.txx						\
+	Rose/SourceCode/CodeGen/factory/classes.txx						\
+	Rose/SourceCode/CodeGen/factory/functions.txx						\
+	Rose/SourceCode/CodeGen/factory/namespaces.txx						\
+	Rose/SourceCode/CodeGen/factory/typedefs.txx						\
+	Rose/SourceCode/CodeGen/factory/variables.txx						\
+	Rose/SourceCode/CodeGen/Object.h								\
+	Rose/SourceCode/Sarif.h								\
 	Rose/SourceLocation.h								\
 	Rose/StringUtility.h								\
 	Rose/StringUtility/Convert.h							\

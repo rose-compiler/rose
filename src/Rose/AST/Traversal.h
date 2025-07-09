@@ -278,4 +278,4 @@ findDescendantsTyped(SgNode *ast) {
 } // namespace
 } // namespace
 
-#endif
+#endif /* ROSE_AST_Traversal_H */

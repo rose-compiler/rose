@@ -6,12 +6,12 @@
 # namespace.
 add_subdirectory(AST)
 add_subdirectory(BinaryAnalysis)
-add_subdirectory(CodeGen)
 add_subdirectory(Color)
 add_subdirectory(CommandLine)
 add_subdirectory(Diagnostics)
 add_subdirectory(FileSystem)
 add_subdirectory(Sarif)
+add_subdirectory(SourceCode)
 add_subdirectory(StringUtility)
 add_subdirectory(Traits)
 
@@ -33,6 +33,7 @@ add_dependencies(roseNamespace rosetta_generated)
 install(FILES
   Affirm.h
   As.h
+  AST.h
   BasicTypes.h
   BinaryAnalysis.h
   BitFlags.h
@@ -54,6 +55,7 @@ install(FILES
   Progress.h
   RecursionCounter.h
   Sarif.h
+  SourceCode.h
   SourceLocation.h
   StringUtility.h
   Yaml.h

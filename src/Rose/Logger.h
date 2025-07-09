@@ -1,6 +1,8 @@
 #ifndef ROSE_Logger_H
 #define ROSE_Logger_H
 
+#include <RoseFirst.h>
+
 #include <map>
 #include <string>
 

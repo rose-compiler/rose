@@ -1,28 +1,12 @@
 include_rules
 
 run $(librose_compile)				\
-    checker/checker.C				\
-    checker/cmdline.C				\
-    checker/integrity_declarations.C		\
-    checker/integrity_edges.C			\
-    checker/integrity_symbols.C			\
-    checker/integrity_types.C			\
-    graphviz.C					\
-    io/delete.C					\
-    io/link.C					\
-    io/load.C					\
-    io/merge.C					\
-    io/share.C					\
     NodeId.C					\
     Traversal.C					\
     Utility.C					\
     utils/edge_ptr_repl.C
 
 run $(public_header) -o include/rose/Rose/AST	\
-    Checker.h					\
-    cmdline.h					\
-    Defect.h					\
-    IO.h					\
     NodeId.h					\
     Traversal.h					\
     Utility.h

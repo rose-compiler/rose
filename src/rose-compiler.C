@@ -1,7 +1,7 @@
 
 #include "sage3basic.h"
 
-#include "Rose/AST/IO.h"
+#include "Rose/SourceCode/AST/IO.h"
 
 #include "midend/astDiagnostics/AstConsistencyTests.h"
 
@@ -39,7 +39,7 @@ int main( int argc, char * argv[] ) {
   auto status = backend(project);
 
 #if !defined(_WIN32) && !defined(__CYGWIN__)
-  Rose::AST::IO::free();
+  Rose::SourceCode::AST::IO::free();
 #endif
 
   return status;

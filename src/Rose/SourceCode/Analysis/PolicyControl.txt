@@ -1,0 +1,3 @@
+# -*- conf -*-
+
+responsibility = Tristan Vanderbruggen <vanderbrugge1@llnl.gov>
