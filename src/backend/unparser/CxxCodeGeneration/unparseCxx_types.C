@@ -1722,7 +1722,12 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
   // This is true in case of a pointer (e.g., int * a) or a reference (e.g., int & a)
      bool btype_first = false;
   // if ( isSgReferenceType(mod_type->get_base_type()) || isSgPointerType(mod_type->get_base_type()) )
-     if ( isSgReferenceType(mod_type->get_base_type()) || isSgPointerType(mod_type->get_base_type()) )
+
+     if ( isSgArrayType(mod_type->get_base_type()) )
+        {
+          info.set_useRestrictKeywordInsideArrayBrackets();
+        }
+       else if ( isSgReferenceType(mod_type->get_base_type()) || isSgPointerType(mod_type->get_base_type()) )
         {
           btype_first = true;
         }
@@ -1792,8 +1797,12 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
 #endif
           if (mod_type->get_typeModifier().isRestrict())
              {
-            // DQ (12/11/2012): Newer version of the code refactored.
-               curprint(unparseRestrictKeyword());
+            // PL (7/9/2025): restrict keywords on array types are unparsed inside of the brackets, not here
+               if ( !isSgArrayType(mod_type->get_base_type()) )
+                  {
+                 // DQ (12/11/2012): Newer version of the code refactored.
+                    curprint(unparseRestrictKeyword());
+                  }
              }
 
        // Microsoft extension
@@ -1858,6 +1867,12 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
                printf ("In Unparse_Type::unparseModifierType(): Calling unparseType on mod_type->get_base_type() = %p = %s \n",mod_type->get_base_type(),mod_type->get_base_type()->class_name().c_str());
 #endif
                unparseType(mod_type->get_base_type(), info);
+
+               if ( isSgArrayType(mod_type->get_base_type()) )
+                  {
+                 // PL (7/9/2025): restrict keywords are unparsed with the array, since it needs to go inside the square brackets.
+                    info.unset_useRestrictKeywordInsideArrayBrackets();
+                  }
              }
             else
              {
@@ -2375,6 +2390,11 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
             // DQ (6/3/2017): Added more debugging info.
                printf ("##### array_type = %p array_type->get_index() = %p = %s \n",array_type,array_type->get_index(),array_type->get_index() != NULL ? array_type->get_index()->class_name().c_str() : "null");
 #endif
+               if (info.useRestrictKeywordInsideArrayBrackets())
+                  {
+                    curprint(unparseRestrictKeyword());
+                  }
+
                if (array_type->get_index())
                   {
                  // JJW (12/14/2008): There may be types inside the size of an array, and they are not the second part of the type

@@ -6639,6 +6639,10 @@ HEADER_UNPARSE_INFO_START
             // with containing multiple variables which translates (typically) to multiple variable declarations (each with one variable) within the AST).
                b_usedInUparseToStringFunction = 55, /*!< Mark this use as being called from the unparseToString() functions (used in debugging) */
 
+            // PL (7/9/2025): Adding support to properly unparse the "restrict" keyword when used inside array brackets.
+            // Example: void foo(int arr[restrict]);
+               b_useRestrictKeywordInsideArrayBrackets = 56, /*!< Note to the array second-half unparser to generate the restrict keyword */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6981,6 +6985,12 @@ HEADER_UNPARSE_INFO_START
 
        // DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
           void unset_declaration_of_context();
+
+       // PL (7/9/2025): Adding support to properly unparse the "restrict" keyword when used inside array brackets.
+       // Example: void foo(int arr[restrict]);
+          bool useRestrictKeywordInsideArrayBrackets() const;
+          void set_useRestrictKeywordInsideArrayBrackets();
+          void unset_useRestrictKeywordInsideArrayBrackets();
 
           void unset_current_context();
 
@@ -17890,6 +17900,19 @@ void
 SgUnparse_Info::unset_usedInUparseToStringFunction()
    { unsetBit(b_usedInUparseToStringFunction); }
 
+// PL (7/9/2025): Adding support to properly unparse the "restrict" keyword when used inside array brackets.
+// Example: void foo(int arr[restrict]);
+bool
+SgUnparse_Info::useRestrictKeywordInsideArrayBrackets() const
+    { return checkBit(b_useRestrictKeywordInsideArrayBrackets); }
+
+void
+SgUnparse_Info::set_useRestrictKeywordInsideArrayBrackets()
+    { setBit(b_useRestrictKeywordInsideArrayBrackets); }
+
+void
+SgUnparse_Info::unset_useRestrictKeywordInsideArrayBrackets()
+    { unsetBit(b_useRestrictKeywordInsideArrayBrackets); }
 
 void
 SgUnparse_Info::display ( const std::string & label ) const
