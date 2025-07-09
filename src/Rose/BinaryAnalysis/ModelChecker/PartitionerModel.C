@@ -1467,10 +1467,11 @@ SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettin
         }
     } else {
         // Choose an initial stack pointer that's unlikely to interfere with instructions or data. This model requires a concrete
-        // stack pointer.
-        auto where = AddressInterval::hull(0x80000000, 0xffffffff); // where to look in the address space
-        Sawyer::Optional<Address> va = partitioner->memoryMap()->findFreeSpace(RESERVE_BELOW + RESERVE_ABOVE, STACK_ALIGNMENT,
-                                                                               where, Sawyer::Container::MATCH_BACKWARD);
+        // stack pointer. Some architectures without virtual memory have only a small amount of memory, so allow quite low
+        // addresses.
+        auto where = AddressInterval::hull(0x00100000, 0xffffffff); // where to look in the address space
+        Sawyer::Optional<Address> va = partitioner->memoryMap()
+                                       ->findFreeSpace(RESERVE_BELOW + RESERVE_ABOVE, STACK_ALIGNMENT, where);
         if (!va) {
             mlog[ERROR] <<"no room for a stack anywhere in " <<StringUtility::addrToString(where) <<"\n";
         } else {
