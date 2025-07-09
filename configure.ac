@@ -1,10 +1,10 @@
 dnl DQ (1/11/2010): Consider handing configure options as specified at:
 dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 
-dnl The version number in the AC_INIT([ROSE], [0.11.145.290])
-dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.11.145.290])
+dnl The version number in the AC_INIT([ROSE], [0.11.145.291])
+dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.11.145.291])
 dnl shell variable.
-AC_INIT([ROSE], [0.11.145.290])
+AC_INIT([ROSE], [0.11.145.291])
 AC_PREREQ([2.59])
 
 # A new definition to tweak code for Autoconf 
