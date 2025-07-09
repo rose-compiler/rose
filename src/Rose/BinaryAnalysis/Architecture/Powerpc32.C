@@ -126,7 +126,8 @@ Powerpc32::registerDictionary() const {
         // "branch and link" instruction. It is primarily used by debuggers to show the next instruction to be executed.
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        regs->insert("iar", powerpc_regclass_iar, 0, 0, 32);
+        regs->insert("pc", powerpc_regclass_iar, 0, 0, 32); // alias for "iar" used by GDB
+        regs->insert("iar", powerpc_regclass_iar, 0, 0, 32); // second because this is the default name in ROSE
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Special purpose registers. There are 1024 of these, some of which have special names.  We name all 1024 consistently and

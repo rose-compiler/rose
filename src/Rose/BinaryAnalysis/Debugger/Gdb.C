@@ -281,6 +281,8 @@ Gdb::attach(const Specimen &specimen) {
                     disassembler_ = Architecture::findByName("nxp-coldfire").orThrow()->newInstructionDecoder();
                 } else if ("m68k:isa-a:nodiv" == arch) {
                     disassembler_ = Architecture::findByName("nxp-coldfire").orThrow()->newInstructionDecoder();
+                } else if ("powerpc:common" == arch) {
+                    disassembler_ = Architecture::findByName("ppc32-be").orThrow()->newInstructionDecoder();
                 } else {
                     ASSERT_not_implemented("unrecognized architecture: " + arch);
                 }

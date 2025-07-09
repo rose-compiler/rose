@@ -232,10 +232,6 @@ public:
      *  characters (except the NUL) into a C++ string and returns it. The @p maxBytes includes the NUL terminator although the
      *  NUL terminator is not returned as part of the string. */
     virtual std::string readCString(Address va, size_t maxBytes = UNLIMITED);
-
-
-
-
 };
 
 } // namespace
