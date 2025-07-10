@@ -905,6 +905,9 @@ add_custom_command(
   DEPENDS rose-config)
 
 if(ENABLE-C)
+  add_custom_target(check-hello-cxx)
+  add_dependencies(check-hello-cxx rose-compiler)
+
   #Check that we can compile & run a simple C program
   add_custom_command(
     TARGET check-core
@@ -925,7 +928,7 @@ if(ENABLE-C)
 
   #Check that we can compile & run a simple C++ program
   add_custom_command(
-    TARGET check-core
+    TARGET check-core check-hello-cxx
     POST_BUILD
     COMMAND echo "\#include <iostream>"                                     >  hello-world.cpp
     COMMAND echo "int main() {"                                             >> hello-world.cpp
@@ -935,7 +938,7 @@ if(ENABLE-C)
     COMMAND rose-compiler -rose:ast:write hello-world-cxx.ast hello-world.cpp -o hello-world-cpp
     COMMAND ./hello-world-cpp
     COMMAND rose-compiler -rose:ast:read hello-world-cxx.ast
-    COMMAND rm -f hello-world.cpp hello-world-cpp hello-world-cxx.ast hello-world.o hello-world.ti
+    COMMAND rm -f hello-world-cpp hello-world-cxx.ast hello-world.o hello-world.ti
       rose_hello-world.cpp rose_odr_class.log rose_odr_function.log rose_odr_variable.log
     VERBATIM
     DEPENDS rose-compiler
