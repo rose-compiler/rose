@@ -2415,7 +2415,7 @@ namespace Ada
   {
     SgType* res = nullptr;
 
-    if (SgTypedefSymbol* tysy = scope.lookup_typedef_symbol("address"))
+    if (SgTypedefSymbol* tysy = scope.lookup_typedef_symbol(typeName))
     {
       const SgTypedefDeclaration& tydcl = dominantTypedefDecl(SG_DEREF(tysy->get_declaration()));
 

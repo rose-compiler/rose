@@ -572,6 +572,7 @@ namespace
         {
           scope = si::Ada::pkgStandardScope();
           domTy = si::Ada::findType(*scope, "integer");
+          ASSERT_not_null(domTy);
         }
       }
       catch (const std::runtime_error&) {}
@@ -1013,18 +1014,77 @@ namespace
     return sgnode;
   }
 
+  /// validates that \p labelid is really a label by checking that the
+  ///   id can be found on the enclosing statement's label list.
+  /// \param  labelid the id of the suspected label.
+  /// \return the labelid if it refers to a label, 0 otherwise.
+  Element_ID elemOnLabelList(Element_ID labelid, AstContext)
+  {
+    if (labelid <= 0)
+      return 0;
 
+    Element_Struct&   labelelem = retrieveElem(elemMap(), labelid);
+    ASSERT_require(labelelem.Element_Kind == A_Defining_Name);
+
+    Element_ID        enclId = labelelem.Enclosing_Element_ID;
+    Element_Struct&   enclElem = retrieveElem(elemMap(), enclId);
+    if (enclElem.Element_Kind != A_Statement)
+      return 0;
+
+    Statement_Struct& enclStmt = enclElem.The_Union.Statement;
+    ElemIdRange       lblrange = idRange(enclStmt.Label_Names);
+
+    const bool        onLabelList = std::find(lblrange.first, lblrange.second, labelid) != lblrange.second;
+
+    if (onLabelList)
+      return labelid;
+
+    return 0;
+  }
 } // anonymous
 
 
 SgAdaAttributeExp&
 getAttributeExpr(Expression_Struct& expr, AstContext ctx, ElemIdRange argRangeSuppl)
 {
+  using AttrMaker = std::function<SgAdaAttributeExp&(const std::string& ident, SgExprListExp& args)>;
+
   ADA_ASSERT(expr.Expression_Kind == An_Attribute_Reference);
 
-  SgAdaAttributeExp* res = nullptr;
+  SgAdaAttributeExp* res  = nullptr;
   NameData           name = getNameID(expr.Attribute_Designator_Identifier, ctx);
-  SgExpression&      obj = getExprID(expr.Prefix, ctx);
+
+  // default behavior creates the object and then the complete attribute.
+  AttrMaker          attrMaker =
+                       [objid = expr.Prefix, ctx](const std::string& ident, SgExprListExp& args) -> SgAdaAttributeExp&
+                       {
+                         SgExpression& obj = getExprID(objid, ctx);
+
+                         return mkAdaAttributeExp(&obj, ident, args);
+                       };
+
+  // references to labels can occur before a label has been seen.
+  //   check if this is such an instance and defer the completion
+  //   until the label must have been seen (at the end of a statement
+  //   sequence).
+  if (expr.Attribute_Kind == An_Address_Attribute)
+  {
+    if (Element_ID labelId = elemOnLabelList(getLabelRefOpt(expr.Prefix, ctx), ctx))
+    {
+      auto deferredLabelHandler =
+             [labelId, ctx](const std::string& ident, SgExprListExp& args) -> SgAdaAttributeExp&
+             {
+               SgAdaAttributeExp& partial = mkAdaAttributeExp(nullptr, ident, args);
+
+               ctx.labelsAndLoops().labelattr(labelId, partial);
+               return partial;
+             };
+
+      // override default creation and defer generating the label reference
+      //   until the label must have been seen.
+      attrMaker = deferredLabelHandler;
+    }
+  }
 
   switch (expr.Attribute_Kind)
   {
@@ -1047,7 +1107,7 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx, ElemIdRange argRangeSu
       else
         exprs = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
 
-      res = &mkAdaAttributeExp(obj, name.fullName, mkExprListExp(exprs));
+      res = &attrMaker(name.fullName, mkExprListExp(exprs));
       break;
     }
 
@@ -1153,12 +1213,10 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx, ElemIdRange argRangeSu
     case An_Overlaps_Storage_Attribute:
     //  |A2012 end
       {
-        logInfo() << "untested attribute created: " << expr.Attribute_Kind
-                  << std::endl;
         std::vector<SgExpression*> exprs = traverseIDs(argRangeSuppl, elemMap(), ArgListCreator{ctx});
         SgExprListExp&             args  = mkExprListExp(exprs);
 
-        res = &mkAdaAttributeExp(obj, name.fullName, args);
+        res = &attrMaker(name.fullName, args);
         break;
       }
 
@@ -1169,7 +1227,7 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx, ElemIdRange argRangeSu
         logError() << "unknown expression attribute: " << expr.Attribute_Kind
                    << std::endl;
 
-        res = &mkAdaAttributeExp(obj, "ErrorAttr:" + name.fullName, mkExprListExp());
+        res = &attrMaker("ErrorAttr:" + name.fullName, mkExprListExp());
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
       }
   }

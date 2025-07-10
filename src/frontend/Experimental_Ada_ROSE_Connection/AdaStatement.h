@@ -147,6 +147,16 @@ namespace Ada_ROSE_Translation
   /// \param sacopes      one or two scopes in which all unprocessed pragmas need to be placed
   /// \param ctx          the translation context, incl a pointer to the unprocessed pragma list
   void processAndPlacePragmas(Pragma_Element_ID_List pragmalst, std::vector<SgScopeStatement*> scopes, AstContext ctx);
+
+  /// returns a potential label element ID, or 0 if id does not refer to a label.
+  /// \note
+  ///   if getLabelRefOpt is used other than from goto statements
+  ///   (i.e., from label'address attribute), the context needs
+  ///   to check that the label is part on the enclosing statement's
+  ///   label list.
+  ///   This is necessary b/c ASIS does not distinguish label identifiers
+  ///   from other identifiers.
+  Element_ID getLabelRefOpt(Element_ID id, AstContext ctx);
 }
 
 #endif /* _ADA_STATEMENT */

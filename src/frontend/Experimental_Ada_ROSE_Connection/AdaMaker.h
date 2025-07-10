@@ -943,13 +943,14 @@ namespace Ada_ROSE_Translation
   mkQualifiedExp(SgExpression& expr, SgType& ty);
 
   /// returns a representation of an Ada Attribute in expression context
-  /// \param exp the attribute's prefix expression
-  /// \param ident the attribute identifier
-  /// \param args the attribute's arguments
+  /// \param objOpt the attribute's prefix expression; a partially constructed
+  ///               attribute may be created by passing in a nullptr.
+  /// \param ident  the attribute identifier
+  /// \param args   the attribute's arguments
   /// \example
   ///    Arr'Range(1) -> exp'ident(args)
   SgAdaAttributeExp&
-  mkAdaAttributeExp(SgExpression& exp, const std::string& ident, SgExprListExp& args);
+  mkAdaAttributeExp(SgExpression* objOpt, const std::string& ident, SgExprListExp& args);
 
   /// creates an increment/decrement of the variable \p var
   /// depending on whether the loop uses forward or backward iteration.

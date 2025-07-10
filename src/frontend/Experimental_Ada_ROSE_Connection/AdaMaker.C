@@ -2327,8 +2327,11 @@ namespace
     return insertAccessArrayDerefIfNeeded(e, si::Ada::baseOfAccessType(si::Ada::typeOfExpr(e).typerep()));
   }
 
-  SgExpression& insertAccessDerefIfNeeded(SgExpression& e, const std::string& ident)
+  SgExpression* insertAccessDerefIfNeeded(SgExpression* e, const std::string& ident)
   {
+    if (e == nullptr)
+      return nullptr;
+
     SgType* basety = si::Ada::baseOfAccessType(si::Ada::typeOfExpr(e).typerep());
 
     if (basety == nullptr)
@@ -2342,7 +2345,7 @@ namespace
                                    );
 
     if (impliedArrayCheck)
-      return insertAccessArrayDerefIfNeeded(e, basety);
+      return &insertAccessArrayDerefIfNeeded(*e, basety);
 
     const bool impliedTaskCheck = (  boost::iequals(ident, "callable")
                                   || boost::iequals(ident, "identity")
@@ -2351,17 +2354,17 @@ namespace
                                   );
 
     if (impliedTaskCheck)
-      return insertAccessTaskDerefIfNeeded(e, basety);
+      return &insertAccessTaskDerefIfNeeded(*e, basety);
 
     const bool impliedObjectCheck = boost::iequals(ident, "valid");
 
     if (impliedObjectCheck)
-      return insertAccessObjectDerefIfNeeded(e, basety);
+      return &insertAccessObjectDerefIfNeeded(*e, basety);
 
     const bool impliedDiscrCheck = boost::iequals(ident, "constrained");
 
     if (impliedDiscrCheck)
-      return insertAccessDiscrDerefIfNeeded(e, basety);
+      return &insertAccessDiscrDerefIfNeeded(*e, basety);
 
     return e;
   }
@@ -2448,40 +2451,41 @@ mkEnumeratorRef(SgEnumDeclaration& enumdecl, SgInitializedName& enumitem)
 
 namespace
 {
-  SgType& accessTypeAttr(SgExpression& expr, SgExprListExp&)
+  SgType& accessTypeAttr(SgExpression* expr, SgExprListExp&)
   {
+    ASSERT_not_null(expr);
     // \todo do we need to create general access for SgVarRefExp
-    return mkAdaAccessType(SG_DEREF(expr.get_type()));
+    return mkAdaAccessType(SG_DEREF(expr->get_type()));
   }
 
-  SgType& integralTypeAttr(SgExpression&, SgExprListExp&)
+  SgType& integralTypeAttr(SgExpression*, SgExprListExp&)
   {
     return mkIntegralType();
   }
 
-  SgType& systemAddressTypeAttr(SgExpression&, SgExprListExp&)
+  SgType& systemAddressTypeAttr(SgExpression*, SgExprListExp&)
   {
     static SgType& res = SG_DEREF(si::Ada::findType("system", "address"));
 
     return res;
   }
 
-  SgType& realTypeAttr(SgExpression&, SgExprListExp&)
+  SgType& realTypeAttr(SgExpression*, SgExprListExp&)
   {
     return mkRealType();
   }
 
-  SgType& unknownTypeAttr(SgExpression&, SgExprListExp&)
+  SgType& unknownTypeAttr(SgExpression*, SgExprListExp&)
   {
     return mkTypeUnknown();
   }
 
-  SgType& voidTypeAttr(SgExpression&, SgExprListExp&)
+  SgType& voidTypeAttr(SgExpression*, SgExprListExp&)
   {
     return mkTypeVoid();
   }
 
-  SgType& boolTypeAttr(SgExpression&, SgExprListExp&)
+  SgType& boolTypeAttr(SgExpression*, SgExprListExp&)
   {
     return si::Ada::standardType("BOOLEAN");
   }
@@ -2491,24 +2495,26 @@ namespace
     return mkFixedType();
   }
 */
-  SgType& stringTypeAttr(SgExpression&, SgExprListExp&)
+  SgType& stringTypeAttr(SgExpression*, SgExprListExp&)
   {
     return si::Ada::standardType("STRING");
   }
 
-  SgType& wideStringTypeAttr(SgExpression&, SgExprListExp&)
+  SgType& wideStringTypeAttr(SgExpression*, SgExprListExp&)
   {
     return si::Ada::standardType("WIDE_STRING");
   }
 
-  SgType& wideWideStringTypeAttr(SgExpression&, SgExprListExp&)
+  SgType& wideWideStringTypeAttr(SgExpression*, SgExprListExp&)
   {
     return si::Ada::standardType("WIDE_WIDE_STRING");
   }
 
-  SgType& firstLastTypeAttr(SgExpression& obj, SgExprListExp& args)
+  SgType& firstLastTypeAttr(SgExpression* obj, SgExprListExp& args)
   {
-    SgType&                basety = SG_DEREF(si::Ada::typeOfExpr(obj).typerep());
+    ASSERT_not_null(obj);
+
+    SgType&                basety = SG_DEREF(si::Ada::typeOfExpr(*obj).typerep());
     si::Ada::FlatArrayType flatty = si::Ada::getArrayTypeInfo(basety);
 
     // 'first/'last applied on a non-array type, Integer'First
@@ -2525,7 +2531,7 @@ namespace
     }
     catch (...)
     {
-      logWarn() << "unknown 'first/'last type: " << obj.unparseToString()
+      logWarn() << "unknown 'first/'last type: " << obj->unparseToString()
                 << std::endl;
 
       resty = &mkTypeUnknown();
@@ -2534,29 +2540,35 @@ namespace
     return SG_DEREF(resty);
   }
 
-  SgType& exprTypeAttr(SgExpression& tyrep, SgExprListExp&)
+  SgType& exprTypeAttr(SgExpression* tyrep, SgExprListExp&)
   {
-    return SG_DEREF(tyrep.get_type());
+    ASSERT_not_null(tyrep);
+
+    return SG_DEREF(tyrep->get_type());
   }
 
-  SgType& argTypeAttr(SgExpression&, SgExprListExp& args)
+  SgType& argTypeAttr(SgExpression*, SgExprListExp& args)
   {
     SgExpression& exp = SG_DEREF(args.get_expressions().front());
 
     return SG_DEREF(exp.get_type());
   }
 
-  SgType& rangeTypeAttr(SgExpression& n, SgExprListExp&)
+  SgType& rangeTypeAttr(SgExpression* n, SgExprListExp&)
   {
-    return mkRangeType(SG_DEREF(n.get_type()));
+    ASSERT_not_null(n);
+
+    return mkRangeType(SG_DEREF(n->get_type()));
   }
 
-  SgType& funTypeAttr(SgExpression& funref, SgExprListExp& args)
+  SgType& funTypeAttr(SgExpression* funref, SgExprListExp& args)
   {
-    if (SgFunctionType* funty = isSgFunctionType(funref.get_type()))
+    ASSERT_not_null(funref);
+
+    if (SgFunctionType* funty = isSgFunctionType(funref->get_type()))
       return SG_DEREF(funty->get_return_type());
 
-    logWarn() << "unable to get 'result type" << funref.unparseToString()
+    logWarn() << "unable to get 'result type" << funref->unparseToString()
               << std::endl;
     return unknownTypeAttr(funref, args);
   }
@@ -2593,9 +2605,9 @@ namespace
   };
 
   SgType&
-  attributeType(SgExpression& expr, const std::string& ident, SgExprListExp& args)
+  attributeType(SgExpression* expr, const std::string& ident, SgExprListExp& args)
   {
-    using TypeMaker = SgType& (*) (SgExpression& expr, SgExprListExp& args);
+    using TypeMaker = SgType& (*) (SgExpression*, SgExprListExp&);
     //~ using TypeCalc  = std::map<std::string, TypeMaker, boost::algorithm::is_iless>;
     using TypeCalc  = std::map<std::string, TypeMaker, ILess>;
 
@@ -2709,8 +2721,7 @@ namespace
                                      , { "word_size",            &integralTypeAttr }
                                      };
 
-
-    SgExpression& obj  = insertAccessDerefIfNeeded(expr, ident);
+    SgExpression* obj  = insertAccessDerefIfNeeded(expr, ident);
     auto          pos  = typecalc.find(ident);
     TypeMaker     bldr = ((pos != typecalc.end()) ? pos->second : nullptr);
 
@@ -2732,14 +2743,18 @@ namespace
 
 
 SgAdaAttributeExp&
-mkAdaAttributeExp(SgExpression& expr, const std::string& ident, SgExprListExp& args)
+mkAdaAttributeExp(SgExpression* objOpt, const std::string& ident, SgExprListExp& args)
 {
-  SgType&            attrty = attributeType(expr, ident, args);
-  SgAdaAttributeExp& sgnode = mkLocatedNode<SgAdaAttributeExp>(ident, &expr, &args, &attrty);
+  // currently the only attribute that can be partially constructed is address.
+  ASSERT_require(objOpt || boost::iequals(ident, "address"));
 
-  expr.set_parent(&sgnode);
+  SgType&            attrty = attributeType(objOpt, ident, args);
+  SgAdaAttributeExp& sgnode = mkLocatedNode<SgAdaAttributeExp>(ident, objOpt, &args, &attrty);
+
+  if (objOpt)
+    objOpt->set_parent(&sgnode);
+
   args.set_parent(&sgnode);
-
   return sgnode;
 }
 

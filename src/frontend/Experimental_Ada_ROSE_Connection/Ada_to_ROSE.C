@@ -35,8 +35,6 @@ namespace Ada_ROSE_Translation
 
 extern Sawyer::Message::Facility mlog;
 
-static bool fail_on_error = true;
-
 
 //
 // declaration store and retrieval
@@ -136,12 +134,8 @@ void logKind(const char* kind, int elemID)
 
 LabelAndLoopManager::~LabelAndLoopManager()
 {
-  for (GotoContainer::value_type el : gotos)
-  {
-    //~ el.first->set_label(&lookupNode(labels, el.second));
-    ADA_ASSERT(el.first->get_label_expression() == nullptr);
-    el.first->set_label_expression(&mkLabelRefExp(lookupNode(labels, el.second)));
-  }
+  for (CompletionFn& complfn : completions)
+    complfn();
 }
 
 void LabelAndLoopManager::label(Element_ID id, SgLabelStatement& lblstmt)
@@ -152,9 +146,31 @@ void LabelAndLoopManager::label(Element_ID id, SgLabelStatement& lblstmt)
   mapped = &lblstmt;
 }
 
+void LabelAndLoopManager::labelattr(Element_ID id, SgAdaAttributeExp& attr)
+{
+  ASSERT_require(id != 0);
+
+  completions.emplace_back( [self = this, labelid = id, attrexp = &attr]()->void
+                            {
+                              ADA_ASSERT(attrexp->get_object() == nullptr);
+
+                              attrexp->set_object(&mkLabelRefExp(lookupNode(self->labels, labelid)));
+                            }
+                          );
+}
+
+
 void LabelAndLoopManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
 {
-  gotos.emplace_back(&gotostmt, id);
+  ASSERT_require(id != 0);
+
+  completions.emplace_back( [self = this, labelid = id, stmt = &gotostmt]()->void
+                            {
+                              ADA_ASSERT(stmt->get_label_expression() == nullptr);
+
+                              stmt->set_label_expression(&mkLabelRefExp(lookupNode(self->labels, labelid)));
+                            }
+                          );
 }
 
 AstContext
@@ -2416,16 +2432,9 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 }
 
 
-bool FAIL_ON_ERROR(AstContext)
-{
-  return true;
-}
-
 /// initialize translation settins
-void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings)
+void initialize(const Rose::Cmdline::Ada::CmdlineSettings&)
 {
-  // settings.failhardAdb and fail_on_error are obsolete
-  if (settings.failhardAdb) fail_on_error = true;
 }
 
 

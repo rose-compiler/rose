@@ -785,25 +785,6 @@ namespace
     return getDefinitionTypeID(decl.Object_Declaration_View, ctx);
   }
 
-  Element_ID getLabelRef(Element_ID id, AstContext ctx)
-  {
-    Element_Struct&    labelref = retrieveElem(elemMap(), id);
-    ADA_ASSERT (labelref.Element_Kind == An_Expression);
-
-    Expression_Struct& labelexp = labelref.The_Union.Expression;
-
-    if (labelexp.Expression_Kind == A_Selected_Component)
-    {
-      logKind("A_Selected_Component", id);
-      return getLabelRef(labelexp.Selector, ctx);
-    }
-
-    ADA_ASSERT (labelexp.Expression_Kind == An_Identifier);
-    logKind("An_Identifier", labelref.ID);
-    return labelexp.Corresponding_Name_Definition;
-  }
-
-
   /// converts an Asis parameter declaration to a ROSE paramter (i.e., variable)
   ///   declaration.
   SgVariableDeclaration&
@@ -2045,8 +2026,7 @@ namespace
           logKind("A_Goto_Statement", elem.ID);
           SgGotoStatement& sgnode = SG_DEREF( sb::buildGotoStatement() );
 
-          ctx.labelsAndLoops().gotojmp(getLabelRef(stmt.Goto_Label, ctx), sgnode);
-
+          ctx.labelsAndLoops().gotojmp(getLabelRefOpt(stmt.Goto_Label, ctx), sgnode);
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
                 Statement_ID           Corresponding_Destination_Statement;
@@ -5943,5 +5923,26 @@ void processAndPlacePragmas(Pragma_Element_ID_List pragmalst, std::vector<SgScop
   placePragmas(std::move(scopes), ctx);
 }
 
+
+Element_ID getLabelRefOpt(Element_ID id, AstContext ctx)
+{
+  Element_Struct&    labelref = retrieveElem(elemMap(), id);
+  if (labelref.Element_Kind != An_Expression)
+    return 0;
+
+  Expression_Struct& labelexp = labelref.The_Union.Expression;
+
+  if (labelexp.Expression_Kind == A_Selected_Component)
+  {
+    logKind("A_Selected_Component", id);
+    return getLabelRefOpt(labelexp.Selector, ctx);
+  }
+
+  if (labelexp.Expression_Kind != An_Identifier)
+    return 0;
+
+  logKind("An_Identifier", labelref.ID);
+  return labelexp.Corresponding_Name_Definition;
+}
 
 }

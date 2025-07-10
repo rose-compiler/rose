@@ -223,33 +223,43 @@ void storeUnitCompletion(std::function<void()> completion);
 //
 // auxiliary functions and types
 
-/// \brief resolves all goto statements to labels
+/// \brief resolves all goto statements and attributes of labels
 ///        at the end of procedures or functions.
+/// \details
+///    Labels (as opposed to declarations) do not need to be forward declared.
+///    Label references can be found in goto statements and attributes (i.e., 'address).
+///    To link those gotos and attributes correctly, creating the references to
+///    labels is deferred until the end of a procedure/function scope
+///    (i.e., LabelAndLoopManager's lifetime).
 struct LabelAndLoopManager
 {
     LabelAndLoopManager() = default;
 
-    /// patch gotos with target (a label statement)
+    /// patch gotos and attributes with target (a label statement)
     ///   at the end of a procudure / function.
     ~LabelAndLoopManager();
 
     /// records a new labeled statement \ref lblstmt with key \ref id.
     void label(Element_ID id, SgLabelStatement& lblstmt);
 
-    /// records a new goto statement \ref gotostmt with label key \ref id.
+    /// records a goto statement \ref gotostmt with label key \ref id.
     void gotojmp(Element_ID id, SgGotoStatement& gotostmt);
+
+    /// records an attribute of a label object.
+    void labelattr(Element_ID id, SgAdaAttributeExp& attr);
 
     /// returns a mapping from an Element_ID to a loop statement
     map_t<int, SgStatement*>& asisLoops() { return loops; }
 
   private:
-    typedef std::map<Element_ID, SgLabelStatement*>               LabelContainer;
-    typedef std::vector<std::pair<SgGotoStatement*, Element_ID> > GotoContainer;
-    typedef map_t<int, SgStatement*>                              LoopMap;
+    using LabelContainer      = std::map<Element_ID, SgLabelStatement*>;
+    using CompletionFn        = std::function<void()>;
+    using CompletionContainer = std::vector<CompletionFn>;
+    using LoopMap             = map_t<int, SgStatement*>;
 
-    LabelContainer labels;
-    GotoContainer  gotos;
-    LoopMap        loops;
+    LabelContainer      labels;
+    CompletionContainer completions;
+    LoopMap             loops;
 
     LabelAndLoopManager(const LabelAndLoopManager&)            = delete;
     LabelAndLoopManager(LabelAndLoopManager&&)                 = delete;
@@ -376,7 +386,8 @@ struct AstContext
 
 /// returns true if an assertion failure should be triggered,
 ///   or if some fallback processing should continue
-bool FAIL_ON_ERROR(AstContext ctx);
+inline
+bool FAIL_ON_ERROR(const AstContext&) { return true; }
 
 
 
