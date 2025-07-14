@@ -76,10 +76,67 @@ operator<<(std::ostream &o, const Location &x) {
     return o;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Location
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+SAWYER_EXPORT
+Location::~Location() {}
+
+SAWYER_EXPORT
+Location::Location()
+    : idx(0), offset(0) {}
+
+SAWYER_EXPORT
+Location::Location(size_t idx, size_t offset)
+    : idx(idx), offset(offset) {}
+
+SAWYER_EXPORT bool
+Location::operator==(const Location &other) const {
+    return idx==other.idx && offset==other.offset;
+}
+
+SAWYER_EXPORT bool
+Location::operator!=(const Location &other) const {
+    return !(*this==other);
+}
+
+SAWYER_EXPORT bool
+Location::operator<(const Location &other) const {
+    return idx<other.idx || (idx==other.idx && offset<other.offset);
+}
+
+SAWYER_EXPORT bool
+Location::operator<=(const Location &other) const {
+    return *this<other || *this==other;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Cursor
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SAWYER_EXPORT
+Cursor::~Cursor() {}
+
+SAWYER_EXPORT
+Cursor::Cursor() {}
+
+SAWYER_EXPORT
+Cursor::Cursor(const std::vector<std::string> &strings)
+    : strings_(strings) {}
+
+SAWYER_EXPORT
+Cursor::Cursor(const std::string &string)
+    : strings_(1, string) {}
+
+SAWYER_EXPORT const std::vector<std::string>&
+Cursor::strings() const {
+    return strings_;
+}
+
+SAWYER_EXPORT const std::string&
+Cursor::arg() const {
+    return arg(loc_);
+}
 
 SAWYER_EXPORT const std::string&
 Cursor::arg(const Location &location) const {
@@ -88,10 +145,20 @@ Cursor::arg(const Location &location) const {
 }
 
 SAWYER_EXPORT std::string
+Cursor::rest() const {
+    return rest(loc_);
+}
+
+SAWYER_EXPORT std::string
 Cursor::rest(const Location &location) const {
     return (location.idx < strings_.size() && location.offset < strings_[location.idx].size() ?
             strings_[location.idx].substr(location.offset) :
             std::string());
+}
+
+SAWYER_EXPORT std::string
+Cursor::substr(const Location &limit, const std::string &separator) const {
+    return substr(loc_, limit, separator);
 }
 
 SAWYER_EXPORT std::string
@@ -115,6 +182,11 @@ Cursor::substr(const Location &limit1, const Location &limit2, const std::string
     return retval;
 }
 
+SAWYER_EXPORT const Location&
+Cursor::location() const {
+    return loc_;
+}
+
 SAWYER_EXPORT Cursor&
 Cursor::location(const Location &loc) {
     loc_ = loc;
@@ -125,6 +197,37 @@ Cursor::location(const Location &loc) {
         loc_.offset = strings_[loc_.idx].size();
     }
     return *this;
+}
+
+SAWYER_EXPORT bool
+Cursor::atArgBegin() const {
+    return loc_.idx<strings_.size() && 0==loc_.offset;
+}
+
+SAWYER_EXPORT bool
+Cursor::atArgEnd() const {
+    return loc_.idx<strings_.size() && loc_.offset>=strings_[loc_.idx].size();
+}
+
+SAWYER_EXPORT bool
+Cursor::atEnd() const {
+    return atEnd(loc_);
+}
+
+SAWYER_EXPORT bool
+Cursor::atEnd(const Location &location) const {
+    return location.idx >= strings_.size();
+}
+
+SAWYER_EXPORT void
+Cursor::consumeArgs(size_t nargs) {
+    loc_.idx = std::min(strings_.size(), loc_.idx+nargs);
+    loc_.offset = 0;
+}
+
+SAWYER_EXPORT void
+Cursor::consumeArg() {
+    consumeArgs(1);
 }
 
 SAWYER_EXPORT void
@@ -159,8 +262,51 @@ Cursor::linearDistance() const {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      ExcursionGuard
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ExcursionGuard::ExcursionGuard(Cursor &cursor)
+    : cursor_(cursor), loc_(cursor.location()), canceled_(false) {}
+
+ExcursionGuard::~ExcursionGuard() {
+    if (!canceled_)
+        cursor_.location(loc_);
+}
+
+void
+ExcursionGuard::cancel() {
+    canceled_ = true;
+}
+
+const Location&
+ExcursionGuard::startingLocation() const {
+    return loc_;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Switch value savers
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SAWYER_EXPORT
+ValueSaver::~ValueSaver() {}
+
+SAWYER_EXPORT
+ValueSaver::ValueSaver() {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Parsers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SAWYER_EXPORT
+ValueParser::~ValueParser() {}
+
+SAWYER_EXPORT
+ValueParser::ValueParser() {}
+
+SAWYER_EXPORT
+ValueParser::ValueParser(const ValueSaver::Ptr &valueSaver)
+    : valueSaver_(valueSaver) {}
+
 
 SAWYER_EXPORT ParsedValue
 ValueParser::matchString(const std::string &str) {
@@ -176,6 +322,17 @@ ValueParser::matchString(const std::string &str) {
 SAWYER_EXPORT ParsedValue
 ValueParser::match(Cursor &cursor) {
     return (*this)(cursor);
+}
+
+SAWYER_EXPORT ValueParser::Ptr
+ValueParser::valueSaver(const ValueSaver::Ptr &f) {
+    valueSaver_ = f;
+    return sharedFromThis();
+}
+
+SAWYER_EXPORT const ValueSaver::Ptr
+ValueParser::valueSaver() const {
+    return valueSaver_;
 }
 
 // Only called by match().  If the subclass doesn't override this, then we try calling the C-string version instead.
@@ -239,6 +396,36 @@ booleanParser() {
     return BooleanParser<bool>::instance();
 }
 
+SAWYER_EXPORT
+StringSetParser::~StringSetParser() {}
+
+SAWYER_EXPORT
+StringSetParser::StringSetParser() {}
+
+SAWYER_EXPORT
+StringSetParser::StringSetParser(const ValueSaver::Ptr &valueSaver)
+    : ValueParser(valueSaver) {}
+
+SAWYER_EXPORT StringSetParser::Ptr
+StringSetParser::instance() {
+    return Ptr(new StringSetParser);
+}
+
+SAWYER_EXPORT StringSetParser::Ptr
+StringSetParser::instance(const ValueSaver::Ptr &valueSaver) {
+    return Ptr(new StringSetParser(valueSaver));
+}
+
+SAWYER_EXPORT StringSetParser::Ptr
+StringSetParser::with(const std::string &s) {
+    return with(&s, &s+1);
+}
+
+SAWYER_EXPORT StringSetParser::Ptr
+StringSetParser::with(const std::vector<std::string> sv) {
+    return with(sv.begin(), sv.end());
+}
+
 SAWYER_EXPORT ParsedValue
 StringSetParser::operator()(Cursor &cursor) {
     Location locStart = cursor.location();
@@ -256,6 +443,26 @@ StringSetParser::operator()(Cursor &cursor) {
     return ParsedValue(strings_[bestMatchIdx], locStart, strings_[bestMatchIdx], valueSaver());
 }
 
+SAWYER_EXPORT
+ListParser::~ListParser() {}
+
+SAWYER_EXPORT
+ListParser::ListParser(const ValueParser::Ptr &firstElmtType, const std::string &separatorRe)
+    : minLength_(1), maxLength_((size_t)-1) {
+    elements_.push_back(ParserSep(firstElmtType, separatorRe));
+}
+
+SAWYER_EXPORT ListParser::Ptr
+ListParser::instance(const ValueParser::Ptr &firstElmtType, const std::string &separatorRe) {
+    return Ptr(new ListParser(firstElmtType, separatorRe));
+}
+
+SAWYER_EXPORT ListParser::Ptr
+ListParser::nextMember(const ValueParser::Ptr &elmtType, const std::string &separatorRe) {
+    elements_.push_back(ParserSep(elmtType, separatorRe));
+    return sharedFromThis().dynamicCast<ListParser>();
+}
+
 SAWYER_EXPORT ListParser::Ptr
 ListParser::limit(size_t minLength, size_t maxLength) {
     if (minLength > maxLength)
@@ -263,6 +470,16 @@ ListParser::limit(size_t minLength, size_t maxLength) {
     minLength_ = minLength;
     maxLength_ = maxLength;
     return sharedFromThis().dynamicCast<ListParser>();
+}
+
+SAWYER_EXPORT ListParser::Ptr
+ListParser::limit(size_t maxLength) {
+    return limit(std::min(minLength_, maxLength), maxLength);
+}
+
+SAWYER_EXPORT ListParser::Ptr
+ListParser::exactly(size_t length) {
+    return limit(length, length);
 }
 
 SAWYER_EXPORT ParsedValue
@@ -348,9 +565,33 @@ listParser(const ValueParser::Ptr &p, const std::string &sep) {
  *                                      Actions
  *******************************************************************************************************************************/
 
+SAWYER_EXPORT
+ShowVersion::~ShowVersion() {}
+
+SAWYER_EXPORT
+ShowVersion::ShowVersion(const std::string &versionString)
+    : versionString_(versionString) {}
+
+SAWYER_EXPORT ShowVersion::Ptr
+ShowVersion::instance(const std::string &versionString) {
+    return Ptr(new ShowVersion(versionString));
+}
+
 SAWYER_EXPORT void
 ShowVersion::operator()(const ParserResult&) {
     std::cerr <<versionString_ <<"\n";
+}
+
+SAWYER_EXPORT
+ShowVersionAndExit::~ShowVersionAndExit() {}
+
+SAWYER_EXPORT
+ShowVersionAndExit::ShowVersionAndExit(const std::string &versionString, int exitStatus)
+    : ShowVersion(versionString), exitStatus_(exitStatus) {}
+
+SAWYER_EXPORT ShowVersionAndExit::Ptr
+ShowVersionAndExit::instance(const std::string &versionString, int exitStatus) {
+    return Ptr(new ShowVersionAndExit(versionString, exitStatus));
 }
 
 SAWYER_EXPORT void
@@ -359,15 +600,60 @@ ShowVersionAndExit::operator()(const ParserResult &parserResult) {
     exit(exitStatus_);
 }
 
+SAWYER_EXPORT
+ShowHelp::~ShowHelp() {}
+
+SAWYER_EXPORT
+ShowHelp::ShowHelp() {}
+
+SAWYER_EXPORT ShowHelp::Ptr
+ShowHelp::instance() {
+    return Ptr(new ShowHelp);
+}
+
 SAWYER_EXPORT void
 ShowHelp::operator()(const ParserResult &parserResult) {
     parserResult.parser().emitDocumentationToPager();
+}
+
+SAWYER_EXPORT
+ShowHelpAndExit::~ShowHelpAndExit() {}
+
+SAWYER_EXPORT
+ShowHelpAndExit::ShowHelpAndExit(int exitStatus)
+    : exitStatus_(exitStatus) {}
+
+SAWYER_EXPORT ShowHelpAndExit::Ptr
+ShowHelpAndExit::instance(int exitStatus) {
+    return Ptr(new ShowHelpAndExit(exitStatus));
 }
 
 SAWYER_EXPORT void
 ShowHelpAndExit::operator()(const ParserResult &parserResult) {
     ShowHelp::operator()(parserResult);
     exit(exitStatus_);
+}
+
+SAWYER_EXPORT
+ConfigureDiagnostics::~ConfigureDiagnostics() {}
+
+SAWYER_EXPORT
+ConfigureDiagnostics::ConfigureDiagnostics(const std::string &switchKey, Message::Facilities &facilities, bool exitOnHelp)
+    : switchKey_(switchKey), facilities_(facilities), exitOnHelp_(exitOnHelp) {}
+
+SAWYER_EXPORT ConfigureDiagnostics::Ptr
+ConfigureDiagnostics::instance(const std::string &switchKey, Message::Facilities &facilities, bool exitOnHelp) {
+    return Ptr(new ConfigureDiagnostics(switchKey, facilities, exitOnHelp));
+}
+
+SAWYER_EXPORT bool
+ConfigureDiagnostics::exitOnHelp() const {
+    return exitOnHelp_;
+}
+
+SAWYER_EXPORT void
+ConfigureDiagnostics::exitOnHelp(bool b) {
+    exitOnHelp_=b;
 }
 
 SAWYER_EXPORT void
@@ -411,6 +697,18 @@ ConfigureDiagnostics::operator()(const ParserResult &parserResult) {
     }
 }
 
+SAWYER_EXPORT
+ConfigureDiagnosticsQuiet::~ConfigureDiagnosticsQuiet() {}
+
+SAWYER_EXPORT
+ConfigureDiagnosticsQuiet::ConfigureDiagnosticsQuiet(Message::Facilities &facilities)
+    : facilities_(facilities) {}
+
+SAWYER_EXPORT ConfigureDiagnosticsQuiet::Ptr
+ConfigureDiagnosticsQuiet::instance(Message::Facilities &facilities) {
+    return Ptr(new ConfigureDiagnosticsQuiet(facilities));
+}
+
 SAWYER_EXPORT void
 ConfigureDiagnosticsQuiet::operator()(const ParserResult&) {
     std::string errorMessage = facilities_.control("none,>=error");
@@ -441,6 +739,13 @@ SAWYER_EXPORT ConfigureDiagnosticsQuiet::Ptr
 configureDiagnosticsQuiet(Message::Facilities &facilities) {
     return ConfigureDiagnosticsQuiet::instance(facilities);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      ValueAugmenter
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SAWYER_EXPORT
+ValueAugmenter::~ValueAugmenter() {}
 
 /*******************************************************************************************************************************
  *                                      Parsed values
@@ -516,6 +821,57 @@ T fromFloatingPoint(const boost::any &v) {
     }
 }
 
+SAWYER_EXPORT
+ParsedValue::~ParsedValue() {}
+
+SAWYER_EXPORT
+ParsedValue::ParsedValue()
+    : keySequence_(0), switchSequence_(0) {}
+
+SAWYER_EXPORT
+ParsedValue::ParsedValue(const boost::any value, const Location &loc, const std::string &str, const ValueSaver::Ptr &saver)
+    : value_(value), valueLocation_(loc), valueString_(str), keySequence_(0), switchSequence_(0), valueSaver_(saver) {}
+
+SAWYER_EXPORT ParsedValue&
+ParsedValue::switchInfo(const std::string &key, const Location &loc, const std::string &str) {
+    switchKey_ = key;
+    switchLocation_ = loc;
+    switchString_ = str;
+    return *this;
+}
+
+SAWYER_EXPORT void
+ParsedValue::sequenceInfo(size_t keySequence, size_t switchSequence) {
+    keySequence_ = keySequence;
+    switchSequence_ = switchSequence;
+}
+
+SAWYER_EXPORT const boost::any&
+ParsedValue::value() const {
+    return value_;
+}
+
+SAWYER_EXPORT void
+ParsedValue::value(const boost::any &v) {
+    value_ = v;
+}
+
+SAWYER_EXPORT Location
+ParsedValue::valueLocation() const {
+    return valueLocation_;
+}
+
+SAWYER_EXPORT ParsedValue&
+ParsedValue::valueLocation(const Location &loc) {
+    valueLocation_ = loc;
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+ParsedValue::string() const {
+    return valueString_;
+}
+
 SAWYER_EXPORT int
 ParsedValue::asInt() const {
     return fromInteger<int>(value_);
@@ -587,6 +943,42 @@ ParsedValue::asString() const {
     return x;
 }
 
+SAWYER_EXPORT ParsedValue&
+ParsedValue::switchKey(const std::string &s) {
+    switchKey_ = s;
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+ParsedValue::switchKey() const {
+    return switchKey_;
+}
+
+SAWYER_EXPORT const std::string&
+ParsedValue::switchString() const {
+    return switchString_;
+}
+
+SAWYER_EXPORT Location
+ParsedValue::switchLocation() const {
+    return switchLocation_;
+}
+
+SAWYER_EXPORT size_t
+ParsedValue::keySequence() const {
+    return keySequence_;
+}
+
+SAWYER_EXPORT size_t
+ParsedValue::switchSequence() const {
+    return switchSequence_;
+}
+
+SAWYER_EXPORT const ValueSaver::Ptr
+ParsedValue::valueSaver() const {
+    return valueSaver_;
+}
+
 SAWYER_EXPORT void
 ParsedValue::save() const {
     if (valueSaver_)
@@ -597,6 +989,11 @@ ParsedValue::save() const {
         BOOST_FOREACH (const ParsedValue &pval, values)
             pval.save();
     }
+}
+
+SAWYER_EXPORT bool
+ParsedValue::isEmpty() const {
+    return value_.empty();
 }
 
 SAWYER_EXPORT void
@@ -617,6 +1014,34 @@ operator<<(std::ostream &o, const ParsedValue &x) {
  *                                      Switch arguments declarations
  *******************************************************************************************************************************/
 
+SAWYER_EXPORT
+SwitchArgument::~SwitchArgument() {}
+
+SAWYER_EXPORT
+SwitchArgument::SwitchArgument(const std::string &name, const ValueParser::Ptr &parser)
+    : name_(name), parser_(parser) {}
+
+SAWYER_EXPORT
+SwitchArgument::SwitchArgument(const std::string &name, const ValueParser::Ptr &parser, const std::string &defaultValueString)
+    : name_(name), parser_(parser), defaultValue_(parser->matchString(defaultValueString)) {
+    defaultValue_.valueLocation(NOWHERE);
+}
+
+SAWYER_EXPORT bool
+SwitchArgument::isRequired() const {
+    return defaultValue_.isEmpty();
+}
+
+SAWYER_EXPORT bool
+SwitchArgument::isOptional() const {
+    return !isRequired();
+}
+
+SAWYER_EXPORT const std::string&
+SwitchArgument::name() const {
+    return name_;
+}
+
 SAWYER_EXPORT std::string
 SwitchArgument::nameAsText() const {
     Document::TextMarkup grammar;
@@ -624,10 +1049,47 @@ SwitchArgument::nameAsText() const {
     return boost::trim_copy(grammar(name_));
 }
 
+SAWYER_EXPORT const ParsedValue&
+SwitchArgument::defaultValue() const {
+    return defaultValue_;
+}
+
+SAWYER_EXPORT const std::string&
+SwitchArgument::defaultValueString() const {
+    return defaultValue_.string();
+}
+
+SAWYER_EXPORT const ValueParser::Ptr&
+SwitchArgument::parser() const {
+    return parser_;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SwitchAction
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SAWYER_EXPORT
+SwitchAction::~SwitchAction() {}
+
+SAWYER_EXPORT
+SwitchAction::SwitchAction() {}
+
+SAWYER_EXPORT void
+SwitchAction::run(const ParserResult &parserResult) {
+    (*this)(parserResult);
+}
+
 /*******************************************************************************************************************************
  *                                      Switch Descriptors
  *******************************************************************************************************************************/
 
+SAWYER_EXPORT
+ParsingProperties::~ParsingProperties() {}
+
+SAWYER_EXPORT
+ParsingProperties::ParsingProperties()
+    : inheritLongPrefixes(true), inheritShortPrefixes(true), inheritValueSeparators(true), showGroupName(SHOW_GROUP_INHERIT) {}
+    
 SAWYER_EXPORT ParsingProperties
 ParsingProperties::inherit(const ParsingProperties &base) const {
     ParsingProperties retval;
@@ -650,6 +1112,16 @@ ParsingProperties::inherit(const ParsingProperties &base) const {
     return retval;
 }
 
+SAWYER_EXPORT
+Switch::~Switch() {}
+
+SAWYER_EXPORT
+Switch::Switch(const std::string &longName, char shortName)
+    : hidden_(false), whichValue_(SAVE_LAST), intrinsicValue_(ParsedValue(true, NOWHERE, "true", ValueSaver::Ptr())),
+      explosiveLists_(false), skipping_(SKIP_NEVER) {
+    init(longName, shortName);
+}
+
 SAWYER_EXPORT void
 Switch::init(const std::string &longName, char shortName) {
     if (shortName)
@@ -669,6 +1141,50 @@ Switch::longName(const std::string &name) {
     if (name.empty())
         throw std::runtime_error("switch long name cannot be empty");
     longNames_.push_back(name);
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+Switch::longName() const {
+    return longNames_.front();
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+Switch::longNames() const {
+    return longNames_;
+}
+
+SAWYER_EXPORT Switch&
+Switch::shortName(char c) {
+    if (c)
+        shortNames_ += std::string(1, c);
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+Switch::shortNames() const {
+    return shortNames_;
+}
+
+SAWYER_EXPORT std::string
+Switch::preferredName() const {
+    return longNames_.empty() ? std::string(1, shortNames_[0]) : longNames_[0];
+}
+
+SAWYER_EXPORT Switch&
+Switch::key(const std::string &s) {
+    key_ = s;
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+Switch::key() const {
+    return key_;
+}
+
+SAWYER_EXPORT Switch&
+Switch::synopsis(const std::string &s) {
+    synopsis_ = s;
     return *this;
 }
 
@@ -737,6 +1253,50 @@ Switch::synopsis(const ParsingProperties &swProps, const SwitchGroup *sg /*=NULL
 }
 
 SAWYER_EXPORT Switch&
+Switch::doc(const std::string &s) {
+    documentation_ = s;
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+Switch::doc() const {
+    return documentation_;
+}
+
+SAWYER_EXPORT Switch&
+Switch::docKey(const std::string &s) {
+    documentationKey_ = s;
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+Switch::docKey() const {
+    return documentationKey_;
+}
+
+SAWYER_EXPORT Switch&
+Switch::hidden(bool b) {
+    hidden_ = b;
+    return *this;
+}
+
+SAWYER_EXPORT bool
+Switch::hidden() const {
+    return hidden_;
+}
+
+SAWYER_EXPORT Switch&
+Switch::skipping(SwitchSkipping how) {
+    skipping_ = how;
+    return *this;
+}
+
+SAWYER_EXPORT SwitchSkipping
+Switch::skipping() const {
+    return skipping_;
+}
+
+SAWYER_EXPORT Switch&
 Switch::resetLongPrefixes(const std::string &s1, const std::string &s2, const std::string &s3, const std::string &s4) {
     properties_.inheritLongPrefixes = false;
     properties_.longPrefixes.clear();
@@ -749,6 +1309,17 @@ Switch::resetLongPrefixes(const std::string &s1, const std::string &s2, const st
     if (0!=s4.compare(STR_NONE))
         properties_.longPrefixes.push_back(s4);
     return *this;
+}
+
+SAWYER_EXPORT Switch&
+Switch::longPrefix(const std::string &s1) {
+    properties_.longPrefixes.push_back(s1);
+    return *this;
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+Switch::longPrefixes() const {
+    return properties_.longPrefixes;
 }
 
 SAWYER_EXPORT Switch&
@@ -768,6 +1339,17 @@ Switch::resetShortPrefixes(const std::string &s1, const std::string &s2, const s
 }
 
 SAWYER_EXPORT Switch&
+Switch::shortPrefix(const std::string &s1) {
+    properties_.shortPrefixes.push_back(s1);
+    return *this;
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+Switch::shortPrefixes() const {
+    return properties_.shortPrefixes;
+}
+
+SAWYER_EXPORT Switch&
 Switch::resetValueSeparators(const std::string &s1, const std::string &s2, const std::string &s3,
                              const std::string &s4) {
     properties_.inheritValueSeparators = false;
@@ -784,6 +1366,17 @@ Switch::resetValueSeparators(const std::string &s1, const std::string &s2, const
 }
 
 SAWYER_EXPORT Switch&
+Switch::valueSeparator(const std::string &s1) {
+    properties_.valueSeparators.push_back(s1);
+    return *this;
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+Switch::valueSeparators() const {
+    return properties_.valueSeparators;
+}
+
+SAWYER_EXPORT Switch&
 Switch::argument(const std::string &name, const ValueParser::Ptr &parser) {
     return argument(SwitchArgument(name, parser));
 }
@@ -791,6 +1384,27 @@ Switch::argument(const std::string &name, const ValueParser::Ptr &parser) {
 SAWYER_EXPORT Switch&
 Switch::argument(const std::string &name, const ValueParser::Ptr &parser, const std::string &defaultValueStr) {
     return argument(SwitchArgument(name, parser, defaultValueStr));
+}
+
+SAWYER_EXPORT Switch&
+Switch::argument(const SwitchArgument &arg) {
+    arguments_.push_back(arg);
+    return *this;
+}
+
+SAWYER_EXPORT const SwitchArgument&
+Switch::argument(size_t idx) const {
+    return arguments_[idx];
+}
+
+SAWYER_EXPORT const std::vector<SwitchArgument>&
+Switch::arguments() const {
+    return arguments_;
+}
+
+SAWYER_EXPORT size_t
+Switch::nArguments() const {
+    return arguments_.size();
 }
 
 SAWYER_EXPORT size_t
@@ -801,6 +1415,86 @@ Switch::nRequiredArguments() const {
             ++retval;
     }
     return retval;
+}
+
+SAWYER_EXPORT Switch&
+Switch::intrinsicValue(const char *value, std::string &storage) {
+    intrinsicValue_ = ParsedValue(std::string(value), NOWHERE, value, TypedSaver<std::string>::instance(storage));
+    return *this;
+}
+
+SAWYER_EXPORT Switch&
+Switch::intrinsicValue(const std::string &text, const ValueParser::Ptr &p) {
+    intrinsicValue_ = p->matchString(text);
+    intrinsicValue_.valueLocation(NOWHERE);
+    return *this;
+}
+
+SAWYER_EXPORT Switch&
+Switch::intrinsicValue(const std::string &text) {
+    intrinsicValue_ = anyParser()->matchString(text);
+    intrinsicValue_.valueLocation(NOWHERE);
+    return *this;
+}
+
+SAWYER_EXPORT Switch&
+Switch::intrinsicValue(const ParsedValue &value) {
+    intrinsicValue_ = value;
+    return *this;
+}
+
+SAWYER_EXPORT ParsedValue
+Switch::intrinsicValue() const {
+    return intrinsicValue_;
+}
+
+SAWYER_EXPORT Switch&
+Switch::explosiveLists(bool b) {
+    explosiveLists_ = b;
+    return *this;
+}
+
+SAWYER_EXPORT bool
+Switch::explosiveLists() const {
+    return explosiveLists_;
+}
+
+SAWYER_EXPORT Switch&
+Switch::action(const SwitchAction::Ptr &f) {
+    action_ = f;
+    return *this;
+}
+
+SAWYER_EXPORT const SwitchAction::Ptr&
+Switch::action() const {
+    return action_;
+}
+
+SAWYER_EXPORT Switch&
+Switch::whichValue(WhichValue s) {
+    whichValue_ = s;
+    return *this;
+}
+
+SAWYER_EXPORT WhichValue
+Switch::whichValue() const {
+    return whichValue_;
+}
+
+SAWYER_EXPORT Switch&
+Switch::valueAugmenter(const ValueAugmenter::Ptr &f) {
+    valueAugmenter_ = f;
+    return *this;
+}
+
+SAWYER_EXPORT ValueAugmenter::Ptr
+Switch::valueAugmenter() const {
+    return valueAugmenter_;
+}
+
+SAWYER_EXPORT const ParsingProperties&
+Switch::properties() const {
+    return properties_;
 }
 
 SAWYER_EXPORT std::runtime_error
@@ -1102,6 +1796,73 @@ Switch::matchShortArguments(const std::string &switchString, Cursor &cursor /*in
  *                                      SwitchGroup
  *******************************************************************************************************************************/
 
+SAWYER_EXPORT
+SwitchGroup::~SwitchGroup() {}
+
+SAWYER_EXPORT
+SwitchGroup::SwitchGroup()
+    : switchOrder_(DOCKEY_ORDER) {
+    initializeLibrary();
+}
+
+SAWYER_EXPORT
+SwitchGroup::SwitchGroup(const std::string &title, const std::string &docKey)
+    : title_(title), docKey_(docKey), switchOrder_(DOCKEY_ORDER) {}
+
+SAWYER_EXPORT const std::string&
+SwitchGroup::title() const {
+    return title_;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::title(const std::string &title) {
+    title_ = title;
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+SwitchGroup::name() const {
+    return name_;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::name(const std::string &name) {
+    name_ = name;
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+SwitchGroup::docKey() const {
+    return docKey_;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::docKey(const std::string &key) {
+    docKey_ = key;
+    return *this;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::doc(const std::string &s) {
+    documentation_ = s;
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+SwitchGroup::doc() const {
+    return documentation_;
+}
+
+SAWYER_EXPORT ShowGroupName
+SwitchGroup::showingGroupNames() const {
+    return properties_.showGroupName;
+}
+
+SAWYER_EXPORT void
+SwitchGroup::showingGroupNames(ShowGroupName x) {
+    properties_.showGroupName = x;
+}
+
 SAWYER_EXPORT SwitchGroup&
 SwitchGroup::resetLongPrefixes(const std::string &s1, const std::string &s2,
                                const std::string &s3, const std::string &s4) {
@@ -1116,6 +1877,17 @@ SwitchGroup::resetLongPrefixes(const std::string &s1, const std::string &s2,
     if (0!=s1.compare(STR_NONE))
         properties_.longPrefixes.push_back(s4);
     return *this;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::longPrefix(const std::string &s1) {
+    properties_.longPrefixes.push_back(s1);
+    return *this;
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+SwitchGroup::longPrefixes() const {
+    return properties_.longPrefixes;
 }
 
 SAWYER_EXPORT SwitchGroup&
@@ -1135,6 +1907,17 @@ SwitchGroup::resetShortPrefixes(const std::string &s1, const std::string &s2,
 }
 
 SAWYER_EXPORT SwitchGroup&
+SwitchGroup::shortPrefix(const std::string &s1) {
+    properties_.shortPrefixes.push_back(s1);
+    return *this;
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+SwitchGroup::shortPrefixes() const {
+    return properties_.shortPrefixes;
+}
+
+SAWYER_EXPORT SwitchGroup&
 SwitchGroup::resetValueSeparators(const std::string &s1, const std::string &s2,
                                   const std::string &s3, const std::string &s4) {
     properties_.inheritValueSeparators = false;
@@ -1148,6 +1931,27 @@ SwitchGroup::resetValueSeparators(const std::string &s1, const std::string &s2,
     if (0!=s1.compare(STR_NONE))
         properties_.valueSeparators.push_back(s4);
     return *this;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::valueSeparator(const std::string &s1) {
+    properties_.valueSeparators.push_back(s1);
+    return *this;
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+SwitchGroup::valueSeparators() const {
+    return properties_.valueSeparators;
+}
+
+SAWYER_EXPORT size_t
+SwitchGroup::nSwitches() const {
+    return switches_.size();
+}
+
+SAWYER_EXPORT const std::vector<Switch>&
+SwitchGroup::switches() const {
+    return switches_;
 }
 
 SAWYER_EXPORT SwitchGroup&
@@ -1244,9 +2048,35 @@ SwitchGroup::removeByKey(const std::string &s) {
     return *this;
 }
 
+SAWYER_EXPORT const SortOrder&
+SwitchGroup::switchOrder() const {
+    return switchOrder_;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::switchOrder(SortOrder order) {
+    switchOrder_ = order;
+    return *this;
+}
+
+SAWYER_EXPORT const ParsingProperties&
+SwitchGroup::properties() const {
+    return properties_;
+}
+
 /*******************************************************************************************************************************
  *                                      Parser results
  *******************************************************************************************************************************/
+
+SAWYER_EXPORT
+ParserResult::~ParserResult() {}
+
+SAWYER_EXPORT
+ParserResult::ParserResult() {}
+
+SAWYER_EXPORT
+ParserResult::ParserResult(const Parser &parser, const std::vector<std::string> &argv)
+    : parser_(parser), cursor_(argv) {}
 
 // Do not save the 'sw' pointer because we have no control over when the user will destroy the object.
 // This should be called for at most one switch occurrence at a time.
@@ -1351,6 +2181,21 @@ ParserResult::apply() const {
     return *this;
 }
 
+SAWYER_EXPORT size_t
+ParserResult::have(const std::string &switchKey) const {
+    return keyIndex_.getOrDefault(switchKey).size();
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+ParserResult::allArgs() const {
+    return cursor_.strings();
+}
+
+SAWYER_EXPORT const Parser&
+ParserResult::parser() const {
+    return parser_;
+}
+
 SAWYER_EXPORT const ParsedValue&
 ParserResult::parsed(const std::string &switchKey, size_t idx) const {
     return values_[keyIndex_[switchKey][idx]];
@@ -1421,9 +2266,67 @@ ParserResult::parsedArgs() const {
     return retval;
 }
 
+SAWYER_EXPORT Cursor&
+ParserResult::cursor() {
+    return cursor_;
+}
+
 /*******************************************************************************************************************************
  *                                      Parser
  *******************************************************************************************************************************/
+
+SAWYER_EXPORT
+Parser::~Parser() {}
+
+SAWYER_EXPORT
+Parser::Parser()
+    : groupNameSeparator_("-"), shortMayNestle_(true), skipNonSwitches_(false), skipUnknownSwitches_(false),
+      versionString_("alpha"), chapterNumber_(1), chapterName_("User Commands"), switchGroupOrder_(INSERTION_ORDER),
+      reportingAmbiguities_(true) {
+    init();
+}
+
+SAWYER_EXPORT Parser&
+Parser::with(const SwitchGroup &sg) {
+    switchGroups_.push_back(sg);
+    return *this;
+}
+
+SAWYER_EXPORT Parser&
+Parser::with(const SwitchGroup &sg, const std::string &docKey) {
+    switchGroups_.push_back(sg);
+    switchGroups_.back().docKey(docKey);
+    return *this;
+}
+
+SAWYER_EXPORT Parser&
+Parser::with(const std::vector<SwitchGroup> &sgs) {
+    switchGroups_.insert(switchGroups_.end(), sgs.begin(), sgs.end());
+    return *this;
+}
+
+SAWYER_EXPORT Parser&
+Parser::with(const Switch &sw) {
+    switchGroups_.push_back(SwitchGroup().insert(sw));
+    return *this;
+}
+
+SAWYER_EXPORT Parser&
+Parser::with(Switch sw, const std::string &docKey) {
+    sw.docKey(docKey);
+    switchGroups_.push_back(SwitchGroup().insert(sw));
+    return *this;
+}
+
+SAWYER_EXPORT const std::vector<SwitchGroup>&
+Parser::switchGroups() const {
+    return switchGroups_;
+}
+
+SAWYER_EXPORT std::vector<SwitchGroup>&
+Parser::switchGroups() {
+    return switchGroups_;
+}
 
 SAWYER_EXPORT void
 Parser::init() {
@@ -1474,6 +2377,39 @@ Parser::eraseSwitchGroup(const std::string &name) {
     return false;
 }
 
+SAWYER_EXPORT bool
+Parser::reportingAmbiguities() const {
+    return reportingAmbiguities_;
+}
+
+SAWYER_EXPORT Parser&
+Parser::reportingAmbiguities(bool b) {
+    reportingAmbiguities_ = b;
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+Parser::groupNameSeparator() const {
+    return groupNameSeparator_;
+}
+
+SAWYER_EXPORT Parser&
+Parser::groupNameSeparator(const std::string &s) {
+    groupNameSeparator_ = s;
+    return *this;
+}
+
+SAWYER_EXPORT ShowGroupName
+Parser::showingGroupNames() const {
+    return properties_.showGroupName;
+}
+
+SAWYER_EXPORT Parser&
+Parser::showingGroupNames(ShowGroupName x) {
+    properties_.showGroupName = x;
+    return *this;
+}
+
 SAWYER_EXPORT Parser&
 Parser::resetLongPrefixes(const std::string &s1, const std::string &s2, const std::string &s3, const std::string &s4) {
     properties_.inheritLongPrefixes = false;
@@ -1490,6 +2426,17 @@ Parser::resetLongPrefixes(const std::string &s1, const std::string &s2, const st
 }
 
 SAWYER_EXPORT Parser&
+Parser::longPrefix(const std::string &s1) {
+    properties_.longPrefixes.push_back(s1);
+    return *this;
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+Parser::longPrefixes() const {
+    return properties_.longPrefixes;
+}
+
+SAWYER_EXPORT Parser&
 Parser::resetShortPrefixes(const std::string &s1, const std::string &s2, const std::string &s3, const std::string &s4) {
     properties_.inheritShortPrefixes = false;
     properties_.shortPrefixes.clear();
@@ -1502,6 +2449,17 @@ Parser::resetShortPrefixes(const std::string &s1, const std::string &s2, const s
     if (0!=s1.compare(STR_NONE))
         properties_.shortPrefixes.push_back(s4);
     return *this;
+}
+
+SAWYER_EXPORT Parser&
+Parser::shortPrefix(const std::string &s1) {
+    properties_.shortPrefixes.push_back(s1);
+    return *this;
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+Parser::shortPrefixes() const {
+    return properties_.shortPrefixes;
 }
 
 SAWYER_EXPORT Parser&
@@ -1521,6 +2479,17 @@ Parser::resetValueSeparators(const std::string &s1, const std::string &s2,
 }
 
 SAWYER_EXPORT Parser&
+Parser::valueSeparator(const std::string &s1) {
+    properties_.valueSeparators.push_back(s1);
+    return *this;
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+Parser::valueSeparators() const {
+    return properties_.valueSeparators;
+}
+
+SAWYER_EXPORT Parser&
 Parser::resetTerminationSwitches(const std::string &s1, const std::string &s2,
                                  const std::string &s3, const std::string &s4) {
     terminationSwitches_.clear();
@@ -1536,6 +2505,28 @@ Parser::resetTerminationSwitches(const std::string &s1, const std::string &s2,
 }
 
 SAWYER_EXPORT Parser&
+Parser::terminationSwitch(const std::string &s1) {
+    terminationSwitches_.push_back(s1);
+    return *this;
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+Parser::terminationSwitches() const {
+    return terminationSwitches_;
+}
+
+SAWYER_EXPORT Parser&
+Parser::shortMayNestle(bool b) {
+    shortMayNestle_ = b;
+    return *this;
+}
+
+SAWYER_EXPORT bool
+Parser::shortMayNestle() const {
+    return shortMayNestle_;
+}
+
+SAWYER_EXPORT Parser&
 Parser::resetInclusionPrefixes(const std::string &s1, const std::string &s2,
                                const std::string &s3, const std::string &s4) {
     inclusionPrefixes_.clear();
@@ -1548,6 +2539,72 @@ Parser::resetInclusionPrefixes(const std::string &s1, const std::string &s2,
     if (0!=s1.compare(STR_NONE))
         inclusionPrefixes_.push_back(s4);
     return *this;
+}
+
+SAWYER_EXPORT Parser&
+Parser::inclusionPrefix(const std::string &s1) {
+    inclusionPrefixes_.push_back(s1);
+    return *this;
+}
+
+SAWYER_EXPORT const std::vector<std::string>&
+Parser::inclusionPrefixes() const {
+    return inclusionPrefixes_;
+}
+
+SAWYER_EXPORT Parser&
+Parser::skippingNonSwitches(bool b) {
+    skipNonSwitches_ = b;
+    return *this;
+}
+
+SAWYER_EXPORT bool
+Parser::skippingNonSwitches() const {
+    return skipNonSwitches_;
+}
+
+SAWYER_EXPORT Parser&
+Parser::skippingUnknownSwitches(bool b) {
+    skipUnknownSwitches_ = b;
+    return *this;
+}
+
+SAWYER_EXPORT bool
+Parser::skippingUnknownSwitches() const {
+    return skipUnknownSwitches_;
+}
+
+SAWYER_EXPORT Parser&
+Parser::errorStream(const Message::SProxy &stream) {
+    errorStream_ = stream;
+    return *this;
+}
+
+SAWYER_EXPORT const Message::SProxy&
+Parser::errorStream() const {
+    return errorStream_;
+}
+
+SAWYER_EXPORT Parser&
+Parser::exitMessage(const std::string &s) {
+    exitMessage_ = s;
+    return *this;
+}
+
+SAWYER_EXPORT std::string
+Parser::exitMessage() const {
+    return exitMessage_ ? *exitMessage_ : std::string();
+}
+
+SAWYER_EXPORT Parser&
+Parser::environmentVariable(const std::string &s) {
+    environmentVariable_ = s;
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+Parser::environmentVariable() const {
+    return environmentVariable_;
 }
 
 SAWYER_EXPORT ParserResult
@@ -2051,6 +3108,12 @@ Parser::expandIncludedFiles(const std::vector<std::string> &args) {
     return retval;
 }
 
+SAWYER_EXPORT Parser&
+Parser::programName(const std::string& programName) {
+    programName_ = programName;
+    return *this;
+}
+
 SAWYER_EXPORT const std::string&
 Parser::programName() const {
     if (programName_.empty()) {
@@ -2062,10 +3125,26 @@ Parser::programName() const {
 }
 
 SAWYER_EXPORT Parser&
+Parser::purpose(const std::string &purpose) {
+    purpose_ = purpose;
+    return *this;
+}
+
+SAWYER_EXPORT const std::string&
+Parser::purpose() const {
+    return purpose_;
+}
+
+SAWYER_EXPORT Parser&
 Parser::version(const std::string &versionString, const std::string &dateString) {
     versionString_ = versionString;
     dateString_ = dateString;
     return *this;
+}
+
+SAWYER_EXPORT Parser&
+Parser::version(const std::pair<std::string, std::string> &p) {
+    return version(p.first, p.second);
 }
 
 SAWYER_EXPORT std::pair<std::string, std::string>
@@ -2106,6 +3185,11 @@ Parser::chapter(int chapterNumber, const std::string &chapterName) {
     return *this;
 }
 
+SAWYER_EXPORT Parser&
+Parser::chapter(const std::pair<int, std::string> &p) {
+    return chapter(p.first, p.second);
+}
+
 SAWYER_EXPORT std::pair<int, std::string>
 Parser::chapter() const {
     return std::make_pair(chapterNumber_, chapterName_);
@@ -2116,6 +3200,11 @@ Parser::doc(const std::string &sectionName, const std::string &docKey, const std
     sectionOrder_.insert(docKey, sectionName);
     sectionDoc_.insert(boost::to_lower_copy(sectionName), text);
     return *this;
+}
+
+SAWYER_EXPORT Parser&
+Parser::doc(const std::string &sectionName, const std::string &text) {
+    return doc(sectionName, sectionName, text);
 }
 
 SAWYER_EXPORT Parser&
@@ -2646,6 +3735,17 @@ Parser::emitDocumentationToPager() const {
     return false;
 }
 
+SAWYER_EXPORT SortOrder
+Parser::switchGroupOrder() const {
+    return switchGroupOrder_;
+}
+
+SAWYER_EXPORT Parser&
+Parser::switchGroupOrder(SortOrder order) {
+    switchGroupOrder_ = order;
+    return *this;
+}
+
 SAWYER_EXPORT void
 Parser::insertLongSwitchStrings(Canonical canonical, NamedSwitches &retval) const {
     BOOST_FOREACH (const SwitchGroup &sg, switchGroups_) {
@@ -2839,6 +3939,11 @@ Parser::regroupArgs(const std::vector<std::string> &args, const Container::Inter
     }
 
     return retval;
+}
+
+SAWYER_EXPORT const ParsingProperties&
+Parser::properties() const {
+    return properties_;
 }
 
 

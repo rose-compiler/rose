@@ -217,28 +217,30 @@ struct SAWYER_EXPORT Location {
     size_t idx;                                                 /**< Index into some vector of program argument strings. */
     size_t offset;                                              /**< Character offset within a program argument string. */
 
+    ~Location();
+
     /** Constructs the location of the first character of the first string.  For empty command-lines, this is also the end
      *  location. */
-    Location(): idx(0), offset(0) {}
+    Location();
 
     /** Constructs a location that points to a particular character of a particular string. */
-    Location(size_t idx, size_t offset): idx(idx), offset(offset) {}
+    Location(size_t idx, size_t offset);
 
     /** Equality. Returns true only when this location is equal to @p other. Two locations are equal only when their @ref idx
      *  and @ref offset members are equal. */
-    bool operator==(const Location &other) const { return idx==other.idx && offset==other.offset; }
+    bool operator==(const Location &other) const;
 
     /** Inequality. Returns true only when this location is not equal to @p other.  Two locations are not equal if either
      *  their @ref idx or @ref offset members are not equal. */
-    bool operator!=(const Location &other) const { return !(*this==other); }
+    bool operator!=(const Location &other) const;
 
     /** Less than.  Returns true only when this location is less than @p other.  If both locations are referring to the same
      * command-line, then this method returns true if this location points to an earlier character than @p other. */
-    bool operator<(const Location &other) const { return idx<other.idx || (idx==other.idx && offset<other.offset); }
+    bool operator<(const Location &other) const;
 
     /** Less than or equal.  Returns true only when this location is less than or equal to @p other as determined by the
      *  <code><</code> or <code>==</code> operators. */
-    bool operator<=(const Location &other) const { return *this<other || *this==other; }
+    bool operator<=(const Location &other) const;
 };
 
 /** Print a location. Prints a location as the dotted pair <em>idx</em>.<em>offset</em>. */
@@ -258,19 +260,21 @@ class SAWYER_EXPORT Cursor {
     Location loc_;
 #include <Sawyer/WarningsRestore.h>
 public:
+    ~Cursor();
+
     /** Construct a cursor from an ordered set of strings.  The cursor's initial position is the first character of the first
      *  string, or the end if the set contains no strings or contains only empty strings. */
-    Cursor(const std::vector<std::string> &strings): strings_(strings) { location(Location()); }
+    explicit Cursor(const std::vector<std::string> &strings);
 
     /** Constructs a cursor for a single string.  The cursor's initial position is the first character of the string, or the
      *  end if the string is empty. */
-    Cursor(const std::string &string): strings_(1, string) { location(Location()); }
+    Cursor(const std::string &string);
 
     /** Constructs a not-very-useful cursor to nothing. */
-    Cursor() {}
+    Cursor();
 
     /** All strings for the cursor. */
-    const std::vector<std::string>& strings() const { return strings_; }
+    const std::vector<std::string>& strings() const;
 
     /** Property: current position of the cursor.
      *
@@ -289,31 +293,31 @@ public:
      *  number of strings in the cursor, and its @c offset member is less than or equal to the length of that string (or zero
      *  when @c idx is equal to the number of strings).
      * @{ */
-    const Location& location() const { return loc_; }
+    const Location& location() const;
     Cursor& location(const Location &loc);
     /** @} */
 
     /** True when the cursor is at the beginning of an argument. Returns true if the cursor points to an argument and is at the
      * beginning of that argument. Returns false otherwise, including when @ref atEnd returns true. */
-    bool atArgBegin() const { return loc_.idx<strings_.size() && 0==loc_.offset; }
+    bool atArgBegin() const;
 
     /** True when the cursor is at the end of an argument.  Returns true if the cursor points to an argument and is positioned
      *  past the end of that string.  Returns false otherwise, including when @ref atEnd returns true. */
-    bool atArgEnd() const { return loc_.idx<strings_.size() && loc_.offset>=strings_[loc_.idx].size(); }
+    bool atArgEnd() const;
 
     /** Returns true when the cursor is after all arguments. When the cursor is after all arguments, then @ref atArgBegin and
      *  @ref atArgEnd both return false. A @p locaton can be specified to override the location that's inherent to this cursor
      *  without changing this cursor.
      * @{ */
-    bool atEnd() const { return atEnd(loc_); }
-    bool atEnd(const Location &location) const { return location.idx >= strings_.size(); }
+    bool atEnd() const;
+    bool atEnd(const Location &location) const;
     /** @} */
 
     /** Return the entire current program argument regardless of where the cursor is in that argument.  A @p location can be
      *  specified to override the location that's inherent to this cursor without changing this cursor.  It is an error to call
      *  this when @ref atEnd returns true.
      * @{ */
-    const std::string& arg() const { return arg(loc_); }
+    const std::string& arg() const;
     const std::string& arg(const Location &location) const;
     /** @} */
 
@@ -321,7 +325,7 @@ public:
      *  argument then an empty string is returned.  A @p location can be specified to override the location that's inherent to
      *  this cursor without changing this cursor.  Returns an empty string if called when @ref atEnd returns true.
      * @{ */
-    std::string rest() const { return rest(loc_); }
+    std::string rest() const;
     std::string rest(const Location &location) const;
     /** @} */
 
@@ -330,7 +334,7 @@ public:
      *  specified locations rather than this cursor's current location.  The @p separator string is inserted between text that
      *  comes from two different strings. @sa linearDistance
      * @{ */
-    std::string substr(const Location &limit, const std::string &separator=" ") const { return substr(loc_, limit, separator); }
+    std::string substr(const Location &limit, const std::string &separator=" ") const;
     std::string substr(const Location &limit1, const Location &limit2, const std::string &separator=" ") const;
     /** @} */
 
@@ -347,11 +351,8 @@ public:
      * will be positioned to the end and @ref atEnd will return true.  It is permissible to call this method when @ref atEnd
      * already returns true, in which case nothing happens.
      * @{ */
-    void consumeArgs(size_t nargs) {
-        loc_.idx = std::min(strings_.size(), loc_.idx+nargs);
-        loc_.offset = 0;
-    }
-    void consumeArg() { consumeArgs(1); }
+    void consumeArgs(size_t nargs);
+    void consumeArg();
     /** @} */
 
     /** Number of characters from the beginning of the cursor to its current location.  This is the same as calling
@@ -371,16 +372,16 @@ class ExcursionGuard {
 public:
     /** Construct a guard for a cursor.  The guard remembers the cursor's location and restores the location if the
      *  guard is destroyed before its @ref cancel method is called. */
-    ExcursionGuard(Cursor &cursor): cursor_(cursor), loc_(cursor.location()), canceled_(false) {} // implicit
-    ~ExcursionGuard() { if (!canceled_) cursor_.location(loc_); }
+    ExcursionGuard(Cursor&); // implicit
+    ~ExcursionGuard();
 
     /** Cancel the excursion guard.  The associated cursor will not be reset to its initial location when this guard is
      *  destroyed. */
-    void cancel() { canceled_ = true; }
+    void cancel();
 
     /** Starting location.  This is the location to which the cursor is restored when the guard is destroyed, unless @ref
      *  cancel has been called. */
-    const Location &startingLocation() const { return loc_; }
+    const Location& startingLocation() const;
 };
 
 
@@ -390,11 +391,13 @@ public:
 
 // used internally
 class SAWYER_EXPORT ValueSaver: public SharedObject {
+public:
+    virtual ~ValueSaver();
 protected:
-    ValueSaver() {}
+    ValueSaver();
 public:
     typedef SharedPointer<ValueSaver> Ptr;
-    virtual ~ValueSaver() {}
+public:
     virtual void save(const boost::any&, const std::string &switchKey) = 0;
 };
 
@@ -516,8 +519,10 @@ class SAWYER_EXPORT ParsedValue {
 #include <Sawyer/WarningsRestore.h>
 
 public:
+    ~ParsedValue();
+
     /** Construct a new empty value.  The @ref isEmpty method will return true for values that are default constructed. */
-    ParsedValue(): keySequence_(0), switchSequence_(0) {}
+    ParsedValue();
 
     /** Construct a new value. The type of the value is erased via <code>boost::any</code> so that templates do not need to be
      *  used at the API level.  It is the responsibility of the user to remember the type of the value, although restoration of
@@ -528,24 +533,15 @@ public:
      *
      *  The arguments specified here are the values returned by @ref value, @ref valueLocation, @ref string, and @ref
      *  valueSaver. */
-    ParsedValue(const boost::any value, const Location &loc, const std::string &str, const ValueSaver::Ptr &saver)
-        : value_(value), valueLocation_(loc), valueString_(str), keySequence_(0), switchSequence_(0), valueSaver_(saver) {}
+    ParsedValue(const boost::any value, const Location &loc, const std::string &str, const ValueSaver::Ptr &saver);
 
     /** Update switch information.  This updates information about the switch that parsed the value. The arguments specified
      *  here will be the values returned by  @ref switchKey, @ref switchLocation, and @ref switchString. */
-    ParsedValue& switchInfo(const std::string &key, const Location &loc, const std::string &str) {
-        switchKey_ = key;
-        switchLocation_ = loc;
-        switchString_ = str;
-        return *this;
-    }
+    ParsedValue& switchInfo(const std::string &key, const Location &loc, const std::string &str);
 
 private:
     friend class ParserResult;
-    void sequenceInfo(size_t keySequence, size_t switchSequence) {
-        keySequence_ = keySequence;
-        switchSequence_ = switchSequence;
-    }
+    void sequenceInfo(size_t keySequence, size_t switchSequence);
 
 public:
     /** Property: the parsed value.
@@ -553,19 +549,19 @@ public:
      *  parsed value including void.  This is the most basic access to the value; the class also provides a variety of casting
      *  accessors that are sometimes more convenient (their names start with the word "as").
      * @{ */
-    const boost::any& value() const { return value_; }
-    void value(const boost::any &v) { value_ = v; }
+     const boost::any& value() const;
+     void value(const boost::any &v);
     /** @} */
 
     /** Property: command-line location from whence this value came.
      *  For values that are defaults which didn't come from the command-line, the constant @ref NOWHERE is returned.
      * @{ */
-    Location valueLocation() const { return valueLocation_; }
-    ParsedValue& valueLocation(const Location &loc) { valueLocation_ = loc; return *this; }
+    Location valueLocation() const;
+    ParsedValue& valueLocation(const Location &loc);
     /** @} */
 
     /** String representation.  This is the string that was parsed to create the value. */
-    const std::string &string() const { return valueString_; }
+    const std::string& string() const;
 
     /** Convenience cast.  This returns the value cast to the specified type.  Whereas <code>boost::any_cast</code> requires an
      *  exact type match for the cast to be successful, this method makes more of an effort to be successful.  It recognizes a
@@ -590,8 +586,8 @@ public:
 
     /** Property: switch key. The key used by the switch that created this value.
      * @{ */
-    ParsedValue& switchKey(const std::string &s) { switchKey_ = s; return *this; }
-    const std::string& switchKey() const { return switchKey_; }
+    ParsedValue& switchKey(const std::string &s);
+    const std::string& switchKey() const;
     /** @} */
 
     /** The string for the switch that caused this value to be parsed.  This string includes the switch prefix and the switch
@@ -601,31 +597,31 @@ public:
      *  For nestled short switches, the string returned by this method doesn't necessarily appear anywhere on the program
      *  command line.  For instance, this method might return "-b" when the command line was "-ab", because "-a" is a different
      *  switch with presumably a different set of parsed values. */
-    const std::string& switchString() const { return switchString_; }
+    const std::string& switchString() const;
 
     /** The command-line location of the switch to which this value belongs.  The return value indicates the start of the
      *  switch name after any leading prefix.  For nestled single-character switches, the location's command line argument
      *  index will be truthful, but the character offset will refer to the string returned by @ref switchString. */
-    Location switchLocation() const { return switchLocation_; }
+    Location switchLocation() const;
 
     /** How this value relates to others with the same key.  This method returns the sequence number for this value among all
      *  values created for the same switch key. */
-    size_t keySequence() const { return keySequence_; }
+    size_t keySequence() const;
 
     /** How this value relates to others created by the same switch.  This method returns the sequence number for this value
      *  among all values created for switches with the same Switch::preferredName. */
-    size_t switchSequence() const { return switchSequence_; }
+    size_t switchSequence() const;
 
     /** How to save a value at a user-supplied location.  These functors are used internally by the library and users don't
      * usually see them. */
-    const ValueSaver::Ptr valueSaver() const { return valueSaver_; }
+    const ValueSaver::Ptr valueSaver() const;
 
     /** Save this value in switch-supplied storage. This calls the functor returned by @ref valueSaver in order to save this
      *  parsed value to a user-specified variable in a type-specific manner. */
     void save() const;
 
     /** True if the value is void. Returns true if this object has no value. */
-    bool isEmpty() const { return value_.empty(); }
+    bool isEmpty() const;
 
     /** Print some debugging information. */
     void print(std::ostream&) const;
@@ -700,17 +696,18 @@ class SAWYER_EXPORT ValueParser: public SharedObject, public SharedFromThis<Valu
 #include <Sawyer/WarningsOff.h>
     ValueSaver::Ptr valueSaver_;
 #include <Sawyer/WarningsRestore.h>
+public:
+    virtual ~ValueParser();
+
 protected:
     /** Constructor for derived classes. Non-subclass users should use @c instance or factories instead. */
-    ValueParser() {}
+    ValueParser();
 
     /** Constructor for derived classes. Non-subclass users should use @c instance or factories instead. */
-    explicit ValueParser(const ValueSaver::Ptr &valueSaver): valueSaver_(valueSaver) {}
+    explicit ValueParser(const ValueSaver::Ptr &valueSaver);
 public:
     /** Reference counting pointer for this class. */
     typedef SharedPointer<ValueParser> Ptr;
-
-    virtual ~ValueParser() {}
 
     /** Parse the entire string and return a value.  The matching of the parser against the input is performed by calling
      *  @ref match, which may throw an exception if the input is matched but cannot be converted to a value (e.g., integer
@@ -737,8 +734,8 @@ public:
      *  is saved until apply is called--this allows command-lines to be parsed for their error side effects without actually
      *  changing any program state.
      * @{ */
-    Ptr valueSaver(const ValueSaver::Ptr &f) { valueSaver_ = f; return sharedFromThis(); }
-    const ValueSaver::Ptr valueSaver() const { return valueSaver_; }
+    Ptr valueSaver(const ValueSaver::Ptr &f);
+    const ValueSaver::Ptr valueSaver() const;
     /** @} */
 
 private:
@@ -1230,12 +1227,15 @@ class SAWYER_EXPORT StringSetParser: public ValueParser {
 #include <Sawyer/WarningsOff.h>
     std::vector<std::string> strings_;
 #include <Sawyer/WarningsRestore.h>
+public:
+    ~StringSetParser();
+
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
-    StringSetParser() {}
+    StringSetParser();
 
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
-    StringSetParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
+    StringSetParser(const ValueSaver::Ptr&);
 public:
     /** Reference counting pointer for this class. */
     typedef SharedPointer<StringSetParser> Ptr;
@@ -1243,17 +1243,17 @@ public:
     /** Allocating constructor. Returns a pointer to a new StringSetParser object.  Uses will most likely want to use
      *  the @ref stringSetParser factory instead, which requires less typing.
      * @sa sawyer_parser_factories */
-    static Ptr instance() { return Ptr(new StringSetParser); }
+    static Ptr instance();
 
     /** Allocating constructor. Returns a pointer to a new StringSetParser object.  Uses will most likely want to use
      *  the @ref stringSetParser factory instead, which takes the same arguments, but requires less typing.
      * @sa sawyer_parser_factories */
-    static Ptr instance(const ValueSaver::Ptr &valueSaver) { return Ptr(new StringSetParser(valueSaver)); }
+    static Ptr instance(const ValueSaver::Ptr&);
 
     /** Adds string members.  Inserts an additional string to be recognized in the input.
      *  @{ */
-    Ptr with(const std::string &s) { return with(&s, &s+1); }
-    Ptr with(const std::vector<std::string> sv) { return with(sv.begin(), sv.end()); }
+    Ptr with(const std::string&);
+    Ptr with(const std::vector<std::string>);
     template<class InputIterator>
     Ptr with(InputIterator begin, InputIterator end) {
         strings_.insert(strings_.end(), begin, end);
@@ -1322,12 +1322,13 @@ class SAWYER_EXPORT ListParser: public ValueParser {
     std::vector<ParserSep> elements_;
     size_t minLength_, maxLength_;                      // limits on the number of values permitted
 #include <Sawyer/WarningsRestore.h>
+public:
+    ~ListParser();
+    ListParser() = delete;
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
-    ListParser(const ValueParser::Ptr &firstElmtType, const std::string &separatorRe)
-        : minLength_(1), maxLength_((size_t)-1) {
-        elements_.push_back(ParserSep(firstElmtType, separatorRe));
-    }
+    ListParser(const ValueParser::Ptr &firstElmtType, const std::string &separatorRe);
+
 public:
     /** Reference counting pointer for this class. */
     typedef SharedPointer<ListParser> Ptr;
@@ -1342,9 +1343,7 @@ public:
      *  subsequent values. The default separator is a comma, semicolon, or colon followed by zero or more white space
      *  characters. Users will most likely want to use the @ref listParser factory instead, which takes the same arguments
      *  but requires less typing. */
-    static Ptr instance(const ValueParser::Ptr &firstElmtType, const std::string &separatorRe="[,;:]\\s*") {
-        return Ptr(new ListParser(firstElmtType, separatorRe));
-    }
+    static Ptr instance(const ValueParser::Ptr &firstElmtType, const std::string &separatorRe="[,;:]\\s*");
 
     /** Specifies element type and separator.
      *
@@ -1352,10 +1351,7 @@ public:
      *  members unless a subsequent type and separator are supplied.  I.e., the final element type and separator are repeated
      *  as necessary when parsing. The default separator is a comma, semicolon, or colon followed by zero ore more white space
      *  characters. */
-    Ptr nextMember(const ValueParser::Ptr &elmtType, const std::string &separatorRe="[,;:]\\s*") {
-        elements_.push_back(ParserSep(elmtType, separatorRe));
-        return sharedFromThis().dynamicCast<ListParser>();
-    }
+    Ptr nextMember(const ValueParser::Ptr &elmtType, const std::string &separatorRe="[,;:]\\s*");
 
     /** Specify limits for the number of values parsed.
      *
@@ -1364,8 +1360,8 @@ public:
      *  the lower and upper bound to the same value.
      * @{ */
     Ptr limit(size_t minLength, size_t maxLength);
-    Ptr limit(size_t maxLength) { return limit(std::min(minLength_, maxLength), maxLength); }
-    Ptr exactly(size_t length) { return limit(length, length); }
+    Ptr limit(size_t maxLength);
+    Ptr exactly(size_t length);
     /** @} */
 private:
     virtual ParsedValue operator()(Cursor&) /*override*/;
@@ -1539,54 +1535,44 @@ class SAWYER_EXPORT SwitchArgument {
     ParsedValue defaultValue_;                          // default value if the argument is optional
 #include <Sawyer/WarningsRestore.h>
 public:
+    ~SwitchArgument();
+
     /** Construct a new required argument. The @p name is used in documentation and error messages and need not be
      *  unique. */
-    explicit SwitchArgument(const std::string &name, const ValueParser::Ptr &parser = anyParser())
-        : name_(name), parser_(parser) {}
+    explicit SwitchArgument(const std::string &name, const ValueParser::Ptr &parser = anyParser());
 
     /** Construct a new switch optional argument.  The @p name is used in documentation and error messages and need not be
      *  unique. The @p defaultValueString is immediately parsed via supplied parser and stored; an
      *  <code>std::runtime_error</code> exception is thrown if it cannot be parsed. */
-    SwitchArgument(const std::string &name, const ValueParser::Ptr &parser, const std::string &defaultValueString)
-        : name_(name), parser_(parser), defaultValue_(parser->matchString(defaultValueString)) {
-        defaultValue_.valueLocation(NOWHERE);
-    }
+    SwitchArgument(const std::string &name, const ValueParser::Ptr &parser, const std::string &defaultValueString);
 
     /** Returns true if this argument is required. An argument is a required argument if it has no default value. */
-    bool isRequired() const {
-        return defaultValue_.isEmpty();
-    }
+    bool isRequired() const;
 
     /** Returns true if this argument is not required.  Any argument that is not a required argument will have a default value
      *  that is returned in its place when parsing the switch. */
-    bool isOptional() const {
-        return !isRequired();
-    }
+    bool isOptional() const;
 
     /** Argument name. The name is used for documentation and error messages.  It need not look like a variable. For instance,
      *  it could be "on|off|auto" to indicate that three values are possible, or "\@v{int}|wide" to indicate that the value can
      *  be any integer or the string "wide".  The string may contain markup, which is removed when used in error messages. As a
      *  convenience, if the string begins with a lower-case letter and contains only lower-case letters, hyphens, and
      *  underscores then it will be treated as a variable.  That is, the string "foo" is shorthand for "\@v{foo}". */
-    const std::string &name() const { return name_; }
+    const std::string& name() const;
 
     /** Returns the name without markup. @sa name */
     std::string nameAsText() const;
 
     /** The parsed default value. The ParsedValue::isEmpty() will return true if this argument is required. */
-    const ParsedValue& defaultValue() const {
-        return defaultValue_;
-    }
+    const ParsedValue& defaultValue() const;
 
     /** The default value string.  This is the string that was parsed to create the default value.  Returns an empty string if
      *  the argument is required, but since such values are also valid default values one should call isRequired() or
      *  isOptional() to make that determination. */
-    const std::string& defaultValueString() const {
-        return defaultValue_.string();
-    }
+    const std::string& defaultValueString() const;
 
     /** Returns a pointer to the parser.  Parsers are reference counted and should not be explicitly destroyed. */
-    const ValueParser::Ptr& parser() const { return parser_; }
+    const ValueParser::Ptr& parser() const;
 };
 
 
@@ -1613,10 +1599,11 @@ class SAWYER_EXPORT SwitchAction: public SharedObject {
 public:
     /** Reference counting pointer for this class. */
     typedef SharedPointer<SwitchAction> Ptr;
-    virtual ~SwitchAction() {}
+    virtual ~SwitchAction();
+    SwitchAction();
 
     /** Runs the action.  Calling this method will cause the function operator to be invoked with the parser results. */
-    void run(const ParserResult &parserResult) /*final*/ { (*this)(parserResult); }
+    void run(const ParserResult &parserResult);         // final
 protected:
     virtual void operator()(const ParserResult&) = 0;
 };
@@ -1628,9 +1615,12 @@ class SAWYER_EXPORT ShowVersion: public SwitchAction {
 #include <Sawyer/WarningsOff.h>
     std::string versionString_;
 #include <Sawyer/WarningsRestore.h>
+public:
+    ~ShowVersion();
+    ShowVersion() = delete;
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
-    explicit ShowVersion(const std::string &versionString): versionString_(versionString) {}
+    explicit ShowVersion(const std::string &versionString);
 public:
     /** Reference counting pointer for this class. */
     typedef SharedPointer<ShowVersion> Ptr;
@@ -1639,7 +1629,7 @@ public:
      *  showVersion factory instead, which requires less typing.
      *
      * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
-    static Ptr instance(const std::string &versionString) { return Ptr(new ShowVersion(versionString)); }
+    static Ptr instance(const std::string &versionString);
 protected:
     virtual void operator()(const ParserResult&) /*overload*/;
 };
@@ -1648,10 +1638,12 @@ protected:
  *  with the specified status. */
 class SAWYER_EXPORT ShowVersionAndExit: public ShowVersion {
     int exitStatus_;
+public:
+    ~ShowVersionAndExit();
+    ShowVersionAndExit() = delete;
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
-    explicit ShowVersionAndExit(const std::string &versionString, int exitStatus)
-        : ShowVersion(versionString), exitStatus_(exitStatus) {}
+    explicit ShowVersionAndExit(const std::string &versionString, int exitStatus);
 public:
     /** Reference counting pointer for this class. */
     typedef SharedPointer<ShowVersionAndExit> Ptr;
@@ -1660,9 +1652,7 @@ public:
      *  @ref showVersionAndExit factory instead, which requires less typing.
      *
      * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
-    static Ptr instance(const std::string &versionString, int exitStatus) {
-        return Ptr(new ShowVersionAndExit(versionString, exitStatus));
-    }
+    static Ptr instance(const std::string &versionString, int exitStatus);
 protected:
     virtual void operator()(const ParserResult&) /*overload*/;
 };
@@ -1672,9 +1662,11 @@ protected:
  *  happen if standard input is not the terminal, since the pager will probably be expecting to read commands from standard
  *  input. */
 class SAWYER_EXPORT ShowHelp: public SwitchAction {
+public:
+    ~ShowHelp();
 protected:
     /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
-    ShowHelp() {}
+    ShowHelp();
 public:
     /** Reference counting pointer for this class. */
     typedef SharedPointer<ShowHelp> Ptr;
@@ -1683,7 +1675,7 @@ public:
      *  showHelp factory instead, which requires less typing.
      *
      * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
-    static Ptr instance() { return Ptr(new ShowHelp); }
+    static Ptr instance();
 protected:
     virtual void operator()(const ParserResult&) /*override*/;
 };
@@ -1692,9 +1684,12 @@ protected:
  *  value. */
 class SAWYER_EXPORT ShowHelpAndExit: public ShowHelp {
     int exitStatus_;
+public:
+    ~ShowHelpAndExit();
+    ShowHelpAndExit() = delete;
 protected:
     /** Constructor for derived classes.  Non-subclass users should use @ref instance instead. */
-    ShowHelpAndExit(int exitStatus): exitStatus_(exitStatus) {}
+    explicit ShowHelpAndExit(int exitStatus);
 public:
     /** Reference counting pointer for this class. */
     typedef SharedPointer<ShowHelpAndExit> Ptr;
@@ -1703,7 +1698,7 @@ public:
      * @ref showHelpAndExit factory instead, which requires less typing.
      *
      * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
-    static Ptr instance(int exitStatus) { return Ptr(new ShowHelpAndExit(exitStatus)); }
+    static Ptr instance(int exitStatus);
 protected:
     virtual void operator()(const ParserResult&) /*override*/;
 };
@@ -1729,10 +1724,12 @@ class SAWYER_EXPORT ConfigureDiagnostics: public SwitchAction {
     Message::Facilities &facilities_;
     bool exitOnHelp_;
 #include <Sawyer/WarningsRestore.h>
+public:
+    ~ConfigureDiagnostics();
+    ConfigureDiagnostics() = delete;
 protected:
     /** Constructor for derived classes.  Non-subclass users should use @ref instance instead. */
-    ConfigureDiagnostics(const std::string &switchKey, Message::Facilities &facilities, bool exitOnHelp)
-        : switchKey_(switchKey), facilities_(facilities), exitOnHelp_(exitOnHelp) {}
+    ConfigureDiagnostics(const std::string &switchKey, Message::Facilities &facilities, bool exitOnHelp);
 public:
     /** Reference counting pointer for this class. */
     typedef SharedPointer<ConfigureDiagnostics> Ptr;
@@ -1741,17 +1738,15 @@ public:
      * the @ref configureDiagnostics factory instead, which requires less typing.
      *
      * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
-    static Ptr instance(const std::string &switchKey, Message::Facilities &facilities, bool exitOnHelp=true) {
-        return Ptr(new ConfigureDiagnostics(switchKey, facilities, exitOnHelp));
-    }
+    static Ptr instance(const std::string &switchKey, Message::Facilities &facilities, bool exitOnHelp = true);
 
     /** Property: program exit after help is displayed.
      *
      *  If true, then the program exits with success immediately after a "help" command is processed.
      *
      *  @{ */
-    bool exitOnHelp() const { return exitOnHelp_; }
-    void exitOnHelp(bool b) { exitOnHelp_=b; }
+    bool exitOnHelp() const;
+    void exitOnHelp(bool);
     /** @} */
 protected:
     virtual void operator()(const ParserResult&) /*override*/;
@@ -1768,10 +1763,11 @@ class SAWYER_EXPORT ConfigureDiagnosticsQuiet: public SwitchAction {
 #include <Sawyer/WarningsOff.h>
     Message::Facilities &facilities_;
 #include <Sawyer/WarningsRestore.h>
+public:
+    ~ConfigureDiagnosticsQuiet();
+    ConfigureDiagnosticsQuiet() = delete;
 protected:
-    ConfigureDiagnosticsQuiet(Message::Facilities &facilities)
-        : facilities_(facilities) {
-    }
+    ConfigureDiagnosticsQuiet(Message::Facilities &facilities);
 
 public:
     /** Reference counting pointer for this class. */
@@ -1781,9 +1777,7 @@ public:
      * the @ref configureDiagnosticsQuiet factory instead, which requires less typing.
      *
      * @sa @ref sawyer_action_factories, and the @ref SwitchAction class. */
-    static Ptr instance(Message::Facilities &facilities) {
-        return Ptr(new ConfigureDiagnosticsQuiet(facilities));
-    }
+    static Ptr instance(Message::Facilities &facilities);
 
 protected:
     virtual void operator()(const ParserResult&) /*override*/;
@@ -1897,7 +1891,7 @@ class SAWYER_EXPORT ValueAugmenter: public SharedObject {
 public:
     /** Reference counting pointer for this class. */
     typedef SharedPointer<ValueAugmenter> Ptr;
-    virtual ~ValueAugmenter() {}
+    virtual ~ValueAugmenter();
 
     /** Called when a switch's value is about to be stored into the ParserResult.  The previously stored switch values for all
      * switch occurrences that used this same key are provided in the first arugment.  The recently parsed value (or values if
@@ -2000,9 +1994,8 @@ struct SAWYER_EXPORT ParsingProperties {
     bool inheritValueSeparators;
     ShowGroupName showGroupName;                        // How to show group name in switch synopsis
 #include <Sawyer/WarningsRestore.h>
-    ParsingProperties()
-        : inheritLongPrefixes(true), inheritShortPrefixes(true), inheritValueSeparators(true),
-          showGroupName(SHOW_GROUP_INHERIT) {}
+    ~ParsingProperties();
+    ParsingProperties();
     ParsingProperties inherit(const ParsingProperties &base) const;
 };
 
@@ -2059,6 +2052,9 @@ private:
 #include <Sawyer/WarningsRestore.h>
 
 public:
+    ~Switch();
+    Switch() = delete;
+
     /** Constructs a switch declaration.  Every switch must have either a long or short name (or both), neither of which should
      *  include prefix characters such as hyphens. The best practice is to provide a long name for every switch and short names
      *  only for the most commonly used switches.
@@ -2071,11 +2067,7 @@ public:
      *  Names of switches need not be unique.  If more than one switch is able to parse a command-line argument then the first
      *  declaration wins.  This feature is sometimes used to declare two switches having identical names but different
      *  arguments or argument types. */
-    explicit Switch(const std::string &longName, char shortName='\0')
-        : hidden_(false), whichValue_(SAVE_LAST), intrinsicValue_(ParsedValue(true, NOWHERE, "true", ValueSaver::Ptr())),
-          explosiveLists_(false), skipping_(SKIP_NEVER) {
-        init(longName, shortName);
-    }
+    explicit Switch(const std::string &longName, char shortName='\0');
 
     // FIXME[Robb Matzke 2014-03-03]: test that "--prefix=5" works when names are "pre" and "prefix" in that order
     /** Property: switch long name.  Long names normally consist of multiple letters and use prefixes that are different than
@@ -2083,8 +2075,8 @@ public:
      *  special character (like "=") or by appearing in the next program argument.
      * @{ */
     Switch& longName(const std::string &name);
-    const std::string& longName() const { return longNames_.front(); }
-    const std::vector<std::string>& longNames() const { return longNames_; }
+    const std::string& longName() const;
+    const std::vector<std::string>& longNames() const;
     /** @} */
 
     /** Property: switch short name. Short names are single letters and use a different set of prefixes than long names (which
@@ -2092,13 +2084,13 @@ public:
      *  adjacent to the switch, like <code>-n5</code>, but long-name switches usually separate the switch from the value with a
      *  special string, like <code>-\-number=5</code>.
      * @{ */
-    Switch& shortName(char c) { if (c) shortNames_ += std::string(1, c); return *this; }
-    const std::string& shortNames() const { return shortNames_; }
+    Switch& shortName(char c);
+    const std::string& shortNames() const;
     /** @} */
 
     /** Name by which switch prefers to be known.  This is the first long name, or the first short name if there are no
      *  long names. */
-    std::string preferredName() const { return longNames_.empty() ? std::string(1, shortNames_[0]) : longNames_[0]; }
+    std::string preferredName() const;
 
     /** Property: value storage key.  When a switch value is parsed (or an intrinsic or default value is used) to create a
      *  ParsedValue object, the object will be associated with the switch key.  This allows different switches to write to the
@@ -2108,8 +2100,8 @@ public:
      *  messages (it looks like a switch occurrence string yet might be completely unrelated to what appeared on the command
      *  line).
      * @{ */
-    Switch& key(const std::string &s) { key_ = s; return *this; }
-    const std::string &key() const { return key_; }
+    Switch& key(const std::string &s);
+    const std::string& key() const;
     /** @} */
 
     /** Property: abstract summary of the switch syntax.  The synopsis is normally generated automatically from other
@@ -2143,7 +2135,7 @@ public:
      * @sa @ref doc
      *
      * @{ */
-    Switch& synopsis(const std::string &s) { synopsis_ = s; return *this; }
+    Switch& synopsis(const std::string &s);
     std::string synopsis() const;
     /** @} */
 
@@ -2182,24 +2174,24 @@ public:
      *  Even switches with no documentation will show up in the generated documentation--they will be marked as "Not
      *  documented".  To suppress them entirely, set their @ref hidden property to true.
      * @{ */
-    Switch& doc(const std::string &s) { documentation_ = s; return *this; }
-    const std::string& doc() const { return documentation_; }
+    Switch& doc(const std::string &s);
+    const std::string& doc() const;
     /** @} */
 
     /** Property: key to control order of documentation.  Normally, documentation for a group of switches is sorted according
      *  to the switche's @ref preferredName.  Specifying a docKey string causes that string to be used instead of the switch
      *  names.  The key string itself never appears in any documentation.
      *  @{ */
-    Switch& docKey(const std::string &s) { documentationKey_ = s; return *this; }
-    const std::string &docKey() const { return documentationKey_; }
+    Switch& docKey(const std::string &s);
+    const std::string& docKey() const;
     /** @} */
 
     /** Property: whether this switch appears in documentation. A hidden switch still participates when parsing command lines,
      *  but will not show up in documentation.  This is ofen used for a switch when that switch is documented as part of some
      *  other switch.
      * @{ */
-    Switch& hidden(bool b) { hidden_ = b; return *this; }
-    bool hidden() const { return hidden_; }
+    Switch& hidden(bool b);
+    bool hidden() const;
     /** @} */
 
     /** Property: whether to skip over this switch.
@@ -2213,8 +2205,8 @@ public:
      *  argument are @ref SKIP_WEAK or @ref SKIP_STRONG.
      *
      * @{ */
-    Switch& skipping(SwitchSkipping how) { skipping_ = how; return *this; }
-    SwitchSkipping skipping() const { return skipping_; }
+    Switch& skipping(SwitchSkipping how);
+    SwitchSkipping skipping() const;
     /** @} */
 
     /** Property: prefixes for long names.  A long name prefix is the characters that introduce a long switch, usually "-\-"
@@ -2230,8 +2222,8 @@ public:
      * @{ */
     Switch& resetLongPrefixes(const std::string &s1=STR_NONE, const std::string &s2=STR_NONE,
                               const std::string &s3=STR_NONE, const std::string &s4=STR_NONE);
-    Switch& longPrefix(const std::string &s1) { properties_.longPrefixes.push_back(s1); return *this; }
-    const std::vector<std::string>& longPrefixes() const { return properties_.longPrefixes; }
+    Switch& longPrefix(const std::string &s1);
+    const std::vector<std::string>& longPrefixes() const;
     /** @} */
 
     /** Property: prefixes for short names.  A short name prefix is the characters that introduce a short switch, usually
@@ -2247,8 +2239,8 @@ public:
      * @{ */
     Switch& resetShortPrefixes(const std::string &s1=STR_NONE, const std::string &s2=STR_NONE,
                                const std::string &s3=STR_NONE, const std::string &s4=STR_NONE);
-    Switch& shortPrefix(const std::string &s1) { properties_.shortPrefixes.push_back(s1); return *this; }
-    const std::vector<std::string>& shortPrefixes() const { return properties_.shortPrefixes; }
+    Switch& shortPrefix(const std::string &s1);
+    const std::vector<std::string>& shortPrefixes() const;
     /** @} */
 
     /** Property: strings that separate a long switch from its value. A value separator is the string that separates a long
@@ -2269,8 +2261,8 @@ public:
      * @{ */
     Switch& resetValueSeparators(const std::string &s1=STR_NONE, const std::string &s2=STR_NONE,
                                  const std::string &s3=STR_NONE, const std::string &s4=STR_NONE);
-    Switch& valueSeparator(const std::string &s1) { properties_.valueSeparators.push_back(s1); return *this; }
-    const std::vector<std::string>& valueSeparators() const { return properties_.valueSeparators; }
+    Switch& valueSeparator(const std::string &s1);
+    const std::vector<std::string>& valueSeparators() const;
     /** @} */
 
     /** Property: switch argument.  A switch argument declares how text after the switch name is parsed to form a value.  An
@@ -2297,13 +2289,13 @@ public:
      * @{ */
     Switch& argument(const std::string &name, const ValueParser::Ptr &parser = anyParser());
     Switch& argument(const std::string &name, const ValueParser::Ptr &parser, const std::string &defaultValue);
-    Switch& argument(const SwitchArgument &arg) { arguments_.push_back(arg); return *this; }
-    const SwitchArgument& argument(size_t idx) const { return arguments_[idx]; }
-    const std::vector<SwitchArgument>& arguments() const { return arguments_; }
+    Switch& argument(const SwitchArgument &arg);
+    const SwitchArgument& argument(size_t idx) const;
+    const std::vector<SwitchArgument>& arguments() const;
     /** @} */
 
     /** Total number of arguments.  This is the total number of arguments currently declared for the switch. */
-    size_t nArguments() const { return arguments_.size(); }
+    size_t nArguments() const;
 
     /** Number of required arguments. This is the number of arguments which do not have default values and which therefore must
      *  appear on the command line for each occurrence of the switch. */
@@ -2343,22 +2335,11 @@ public:
         intrinsicValue_ = ParsedValue(value, NOWHERE, boost::lexical_cast<std::string>(value), TypedSaver<T>::instance(storage));
         return *this;
     }
-    Switch& intrinsicValue(const char *value, std::string &storage) {
-        intrinsicValue_ = ParsedValue(std::string(value), NOWHERE, value, TypedSaver<std::string>::instance(storage));
-        return *this;
-    }
-    Switch& intrinsicValue(const std::string &text, const ValueParser::Ptr &p) {
-        intrinsicValue_ = p->matchString(text);
-        intrinsicValue_.valueLocation(NOWHERE);
-        return *this;
-    }
-    Switch& intrinsicValue(const std::string &text) {
-        intrinsicValue_ = anyParser()->matchString(text);
-        intrinsicValue_.valueLocation(NOWHERE);
-        return *this;
-    }
-    Switch& intrinsicValue(const ParsedValue &value) { intrinsicValue_ = value; return *this; }
-    ParsedValue intrinsicValue() const { return intrinsicValue_; }
+    Switch& intrinsicValue(const char *value, std::string &storage);
+    Switch& intrinsicValue(const std::string &text, const ValueParser::Ptr &p);
+    Switch& intrinsicValue(const std::string &text);
+    Switch& intrinsicValue(const ParsedValue &value);
+    ParsedValue intrinsicValue() const;
     /** @} */
 
     /** Property: whether to convert a list value to individual values.  The @ref ListParser returns a single value of type
@@ -2383,8 +2364,8 @@ public:
      *  <code>std::runtime_error</code> regarding an invalid type conversion.
      *
      * @{ */
-    Switch& explosiveLists(bool b) { explosiveLists_ = b; return *this; }
-    bool explosiveLists() const { return explosiveLists_; }
+    Switch& explosiveLists(bool b);
+    bool explosiveLists() const;
     /** @} */
 
     /** Property: action to occur.  Each switch may define an action that will be called by ParserResult::apply. When a
@@ -2408,8 +2389,8 @@ public:
      *            .action(showVersion("1.2.3"))); // emit "1.2.3"
      * @endcode
      * @{ */
-    Switch& action(const SwitchAction::Ptr &f) { action_ = f; return *this; }
-    const SwitchAction::Ptr& action() const { return action_; }
+    Switch& action(const SwitchAction::Ptr &f);
+    const SwitchAction::Ptr& action() const;
     /** @} */
 
     /** Property: how to handle multiple occurrences. Describes what to do if a switch occurs more than once.  Normally, if a
@@ -2437,8 +2418,8 @@ public:
      *  If a switch with @ref SAVE_LAST is processed, it deletes all the previously saved values for the same key even if they
      *  came from other switches having the same key but not the same @ref SAVE_LAST configuration.
      * @{ */
-    Switch& whichValue(WhichValue s) { whichValue_ = s; return *this; }
-    WhichValue whichValue() const { return whichValue_; }
+    Switch& whichValue(WhichValue s);
+    WhichValue whichValue() const;
     /** @} */
 
     /** Property: functor to agument values. This is the functor that is called to augment a previously parsed values by
@@ -2449,13 +2430,13 @@ public:
      *  @li @ref sawyer_augmenter_factories
      *  @li @ref ValueAugmenter base class
      * @{ */
-    Switch& valueAugmenter(const ValueAugmenter::Ptr &f) { valueAugmenter_ = f; return *this; }
-    ValueAugmenter::Ptr valueAugmenter() const { return valueAugmenter_; }
+    Switch& valueAugmenter(const ValueAugmenter::Ptr &f);
+    ValueAugmenter::Ptr valueAugmenter() const;
     /** @} */
 
 public:
     // Used internally
-    const ParsingProperties& properties() const { return properties_; }
+    const ParsingProperties& properties() const;
 
 private:
     friend class Parser;
@@ -2577,8 +2558,10 @@ class SAWYER_EXPORT SwitchGroup {
     SortOrder switchOrder_;
 #include <Sawyer/WarningsRestore.h>
 public:
+    ~SwitchGroup();
+
     /** Construct an unnamed, untitled group. */
-    SwitchGroup(): switchOrder_(DOCKEY_ORDER) { initializeLibrary(); }
+    SwitchGroup();
 
     /** Construct a titled group.
      *
@@ -2586,16 +2569,15 @@ public:
      *  The @p title will appear as the title of a subsection for the switches and should be capitalized like a title (initial
      *  capital letters). The optional @p docKey is used to sort the groups in relation to each other (the default is to sort
      *  by group title). */
-    explicit SwitchGroup(const std::string &title, const std::string &docKey="")
-        : title_(title), docKey_(docKey), switchOrder_(DOCKEY_ORDER) {}
+    explicit SwitchGroup(const std::string &title, const std::string &docKey = "");
 
     /** Property: Title of the switch group.
      *
      *  A switch group may have a subsection title for documentation.  The title should be capitalized like a title.  The title
      *  may also be specified in the constructor.
      * @{ */
-    const std::string& title() const { return title_; }
-    SwitchGroup& title(const std::string &title) { title_ = title; return *this; }
+    const std::string& title() const;
+    SwitchGroup& title(const std::string &title);
     /** @} */
 
     /** Property: Group name.
@@ -2608,8 +2590,8 @@ public:
      *  Names can only resolve long switches, not short switches.
      *
      * @{ */
-    const std::string& name() const { return name_; }
-    SwitchGroup& name(const std::string &name) { name_ = name; return *this; }
+    const std::string& name() const;
+    SwitchGroup& name(const std::string &name);
     /** @} */
 
     /** Property: Documentation sort key.
@@ -2624,8 +2606,8 @@ public:
      *
      * @sa SwitchGroup::switchOrder
      * @{ */
-    const std::string& docKey() const { return docKey_; }
-    SwitchGroup& docKey(const std::string &key) { docKey_ = key; return *this; }
+    const std::string& docKey() const;
+    SwitchGroup& docKey(const std::string &key);
     /** @} */
 
     /** Property: Detailed description.
@@ -2640,8 +2622,8 @@ public:
      *  within this group.
      *
      * @{ */
-    SwitchGroup& doc(const std::string &s) { documentation_ = s; return *this; }
-    const std::string& doc() const { return documentation_; }
+    SwitchGroup& doc(const std::string &s);
+    const std::string& doc() const;
     /** @} */
 
     /** Property: How to show group name in switch synopsis.
@@ -2650,40 +2632,40 @@ public:
      *  the parser containing the group at the time of documentation.
      *
      * @{ */
-    ShowGroupName showingGroupNames() const { return properties_.showGroupName; }
-    void showingGroupNames(ShowGroupName x) { properties_.showGroupName = x; }
+    ShowGroupName showingGroupNames() const;
+    void showingGroupNames(ShowGroupName x);
     /** @} */
 
     /** @copydoc Switch::resetLongPrefixes
      * @{ */
     SwitchGroup& resetLongPrefixes(const std::string &s1=STR_NONE, const std::string &s2=STR_NONE,
                                    const std::string &s3=STR_NONE, const std::string &s4=STR_NONE);
-    SwitchGroup& longPrefix(const std::string &s1) { properties_.longPrefixes.push_back(s1); return *this; }
-    const std::vector<std::string>& longPrefixes() const { return properties_.longPrefixes; }
+    SwitchGroup& longPrefix(const std::string &s1);
+    const std::vector<std::string>& longPrefixes() const;
     /** @} */
 
     /** @copydoc Switch::resetShortPrefixes
      * @{ */
     SwitchGroup& resetShortPrefixes(const std::string &s1=STR_NONE, const std::string &s2=STR_NONE,
                                     const std::string &s3=STR_NONE, const std::string &s4=STR_NONE);
-    SwitchGroup& shortPrefix(const std::string &s1) { properties_.shortPrefixes.push_back(s1); return *this; }
-    const std::vector<std::string>& shortPrefixes() const { return properties_.shortPrefixes; }
+    SwitchGroup& shortPrefix(const std::string &s1);
+    const std::vector<std::string>& shortPrefixes() const;
     /** @} */
 
     /** @copydoc Switch::resetValueSeparators
      * @{ */
     SwitchGroup& resetValueSeparators(const std::string &s1=STR_NONE, const std::string &s2=STR_NONE,
                                       const std::string &s3=STR_NONE, const std::string &s4=STR_NONE);
-    SwitchGroup& valueSeparator(const std::string &s1) { properties_.valueSeparators.push_back(s1); return *this; }
-    const std::vector<std::string>& valueSeparators() const { return properties_.valueSeparators; }
+    SwitchGroup& valueSeparator(const std::string &s1);
+    const std::vector<std::string>& valueSeparators() const;
     /** @} */
 
     /** Number of switches declared. */
-    size_t nSwitches() const { return switches_.size(); }
+    size_t nSwitches() const;
 
     /** List of all declared switches. The return value contains the switch declarations in the order they were inserted into
      *  this switch group. */
-    const std::vector<Switch>& switches() const { return switches_; }
+    const std::vector<Switch>& switches() const;
 
     /** Returns true if a switch with the specified name exists.  Both long and short names are checked. */
     bool nameExists(const std::string &switchName);
@@ -2725,13 +2707,13 @@ public:
      *
      * @sa SwitchGroup::docKey
      * @{ */
-    const SortOrder& switchOrder() const { return switchOrder_; }
-    SwitchGroup& switchOrder(SortOrder order) { switchOrder_ = order; return *this; }
+    const SortOrder& switchOrder() const;
+    SwitchGroup& switchOrder(SortOrder order);
     /** @} */
 
 public:
     // Used internally
-    const ParsingProperties& properties() const { return properties_; }
+    const ParsingProperties& properties() const;
 
 private:
     friend class Parser;
@@ -2780,51 +2762,27 @@ class SAWYER_EXPORT Parser {
 #include <Sawyer/WarningsRestore.h>
 
 public:
+    ~Parser();
+
     /** Default constructor.  The default constructor sets up a new parser with defaults suitable for the operating
      *  system. The switch declarations need to be added (via @ref with) before the parser is useful. */
-    Parser()
-        : groupNameSeparator_("-"), shortMayNestle_(true), skipNonSwitches_(false), skipUnknownSwitches_(false),
-          versionString_("alpha"), chapterNumber_(1), chapterName_("User Commands"), switchGroupOrder_(INSERTION_ORDER),
-          reportingAmbiguities_(true) {
-        init();
-    }
+    Parser();
 
     /** Add switch declarations. The specified switch declaration or group of switch declarations is copied into the parser. A
      *  documentation key can be supplied to override the sort order for the group or switch.
      * @{ */
-    Parser& with(const SwitchGroup &sg) {
-        switchGroups_.push_back(sg);
-        return *this;
-    }
-    Parser& with(const SwitchGroup &sg, const std::string &docKey) {
-        switchGroups_.push_back(sg);
-        switchGroups_.back().docKey(docKey);
-        return *this;
-    }
-    Parser& with(const std::vector<SwitchGroup> &sgs) {
-        switchGroups_.insert(switchGroups_.end(), sgs.begin(), sgs.end());
-        return *this;
-    }
-    Parser& with(const Switch &sw) {
-        switchGroups_.push_back(SwitchGroup().insert(sw));
-        return *this;
-    }
-    Parser& with(Switch sw, const std::string &docKey) {
-        sw.docKey(docKey);
-        switchGroups_.push_back(SwitchGroup().insert(sw));
-        return *this;
-    }
+    Parser& with(const SwitchGroup &sg);
+    Parser& with(const SwitchGroup &sg, const std::string &docKey);
+    Parser& with(const std::vector<SwitchGroup> &sgs);
+    Parser& with(const Switch &sw);
+    Parser& with(Switch sw, const std::string &docKey);
     /** @} */
 
     /** List of all switch groups.
      *
      * @{ */
-    const std::vector<SwitchGroup>& switchGroups() const {
-        return switchGroups_;
-    }
-    std::vector<SwitchGroup>& switchGroups() {
-        return switchGroups_;
-    }
+    const std::vector<SwitchGroup>& switchGroups() const;
+    std::vector<SwitchGroup>& switchGroups();
     /** @} */
 
     /** Predicate to determine whether a switch group exists.
@@ -2859,8 +2817,8 @@ public:
      *  definition is used.
      *
      * @{ */
-    bool reportingAmbiguities() const { return reportingAmbiguities_; }
-    Parser& reportingAmbiguities(bool b) { reportingAmbiguities_ = b; return *this; }
+    bool reportingAmbiguities() const;
+    Parser& reportingAmbiguities(bool b);
     /** @} */
 
     /** Property: String separating group name from switch name.
@@ -2870,8 +2828,8 @@ public:
      *  separator is "-", then the switch can be parsed as either "--switch" or as "--group-switch".
      *
      * @{ */
-    const std::string& groupNameSeparator() const { return groupNameSeparator_; }
-    Parser& groupNameSeparator(const std::string &s) { groupNameSeparator_ = s; return *this; }
+    const std::string& groupNameSeparator() const;
+    Parser& groupNameSeparator(const std::string &s);
     /** @} */
 
     /** Property: How to show group names in switch documentation.
@@ -2883,8 +2841,8 @@ public:
      *  See also, @ref groupNameSeparator, @ref SwitchGroup::name.
      *
      * @{ */
-    ShowGroupName showingGroupNames() const { return properties_.showGroupName; }
-    Parser& showingGroupNames(ShowGroupName x) { properties_.showGroupName = x; return *this; }
+    ShowGroupName showingGroupNames() const;
+    Parser& showingGroupNames(ShowGroupName);
     /** @} */
 
     /** Prefixes to use for long command-line switches.  The @ref resetLongPrefixes clears the list (and adds prefixes) while
@@ -2893,8 +2851,8 @@ public:
      * @{ */
     Parser& resetLongPrefixes(const std::string &s1=STR_NONE, const std::string &s2=STR_NONE,
                               const std::string &s3=STR_NONE, const std::string &s4=STR_NONE);
-    Parser& longPrefix(const std::string &s1) { properties_.longPrefixes.push_back(s1); return *this; }
-    const std::vector<std::string>& longPrefixes() const { return properties_.longPrefixes; }
+    Parser& longPrefix(const std::string &s1);
+    const std::vector<std::string>& longPrefixes() const;
     /** @} */
 
     /** Prefixes to use for short command-line switches.  The @ref resetShortPrefixes clears the list (and adds prefixes) while
@@ -2903,8 +2861,8 @@ public:
      * @{ */
     Parser& resetShortPrefixes(const std::string &s1=STR_NONE, const std::string &s2=STR_NONE,
                                const std::string &s3=STR_NONE, const std::string &s4=STR_NONE);
-    Parser& shortPrefix(const std::string &s1) { properties_.shortPrefixes.push_back(s1); return *this; }
-    const std::vector<std::string>& shortPrefixes() const { return properties_.shortPrefixes; }
+    Parser& shortPrefix(const std::string &s1);
+    const std::vector<std::string>& shortPrefixes() const;
     /** @} */
 
     /** Strings that separate a long switch from its value.  The @ref resetValueSeparators clears the list (and adds
@@ -2915,8 +2873,8 @@ public:
      * @{ */
     Parser& resetValueSeparators(const std::string &s1=STR_NONE, const std::string &s2=STR_NONE,
                                 const std::string &s3=STR_NONE, const std::string &s4=STR_NONE);
-    Parser& valueSeparator(const std::string &s1) { properties_.valueSeparators.push_back(s1); return *this; }
-    const std::vector<std::string>& valueSeparators() const { return properties_.valueSeparators; }
+    Parser& valueSeparator(const std::string &s1);
+    const std::vector<std::string>& valueSeparators() const;
     /** @} */
 
     /** Strings that indicate the end of the argument list.  The @ref resetTerminationSwitches clears the list (and adds
@@ -2925,8 +2883,8 @@ public:
      * @{ */
     Parser& resetTerminationSwitches(const std::string &s1=STR_NONE, const std::string &s2=STR_NONE,
                                    const std::string &s3=STR_NONE, const std::string &s4=STR_NONE);
-    Parser& terminationSwitch(const std::string &s1) { terminationSwitches_.push_back(s1); return *this; }
-    const std::vector<std::string>& terminationSwitches() const { return terminationSwitches_; }
+    Parser& terminationSwitch(const std::string &s1);
+    const std::vector<std::string>& terminationSwitches() const;
     /** @} */
 
     /** Indicates whether short switches can nestle together.  If short switches are allowed to nestle, then <code>-ab</code>
@@ -2936,8 +2894,8 @@ public:
      *  entire "100b" will be parsed as the value for the "a" switch.  The default on Unix-like systems is that short switches
      *  may nestle.
      * @{ */
-    Parser& shortMayNestle(bool b) { shortMayNestle_ = b; return *this; }
-    bool shortMayNestle() const { return shortMayNestle_; }
+    Parser& shortMayNestle(bool b);
+    bool shortMayNestle() const;
     /** @} */
 
     /** Strings that indicate that arguments are to be read from a file.  The @ref resetInclusionPrefixes clears the list (and
@@ -2953,8 +2911,8 @@ public:
      * @{ */
     Parser& resetInclusionPrefixes(const std::string &s1=STR_NONE, const std::string &s2=STR_NONE,
                                    const std::string &s3=STR_NONE, const std::string &s4=STR_NONE);
-    Parser& inclusionPrefix(const std::string &s1) { inclusionPrefixes_.push_back(s1); return *this; }
-    const std::vector<std::string>& inclusionPrefixes() const { return inclusionPrefixes_; }
+    Parser& inclusionPrefix(const std::string &s1);
+    const std::vector<std::string>& inclusionPrefixes() const;
     /** @} */
 
     /** Whether to skip over non-switch arguments when parsing.  If false, parsing stops at the first non-switch, otherwise
@@ -2964,8 +2922,8 @@ public:
      *
      * @sa ParserResult::skippedArgs ParserResult::unparsedArgs
      * @{ */
-    Parser& skippingNonSwitches(bool b) { skipNonSwitches_ = b; return *this; }
-    bool skippingNonSwitches() const { return skipNonSwitches_; }
+    Parser& skippingNonSwitches(bool b);
+    bool skippingNonSwitches() const;
     /** @} */
 
     /** Whether to skip over unrecognized switches.  An unrecognized switch is any program argument that looks like a switch
@@ -2974,8 +2932,8 @@ public:
      *
      * @sa ParserResult::skippedArgs ParserResult::unparsedArgs
      * @{ */
-    Parser& skippingUnknownSwitches(bool b) { skipUnknownSwitches_ = b; return *this; }
-    bool skippingUnknownSwitches() const { return skipUnknownSwitches_; }
+    Parser& skippingUnknownSwitches(bool b);
+    bool skippingUnknownSwitches() const;
     /** @} */
 
     /** Specifies a message stream to which errors are sent.  If non-null, when a parse method encounters an error it writes
@@ -2995,8 +2953,8 @@ public:
      *
      * @sa @ref skippingNonSwitches @ref skippingUnknownSwitches
      * @{ */
-    Parser& errorStream(const Message::SProxy &stream) { errorStream_ = stream; return *this; }
-    const Message::SProxy& errorStream() const { return errorStream_; }
+    Parser& errorStream(const Message::SProxy &stream);
+    const Message::SProxy& errorStream() const;
     /** @} */
 
     /** Extra text to print before exit. This is only used when the @ref errorStream property is non-null.  The default is to
@@ -3005,8 +2963,8 @@ public:
      *
      * @sa @ref errorStream
      * @{ */
-    Parser& exitMessage(const std::string &s) { exitMessage_ = s; return *this; }
-    std::string exitMessage() const { return exitMessage_ ? *exitMessage_ : std::string(); }
+    Parser& exitMessage(const std::string &s);
+    std::string exitMessage() const;
     /** @} */
 
     /** Name of environment variable holding initial arguments.
@@ -3015,8 +2973,8 @@ public:
      *  way that command-line arguments are read from files by @ref readArgsFromFile.
      *
      * @{ */
-    Parser& environmentVariable(const std::string &s) { environmentVariable_ = s; return *this; }
-    const std::string& environmentVariable() const { return environmentVariable_; }
+    Parser& environmentVariable(const std::string &s);
+    const std::string& environmentVariable() const;
     /** @} */
 
     /** Parse program arguments.  The first program argument, <code>argv[0]</code>, is considered to be the name of the program
@@ -3083,7 +3041,7 @@ public:
     /** Program name for documentation.  If no program name is given (or it is set to the empty string) then the name is
      *  obtained from the operating system.
      * @{ */
-    Parser& programName(const std::string& programName) { programName_ = programName; return *this; }
+    Parser& programName(const std::string& programName);
     const std::string& programName() const;
     /** @} */
 
@@ -3091,15 +3049,15 @@ public:
      *  a Unix man page and picked up the the makewhatis(8) command.  The string specified here should be the part that
      *  appears after the hyphen, as in "foo - frobnicate the bar library".
      * @{ */
-    Parser& purpose(const std::string &purpose) { purpose_ = purpose; return *this; }
-    const std::string& purpose() const { return purpose_; }
+    Parser& purpose(const std::string &purpose);
+    const std::string& purpose() const;
     /** @} */
 
     /** Program version.  Every program should have a version string and a date of last change. If no version string is given
      *  then "alpha" is assumed; if no date is given then the current month and year are used.
      * @{ */
     Parser& version(const std::string &versionString, const std::string &dateString="");
-    Parser& version(const std::pair<std::string, std::string> &p) { return version(p.first, p.second); }
+    Parser& version(const std::pair<std::string, std::string> &p);
     std::pair<std::string, std::string> version() const;
     /** @} */
 
@@ -3119,7 +3077,7 @@ public:
      *  overrides the default name of that chapter.  If no chapter is specified, "1" is assumed.
      * @{ */
     Parser& chapter(int chapterNumber, const std::string &chapterName="");
-    Parser& chapter(const std::pair<int, std::string> &p) { return chapter(p.first, p.second); }
+    Parser& chapter(const std::pair<int, std::string> &p);
     std::pair<int, std::string> chapter() const;
     /** @} */
 
@@ -3162,7 +3120,7 @@ public:
      *
      * @{ */
     Parser& doc(const std::string &sectionName, const std::string &docKey, const std::string &text);
-    Parser& doc(const std::string &sectionName, const std::string &text) { return doc(sectionName, sectionName, text); }
+    Parser& doc(const std::string &sectionName, const std::string &text);
     Parser& doc(const std::pair<std::string /*sectionName*/, std::string /*text*/>&);
     std::vector<std::string> docSections() const;
     std::string docForSwitches() const;
@@ -3200,8 +3158,8 @@ public:
      *  with respect to each other.  The subsections can be sorted according to the order they were inserted into the parser,
      *  or alphabetically by their documentation keys or titles.
      * @{ */
-    SortOrder switchGroupOrder() const { return switchGroupOrder_; }
-    Parser& switchGroupOrder(SortOrder order) { switchGroupOrder_ = order; return *this; }
+    SortOrder switchGroupOrder() const;
+    Parser& switchGroupOrder(SortOrder order);
     /** @} */
 
     /** Insert records for long switch strings.
@@ -3252,7 +3210,7 @@ public:
 
 public:
     // Used internally
-    const ParsingProperties& properties() const { return properties_; }
+    const ParsingProperties& properties() const;
 
 private:
     void init();
@@ -3360,22 +3318,22 @@ class SAWYER_EXPORT ParserResult {
     Container::Map<std::string, SwitchAction::Ptr> actions_;
 #include <Sawyer/WarningsRestore.h>
 
+public:
+    ~ParserResult();
+    ParserResult();
+
 private:
     friend class Parser;
-    ParserResult(const Parser &parser, const std::vector<std::string> &argv): parser_(parser), cursor_(argv) {}
+    ParserResult(const Parser &parser, const std::vector<std::string> &argv);
 
 public:
-    ParserResult() {}
-
     /** Saves parsed values in switch-specified locations.  This method implements the @e push paradigm mentioned in the class
      *  documentation (see @ref ParserResult). */
     const ParserResult& apply() const;
 
     /** Returns the number of values for the specified key. This is the number of values actually stored for switches using
      * this key, which might be fewer than the number of values parsed.  See Switch::whichValue. */
-    size_t have(const std::string &switchKey) const {
-        return keyIndex_.getOrDefault(switchKey).size();
-    }
+    size_t have(const std::string &switchKey) const;
 
     /** Returns values for a key.  This is the usual method for obtaining a value for a switch.  During parsing, the arguments
      *  of the switch are converted to @ref ParsedValue objects and stored according to the key of the switch that did the
@@ -3445,10 +3403,10 @@ public:
      *
      *  This returns the original command line except that program arguments inserted into the command-line due to file
      *  inclusion will be returned in place of the file inclusion switch itself. */
-    const std::vector<std::string>& allArgs() const { return cursor_.strings(); }
+    const std::vector<std::string>& allArgs() const;
 
     /** That parser that created this result.  This is a copy of the parser that was used to create this result. */
-    const Parser& parser() const { return parser_; }
+    const Parser& parser() const;
 
 private:
     // Insert more parsed values.  Values should be inserted one switch's worth at a time (or fewer)
@@ -3461,7 +3419,7 @@ private:
     // Add a terminator
     void terminator(const Location&);
 
-    Cursor& cursor() { return cursor_; }
+    Cursor& cursor();
 };
 
 } // namespace
