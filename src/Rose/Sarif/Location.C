@@ -131,7 +131,7 @@ Location::emit(std::ostream &out) {
             <<",\"region\":{"
             <<"\"byteOffset\":" <<binaryAddresses().least();
         if (binaryAddresses() == BinaryAnalysis::AddressInterval::whole()) {
-            static_assert(sizeof(BinaryAnalysis::AddressInterval::Value)==8);
+            static_assert(sizeof(BinaryAnalysis::AddressInterval::Value)==8, "binary addresses must be 8 bytes");
             out <<",\"byteLength\":18446744073709551616";
         } else {
             out <<",\"byteLength\":" <<binaryAddresses().size();

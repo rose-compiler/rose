@@ -76,7 +76,7 @@ public:
      *
      * @{ */
     Ptr with(const std::string &suffix, T multiplier, Preferred preferred = Preferred::YES) {
-        suffixes_[suffix] = Suffix{.multiplier = multiplier, .preferred = preferred};
+        suffixes_[suffix] = Suffix{multiplier, preferred};
         return as<SuffixMultiplierParser>(sharedFromThis());
     }
 
