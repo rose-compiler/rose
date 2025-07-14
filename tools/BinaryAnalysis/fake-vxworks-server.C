@@ -54,8 +54,6 @@ struct Context {
 };
 
 static const size_t BUFFER_SIZE = 1024;
-static const size_t NBYTES_PER_LINE = 16;
-static const size_t NLINES_PER_BATCH = 4096 / NBYTES_PER_LINE;
 static const size_t BITS_PER_WORD = 32;
 static const std::string numberRe = "(?:0x[0-9a-fA-F]+|0b[01]+|[1-9][0-9]*|0)";
 static Sawyer::Message::Facility mlog;
@@ -146,7 +144,8 @@ greeting(std::ostream &client) {
               "\n";
 }
 
-static void crash(const std::string &mesg) [[noreturn]] {
+[[noreturn]]
+static void crash(const std::string &mesg) {
     std::cerr <<"simulated server crash: " <<mesg <<"\n";
     abort();
 }
