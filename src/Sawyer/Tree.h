@@ -308,8 +308,8 @@ private:
     protected:
         // Return this edge and the previous edges in the order they were initialized. Each member is either a non-null pointer to
         // an `Edge` or a non-null pointer to an `EdgeVector`.
-        std::vector<EdgeBase*> baseEdgeList() const {
-            std::vector<EdgeBase*> retval;
+        std::vector<const EdgeBase*> baseEdgeList() const {
+            std::vector<const EdgeBase*> retval;
             for (EdgeBase *child = this; child; child = prev)
                 retval.push_back(child);
             std::reverse(retval.begin(), retval.end());
