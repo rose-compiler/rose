@@ -19,7 +19,7 @@
 
 
 namespace sb = Rose::SageBuilderAsm;
-using namespace Rose::Diagnostics; // mlog WARN, ...
+namespace diag = Rose::Diagnostics; // mlog WARN, ...
 
 namespace // anonymous namespace for auxiliary functions
 {
@@ -170,9 +170,9 @@ namespace // anonymous namespace for auxiliary functions
 
     uint32_t res = 0;
 
-    if (TRACE_CONSTRUCTION)
-      std::cerr << "skip string padding of " << (reservedLen - strLen) << " bytes"
-                << std::endl;
+    SAWYER_MESG(diag::mlog[diag::TRACE])
+      << "skip string padding of " << (reservedLen - strLen) << " bytes"
+      << std::endl;
 
     while (strLen < reservedLen)
     {
@@ -225,9 +225,10 @@ namespace // anonymous namespace for auxiliary functions
 
     if (res != expected)
     {
-      mlog[INFO] << "unexpected read " << (msg ? msg : "") << ": expected " << integerValue(expected)
-                 << ", got " << integerValue(res) << "."
-                 << std::endl;
+      SAWYER_MESG(diag::mlog[diag::INFO]) 
+            << "unexpected read " << (msg ? msg : "") << ": expected " << integerValue(expected)
+            << ", got " << integerValue(res) << "."
+            << std::endl;
     }
 
     return res;
@@ -243,9 +244,10 @@ namespace // anonymous namespace for auxiliary functions
 
     if (val != expected)
     {
-      mlog[INFO] << "unexpected write: expected " << integerValue(expected)
-                 << ", got " << integerValue(val) << "."
-                 << std::endl;
+      SAWYER_MESG(diag::mlog[diag::INFO]) 
+           << "unexpected write: expected " << integerValue(expected)
+           << ", got " << integerValue(val) << "."
+           << std::endl;
     }
   }
 
@@ -267,18 +269,18 @@ namespace // anonymous namespace for auxiliary functions
 
     std::vector<elem_type> res;
 
-    if (TRACE_CONSTRUCTION)
-      std::cerr << "Output the number of rows for each table: "
-                << std::endl;
+    SAWYER_MESG(diag::mlog[diag::TRACE])
+      << "Output the number of rows for each table: "
+      << std::endl;
 
     for (uint64_t i = 0; i < num; ++i)
     {
       elem_type tmp_rows_value = rd(buf, index);
       res.push_back(tmp_rows_value);
 
-      if (TRACE_CONSTRUCTION)
-        std::cerr << "--- table " << i << ": tmp_rows_value = " << tmp_rows_value
-                  << std::endl;
+      SAWYER_MESG(diag::mlog[diag::TRACE])
+        << "--- table " << i << ": tmp_rows_value = " << tmp_rows_value
+        << std::endl;
     }
 
     return res;
@@ -360,18 +362,17 @@ namespace // anonymous namespace for auxiliary functions
 
     for (size_t i = 0; i < numberOfStreams; ++i)
     {
-      if (TRACE_CONSTRUCTION) {
-        std::cerr << "START: stream header " << i << " of " << numberOfStreams << ": index = " << index
-                  << std::endl;
-      }
+      SAWYER_MESG(diag::mlog[diag::TRACE])
+        << "START: stream header " << i << " of " << numberOfStreams << ": index = " << index
+        << std::endl;
 
       StreamHeader        streamHeader = StreamHeader::parse(buf,index);
       SgAsmCilDataStream* dataStream = nullptr;
 
-      if (TRACE_CONSTRUCTION) {
-        std::cerr << ": name is " << streamHeader.name() << "\n";
-      }
-
+      SAWYER_MESG(diag::mlog[diag::TRACE])
+        << ": name is " << streamHeader.name() 
+        << std::endl;
+      
       if (  (SgAsmCilDataStream::ID_STRING_HEAP == streamHeader.name())
          || (SgAsmCilDataStream::ID_BLOB_HEAP   == streamHeader.name())
          || (SgAsmCilDataStream::ID_US_HEAP     == streamHeader.name()) // \todo should be a Utf16 Stream
@@ -382,15 +383,29 @@ namespace // anonymous namespace for auxiliary functions
       else if (SgAsmCilDataStream::ID_METADATA_HEAP == streamHeader.name())
         dataStream = new SgAsmCilMetadataHeap(streamHeader.offset(), streamHeader.size(), streamHeader.name(), streamHeader.namePadding());
 
-      ASSERT_not_null(dataStream);
-
-      dataStream->set_parent(parent);
-      dataStream->parse(buf, start_of_MetadataRoot);
-      res.push_back(dataStream);
-
-      if (TRACE_CONSTRUCTION)
-        std::cerr << "END: stream header " << i << " of " << numberOfStreams << ": index = " << index
-                  << std::endl;
+      if (dataStream)
+      {
+        dataStream->set_parent(parent);
+        dataStream->parse(buf, start_of_MetadataRoot);
+        res.push_back(dataStream);
+  
+        SAWYER_MESG(diag::mlog[diag::TRACE])
+          << "END: stream header " << i << " of " << numberOfStreams << ": index = " << index
+          << std::endl;
+      }
+      else
+      {
+        diag::mlog[diag::ERROR]
+              << "Skipping stream named " << streamHeader.name() 
+              << "\n  name does not correspond to valid stream ID (i.e.," 
+                    << SgAsmCilDataStream::ID_STRING_HEAP
+                    << "," << SgAsmCilDataStream::ID_BLOB_HEAP
+                    << "," << SgAsmCilDataStream::ID_US_HEAP
+                    << "," << SgAsmCilDataStream::ID_GUID_HEAP
+                    << "," << SgAsmCilDataStream::ID_METADATA_HEAP
+                    << ")"
+              << std::endl;
+      }
     }
 
     return res;
@@ -445,9 +460,9 @@ namespace // anonymous namespace for auxiliary functions
 
     sgnode->set_parent(parent);
 
-    if (TRACE_CONSTRUCTION)
-      std::cerr << "Creating " << sgnode->class_name() << " node at " << index
-                << std::endl;
+    SAWYER_MESG(diag::mlog[diag::TRACE])
+      << "Creating " << sgnode->class_name() << " node at " << index
+      << std::endl;
 
     sgnode->parse(buf, index, dataSizeflags);
     return sgnode;
@@ -562,18 +577,16 @@ void SgAsmCilAssembly::parse(const std::vector<uint8_t>& buf, size_t& index, uin
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_Culture = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_HashAlgId = " << p_HashAlgId << std::endl;
-    std::cerr << "p_MajorVersion = " << p_MajorVersion << std::endl;
-    std::cerr << "p_MinorVersion = " << p_MinorVersion << std::endl;
-    std::cerr << "p_BuildNumber = " << p_BuildNumber << std::endl;
-    std::cerr << "p_RevisionNumber = " << p_RevisionNumber << std::endl;
-    std::cerr << "p_Flags = " << p_Flags << std::endl;
-    std::cerr << "p_PublicKey = " << p_PublicKey << std::endl;
-    std::cerr << "p_Name = " << p_Name << std::endl;
-    std::cerr << "p_Culture = " << p_Culture << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_HashAlgId = " << p_HashAlgId << std::endl
+    << "p_MajorVersion = " << p_MajorVersion << std::endl
+    << "p_MinorVersion = " << p_MinorVersion << std::endl
+    << "p_BuildNumber = " << p_BuildNumber << std::endl
+    << "p_RevisionNumber = " << p_RevisionNumber << std::endl
+    << "p_Flags = " << p_Flags << std::endl
+    << "p_PublicKey = " << p_PublicKey << std::endl
+    << "p_Name = " << p_Name << std::endl
+    << "p_Culture = " << p_Culture << std::endl;
 }
 
 void SgAsmCilAssembly::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -639,12 +652,10 @@ void SgAsmCilAssemblyOS::parse(const std::vector<uint8_t>& buf, size_t& index, u
   p_OSMajorVersion = read32bitValue(buf,index);
   p_OSMinorVersion = read32bitValue(buf,index);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_OSPlatformID = " << p_OSPlatformID << std::endl;
-    std::cerr << "p_OSMajorVersion = " << p_OSMajorVersion << std::endl;
-    std::cerr << "p_OSMinorVersion = " << p_OSMinorVersion << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_OSPlatformID = " << p_OSPlatformID << std::endl
+    << "p_OSMajorVersion = " << p_OSMajorVersion << std::endl
+    << "p_OSMinorVersion = " << p_OSMinorVersion << std::endl;
 }
 
 void SgAsmCilAssemblyOS::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t) const
@@ -670,10 +681,8 @@ void SgAsmCilAssemblyProcessor::parse(const std::vector<uint8_t>& buf, size_t& i
 {
   p_Processor = read32bitValue(buf,index);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Processor = " << p_Processor << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Processor = " << p_Processor << std::endl;
 }
 
 void SgAsmCilAssemblyProcessor::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t) const
@@ -701,18 +710,16 @@ void SgAsmCilAssemblyRef::parse(const std::vector<uint8_t>& buf, size_t& index, 
   p_Culture = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_HashValue = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_MajorVersion = " << p_MajorVersion << std::endl;
-    std::cerr << "p_MinorVersion = " << p_MinorVersion << std::endl;
-    std::cerr << "p_BuildNumber = " << p_BuildNumber << std::endl;
-    std::cerr << "p_RevisionNumber = " << p_RevisionNumber << std::endl;
-    std::cerr << "p_Flags = " << p_Flags << std::endl;
-    std::cerr << "p_PublicKeyOrToken = " << p_PublicKeyOrToken << std::endl;
-    std::cerr << "p_Name = " << p_Name << std::endl;
-    std::cerr << "p_Culture = " << p_Culture << std::endl;
-    std::cerr << "p_HashValue = " << p_HashValue << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_MajorVersion = " << p_MajorVersion << std::endl
+    << "p_MinorVersion = " << p_MinorVersion << std::endl
+    << "p_BuildNumber = " << p_BuildNumber << std::endl
+    << "p_RevisionNumber = " << p_RevisionNumber << std::endl
+    << "p_Flags = " << p_Flags << std::endl
+    << "p_PublicKeyOrToken = " << p_PublicKeyOrToken << std::endl
+    << "p_Name = " << p_Name << std::endl
+    << "p_Culture = " << p_Culture << std::endl
+    << "p_HashValue = " << p_HashValue << std::endl;
 }
 
 void SgAsmCilAssemblyRef::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -785,13 +792,11 @@ void SgAsmCilAssemblyRefOS::parse(const std::vector<uint8_t>& buf, size_t& index
   p_OSMinorVersion = read32bitValue(buf,index);
   p_AssemblyRefOS = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_assembly_ref);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_OSPlatformID = " << p_OSPlatformID << std::endl;
-    std::cerr << "p_OSMajorVersion = " << p_OSMajorVersion << std::endl;
-    std::cerr << "p_OSMinorVersion = " << p_OSMinorVersion << std::endl;
-    std::cerr << "p_AssemblyRefOS = " << p_AssemblyRefOS << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_OSPlatformID = " << p_OSPlatformID << std::endl
+    << "p_OSMajorVersion = " << p_OSMajorVersion << std::endl
+    << "p_OSMinorVersion = " << p_OSMinorVersion << std::endl
+    << "p_AssemblyRefOS = " << p_AssemblyRefOS << std::endl;
 }
 
 void SgAsmCilAssemblyRefOS::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -827,11 +832,9 @@ void SgAsmCilAssemblyRefProcessor::parse(const std::vector<uint8_t>& buf, size_t
   p_Processor = read32bitValue(buf,index);
   p_AssemblyRef = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_assembly_ref);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Processor = " << p_Processor << std::endl;
-    std::cerr << "p_AssemblyRef = " << p_AssemblyRef << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Processor = " << p_Processor << std::endl
+    << "p_AssemblyRef = " << p_AssemblyRef << std::endl;
 }
 
 void SgAsmCilAssemblyRefProcessor::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -862,12 +865,10 @@ void SgAsmCilClassLayout::parse(const std::vector<uint8_t>& buf, size_t& index, 
   p_ClassSize = read32bitValue(buf,index);
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_PackingSize = " << p_PackingSize << std::endl;
-    std::cerr << "p_ClassSize = " << p_ClassSize << std::endl;
-    std::cerr << "p_Parent = " << p_Parent << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_PackingSize = " << p_PackingSize << std::endl
+    << "p_ClassSize = " << p_ClassSize << std::endl
+    << "p_Parent = " << p_Parent << std::endl;
 }
 
 void SgAsmCilClassLayout::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -902,13 +903,11 @@ void SgAsmCilConstant::parse(const std::vector<uint8_t>& buf, size_t& index, uin
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_constant);
   p_Value = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Type = " << std::to_string(p_Type) << std::endl;
-    std::cerr << "p_Padding = " << std::to_string(p_Padding) << std::endl;
-    std::cerr << "p_Parent = " << p_Parent << std::endl;
-    std::cerr << "p_Value = " << p_Value << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Type = " << std::to_string(p_Type) << std::endl
+    << "p_Padding = " << std::to_string(p_Padding) << std::endl
+    << "p_Parent = " << p_Parent << std::endl
+    << "p_Value = " << p_Value << std::endl;
 }
 
 void SgAsmCilConstant::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -951,12 +950,10 @@ void SgAsmCilCustomAttribute::parse(const std::vector<uint8_t>& buf, size_t& ind
   p_Type = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_custom_attribute_type);
   p_Value = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Parent = " << p_Parent << std::endl;
-    std::cerr << "p_Type = " << p_Type << std::endl;
-    std::cerr << "p_Value = " << p_Value << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Parent = " << p_Parent << std::endl
+    << "p_Type = " << p_Type << std::endl
+    << "p_Value = " << p_Value << std::endl;
 }
 
 void SgAsmCilCustomAttribute::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1002,12 +999,10 @@ void SgAsmCilDeclSecurity::parse(const std::vector<uint8_t>& buf, size_t& index,
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_decl_security);
   p_PermissionSet = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Action = " << p_Action << std::endl;
-    std::cerr << "p_Parent = " << p_Parent << std::endl;
-    std::cerr << "p_PermissionSet = " << p_PermissionSet << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Action = " << p_Action << std::endl
+    << "p_Parent = " << p_Parent << std::endl
+    << "p_PermissionSet = " << p_PermissionSet << std::endl;
 }
 
 void SgAsmCilDeclSecurity::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1047,12 +1042,10 @@ void SgAsmCilEvent::parse(const std::vector<uint8_t>& buf, size_t& index, uint64
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_EventType = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_EventFlags = " << p_EventFlags << std::endl;
-    std::cerr << "p_Name = " << p_Name << std::endl;
-    std::cerr << "p_EventType = " << p_EventType << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_EventFlags = " << p_EventFlags << std::endl
+    << "p_Name = " << p_Name << std::endl
+    << "p_EventType = " << p_EventType << std::endl;
 }
 
 void SgAsmCilEvent::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1092,11 +1085,9 @@ void SgAsmCilEventMap::parse(const std::vector<uint8_t>& buf, size_t& index, uin
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   p_EventList = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_event);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Parent = " << p_Parent << std::endl;
-    std::cerr << "p_EventList = " << p_EventList << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Parent = " << p_Parent << std::endl
+    << "p_EventList = " << p_EventList << std::endl;
 }
 
 void SgAsmCilEventMap::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1135,14 +1126,12 @@ void SgAsmCilExportedType::parse(const std::vector<uint8_t>& buf, size_t& index,
   p_TypeNamespace = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_Implementation = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_implementation);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_EventFlags = " << p_EventFlags << std::endl;
-    std::cerr << "p_TypeDefIdName = " << p_TypeDefIdName << std::endl;
-    std::cerr << "p_TypeName = " << p_TypeName << std::endl;
-    std::cerr << "p_TypeNamespace = " << p_TypeNamespace << std::endl;
-    std::cerr << "p_Implementation = " << p_Implementation << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_EventFlags = " << p_EventFlags << std::endl
+    << "p_TypeDefIdName = " << p_TypeDefIdName << std::endl
+    << "p_TypeName = " << p_TypeName << std::endl
+    << "p_TypeNamespace = " << p_TypeNamespace << std::endl
+    << "p_Implementation = " << p_Implementation << std::endl;
 }
 
 void SgAsmCilExportedType::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1196,12 +1185,10 @@ void SgAsmCilField::parse(const std::vector<uint8_t>& buf, size_t& index, uint64
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_Signature = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Flags = " << p_Flags << std::endl;
-    std::cerr << "p_Name = " << p_Name << std::endl;
-    std::cerr << "p_Signature = " << p_Signature << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Flags = " << p_Flags << std::endl
+    << "p_Name = " << p_Name << std::endl
+    << "p_Signature = " << p_Signature << std::endl;
 }
 
 void SgAsmCilField::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1241,11 +1228,9 @@ void SgAsmCilFieldLayout::parse(const std::vector<uint8_t>& buf, size_t& index, 
   p_Offset = read32bitValue(buf,index);
   p_Field = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_field);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Offset = " << p_Offset << std::endl;
-    std::cerr << "p_Field = " << p_Field << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Offset = " << p_Offset << std::endl
+    << "p_Field = " << p_Field << std::endl;
 }
 
 void SgAsmCilFieldLayout::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1275,11 +1260,9 @@ void SgAsmCilFieldMarshal::parse(const std::vector<uint8_t>& buf, size_t& index,
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_field_marshall);
   p_NativeType = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Parent = " << p_Parent << std::endl;
-    std::cerr << "p_NativeType = " << p_NativeType << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Parent = " << p_Parent << std::endl
+    << "p_NativeType = " << p_NativeType << std::endl;
 }
 
 void SgAsmCilFieldMarshal::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1315,11 +1298,9 @@ void SgAsmCilFieldRVA::parse(const std::vector<uint8_t>& buf, size_t& index, uin
   p_RVA = read32bitValue(buf,index);
   p_Field = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_field);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_RVA = " << p_RVA << std::endl;
-    std::cerr << "p_Field = " << p_Field << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_RVA = " << p_RVA << std::endl
+    << "p_Field = " << p_Field << std::endl;
 }
 
 void SgAsmCilFieldRVA::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1350,12 +1331,10 @@ void SgAsmCilFile::parse(const std::vector<uint8_t>& buf, size_t& index, uint64_
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_HashValue = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Flags = " << p_Flags << std::endl;
-    std::cerr << "p_Name = " << p_Name << std::endl;
-    std::cerr << "p_HashValue = " << p_HashValue << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Flags = " << p_Flags << std::endl
+    << "p_Name = " << p_Name << std::endl
+    << "p_HashValue = " << p_HashValue << std::endl;
 }
 
 void SgAsmCilFile::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1397,13 +1376,11 @@ void SgAsmCilGenericParam::parse(const std::vector<uint8_t>& buf, size_t& index,
   p_Owner = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_or_method_def);
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Number = " << p_Number << std::endl;
-    std::cerr << "p_Flags = " << p_Flags << std::endl;
-    std::cerr << "p_Owner = " << p_Owner << std::endl;
-    std::cerr << "p_Name = " << p_Name << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Number = " << p_Number << std::endl
+    << "p_Flags = " << p_Flags << std::endl
+    << "p_Owner = " << p_Owner << std::endl
+    << "p_Name = " << p_Name << std::endl;
 }
 
 void SgAsmCilGenericParam::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1446,11 +1423,9 @@ void SgAsmCilGenericParamConstraint::parse(const std::vector<uint8_t>& buf, size
   p_Owner = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_generic_param);
   p_Constraint = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Owner = " << p_Owner << std::endl;
-    std::cerr << "p_Constraint = " << p_Constraint << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Owner = " << p_Owner << std::endl
+    << "p_Constraint = " << p_Constraint << std::endl;
 }
 
 void SgAsmCilGenericParamConstraint::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1488,13 +1463,11 @@ void SgAsmCilImplMap::parse(const std::vector<uint8_t>& buf, size_t& index, uint
   p_ImportName = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_ImportScope = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_module_ref);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_MappingFlags = " << p_MappingFlags << std::endl;
-    std::cerr << "p_MemberForwarded = " << p_MemberForwarded << std::endl;
-    std::cerr << "p_ImportName = " << p_ImportName << std::endl;
-    std::cerr << "p_ImportScope = " << p_ImportScope << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_MappingFlags = " << p_MappingFlags << std::endl
+    << "p_MemberForwarded = " << p_MemberForwarded << std::endl
+    << "p_ImportName = " << p_ImportName << std::endl
+    << "p_ImportScope = " << p_ImportScope << std::endl;
 }
 
 void SgAsmCilImplMap::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1543,11 +1516,9 @@ void SgAsmCilInterfaceImpl::parse(const std::vector<uint8_t>& buf, size_t& index
   p_Class = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   p_Interface = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Class = " << p_Class << std::endl;
-    std::cerr << "p_Interface = " << p_Interface << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Class = " << p_Class << std::endl
+    << "p_Interface = " << p_Interface << std::endl;
 }
 
 void SgAsmCilInterfaceImpl::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1585,13 +1556,11 @@ void SgAsmCilManifestResource::parse(const std::vector<uint8_t>& buf, size_t& in
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_Implementation = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_implementation);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Offset = " << p_Offset << std::endl;
-    std::cerr << "p_Flags = " << p_Flags << std::endl;
-    std::cerr << "p_Name = " << p_Name << " " << std::endl;
-    std::cerr << "p_Implementation = " << p_Implementation << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Offset = " << p_Offset << std::endl
+    << "p_Flags = " << p_Flags << std::endl
+    << "p_Name = " << p_Name << " " << std::endl
+    << "p_Implementation = " << p_Implementation << std::endl;
 }
 
 void SgAsmCilManifestResource::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1635,12 +1604,10 @@ void SgAsmCilMemberRef::parse(const std::vector<uint8_t>& buf, size_t& index, ui
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_Signature = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Class = " << p_Class << std::endl;
-    std::cerr << "p_Name = " << p_Name << std::endl;
-    std::cerr << "p_Signature = " << p_Signature << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Class = " << p_Class << std::endl
+    << "p_Name = " << p_Name << std::endl
+    << "p_Signature = " << p_Signature << std::endl;
 }
 
 void SgAsmCilMemberRef::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1690,15 +1657,13 @@ void SgAsmCilMethodDef::parse(const std::vector<uint8_t>& buf, size_t& index, ui
   p_Signature = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
   p_ParamList = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_param);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_RVA = " << p_RVA << std::endl;
-    std::cerr << "p_ImplFlags = " << p_ImplFlags << std::endl;
-    std::cerr << "p_Flags = " << p_Flags << std::endl;
-    std::cerr << "p_Name = " << p_Name << std::endl;
-    std::cerr << "p_Signature = " << p_Signature << std::endl;
-    std::cerr << "p_ParamList = " << p_ParamList << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_RVA = " << p_RVA << std::endl
+    << "p_ImplFlags = " << p_ImplFlags << std::endl
+    << "p_Flags = " << p_Flags << std::endl
+    << "p_Name = " << p_Name << std::endl
+    << "p_Signature = " << p_Signature << std::endl
+    << "p_ParamList = " << p_ParamList << std::endl;
 }
 
 void SgAsmCilMethodDef::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1754,12 +1719,10 @@ void SgAsmCilMethodImpl::parse(const std::vector<uint8_t>& buf, size_t& index, u
   p_MethodBody = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
   p_MethodDeclaration = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Class = " << p_Class << std::endl;
-    std::cerr << "p_MethodBody = " << p_MethodBody << std::endl;
-    std::cerr << "p_MethodDeclaration = " << p_MethodDeclaration << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Class = " << p_Class << std::endl
+    << "p_MethodBody = " << p_MethodBody << std::endl
+    << "p_MethodDeclaration = " << p_MethodDeclaration << std::endl;
 }
 
 void SgAsmCilMethodImpl::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1805,12 +1768,10 @@ void SgAsmCilMethodSemantics::parse(const std::vector<uint8_t>& buf, size_t& ind
   p_Method = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def);
   p_Association = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_semantics);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Semantics = " << p_Semantics << std::endl;
-    std::cerr << "p_Method = " << p_Method << std::endl;
-    std::cerr << "p_Association = " << p_Association << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Semantics = " << p_Semantics << std::endl
+    << "p_Method = " << p_Method << std::endl
+    << "p_Association = " << p_Association << std::endl;
 }
 
 void SgAsmCilMethodSemantics::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1849,11 +1810,9 @@ void SgAsmCilMethodSpec::parse(const std::vector<uint8_t>& buf, size_t& index, u
   p_Method = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
   p_Instantiation = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Method = " << p_Method << std::endl;
-    std::cerr << "p_Instantiation = " << p_Instantiation << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Method = " << p_Method << std::endl
+    << "p_Instantiation = " << p_Instantiation << std::endl;
 }
 
 void SgAsmCilMethodSpec::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1892,14 +1851,12 @@ void SgAsmCilModule::parse(const std::vector<uint8_t>& buf, size_t& index, uint6
   p_Encld = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_guid_heap);
   p_EncBaseId = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_guid_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Generation = " << p_Generation << std::endl;
-    std::cerr << "p_Name = " << p_Name << std::endl;
-    std::cerr << "p_Mvid = " << p_Mvid << std::endl;
-    std::cerr << "p_Encld = " << p_Encld << std::endl;
-    std::cerr << "p_EncBaseId = " << p_EncBaseId << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Generation = " << p_Generation << std::endl
+    << "p_Name = " << p_Name << std::endl
+    << "p_Mvid = " << p_Mvid << std::endl
+    << "p_Encld = " << p_Encld << std::endl
+    << "p_EncBaseId = " << p_EncBaseId << std::endl;
 }
 
 void SgAsmCilModule::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1956,10 +1913,8 @@ void SgAsmCilModuleRef::parse(const std::vector<uint8_t>& buf, size_t& index, ui
 {
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Name = " << p_Name << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Name = " << p_Name << std::endl;
 }
 
 void SgAsmCilModuleRef::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -1987,11 +1942,9 @@ void SgAsmCilNestedClass::parse(const std::vector<uint8_t>& buf, size_t& index, 
   p_NestedClass = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   p_EnclosingClass = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_NestedClass = " << p_NestedClass << std::endl;
-    std::cerr << "p_EnclosingClass = " << p_EnclosingClass << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_NestedClass = " << p_NestedClass << std::endl
+    << "p_EnclosingClass = " << p_EnclosingClass << std::endl;
 }
 
 void SgAsmCilNestedClass::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -2028,12 +1981,10 @@ void SgAsmCilParam::parse(const std::vector<uint8_t>& buf, size_t& index, uint64
   p_Sequence = read16bitValue(buf,index);
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Flags = " << p_Flags << std::endl;
-    std::cerr << "p_Sequence = " << p_Sequence << std::endl;
-    std::cerr << "p_Name = " << p_Name << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Flags = " << p_Flags << std::endl
+    << "p_Sequence = " << p_Sequence << std::endl
+    << "p_Name = " << p_Name << std::endl;
 }
 
 void SgAsmCilParam::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -2067,12 +2018,10 @@ void SgAsmCilProperty::parse(const std::vector<uint8_t>& buf, size_t& index, uin
   p_Name = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_Type = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Flags = " << p_Flags << std::endl;
-    std::cerr << "p_Name = " << p_Name << std::endl;
-    std::cerr << "p_Type = " << p_Type << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Flags = " << p_Flags << std::endl
+    << "p_Name = " << p_Name << std::endl
+    << "p_Type = " << p_Type << std::endl;
 }
 
 void SgAsmCilProperty::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -2112,11 +2061,9 @@ void SgAsmCilPropertyMap::parse(const std::vector<uint8_t>& buf, size_t& index, 
   p_Parent = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def);
   p_PropertyList = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_property);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Parent = " << p_Parent << std::endl;
-    std::cerr << "p_PropertyList = " << p_PropertyList << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Parent = " << p_Parent << std::endl
+    << "p_PropertyList = " << p_PropertyList << std::endl;
 }
 
 void SgAsmCilPropertyMap::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -2151,10 +2098,8 @@ void SgAsmCilStandAloneSig::parse(const std::vector<uint8_t>& buf, size_t& index
 {
   p_Signature = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Signature = " << p_Signature << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Signature = " << p_Signature << std::endl;
 }
 
 void SgAsmCilStandAloneSig::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -2185,15 +2130,13 @@ void SgAsmCilTypeDef::parse(const std::vector<uint8_t>& buf, size_t& index, uint
   p_FieldList = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_field);
   p_MethodList = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Flags = " << p_Flags << std::endl;
-    std::cerr << "p_TypeName = " << p_TypeName << std::endl;
-    std::cerr << "p_TypeNamespace = " << p_TypeNamespace << std::endl;
-    std::cerr << "p_Extends = " << p_Extends << std::endl;
-    std::cerr << "p_FieldList = " << p_FieldList << std::endl;
-    std::cerr << "p_MethodList = " << p_MethodList << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Flags = " << p_Flags << std::endl
+    << "p_TypeName = " << p_TypeName << std::endl
+    << "p_TypeNamespace = " << p_TypeNamespace << std::endl
+    << "p_Extends = " << p_Extends << std::endl
+    << "p_FieldList = " << p_FieldList << std::endl
+    << "p_MethodList = " << p_MethodList << std::endl;
 }
 
 void SgAsmCilTypeDef::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -2262,12 +2205,10 @@ void SgAsmCilTypeRef::parse(const std::vector<uint8_t>& buf, size_t& index, uint
   p_TypeName = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
   p_TypeNamespace = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_ResolutionScope = " << p_ResolutionScope << std::endl;
-    std::cerr << "p_TypeName = " << p_TypeName << std::endl;
-    std::cerr << "p_TypeNamespace = " << p_TypeNamespace << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_ResolutionScope = " << p_ResolutionScope << std::endl
+    << "p_TypeName = " << p_TypeName << std::endl
+    << "p_TypeNamespace = " << p_TypeNamespace << std::endl;
 }
 
 void SgAsmCilTypeRef::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -2313,10 +2254,8 @@ void SgAsmCilTypeSpec::parse(const std::vector<uint8_t>& buf, size_t& index, uin
 {
   p_Signature = readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "p_Signature = " << p_Signature << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "p_Signature = " << p_Signature << std::endl;
 }
 
 void SgAsmCilTypeSpec::unparse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing) const
@@ -2504,7 +2443,7 @@ computePositionInRowVector(uint64_t valid)
     res.push_back(idx);
   }
 
-  //~ std::cerr << ctr << " ctr <? " << numValidBits << std::endl;
+  //~ << ctr << " ctr <? " << numValidBits << std::endl;
   ROSE_ASSERT(ctr < numValidBits);
   return res;
 }
@@ -2596,14 +2535,14 @@ uses4byteIndex( const std::vector<uint32_t>& numberOfRows,
 {
   const size_t   bitsForTableIdentifier = calcTableIdentifierSize(tables);
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "|numberOfRows, posInRowVector, tables| = "
-              << numberOfRows.size() << ", "
-              << posInRowVector.size() << ", "
-              << tables.size()
-              << "  flag = " << flag
-              << "  bitsForTableIdentifier = " << bitsForTableIdentifier
-              << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+      << "|numberOfRows, posInRowVector, tables| = "
+      << numberOfRows.size() << ", "
+      << posInRowVector.size() << ", "
+      << tables.size()
+      << "  flag = " << flag
+      << "  bitsForTableIdentifier = " << bitsForTableIdentifier
+      << std::endl;
 
   const uint32_t maxTableSize = calcMaxTableSize(numberOfRows, posInRowVector, tables);
   const uint32_t TWO_BYTE_MAX = (1 << (16-bitsForTableIdentifier))-1;
@@ -2710,23 +2649,23 @@ parseMetadataTable( SgAsmCilMetadataHeap* parent,
 
   sgnode->set_parent(parent);
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "Build the e_" << tblName << " table; rows = " << rows << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "Build the e_" << tblName << " table; rows = " << rows << std::endl;
 
   res.reserve(rows);
   for (size_t j=0; j < rows; ++j)
   {
-    if (TRACE_CONSTRUCTION)
-      std::cerr << " --- processing row j = " << (j+1) << std::endl;
+    SAWYER_MESG(diag::mlog[diag::TRACE])
+      << " --- processing row j = " << (j+1) << std::endl;
 
     res.push_back(parseAsmCilNode<CilMetadataType>(sgnode,buf,index,sizeFlags));
     
-    if (TRACE_CONSTRUCTION)
-      std::cerr << "DONE: processing row j = " << (j+1) << std::endl;
+    SAWYER_MESG(diag::mlog[diag::TRACE])
+      << "DONE: processing row j = " << (j+1) << std::endl;
   }
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "DONE: Build the e_" << tblName << " table; rows = " << rows << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "DONE: Build the e_" << tblName << " table; rows = " << rows << std::endl;
 
   return sgnode;
 }
@@ -2768,53 +2707,55 @@ void SgAsmCilMetadataHeap::parse(const std::vector<uint8_t>& buf, size_t startOf
   
   //~ for (std::size_t i = 0; i < buf.size(); ++i)
     //~ if (buf[i] == 182) 
-      //~ std::cerr << i << std::endl;
+      //~ << i << std::endl;
 
-  if (TRACE_CONSTRUCTION)
-    printf ("In MetadataTable constructor: buf = 0x%" PRIxPTR ", index = %zu, offset = %" PRIu32 "\n",(uintptr_t)buf.data(),startOfMetaData,ofs);
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "In MetadataTable constructor: buf = 0x" << uintptr_t(buf.data())
+        << ", index = " << startOfMetaData
+        << ", offset = " << ofs
+    << std::endl;
 
   size_t index = startOfMetaData + ofs;
 
-
   p_ReservedAlwaysZero = readExpected(read32bitValue, buf, index, 0, "[ReservedAlwaysZero]");
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "ReservedAlwaysZero = " << traceRep(p_ReservedAlwaysZero) << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "ReservedAlwaysZero = " << traceRep(p_ReservedAlwaysZero) << std::endl;
   p_MajorVersion = read8bitValue(buf,index);
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "MajorVersion = " << traceRep(p_MajorVersion) << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "MajorVersion = " << traceRep(p_MajorVersion) << std::endl;
   p_MinorVersion = read8bitValue(buf,index);
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "MinorVersion = " << traceRep(p_MinorVersion) << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "MinorVersion = " << traceRep(p_MinorVersion) << std::endl;
   p_HeapSizes = read8bitValue(buf,index);
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "HeapSizes = " << traceRep(p_HeapSizes) << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "HeapSizes = " << traceRep(p_HeapSizes) << std::endl;
   p_ReservedAlwaysOne = readExpected(read8bitValue,buf,index,1, "[ReservedAlwaysOne]");
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "ReservedAlwaysOne = " << traceRep(p_ReservedAlwaysOne) << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "ReservedAlwaysOne = " << traceRep(p_ReservedAlwaysOne) << std::endl;
   p_Valid = read64bitValue(buf,index);  std::vector<int8_t> posInRowVector = computePositionInRowVector(get_Valid());
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "Valid = " << traceRep(p_Valid) << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "Valid = " << traceRep(p_Valid) << std::endl;
   p_Sorted = read64bitValue(buf,index);
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "Sorted = " << traceRep(p_Sorted) << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "Sorted = " << traceRep(p_Sorted) << std::endl;
   p_NumberOfRows = readVector(read32bitValue, Rose::BitOps::nSet(get_Valid()), buf, index);
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "NumberOfRows = " << traceRep(p_NumberOfRows) << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "NumberOfRows = " << traceRep(p_NumberOfRows) << std::endl;
   p_DataSizeFlags = computeDataSizeFlags(get_HeapSizes(), posInRowVector, get_NumberOfRows());
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "DataSizeFlags = " << traceRep(p_DataSizeFlags) << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "DataSizeFlags = " << traceRep(p_DataSizeFlags) << std::endl;
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "Build the tables: " << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "Build the tables: " << std::endl;
 
   for (size_t kind = 0; kind < posInRowVector.size(); ++kind)
   {
@@ -2941,9 +2882,10 @@ void SgAsmCilMetadataHeap::parse(const std::vector<uint8_t>& buf, size_t startOf
         p_TypeSpecTable = parseMetadataTable<SgAsmCilTypeSpecTable>(this, buf, index, get_DataSizeFlags(), rows, "TypeSpec");
         break;
       default:
-        std::cerr << "default reached:\n"
-                  << "parsing not implemented for kind = " << kind << asString(SgAsmCilMetadataHeap::TableKind(kind))
-                  << std::endl;
+        diag::mlog[diag::ERROR] 
+              << "default reached:\n"
+              << "parsing not implemented for kind = " << kind << asString(SgAsmCilMetadataHeap::TableKind(kind))
+              << std::endl;
         ROSE_ABORT();
         break;
     }
@@ -3092,9 +3034,10 @@ void SgAsmCilMetadataHeap::unparse(std::vector<uint8_t>& buf, size_t startOfMeta
         unparseMetadataTable(get_TypeSpecTable(), buf, index, get_DataSizeFlags(), rows, "TypeSpec");
         break;
       default:
-        std::cerr << "default reached:\n"
-                  << "unparsing not implemented for kind = " << kind << asString(SgAsmCilMetadataHeap::TableKind(kind))
-                  << std::endl;
+        diag::mlog[diag::ERROR]
+              << "default reached:\n"
+              << "unparsing not implemented for kind = " << kind << asString(SgAsmCilMetadataHeap::TableKind(kind))
+              << std::endl;
         ROSE_ABORT();
         break;
     }
@@ -3126,7 +3069,6 @@ namespace
 void SgAsmCilMetadataHeap::dump(std::ostream& os) const
 {
   os << "  Metadata Stream" << std::endl
-
      << "    ReservedAlwaysZero = " << traceRep(p_ReservedAlwaysZero) << std::endl
      << "    MajorVersion = " << traceRep(p_MajorVersion) << std::endl
      << "    MinorVersion = " << traceRep(p_MinorVersion) << std::endl
@@ -3341,10 +3283,14 @@ SgAsmCilMetadataHeap::get_MetadataNode(std::uint32_t index, TableKind knd) const
       res = get_TypeSpecTable()->get_elements().at(index-1);
       break;
 
-    default: ;
+    default: 
+      diag::mlog[diag::ERROR]
+         << "Unable to decode metadata reference ... " 
+         << "\n    index = " << index << "  knd = " << knd
+         << std::endl;
   }
 
-  ASSERT_not_null(res);
+  // \note if the token cannot be decoded, nullptr is returned. 
   return res;
 }
 
@@ -3374,10 +3320,10 @@ SgAsmCilMetadataHeap::get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind
   const std::vector<std::int8_t> posInRow = computePositionInRowVector(get_Valid());
   const AccessTuple              access   = computeAccessPair(posInRow, get_NumberOfRows(), refcode, knd);
   
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "table: " << asString(knd) << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "table: " << asString(knd) << std::endl;
 
-  //~ std::cerr << "x@" << RangePrinter<std::int8_t>{posInRow} << "."
+  //~ << "x@" << RangePrinter<std::int8_t>{posInRow} << "."
             //~ << RangePrinter<unsigned>{get_NumberOfRows()} << "|" << refcode << "'" << asString(knd)
             //~ << std::endl;
 
@@ -3523,7 +3469,10 @@ disassemble( Rose::BinaryAnalysis::Address base_va,
     if (disasm->architecture()->isUnknown(instr)) {
       // Pad block with noops because something went wrong
       // TODO: don't pad with noops, pad by expanding current unknown instruction
-      mlog[ERROR] << "unknown instruction.. use padding." << std::endl;
+      diag::mlog[diag::ERROR] 
+             << "unknown instruction.. use padding." 
+             << std::endl;
+                  
       updateBodyState(bdyState, SgAsmCilMethodDef::BDY_INVALID_INSTRUCTION);
 
       SgUnsignedCharList rawBytes(1,'\0');
@@ -3551,13 +3500,17 @@ disassemble( Rose::BinaryAnalysis::Address base_va,
         case rb::CilInstructionKind::Cil_endfinally:
           break;
         default:
-          mlog[INFO] << "last instruction in block is not Cil_ret (or like), is 0x" << std::hex << (int) instr->get_anyKind() << std::dec << "\n";
+          SAWYER_MESG(diag::mlog[diag::INFO]) 
+                << "last instruction in block is not Cil_ret (or like), is 0x" 
+                << std::hex << int(instr->get_anyKind()) << std::dec 
+                << std::endl;
       }
     }
   }
 
   if (addr > sz) {
-    mlog[ERROR] << "instruction address exceeds size of instruction block\n";
+    diag::mlog[diag::ERROR] 
+        << "instruction address exceeds size of instruction block\n";
     
     updateBodyState(bdyState, SgAsmCilMethodDef::BDY_INVALID_INSTRUCTION_LENGTH);    
   }
@@ -3856,8 +3809,9 @@ void decodeMetadata(Rose::BinaryAnalysis::Address base_va, SgAsmCilMetadataHeap*
   
   if (mtbl == nullptr)
   {
-    mlog[ERROR] << "unable to find methods in the CIL assembly." 
-                  << std::endl; 
+    diag::mlog[diag::ERROR] 
+          << "unable to find methods in the CIL assembly." 
+          << std::endl; 
     return;                  
   }
   
@@ -3884,9 +3838,10 @@ void decodeMetadata(Rose::BinaryAnalysis::Address base_va, SgAsmCilMetadataHeap*
     
     if (nread != 1)
     {
-      mlog[ERROR] << "unable to parse method " << methodctr 
-                  << "\n  unable to read header byte."
-                  << std::endl; 
+      diag::mlog[diag::ERROR] 
+            << "unable to parse method " << methodctr 
+            << "\n  unable to read header byte."
+            << std::endl; 
 
       m->set_bodyState(SgAsmCilMethodDef::BDY_INVALID_HEADER_BYTE);
       continue;
@@ -3897,12 +3852,13 @@ void decodeMetadata(Rose::BinaryAnalysis::Address base_va, SgAsmCilMetadataHeap*
     
     if ((isTiny | isFat) == 0)
     {
-      mlog[ERROR] << "unable to parse method " << methodctr 
-                  << "\n  inconsistent tiny/fat header flags; @rva " << reinterpret_cast<void*>(rva)
-                  << "\n  formatflag = " << reinterpret_cast<void*>((mh0 & MethodHeader::FORMAT)) << " != "  
-                    << reinterpret_cast<void*>(MethodHeader::TINY) << "[tiny] or " 
-                    << reinterpret_cast<void*>(MethodHeader::FAT) << "[fat]" 
-                  << std::endl;
+      diag::mlog[diag::ERROR] 
+              << "unable to parse method " << methodctr 
+              << "\n  inconsistent tiny/fat header flags; @rva " << reinterpret_cast<void*>(rva)
+              << "\n  formatflag = " << reinterpret_cast<void*>((mh0 & MethodHeader::FORMAT)) << " != "  
+                << reinterpret_cast<void*>(MethodHeader::TINY) << "[tiny] or " 
+                << reinterpret_cast<void*>(MethodHeader::FAT) << "[fat]" 
+              << std::endl;
                   
       m->set_bodyState(SgAsmCilMethodDef::BDY_INVALID_HEADER_KIND);
       continue;            
@@ -3934,10 +3890,11 @@ void decodeMetadata(Rose::BinaryAnalysis::Address base_va, SgAsmCilMetadataHeap*
     
     if (!readCorrectly)
     {
-      mlog[ERROR] << "unable to read body of method " << methodctr
-                  << "\n  expected to read " << codeLen << " bytes"
-                  << "\n  read " << nreadCode << " bytes"
-                  << std::endl;
+      diag::mlog[diag::ERROR] 
+              << "unable to read body of method " << methodctr
+              << "\n  expected to read " << codeLen << " bytes"
+              << "\n  read " << nreadCode << " bytes"
+              << std::endl;
       
       // prevent decoding empty instructions.
       code.resize(nreadCode);
@@ -3968,8 +3925,8 @@ void decodeMetadata(Rose::BinaryAnalysis::Address base_va, SgAsmCilMetadataHeap*
       }
 
       case CodeTypeMask::runtime :
-        mlog[ERROR] << "Code is runtime provided. Please share specimen with ROSE developers." << code.size()
-                    << std::endl;
+        diag::mlog[diag::ERROR] << "Code is runtime provided. Please share specimen with ROSE developers." << code.size()
+                                << std::endl;
         bodyState = SgAsmCilMethodDef::BDY_RUNTIME_SUPPORTED;
         // looking for sample code
         break;
@@ -3990,7 +3947,7 @@ void decodeMetadata(Rose::BinaryAnalysis::Address base_va, SgAsmCilMetadataHeap*
     Rose::BinaryAnalysis::Address sectionRva = base_va + codeRVA + codeLen;
 
   /*
-    std::cerr << "################################## "
+    << "################################## "
               << m->get_Name_string()
               << " more: " << hasMoreSections
               << " tiny: " << isTiny
@@ -4192,12 +4149,11 @@ void SgAsmCilMetadataRoot::parse()
   const Rose::BinaryAnalysis::Address base_va = clih->get_baseVa();
   const Rose::BinaryAnalysis::Address rva_offset = clih->get_rvaOffset(rva);
 
-  if (TRACE_CONSTRUCTION)
-  {
-    std::cerr << "------------------------SgAsmCilMetadataRoot::parse-----------------------------\n";
-    std::cerr << "    rva: " << rva << " size: " << size << std::endl;
-    std::cerr << "    base_va: " << base_va << " rva_offset: " << rva_offset << std::endl;
-  }
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "------------------------SgAsmCilMetadataRoot::parse-----------------------------"
+    << "\n    rva: " << rva << " size: " << size
+    << "\n    base_va: " << base_va << " rva_offset: " << rva_offset 
+    << std::endl;
 
   /* Read the Signature via loader map. */
   // Note: probably want to allocate a larger buffer
@@ -4246,42 +4202,41 @@ void SgAsmCilMetadataRoot::parse(const std::vector<uint8_t>& buf, size_t index)
 {
   size_t start_of_MetadataRoot = index;
 
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "Initialize the elements of the data structure" << std::endl;
-
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "Initialize the elements of the data structure" << std::endl;
 
   p_Signature = readExpected(read32bitValue, buf, index, MAGIC_SIGNATURE, "[MAGIC_SIGNATURE]");
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "Signature = " << p_Signature << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "Signature = " << p_Signature << std::endl;
   p_MajorVersion = read16bitValue(buf, index);
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "MajorVersion = " << p_MajorVersion << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "MajorVersion = " << p_MajorVersion << std::endl;
   p_MinorVersion = read16bitValue(buf, index);
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "MinorVersion = " << p_MinorVersion << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "MinorVersion = " << p_MinorVersion << std::endl;
   p_Reserved0 = readExpected(read32bitValue, buf, index, 0, "[Reserved0]");
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "Reserved0 = " << p_Reserved0 << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "Reserved0 = " << p_Reserved0 << std::endl;
   p_Length = read32bitValue(buf,index);
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "Length = " << p_Length << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "Length = " << p_Length << std::endl;
   p_Version = readUtf8String(buf, index, get_Length());
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "Version = " << p_Version << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "Version = " << p_Version << std::endl;
   p_VersionPadding = readStringPadding(buf, index, p_Version.size(), get_Length());
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "VersionPadding = " << p_VersionPadding << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "VersionPadding = " << p_VersionPadding << std::endl;
   p_Flags = readExpected(read16bitValue, buf, index, 0, "[Flags]");
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "Flags = " << p_Flags << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "Flags = " << p_Flags << std::endl;
   p_NumberOfStreams = read16bitValue(buf, index);
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "NumberOfStreams = " << p_NumberOfStreams << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "NumberOfStreams = " << p_NumberOfStreams << std::endl;
 
 
   p_Streams = parseStreams(this, buf, index, start_of_MetadataRoot, get_NumberOfStreams());
-  if (TRACE_CONSTRUCTION)
-    std::cerr << "Streams has " << p_Streams.size() << " elements." << std::endl;
+  SAWYER_MESG(diag::mlog[diag::TRACE])
+    << "Streams has " << p_Streams.size() << " elements." << std::endl;
 }
 
 void SgAsmCilMetadataRoot::unparse(std::ostream& os) const
