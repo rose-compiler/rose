@@ -9,8 +9,6 @@
 #define Sawyer_Optional_H
 
 #include <Sawyer/Sawyer.h>
-#include <boost/type_traits/aligned_storage.hpp>
-#include <boost/type_traits/type_with_alignment.hpp>
 
 #include <stdexcept>
 
@@ -54,17 +52,11 @@ public:
  *  The stored value type (@ref Value) cannot be a reference type. */
 template<typename T>
 class Optional {
-
-    // Done as a union to avoid aliasing warnings from GCC
-    union SAWYER_MAY_ALIAS MayAlias {
-        unsigned char data_[sizeof(T)];
-        BOOST_DEDUCED_TYPENAME boost::type_with_alignment<boost::alignment_of<T>::value >::type aligner_;
-    } mayAlias_;
-
+    alignas(alignof(T)) unsigned char data_[sizeof(T)]; // storage for the value
     bool isEmpty_;
 
-    void *address() { return &mayAlias_; }
-    const void*address() const { return &mayAlias_; }
+    void *address() { return data_; }
+    const void*address() const { return &data_; }
 
 #ifdef SAWYER_HAVE_BOOST_SERIALIZATION
 private:
