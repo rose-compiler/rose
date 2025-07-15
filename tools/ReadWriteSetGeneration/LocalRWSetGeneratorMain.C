@@ -7,8 +7,6 @@
 #include <sstream>
 // 03/20/2023): Adding boost filesystem usage:
 #include <boost/filesystem.hpp>
-#include <boost/filesystem/convenience.hpp>
-
 
 static const char *purpose = "Make a JSON file giving the (non-recursive) read/write sets for each function.";
 static const char *description =

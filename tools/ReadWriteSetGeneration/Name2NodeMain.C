@@ -11,7 +11,6 @@
 #include <unordered_set>
 // 03/20/2023): Adding boost filesystem usage:
 #include <boost/filesystem.hpp>
-#include <boost/filesystem/convenience.hpp>
 
 
 static const char *purpose = "Demonstrate the ability to take names from a RWSet JSON file and lookup the nodes.";
