@@ -2390,7 +2390,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
             // DQ (6/3/2017): Added more debugging info.
                printf ("##### array_type = %p array_type->get_index() = %p = %s \n",array_type,array_type->get_index(),array_type->get_index() != NULL ? array_type->get_index()->class_name().c_str() : "null");
 #endif
-               if (info.useRestrictKeywordInsideArrayBrackets())
+               if ( info.useRestrictKeywordInsideArrayBrackets() && SageInterface::is_C_language() )
                   {
                     curprint(unparseRestrictKeyword());
                   }
