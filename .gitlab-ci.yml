@@ -427,3 +427,6 @@ Coverage-Analysis-Combine:
       - job: Coverage-Analysis
       - job: Coverage-Analysis-Ada
       - job: Coverage-Analysis-Libadalang
+
+Blame-Warnings:
+    extends: .release-base
