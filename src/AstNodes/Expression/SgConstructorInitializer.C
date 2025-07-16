@@ -68,7 +68,6 @@ SgConstructorInitializer::post_construction_initialization()
          // PP (4/17/21) : Added exception for Ada
          //   In Ada, SgConstructorInitializer nodes can be used with
          //   typedef types and built in types (e.g., x := new Integer'(2); )
-          const bool isAdaCode = SageInterface::is_Ada_language();
 
        // This can be NULL for the case of an undeclared constructor.
        // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
@@ -78,7 +77,10 @@ SgConstructorInitializer::post_construction_initialization()
 
        // DQ (1/19/2019): This is failing in the copyAST tests for test2005_24.C
 
-          ROSE_ASSERT( isAdaCode || (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
+          ROSE_ASSERT(SageInterface::is_Ada_language() ||
+                      (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) ||
+                       isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) ||
+                      (p_associated_class_unknown == true));
         }
 
   // DQ (11/15/2006): avoid setting newArgs this late in the process.
