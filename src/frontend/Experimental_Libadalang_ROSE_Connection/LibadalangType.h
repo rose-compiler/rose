@@ -97,7 +97,7 @@ createExHandlerType(ada_base_entity* lal_exception_choices, AstContext ctx);
 
 /// Given the expr portion of an ada_number_decl, returns the type of said decl
 SgType*
-getNumberDeclType(ada_base_entity* lal_element);
+getNumberDeclType(ada_base_entity* lal_element, AstContext ctx);
 
 /// returns a ROSE node representing the type indicated by \p lal_expr
 SgNode&

@@ -2890,6 +2890,159 @@ namespace {
   }
 } //end unnamed namespace
 
+//Iterate over an ada_generic_<package/subp>_decl node to create a new node for the instantiated decl
+//  We need to do this b/c lal does not create nodes for compiler-generated sections, unlike ASIS.
+//  So any references to instantiated packages/subps in the lal tree point back to the generic package/subp,
+//  which causes "invalid prefix in selected component" errors in the generated code.
+void createInstantiationDecl(ada_base_entity* lal_element, std::string ident, AstContext ctx){
+  //Get the kind of this node
+  ada_node_kind_enum kind = ada_node_kind(lal_element);
+
+  switch(kind)
+  {
+    case ada_generic_subp_decl:
+    {
+      logKind("ada_generic_subp_decl", kind);
+      //Treat this node as an ada_subp_decl
+
+      //Get the subp spec node & whether this decl is overriding another
+      ada_base_entity subp_spec;
+      ada_base_entity lal_overriding;
+      ada_generic_subp_decl_f_subp_decl(lal_element, &subp_spec);
+      ada_generic_subp_internal_f_subp_spec(&subp_spec, &subp_spec);
+      ada_classic_subp_decl_f_overriding(lal_element, &lal_overriding);
+
+      //Determine if this is a function or procedure
+      ada_base_entity subp_kind;
+      ada_subp_spec_f_subp_kind(&subp_spec, &subp_kind);
+      ada_node_kind_enum subp_kind_kind = ada_node_kind(&subp_kind);
+
+      //Get the params for if this is a function
+      ada_base_entity subp_params;
+      ada_subp_spec_f_subp_params(&subp_spec, &subp_params);
+
+      //Get the return type for if this is a function
+      ada_base_entity subp_returns;
+      ada_subp_spec_f_subp_returns(&subp_spec, &subp_returns);
+
+
+      ada_node_kind_enum lal_overriding_kind = ada_node_kind(&lal_overriding);
+
+      const bool              isFunc = subp_kind_kind == ada_subp_kind_function;
+      const bool          overriding = (lal_overriding_kind == ada_overriding_overriding); //TODO ada_overriding_unspecified might count?
+      SgScopeStatement* parent_scope = &ctx.scope();
+      SgType&                rettype = isFunc ? getDeclType(&subp_returns, ctx)
+                                                : mkTypeVoid();
+
+      const std::string subp_type_report = isFunc ? "function instantiation " : "procedure instantiation ";
+      logTrace() << subp_type_report << ident << std::endl;
+
+      SgScopeStatement&      logicalScope = SG_DEREF(parent_scope);
+      const bool             renamingAsBody = false; //definedByRenamingID(decl.Corresponding_Body, ctx); //TODO Can lal do this?
+      ParameterCompletion    complete{&subp_params, ctx};
+      SgFunctionDeclaration& sgnode  = renamingAsBody
+                                          ? mkAdaFunctionRenamingDecl(ident, logicalScope, rettype, std::move(complete))
+                                          : mkProcedureDecl_nondef(ident, logicalScope, rettype, std::move(complete))
+                                          ;
+
+      setAbstractModifier(sgnode, lal_element);
+      setOverride(sgnode, overriding);
+
+      //There is no point to recording this node by hash, b/c we'd have to change the hash to be different
+      //  from the original generic decl's hash, and no nodes in the lal tree would refer to the changed hash
+      /*int hash = hash_node(lal_element);
+      int defining_name_hash = hash_node(&lal_defining_name);
+      recordNode(libadalangDecls(), hash, sgnode);
+      recordNode(libadalangDecls(), defining_name_hash, sgnode);*/
+
+      privatize(sgnode, false);
+      //This won't point to a "real" location, but that's okay since it will be marked as compiler-generated
+      attachSourceLocation(sgnode, lal_element, ctx);
+      ctx.appendStatement(sgnode);
+
+      break;
+    }
+    case ada_generic_package_decl:
+    {
+      logKind("ada_generic_package_decl", kind);
+      //Treat this node as an ada_package_decl
+
+      SgScopeStatement*     parent_scope = &ctx.scope();
+
+      SgAdaPackageSpecDecl& sgnode       = mkAdaPackageSpecDecl(ident, SG_DEREF(parent_scope));
+      SgAdaPackageSpec&     pkgspec      = SG_DEREF(sgnode.get_definition());
+
+      logTrace() << "package instantiation " << ident
+                 << std::endl;
+
+      //There is no point to recording this node by hash, b/c we'd have to change the hash to be different
+      //  from the original generic decl's hash, and no nodes in the lal tree would refer to the changed hash
+      /*int hash = hash_node(&lal_defining_name);
+      int hash0 = hash_node(lal_element);
+      recordNode(libadalangDecls(), hash, sgnode);
+      recordNode(libadalangDecls(), hash0, sgnode);*/
+
+      privatize(sgnode, false);
+      //~ attachSourceLocation(pkgspec, lal_element, ctx);
+      //This won't point to a "real" location, but that's okay since it will be marked as compiler-generated
+      attachSourceLocation(sgnode, lal_element, ctx);
+      ctx.appendStatement(sgnode);
+
+
+      //Get the package internal
+      ada_base_entity lal_package_internal;
+      ada_generic_package_decl_f_package_decl(lal_element, &lal_package_internal);
+
+      //TODO: Calling handleElement on the same lal node twice will produce the same hash & overwrite the first record in the maps,
+      //  which I thought would be a big problem. This hasn't caused any issues in any example I've run, though. Not sure why.
+
+      // visible items
+      {
+        ada_base_entity public_part;
+        ada_base_package_decl_f_public_part(&lal_package_internal, &public_part);
+        ada_declarative_part_f_decls(&public_part, &public_part);
+
+        if(!ada_node_is_null(&public_part)){
+          int range = ada_node_children_count(&public_part);
+          for(int i = 0; i < range; ++i){
+            ada_base_entity lal_child;
+            if(ada_node_child(&public_part, i, &lal_child) != 0){
+              handleElement(&lal_child, ctx.scope(pkgspec));
+            }
+          }
+        }
+      }
+
+      // private items
+      {
+        ada_base_entity private_part;
+        ada_base_package_decl_f_private_part(&lal_package_internal, &private_part);
+        ada_declarative_part_f_decls(&private_part, &private_part);
+
+        if(!ada_node_is_null(&private_part)){
+          int range = ada_node_children_count(&private_part);
+          for(int i = 0; i < range; ++i){
+            ada_base_entity lal_child;
+            if(ada_node_child(&private_part, i, &lal_child) != 0){
+              handleElement(&lal_child, ctx.scope(pkgspec), true /* private items */);
+            }
+          }
+
+          // a package may contain an empty private section
+          pkgspec.set_hasPrivate(true);
+        }
+      }
+
+      break;
+    }
+    default:
+    {
+      logError() << "Unsupported node kind " << kind << " in createInstantiationDecl!\n";
+      break;
+    }
+  }
+}
+
 void handlePragma(ada_base_entity* lal_element, SgStatement* stmtOpt, AstContext ctx){
   ctx.appendStatement(createPragma_common(lal_element, stmtOpt, ctx));
 }
@@ -2939,7 +3092,6 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         int hash = hash_node(&lal_defining_name);
         recordNode(libadalangDecls(), hash, sgnode);
 
-        // \todo check w/ AS that adding extra hashlinks is OK.
         int hash0 = hash_node(lal_element);
         recordNode(libadalangDecls(), hash0, sgnode);
 
@@ -3544,7 +3696,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_expr;
         ada_number_decl_f_expr(lal_element, &lal_expr);
 
-        SgType* expected_type = getNumberDeclType(&lal_expr);
+        SgType* expected_type = getNumberDeclType(&lal_expr, ctx);
 
         assocdecl = &handleNumberDecl(lal_element, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), SG_DEREF(expected_type));
 
@@ -4074,21 +4226,21 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         int           hash = hash_node(&lal_defining_name);
 
         //Get the decl we are instantiating off of
-        ada_base_entity lal_generic_decl;
+        ada_base_entity lal_generic_decl, lal_generic_decl_name;
         ada_generic_instantiation_p_designated_generic_decl(lal_element, &lal_generic_decl);
         //Get the kind of the decl, and use that to get its defining_name
         ada_node_kind_enum lal_generic_decl_kind = ada_node_kind(&lal_generic_decl);
         if(lal_generic_decl_kind == ada_generic_package_decl){
-          ada_generic_package_decl_f_package_decl(&lal_generic_decl, &lal_generic_decl);
-          ada_base_package_decl_f_package_name(&lal_generic_decl, &lal_generic_decl);
+          ada_generic_package_decl_f_package_decl(&lal_generic_decl, &lal_generic_decl_name);
+          ada_base_package_decl_f_package_name(&lal_generic_decl_name, &lal_generic_decl_name);
         } else if(lal_generic_decl_kind == ada_generic_subp_decl){
-          ada_generic_subp_decl_f_subp_decl(&lal_generic_decl, &lal_generic_decl);
-          ada_generic_subp_internal_f_subp_spec(&lal_generic_decl, &lal_generic_decl);
-          ada_subp_spec_f_subp_name(&lal_generic_decl, &lal_generic_decl);
+          ada_generic_subp_decl_f_subp_decl(&lal_generic_decl, &lal_generic_decl_name);
+          ada_generic_subp_internal_f_subp_spec(&lal_generic_decl_name, &lal_generic_decl_name);
+          ada_subp_spec_f_subp_name(&lal_generic_decl_name, &lal_generic_decl_name);
         } else {
           logError() << "Unhandled base decl kind: " << lal_generic_decl_kind << "!\n";
         }
-        int base_decl_hash = hash_node(&lal_generic_decl);
+        int base_decl_hash = hash_node(&lal_generic_decl_name);
         SgDeclarationStatement*   basedecl = findFirst(libadalangDecls(), base_decl_hash);
 
         //Get the params
@@ -4132,10 +4284,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //LAL_REP_ISSUE: Libadalang's first_corresponding_decl points to the generic,
         //  whereas ASIS' Corresponding_Declaration points to a compiler generated instance (which Libadalang does not have).
         //  Not sure how to translate this to Libadalang.
-        /*// PP (4/1/22): fill in the declaration
-        handleDeclaration( retrieveElem(elemMap(), decl.Corresponding_Declaration),
-                           ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope()))
-                         );*/
+        // PP (4/1/22): fill in the declaration
+        createInstantiationDecl(&lal_generic_decl, ident, ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope())));
 
         // mark whole subtree under sgnode.get_instantiatedScope() as instantiated
         si::Ada::setSourcePositionInSubtreeToCompilerGenerated(sgnode.get_instantiatedScope());

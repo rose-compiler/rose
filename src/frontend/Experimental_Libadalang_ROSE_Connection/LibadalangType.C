@@ -1991,7 +1991,7 @@ SgType& createExHandlerType(ada_base_entity* lal_exception_choices, AstContext c
 
 /// Get the type for a constant declaration
 /// This function can call itself recursively
-SgType* getNumberDeclType(ada_base_entity* lal_element){
+SgType* getNumberDeclType(ada_base_entity* lal_element, AstContext ctx){
   ada_base_entity lal_expr = *lal_element;
   ada_node_kind_enum lal_expr_kind = ada_node_kind(&lal_expr);
   switch(lal_expr_kind){
@@ -2008,7 +2008,7 @@ SgType* getNumberDeclType(ada_base_entity* lal_element){
           ada_bin_op_f_left(&lal_expr, &lal_expr);
           lal_expr_kind = ada_node_kind(&lal_expr);
         }
-        return getNumberDeclType(&lal_expr);
+        return getNumberDeclType(&lal_expr, ctx);
         break;
       }
     case ada_dotted_name:
@@ -2016,7 +2016,7 @@ SgType* getNumberDeclType(ada_base_entity* lal_element){
         //Get the suffix
         ada_base_entity lal_suffix;
         ada_dotted_name_f_suffix(&lal_expr, &lal_suffix);
-        return getNumberDeclType(&lal_suffix);
+        return getNumberDeclType(&lal_suffix, ctx);
         break;
       }
     case ada_un_op:
@@ -2024,7 +2024,7 @@ SgType* getNumberDeclType(ada_base_entity* lal_element){
         //Get the expr
         ada_base_entity lal_un_expr;
         ada_un_op_f_expr(&lal_expr, &lal_un_expr);
-        return getNumberDeclType(&lal_un_expr);
+        return getNumberDeclType(&lal_un_expr, ctx);
         break;
       }
     case ada_identifier:
@@ -2034,11 +2034,17 @@ SgType* getNumberDeclType(ada_base_entity* lal_element){
         lal_expr_kind = ada_node_kind(&lal_first_decl);
         if(lal_expr_kind == ada_number_decl){
           ada_number_decl_f_expr(&lal_first_decl, &lal_first_decl);
-          return getNumberDeclType(&lal_first_decl);
+          return getNumberDeclType(&lal_first_decl, ctx);
         } else {
           logWarn() << "Constant references unhandled kind " << lal_expr_kind << std::endl;
           return &mkTypeUnknown();
         }
+        break;
+      }
+    case ada_attribute_ref:
+      {
+        SgAdaAttributeExp& attributeType = getAttributeExpr(lal_element, ctx);
+        return attributeType.get_attrType();
         break;
       }
     default:

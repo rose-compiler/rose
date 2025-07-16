@@ -103,6 +103,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
     "max_alignment_for_allocation", // 13.11.1(4), K(144)
     "max_integer_size",             // GNAT-specific attribute
     "max_size_in_storage_elements", // 13.11.1(3), K(145)
+    "maximum_alignment",            // GNAT-specific attribute
     "min",                          // 3.5(16), K(147)
     "mod",                          // 3.5.4(16), K(150)
     "model",                        // A.5.3(68), G.2.2(7), K(151)
@@ -111,6 +112,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
     "model_mantissa",               // A.5.3(64), G.2.2(3), K(159)
     "model_small",                  // A.5.3(67), K(161)
     "modulus",                      // 3.5.4(17), K(163)
+    "object_size",                  // GNAT-specific attribute
     "old",                          // 6.1.1(26)
     "output",                       // 13.13.2(19), 13.13.2(29), K(165), K(169)
     "overlaps_storage",             // 13.3(73), K(172)
@@ -151,6 +153,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
     "valid",                        // 13.9.2(3), H(6), K(262)
     "value",                        // 3.5(52), K(264)
     "version",                      // E.3(3), K(268)
+    "wchar_t_size",                 // GNAT-specific attribute
     "wide_image",                   // 3.5(28), K(270)
     "wide_value",                   // 3.5(40), K(274)
     "wide_wide_image",              // 3.5(27), K(277)
