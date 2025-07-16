@@ -1024,7 +1024,7 @@ void
 SgNode::set_isModified ( bool isModified)
    {
   // DQ (4/14/2015): Detect if this is called from a NULL pointer.
-     ASSERT_not_null(this);
+     ASSERT_this();
 
 #if 0
   // DQ (6/4/2019): Use this to debug the outlining to seperate file mechanism (remove some spew by ignoring some IR nodes).
@@ -1104,7 +1104,7 @@ bool
 SgNode::get_isModified () const
    {
   // DQ (4/14/2015): Detect if this is called from a NULL pointer.
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      return p_isModified;
    }
@@ -1114,7 +1114,7 @@ void
 SgNode::set_containsTransformation ( bool containsTransformation)
    {
   // DQ (4/14/2015): Detect if this is called from a NULL pointer.
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      p_containsTransformation = containsTransformation;
    }
@@ -1123,7 +1123,7 @@ SgNode::set_containsTransformation ( bool containsTransformation)
 bool
 SgNode::get_containsTransformation () const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      return p_containsTransformation;
    }
@@ -1134,7 +1134,7 @@ SgNode::get_isVisited () const
    {
   // The p_isVisited flag has been removed, it is an error to call this function.
 
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      printf ("Error: The p_isVisited flag has been removed, it is an error to call this function (get_isVisited). \n");
      ROSE_ASSERT(false);
@@ -1146,7 +1146,7 @@ void
 SgNode::set_isVisited ( bool isVisited )
    {
   // The p_isVisited flag has been removed, it is an error to call this function.
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      printf ("Error: The p_isVisited flag has been removed, it is an error to call this function (set_isVisited). \n");
      ROSE_ASSERT(false);
@@ -1163,7 +1163,7 @@ SgNode::set_parent ( SgNode* parent )
    {
   // ROSE_ASSERT (parent != NULL);  // QY: should allow setting parent to NULL when detaching SgNodes
   // DQ (9/24/2004): Enforce this simple rule!
-     ASSERT_not_null(this);
+     ASSERT_this();
      ROSE_ASSERT(this != parent);
 
 #if 0
@@ -1298,7 +1298,7 @@ SgNode::set_parent ( SgNode* parent )
 SgNode*
 SgNode::get_parent () const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      SgNode* returnNode = p_parent;
 
@@ -1664,14 +1664,14 @@ operator<< ( std::ostream & os, const struct stat & sb )
 VirtualCFG::CFGNode
 SgNode::cfgForBeginning()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return VirtualCFG::CFGNode(this, 0);
    }
 
 VirtualCFG::CFGNode
 SgNode::cfgForEnd()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
    }
 

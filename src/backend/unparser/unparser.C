@@ -1508,7 +1508,7 @@ unparseDeclarationToString ( SgDeclarationStatement* declaration, bool unparseAs
   //        d) template declarations
   //        e) variable definition???
 
-  // ASSERT_not_null(this);
+  // ASSERT_this();
      ASSERT_not_null( declaration);
 
 #if 0

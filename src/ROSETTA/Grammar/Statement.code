@@ -4593,7 +4593,7 @@ SgStatement::replace_expression(SgExpression * original_expression, SgExpression
 SgScopeStatement*
 SgStatement::get_scope(void) const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
   // This is a function called after the parents have been set.  It is not called by the
   // EDG/SAGE interface and is only called after the SAGE AST has been built and the parent

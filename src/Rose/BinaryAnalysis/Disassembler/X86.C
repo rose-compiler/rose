@@ -3306,7 +3306,7 @@ X86::decodeOpcode0F(State &state) const
         case 0x37:
             return makeInstruction(state, x86_getsec);
         case 0x38:
-            decodeOpcode0F38(state); /*SSSE3*/
+            return decodeOpcode0F38(state); /*SSSE3*/
         case 0x39:
             throw ExceptionX86("bad opcode 0x0f39", state);
         case 0x3A: {

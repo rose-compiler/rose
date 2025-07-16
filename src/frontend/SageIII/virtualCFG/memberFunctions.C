@@ -3375,7 +3375,7 @@ SgExpression::cfgIsIndexInteresting(unsigned int idx) const {
 
 unsigned int
 SgExpression::cfgFindChildIndex(SgNode* n) {
-   ASSERT_not_null(this);
+   ASSERT_this();
 
    if (isSgBoolValExp(this) != nullptr)
       {
@@ -4068,7 +4068,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
   }
 
   std::vector<CFGEdge> SgFunctionCallExp::cfgOutEdges(unsigned int idx) {
-    ASSERT_not_null(this);
+    ASSERT_this();
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(CFGNode(this, idx), this->get_function()->cfgForBeginning(), result); break;
@@ -4093,7 +4093,7 @@ SgPseudoDestructorRefExp::cfgInEdges(unsigned int idx)
   }
 
   std::vector<CFGEdge> SgFunctionCallExp::cfgInEdges(unsigned int idx) {
-    ASSERT_not_null(this);
+    ASSERT_this();
     std::vector<CFGEdge> result;
     switch (idx) {
       case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
@@ -4805,7 +4805,7 @@ std::vector<CFGEdge> SgCtorInitializerList::cfgOutEdges(unsigned int idx) {
 
 std::vector<CFGEdge> SgCtorInitializerList::cfgInEdges(unsigned int idx) {
      std::vector<CFGEdge> result;
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      if (idx == 0) {
        makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);

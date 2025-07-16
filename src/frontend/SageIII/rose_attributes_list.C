@@ -55,7 +55,7 @@ PreprocessingInfo::rose_macro_call::rose_macro_call()
 unsigned int PreprocessingInfo::packed_size () const
    {
   // This function computes the size of the packed representation of this classes data members.
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      unsigned int packedSize = sizeof (file_info) +
   /* string size and string */ sizeof (unsigned int) + internalString.size() +
@@ -82,7 +82,7 @@ unsigned int PreprocessingInfo::packed_size () const
 // JH (01/03/2006) This pack methods might cause memory leaks. Think of deleting them after stored to file ...
 char* PreprocessingInfo::packed()  const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      const char* saveString  = internalString.c_str();
      unsigned int stringSize = internalString.size();
 
@@ -111,7 +111,7 @@ char* PreprocessingInfo::packed()  const
 // JH (01/03/2006) This unpack method works complementary to packed ...
 void PreprocessingInfo::unpacked( char* storePointer )
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
   // DQ (2/28/2010): But jump over the file_info data member so that all ther other data members will be unpacked properly.
      storePointer += sizeof(file_info);
@@ -441,7 +441,7 @@ PreprocessingInfo::PreprocessingInfo(const PreprocessingInfo & prepInfo)
 
 PreprocessingInfo::~PreprocessingInfo()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
   // Reset these values so that they are not set to zero (a valid value) if a PreprocessingInfo object is reused
      delete file_info;
@@ -457,7 +457,7 @@ PreprocessingInfo::~PreprocessingInfo()
 int
 PreprocessingInfo::getColumnNumberOfEndOfString() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      int col = 1;
      int i   = 0;
 
@@ -493,7 +493,7 @@ PreprocessingInfo::DirectiveType
 PreprocessingInfo::getTypeOfDirective () const
    {
   // Access function for the type of directive
-     ASSERT_not_null(this);
+     ASSERT_this();
      return whatSortOfDirective;
    }
 
@@ -501,7 +501,7 @@ void
 PreprocessingInfo::setTypeOfDirective (PreprocessingInfo::DirectiveType dt)
    {
   // Access function for the type of directive
-     ASSERT_not_null(this);
+     ASSERT_this();
      whatSortOfDirective = dt;
    }
 
@@ -619,7 +619,7 @@ PreprocessingInfo::directiveTypeName ( const DirectiveType & directive )
 int
 PreprocessingInfo::getLineNumber() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      ASSERT_not_null(file_info);
      return file_info->get_line();
    }
@@ -627,7 +627,7 @@ PreprocessingInfo::getLineNumber() const
 int
 PreprocessingInfo::getColumnNumber() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      ASSERT_not_null(file_info);
      return file_info->get_col();
    }
@@ -638,7 +638,7 @@ PreprocessingInfo::getColumnNumber() const
 std::string
 PreprocessingInfo::getFilename() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      ASSERT_not_null(file_info);
      return file_info->get_filenameString();
    }
@@ -648,7 +648,7 @@ PreprocessingInfo::getFilename() const
 int
 PreprocessingInfo::getFileId() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      ASSERT_not_null(file_info);
      return file_info->get_file_id();
    }
@@ -656,21 +656,21 @@ PreprocessingInfo::getFileId() const
 string
 PreprocessingInfo::getString() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return internalString;
    }
 
 void
 PreprocessingInfo::setString ( const std::string & s )
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      internalString = s;
    }
 
 int
 PreprocessingInfo::getNumberOfLines() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      int line = 0;
      int i = 0;
      while (internalString[i] != '\0')
@@ -694,7 +694,7 @@ PreprocessingInfo::display (const string & label) const
    {
      printf ("\n");
      printf ("Inside of PreprocessingInfo display(%s): \n",label.c_str());
-     ASSERT_not_null(this);
+     ASSERT_this();
      file_info->display(label);
      printf ("     numberOfLines  = %d \n",numberOfLines);
      printf ("     relativePosition = %s \n",relativePositionName(relativePosition).c_str());
@@ -713,28 +713,28 @@ PreprocessingInfo::relativePositionName (const RelativePositionType & position)
 PreprocessingInfo::RelativePositionType
 PreprocessingInfo::getRelativePosition(void) const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return relativePosition;
    }
 
 void
 PreprocessingInfo::setRelativePosition( RelativePositionType relPos )
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      relativePosition = relPos;
    }
 
 int
 PreprocessingInfo::getStringLength(void) const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return internalString.length();
    }
 
 Sg_File_Info*
 PreprocessingInfo::get_file_info() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      ASSERT_not_null(file_info);
      return file_info;
    }
@@ -742,7 +742,7 @@ PreprocessingInfo::get_file_info() const
 void
 PreprocessingInfo::set_file_info( Sg_File_Info* info )
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      file_info = info;
    }
 
@@ -1027,21 +1027,21 @@ PreprocessingInfo::isSelfReferential()
 bool
 PreprocessingInfo::isTransformation() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return p_isTransformation;
    }
 
 void
 PreprocessingInfo::setAsTransformation()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      p_isTransformation = true;
    }
 
 void
 PreprocessingInfo::unsetAsTransformation()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      p_isTransformation = false;
    }
 
@@ -1062,7 +1062,7 @@ ROSEAttributesList::~ROSEAttributesList()
 void
 ROSEAttributesList::addElement( PreprocessingInfo::DirectiveType dt, const std::string & pLine, const std::string & filename, int lineNumber, int columnNumber, int numOfLines )
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      ASSERT_require(pLine.empty() == false);
      ASSERT_require(lineNumber    >  0);
      ASSERT_require(columnNumber  >  0);
@@ -1075,7 +1075,7 @@ ROSEAttributesList::addElement( PreprocessingInfo::DirectiveType dt, const std::
 PreprocessingInfo*
 ROSEAttributesList::lastElement()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      ASSERT_require(attributeList.empty() == false);
      return attributeList.back();
    }
@@ -1083,7 +1083,7 @@ ROSEAttributesList::lastElement()
 void
 ROSEAttributesList::moveElements( ROSEAttributesList & pList )
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      int length = pList.size();
      if ( length > 0 )
@@ -1112,7 +1112,7 @@ ROSEAttributesList::moveElements( ROSEAttributesList & pList )
 void
 ROSEAttributesList::addElement( PreprocessingInfo &pRef )
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      insertElement(pRef);
    }
 
@@ -1120,7 +1120,7 @@ ROSEAttributesList::addElement( PreprocessingInfo &pRef )
 void
 ROSEAttributesList::insertElement( PreprocessingInfo & pRef )
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      int done = 0;
      vector<PreprocessingInfo*>::iterator i = attributeList.begin();
@@ -1159,55 +1159,55 @@ ROSEAttributesList::setFileName(const string & fName)
   // DQ (10/4/2013): This function is called by the EasyStorage<ROSEAttributesList>::rebuildDataStoredInEasyStorageClass()
   // which is called as part of the AST File I/O (AST serialization).  It was not previously called until more information
   // was added to the AST (likely as part of the new token stream support for parse tree reconstruction in ROSE).
-     ASSERT_not_null(this);
+     ASSERT_this();
      fileName = fName;
    }
 
 string
 ROSEAttributesList::getFileName()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return fileName;
    }
 
 void
 ROSEAttributesList::setIndex(int i)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      index = i;
    }
 
 int
 ROSEAttributesList::getIndex()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return index;
    }
 
 int
 ROSEAttributesList::size(void)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return getLength();
    }
 
 int
 ROSEAttributesList::getLength(void)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return attributeList.size();
    }
 
 void
 ROSEAttributesList::clean(void)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
    }
 
 void
 ROSEAttributesList::deepClean(void)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      vector<PreprocessingInfo*>::iterator head = attributeList.begin();
      vector<PreprocessingInfo*>::iterator tail = attributeList.end();
      attributeList.erase(head,tail);
@@ -1217,7 +1217,7 @@ ROSEAttributesList::deepClean(void)
 PreprocessingInfo*
 ROSEAttributesList::operator[]( int i)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return attributeList[i];
    }
 
@@ -1225,7 +1225,7 @@ void
 ROSEAttributesList::display ( const string & label )
    {
      printf ("ROSEAttributesList::display (label = %s): size = %zu \n",label.c_str(),attributeList.size());
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      vector<PreprocessingInfo*>::iterator j = attributeList.begin();
      for (j = attributeList.begin(); j != attributeList.end(); j++)
@@ -1252,14 +1252,14 @@ ROSEAttributesList::display ( const string & label )
 void
 ROSEAttributesList::set_rawTokenStream( LexTokenStreamTypePointer s )
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      rawTokenStream = s;
    }
 
 LexTokenStreamTypePointer
 ROSEAttributesList::get_rawTokenStream()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return rawTokenStream;
    }
 
@@ -1269,7 +1269,7 @@ ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const strin
   // This function does not work for fixed-format, which is processed separately.
   // This function reads the token stream and extracts out the comments for inclusion into the attributeList.
 
-     ASSERT_not_null(this);
+     ASSERT_this();
      ASSERT_require (filename.empty() == false);
 
      printf ("This is an old version of the function to collect CPP directives and comments \n");
@@ -1746,7 +1746,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
   // the recognition of CPP directives from comments this function may be useful for the fix format CPP case.
   // CPP directives should also be easier than a lot of other token recognition.
 
-     ASSERT_not_null(this);
+     ASSERT_this();
      ASSERT_require (filename.empty() == false);
 
   // Open file for reading line by line!
@@ -2026,7 +2026,7 @@ ROSEAttributesListContainer::~ROSEAttributesListContainer()
 void
 ROSEAttributesListContainer::addList ( std::string fileName, ROSEAttributesList* listPointer )
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      attributeListMap[fileName] = listPointer;
    }
 

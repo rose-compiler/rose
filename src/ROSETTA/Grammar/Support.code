@@ -7750,7 +7750,7 @@ void
 SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
    {
   // For simplicity, there is only a single insert member function to put a symbol into the symbol table.
-     ASSERT_not_null(this);
+     ASSERT_this();
 
   // DQ (2/19/2007): Added additional assertion!
      ROSE_ASSERT (p_table != NULL);
@@ -11471,7 +11471,7 @@ SgInitializedName::operator< (const SgInitializedName&) const
 SgType*
 SgInitializedName::get_type() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return p_typeptr;
    }
 
@@ -11489,7 +11489,7 @@ SgInitializedName::set_type(SgType *t)
 SgInitializer*
 SgInitializedName::get_initializer() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      if (p_is_initializer)
           return p_initptr;
        else
@@ -11499,7 +11499,7 @@ SgInitializedName::get_initializer() const
 void
 SgInitializedName::set_initializer(SgInitializer* i)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
   // DQ (4/14/2015): Added call to set_isModified() function to record change to this IR node.
      set_isModified(true);
@@ -11892,7 +11892,7 @@ SgName::SgName() : p_char("")
 unsigned int
 SgName::get_length() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return p_char.size();
    }
 
@@ -11911,14 +11911,14 @@ SgName::SgName(const SgName& n): p_char(n.p_char)
 int
 SgName::operator!=(const SgName& n1) const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return p_char != n1.p_char;
    }
 
 int
 SgName::operator==(const SgName& n1) const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return p_char == n1.p_char;
    }
 
@@ -12688,7 +12688,7 @@ Sg_File_Info::Sg_File_Info()
      p_fileIDsToUnparse(),
      p_fileLineNumbersToUnparse()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      post_construction_initialization();
    }
 
@@ -12747,7 +12747,7 @@ Sg_File_Info::Sg_File_Info( int file_id, int line, int column )
 void
 Sg_File_Info::post_construction_initialization()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
@@ -12938,7 +12938,7 @@ Sg_File_Info::get_physical_file_id_reference()
 int
 Sg_File_Info::get_physical_file_id(int input_file_id) const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
   // Initialize to error value.
      int return_physical_file_id = NULL_FILE_ID;
@@ -13630,7 +13630,7 @@ Sg_File_Info::set_col( int n )
 bool
 Sg_File_Info::hasPositionInSource() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      bool result = ( ! ( isTransformation() || isCompilerGenerated() || isOutputInCodeGeneration() ) );
 
      return result;
@@ -13646,7 +13646,7 @@ Sg_File_Info::isSameFile(SgFile* file) const
   // testing if two file info objects represent the same file (an integer equality test instead of string comparision).
   // File names are particularly long (since they include full path), so this will allow us to save a lot of space.
 
-     ASSERT_not_null(this);
+     ASSERT_this();
      ASSERT_not_null(file);
 
   // DQ (9/5/2008): Use the local Sg_File_Info instead of the one on the root (which is only available for a SgSourceFile)
@@ -14251,7 +14251,7 @@ std::string
 SgFile::getFileName() const
    {
   // Get the filename from the Sage III file object
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      Sg_File_Info* fileInfo = p_startOfConstruct;
      ASSERT_not_null(fileInfo);
@@ -15001,7 +15001,7 @@ SgSourceFile::get_token_unparse_frontier()
   // DQ (9/28/2018): We need to merge these results not overright the initial results.  This is essential when we are supporting
   // multiple files (or header files in addition to the source file).
 
-     ASSERT_not_null(this);
+     ASSERT_this();
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
@@ -15082,7 +15082,7 @@ SgSourceFile::set_token_unparse_frontier_adjacency(std::map<SgNode*,PreviousAndN
 std::map<SgNode*,PreviousAndNextNodeData*> &
 SgSourceFile::get_token_unparse_frontier_adjacency()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
@@ -15170,7 +15170,7 @@ SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(std::multimap<int,S
 std::multimap<int,SgStatement*> &
 SgSourceFile::get_redundantlyMappedTokensToStatementMultimap()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
@@ -15246,7 +15246,7 @@ SgSourceFile::set_redundantTokenEndingsSet(std::set<int> & X)
 std::set<int> &
 SgSourceFile::get_redundantTokenEndingsSet()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
@@ -15332,7 +15332,7 @@ SgSourceFile::get_representativeWhitespaceStatementMap()
   // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
   // DQ (11/20/2015): Not sure I want this to be copy by value, but OK for now.
 
-     ASSERT_not_null(this);
+     ASSERT_this();
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
@@ -15412,7 +15412,7 @@ SgSourceFile::get_macroExpansionMap()
    {
   // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
 
-     ASSERT_not_null(this);
+     ASSERT_this();
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
@@ -15469,7 +15469,7 @@ SgHeaderFileReport::display( const string & label) const
   // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
      printf ("\nIn HeaderFileReport::display(): label = %s \n",label.c_str());
 
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      printf ("In HeaderFileReport::display(): p_source_file = %p \n",p_source_file);
      ROSE_ASSERT(p_source_file != NULL);
@@ -15672,7 +15672,7 @@ SgProject::post_construction_initialization()
 SgProject::SgProject(int argc, char** argv, bool frontendConstantFolding)
    : SgProject()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
   // DQ (9/18/2011): Added support to use frontend specific constant folding (applies to C/C++ using EDG).
   // All other languges have no specific constant folding options in their frontends.  We use to support
@@ -15689,7 +15689,7 @@ SgProject::SgProject(int argc, char** argv, bool frontendConstantFolding)
 SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding )
    : SgProject()
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
   // DQ (9/18/2011): Added support to use frontend specific constant folding (applies to C/C++ using EDG).
   // All other languges have no specific constant folding options in their frontends.  We use to support
@@ -15745,14 +15745,14 @@ std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<string> 
 SgFilePtrList &
 SgProject::get_fileList() const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return p_fileList_ptr->get_listOfFiles();
    }
 
 void
 SgProject::set_fileList( SgFilePtrList & fileList )
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      set_isModified(true);
 
      p_fileList_ptr->get_listOfFiles() = fileList;
@@ -15920,7 +15920,7 @@ SgProject::set_showBackendCommandLine ( bool show )
 std::string
 SgProject::get_applicationRootDirectory () const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      return p_applicationRootDirectory;
    }
 
@@ -15929,7 +15929,7 @@ SgProject::get_applicationRootDirectory () const
 void
 SgProject::set_applicationRootDirectory ( std::string applicationRootDirectory )
   {
-    ASSERT_not_null(this);
+    ASSERT_this();
 
     p_applicationRootDirectory = applicationRootDirectory;
 
@@ -16056,21 +16056,21 @@ SgProject::get_skipfinalCompileStep (void) const
 void
 SgProject::set_C_only       (bool value)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      p_C_only = value;
    }
 
 void
 SgProject::set_Cxx_only     (bool value)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      p_Cxx_only = value;
    }
 
 void
 SgProject::set_Fortran_only (bool value)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      p_Fortran_only = value;
    }
 
@@ -16585,7 +16585,7 @@ SgProject::get_Python_only (void) const
 void
 SgProject::set_Java_only(bool value)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      p_Java_only = value;
    }
 
@@ -16685,14 +16685,14 @@ SgProject::get_Ada_only (void) const
 void
 SgProject::set_Ada_only (bool value)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      p_Ada_only = value;
    }
 
 void
 SgProject::set_Jovial_only(bool value)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      p_Jovial_only = value;
    }
 
@@ -16711,7 +16711,7 @@ SgProject::get_Jovial_only(void) const
 void
 SgProject::set_Jvm_only(bool value)
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
      p_Jvm_only = value;
    }
 
@@ -18563,7 +18563,7 @@ SgTemplateParameter::is_matching_kind (const SgTemplateParameter & X, const SgTe
 SgName
 SgTemplateParameter::get_mangled_name (void) const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
 #if 0
   // mprintf ("In SgTemplateParameter::get_mangled_name(): this = %p get_argumentType() = %d unparseToString() = %s \n",this,get_argumentType(),unparseToString().c_str());
@@ -18722,7 +18722,7 @@ SgTemplateArgument::SgTemplateArgument ( bool explicitlySpecified )
 SgName
 SgTemplateArgument::get_mangled_name (void) const
    {
-     ASSERT_not_null(this);
+     ASSERT_this();
 
 #if DEBUG_TEMPLATE_ARGUMENT_GET_MANGLED_NAME
   // mprintf ("In SgTemplateArgument::get_mangled_name(): this = %p get_argumentType() = %d unparseToString() = %s \n",this,get_argumentType(),unparseToString().c_str());
@@ -19277,7 +19277,7 @@ SgTemplateArgument::display( const std::string & label) const
    {
   // DQ (5/22/2016): Adding display function for debugging.
 
-     ASSERT_not_null(this);
+     ASSERT_this();
 
   // DQ (5/12/2024): Added debugging information.
      printf ("In SgTemplateArgument::display(label = %s): get_argumentType() = %s \n",label.c_str(),this->template_argument_kind().c_str()); 
@@ -19377,7 +19377,7 @@ std::string
 SgTemplateArgument::unparseToStringSupport()
    {
   // DQ (3/10/2018): This is a function mostly used for debugging.
-     ASSERT_not_null(this);
+     ASSERT_this();
 
      SgUnparse_Info *info = new SgUnparse_Info();
      ROSE_ASSERT(info != NULL);
