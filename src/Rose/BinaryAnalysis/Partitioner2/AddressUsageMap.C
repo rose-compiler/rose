@@ -38,6 +38,22 @@ AddressUser::AddressUser(const DataBlock::Ptr &dblock)
 
 AddressUser::~AddressUser() {}
 
+AddressUser&
+AddressUser::operator=(const AddressUser &other) {
+    this->insn_ = other.insn_;
+    this->bblocks_ = other.bblocks_;
+    this->dblock_ = other.dblock_;
+    return *this;
+}
+
+AddressUser::AddressUser(const AddressUser &other) {
+    AddressUser x;
+    x.insn_ = other.insn_;
+    x.bblocks_ = other.bblocks_;
+    x.dblock_ = other.dblock_;
+    *this = x;
+}
+
 Address
 AddressUser::address() const {
     if (insn_)

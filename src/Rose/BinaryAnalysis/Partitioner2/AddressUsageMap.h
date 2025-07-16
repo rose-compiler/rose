@@ -58,7 +58,10 @@ public:
     /** Constructs a new user which is a data block. The data block must not be the null pointer. */
     explicit AddressUser(const DataBlockPtr&);
 
+    // Defined in the .C file where all necessary class definitions (plain and templatized) are available.
     ~AddressUser();
+    AddressUser(const AddressUser&);
+    AddressUser& operator=(const AddressUser&);
 
     /** Address of user.
      *
