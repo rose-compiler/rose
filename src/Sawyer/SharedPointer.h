@@ -421,38 +421,49 @@ public:
 //                                      Implementations
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if defined(__EDG__)
+// The ROSE compiler using the __EDG__ frontend has difficulty compiling this code and its error messages are not sufficient to be
+// able to tell what's wrong. Neither GCC nor LLVM have problems even when configured to use the C++14 standard
+// (-std=c++14). Therefore, shared pointers when compiled with EDG are no-ops in that they will always return an indication that the
+// memory is in use. This may cause large amounts of memory to be leaked when an installtion of librose is used which was itself
+// compiled with ROSE tools.
+#define SAWYER_LEAK_SHARED_POINTERS
+#endif
+
 template<class T>
 inline size_t SharedPointer<T>::ownershipCount(T *rawPtr) {
     if (rawPtr) {
+#if defined(SAWYER_LEAK_SHARED_POINTERS)
+        return 1;
+#else
         SAWYER_THREAD_TRAITS::LockGuard lock(rawPtr->SharedObject::mutex_);
         return rawPtr->SharedObject::nrefs_;
+#endif
     }
     return 0;
 }
 
 template<class T>
 inline void SharedPointer<T>::acquireOwnership(Pointee *rawPtr) {
+#if defined(SAWYER_LEAK_SHARED_POINTERS)
+    // void
+#else
     if (rawPtr != nullptr) {
-#ifndef USE_ROSE
-     // DQ (7/20/2025): This origianal code is required to support the execution of the CxxGrammarMetaProgram (in ROSETTA).
-     // DQ (7/14/2025): Fix for EDG compiling this header file. Issue reported to Robb, who is working on a better fix.
         SAWYER_THREAD_TRAITS::LockGuard lock(rawPtr->SharedObject::mutex_);
         ++rawPtr->SharedObject::nrefs_;
-#endif
     }
+#endif
 }
 
 template<class T>
 inline size_t SharedPointer<T>::releaseOwnership(Pointee *rawPtr) {
     if (rawPtr != nullptr) {
-#ifndef USE_ROSE
-     // DQ (7/20/2025): This origianal code is required to support the execution of the CxxGrammarMetaProgram (in ROSETTA).
-     // DQ (7/14/2025): Fix for EDG compiling this header file. Issue reported to Robb, who is working on a better fix.
+#if defined(SAWYER_LEAK_SHARED_POINTERS)
+        return 1;
+#else
         SAWYER_THREAD_TRAITS::LockGuard lock(rawPtr->SharedObject::mutex_);
         assert(rawPtr->SharedObject::nrefs_ > 0);
         return --rawPtr->SharedObject::nrefs_;
-#else
-        return 0;
 #endif
     } else {
         return 0;
