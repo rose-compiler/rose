@@ -431,22 +431,15 @@ Unparse_Ada::unparseType(SgType* ty, SgUnparse_Info& info)
   using MapOfNameQualMap = std::map<SgNode*, NameQualMap>;
 
   ASSERT_not_null(ty);
-
-  SgNode* const currentReferenceNode = info.get_reference_node_for_qualification();
-
-  //~ // set the reference node, unless the unparser is already in type mode
-  //~ if (&nameQualificationMap() == &SgNode::get_globalQualifiedNameMapForNames())
-    //~ info.set_reference_node_for_qualification(const_cast<SgLocatedNode*>(&ref));
-
-  SgNode*            refNode = info.get_reference_node_for_qualification();
-  const NameQualMap& currentNameQualMap = nameQualificationMap();
-  const MapOfNameQualMap& typeQualMap = SgNode::get_globalQualifiedNameMapForMapsOfTypes();
-  const NameQualMap& nameQualMapForTypeSubtree = getQualMapping(typeQualMap, refNode, SgNode::get_globalQualifiedNameMapForTypes());
+  const NameQualMap&      currentNameQualMap        = nameQualificationMap();
+  SgNode* const           refNode                   = info.get_reference_node_for_qualification();
+  const MapOfNameQualMap& typeQualMap               = SgNode::get_globalQualifiedNameMapForMapsOfTypes();
+  const NameQualMap&      nameQualMapForTypeSubtree = getQualMapping(typeQualMap, refNode, SgNode::get_globalQualifiedNameMapForTypes());
 
   withNameQualificationMap(nameQualMapForTypeSubtree);
   sg::dispatch(AdaTypeUnparser{*this, info, std::cerr}, ty);
   withNameQualificationMap(currentNameQualMap);
 
   // restore reference node
-  info.set_reference_node_for_qualification(currentReferenceNode);
+  info.set_reference_node_for_qualification(refNode);
 }

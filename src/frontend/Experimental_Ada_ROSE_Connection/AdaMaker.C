@@ -421,6 +421,9 @@ mkAdaDiscreteType()
   return mkTypeNode<SgAdaDiscreteType>();
 }
 
+/*
+no longer needed
+
 SgType& mkQualifiedType(SgExpression& qual, SgType& base)
 {
   SgTypeExpression& baseexp   = mkTypeExpression(base);
@@ -429,7 +432,7 @@ SgType& mkQualifiedType(SgExpression& qual, SgType& base)
 
   return sgnode;
 }
-
+*/
 
 SgTypeVoid&
 mkTypeVoid()

@@ -59,6 +59,7 @@ namespace
     const SgTypedefDeclaration* defdcl = isSgTypedefDeclaration(dcl->get_definingDeclaration());
 
     if (defdcl != nullptr) dcl = defdcl;
+
     return *dcl;
   }
 
@@ -2420,7 +2421,7 @@ namespace Ada
       const SgTypedefDeclaration& tydcl = dominantTypedefDecl(SG_DEREF(tysy->get_declaration()));
 
       res = tydcl.get_type();
-      ASSERT_require(res);
+      ASSERT_not_null(res);
     }
 
     return res;
@@ -2472,6 +2473,20 @@ namespace Ada
   SgType& TypeDescription::typerep_ref() const
   {
     return SG_DEREF(typerep());
+  }
+
+  SgType* TypeDescription::dominantTyperep() const
+  {
+    SgType* ty = typerep();
+
+    if (SgTypedefType* tydef = isSgTypedefType(ty))
+    {
+      const SgTypedefDeclaration& domdcl = dominantTypedefDecl(*tydef);
+
+      ty = domdcl.get_type();
+    }
+
+    return ty;
   }
 
   TypeDescription typeRoot(SgType& ty)

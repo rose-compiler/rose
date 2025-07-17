@@ -185,19 +185,18 @@ namespace
       return nullptr;
 
     // first try to find an argument matching the name
-    SgExprListExp&       args  = SG_DEREF(insdcl->get_actual_parameters());
-    SgExpressionPtrList& exprs = args.get_expressions();
-    //~ logError() << "instance " << exprs.size() << std::endl;
-    ExprIterator         exbeg = exprs.begin();
-    ExprIterator         exend = exprs.end();
-    ExprIterator         expos = std::find_if( exbeg, exend,
-                                               [&tyname](const SgExpression* exp) -> bool
-                                               {
-                                                 const SgActualArgumentExpression* act = isSgActualArgumentExpression(exp);
+    auto introducesParam =
+            [&tyname](const SgExpression* exp) -> bool
+            {
+              const SgActualArgumentExpression* act = isSgActualArgumentExpression(exp);
 
-                                                 return act && boost::iequals(tyname, act->get_argument_name().getString());
-                                               }
-                                             );
+              return act && boost::iequals(tyname, act->get_argument_name().getString());
+            };
+
+    SgExprListExp&       args  = SG_DEREF(insdcl->get_actual_parameters());
+    const SgExpressionPtrList& exprs = args.get_expressions();
+    ExprIterator         exend = exprs.end();
+    ExprIterator         expos = std::find_if(exprs.begin(), exend, introducesParam);
 
     if (expos != exend)
       return extractFundamentalNode(isSgActualArgumentExpression(*expos)->get_expression());
@@ -206,20 +205,21 @@ namespace
     SgAdaGenericDecl& gendcl = si::Ada::getGenericDecl(*insdcl);
     SgAdaGenericDefn& gendfn = SG_DEREF(gendcl.get_definition());
 
-    SgDeclarationStatementPtrList& genArglst = gendfn.get_declarations();
+    auto introducesType =
+            [&tyname](const SgDeclarationStatement* prm) -> bool
+            {
+              if (const SgAdaDiscriminatedTypeDecl* discr = isSgAdaDiscriminatedTypeDecl(prm))
+                prm = discr->get_discriminatedDecl();
+
+              const SgAdaFormalTypeDecl* formalParam = isSgAdaFormalTypeDecl(prm);
+
+              return formalParam && boost::iequals(tyname, formalParam->get_name().getString());
+            };
+
+    const SgDeclarationStatementPtrList& genArglst = gendfn.get_declarations();
     DeclIterator      genbeg = genArglst.begin();
     DeclIterator      genend = genArglst.end();
-    DeclIterator      genpos = std::find_if( genbeg, genend,
-                                             [&tyname](const SgDeclarationStatement* prm) -> bool
-                                             {
-                                               if (const SgAdaDiscriminatedTypeDecl* discr = isSgAdaDiscriminatedTypeDecl(prm))
-                                                 prm = discr->get_discriminatedDecl();
-
-                                               const SgAdaFormalTypeDecl* formalParam = isSgAdaFormalTypeDecl(prm);
-
-                                               return formalParam && boost::iequals(tyname, formalParam->get_name().getString());
-                                             }
-                                           );
+    DeclIterator      genpos = std::find_if(genbeg, genend, introducesType);
 
     if (genpos != genend)
     {
@@ -263,21 +263,6 @@ namespace
         {
           logKind("A_Selected_Component");
           res = &getExprTypeID(typeEx.Selector, ctx);
-
-/*
-          /// temporary code to handle incomplete AST for generic instantiations
-          /// \todo
-          if (SgType* ty = isSgType(res))
-          {
-            if (SgAdaGenericInstanceDecl* gendecl = instantiationDeclID(typeEx.Prefix, ctx))
-            {
-              SgExpression& declref = mkAdaUnitRefExp(*gendecl);
-
-              res = &mkQualifiedType(declref, *ty);
-            }
-          }
-          /// end temporary code
-*/
           break;
         }
 
@@ -1126,44 +1111,55 @@ namespace
 */
     return res;
   }
-} // anonymous
 
-// \todo we may want to return a variant instead of a pair in C++17
-std::pair<SgInitializedName*, SgAdaRenamingDecl*>
-getExceptionBase(Element_Struct& el, AstContext ctx)
-{
-  ADA_ASSERT(el.Element_Kind == An_Expression);
-
-  NameData        name = getQualName(el, ctx);
-  Element_Struct& elem = name.elem();
-
-  ADA_ASSERT(elem.Element_Kind == An_Expression);
-  Expression_Struct& ex  = elem.The_Union.Expression;
-
-  // first attempt: look up in user defined exceptions
-  if (SgInitializedName* userex = findFirst(asisExcps(), ex.Corresponding_Name_Definition))
-    return std::make_pair(userex, nullptr);
-
-  // second attempt: look up in renamed declarations defined by the user
-  if (SgDeclarationStatement* userdcl = findFirst(asisDecls(), ex.Corresponding_Name_Definition))
+  SgExpression& withSourceLocation(SgExpression& e, Element_Struct& el, AstContext ctx)
   {
-    SgAdaRenamingDecl& rendcl = SG_DEREF(isSgAdaRenamingDecl(userdcl));
+    attachSourceLocation(e, el, ctx);
 
-    return std::make_pair(nullptr, &rendcl);
+    return e;
   }
 
-  // final attempt: look up in exceptions defined in standard
-  SgDeclarationStatement* stddcl = findFirst(adaExcps(), AdaIdentifier{ex.Name_Image});
+  SgExpression&
+  createExceptionRef_aux(Element_Struct& el, AstContext ctx)
+  {
+    ADA_ASSERT(el.Element_Kind == An_Expression);
 
-  if (SgAdaRenamingDecl* rendcl = isSgAdaRenamingDecl(stddcl))
-    return std::make_pair(nullptr, rendcl);
+    NameData        name = getQualName(el, ctx);
+    Element_Struct& elem = name.elem();
 
-  SgVariableDeclaration&    vardcl = SG_DEREF(isSgVariableDeclaration(stddcl));
-  SgInitializedNamePtrList& names = vardcl.get_variables();
-  ASSERT_require(names.size() == 1);
+    ADA_ASSERT(elem.Element_Kind == An_Expression);
+    Expression_Struct& ex  = elem.The_Union.Expression;
 
-  return { names.front(), nullptr };
-}
+    // first attempt: look up in user defined exceptions
+    if (SgInitializedName* userex = findFirst(asisExcps(), ex.Corresponding_Name_Definition))
+      return mkExceptionRef(*userex, ctx.scope());
+
+    // second attempt: look up in renamed declarations defined by the user
+    if (SgDeclarationStatement* userdcl = findFirst(asisDecls(), ex.Corresponding_Name_Definition))
+      return mkAdaRenamingRefExp(SG_DEREF(isSgAdaRenamingDecl(userdcl)));
+
+    // final attempt: look up in exceptions defined in standard
+    SgDeclarationStatement* stddcl = findFirst(adaExcps(), AdaIdentifier{ex.Name_Image});
+
+    if (SgAdaRenamingDecl* rendcl = isSgAdaRenamingDecl(stddcl))
+      return mkAdaRenamingRefExp(*rendcl);
+
+    SgVariableDeclaration&    vardcl = SG_DEREF(isSgVariableDeclaration(stddcl));
+    SgInitializedNamePtrList& names = vardcl.get_variables();
+    ASSERT_require(names.size() == 1);
+
+    return mkExceptionRef(SG_DEREF(names.front()), ctx.scope());
+  }
+
+  SgExpression&
+  createExceptionRef(Element_Struct& el, AstContext ctx)
+  {
+    SgExpression& e = createExceptionRef_aux(el, ctx);
+
+    attachSourceLocation(e, el, ctx);
+    return e;
+  }
+} // anonymous
 
 
 SgType&
@@ -1877,20 +1873,9 @@ void ExHandlerTypeCreator::operator()(Element_Struct& elem)
   SgExpression* exceptExpr = nullptr;
 
   if (elem.Element_Kind == An_Expression)
-  {
-    auto              expair = getExceptionBase(elem, ctx);
-    SgScopeStatement& scope = ctx.scope();
-
-    exceptExpr = expair.first ? &mkExceptionRef(*expair.first, scope)
-                              : &mkAdaRenamingRefExp(SG_DEREF(expair.second))
-                              ;
-
-    attachSourceLocation(SG_DEREF(exceptExpr), elem, ctx);
-  }
+    exceptExpr = &createExceptionRef(elem, ctx);
   else if (elem.Element_Kind == A_Definition)
-  {
     exceptExpr = &getDefinitionExpr(elem, ctx);
-  }
 
   lst.push_back(&mkExceptionType(SG_DEREF(exceptExpr)));
 }

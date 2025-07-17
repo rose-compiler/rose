@@ -1405,19 +1405,39 @@ namespace
                       //~ );
   }
 
-  bool hasSystemAddressType(const SgExpression* e)
+  const SgType* systemAddressType()
   {
     // memoize the system address type
-    static SgType* systemAddressType = nullptr;
+    static const SgType* sysAddressType = nullptr;
 
     // system address may be unknown up until the package system is processed
-    if (systemAddressType == nullptr)
-      systemAddressType = si::Ada::findType("system", "address");
+    if (sysAddressType == nullptr)
+      sysAddressType = si::Ada::findType("system", "address");
 
-    return (  e
-           && systemAddressType
-           && si::Ada::typeOfExpr(e).typerep() == systemAddressType
-           );
+    return sysAddressType;
+  }
+
+  const SgType* standardIntegerType()
+  {
+    // memoize the standard integer type
+    static const SgType* stdIntegerType = nullptr;
+
+    // system address may be unknown up until the package system is processed
+    if (stdIntegerType == nullptr)
+      stdIntegerType = si::Ada::findType("standard", "integer");
+
+    return stdIntegerType;
+  }
+
+
+  bool isSystemAddressType(const SgType* ty)
+  {
+    return ty && ty == systemAddressType();
+  }
+
+  bool hasSystemAddressType(const SgExpression* e)
+  {
+    return isSystemAddressType(si::Ada::typeOfExpr(e).dominantTyperep());
   }
 
   bool callWithLiteralEqArgs(const OverloadMap& m, const SgFunctionCallExp& call, const SgFunctionRefExp& fnref)
@@ -1462,10 +1482,10 @@ namespace
     return std::all_of(arglst.begin(), arglst.end(), hasLiteralEq);
   }
 
-  bool callWithSystemAddress(const OverloadMap& m, const SgFunctionCallExp& call, const SgFunctionRefExp& fnref)
+  bool callWithSystemAddress(const OverloadMap& m, const SgFunctionCallExp& call, const SgFunctionRefExp&)
   {
-    const SgExprListExp&         args   = SG_DEREF(call.get_args());
-    const SgExpressionPtrList&   arglst = args.get_expressions();
+    const SgExprListExp&       args   = SG_DEREF(call.get_args());
+    const SgExpressionPtrList& arglst = args.get_expressions();
 
     return std::any_of(arglst.begin(), arglst.end(), hasSystemAddressType);
   }
@@ -2024,8 +2044,6 @@ namespace
   }
 
 
-
-
   template <class SageParent>
   void setChildIfNull( std::size_t& ctr,
                        SageParent& parent,
@@ -2068,8 +2086,8 @@ namespace
   }
 
 
-  /// checks if the scope of the type returned by \ref is the same
-  ///   as the scope where \ref ty was declared.
+  /// checks if the scope of the type returned by \p exp is the same
+  ///   as the scope where \p ty was declared.
   /// \todo implement full type check and rename to typeCheckCallContext ..
   bool scopeCheckCallContext(SgFunctionCallExp& exp, const SgType& ty)
   {
@@ -2091,6 +2109,7 @@ namespace
     SgType&    castty = SG_DEREF( ty.stripType(SgType::STRIP_MODIFIER_TYPE) );
     SgCastExp& castex = mkCastExp(exp, castty);
 
+    // \todo set castex to compiler generated
     si::replaceExpression(&dummy, &castex, false /* delete dummy */);
   }
 
@@ -2113,84 +2132,150 @@ namespace
     decorateWithTypeCast(exp, ty);
   }
 
-  void decorateSystemAddressArgsWithTypecast(SgFunctionCallExp& exp, const SgType& ty)
+
+  //using TypeCastPredicate = std::function<bool(const OverloadMap::value_type&)>;
+  using TypeQueryFn = std::function<const SgType*(SgFunctionCallExp&, const OverloadMap::value_type&)>;
+  using TypeCastFn  = std::function<void(SgFunctionCallExp&, const SgType&)>;
+
+  void typeCastIf(const OverloadMap& m, TypeQueryFn queryType, TypeCastFn action)
   {
-    // Adds type casts to arithmetic operations on expression of type system.address.
-    //   see issue #660, https://rosecompiler2.llnl.gov/gitlab/main/rose-compiler/rose/-/issues/660
+    auto applyIf =
+            [queryType, action](const OverloadMap::value_type& el) -> void
+            {
+              if (el.first == nullptr)
+                return;
 
-    // just process enabled integral operators in package standard and
-    //   not legitimate operators in package system.
-    if (SgFunctionSymbol* fnsym = exp.getAssociatedFunctionSymbol())
-      if (fnsym->get_scope() != si::Ada::pkgStandardScope())
-        return;
+              SgFunctionCallExp* callexp = isSgFunctionCallExp(el.first->get_parent());
+              if (callexp == nullptr)
+                return;
 
-    SgExprListExp&             args = SG_DEREF(exp.get_args());
-    const SgExpressionPtrList& arglst = args.get_expressions();
-
-    auto replacer = [&ty](SgExpression* exp) -> void
-                    {
-                      if (hasSystemAddressType(exp))
-                      {
-                        ASSERT_not_null(exp);
-                        decorateWithTypeCast(*exp, ty);
-                      }
-                    };
-
-    std::for_each( arglst.begin(), arglst.end(), replacer );
-  }
-
-  using TypeCastPredicate = std::function<bool(const OverloadMap::value_type&)>;
-  using TypeCastFunction  = std::function<void(SgFunctionCallExp& callexp, const SgType&)>;
-
-  void typeCastIf(const OverloadMap& m, TypeCastPredicate pred, TypeCastFunction action)
-  {
-    auto applyIf = [pred, action](const OverloadMap::value_type& el) -> void
-                   {
-                     if (el.first == nullptr)
-                       return;
-
-                     if (!pred(el))
-                       return;
-
-                     SgFunctionCallExp* callexp = isSgFunctionCallExp(el.first->get_parent());
-                     if (callexp == nullptr)
-                       return;
-
-                     std::set<const SgType*> typeCandidates = expectedTypes(callexp);
-
-                     const bool skipTypeCasting = (  (typeCandidates.size() > 1)
-                                                  || (typeCandidates.size() == 0)
-                                                  || (*typeCandidates.begin() == nullptr)
-                                                  || (scopeCheckCallContext(*callexp, **typeCandidates.begin()))
-                                                  );
-
-                     if (skipTypeCasting)
-                       return;
-
-                     action(*callexp, **typeCandidates.begin());
-                   };
+              if (const SgType* ty = queryType(*callexp, el))
+                action(*callexp, *ty);
+            };
 
     std::for_each(m.begin(), m.end(), applyIf);
   }
 
   void typecastLiteralEquivalentFunctions(const OverloadMap& m)
   {
-    auto isLiteralEq = [](const OverloadMap::value_type& el) -> bool
-                       {
-                         return el.second.systemAddressBased();
-                       };
+    auto literalType =
+            [](SgFunctionCallExp& callexp, const OverloadMap::value_type& el) -> const SgType*
+            {
+              if (!el.second.literalEquivalent())
+                return nullptr;
 
-    typeCastIf(m, isLiteralEq, decorateCallWithTypecast);
+              std::set<const SgType*> typeCandidates = expectedTypes(&callexp);
+
+              const bool skipTypeCasting = (  (typeCandidates.size() != 1)
+                                           || (*typeCandidates.begin() == nullptr)
+                                           || scopeCheckCallContext(callexp, **typeCandidates.begin())
+                                           );
+              if (skipTypeCasting)
+                return nullptr;
+
+              return *typeCandidates.begin();
+            };
+
+    typeCastIf(m, literalType, decorateCallWithTypecast);
   }
+
+  struct DecorateSystemAddressArgsWithTypecastIfNeeded
+  {
+    // \todo
+    // this is quite a hack; needs to be replaced with proper type checking for Ada..
+
+    bool isRelationalOp(const SgExpression* exp)
+    {
+      const SgFunctionRefExp* fnref = isSgFunctionRefExp(exp);
+      if (fnref == nullptr)
+        return false;
+
+      const SgFunctionDeclaration* fndcl = fnref->getAssociatedFunctionDeclaration();
+      if (fndcl == nullptr)
+        return false;
+
+      std::string opname = si::Ada::convertRoseOperatorNameToAdaOperator(fndcl->get_name());
+
+      return (  (opname == "=")
+             || (opname == "/=")
+             || (opname == "<")
+             || (opname == ">")
+             || (opname == "<=")
+             || (opname == ">=")
+             );
+    }
+
+    SgType& findTargetType(SgType& ty, const SgFunctionCallExp& call)
+    {
+      if (  (standardIntegerType() != &ty)
+         || isRelationalOp(call.get_function())
+         )
+        return ty;
+
+      const SgNode* callParent = call.get_parent();
+
+      if (const SgAssignOp* assign = isSgAssignOp(callParent))
+        return si::Ada::typeOfExpr(*assign).typerep_ref();
+
+      if (const SgExprListExp* explst = isSgExprListExp(callParent))
+        if (const SgFunctionCallExp* parentCall = isSgFunctionCallExp(explst->get_parent()))
+          return findTargetType(si::Ada::typeOfExpr(*parentCall).typerep_ref(), *parentCall);
+
+      return ty;
+    }
+
+    void operator()(SgExpression* exp)
+    {
+      ASSERT_not_null(exp);
+      ASSERT_not_null(*pos);
+
+      const bool applyTypecast = (  hasSystemAddressType(exp)
+                                 && !isSystemAddressType((*pos)->get_type())
+                                 );
+
+      if (applyTypecast)
+      {
+        SgType& targetType = findTargetType(SG_DEREF((*pos)->get_type()), callexp);
+
+        decorateWithTypeCast(*exp, targetType);
+      }
+
+      ++pos;
+    }
+
+    const SgFunctionCallExp&                 callexp;
+    SgInitializedNamePtrList::const_iterator pos;
+  };
 
   void typecastSystemAddressArguments(const OverloadMap& m)
   {
-    auto hasSystemAddress = [](const OverloadMap::value_type& el) -> bool
-                            {
-                              return el.second.systemAddressBased();
-                            };
+    auto fixSystemAddressArgs =
+            [](const OverloadMap::value_type& el) -> void
+            {
+              if (el.first == nullptr)
+                return;
 
-    typeCastIf(m, hasSystemAddress, decorateSystemAddressArgsWithTypecast);
+              SgFunctionCallExp* callexp = isSgFunctionCallExp(el.first->get_parent());
+              if (callexp == nullptr)
+                return;
+
+              if (!el.second.systemAddressBased())
+                return;
+
+              SgFunctionParameterList* calleeParamList = si::Ada::calleeParameterList(*callexp);
+              if (calleeParamList == nullptr)
+                return;
+
+              const SgInitializedNamePtrList& calleeParms = calleeParamList->get_args();
+              const SgExpressionPtrList       callerArgs  = si::Ada::normalizedCallArguments(*callexp);
+
+              ASSERT_require(calleeParms.size() == callerArgs.size());
+              std::for_each( callerArgs.begin(), callerArgs.end(),
+                             DecorateSystemAddressArgsWithTypecastIfNeeded{*callexp, calleeParms.begin()}
+                           );
+            };
+
+    std::for_each(m.begin(), m.end(), fixSystemAddressArgs);
   }
 
 

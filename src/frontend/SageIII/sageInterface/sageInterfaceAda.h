@@ -577,8 +577,15 @@ namespace Ada
     : base(ty, false, {})
     {}
 
+    /// the type, nullptr if it could not be found
     SgType* typerep()     const { return std::get<0>(*this); }
+
+    /// asserts that the type exists and returns the reference
     SgType& typerep_ref() const;
+
+    /// returns the dominant type. i.e., the definition
+    SgType* dominantTyperep() const;
+
     bool    polymorphic() const { return std::get<1>(*this); }
 
     const std::vector<SgAdaTypeConstraint*>&

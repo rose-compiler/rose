@@ -133,7 +133,8 @@ namespace Ada_ROSE_Translation
 
   /// builds a qualified type ref.base
   /// \todo this is a stop gap function and should not be in the final code
-  SgType& mkQualifiedType(SgExpression& ref, SgType& base);
+  // no longer needed
+  // SgType& mkQualifiedType(SgExpression& ref, SgType& base);
 
   /// builds a modular integral type with mod expression \p modexpr.
   SgAdaModularType&
