@@ -2426,7 +2426,7 @@ NameQualificationTraversal::NameQualificationTraversal(
   // DQ (8/3/2019): Reset the static data member that holds the aliasSymbolCausalNodeSet.
      SgSymbolTable::get_aliasSymbolCausalNodeSet().clear();
      ROSE_ASSERT(SgSymbolTable::get_aliasSymbolCausalNodeSet().empty() == true);
-     
+
   // DQ (7/19/2025): This is how we are turning on and off a special name qualification mode
   // required in the symbol table support.  In general, is is too expensive to be use everywhere,
   // and has a dramatic imact on the support for SgAliasSymbols within the AST_PostProcessing()
@@ -11229,12 +11229,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
         }
 
-  // DQ (7/12/2014): Add any possible nodes that can generate SgAliasSymbols to the SgSymbolTable::p_aliasSymbolCausalNodeSet SgNodeSet.
+  // DQ (7/12/2014): Add any possible nodes that can generate SgAliasSymbols to the SgSymbolTable::p_aliasSymbolCausalNodeSet .
   // This is used by the symbol table to know when to use or ignore SgAliasSymbols in symbol table lookups.
      if (isSgUsingDirectiveStatement(n) != NULL || isSgUsingDeclarationStatement(n) != NULL || isSgBaseClass(n) != NULL)
         {
-       // SgNodeSet & get_aliasSymbolCausalNodeSet()
-
           SgSymbolTable::get_aliasSymbolCausalNodeSet().insert(n);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)

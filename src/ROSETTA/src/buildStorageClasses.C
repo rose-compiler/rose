@@ -744,6 +744,14 @@ AstNodeClass::evaluateType(std::string& varTypeString)
         {
           returnType = STL_SET;
         }
+     else if ( 20 < length && varTypeString.substr(0,19) == "std::unordered_set<" && varTypeString.rfind(">" ) == length-1 )
+        {
+          returnType = STL_UNORDERED_SET;
+        }
+     else if (varTypeString == "SgUnorderedNodeSet")
+        {
+          returnType = STL_UNORDERED_SET;
+        }
      else if ( 10 < length && varTypeString.substr(0,9) == "std::map<" && varTypeString.rfind(">" ) == length-1 )
         {
           returnType = STL_MAP;
@@ -751,6 +759,10 @@ AstNodeClass::evaluateType(std::string& varTypeString)
      else if (varTypeString == "ExtentMap")
         {
           returnType = STL_MAP;
+        }
+     else if ( 20 < length && varTypeString.substr(0,19) == "std::unordered_map<" && varTypeString.rfind(">" ) == length-1 )
+        {
+          returnType = STL_UNORDERED_MAP;
         }
      else if (varTypeString == "AddressIntervalSet" || varTypeString == "Rose::BinaryAnalysis::AddressIntervalSet")
         {
@@ -2407,9 +2419,11 @@ std::string AstNodeClass::buildStaticDataMemberListOfStorageClass()
                          case SGCLASS_POINTER_VECTOR:
                          case STL_CONTAINER:
                          case STL_MAP:
+                         case STL_UNORDERED_MAP:
                       // DQ (4/30/2009): Added case of STL_MULTIMAP
                          case STL_MULTIMAP:
                          case STL_SET:
+                         case STL_UNORDERED_SET:
                          case STRING:
                            s += "     EasyStorage < " + varTypeString + " > " + varStorageNameString +";\n" ;
                            break;
@@ -2551,9 +2565,11 @@ string AstNodeClass::buildSourceForStoringStaticMembers ()
 
                  // DQ (7/12/2014): Adding support for STL_SET.
                     case STL_SET:
+                    case STL_UNORDERED_SET:
                  // DQ (4/30/2009): Added case of STL_MULTIMAP
                     case STL_MULTIMAP:
                     case STL_MAP:
+                    case STL_UNORDERED_MAP:
                       s += "     " + varStorageNameString + ".storeDataInEasyStorageClass( source->" + classNameString + "_" + varNameString + ");\n" ;
                       break;
                     case BASIC_DATA_TYPE:
@@ -2617,9 +2633,11 @@ string AstNodeClass::buildStaticDataConstructorSource ()
 
                  // DQ (7/12/2014): Adding support for STL_SET.
                     case STL_SET:
+                    case STL_UNORDERED_SET:
                  // DQ (4/30/2009): Added case of STL_MULTIMAP
                     case STL_MULTIMAP:
                     case STL_MAP:
+                    case STL_UNORDERED_MAP:
                       s += "     " + classNameString + "_" + varNameString + " = " + varStorageNameString + ".rebuildDataStoredInEasyStorageClass();\n" ;
                       break;
                     case BASIC_DATA_TYPE:
@@ -2673,9 +2691,11 @@ string AstNodeClass::buildStaticDataWriteEasyStorageDataToFileSource()
 
                       // DQ (7/12/2014): Adding support for STL_SET.
                          case STL_SET:
+                         case STL_UNORDERED_SET:
                       // DQ (4/30/2009): Added case of STL_MULTIMAP
                          case STL_MULTIMAP:
                          case STL_MAP:
+                         case STL_UNORDERED_MAP:
                            addString += "     EasyStorage<" + varTypeString + " > :: writeToFile(out);\n";
                            break;
                          default:
@@ -2737,9 +2757,11 @@ string AstNodeClass::buildStaticDataReadEasyStorageDataFromFileSource()
 
                       // DQ (7/12/2014): Adding support for STL_SET.
                          case STL_SET:
+                         case STL_UNORDERED_SET:
                       // DQ (4/30/2009): Added case of STL_MULTIMAP
                          case STL_MULTIMAP:
                          case STL_MAP:
+                         case STL_UNORDERED_MAP:
                            addString += "     EasyStorage<" + varTypeString + " > :: readFromFile(in) ;\n";
                            break;
 
@@ -2798,9 +2820,11 @@ string AstNodeClass::buildStaticDataArrangeEasyStorageInOnePoolSource()
 
                       // DQ (7/12/2014): Adding support for STL_SET.
                          case STL_SET:
+                         case STL_UNORDERED_SET:
                       // DQ (4/30/2009): Added case of STL_MULTIMAP
                          case STL_MULTIMAP:
                          case STL_MAP:
+                         case STL_UNORDERED_MAP:
                            addString += "     EasyStorage<" + varTypeString + " > :: arrangeMemoryPoolInOneBlock();\n";
                            break;
                          default:
@@ -2858,9 +2882,11 @@ string AstNodeClass::buildStaticDataDeleteEasyStorageMemoryPoolSource()
 
                       // DQ (7/12/2014): Adding support for STL_SET.
                          case STL_SET:
+                         case STL_UNORDERED_SET:
                       // DQ (4/30/2009): Added case of STL_MULTIMAP
                          case STL_MULTIMAP:
                          case STL_MAP:
+                         case STL_UNORDERED_MAP:
                            addString += "     EasyStorage<" + varTypeString + " > :: deleteMemoryPool();\n";
                            break;
 

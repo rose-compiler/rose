@@ -9,7 +9,7 @@
 #define foreach BOOST_FOREACH
 
 using namespace std;
-using namespace boost;
+//~ using namespace boost;
 
 ReachingDef::ReachingDef(SgNode* defNode, Type type) : defType(type), thisNode(defNode), renamingNumer(-1) { }
 
@@ -39,7 +39,7 @@ set<SgNode*> ReachingDef::getActualDefinitions() const
     else
     {
         //Depth-first search of phi node graph
-        unordered_set<ReachingDefPtr> visited;
+        boost::unordered_set<ReachingDefPtr> visited;
         vector< ReachingDefPtr > worklist;
         ReachingDefPtr parentDef;
         set<FilteredCfgEdge> edges;

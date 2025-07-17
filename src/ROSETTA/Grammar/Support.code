@@ -4620,7 +4620,7 @@ HEADER_SYMBOL_TABLE_START
           static void set_force_search_of_base_classes( bool value );
 
        // DQ (7/12/2014): Adding support for static data member.
-          static SgNodeSet & get_aliasSymbolCausalNodeSet();
+          static std::unordered_set<SgNode*> & get_aliasSymbolCausalNodeSet();
 
        // DQ (8/3/2019): Display function for static data member.
           static void display_aliasSymbolCausalNodeSet();
@@ -6246,10 +6246,10 @@ HEADER_APPLICATION_PROJECT_START
       //! global concept of verbose level which controls useful output from the compiler (values greater than zero increase output level)
           static int p_verbose;
 
-	//! global to tell mangler to turn off short mangled name optimization. Default is false. (ie, by default short name mangling is enabled)
+  //! global to tell mangler to turn off short mangled name optimization. Default is false. (ie, by default short name mangling is enabled)
           static bool p_mangled_noshortname;
 
-	//! global to output the command line that goes to the backend compiler. Default is false.
+  //! global to output the command line that goes to the backend compiler. Default is false.
           static bool p_showBackendCommandLine;
 
        // DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
@@ -8476,7 +8476,6 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
 #if 0
      mprintf ("In getTemplateParametersOrArgumentsList<SgTemplateArgument>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
 #endif
-
      switch(symbol->variantT())
         {
           case V_SgClassSymbol:
@@ -9507,7 +9506,7 @@ symbolFilter(ReturnSymbolType* symbol, SgTemplateParameterPtrList* templateParam
    }
 
 bool
-isSubset(const std::vector<SgNode*>& a_vector, const std::set<SgNode*>& b_set)
+isSubset(const std::vector<SgNode*>& a_vector, const std::unordered_set<SgNode*>& b_set)
    {
   // DQ (7/12/2014): I am not aware of a faster algorithm for this. Using the shorter
   // vector (from the SgAliasSymbol) first will generally reduce the complexity for
@@ -9516,59 +9515,12 @@ isSubset(const std::vector<SgNode*>& a_vector, const std::set<SgNode*>& b_set)
   // of causal SgNode objects (e.g. SgUsingDirectiveStatement, SgUsingDeclarationStatement,
   // SgBaseClass, etc.).
 
-#if USING_PERFORMANCE_TRACING || 0
-     TimingPerformance timer1 ("Support.code: isSubset:");
-#endif
-
-     AstPerformance::isSubset_numberOfCalls++;
-     size_t a_vector_size = a_vector.size();
-     size_t b_set_size    = b_set.size();
-     AstPerformance::isSubset_numberOf_a_vector_size += a_vector_size;
-     AstPerformance::isSubset_numberOf_b_set_size    += b_set_size;
-     if (a_vector_size > AstPerformance::isSubset_a_vector_size_max)
-        {
-          AstPerformance::isSubset_a_vector_size_max = a_vector_size;
-#if 0
-          printf ("AstPerformance::isSubset_numberOfCalls = %zu AstPerformance::isSubset_a_vector_size_max = %zu \n",AstPerformance::isSubset_a_vector_size_max,AstPerformance::isSubset_numberOfCalls);
-#endif
-        }
-
-     if (b_set_size > AstPerformance::isSubset_b_set_size_max)
-        {
-          AstPerformance::isSubset_b_set_size_max = b_set_size;
-#if 0
-          printf ("AstPerformance::isSubset_numberOfCalls = %zu AstPerformance::isSubset_b_set_size_max = %zu \n",AstPerformance::isSubset_numberOfCalls,AstPerformance::isSubset_b_set_size_max);
-#endif
-        }
-
-#define DEBUG_IS_SUBSET 0
-
-#if DEBUG_IS_SUBSET
-     mprintf ("In isSubset(): a_vector.size() = %zu b_set.size() = %zu \n",a_vector.size(),b_set.size());
-#endif
-
-     for (std::vector<SgNode*>::const_iterator i = a_vector.begin(); i != a_vector.end(); i++)
-        {
-          bool found = false;
-          std::set<SgNode*>::const_iterator j = find(b_set.begin(),b_set.end(),*i);
-          found = (j != b_set.end());
-#if DEBUG_IS_SUBSET
-          mprintf ("In isSubset(): loop: found = %s *i = %p = %s \n",found ? "true" : "false",*i,(*i)->class_name().c_str());
-#endif
-          if (!found)
-             {
-#if DEBUG_IS_SUBSET
-               mprintf ("Leaving isSubset(): returning false \n");
-#endif
-               return false;
-             }
-        }
-
-#if DEBUG_IS_SUBSET
-     mprintf ("Leaving isSubset(): returning true \n");
-#endif
-
-     return true;
+  return std::all_of( a_vector.begin(), a_vector.end(),
+                      [&b_set](SgNode* ptr) -> bool
+                      {
+                        return b_set.count(ptr) != 0;
+                      }
+                    );
    }
 
 
@@ -9803,16 +9755,12 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
 
             // Liao 9/15/2016
             // Allow template function type match. They may have arguments of template types
-               SgFunctionType* f1 = NULL;
-               if (original_aliased_symbol != NULL && isSgFunctionSymbol(original_aliased_symbol))
-                  {
-                    f1= isSgFunctionType(isSgFunctionSymbol(original_aliased_symbol)->get_declaration()->get_type());
-                  }
-               SgFunctionType* f2 = NULL;
-               if (type != NULL)
-                  {
-                   f2 = isSgFunctionType (const_cast <SgType*> (type));
-                  }
+            SgFunctionType* f1 = NULL;
+            if (original_aliased_symbol != NULL && isSgFunctionSymbol(original_aliased_symbol))
+              f1= isSgFunctionType(isSgFunctionSymbol(original_aliased_symbol)->get_declaration()->get_type());
+            SgFunctionType* f2 = NULL;
+            if (type != NULL)
+              f2 = isSgFunctionType (const_cast <SgType*> (type));
 
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
                mprintf ("In loop over target ALIASED symbols associated with nm = %s compare types = %p and %p \n",nm.str(),f1, f2);
@@ -9862,20 +9810,20 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                            // for SgAliasSymbols within the AST_PostProcessing() (specifically the support for using directives
                            // such as "using namespace std;", which can take 80% of the compilation time).
 
-                              bool foundCausalNode = isSubset(aliasedSymbol->get_causal_nodes(),get_aliasSymbolCausalNodeSet());
-                              if (foundCausalNode == true)
-                                 {
-                                // DQ (1/23/2019): I think that this support is specific to the references to a symbol before
-                                // a using directive that would make is visible vs after the using directive.  Unfortunately it
-                                // is not sufficent to support when a class is derivied from another class and private derivation
-                                // would cause alis symbols to be seen or not seen in the subsequent coass derivations (see
-                                // Cxx_tests/test2019_21.C).
-                                // NOTE: the set defined by get_aliasSymbolCausalNodeSet() is only maintained in the name qualification
-                                // support and so it is useless within the
-                                // FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope()
-                                // function.  So to fix this we have added to code in this function to insert the causal nodes into
-                                // the required set.  It might be that this set should be cleared before starting the namequalification
-                                // phase.
+                         bool foundCausalNode = isSubset(aliasedSymbol->get_causal_nodes(),get_aliasSymbolCausalNodeSet());
+                         if (foundCausalNode == true)
+                            {
+                           // DQ (1/23/2019): I think that this support is specific to the references to a symbol before
+                           // a using directive that would make is visible vs after the using directive.  Unfortunately it
+                           // is not sufficent to support when a class is derivied from another class and private derivation
+                           // would cause alis symbols to be seen or not seen in the subsequent coass derivations (see
+                           // Cxx_tests/test2019_21.C).
+                           // NOTE: the set defined by get_aliasSymbolCausalNodeSet() is only maintained in the name qualification
+                           // support and so it is useless within the
+                           // FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope()
+                           // function.  So to fix this we have added to code in this function to insert the causal nodes into
+                           // the required set.  It might be that this set should be cleared before starting the namequalification
+                           // phase.
 
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
                                    mprintf ("Found causal node for SgAliasSymbol: aliasedSymbol = %p = %s original_aliased_symbol = %p = %s \n",
@@ -10663,7 +10611,8 @@ SgSymbolTable::maxCollisions()
 bool SgSymbolTable::p_force_search_of_base_classes = false;
 
 // DQ (7/12/2014): Declaration of space for static data member.
-SgNodeSet SgSymbolTable::p_aliasSymbolCausalNodeSet;
+// SgNodeSet SgSymbolTable::p_aliasSymbolCausalNodeSet;
+SgUnorderedNodeSet SgSymbolTable::p_aliasSymbolCausalNodeSet;
 
 bool
 SgSymbolTable::get_force_search_of_base_classes()
@@ -10695,7 +10644,7 @@ SgSymbolTable::set_name_qualification_mode( bool value )
 
 
 // DQ (7/12/2014): Access function for static data member.
-SgNodeSet &
+SgUnorderedNodeSet&
 SgSymbolTable::get_aliasSymbolCausalNodeSet()
    {
      return p_aliasSymbolCausalNodeSet;
@@ -10706,7 +10655,7 @@ SgSymbolTable::get_aliasSymbolCausalNodeSet()
 void
 SgSymbolTable::display_aliasSymbolCausalNodeSet()
    {
-     SgNodeSet::iterator i = p_aliasSymbolCausalNodeSet.begin();
+     auto i = p_aliasSymbolCausalNodeSet.begin();
      while (i != p_aliasSymbolCausalNodeSet.end())
         {
           printf ("SgSymbolTable::p_aliasSymbolCausalNodeSet: *i = %p = %s \n",*i,(*i)->class_name().c_str());
@@ -19280,7 +19229,7 @@ SgTemplateArgument::display( const std::string & label) const
      ASSERT_this();
 
   // DQ (5/12/2024): Added debugging information.
-     printf ("In SgTemplateArgument::display(label = %s): get_argumentType() = %s \n",label.c_str(),this->template_argument_kind().c_str()); 
+     printf ("In SgTemplateArgument::display(label = %s): get_argumentType() = %s \n",label.c_str(),this->template_argument_kind().c_str());
 
      switch (get_argumentType())
         {

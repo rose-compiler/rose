@@ -18,9 +18,9 @@
 
 using namespace std;
 using namespace ssa_private;
-using namespace boost;
+//~ using namespace boost;
 
-void StaticSingleAssignment::interproceduralDefPropagation(const unordered_set<SgFunctionDefinition*>& interestingFunctions)
+void StaticSingleAssignment::interproceduralDefPropagation(const boost::unordered_set<SgFunctionDefinition*>& interestingFunctions)
 {
     ClassHierarchyWrapper classHierarchy(project);
 
@@ -57,7 +57,7 @@ void StaticSingleAssignment::interproceduralDefPropagation(const unordered_set<S
 }
 
 vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralProcessingOrder(
-        const unordered_set<SgFunctionDefinition*>& interestingFunctions)
+        const boost::unordered_set<SgFunctionDefinition*>& interestingFunctions)
 {
     //First, let's build a call graph. Our goal is to find an order in which to process the functions
     //So that callees are processed before callers. This way we would have exact information at each call site
@@ -188,7 +188,7 @@ bool StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
 }
 
 void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFunctionDeclaration* callee,
-        const unordered_set<SgFunctionDefinition*>& processed, ClassHierarchyWrapper* classHierarchy)
+        const boost::unordered_set<SgFunctionDefinition*>& processed, ClassHierarchyWrapper* classHierarchy)
 {
     ROSE_ASSERT(isSgFunctionCallExp(callSite) || isSgConstructorInitializer(callSite));
     SgFunctionDefinition* calleeDef = NULL;

@@ -1,5 +1,5 @@
 /* JH (01/03/2006) : Setting the static data for the StorageClassMemoryManagemnt class
-   This is only once inluded in StorageClasses.C and thereby it becomes only compiled 
+   This is only once inluded in StorageClasses.C and thereby it becomes only compiled
    once. Hopefully!
 */
 
@@ -28,40 +28,40 @@ namespace AST_FILE_IO_MARKER
            assert (marker == markerIn);
            delete [] markerIn;
 #endif
-         } 
+         }
    };
 
 // The static memory pool is empty at the beginning.
-template <class TYPE> 
+template <class TYPE>
 unsigned long StorageClassMemoryManagement<TYPE>::filledUpTo = 0;
 
 // The size for one memory block is constantly set.
-template <class TYPE> 
+template <class TYPE>
 unsigned long StorageClassMemoryManagement<TYPE>::blockSize = INITIAL_SIZE_OF_MEMORY_BLOCKS;
 
-// There working memory block is always actualBlock-1, so it is 
+// There working memory block is always actualBlock-1, so it is
 // 0 in the beginning
-template <class TYPE> 
+template <class TYPE>
 unsigned int StorageClassMemoryManagement<TYPE>::actualBlock = 0;
 
 // There are no blocks allocated in the beginning.
-template <class TYPE> 
+template <class TYPE>
 unsigned int StorageClassMemoryManagement<TYPE>::blocksAllocated = 0;
 
-// The memoryBlockList is pointing to a valid pointer at the start, 
-// in order to be able to call the delete operator. This seems to be 
+// The memoryBlockList is pointing to a valid pointer at the start,
+// in order to be able to call the delete operator. This seems to be
 // useless, but skips one if-statement that would be called very often!
-template <class TYPE> 
+template <class TYPE>
 TYPE **StorageClassMemoryManagement<TYPE>::memoryBlockList = NULL;
 //TYPE **StorageClassMemoryManagement<TYPE>::memoryBlockList = new TYPE *;
 
-// Just a working pointer, pointing to the position to be set next. In 
+// Just a working pointer, pointing to the position to be set next. In
 // principle it is just pointing to the position filledUpTo
-template <class TYPE> 
+template <class TYPE>
 TYPE *StorageClassMemoryManagement<TYPE>::actual = NULL;
 
 /* JH (01/03/2006) : Setting the member functions for the StorageClassMemoryManagemnt class
-   This is only once inluded in StorageClasses.C and thereby it becomes only compiled 
+   This is only once inluded in StorageClasses.C and thereby it becomes only compiled
    once. Hopefully!
 */
 
@@ -76,7 +76,7 @@ TYPE *StorageClassMemoryManagement<TYPE>::actual = NULL;
       * it is negative or zero, if there is still enough space in the actual block
       * it is positive, if the data does not fit completely in the actual block
 */
-template <class TYPE> 
+template <class TYPE>
 long StorageClassMemoryManagement<TYPE> :: setPositionAndSizeAndReturnOffset (long sizeOfData_)
    {
      sizeOfData = sizeOfData_;
@@ -86,7 +86,7 @@ long StorageClassMemoryManagement<TYPE> :: setPositionAndSizeAndReturnOffset (lo
   }
 
 // method that returns the a pointer beginning the beginning of the actual memory block
-template <class TYPE> 
+template <class TYPE>
 TYPE* StorageClassMemoryManagement<TYPE> :: getBeginningOfActualBlock() const
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
@@ -100,10 +100,10 @@ TYPE* StorageClassMemoryManagement<TYPE> :: getBeginningOfActualBlock() const
 
 
 
-// method that returns the a pointer to the beginning of the data block stored 
-// in the static array! Only used for the rebuilding of the data, in order to enable several 
+// method that returns the a pointer to the beginning of the data block stored
+// in the static array! Only used for the rebuilding of the data, in order to enable several
 // additional asserts and eases the implementation!
-template <class TYPE> 
+template <class TYPE>
 TYPE* StorageClassMemoryManagement<TYPE> :: getBeginningOfDataBlock() const
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
@@ -128,7 +128,7 @@ TYPE* StorageClassMemoryManagement<TYPE> :: getBeginningOfDataBlock() const
    * if yes, we just allocate a new memory block of size blockSize, increase the actualBlock and return
      the new memory block
 */
-template <class TYPE> 
+template <class TYPE>
 TYPE* StorageClassMemoryManagement<TYPE> :: getNewMemoryBlock()
    {
      // check, wheather there is no more free block pointer
@@ -165,7 +165,7 @@ TYPE* StorageClassMemoryManagement<TYPE> :: getNewMemoryBlock()
    delete tehe static memory pool. If the memoryBlockList is not empty (e.g. 0 < actualBlock )
    we delete the pool, otherwise we do nothing.
 */
-template <class TYPE> 
+template <class TYPE>
 void StorageClassMemoryManagement<TYPE> :: deleteMemoryPool()
    {
      if ( 0 < actualBlock )
@@ -199,14 +199,14 @@ void StorageClassMemoryManagement<TYPE> :: deleteMemoryPool()
    }
 
 // return the amount of the data stored or to be stored
-template <class TYPE> 
+template <class TYPE>
 long StorageClassMemoryManagement<TYPE> :: getSizeOfData() const
    {
      return sizeOfData;
    }
 
-// print data that is stored, only used for debugging 
-template <class TYPE> 
+// print data that is stored, only used for debugging
+template <class TYPE>
 // void StorageClassMemoryManagement<TYPE> :: print () const
 void StorageClassMemoryManagement<TYPE>::displayStorageClassData() const
    {
@@ -227,21 +227,21 @@ void StorageClassMemoryManagement<TYPE>::displayStorageClassData() const
    class where the EasyStorage object is declared and used. Therefore, the any EasyStorage
    class might always be a object, never a poitner.
    Further, we always save the filledUpTo, even if the data is already stored and filledUpTo
-   was set to 0. Then we store just the 0 and nothin more is done. The reasen for this is 
-   the reading back of the data is calles in the same order and will so read the 0 and 
-   also do nothing. I am not very glad with this implementation, because this 0s could be 
-   spared, by changing the StorageClassMemoryManagement class. Since this is not a real 
+   was set to 0. Then we store just the 0 and nothin more is done. The reasen for this is
+   the reading back of the data is calles in the same order and will so read the 0 and
+   also do nothing. I am not very glad with this implementation, because this 0s could be
+   spared, by changing the StorageClassMemoryManagement class. Since this is not a real
    perofrmace issue (its only static data, and we already try to spare the doubles in
    the StorageClasses) I just leave it in that manner. But this can be improved!
 */
-template <class TYPE> 
+template <class TYPE>
 void StorageClassMemoryManagement<TYPE> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
      AST_FILE_IO_MARKER::writeMarker("|01|",outputFileStream);
 #endif
      outputFileStream.write((char*)(&filledUpTo),sizeof(filledUpTo));
-      // since the method might get called several times, we only want to store once 
+      // since the method might get called several times, we only want to store once
      if ( 0 < filledUpTo )
         {
           assert ( actual != NULL );
@@ -289,7 +289,7 @@ void StorageClassMemoryManagement<TYPE> :: readFromFile (std::istream& inputFile
         }
     }
 
-                                                                                                                                                                                                                          
+
 /* This method reorganizes the memory pool to contain all data in one memory block.
    It is only used for testing, for storing and repairing the data without writing
    to a file !
@@ -338,27 +338,27 @@ void StorageClassMemoryManagement<TYPE> :: arrangeMemoryPoolInOneBlock()
 /***************************************************************************************
   JH (01/11/2006) EasyStorage for arrays of plain data (mainly char arrays)
   Some comments to the implementation at all:
-  * NULL pointers are stored equally to empty arrays, lists, etc. This means, that if 
-    rebuilded we will have an valid object behind the pointer. The exeptions are 
+  * NULL pointers are stored equally to empty arrays, lists, etc. This means, that if
+    rebuilded we will have an valid object behind the pointer. The exeptions are
     * AstAttributeMechanism
     therefore an NULL pointer will be recreated ( this is realized by setting sizeOfData
     to -1 and check while rebuilt)
   * the actual pointer is pointing to the next position to be stored in. Except for the case, the
     memmory pool is not allocated at all, then the actual pointer is NULL. Therefore, we use
     the actual pointer for checking if the pool is valid (everytime you see (actual != NULL) )
-  * every storting is mainly separated in 2 parts: 
+  * every storting is mainly separated in 2 parts:
     * the setup with the call of setPositionAndSizeAndReturnOffset
-    * the storing of the data, checking, whether it fits in the actual memory block or not 
+    * the storing of the data, checking, whether it fits in the actual memory block or not
       ( done by ( 0 < offset ) )
       * the case it does not fit is separated in 2 or 3 parts
-        * filling the actual memory block 
-        * getting a new block and iterating while the rest of the data does not fit in a 
+        * filling the actual memory block
+        * getting a new block and iterating while the rest of the data does not fit in a
           whole memory block
-        * storing of the rest ( runs sometimes just to storing data ) 
-    * more complex data (PreprocessingInfo, maps, AstAttributeMechanism) contain 
+        * storing of the rest ( runs sometimes just to storing data )
+    * more complex data (PreprocessingInfo, maps, AstAttributeMechanism) contain
       EasyStorage classes themself. Therefore, we must provide explicit member functions
-      deleting the static data of those. These functions call also the corresponding one 
-      of the parent class (if the class is an inherited class). 
+      deleting the static data of those. These functions call also the corresponding one
+      of the parent class (if the class is an inherited class).
 ***************************************************************************************/
 
 /*
@@ -369,10 +369,10 @@ void StorageClassMemoryManagement<TYPE> :: arrangeMemoryPoolInOneBlock()
 void EasyStorage<char*> :: storeDataInEasyStorageClass(const char* data_)
    {
      if ( data_ == NULL )
-        { 
+        {
           Base::sizeOfData = -1;
         }
-     else 
+     else
         {
           storeDataInEasyStorageClass( data_, strlen(data_) );
         }
@@ -380,7 +380,7 @@ void EasyStorage<char*> :: storeDataInEasyStorageClass(const char* data_)
 void EasyStorage<char*> :: storeDataInEasyStorageClass(const char* data_, int sizeOfData_)
    {
      if ( data_ == NULL )
-        { 
+        {
           Base::sizeOfData = -1;
         }
      else
@@ -389,10 +389,10 @@ void EasyStorage<char*> :: storeDataInEasyStorageClass(const char* data_, int si
           char* copy_ = const_cast<char*>(data_);
           long offset = Base::setPositionAndSizeAndReturnOffset ( sizeOfData_ ) ;
        // if the new data does not fit in the actual block
-          if (0 < offset) 
+          if (0 < offset)
              {
             // if there is still space in the actual block
-               if ( offset < Base::getSizeOfData() && Base::actual != NULL ) 
+               if ( offset < Base::getSizeOfData() && Base::actual != NULL )
                   {
                     memcpy( Base::actual, copy_, (Base::getSizeOfData()-offset)*sizeof(char) );
                     copy_ += (Base::getSizeOfData()-offset);
@@ -426,7 +426,7 @@ char* EasyStorage<char*> :: rebuildDataStoredInEasyStorageClass() const
       assert ( Base::actualBlock <= 1 );
       assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() <= 0 ) );
 #endif
-   
+
       char* data_ = NULL ;
       if ( 0 <= Base::getSizeOfData() )
          {
@@ -455,10 +455,10 @@ void EasyStorage<std::string> :: storeDataInEasyStorageClass(const std::string& 
      long offset = Base::setPositionAndSizeAndReturnOffset ( strlen(copy_) ) ;
   // if the new data does not fit in the actual block
      if (0 < offset)
-        { 
+        {
        // if there is still space in the actual block
           if ( offset < Base::getSizeOfData() && Base::actual != NULL )
-             { 
+             {
                memcpy(Base::actual, copy_, (Base::getSizeOfData()-offset)*sizeof(char) );
                copy_ += (Base::getSizeOfData()-offset);
              }
@@ -482,7 +482,7 @@ void EasyStorage<std::string> :: storeDataInEasyStorageClass(const std::string& 
           Base::actual += Base::getSizeOfData();
         }
    }
-                                                                                                                                                                                                                          
+
 
 std::string EasyStorage<std::string> :: rebuildDataStoredInEasyStorageClass() const
    {
@@ -619,7 +619,7 @@ void EasyStorage <CONTAINER<TYPE> > :: storeDataInEasyStorageClass(const CONTAIN
                   }
                offset -= Base::blockSize;
              };
-       // get a new memory block 
+       // get a new memory block
           Base::actual = Base::getNewMemoryBlock();
         }
   // put (the rest of) the data in a new memory block
@@ -628,7 +628,7 @@ void EasyStorage <CONTAINER<TYPE> > :: storeDataInEasyStorageClass(const CONTAIN
           *Base::actual = *dat;
         }
    }
-                                                                                                                                                                                                                          
+
 template <class TYPE, template <class A> class CONTAINER >
 CONTAINER<TYPE> EasyStorage <CONTAINER<TYPE> > :: rebuildDataStoredInEasyStorageClass() const
    {
@@ -636,7 +636,7 @@ CONTAINER<TYPE> EasyStorage <CONTAINER<TYPE> > :: rebuildDataStoredInEasyStorage
      assert ( Base::actualBlock <= 1 );
      assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() == 0 ) );
 #endif
-     
+
      CONTAINER<TYPE> data_;
    // if there is data in the memory pool at all
       if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
@@ -684,7 +684,7 @@ void EasyStorage <std::list<TYPE> > :: storeDataInEasyStorageClass(const std::li
                   }
                offset -= Base::blockSize;
              };
-       // get a new memory block 
+       // get a new memory block
           Base::actual = Base::getNewMemoryBlock();
         }
   // put (the rest of) the data in a new memory block
@@ -693,7 +693,7 @@ void EasyStorage <std::list<TYPE> > :: storeDataInEasyStorageClass(const std::li
           *Base::actual = *dat;
         }
    }
-                                                                                                                                                                                                                          
+
 template <class TYPE>
 std::list<TYPE> EasyStorage <std::list<TYPE> > :: rebuildDataStoredInEasyStorageClass() const
    {
@@ -701,7 +701,7 @@ std::list<TYPE> EasyStorage <std::list<TYPE> > :: rebuildDataStoredInEasyStorage
      assert ( Base::actualBlock <= 1 );
      assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() == 0 ) );
 #endif
-     
+
      std::list<TYPE> data_;
    // if there is data in the memory pool at all
       if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
@@ -749,7 +749,7 @@ void EasyStorage <std::vector<TYPE> > :: storeDataInEasyStorageClass(const std::
                   }
                offset -= Base::blockSize;
              };
-       // get a new memory block 
+       // get a new memory block
           Base::actual = Base::getNewMemoryBlock();
         }
   // put (the rest of) the data in a new memory block
@@ -758,7 +758,7 @@ void EasyStorage <std::vector<TYPE> > :: storeDataInEasyStorageClass(const std::
           *Base::actual = *dat;
         }
    }
-                                                                                                                                                                                                                          
+
 template <class TYPE>
 std::vector<TYPE> EasyStorage <std::vector<TYPE> > :: rebuildDataStoredInEasyStorageClass() const
    {
@@ -766,7 +766,7 @@ std::vector<TYPE> EasyStorage <std::vector<TYPE> > :: rebuildDataStoredInEasySto
      assert ( Base::actualBlock <= 1 );
      assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() == 0 ) );
 #endif
-     
+
      std::vector<TYPE> data_;
    // if there is data in the memory pool at all
       if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
@@ -822,7 +822,7 @@ void EasyStorage <std::set<TYPE> > :: storeDataInEasyStorageClass(const std::set
           *Base::actual = *dat;
         }
    }
-                                                                                                                                                                                                                          
+
 template <class TYPE >
 std::set<TYPE> EasyStorage <std::set<TYPE> > :: rebuildDataStoredInEasyStorageClass() const
    {
@@ -846,7 +846,72 @@ std::set<TYPE> EasyStorage <std::set<TYPE> > :: rebuildDataStoredInEasyStorageCl
 
 /*
    ****************************************************************************************
-   **       Implementations for EasyStorage <std::set<TYPE> >                            **
+   **       Implementations for EasyStorage <std::unordered_set<TYPE> >                  **
+   ****************************************************************************************
+*/
+template <class TYPE >
+void EasyStorage <std::unordered_set<TYPE> > :: storeDataInEasyStorageClass(const std::unordered_set<TYPE>& data_)
+   {
+  // get iterator pointing to begin
+     auto dat = data_.begin();
+     long offset = Base::setPositionAndSizeAndReturnOffset ( data_.size() ) ;
+  // if the new data does not fit in the actual block
+     if (0 < offset)
+        {
+       // if there is still space in the actual block
+          if ( offset < Base::getSizeOfData() && Base::actual != NULL )
+             {
+               for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++dat)
+                  {
+                    *Base::actual = *dat;
+                  }
+             }
+       // the data does not fit in one block
+          while (Base::blockSize < (unsigned long)(offset))
+             {
+               Base::actual = Base::getNewMemoryBlock();
+               for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++dat)
+                  {
+                    *Base::actual = *dat;
+                  }
+               offset -= Base::blockSize;
+             };
+       // get a new memory block
+          Base::actual = Base::getNewMemoryBlock();
+        }
+  // put (the rest of) the data in a new memory block
+     for (; dat != data_.end(); ++dat, ++Base::actual)
+        {
+          *Base::actual = *dat;
+        }
+   }
+
+template <class TYPE >
+std::unordered_set<TYPE> EasyStorage <std::unordered_set<TYPE> > :: rebuildDataStoredInEasyStorageClass() const
+   {
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+      assert ( Base::actualBlock <= 1 );
+      assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() == 0 ) );
+#endif
+      std::unordered_set<TYPE> data_;
+   // if there is data in the memory pool at all
+      if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
+         {
+           TYPE* pointer = Base::getBeginningOfDataBlock();
+           for (long  i=0; i < Base::getSizeOfData(); ++i )
+              {
+                data_.insert(*(pointer+i));
+              }
+         }
+      return data_;
+   }
+
+
+
+
+/*
+   ****************************************************************************************
+   **       Implementations for EasyStorage <SgBitVector>                                **
    ****************************************************************************************
 */
 void EasyStorage <SgBitVector> :: storeDataInEasyStorageClass(const SgBitVector& data_)
@@ -884,7 +949,7 @@ void EasyStorage <SgBitVector> :: storeDataInEasyStorageClass(const SgBitVector&
           *Base::actual = *dat;
         }
    }
-                                                                                                                                                                                                                          
+
 SgBitVector EasyStorage <SgBitVector> :: rebuildDataStoredInEasyStorageClass() const
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
@@ -922,10 +987,10 @@ void EasyStorage <CONTAINER<std::string> > :: storeDataInEasyStorageClass(const 
      long offset = Base::setPositionAndSizeAndReturnOffset ( data_.size() ) ;
   // if the new data does not fit in the actual block
      if (0 < offset)
-        { 
+        {
        // if there is still space in the actual block
           if ( offset < Base::getSizeOfData() && Base::actual != NULL )
-             { 
+             {
                for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++copy_)
                   {
                     actual->storeDataInEasyStorageClass(*copy_);
@@ -995,19 +1060,19 @@ CONTAINER<std::string> EasyStorage <CONTAINER<std::string> > :: rebuildDataStore
 template <template <class A> class CONTAINER >
 void EasyStorage <CONTAINER<std::string> > :: arrangeMemoryPoolInOneBlock()
    {
-    // calling the base class 
+    // calling the base class
      StorageClassMemoryManagement<EasyStorage<std::string> > :: arrangeMemoryPoolInOneBlock();
-    // calling the basic type 
-     EasyStorage <std::string> :: arrangeMemoryPoolInOneBlock(); 
+    // calling the basic type
+     EasyStorage <std::string> :: arrangeMemoryPoolInOneBlock();
    }
 
 template <template <class A> class CONTAINER >
-void EasyStorage <CONTAINER<std::string> > :: deleteMemoryPool() 
+void EasyStorage <CONTAINER<std::string> > :: deleteMemoryPool()
    {
-    // calling the base class 
+    // calling the base class
      StorageClassMemoryManagement<EasyStorage<std::string> > :: deleteMemoryPool();
-    // calling the basic type 
-     EasyStorage <std::string> :: deleteMemoryPool(); 
+    // calling the basic type
+     EasyStorage <std::string> :: deleteMemoryPool();
    }
 
 
@@ -1017,9 +1082,9 @@ void EasyStorage <CONTAINER<std::string> > :: writeToFile(std::ostream& outputFi
 #if FILE_IO_MARKER
      AST_FILE_IO_MARKER::writeMarker("|02|",outputFileStream);
 #endif
-    // calling the base class 
+    // calling the base class
      StorageClassMemoryManagement<EasyStorage<std::string> > :: writeToFile(outputFileStream);
-    // calling the basic type 
+    // calling the basic type
      EasyStorage <std::string> :: writeToFile(outputFileStream);
    }
 
@@ -1029,9 +1094,9 @@ void EasyStorage <CONTAINER<std::string> > :: readFromFile (std::istream& inputF
 #if FILE_IO_MARKER
      AST_FILE_IO_MARKER::readMarker("|02|",inputFileStream);
 #endif
-    // calling the base class 
+    // calling the base class
      StorageClassMemoryManagement<EasyStorage<std::string> > :: readFromFile (inputFileStream);
-    // calling the basic type 
+    // calling the basic type
      EasyStorage <std::string> :: readFromFile (inputFileStream);
    }
 #endif
@@ -1049,10 +1114,10 @@ void EasyStorage <Rose_STL_Container<std::string> > :: storeDataInEasyStorageCla
      long offset = Base::setPositionAndSizeAndReturnOffset ( data_.size() ) ;
   // if the new data does not fit in the actual block
      if (0 < offset)
-        { 
+        {
        // if there is still space in the actual block
           if ( offset < Base::getSizeOfData() && Base::actual != NULL )
-             { 
+             {
                for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++copy_)
                   {
                     actual->storeDataInEasyStorageClass(*copy_);
@@ -1123,18 +1188,18 @@ Rose_STL_Container<std::string> EasyStorage <Rose_STL_Container<std::string> > :
 
 void EasyStorage <Rose_STL_Container<std::string> > :: arrangeMemoryPoolInOneBlock()
    {
-    // calling the base class 
+    // calling the base class
      StorageClassMemoryManagement<EasyStorage<std::string> > :: arrangeMemoryPoolInOneBlock();
-    // calling the basic type 
-     EasyStorage <std::string> :: arrangeMemoryPoolInOneBlock(); 
+    // calling the basic type
+     EasyStorage <std::string> :: arrangeMemoryPoolInOneBlock();
    }
 
-void EasyStorage <Rose_STL_Container<std::string> > :: deleteMemoryPool() 
+void EasyStorage <Rose_STL_Container<std::string> > :: deleteMemoryPool()
    {
-    // calling the base class 
+    // calling the base class
      StorageClassMemoryManagement<EasyStorage<std::string> > :: deleteMemoryPool();
-    // calling the basic type 
-     EasyStorage <std::string> :: deleteMemoryPool(); 
+    // calling the basic type
+     EasyStorage <std::string> :: deleteMemoryPool();
    }
 
 
@@ -1143,9 +1208,9 @@ void EasyStorage <Rose_STL_Container<std::string> > :: writeToFile(std::ostream&
 #if FILE_IO_MARKER
      AST_FILE_IO_MARKER::writeMarker("|03|",outputFileStream);
 #endif
-    // calling the base class 
+    // calling the base class
      StorageClassMemoryManagement<EasyStorage<std::string> > :: writeToFile(outputFileStream);
-    // calling the basic type 
+    // calling the basic type
      EasyStorage <std::string> :: writeToFile(outputFileStream);
    }
 
@@ -1154,9 +1219,9 @@ void EasyStorage <Rose_STL_Container<std::string> > :: readFromFile (std::istrea
 #if FILE_IO_MARKER
      AST_FILE_IO_MARKER::readMarker("|03|",inputFileStream);
 #endif
-    // calling the base class 
+    // calling the base class
      StorageClassMemoryManagement<EasyStorage<std::string> > :: readFromFile (inputFileStream);
-    // calling the basic type 
+    // calling the basic type
      EasyStorage <std::string> :: readFromFile (inputFileStream);
    }
 
@@ -1168,8 +1233,8 @@ void EasyStorage <Rose_STL_Container<std::string> > :: readFromFile (std::istrea
    ****************************************************************************************
 */
 /* The EasyStorage <SgName> class is not derived from the StorageClassMemoryManagement class!
-   This is not necessary, since it only holds a data member EasyStorage <std::string>, which 
-   really contains the data ! Thus, the static data functions just have to call the methods 
+   This is not necessary, since it only holds a data member EasyStorage <std::string>, which
+   really contains the data ! Thus, the static data functions just have to call the methods
    on the data member type EasyStorage <std::string>!!
 */
 void EasyStorage <SgName> :: storeDataInEasyStorageClass(const SgName& name)
@@ -1224,7 +1289,7 @@ void EasyStorage <SgName> :: readFromFile (std::istream& inputFileStream)
    ****************************************************************************************
 */
 /* Since the class  EasyStorageMapEntry <SgName,T> is not inherited from StorageClassMemoryManagement,
-   it does not have to call the static member functions of the base class! 
+   it does not have to call the static member functions of the base class!
 */
 template <class T>
 void EasyStorageMapEntry <SgName,T> :: storeDataInEasyStorageClass(std::pair<const SgName, T>& iter)
@@ -1286,15 +1351,15 @@ void EasyStorageMapEntry <SgName,T> :: readFromFile (std::istream& inputFileStre
 void EasyStorage <rose_hash_multimap*> ::storeDataInEasyStorageClass(rose_hash_multimap* data_)
    {
      if ( data_ == NULL )
-        { 
+        {
           Base::sizeOfData = -1;
         }
-     else 
+     else
         {
-       // store the parent pointer as unsigned long (this should better be AddrType). FixMe, also in the class declaration ! 
+       // store the parent pointer as unsigned long (this should better be AddrType). FixMe, also in the class declaration !
           parent = AST_FILE_IO :: getGlobalIndexFromSgClassPointer( data_->parent );
        // get staring iterator
-// CH (4/9/2010): Use boost::unordered instead       
+// CH (4/9/2010): Use boost::unordered instead
 //#ifdef _MSC_VER
 #if 0
           rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name>::iterator copy_ = data_->begin();
@@ -1327,7 +1392,7 @@ void EasyStorage <rose_hash_multimap*> ::storeDataInEasyStorageClass(rose_hash_m
             // get new memory block, since the old one is full
                Base::actual = Base::getNewMemoryBlock();
              }
-       // store the (rest of the ) data 
+       // store the (rest of the ) data
           for ( ; copy_ != data_->end(); ++copy_, ++Base::actual )
              {
               Base::actual->storeDataInEasyStorageClass(*copy_);
@@ -1336,7 +1401,7 @@ void EasyStorage <rose_hash_multimap*> ::storeDataInEasyStorageClass(rose_hash_m
    }
 
 
-rose_hash_multimap* 
+rose_hash_multimap*
 EasyStorage <rose_hash_multimap*> :: rebuildDataStoredInEasyStorageClass() const
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
@@ -1349,7 +1414,7 @@ EasyStorage <rose_hash_multimap*> :: rebuildDataStoredInEasyStorageClass() const
           return_map = new rose_hash_multimap();
        // set the parent
           return_map->parent = AST_FILE_IO :: getSgClassPointerFromGlobalIndex(parent);
-       // if the memory pool is valid 
+       // if the memory pool is valid
           if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
              {
                EasyStorageMapEntry<SgName,SgSymbol*> *pointer = Base::getBeginningOfDataBlock();
@@ -1418,13 +1483,13 @@ void EasyStorageMapEntry <std::string,AstAttribute*> :: storeDataInEasyStorageCl
    }
 
 
-std::pair<std::string, AstAttribute*> 
+std::pair<std::string, AstAttribute*>
 EasyStorageMapEntry <std::string,AstAttribute*> :: rebuildDataStoredInEasyStorageClass() const
    {
    // call suitable methods of parent and member
       AstAttribute *ret = NULL ;
    // register of the userdefined AstAttribute must be done before reading in. It will print an  error message, that contains
-   // name of the attribute and some info how to register it  
+   // name of the attribute and some info how to register it
    // stored in the right manner but, before rebuilding it has to be registered!
       std :: map < std::string, AST_FILE_IO::CONSTRUCTOR > regAttr = AST_FILE_IO :: getRegisteredAttributes();
       std::string storedAttributeName = attributeName.rebuildDataStoredInEasyStorageClass();
@@ -1493,7 +1558,7 @@ void EasyStorageMapEntry <std::string,AstAttribute*> :: readFromFile (std::istre
 */
 void EasyStorage <AstAttributeMechanism*> :: storeDataInEasyStorageClass(AstAttributeMechanism* data_)
    {
-  // REMARK !!!!! Here we store a pointer that was a NULL pointer in a manner, that it 
+  // REMARK !!!!! Here we store a pointer that was a NULL pointer in a manner, that it
   // can be rebuilt (sizeOfData = - 1)
      if ( data_ == NULL )
         {
@@ -1508,7 +1573,7 @@ void EasyStorage <AstAttributeMechanism*> :: storeDataInEasyStorageClass(AstAttr
           long offset = Base::setPositionAndSizeAndReturnOffset ( first_data.size() ) ;
        // if the new data does not fit in the actual block
           if (0 < offset)
-             { 
+             {
             // if there is still space in the actual block
                if ( offset < Base::getSizeOfData() && Base::actual != NULL )
                   {
@@ -1681,7 +1746,7 @@ PreprocessingInfo* EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStora
 #endif
      if ( 0 < Base::getSizeOfData() )
          {
-        // DQ (4/22/2006): This constructor can not build any IR node or it appears 
+        // DQ (4/22/2006): This constructor can not build any IR node or it appears
         // that the memory pool will become corrupted resulting the a bad AST.
            returnInfo = new PreprocessingInfo();
            ROSE_ASSERT(returnInfo != NULL);
@@ -1772,10 +1837,10 @@ void EasyStorage <CONTAINER<PreprocessingInfo*> > :: storeDataInEasyStorageClass
      long offset = setPositionAndSizeAndReturnOffset ( data_.size() ) ;
   // if the new data does not fit in the actual block
      if (0 < offset)
-        { 
+        {
        // if there is still space in the actual block
           if ( offset < Base::getSizeOfData() && Base::actual != NULL )
-             { 
+             {
                for (;(unsigned long)( Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++copy_)
                   {
                     Base::actual->storeDataInEasyStorageClass(*copy_);
@@ -1803,7 +1868,7 @@ void EasyStorage <CONTAINER<PreprocessingInfo*> > :: storeDataInEasyStorageClass
 
 
 template <template <class A> class CONTAINER >
-CONTAINER<PreprocessingInfo*> 
+CONTAINER<PreprocessingInfo*>
 EasyStorage <CONTAINER<PreprocessingInfo*> > :: rebuildDataStoredInEasyStorageClass() const
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
@@ -1828,17 +1893,17 @@ void EasyStorage <CONTAINER<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlock
    {
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlock();
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> :: arrangeMemoryPoolInOneBlock(); 
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> :: arrangeMemoryPoolInOneBlock();
    }
 
 template <template <class A> class CONTAINER >
-void EasyStorage <CONTAINER<PreprocessingInfo*> > :: deleteMemoryPool() 
+void EasyStorage <CONTAINER<PreprocessingInfo*> > :: deleteMemoryPool()
    {
     // calling the base class method
-     StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: deleteMemoryPool(); 
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> :: deleteMemoryPool(); 
+     StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: deleteMemoryPool();
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> :: deleteMemoryPool();
    }
 
 
@@ -1850,8 +1915,8 @@ void EasyStorage <CONTAINER<PreprocessingInfo*> > :: writeToFile(std::ostream& o
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: writeToFile(outputFileStream);
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> ::  writeToFile(outputFileStream); 
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> ::  writeToFile(outputFileStream);
    }
 
 template <template <class A> class CONTAINER >
@@ -1862,8 +1927,8 @@ void EasyStorage <CONTAINER<PreprocessingInfo*> > :: readFromFile (std::istream&
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: readFromFile (inputFileStream);
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> ::  readFromFile (inputFileStream); 
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> ::  readFromFile (inputFileStream);
    }
 
 /* special implementation for  omitting compiler instantiation errors*/
@@ -1874,10 +1939,10 @@ void EasyStorage <std::vector<PreprocessingInfo*> > :: storeDataInEasyStorageCla
      long offset = setPositionAndSizeAndReturnOffset ( data_.size() ) ;
   // if the new data does not fit in the actual block
      if (0 < offset)
-        { 
+        {
        // if there is still space in the actual block
           if ( offset < Base::getSizeOfData() && Base::actual != NULL )
-             { 
+             {
                for (;(unsigned long)( Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++copy_)
                   {
                     Base::actual->storeDataInEasyStorageClass(*copy_);
@@ -1904,7 +1969,7 @@ void EasyStorage <std::vector<PreprocessingInfo*> > :: storeDataInEasyStorageCla
    }
 
 
-std::vector<PreprocessingInfo*> 
+std::vector<PreprocessingInfo*>
 EasyStorage <std::vector<PreprocessingInfo*> > :: rebuildDataStoredInEasyStorageClass() const
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
@@ -1928,16 +1993,16 @@ void EasyStorage <std::vector<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlo
    {
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlock();
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> :: arrangeMemoryPoolInOneBlock(); 
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> :: arrangeMemoryPoolInOneBlock();
    }
 
-void EasyStorage <std::vector<PreprocessingInfo*> > :: deleteMemoryPool() 
+void EasyStorage <std::vector<PreprocessingInfo*> > :: deleteMemoryPool()
    {
     // calling the base class method
-     StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: deleteMemoryPool(); 
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> :: deleteMemoryPool(); 
+     StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: deleteMemoryPool();
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> :: deleteMemoryPool();
    }
 
 
@@ -1948,8 +2013,8 @@ void EasyStorage <std::vector<PreprocessingInfo*> > :: writeToFile(std::ostream&
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: writeToFile(outputFileStream);
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> ::  writeToFile(outputFileStream); 
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> ::  writeToFile(outputFileStream);
    }
 
 void EasyStorage <std::vector<PreprocessingInfo*> > :: readFromFile (std::istream& inputFileStream)
@@ -1959,8 +2024,8 @@ void EasyStorage <std::vector<PreprocessingInfo*> > :: readFromFile (std::istrea
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: readFromFile (inputFileStream);
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> ::  readFromFile (inputFileStream); 
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> ::  readFromFile (inputFileStream);
    }
 
 
@@ -2021,10 +2086,10 @@ void EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass
 
        // if the new data does not fit in the actual block
           if (0 < offset)
-             { 
+             {
             // if there is still space in the actual block
                if ( offset < Base::getSizeOfData() && Base::actual != NULL )
-                  { 
+                  {
                     for (;(unsigned long)( Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++copy_)
                        {
                          Base::actual->storeDataInEasyStorageClass(*copy_);
@@ -2064,7 +2129,7 @@ void EasyStorage <AttachedPreprocessingInfoType*> :: storeDataInEasyStorageClass
    }
 
 
-AttachedPreprocessingInfoType* 
+AttachedPreprocessingInfoType*
 EasyStorage <AttachedPreprocessingInfoType*> :: rebuildDataStoredInEasyStorageClass() const
    {
 //      printf ("EasyStorage <AttachedPreprocessingInfoType*> :: rebuildDataStoredInEasyStorageClass \n");
@@ -2093,16 +2158,16 @@ void EasyStorage <AttachedPreprocessingInfoType*> :: arrangeMemoryPoolInOneBlock
    {
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlock();
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> :: arrangeMemoryPoolInOneBlock(); 
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> :: arrangeMemoryPoolInOneBlock();
    }
 
-void EasyStorage <AttachedPreprocessingInfoType*> :: deleteMemoryPool() 
+void EasyStorage <AttachedPreprocessingInfoType*> :: deleteMemoryPool()
    {
     // calling the base class method
-     StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: deleteMemoryPool(); 
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> :: deleteMemoryPool(); 
+     StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: deleteMemoryPool();
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> :: deleteMemoryPool();
    }
 
 
@@ -2113,8 +2178,8 @@ void EasyStorage <AttachedPreprocessingInfoType*> :: writeToFile(std::ostream& o
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: writeToFile(outputFileStream);
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> ::  writeToFile(outputFileStream); 
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> ::  writeToFile(outputFileStream);
    }
 
 void EasyStorage <AttachedPreprocessingInfoType*> :: readFromFile (std::istream& inputFileStream)
@@ -2124,8 +2189,8 @@ void EasyStorage <AttachedPreprocessingInfoType*> :: readFromFile (std::istream&
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: readFromFile (inputFileStream);
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> ::  readFromFile (inputFileStream); 
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> ::  readFromFile (inputFileStream);
    }
 
 /*
@@ -2255,7 +2320,7 @@ EasyStorage <ROSEAttributesListContainerPtr> :: rebuildDataStoredInEasyStorageCl
 #endif
           returnPtr = new ROSEAttributesListContainer;
           vector<ROSEAttributesList*> data_;
-       // if the memory pool is valid 
+       // if the memory pool is valid
           if ( Base::actual != NULL && 0 < Base::getSizeOfData() )
              {
                EasyStorage<ROSEAttributesList>* pointer = Base::getBeginningOfDataBlock();
@@ -2327,13 +2392,13 @@ std::pair<std::string, ROSEAttributesList*> EasyStorageMapEntry <std::string,ROS
      return returnPair;
    }
 
-void EasyStorageMapEntry <std::string,ROSEAttributesList> :: arrangeMemoryPoolInOneBlock() 
+void EasyStorageMapEntry <std::string,ROSEAttributesList> :: arrangeMemoryPoolInOneBlock()
    {
      EasyStorage <std::string> :: arrangeMemoryPoolInOneBlock();
      EasyStorage <ROSEAttributesList> :: arrangeMemoryPoolInOneBlock();
    }
-  
-void EasyStorageMapEntry <std::string,ROSEAttributesList> :: deleteMemoryPool() 
+
+void EasyStorageMapEntry <std::string,ROSEAttributesList> :: deleteMemoryPool()
    {
      EasyStorage <std::string> :: deleteMemoryPool();
      EasyStorage <ROSEAttributesList> :: deleteMemoryPool();
@@ -2348,7 +2413,7 @@ void EasyStorageMapEntry <std::string,ROSEAttributesList> :: writeToFile(std::os
      EasyStorage <std::string> :: writeToFile(outputFileStream);
      EasyStorage <ROSEAttributesList> :: writeToFile(outputFileStream);
    }
-  
+
 void EasyStorageMapEntry <std::string,ROSEAttributesList> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
@@ -2421,7 +2486,7 @@ EasyStorage <ROSEAttributesListContainerPtr> :: rebuildDataStoredInEasyStorageCl
 #endif
           returnPtr = new ROSEAttributesListContainer;
           std::map<std::string,ROSEAttributesList*> data_;
-       // if the memory pool is valid 
+       // if the memory pool is valid
           if ( Base::actual != NULL && 0 < Base::getSizeOfData() )
              {
                std::pair<std::string,ROSEAttributesList*> tempPair;
@@ -2491,10 +2556,10 @@ void EasyStorage <std::set<PreprocessingInfo*> > :: storeDataInEasyStorageClass(
      long offset = setPositionAndSizeAndReturnOffset ( data.size() ) ;
   // if the new data does not fit in the actual block
      if (0 < offset)
-        { 
+        {
        // if there is still space in the actual block
           if ( offset < Base::getSizeOfData() && Base::actual != NULL )
-             { 
+             {
                for (;(unsigned long)( Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++dataIterator)
                   {
                     Base::actual->storeDataInEasyStorageClass(*dataIterator);
@@ -2521,7 +2586,7 @@ void EasyStorage <std::set<PreprocessingInfo*> > :: storeDataInEasyStorageClass(
    }
 
 
-std::set<PreprocessingInfo*> 
+std::set<PreprocessingInfo*>
 EasyStorage <std::set<PreprocessingInfo*> > :: rebuildDataStoredInEasyStorageClass() const
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
@@ -2545,16 +2610,16 @@ void EasyStorage <std::set<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlock(
    {
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlock();
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> :: arrangeMemoryPoolInOneBlock(); 
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> :: arrangeMemoryPoolInOneBlock();
    }
 
-void EasyStorage <std::set<PreprocessingInfo*> > :: deleteMemoryPool() 
+void EasyStorage <std::set<PreprocessingInfo*> > :: deleteMemoryPool()
    {
     // calling the base class method
-     StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: deleteMemoryPool(); 
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> :: deleteMemoryPool(); 
+     StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: deleteMemoryPool();
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> :: deleteMemoryPool();
    }
 
 
@@ -2565,8 +2630,8 @@ void EasyStorage <std::set<PreprocessingInfo*> > :: writeToFile(std::ostream& ou
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: writeToFile(outputFileStream);
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> ::  writeToFile(outputFileStream); 
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> ::  writeToFile(outputFileStream);
    }
 
 void EasyStorage <std::set<PreprocessingInfo*> > :: readFromFile (std::istream& inputFileStream)
@@ -2576,8 +2641,8 @@ void EasyStorage <std::set<PreprocessingInfo*> > :: readFromFile (std::istream& 
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: readFromFile (inputFileStream);
-    // calling the basic type 
-     EasyStorage <PreprocessingInfo*> ::  readFromFile (inputFileStream); 
+    // calling the basic type
+     EasyStorage <PreprocessingInfo*> ::  readFromFile (inputFileStream);
    }
 
 /*
@@ -2599,13 +2664,13 @@ std::pair<std::string, std::set<PreprocessingInfo*> > EasyStorageMapEntry <std::
      return returnPair;
    }
 
-void EasyStorageMapEntry <std::string, std::set<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlock() 
+void EasyStorageMapEntry <std::string, std::set<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlock()
    {
      EasyStorage <std::string> :: arrangeMemoryPoolInOneBlock();
      EasyStorage <std::set<PreprocessingInfo*> > :: arrangeMemoryPoolInOneBlock();
    }
 
-void EasyStorageMapEntry <std::string, std::set<PreprocessingInfo*> > :: deleteMemoryPool() 
+void EasyStorageMapEntry <std::string, std::set<PreprocessingInfo*> > :: deleteMemoryPool()
    {
      EasyStorage <std::string> :: deleteMemoryPool();
      EasyStorage <std::set<PreprocessingInfo*> > :: deleteMemoryPool();
@@ -2686,7 +2751,7 @@ EasyStorage <std::map<std::string, std::set<PreprocessingInfo*> > > :: rebuildDa
           assert ( Base::actualBlock <= 1 );
           assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() <= 0 ) );
 #endif
-       // if the memory pool is valid 
+       // if the memory pool is valid
           if ( Base::actual != NULL && 0 < Base::getSizeOfData() )
              {
                std::pair<std::string, std::set<PreprocessingInfo*> > tempPair;
@@ -2758,12 +2823,12 @@ std::pair<std::string, int > EasyStorageMapEntry <std::string,int> :: rebuildDat
      return returnPair;
    }
 
-void EasyStorageMapEntry <std::string,int> :: arrangeMemoryPoolInOneBlock() 
+void EasyStorageMapEntry <std::string,int> :: arrangeMemoryPoolInOneBlock()
    {
      EasyStorage <std::string> :: arrangeMemoryPoolInOneBlock();
    }
-  
-void EasyStorageMapEntry <std::string,int> :: deleteMemoryPool() 
+
+void EasyStorageMapEntry <std::string,int> :: deleteMemoryPool()
    {
      EasyStorage <std::string> :: deleteMemoryPool();
    }
@@ -2776,7 +2841,7 @@ void EasyStorageMapEntry <std::string,int> :: writeToFile(std::ostream& outputFi
 #endif
      EasyStorage <std::string> :: writeToFile(outputFileStream);
    }
-  
+
 void EasyStorageMapEntry <std::string,int> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
@@ -2803,12 +2868,12 @@ std::pair<std::string, uint64_t > EasyStorageMapEntry <std::string,uint64_t> :: 
      return returnPair;
    }
 
-void EasyStorageMapEntry <std::string,uint64_t> :: arrangeMemoryPoolInOneBlock() 
+void EasyStorageMapEntry <std::string,uint64_t> :: arrangeMemoryPoolInOneBlock()
    {
      EasyStorage <std::string> :: arrangeMemoryPoolInOneBlock();
    }
-  
-void EasyStorageMapEntry <std::string,uint64_t> :: deleteMemoryPool() 
+
+void EasyStorageMapEntry <std::string,uint64_t> :: deleteMemoryPool()
    {
      EasyStorage <std::string> :: deleteMemoryPool();
    }
@@ -2821,7 +2886,7 @@ void EasyStorageMapEntry <std::string,uint64_t> :: writeToFile(std::ostream& out
 #endif
      EasyStorage <std::string> :: writeToFile(outputFileStream);
    }
-  
+
 void EasyStorageMapEntry <std::string,uint64_t> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
@@ -2849,12 +2914,12 @@ std::pair<int, std::string> EasyStorageMapEntry <int, std::string> :: rebuildDat
      return returnPair;
    }
 
-void EasyStorageMapEntry <int, std::string> :: arrangeMemoryPoolInOneBlock() 
+void EasyStorageMapEntry <int, std::string> :: arrangeMemoryPoolInOneBlock()
    {
      EasyStorage <std::string> :: arrangeMemoryPoolInOneBlock();
    }
-  
-void EasyStorageMapEntry <int, std::string> :: deleteMemoryPool() 
+
+void EasyStorageMapEntry <int, std::string> :: deleteMemoryPool()
    {
      EasyStorage <std::string> :: deleteMemoryPool();
    }
@@ -2867,7 +2932,7 @@ void EasyStorageMapEntry <int,std::string> :: writeToFile(std::ostream& outputFi
 #endif
      EasyStorage <std::string> :: writeToFile(outputFileStream);
    }
-  
+
 void EasyStorageMapEntry <int,std::string> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
@@ -2898,12 +2963,12 @@ std::pair<SgNode*, int > EasyStorageMapEntry <SgNode*,int> :: rebuildDataStoredI
      return returnPair;
    }
 
-void EasyStorageMapEntry <SgNode*,int> :: arrangeMemoryPoolInOneBlock() 
+void EasyStorageMapEntry <SgNode*,int> :: arrangeMemoryPoolInOneBlock()
    {
   // EasyStorage <SgNode*> :: arrangeMemoryPoolInOneBlock();
    }
-  
-void EasyStorageMapEntry <SgNode*,int> :: deleteMemoryPool() 
+
+void EasyStorageMapEntry <SgNode*,int> :: deleteMemoryPool()
    {
   // EasyStorage <SgNode*> :: deleteMemoryPool();
    }
@@ -2916,7 +2981,7 @@ void EasyStorageMapEntry <SgNode*,int> :: writeToFile(std::ostream& outputFileSt
 #endif
   // EasyStorage <SgNode*> :: writeToFile(outputFileStream);
    }
-  
+
 void EasyStorageMapEntry <SgNode*,int> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
@@ -2932,7 +2997,7 @@ void EasyStorageMapEntry <SgNode*,int> :: readFromFile (std::istream& inputFileS
    **      Implementations for EasyStorage < std::map<int,std::string> >                 **
    ****************************************************************************************
 */
-void EasyStorage < std::map<int,std::string> > :: storeDataInEasyStorageClass(const std::map<int,std::string>& data_) 
+void EasyStorage < std::map<int,std::string> > :: storeDataInEasyStorageClass(const std::map<int,std::string>& data_)
    {
      std::map<int,std::string>::const_iterator dat = data_.begin();
      long offset = Base::setPositionAndSizeAndReturnOffset ( data_.size() ) ;
@@ -2968,7 +3033,7 @@ void EasyStorage < std::map<int,std::string> > :: storeDataInEasyStorageClass(co
         }
    }
 
-std::map<int,std::string> 
+std::map<int,std::string>
 EasyStorage < std::map<int,std::string> > :: rebuildDataStoredInEasyStorageClass() const
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
@@ -3031,7 +3096,7 @@ void EasyStorage < std::map<int,std::string> > :: readFromFile (std::istream& in
    **      Implementations for EasyStorage < std::map<std::string,int> >                 **
    ****************************************************************************************
 */
-void EasyStorage < std::map<std::string,int> > :: storeDataInEasyStorageClass(const std::map<std::string,int>& data_) 
+void EasyStorage < std::map<std::string,int> > :: storeDataInEasyStorageClass(const std::map<std::string,int>& data_)
    {
      std::map<std::string,int>::const_iterator dat = data_.begin();
      long offset = Base::setPositionAndSizeAndReturnOffset ( data_.size() ) ;
@@ -3125,7 +3190,7 @@ void EasyStorage < std::map<std::string,int> > :: readFromFile (std::istream& in
    **      Implementations for EasyStorage < std::map<std::string, uint64_t> >                 **
    ****************************************************************************************
 */
-void EasyStorage < std::map<std::string,uint64_t> > :: storeDataInEasyStorageClass(const std::map<std::string,uint64_t>& data_) 
+void EasyStorage < std::map<std::string,uint64_t> > :: storeDataInEasyStorageClass(const std::map<std::string,uint64_t>& data_)
    {
      std::map<std::string,uint64_t>::const_iterator dat = data_.begin();
      long offset = Base::setPositionAndSizeAndReturnOffset ( data_.size() ) ;
@@ -3332,7 +3397,7 @@ void EasyStorage < std::map<SgNode*,int> > :: readFromFile (std::istream& inputF
 
 /*
    ****************************************************************************************
-   **      Implementations for EasyStorage < std::map<int,std::string> >                 **
+   **      Implementations for EasyStorage < std::map<SgNode*,std::string> >             **
    ****************************************************************************************
 */
 void EasyStorage < std::map<SgNode*,std::string> > :: storeDataInEasyStorageClass(const std::map<SgNode*,std::string>& /*data_*/)
@@ -3374,7 +3439,7 @@ void EasyStorage < std::map<SgNode*,std::string> > :: storeDataInEasyStorageClas
 #endif
    }
 
-std::map<SgNode*,std::string> 
+std::map<SgNode*,std::string>
 EasyStorage < std::map<SgNode*,std::string> > :: rebuildDataStoredInEasyStorageClass() const
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
@@ -3454,7 +3519,7 @@ void EasyStorage < std::map<SgNode*,std::string> > :: readFromFile (std::istream
    **      Implementations for EasyStorage < std::map<int,std::map<SgNode*,std::string> > >      **
 ***************************************************************************************************
 */
-void EasyStorage < std::map<SgNode*,std::map<SgNode*,std::string> > > :: storeDataInEasyStorageClass(const std::map<SgNode*,std::map<SgNode*,std::string> >& data_) 
+void EasyStorage < std::map<SgNode*,std::map<SgNode*,std::string> > > :: storeDataInEasyStorageClass(const std::map<SgNode*,std::map<SgNode*,std::string> >& data_)
    {
   // DQ (3/13/2019): Comment out so that we can debug the compiling issues
 #if 0
@@ -3493,7 +3558,7 @@ void EasyStorage < std::map<SgNode*,std::map<SgNode*,std::string> > > :: storeDa
 #endif
    }
 
-std::map<SgNode*,std::map<SgNode*,std::string> > 
+std::map<SgNode*,std::map<SgNode*,std::string> >
 EasyStorage < std::map<SgNode*,std::map<SgNode*,std::string> > > :: rebuildDataStoredInEasyStorageClass() const
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
@@ -3567,6 +3632,127 @@ void EasyStorage < std::map<SgNode*,std::map<SgNode*,std::string> > > :: readFro
    }
 
 
+
+
+/*
+   ****************************************************************************************
+   **      Implementations for EasyStorage < std::unordered_map<SgNode*,std::string> >             **
+   ****************************************************************************************
+*/
+void EasyStorage < std::unordered_map<SgNode*,std::string> > :: storeDataInEasyStorageClass(const std::unordered_map<SgNode*,std::string>& /*data_*/)
+   {
+  // DQ (10/6/2006): Comment out so that we can debug the compiling issues
+#if 0
+     std::unordered_map<SgNode*,std::string>::const_iterator dat = data_.begin();
+     long offset = Base::setPositionAndSizeAndReturnOffset ( data_.size() ) ;
+  // if the new data does not fit in the actual block
+     if (0 < offset)
+        {
+       // if there is still space in the actual block
+          if (offset < Base::getSizeOfData())
+             {
+               if (Base::actual != NULL)
+                  {
+                    for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++dat)
+                       {
+                         Base::actual->storeDataInEasyStorageClass(*dat);
+                       }
+                  }
+             }
+       // the data does not fit in one block
+          while (Base::blockSize < (unsigned long)(offset))
+             {
+               Base::actual = Base::getNewMemoryBlock();
+               for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++dat)
+                  {
+                    Base::actual->storeDataInEasyStorageClass(*dat);
+                  }
+               offset -= Base::blockSize;
+             };
+          Base::actual = Base::getNewMemoryBlock();
+        }
+     for (; dat != data_.end(); ++dat, ++Base::actual)
+        {
+          Base::actual->storeDataInEasyStorageClass(*dat);
+        }
+#endif
+   }
+
+std::unordered_map<SgNode*,std::string>
+EasyStorage < std::unordered_map<SgNode*,std::string> > :: rebuildDataStoredInEasyStorageClass() const
+   {
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+      assert ( Base::actualBlock <= 1 );
+      assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() <= 0 ) );
+#endif
+      std::unordered_map<SgNode*,std::string> data_;
+
+  // DQ (10/6/2006): Comment out so that we can debug the linking issues
+#if 0
+   // if the memory pool is valid
+      std::pair <SgNode*, std::string> tempPair;
+      if ( Base::actual != NULL && 0 < Base::getSizeOfData() )
+         {
+           EasyStorageMapEntry<SgNode*,std::string>* pointer = Base::getBeginningOfDataBlock();
+           for ( long i=0; i < Base::getSizeOfData(); ++i )
+              {
+                assert (Base::actualBlock == 1);
+                tempPair = (pointer+i)->rebuildDataStoredInEasyStorageClass();
+                data_[tempPair.first] = tempPair.second;
+              }
+         }
+#endif
+      return data_;
+
+   }
+
+void EasyStorage < std::unordered_map<SgNode*,std::string> > :: arrangeMemoryPoolInOneBlock()
+   {
+  // DQ (10/6/2006): Comment out so that we can debug the linking issues
+#if 0
+     StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, std::string> > :: arrangeMemoryPoolInOneBlock();
+     EasyStorageMapEntry<SgNode*, std::string> :: arrangeMemoryPoolInOneBlock();
+#endif
+   }
+
+void EasyStorage < std::unordered_map<SgNode*,std::string> > :: deleteMemoryPool()
+   {
+  // DQ (10/6/2006): Comment out so that we can debug the linking issues
+#if 0
+     StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, std::string> > :: deleteMemoryPool();
+     EasyStorageMapEntry<SgNode*, std::string> :: deleteMemoryPool();
+#endif
+   }
+
+
+void EasyStorage < std::unordered_map<SgNode*,std::string> > :: writeToFile(std::ostream& outputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::writeMarker("|23|",outputFileStream);  // PP \todo update marker
+#endif
+
+  // DQ (10/6/2006): Comment out so that we can debug the linking issues
+#if 0
+     StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, std::string> > :: writeToFile(outputFileStream);
+     EasyStorageMapEntry<SgNode*, std::string> :: writeToFile(outputFileStream);
+#endif
+   }
+
+void EasyStorage < std::unordered_map<SgNode*,std::string> > :: readFromFile (std::istream& inputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::readMarker("|23|",inputFileStream);  // PP \todo update marker
+#endif
+
+  // DQ (10/6/2006): Comment out so that we can debug the linking issues
+#if 0
+     StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, std::string> > :: readFromFile (inputFileStream);
+     EasyStorageMapEntry<SgNode*, std::string> :: readFromFile (inputFileStream);
+#endif
+   }
+
+
+
 //#ifdef ROSE_USE_NEW_GRAPH_NODES
 
 // ****************************************************************************************
@@ -3577,13 +3763,13 @@ void EasyStorage < std::map<SgNode*,std::map<SgNode*,std::string> > > :: readFro
 void EasyStorage <rose_graph_hash_multimap*> ::storeDataInEasyStorageClass(rose_graph_hash_multimap* data_)
    {
      if ( data_ == NULL )
-        { 
+        {
           Base::sizeOfData = -1;
         }
-     else 
+     else
         {
 #if 0
-       // store the parent pointer as unsigned long (this should better be AddrType). FixMe, also in the class declaration ! 
+       // store the parent pointer as unsigned long (this should better be AddrType). FixMe, also in the class declaration !
           parent = AST_FILE_IO :: getGlobalIndexFromSgClassPointer( data_->parent );
        // get staring iterator
           rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator copy_ = data_->begin();
@@ -3612,7 +3798,7 @@ void EasyStorage <rose_graph_hash_multimap*> ::storeDataInEasyStorageClass(rose_
             // get new memory block, since the old one is full
                Base::actual = Base::getNewMemoryBlock();
              }
-       // store the (rest of the ) data 
+       // store the (rest of the ) data
           for ( ; copy_ != data_->end(); ++copy_, ++Base::actual )
              {
               Base::actual->storeDataInEasyStorageClass(*copy_);
@@ -3627,7 +3813,7 @@ void EasyStorage <rose_graph_hash_multimap*> ::storeDataInEasyStorageClass(rose_
    }
 
 
-rose_graph_hash_multimap* 
+rose_graph_hash_multimap*
 EasyStorage <rose_graph_hash_multimap*> :: rebuildDataStoredInEasyStorageClass() const
    {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
@@ -3643,7 +3829,7 @@ EasyStorage <rose_graph_hash_multimap*> :: rebuildDataStoredInEasyStorageClass()
           return_map = new rose_hash_multimap();
        // set the parent
           return_map->parent = AST_FILE_IO :: getSgClassPointerFromGlobalIndex(parent);
-       // if the memory pool is valid 
+       // if the memory pool is valid
           if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
              {
                EasyStorageMapEntry<SgName,SgSymbol*> *pointer = Base::getBeginningOfDataBlock();
@@ -3700,7 +3886,7 @@ void EasyStorage <rose_graph_hash_multimap*> :: readFromFile (std::istream& inpu
      EasyStorageMapEntry <SgName,SgSymbol*> :: readFromFile (inputFileStream);
    }
 #else
-// else belongs to #if0 
+// else belongs to #if0
 
 void EasyStorage <rose_graph_hash_multimap> ::storeDataInEasyStorageClass(const rose_graph_hash_multimap& data_)
    {
@@ -3764,7 +3950,7 @@ void EasyStorage <rose_graph_hash_multimap> :: readFromFile (std::istream& input
      StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: readFromFile (inputFileStream);
      EasyStorageMapEntry <SgName,SgSymbol*> :: readFromFile (inputFileStream);
    }
-#endif 
+#endif
 // endif of #if0
 
 
@@ -3983,7 +4169,7 @@ void EasyStorage <rose_graph_node_edge_hash_multimap> :: readFromFile (std::istr
    **      Implementations for EasyStorage < std::multimap<std::string,int> >                 **
    ****************************************************************************************
 */
-void EasyStorage < std::multimap<std::string,int> > :: storeDataInEasyStorageClass(const std::multimap<std::string,int>& data_) 
+void EasyStorage < std::multimap<std::string,int> > :: storeDataInEasyStorageClass(const std::multimap<std::string,int>& data_)
    {
      std::multimap<std::string,int>::const_iterator dat = data_.begin();
      long offset = Base::setPositionAndSizeAndReturnOffset ( data_.size() ) ;
@@ -4286,12 +4472,12 @@ std::pair<int,SgGraphNode*> EasyStorageMapEntry <int,SgGraphNode*> :: rebuildDat
      return returnPair;
    }
 
-void EasyStorageMapEntry <int,SgGraphNode*> :: arrangeMemoryPoolInOneBlock() 
+void EasyStorageMapEntry <int,SgGraphNode*> :: arrangeMemoryPoolInOneBlock()
    {
   // EasyStorage <SgNode*> :: arrangeMemoryPoolInOneBlock();
    }
-  
-void EasyStorageMapEntry <int,SgGraphNode*> :: deleteMemoryPool() 
+
+void EasyStorageMapEntry <int,SgGraphNode*> :: deleteMemoryPool()
    {
   // EasyStorage <SgNode*> :: deleteMemoryPool();
    }
@@ -4334,12 +4520,12 @@ std::pair<int,SgGraphEdge*> EasyStorageMapEntry <int,SgGraphEdge*> :: rebuildDat
      return returnPair;
    }
 
-void EasyStorageMapEntry <int,SgGraphEdge*> :: arrangeMemoryPoolInOneBlock() 
+void EasyStorageMapEntry <int,SgGraphEdge*> :: arrangeMemoryPoolInOneBlock()
    {
   // EasyStorage <SgNode*> :: arrangeMemoryPoolInOneBlock();
    }
-  
-void EasyStorageMapEntry <int,SgGraphEdge*> :: deleteMemoryPool() 
+
+void EasyStorageMapEntry <int,SgGraphEdge*> :: deleteMemoryPool()
    {
   // EasyStorage <SgNode*> :: deleteMemoryPool();
    }
@@ -4604,7 +4790,7 @@ ExtentMap EasyStorage<ExtentMap>::rebuildDataStoredInEasyStorageClass() const
 
      ExtentMap emap;
 
-// DQ (10/21/2010): This macro prevents the ExtentMap::insert() function from being undefined 
+// DQ (10/21/2010): This macro prevents the ExtentMap::insert() function from being undefined
 // when binary analysis is not supported (via language only options in configure).
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
      if (Base::actual!=NULL && Base::getSizeOfData()>0)

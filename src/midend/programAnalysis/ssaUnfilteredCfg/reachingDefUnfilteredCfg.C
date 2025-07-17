@@ -9,7 +9,7 @@
 #define foreach BOOST_FOREACH
 
 using namespace std;
-using namespace boost;
+//~ using namespace boost;
 using namespace ssa_unfiltered_cfg;
 
 ReachingDef::ReachingDef(const CFGNode& defNode, Type type) : defType(type), thisNode(defNode), renamingNumer(-1) { }
@@ -40,7 +40,7 @@ set<CFGNode> ReachingDef::getActualDefinitions() const
     else
     {
         //Depth-first search of phi node graph
-        unordered_set<ReachingDefPtr> visited;
+        boost::unordered_set<ReachingDefPtr> visited;
         vector< ReachingDefPtr > worklist;
         ReachingDefPtr parentDef;
         set<CFGEdge> edges;

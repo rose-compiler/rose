@@ -284,7 +284,7 @@ Grammar::setUpSupport ()
   // of after their use in the AST relative to the causal nodes (SgUsingDirectiveStatement, SgUsingDeclarationStatement,
   // SgBaseClass, etc.).  This is a requirement imposed because we must support the generation of source code
   // from the AST (and correct name qualification as a result).
-     SymbolTable.setDataPrototype("static SgNodeSet","aliasSymbolCausalNodeSet", "",
+     SymbolTable.setDataPrototype("static SgUnorderedNodeSet","aliasSymbolCausalNodeSet", "",
                             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/22/2010): Added type table to support stricter uniqueness of types and proper sharing.
@@ -789,7 +789,7 @@ Grammar::setUpSupport ()
      SourceFile.setDataPrototype   ( "bool", "isDynamicLibrary", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (5/20/2021): Save the first and last statement associated with the source file (required to support the 
+  // DQ (5/20/2021): Save the first and last statement associated with the source file (required to support the
   // token-based unparsing (e.g. detecting the last statement so that we can output the trailing whitespace).
      SourceFile.setDataPrototype ( "SgStatement*", "firstStatement", " = NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -2640,23 +2640,3 @@ Specifiers that can have only one value (implemented with a protected enum varia
     OpenclAccessModeModifier.setFunctionSource ( "SOURCE_OPENCL_ACCESS_MODE_MODIFIER", "../Grammar/Support.code" );
 
    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

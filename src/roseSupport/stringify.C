@@ -15318,20 +15318,22 @@ namespace stringify { namespace AstNodeClass {
             case 17L: return "SGCLASS_POINTER_VECTOR_NAMED_LIST";
             case 18L: return "STL_CONTAINER";
             case 19L: return "STL_SET";
-            case 20L: return "STL_MULTIMAP";
-            case 21L: return "STL_MAP";
-            case 22L: return "STRING";
-            case 23L: return "SGNAME";
-            case 24L: return "BIT_VECTOR";
-            case 25L: return "MODIFIERCLASS";
-            case 26L: return "MODIFIERCLASS_WITHOUTEASYSTORAGE";
-            case 27L: return "ASTATTRIBUTEMECHANISM";
-            case 28L: return "TO_HANDLE";
-            case 29L: return "OSTREAM";
-            case 30L: return "ENUM_TYPE";
-            case 31L: return "BASIC_DATA_TYPE";
-            case 32L: return "SKIP_TYPE";
-            case 33L: return "SGCLASS_POINTER_LIST_POINTER";
+            case 20L: return "STL_UNORDERED_SET";
+            case 21L: return "STL_MULTIMAP";
+            case 22L: return "STL_MAP";
+            case 23L: return "STL_UNORDERED_MAP";
+            case 24L: return "STRING";
+            case 25L: return "SGNAME";
+            case 26L: return "BIT_VECTOR";
+            case 27L: return "MODIFIERCLASS";
+            case 28L: return "MODIFIERCLASS_WITHOUTEASYSTORAGE";
+            case 29L: return "ASTATTRIBUTEMECHANISM";
+            case 30L: return "TO_HANDLE";
+            case 31L: return "OSTREAM";
+            case 32L: return "ENUM_TYPE";
+            case 33L: return "BASIC_DATA_TYPE";
+            case 34L: return "SKIP_TYPE";
+            case 35L: return "SGCLASS_POINTER_LIST_POINTER";
             default: return "";
         }
     }
