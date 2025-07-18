@@ -786,6 +786,28 @@ namespace
 
           break;
         }
+
+      case ada_object_decl:
+        {
+          ada_base_entity lal_defining_name;
+          ada_object_decl_f_ids(lal_expr, &lal_defining_name);
+          //TODO: If there are multiple defining names, how do we pick the right one?
+          ada_node_child(&lal_defining_name, 0, &lal_defining_name);
+          int name_hash = hash_node(&lal_defining_name);
+
+          findFirstOf
+          || (res = findFirst(adaVars(),         name_hash))
+          || (res = findFirst(libadalangVars(),  name_hash))
+          ;
+
+          if(res == nullptr){
+              logFlaw() << "Couldn't getExprType for ada_object_decl\n";
+              res = &mkTypeUnknown();
+          }
+
+          break;
+        }
+
       case ada_attribute_ref:
         {
           res = &getAttributeExpr(lal_expr, ctx);

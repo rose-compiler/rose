@@ -1490,7 +1490,7 @@ namespace
     SgFunctionParameterList&  lst    = SG_DEREF(sgnode.get_parameterList());
     SgScopeStatement&         psc    = scopeMaker();
 
-    //ADA_ASSERT(sgnode.get_functionParameterScope() == nullptr);
+    ASSERT_require(sgnode.get_functionParameterScope() == nullptr);
     linkParameterScope(sgnode, lst, psc);
 
     SgInitializedName&        entryIndexVar  = genIndex(psc);
@@ -1506,7 +1506,7 @@ namespace
     sgnode.set_type(&funty);
 
     // not used
-    //ADA_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
+    ASSERT_require(sgnode.get_parameterList_syntax() == nullptr);
 
     if (nullptr == scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL))
       scope.insert_symbol(name, &mkBareNode<SgFunctionSymbol>(&sgnode));

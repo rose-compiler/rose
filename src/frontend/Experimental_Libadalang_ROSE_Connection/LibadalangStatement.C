@@ -2522,6 +2522,18 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           SgExpression&            idx      = getExpr_opt(nullptr, ctx); //TODO What is Accept_Entry_Index?
           SgAdaAcceptStmt&         sgnode   = mkAdaAcceptStmt(entryref, idx);
 
+          //Set the SgFunctionParameterScope to have the correct parent
+          //  It initially has the SgAdaAcceptStmt node as its parent, but this is bad since that node isn't a decl
+          //  The ASIS frontend sets it to the corresponding SgAdaEntryDecl node somewhere, but I can't figure out where, so I'll just do it here
+          ada_base_entity lal_decl_name;
+          ada_name_p_referenced_decl(&lal_identifier, 1, &lal_decl_name);
+          ada_entry_decl_f_spec(&lal_decl_name, &lal_decl_name);
+          ada_entry_spec_f_entry_name(&lal_decl_name, &lal_decl_name);
+          int decl_hash = hash_node(&lal_decl_name);
+          SgDeclarationStatement& entrydecl = lookupNode(libadalangDecls(), decl_hash);
+          SgFunctionParameterScope* parmScope = sgnode.get_parameterScope();
+          parmScope->set_parent(&entrydecl);
+
           completeStmt(sgnode, lal_stmt, ctx);
 
           //Get the params

@@ -2075,7 +2075,7 @@ namespace{
     }
 
     if(ada_node_is_null(lal_expr)){
-      logFlaw() << "Null node in getExpr_opt()\n";
+      logInfo() << "Null node in getExpr_opt()\n";
       return mkNullExpression();
     }
 
