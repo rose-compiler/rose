@@ -938,7 +938,7 @@ if(ENABLE-C)
     COMMAND rose-compiler -rose:ast:write hello-world-cxx.ast hello-world.cpp -o hello-world-cpp
     COMMAND ./hello-world-cpp
     COMMAND rose-compiler -rose:ast:read hello-world-cxx.ast
-    COMMAND rm -f hello-world-cpp hello-world-cxx.ast hello-world.o hello-world.ti
+    COMMAND rm -f hello-world.cpp hello-world-cpp hello-world-cxx.ast hello-world.o hello-world.ti
       rose_hello-world.cpp rose_odr_class.log rose_odr_function.log rose_odr_variable.log
     VERBATIM
     DEPENDS rose-compiler
