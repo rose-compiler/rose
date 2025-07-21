@@ -111,8 +111,14 @@ namespace AstUtilInterface{
     //! (modify, read, or call). Returns the string representation of the operator and variable.
     void AddOperatorSideEffectAnnotation(SgNode* op_ast, const AstNodePtr& var, OperatorSideEffect relation);
 
-    //! Returns a string that uniquely identifies the given variable.
+    //! Returns a string that uniquely identifies the given variable. 
+    //! If provided with a dict_table, save the file name and line number for the signature.
     std::string GetVariableSignature(const AstNodePtr& variable);
+    // Set configuration to save the file name and line number for each variable signature.
+    void SetSaveVariableDictionary(bool doit);
+    // Output a dictionary that maps each signature to its file name and location.. 
+    void OutputSignatureDictionary(std::ostream& output); 
+
 
     //! Returns whether the given ref reaches only local data within scope. 
     bool IsLocalRef(SgNode* ref, SgNode* scope, bool* has_ptr_deref = 0);

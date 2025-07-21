@@ -10,6 +10,31 @@
 
 DebugLog DebugAstUtil("-debugastutil");
 
+namespace AstUtilInterface {
+class VariableSignatureDictionary {
+private:
+  static DependenceTable* dict;
+  
+public:
+  static void set_doit(bool doit) {
+    if (doit && dict == 0) {
+       dict = new DependenceTable(/*update annotations=*/false);
+    }
+  }
+
+  static DependenceTable* get_dictionary() {
+    return dict;
+  } 
+};
+DependenceTable* VariableSignatureDictionary::dict = 0;
+
+};
+
+void AstUtilInterface::SetSaveVariableDictionary(bool doit) {
+  VariableSignatureDictionary::set_doit(doit);
+}
+
+
 void AstUtilInterface::ComputeAstSideEffects(SgNode* ast, 
               std::function<bool(const AstNodePtr&, 
               const AstNodePtr&, AstUtilInterface::OperatorSideEffect)>* collect,
@@ -214,5 +239,24 @@ bool AstUtilInterface::IsLocalRef(SgNode* ref, SgNode* scope, bool* has_ptr_dere
 }
 
 std::string AstUtilInterface::GetVariableSignature(const AstNodePtr&  variable) {
-  return AstInterface::GetVariableSignature(variable);
+  auto sig = AstInterface::GetVariableSignature(variable);
+  auto* dict_table = VariableSignatureDictionary::get_dictionary();
+  if (dict_table != 0 && variable.get_ptr() != 0) {
+     std::string filename;
+     int lineno = -1; 
+     if (AstInterface::get_fileInfo(variable, &filename, &lineno)) {
+        std::stringstream loc;
+        loc << "Line:" << lineno;
+        DependenceEntry e(sig, filename, "", loc.str());
+        dict_table->SaveDependence(e);
+     }
+  }
+  return sig;
+}
+
+void AstUtilInterface::OutputSignatureDictionary(std::ostream& output) {
+  auto* dict_table = VariableSignatureDictionary::get_dictionary();
+  if (dict_table != 0) {
+       dict_table->OutputDependences(output); 
+  }
 }
