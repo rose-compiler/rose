@@ -38,6 +38,9 @@ int main( int argc, char * argv[] ) {
 
   auto status = backend(project);
 
+// DQ (7/14/2025): Adding performance reporting.
+   TimingPerformance::generateReport();
+
 #if !defined(_WIN32) && !defined(__CYGWIN__)
   Rose::SourceCode::AST::IO::free();
 #endif

@@ -2963,7 +2963,7 @@ SgFile::usage ( int status )
 "                             Enable experimental processing of resilience directives defined by FAIL-SAFE annotation language specification.\n"
 "     -rose:projectSpecificDatabaseFile FILE\n"
 "                             filename where a database of all files used in a project are stored\n"
-"                             for producing unique trace ids and retrieving the reverse mapping from trace to files"
+"                             for producing unique trace ids and retrieving the reverse mapping from trace to files\n"
 "     -rose:compilationPerformance\n"
 "                             Output compilation performance after compilation of input file.\n"
 "                             Reports internal phases of ROSE compilation (time and memory requirements), output to stdout.\n"

@@ -433,17 +433,27 @@ inline size_t SharedPointer<T>::ownershipCount(T *rawPtr) {
 template<class T>
 inline void SharedPointer<T>::acquireOwnership(Pointee *rawPtr) {
     if (rawPtr != nullptr) {
+#ifndef USE_ROSE
+     // DQ (7/20/2025): This origianal code is required to support the execution of the CxxGrammarMetaProgram (in ROSETTA).
+     // DQ (7/14/2025): Fix for EDG compiling this header file. Issue reported to Robb, who is working on a better fix.
         SAWYER_THREAD_TRAITS::LockGuard lock(rawPtr->SharedObject::mutex_);
         ++rawPtr->SharedObject::nrefs_;
+#endif
     }
 }
 
 template<class T>
 inline size_t SharedPointer<T>::releaseOwnership(Pointee *rawPtr) {
     if (rawPtr != nullptr) {
+#ifndef USE_ROSE
+     // DQ (7/20/2025): This origianal code is required to support the execution of the CxxGrammarMetaProgram (in ROSETTA).
+     // DQ (7/14/2025): Fix for EDG compiling this header file. Issue reported to Robb, who is working on a better fix.
         SAWYER_THREAD_TRAITS::LockGuard lock(rawPtr->SharedObject::mutex_);
         assert(rawPtr->SharedObject::nrefs_ > 0);
         return --rawPtr->SharedObject::nrefs_;
+#else
+        return 0;
+#endif
     } else {
         return 0;
     }

@@ -5531,31 +5531,53 @@ int SgScopeStatement::lookup_symbol(const SgName& n, SgSymbol *s) const
      return false;
    }
 
+// DQ (7/14/2025): Adding timers to support Matt's tool.
+#define USING_PERFORMANCE_TRACING 0
+
 SgSymbol*
 SgScopeStatement::lookup_symbol(const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList) const
    {
      ROSE_ASSERT (this != NULL);
      ROSE_ASSERT (p_symbol_table != NULL);
 
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+#if USING_PERFORMANCE_TRACING
+     TimingPerformance timer1 ("SgScopeStatement::lookup_symbol: whole function:");
+#endif
+
      SgSymbol * symbol = p_symbol_table->find_any(n,templateParameterList,templateArgumentList);
 
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (symbol == NULL && namespaceDefinitionStatement != NULL)
         {
+#if USING_PERFORMANCE_TRACING
+       // DQ (7/14/2025): Adding timers to support Matt's tool.
+          TimingPerformance timer1 ("SgScopeStatement::lookup_symbol: looking in global namespace definition:");
+#endif
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
           symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find_any(n,templateParameterList,templateArgumentList);
         }
 
      const SgGlobal * global_scope = isSgGlobal(this);
-     if (symbol == NULL && global_scope != NULL) {
-       SgProject * project = SageInterface::getProject(global_scope);
-       if (project != NULL) {
-         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-         assert(globalScopeAcrossFiles != NULL);
-         symbol = globalScopeAcrossFiles->get_symbol_table()->find_any(n,templateParameterList,templateArgumentList);
-       }
-     }
+     if (symbol == NULL && global_scope != NULL)
+        {
+#if USING_PERFORMANCE_TRACING
+       // DQ (7/14/2025): Adding timers to support Matt's tool.
+          TimingPerformance timer1 ("SgScopeStatement::lookup_symbol: symbol not found::");
+#endif
+          SgProject * project = SageInterface::getProject(global_scope);
+          if (project != NULL)
+             {
+#if USING_PERFORMANCE_TRACING
+            // DQ (7/14/2025): Adding timers to support Matt's tool.
+               TimingPerformance timer1 ("SgScopeStatement::lookup_symbol: symbol not found: looking in other global scopes:");
+#endif
+               SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+               assert(globalScopeAcrossFiles != NULL);
+               symbol = globalScopeAcrossFiles->get_symbol_table()->find_any(n,templateParameterList,templateArgumentList);
+             }
+        }
 
      return symbol;
    }

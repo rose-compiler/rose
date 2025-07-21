@@ -6730,12 +6730,21 @@ SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatemen
 SgSymbol*
 SageInterface::lookupSymbolInParentScopesIgnoringAliasSymbols (const SgName & name, SgScopeStatement *currentScope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
    {
-// DQ (8/5/2020): the "using namespace" directive will not hide existing visability of symbols in resolving visability.
-// So we need to test if a symbol is visible exclusing matching alises due to using direectives before we can decide to
-// persue name space qualification. This is best demonstrated by Cxx_tests/test2020_18.C, test2020_19.C, test2020_20.C,
-// and test2020_21.C.
+  // DQ (8/5/2020): the "using namespace" directive will not hide existing visability of symbols in resolving visability.
+  // So we need to test if a symbol is visible exclusing matching alises due to using direectives before we can decide to
+  // persue name space qualification. This is best demonstrated by Cxx_tests/test2020_18.C, test2020_19.C, test2020_20.C,
+  // and test2020_21.C.
+
+// DQ (7/14/2025): Adding timers to support Matt's tool.
+#define USING_PERFORMANCE_TRACING 0
 
      SgSymbol* symbol = NULL;
+
+#if USING_PERFORMANCE_TRACING
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+     TimingPerformance timer1 ("SageInterface::lookupSymbolInParentScopesIgnoringAliasSymbols: whole function:");
+#endif
+
      if (currentScope == NULL)
         {
           currentScope = SageBuilder::topScopeStack();
@@ -6752,6 +6761,11 @@ SageInterface::lookupSymbolInParentScopesIgnoringAliasSymbols (const SgName & na
 
      while ((currentScope != NULL) && (symbol == NULL))
         {
+#if USING_PERFORMANCE_TRACING
+       // DQ (7/14/2025): Adding timers to support Matt's tool.
+          TimingPerformance timer1 ("SageInterface::lookupSymbolInParentScopesIgnoringAliasSymbols: in loop:");
+#endif
+
 #if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES_IGNORING_ALIAS_SYMBOLS
           printf("   --- In SageInterface:: lookupSymbolInParentScopesIgnoringAliasSymbols(): name = %s currentScope = %p = %s \n",
                name.str(),currentScope,currentScope->class_name().c_str());

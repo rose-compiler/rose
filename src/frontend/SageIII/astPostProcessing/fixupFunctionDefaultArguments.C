@@ -5,12 +5,19 @@
    #include "transformationSupport.h"
 #endif
 
+// DQ (7/20/2025): Added preformance tracing using Matt's tool (built on top of the default perfoermance analysis in ROSE).
+#define USING_PERFORMANCE_TRACING 0
+
 bool
 containsLambdaSupportForFixupFunctionDefaultArguments (SgExpression* node)
    {
   // This function takes the initializer for any default initialization.
   // I need it becasue the SageInterface::deleteAST is not robust enough to support the rather complicated 
   // case of deleting a lambda expression and allof the associated generated classes and member functions.
+
+#if USING_PERFORMANCE_TRACING || 0
+     TimingPerformance timer ("Fixup function default arguments: containsLambdaSupportForFixupFunctionDefaultArguments");
+#endif
 
      class LambdaTestTraversal : public AstSimpleProcessing
         {
@@ -35,19 +42,58 @@ containsLambdaSupportForFixupFunctionDefaultArguments (SgExpression* node)
      return traversal.foundLambda;
    }
 
+
+size_t
+numberOfNodeInAST (SgExpression* node)
+   {
+  // DQ (7/20/2025): This function id for debuggin information, it counts the number
+  // of nodes in the subtrees represented by the input expression.
+
+#if USING_PERFORMANCE_TRACING
+     TimingPerformance timer ("Fixup function default arguments: numberOfNodeInAST");
+#endif
+
+     class NodeCounter : public AstSimpleProcessing
+        {
+          public:
+               size_t nodeCount;
+
+               NodeCounter() : nodeCount(0) {}
+          
+               void visit (SgNode* node)
+                  {
+                    nodeCount++;
+                  }
+        };
+
+  // Now build the traveral object and call the traversal (preorder) on the AST subtree.
+     NodeCounter traversal;
+     traversal.traverse(node, preorder);
+
+     return traversal.nodeCount;
+   }
+
+
 void
 fixupFunctionDefaultArguments( SgNode* node )
    {
   // This function determines the best function declaration where to associate default arguments.
      ASSERT_not_null(node);
+
      TimingPerformance timer ("Fixup function default arguments:");
+
      SgSourceFile* file = nullptr;
 
+     static size_t totalNumberOfNodedDeleted = 0;
+     
      if (node->get_parent() == nullptr)
         {
           SgProject *project = isSgProject(node);
           if (project != nullptr)
              {
+#if USING_PERFORMANCE_TRACING
+               TimingPerformance timer ("Fixup function default arguments: processing the SgProject");
+#endif
             // GB (9/4/2009): Added this case for handling SgProject nodes. We do
             // this simply by iterating over the list of files in the project and
             // calling this function recursively. This is only one level of
@@ -68,15 +114,27 @@ fixupFunctionDefaultArguments( SgNode* node )
           file = TransformationSupport::getSourceFile(node);
           if (file != nullptr)
              {
+#if USING_PERFORMANCE_TRACING
+               TimingPerformance timer ("Fixup function default arguments: processing the SgSourceFile");
+#endif
             // This simplifies how the traversal is called!
                FixupFunctionDefaultArguments declarationFixupTraversal(file);
 
             // This inherited attribute is used for all traversals (within the iterative approach we define)
                FixupFunctionDefaultArgumentsInheritedAttribute inheritedAttribute;
 
+               {
+#if USING_PERFORMANCE_TRACING
+               TimingPerformance timer ("Fixup function default arguments: traversal to generate map of sets");
+#endif
             // This will be called iteratively so that we can do a fixed point iteration
                declarationFixupTraversal.traverse(node,inheritedAttribute);
+               }
 
+               {
+#if USING_PERFORMANCE_TRACING
+               TimingPerformance timer ("Fixup function default arguments: processing the map of sets");
+#endif
             // Now we have assembled the global data structure to represent the function declarations using
             // default arguments and we have to use this data to eliminate the redundant default entries.
                std::map<SgFunctionDeclaration*,FixupFunctionDefaultArguments::SetStructure*>::iterator i = declarationFixupTraversal.mapOfSetsOfFunctionDeclarations.begin();
@@ -87,7 +145,10 @@ fixupFunctionDefaultArguments( SgNode* node )
 
                     ASSERT_not_null(firstNondefiningDeclaration);
                     ASSERT_not_null(setStructure);
-
+#if 0
+                 // DQ (7/20/2025): This is called more often that I wish to worry about being processed.
+                    TimingPerformance timer ("Fixup function default arguments: processing the sets");
+#endif
                     SgFunctionDeclaration* bestFunctionDeclarationForDefaultArguments = setStructure->associatedFunctionDeclaration;
                     std::set<SgFunctionDeclaration*> & setOfFunctionDeclarations = setStructure->setOfFunctionDeclarations;
                     std::set<SgFunctionDeclaration*>::iterator j = setOfFunctionDeclarations.begin();
@@ -96,6 +157,9 @@ fixupFunctionDefaultArguments( SgNode* node )
                          SgFunctionDeclaration* functionDeclarationFromSet = *j;
                          if (functionDeclarationFromSet != bestFunctionDeclarationForDefaultArguments)
                             {
+#if USING_PERFORMANCE_TRACING
+                              TimingPerformance timer ("Fixup function default arguments: processing a function");
+#endif
                               SgFunctionDeclaration* functionDeclarationWithRedundantDefaultArguments = functionDeclarationFromSet;
                               SgInitializedNamePtrList & argList = functionDeclarationWithRedundantDefaultArguments->get_args();
                               SgInitializedNamePtrList::iterator k = argList.begin();
@@ -110,7 +174,25 @@ fixupFunctionDefaultArguments( SgNode* node )
                                         bool foundLambda = containsLambdaSupportForFixupFunctionDefaultArguments(defaultArgument);
                                         if (foundLambda == false)
                                            {
-                                             SageInterface::deleteAST(defaultArgument);
+#if USING_PERFORMANCE_TRACING
+                                             TimingPerformance timer ("Fixup function default arguments: traversal to process sets: deleteAST (now skipping deleteAST)");
+#endif
+#if 0
+                                             size_t numberOfNodesToDelete = numberOfNodeInAST(defaultArgument);
+                                             totalNumberOfNodedDeleted += numberOfNodesToDelete;
+                                             printf ("In fixupFunctionDefaultArguments(): defaultArgument = %p = %s numberOfNodesToDelete = %zu totalNumberOfNodedDeleted = %zu \n",
+                                                  defaultArgument,defaultArgument->class_name().c_str(),numberOfNodesToDelete,totalNumberOfNodedDeleted);
+#endif
+                                          // DQ (7/20/2025): After discussion with Tristan, we will skip the call to deleteAST() because
+                                          // it is expensive (after the performance bug with symbol table fixup, it now takes 1/3 of the
+                                          // time to just call deleteAST() (on a input program including rose.h header file as a benchmark).
+                                          // Note that for this input program, there are 20M IR nodes, but only 1700 need to be deleted,
+                                          // so this is an insignificant memory issue. A plan is to at a later date use a function that
+                                          // Tristan wrote to identify and delete all of the IR nodes that are disconected from the AST
+                                          // (as defined with a root at SgProject).
+                                          // SageInterface::deleteAST(defaultArgument);
+                                             defaultArgument->set_parent(NULL);
+                                             arg->set_initializer(NULL);
                                            }
                                           else
                                            {
@@ -124,11 +206,13 @@ fixupFunctionDefaultArguments( SgNode* node )
                                    k++;
                                  }
                             }
+
                          j++;
                        }
-                    
+
                     i++;
                   }
+               } // end of timer
              }
         }
    }

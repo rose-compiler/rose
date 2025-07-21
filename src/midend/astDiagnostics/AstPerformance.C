@@ -26,6 +26,32 @@
 // DQ (12/8/2006): Linux memory usage mechanism (no longer used, implemented internally (below)).
 // #include<memoryUsage.h>
 
+// DQ (7/16/2025): Added counters for a suspected performance issue in ROSE.
+// Specifically when processing the ROSE binary Analysis support using ROSE
+// (required for binary fuzz testing) we spend 80% of the time in the
+// FixupAstSymbolTablesToSupportAliasedSymbols() function.
+size_t AstPerformance::numberOfCallsToInjectSymbolsFromReferencedScopeIntoCurrentScope = 0;
+size_t AstPerformance::numberOfSymbolsCopiedIntoAliasSymbols                           = 0;
+size_t AstPerformance::numberOfUsingDirectivesProcessingAliasSymbols                   = 0;
+size_t AstPerformance::numberOfUsingBaseClassesProcessingAliasSymbols                  = 0;
+size_t AstPerformance::isSubset_numberOfCalls                                          = 0;
+size_t AstPerformance::isSubset_numberOf_a_vector_size                                 = 0;
+size_t AstPerformance::isSubset_numberOf_b_set_size                                    = 0;
+size_t AstPerformance::isSubset_a_vector_size_max                                      = 0;
+size_t AstPerformance::isSubset_b_set_size_max                                         = 0;
+
+// DQ (7/19/2025): Adding more debugging...
+size_t AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_range_size_max                      = 0;
+size_t AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfBaseClass                                      = 0;
+size_t AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfTimes_symbolExistsInBaseScope                  = 0;
+size_t AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfTimes_symbolExistsInBaseScope_SgVariableSymbol = 0;
+size_t AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfTimes_calledFromUsingDirective                 = 0;
+size_t AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfTimes_alreadyExistsAndIsInterestingCase        = 0;
+size_t AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_range_count                         = 0;
+size_t AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_false_addingNewSgAliasSymbol             = 0;
+size_t AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_addingCausalNode                    = 0;
+
+
 using namespace std;
 
 // DQ (8/29/2007): Part of initial support for more portable timers (suggested by Matt Sottile at LANL)
@@ -673,6 +699,43 @@ struct rusage
           (*i)->outputReport(5);
           i++;
         }
+
+  // DQ (7/16/2025): Added output of performance counters associated with what might be a performance problem in ROSE.
+  // DQ (7/16/2025): Added counters for a suspected performance issue in ROSE.
+  // Specifically when processing the ROSE binary Analysis support using ROSE
+  // (required for binary fuzz testing) we spend 80% of the time in the
+  // FixupAstSymbolTablesToSupportAliasedSymbols() function.
+     printf ("AstPerformance::numberOfCallsToInjectSymbolsFromReferencedScopeIntoCurrentScope = %zu \n",numberOfCallsToInjectSymbolsFromReferencedScopeIntoCurrentScope);
+     printf ("AstPerformance::numberOfSymbolsCopiedIntoAliasSymbols                           = %zu \n",numberOfSymbolsCopiedIntoAliasSymbols);
+     printf ("AstPerformance::numberOfUsingDirectivesProcessingAliasSymbols                   = %zu \n",numberOfUsingDirectivesProcessingAliasSymbols);
+     printf ("AstPerformance::numberOfUsingBaseClassesProcessingAliasSymbols                  = %zu \n",numberOfUsingBaseClassesProcessingAliasSymbols);
+
+     printf ("AstPerformance::isSubset_numberOfCalls                                          = %zu \n",isSubset_numberOfCalls);
+     printf ("AstPerformance::isSubset_numberOf_a_vector_size                                 = %zu \n",isSubset_numberOf_a_vector_size);
+     printf ("AstPerformance::isSubset_numberOf_b_set_size                                    = %zu \n",isSubset_numberOf_b_set_size);
+     printf ("AstPerformance::isSubset_a_vector_size_max                                      = %zu \n",isSubset_a_vector_size_max);
+     printf ("AstPerformance::isSubset_b_set_size_max                                         = %zu \n",isSubset_b_set_size_max);
+
+  // DQ (7/19/2025): Adding performance debugging support.
+     printf ("AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_range_size_max                      = %zu \n",
+          injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_range_size_max);
+     printf ("AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfBaseClass                                      = %zu \n",
+          injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfBaseClass);
+     printf ("AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfTimes_symbolExistsInBaseScope                  = %zu \n",
+          injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfTimes_symbolExistsInBaseScope);
+     printf ("AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfTimes_symbolExistsInBaseScope_SgVariableSymbol = %zu \n",
+          injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfTimes_symbolExistsInBaseScope_SgVariableSymbol);
+     printf ("AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfTimes_calledFromUsingDirective                 = %zu \n",
+          injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfTimes_calledFromUsingDirective);
+     printf ("AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfTimes_alreadyExistsAndIsInterestingCase        = %zu \n",
+          injectSymbolsFromReferencedScopeIntoCurrentScope_numberOfTimes_alreadyExistsAndIsInterestingCase);
+     printf ("AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_range_count                         = %zu \n",
+          injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_range_count);
+     printf ("AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_false_addingNewSgAliasSymbol             = %zu \n",
+          injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_false_addingNewSgAliasSymbol);
+     printf ("AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_addingCausalNode                    = %zu \n",
+          injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_addingCausalNode);
+
 
 #if 0
  // DQ (6/22/2011): Now that the code associated with these variables has been removed, these are no longer needed.

@@ -2426,6 +2426,22 @@ NameQualificationTraversal::NameQualificationTraversal(
   // DQ (8/3/2019): Reset the static data member that holds the aliasSymbolCausalNodeSet.
      SgSymbolTable::get_aliasSymbolCausalNodeSet().clear();
      ROSE_ASSERT(SgSymbolTable::get_aliasSymbolCausalNodeSet().empty() == true);
+     
+  // DQ (7/19/2025): This is how we are turning on and off a special name qualification mode
+  // required in the symbol table support.  In general, is is too expensive to be use everywhere,
+  // and has a dramatic imact on the support for SgAliasSymbols within the AST_PostProcessing()
+  // (specifically the support for using directives such as "using namespace std;", which can
+  // take 80% of the compilation time).
+  // ROSE_ASSERT(SgSymbolTable::get_name_qualification_mode() == false);
+
+#if 0
+     printf ("In NameQualificationTraversal() constructor: SgSymbolTable::get_name_qualification_mode() = %s \n",
+          (SgSymbolTable::get_name_qualification_mode() == true) ? "true" : "false");
+#endif
+
+     SgSymbolTable::set_name_qualification_mode(true);
+
+     ROSE_ASSERT(SgSymbolTable::get_name_qualification_mode() == true);
 
      declarationSet = NULL;
 

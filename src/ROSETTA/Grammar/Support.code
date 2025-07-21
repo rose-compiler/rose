@@ -4625,6 +4625,17 @@ HEADER_SYMBOL_TABLE_START
        // DQ (8/3/2019): Display function for static data member.
           static void display_aliasSymbolCausalNodeSet();
 
+       // DQ (7/19/2025): This is to support the new name qualification mode.  It allows us to have a more expensive cost
+       // of processing the symbol table lookups to support the name qualifiaction (required) and have a much less
+       // expensive cost of lookup normally (outside of the name qualification).  This is related to the support for
+       // alias nodes, and causal nodes and is a result of name qualification being required before seeing the causal
+       // nodes in a traversal (such as the traversal for the name qualification) and not being required (and sometimes
+       // an error) after the causal nodes in the traversal.  More information on this is in the declaration of the static
+       // data member (name_qualification_mode, in src/ROSETTA/src/support.C). This has become a significant performance
+       // problem.
+          static bool get_name_qualification_mode();
+          static void set_name_qualification_mode( bool value );
+
      protected:
 
        // DQ (4/14/2017): Test test2017_30.C demonstrates that we need to be able to force the filtering of symbols from templates
@@ -8275,6 +8286,9 @@ SgSymbolTable::exists ( const SgName & nm, SgSymbol *sp ) const
       SgNamespaceSymbol* find_namespace(const SgName &);
 */
 
+// DQ (7/14/2025): Adding timers to support Matt's tool.
+#define USING_PERFORMANCE_TRACING 0
+
 SgSymbol*
 SgSymbolTable::find_any(const SgName & nm, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
    {
@@ -8282,6 +8296,10 @@ SgSymbolTable::find_any(const SgName & nm, SgTemplateParameterPtrList* templateP
   // DQ (6/24/2013): This special case requires some special support in find_symbol_support.
   // return find_symbol_support<SgSymbol>(nm,templateParameterList,templateArgumentList);
      bool filterTemplateSymbols = false;
+
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+  // TimingPerformance timer1 ("SgSymbolTable::find_any: whole function:");
+
      return find_symbol_with_type_support<SgSymbol>(nm,NULL,templateParameterList,templateArgumentList,filterTemplateSymbols);
    }
 
@@ -8345,6 +8363,11 @@ SgSymbolTable::find_class(const SgName & nm)
 bool
 SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArguments(SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentsList, SgSymbol* symbol)
    {
+#if USING_PERFORMANCE_TRACING
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+     TimingPerformance timer1 ("SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArguments: whole function:");
+#endif
+
   // DQ (8/8/2013): I don't think that we need to handle the case of where there is both a valid SgTemplateParameterPtrList and SgTemplateArgumentPtrList.
      bool returnValue = false;
 
@@ -8354,6 +8377,9 @@ SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArgum
 
      if (templateParameterList != NULL)
         {
+       // DQ (7/14/2025): Adding timers to support Matt's tool.
+       // TimingPerformance timer1 ("SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArguments: valid templateParameterList:");
+
        // Note that this should be a template case if template parameters were specified.
 
        // DQ (8/19/2013): template classes need to use both the template parameter list and the template argument list.
@@ -8385,6 +8411,9 @@ SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArgum
         }
        else
         {
+       // DQ (7/14/2025): Adding timers to support Matt's tool.
+       // TimingPerformance timer1 ("SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArguments: null templateParameterList:");
+
        // This is not a template and is either an instantiation of a template or non-instantiation (normal class, function, etc.).
           returnValue = hasMatchingTemplateArgumentsOrNoTemplateArguments(templateArgumentsList,symbol);
         }
@@ -8399,6 +8428,9 @@ SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArgum
 bool
 SgSymbolTable::hasMatchingTemplateParametersOrNoTemplateParameters(SgTemplateParameterPtrList* templateParameterList, SgSymbol* symbol)
    {
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+  // TimingPerformance timer1 ("SgSymbolTable::hasMatchingTemplateParametersOrNoTemplateParameters: whole function:");
+
   // This is an overloaded function.
 
   // This function hides the details of calling the template version of the function.
@@ -8409,6 +8441,9 @@ SgSymbolTable::hasMatchingTemplateParametersOrNoTemplateParameters(SgTemplatePar
 bool
 SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgumentPtrList* templateArgumentsList, SgSymbol* symbol)
    {
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+  // TimingPerformance timer1 ("SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments: whole function:");
+
   // This is an overloaded function.
 
   // This is the refactored version of the previous function API.
@@ -8420,12 +8455,18 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
 // DQ (8/10/2013): Base template for specializations specific to template arguments and template parameters.
 template <class T> std::vector<T*> getTemplateParametersOrArgumentsList(SgSymbol* symbol)
    {
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+  // TimingPerformance timer1 ("getTemplateParametersOrArgumentsList: whole function:");
+
      return std::vector<T*>();
    }
 
 template <>
 std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplateArgument>(SgSymbol* symbol)
    {
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+  // TimingPerformance timer1 ("getTemplateParametersOrArgumentsList<SgTemplateArgument>: whole function:");
+
   // Template specialization for handling template arguments.
 
   // DQ (8/11/2013): This function uses the STL copy operation and might have a more efficient implementation.
@@ -8435,6 +8476,7 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
 #if 0
      mprintf ("In getTemplateParametersOrArgumentsList<SgTemplateArgument>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
 #endif
+
      switch(symbol->variantT())
         {
           case V_SgClassSymbol:
@@ -8587,6 +8629,9 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
 template <>
 std::vector<SgTemplateParameter*> getTemplateParametersOrArgumentsList<SgTemplateParameter>(SgSymbol* symbol)
    {
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+  // TimingPerformance timer1 ("getTemplateParametersOrArgumentsList<SgTemplateParameter>: whole function:");
+
   // Template specialization for handling template parameters.
 
   // DQ (8/11/2013): This function uses the STL copy operation and might have a more efficient implementation.
@@ -8738,6 +8783,11 @@ template <class T>
 bool
 SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrArguments(std::vector<T*>* templateParametersOrArgumentsList, SgSymbol* symbol)
    {
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+#if USING_PERFORMANCE_TRACING
+     TimingPerformance timer1 ("SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrArguments: whole function:");
+#endif
+
   // DQ (8/8/2013): I needed to change the API to be more generic to support template for functions (and not just classes).
 
   // DQ (1/30/2013): Note that this function only supports the evaluation of template arguments for classes (and structs, and unions),
@@ -9355,8 +9405,14 @@ symbolFilter(ReturnSymbolType* symbol, SgTemplateParameterPtrList* templateParam
   // DQ (8/13/2013): This function filters types of IR nodes that could not be considered given the rules
   // for what IR nodes apply when template parameters lists and template argument lists are provided.
 
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+  // TimingPerformance timer1 ("symbolFilter: whole function:");
+
      if (symbol != NULL)
         {
+       // DQ (7/14/2025): Adding timers to support Matt's tool.
+       // TimingPerformance timer1 ("symbolFilter: valid symbol:");
+
           VariantT symbolVariant = symbol->variantT();
 
 #if DEBUG_SYMBOL_FILTER
@@ -9460,6 +9516,31 @@ isSubset(const std::vector<SgNode*>& a_vector, const std::set<SgNode*>& b_set)
   // of causal SgNode objects (e.g. SgUsingDirectiveStatement, SgUsingDeclarationStatement,
   // SgBaseClass, etc.).
 
+#if USING_PERFORMANCE_TRACING || 0
+     TimingPerformance timer1 ("Support.code: isSubset:");
+#endif
+
+     AstPerformance::isSubset_numberOfCalls++;
+     size_t a_vector_size = a_vector.size();
+     size_t b_set_size    = b_set.size();
+     AstPerformance::isSubset_numberOf_a_vector_size += a_vector_size;
+     AstPerformance::isSubset_numberOf_b_set_size    += b_set_size;
+     if (a_vector_size > AstPerformance::isSubset_a_vector_size_max)
+        {
+          AstPerformance::isSubset_a_vector_size_max = a_vector_size;
+#if 0
+          printf ("AstPerformance::isSubset_numberOfCalls = %zu AstPerformance::isSubset_a_vector_size_max = %zu \n",AstPerformance::isSubset_a_vector_size_max,AstPerformance::isSubset_numberOfCalls);
+#endif
+        }
+
+     if (b_set_size > AstPerformance::isSubset_b_set_size_max)
+        {
+          AstPerformance::isSubset_b_set_size_max = b_set_size;
+#if 0
+          printf ("AstPerformance::isSubset_numberOfCalls = %zu AstPerformance::isSubset_b_set_size_max = %zu \n",AstPerformance::isSubset_numberOfCalls,AstPerformance::isSubset_b_set_size_max);
+#endif
+        }
+
 #define DEBUG_IS_SUBSET 0
 
 #if DEBUG_IS_SUBSET
@@ -9528,6 +9609,11 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
 
   // DQ (5/20/2013): Newer implementation of the symbol table handling to account for the template type, SgRenameSymbol, and SgAliasSymbols (in that order).
 
+#if USING_PERFORMANCE_TRACING
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+     TimingPerformance timer1 ("SgSymbolTable::find_symbol_with_type_support: whole function:");
+#endif
+
      ROSE_ASSERT(p_table != NULL);
 
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
@@ -9543,6 +9629,12 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
      std::pair<hash_iterator, hash_iterator> save_original_range = range;
 
   // First look through only the local (non-aliased) symbols.
+
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+     {
+#if USING_PERFORMANCE_TRACING
+     TimingPerformance timer1 ("SgSymbolTable::find_symbol_with_type_support: loop over multimap range:");
+#endif
 
      for (hash_iterator i = range.first; i != range.second; ++i)
         {
@@ -9600,6 +9692,9 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
 
           if ( (symbol != NULL) && ( (type == NULL) || ( (type != NULL) && (getTypeOfDeclaration(symbol) == type) ) ) )
              {
+            // DQ (7/14/2025): Adding timers to support Matt's tool.
+            // TimingPerformance timer1 ("SgSymbolTable::find_symbol_with_type_support: in loop over multimap range: symbol found and type handling");
+
                p_name    = nm;
                p_no_name = false;
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
@@ -9633,6 +9728,9 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
              }
             else
              {
+            // DQ (7/14/2025): Adding timers to support Matt's tool.
+            // TimingPerformance timer1 ("SgSymbolTable::find_symbol_with_type_support: in loop over multimap range: symbol not found or type not handled");
+
             // DQ (10/11/2008): Added support to find renamed functions (common in Fortran 90)
             // F90 permits interface statements to effectively rename functions is scope,
             // SgRenameSymbol IR nodes are used to represent the renamed functions.  This
@@ -9660,12 +9758,21 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
        // p_iterator++;
         }
 
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+     }
+
   // DQ (9/30/2008): If we have not found a symbol from the current scope, search for symbols
   // injected from other scopes using the Fortran "use" statment (or in a future implementation
   // the C++ "using" directive or "using" declaration).
 
   // Reset the range so we can look for SgAliasSymbols.
      range = save_original_range;
+
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+     {
+#if USING_PERFORMANCE_TRACING
+     TimingPerformance timer1 ("SgSymbolTable::find_symbol_with_type_support: in loop over alias symbols:");
+#endif
 
   // Iterate through the list that match the name to find the one that is a SgTemplateSymbol and has a matching SgType pointer.
      for (hash_iterator i = range.first; i != range.second; ++i)
@@ -9675,6 +9782,9 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
           SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
           if (aliasedSymbol != NULL)
              {
+            // DQ (7/14/2025): Adding timers to support Matt's tool.
+            // TimingPerformance timer1 ("SgSymbolTable::find_symbol_with_type_support: in loop over alias symbols: found alias symbol:");
+
             // DQ (10/9/2008): Resolve the last link in any chain of alias symbols
                ReturnType* original_aliased_symbol = dynamic_cast<ReturnType*>(aliasedSymbol->get_base());
 
@@ -9693,25 +9803,32 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
 
             // Liao 9/15/2016
             // Allow template function type match. They may have arguments of template types
-            SgFunctionType* f1 = NULL;
-            if (original_aliased_symbol != NULL && isSgFunctionSymbol(original_aliased_symbol))
-              f1= isSgFunctionType(isSgFunctionSymbol(original_aliased_symbol)->get_declaration()->get_type());
-            SgFunctionType* f2 = NULL;
-            if (type != NULL)
-              f2 = isSgFunctionType (const_cast <SgType*> (type));
+               SgFunctionType* f1 = NULL;
+               if (original_aliased_symbol != NULL && isSgFunctionSymbol(original_aliased_symbol))
+                  {
+                    f1= isSgFunctionType(isSgFunctionSymbol(original_aliased_symbol)->get_declaration()->get_type());
+                  }
+               SgFunctionType* f2 = NULL;
+               if (type != NULL)
+                  {
+                   f2 = isSgFunctionType (const_cast <SgType*> (type));
+                  }
 
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
-            mprintf ("In loop over target ALIASED symbols associated with nm = %s compare types = %p and %p \n",nm.str(),f1, f2);
+               mprintf ("In loop over target ALIASED symbols associated with nm = %s compare types = %p and %p \n",nm.str(),f1, f2);
 #endif
 
-            bool equavilentFunctionType= ( (f1!= NULL && f2!= NULL) && (SageInterface::isEquivalentFunctionType(f1, f2)) );
+               bool equavilentFunctionType = ( (f1!= NULL && f2!= NULL) && (SageInterface::isEquivalentFunctionType(f1, f2)) );
 
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
-            mprintf ("  -- equavilentFunctionType = %s\n", equavilentFunctionType ? "true" : "false");
+               mprintf ("  -- equavilentFunctionType = %s\n", equavilentFunctionType ? "true" : "false");
 #endif
 
                if ( (original_aliased_symbol != NULL) && ( (type == NULL) || ((type != NULL) && (getTypeOfDeclaration(original_aliased_symbol) == type || equavilentFunctionType)) ) )
                   {
+                 // DQ (7/14/2025): Adding timers to support Matt's tool.
+                 // TimingPerformance timer1 ("SgSymbolTable::find_symbol_with_type_support: in loop over alias symbols: found alias symbol: not found original_aliased_symbol:");
+
                     p_name    = nm;
                     p_no_name = false;
 
@@ -9721,6 +9838,9 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                  // being constructed).
                     if (hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArguments(templateParameterList,templateArgumentList,original_aliased_symbol) == true)
                        {
+                      // DQ (7/14/2025): Adding timers to support Matt's tool.
+                      // TimingPerformance timer1 ("SgSymbolTable::find_symbol_with_type_support: in loop over alias symbols: found alias symbol: not found original_aliased_symbol: hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArguments is true:");
+
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
                          mprintf ("In SgSymbolTable::find_symbol_with_type_support(): Found a match: return original_aliased_symbol = %p = %s nm = %s \n",original_aliased_symbol,original_aliased_symbol->class_name().c_str(),nm.str());
 #endif
@@ -9735,48 +9855,61 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                       // of possible causal nodes for alias symbols to be inserted is held in a static member of the
                       // SgSymbolTable (new modification to SgSymbolTable).
 
-                         bool foundCausalNode = isSubset(aliasedSymbol->get_causal_nodes(),get_aliasSymbolCausalNodeSet());
-                         if (foundCausalNode == true)
+                         if (get_name_qualification_mode() == true)
                             {
-                           // DQ (1/23/2019): I think that this support is specific to the references to a symbol before
-                           // a using directive that would make is visible vs after the using directive.  Unfortunately it
-                           // is not sufficent to support when a class is derivied from another class and private derivation
-                           // would cause alis symbols to be seen or not seen in the subsequent coass derivations (see
-                           // Cxx_tests/test2019_21.C).
-                           // NOTE: the set defined by get_aliasSymbolCausalNodeSet() is only maintained in the name qualification
-                           // support and so it is useless within the
-                           // FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope()
-                           // function.  So to fix this we have added to code in this function to insert the causal nodes into
-                           // the required set.  It might be that this set should be cleared before starting the namequalification
-                           // phase.
+                           // DQ (7/19/2025): This is now only executed as part of special support for the name qualifiacation.
+                           // In general is is too expensive to be use everywhere, and has a dramatic imact on the support
+                           // for SgAliasSymbols within the AST_PostProcessing() (specifically the support for using directives
+                           // such as "using namespace std;", which can take 80% of the compilation time).
+
+                              bool foundCausalNode = isSubset(aliasedSymbol->get_causal_nodes(),get_aliasSymbolCausalNodeSet());
+                              if (foundCausalNode == true)
+                                 {
+                                // DQ (1/23/2019): I think that this support is specific to the references to a symbol before
+                                // a using directive that would make is visible vs after the using directive.  Unfortunately it
+                                // is not sufficent to support when a class is derivied from another class and private derivation
+                                // would cause alis symbols to be seen or not seen in the subsequent coass derivations (see
+                                // Cxx_tests/test2019_21.C).
+                                // NOTE: the set defined by get_aliasSymbolCausalNodeSet() is only maintained in the name qualification
+                                // support and so it is useless within the
+                                // FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope()
+                                // function.  So to fix this we have added to code in this function to insert the causal nodes into
+                                // the required set.  It might be that this set should be cleared before starting the namequalification
+                                // phase.
 
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
-                              mprintf ("Found causal node for SgAliasSymbol: aliasedSymbol = %p = %s original_aliased_symbol = %p = %s \n",
-                                   aliasedSymbol,aliasedSymbol->class_name().c_str(),original_aliased_symbol,original_aliased_symbol->class_name().c_str());
-                              ROSE_ASSERT(aliasedSymbol->get_alias() != NULL);
-                              mprintf (" --- aliasedSymbol = %p aliasedSymbol->get_alias() = %p = %s \n",aliasedSymbol,aliasedSymbol->get_alias(),aliasedSymbol->get_alias()->class_name().c_str());
-                              mprintf (" --- aliasedSymbol->get_causal_nodes().size() = %" PRIuPTR " \n",aliasedSymbol->get_causal_nodes().size());
-                              mprintf (" --- get_aliasSymbolCausalNodeSet().size()    = %" PRIuPTR " \n",get_aliasSymbolCausalNodeSet().size());
+                                   mprintf ("Found causal node for SgAliasSymbol: aliasedSymbol = %p = %s original_aliased_symbol = %p = %s \n",
+                                        aliasedSymbol,aliasedSymbol->class_name().c_str(),original_aliased_symbol,original_aliased_symbol->class_name().c_str());
+                                   ROSE_ASSERT(aliasedSymbol->get_alias() != NULL);
+                                   mprintf (" --- aliasedSymbol = %p aliasedSymbol->get_alias() = %p = %s \n",aliasedSymbol,aliasedSymbol->get_alias(),aliasedSymbol->get_alias()->class_name().c_str());
+                                   mprintf (" --- aliasedSymbol->get_causal_nodes().size() = %" PRIuPTR " \n",aliasedSymbol->get_causal_nodes().size());
+                                   mprintf (" --- get_aliasSymbolCausalNodeSet().size()    = %" PRIuPTR " \n",get_aliasSymbolCausalNodeSet().size());
 #endif
-                              return original_aliased_symbol;
+                                   return original_aliased_symbol;
+                                 }
+                                else
+                                 {
+                                // DQ (7/12/2014): If we didn't find the causal node then we can't consider the alias to exist
+                                // yet in the traversal of the AST represented by the symbol table query at this point.
+                                   original_aliased_symbol = NULL;
+
+#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
+                                   mprintf ("associated causal nodes not seen yet in traversal of AST: \n");
+                                   ROSE_ASSERT(aliasedSymbol->get_alias() != NULL);
+                                   mprintf (" --- aliasedSymbol = %p aliasedSymbol->get_alias() = %p = %s \n",aliasedSymbol,aliasedSymbol->get_alias(),aliasedSymbol->get_alias()->class_name().c_str());
+                                   mprintf (" --- aliasedSymbol->get_causal_nodes().size() = %zu \n",aliasedSymbol->get_causal_nodes().size());
+                                   mprintf (" --- get_aliasSymbolCausalNodeSet().size()    = %zu \n",get_aliasSymbolCausalNodeSet().size());
+                                   for (std::vector<SgNode*>::iterator i = aliasedSymbol->get_causal_nodes().begin(); i != aliasedSymbol->get_causal_nodes().end(); i++)
+                                      {
+                                        mprintf ("   --- causal node = %p = %s \n",*i,(*i)->class_name().c_str());
+                                      }
+#endif
+                                 }
                             }
                            else
                             {
-                           // DQ (7/12/2014): If we didn't find the causal node then we can't consider the alias to exist
-                           // yet in the traversal of the AST represented by the symbol table query at this point.
-                              original_aliased_symbol = NULL;
-
-#if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
-                              mprintf ("associated causal nodes not seen yet in traversal of AST: \n");
-                              ROSE_ASSERT(aliasedSymbol->get_alias() != NULL);
-                              mprintf (" --- aliasedSymbol = %p aliasedSymbol->get_alias() = %p = %s \n",aliasedSymbol,aliasedSymbol->get_alias(),aliasedSymbol->get_alias()->class_name().c_str());
-                              mprintf (" --- aliasedSymbol->get_causal_nodes().size() = %zu \n",aliasedSymbol->get_causal_nodes().size());
-                              mprintf (" --- get_aliasSymbolCausalNodeSet().size()    = %zu \n",get_aliasSymbolCausalNodeSet().size());
-                              for (std::vector<SgNode*>::iterator i = aliasedSymbol->get_causal_nodes().begin(); i != aliasedSymbol->get_causal_nodes().end(); i++)
-                                 {
-                                   mprintf ("   --- causal node = %p = %s \n",*i,(*i)->class_name().c_str());
-                                 }
-#endif
+                           // DQ (7/19/2025): This is the mode outside of the name qualification support.
+                              return original_aliased_symbol;
                             }
                        }
                       else
@@ -9791,8 +9924,14 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
              }
         }
 
+  // DQ (7/14/2025): Adding timers to support Matt's tool.
+     }
+
      if (this->get_force_search_of_base_classes() == true)
         {
+       // DQ (7/14/2025): Adding timers to support Matt's tool.
+       // TimingPerformance timer1 ("SgSymbolTable::find_symbol_with_type_support: in loop over alias symbols: found alias symbol: force_search_of_base_classes:");
+
        // DQ (3/28/2014): If we reach this point, then in the case of Java, we have to search the
        // base class definitions (since the representation of Java base class does not presently
        // inject the base class symbols into the derived class symbol table.  There are pros and
@@ -9802,11 +9941,18 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
           SgClassDefinition* classDefinition = isSgClassDefinition(parentNode);
           if (classDefinition != NULL)
              {
+#if USING_PERFORMANCE_TRACING
+            // DQ (7/14/2025): Adding timers to support Matt's tool.
+               TimingPerformance timer1 ("SgSymbolTable::find_symbol_with_type_support: in loop over alias symbols: found alias symbol: force_search_of_base_classes: classDefinition:");
+#endif
                SgBaseClassPtrList & base_classes = classDefinition->get_inheritances();
 
                SgBaseClassPtrList::iterator i = base_classes.begin();
                while (i != base_classes.end())
                   {
+                 // DQ (7/14/2025): Adding timers to support Matt's tool.
+                 // TimingPerformance timer1 ("SgSymbolTable::find_symbol_with_type_support: in loop over alias symbols: found alias symbol: force_search_of_base_classes: classDefinition: in loop over base blass list:");
+
                     SgBaseClass* baseClass = *i;
                     ROSE_ASSERT(baseClass != NULL);
                     SgClassDeclaration* baseClassDeclaration = baseClass->get_base_class();
@@ -9816,6 +9962,9 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                  // DQ: Note that we have to implement conditional lookup based on base class permissions, plus the access permissions of base class members.
                     if (baseClassDeclaration_defining != NULL)
                        {
+                      // DQ (7/14/2025): Adding timers to support Matt's tool.
+                      // TimingPerformance timer1 ("SgSymbolTable::find_symbol_with_type_support: in loop over alias symbols: found alias symbol: force_search_of_base_classes: classDefinition: in loop over base blass list: found valid baseClassDeclaration_defining");
+
                          SgClassDefinition* baseClassDefinition = baseClassDeclaration_defining->get_definition();
                          ROSE_ASSERT(baseClassDefinition != NULL);
 
@@ -10527,6 +10676,23 @@ SgSymbolTable::set_force_search_of_base_classes( bool value )
    {
      p_force_search_of_base_classes = value;
    }
+
+// DQ (7/19/2025): Declaration of space for static data member.
+bool SgSymbolTable::p_name_qualification_mode = false;
+
+bool
+SgSymbolTable::get_name_qualification_mode()
+   {
+     return p_name_qualification_mode;
+   }
+
+void
+SgSymbolTable::set_name_qualification_mode( bool value )
+   {
+     p_name_qualification_mode = value;
+   }
+
+
 
 // DQ (7/12/2014): Access function for static data member.
 SgNodeSet &

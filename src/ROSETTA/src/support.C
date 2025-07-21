@@ -297,6 +297,22 @@ Grammar::setUpSupport ()
      SymbolTable.setDataPrototype("static bool","force_search_of_base_classes","= false",
                             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
+  // DQ (7/19/2025): data member to allow for name qualification mode.  This mode is more expensive, since the causal node vector
+  // must be used against the collection of nodes visited as we proceed through the traversal of the AST.  This results in the
+  // isSubset() function to be called, and this can be expensive (and I think this is only needed to support the name qualification.
+  // This is part of work to identify and fix the performance problems of ROSE compiling ROSE code (but is is not specific to
+  // ROSE code as a target, just that large applications can exhibit this issue. Specifically, this performance problem is
+  // characterized by the cost of processing using directives (which can be more than half the cost of the compilation just to
+  // process for example "using namespace std;").  It is because the symbol table lookup is supporting a mode that is required
+  // for the name qualification, but is doing so generally for all symbol table lookups.  It is related to the support for
+  // SgAliasNodes, but is more a consequence of the cost of the name qualification mode in the symbol table lookup.  The symtom
+  // is that the AST_PostProcessing() is a dominate cost, and specifically the FixupAstSymbolTablesToSupportAliasedSymbols().
+  // More specifically it is the support for the using directives within the injectSymbolsFromReferencedScopeIntoCurrentScope()
+  // function.  This fix is to verify that we understand the problem, and may not be the fix that we more collectively arrive
+  // at after internal discussions (but that has to wait until Monday).
+     SymbolTable.setDataPrototype("static bool","name_qualification_mode","= false",
+                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+
 
      Name.setFunctionPrototype                ( "HEADER_NAME", "../Grammar/Support.code");
 
