@@ -87,7 +87,7 @@ struct List : list_base_t<Elements...> {
    * \param args forwarded values of functor argments
    */
   template <typename Functor, typename... Args>
-  static inline void apply(Functor && functor, Args&&... args) {}
+  static inline void apply(Functor &&, Args&&...) {}
 
   /**
    * Map Functor to each element of the list and return a list. Functor return a list element.

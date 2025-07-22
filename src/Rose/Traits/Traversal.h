@@ -33,7 +33,7 @@ namespace traversal_details {
   /**
    * No Operation lambda and type
    */
-  auto nop_noargs_f = []<typename NodeT, typename FieldT>(NodeT * node, FieldT pfld) {};
+  auto nop_noargs_f = []<typename NodeT, typename FieldT>(NodeT * , FieldT) { /* NOP */ };
 
 //  auto nop_pre_f = []<typename SynthT, typename NodeT, typename FieldT, typename InhT>(NodeT * node, FieldT pfld, InhT & inh) { return InhT{}; };
 //  auto nop_post_f = []<typename SynthT, typename NodeT, typename FieldT, typename InhT>(NodeT * node, FieldT pfld, InhT const & inh, SynthContT const & synths) { return SynthT{}; };
@@ -59,7 +59,7 @@ namespace traversal_details {
     using enable_iterate = std::enable_if_t<!do_nothing<F, N> && F::iterable>;
 
     template <typename FieldT, typename ChildNodeT, enable_nop<FieldT, ChildNodeT> * = nullptr>
-    inline void operator() (ChildNodeT * node, PreFuncT & pre, PostFuncT & post) const { /* NOP */ }
+    inline void operator() (ChildNodeT *, PreFuncT &, PostFuncT &) const { /* NOP */ }
 
     template <typename FieldT, typename ChildNodeT, enable_call<FieldT, ChildNodeT> * = nullptr>
     inline void operator() (ChildNodeT * node, PreFuncT & pre, PostFuncT & post) const {
