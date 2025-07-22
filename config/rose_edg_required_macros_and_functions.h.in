@@ -99,7 +99,14 @@
 #  define ROSE_GNUATTR(X) __attribute__(X)
 #endif
 
-
+#if defined(__GNUC__) && __GNUC__ >= 13
+/* These headers both conflict with GCC 13 and are unnecessary for GCC 13 functionality. */
+#  define _BITS_FLOATN_COMMON_H
+#  define _BITS_FLOATN_H
+/* __float80 is used in the <coroutine> header, but is equivalent to _Float64x */
+/* See: https://stackoverflow.com/a/49910326 */
+#  define __float80 _Float64x
+#endif
 
 /* DQ (4/23/2017): This is now added on the EDG command line to support handling of Microsoft options.
    This supports analysis of Microsofte specific code on Linuc platforms.  It is not clear now specific
