@@ -2328,7 +2328,6 @@ asString ( SgAsmCilMetadataHeap::TableKind e )
 
   switch (e)
   {
-
     case SgAsmCilMetadataHeap::e_Assembly: res = "e_Assembly"; break;
     case SgAsmCilMetadataHeap::e_AssemblyOS: res = "e_AssemblyOS"; break;
     case SgAsmCilMetadataHeap::e_AssemblyProcessor: res = "e_AssemblyProcessor"; break;
@@ -2369,7 +2368,7 @@ asString ( SgAsmCilMetadataHeap::TableKind e )
     case SgAsmCilMetadataHeap::e_TypeSpec: res = "e_TypeSpec"; break;
 
     default:
-      ROSE_ABORT();
+      res = "unknown table name";
    }
 
   ASSERT_not_null(res);
@@ -2720,15 +2719,15 @@ void SgAsmCilMetadataHeap::parse(const std::vector<uint8_t>& buf, size_t startOf
   p_ReservedAlwaysZero = readExpected(read32bitValue, buf, index, 0, "[ReservedAlwaysZero]");
 
   SAWYER_MESG(diag::mlog[diag::TRACE])
-    << "ReservedAlwaysZero = " << traceRep(p_ReservedAlwaysZero) << std::endl;
+    << "ReservedAlwaysZero = " << traceRep(int(p_ReservedAlwaysZero)) << std::endl;
   p_MajorVersion = read8bitValue(buf,index);
 
   SAWYER_MESG(diag::mlog[diag::TRACE])
-    << "MajorVersion = " << traceRep(p_MajorVersion) << std::endl;
+    << "MajorVersion = " << traceRep(int(p_MajorVersion)) << std::endl;
   p_MinorVersion = read8bitValue(buf,index);
 
   SAWYER_MESG(diag::mlog[diag::TRACE])
-    << "MinorVersion = " << traceRep(p_MinorVersion) << std::endl;
+    << "MinorVersion = " << traceRep(int(p_MinorVersion)) << std::endl;
   p_HeapSizes = read8bitValue(buf,index);
 
   SAWYER_MESG(diag::mlog[diag::TRACE])
@@ -2736,7 +2735,7 @@ void SgAsmCilMetadataHeap::parse(const std::vector<uint8_t>& buf, size_t startOf
   p_ReservedAlwaysOne = readExpected(read8bitValue,buf,index,1, "[ReservedAlwaysOne]");
 
   SAWYER_MESG(diag::mlog[diag::TRACE])
-    << "ReservedAlwaysOne = " << traceRep(p_ReservedAlwaysOne) << std::endl;
+    << "ReservedAlwaysOne = " << traceRep(int(p_ReservedAlwaysOne)) << std::endl;
   p_Valid = read64bitValue(buf,index);  std::vector<int8_t> posInRowVector = computePositionInRowVector(get_Valid());
 
   SAWYER_MESG(diag::mlog[diag::TRACE])
@@ -2884,10 +2883,11 @@ void SgAsmCilMetadataHeap::parse(const std::vector<uint8_t>& buf, size_t startOf
       default:
         diag::mlog[diag::ERROR] 
               << "default reached:\n"
-              << "parsing not implemented for kind = " << kind << asString(SgAsmCilMetadataHeap::TableKind(kind))
+              << "parsing not implemented for kind = " << kind 
+              << " " << asString(SgAsmCilMetadataHeap::TableKind(kind))
+              << "\nAborting ..." 
               << std::endl;
-        ROSE_ABORT();
-        break;
+        exit(1);
     }
   }
 }
@@ -3069,11 +3069,11 @@ namespace
 void SgAsmCilMetadataHeap::dump(std::ostream& os) const
 {
   os << "  Metadata Stream" << std::endl
-     << "    ReservedAlwaysZero = " << traceRep(p_ReservedAlwaysZero) << std::endl
-     << "    MajorVersion = " << traceRep(p_MajorVersion) << std::endl
-     << "    MinorVersion = " << traceRep(p_MinorVersion) << std::endl
+     << "    ReservedAlwaysZero = " << traceRep(int(p_ReservedAlwaysZero)) << std::endl
+     << "    MajorVersion = " << traceRep(int(p_MajorVersion)) << std::endl
+     << "    MinorVersion = " << traceRep(int(p_MinorVersion)) << std::endl
      << "    HeapSizes = " << traceRep(p_HeapSizes) << std::endl
-     << "    ReservedAlwaysOne = " << traceRep(p_ReservedAlwaysOne) << std::endl
+     << "    ReservedAlwaysOne = " << traceRep(int(p_ReservedAlwaysOne)) << std::endl
      << "    Valid = " << traceRep(p_Valid) << std::endl
      << "    Sorted = " << traceRep(p_Sorted) << std::endl
      << "    NumberOfRows = " << traceRep(p_NumberOfRows) << std::endl
@@ -3459,14 +3459,16 @@ disassemble( Rose::BinaryAnalysis::Address base_va,
               MemoryMap::Segment::staticInstance(buf.data(), sz,
                                                  MemoryMap::READABLE|MemoryMap::EXECUTABLE, "CIL code segment"));
 
-  while (addr < sz) {
+  while (addr < sz) 
+  {
     SgAsmInstruction* instr = disasm->disassembleOne(map, base_va + addr);
     ASSERT_not_null(instr);
 
     lst.push_back(instr);
     addr += instr->get_size();
 
-    if (disasm->architecture()->isUnknown(instr)) {
+    if (disasm->architecture()->isUnknown(instr)) 
+    {
       // Pad block with noops because something went wrong
       // TODO: don't pad with noops, pad by expanding current unknown instruction
       diag::mlog[diag::ERROR] 
@@ -3476,7 +3478,8 @@ disassemble( Rose::BinaryAnalysis::Address base_va,
       updateBodyState(bdyState, SgAsmCilMethodDef::BDY_INVALID_INSTRUCTION);
 
       SgUnsignedCharList rawBytes(1,'\0');
-      while (addr < sz) {
+      while (addr < sz) 
+      {
         SgAsmCilInstruction* insn = new SgAsmCilInstruction(base_va+addr, *disasm->architecture()->registrationId(),
                                                             Rose::BinaryAnalysis::CilInstructionKind::Cil_nop);
         insn->set_rawBytes(rawBytes);
@@ -3485,34 +3488,38 @@ disassemble( Rose::BinaryAnalysis::Address base_va,
         addr += insn->get_size();
       }
     }
-
-    // Just checking for when last instruction is not return from function (or similar terminating instruction)
-    ASSERT_require(addr <= sz);
-    if (addr == sz) {
-      switch (instr->get_anyKind())
-      {
-        namespace rb = Rose::BinaryAnalysis;
-        case 0:
-        case rb::CilInstructionKind::Cil_ret:
-        case rb::CilInstructionKind::Cil_throw:
-        case rb::CilInstructionKind::Cil_br:
-        case rb::CilInstructionKind::Cil_br_s:
-        case rb::CilInstructionKind::Cil_endfinally:
-          break;
-        default:
-          SAWYER_MESG(diag::mlog[diag::INFO]) 
-                << "last instruction in block is not Cil_ret (or like), is 0x" 
-                << std::hex << int(instr->get_anyKind()) << std::dec 
-                << std::endl;
-      }
-    }
   }
 
-  if (addr > sz) {
+  if (addr > sz) 
+  {
     diag::mlog[diag::ERROR] 
         << "instruction address exceeds size of instruction block\n";
     
     updateBodyState(bdyState, SgAsmCilMethodDef::BDY_INVALID_INSTRUCTION_LENGTH);    
+  }
+  else if (lst.size())
+  {
+    SgAsmInstruction* instr = lst.back();
+    ASSERT_not_null(instr);
+    
+    // Just checking for when last instruction is not return from function (or similar terminating instruction)
+    switch (instr->get_anyKind())
+    {
+      namespace rb = Rose::BinaryAnalysis;
+
+      case 0:
+      case rb::CilInstructionKind::Cil_ret:
+      case rb::CilInstructionKind::Cil_throw:
+      case rb::CilInstructionKind::Cil_br:
+      case rb::CilInstructionKind::Cil_br_s:
+      case rb::CilInstructionKind::Cil_endfinally:
+        break;
+      default:
+        SAWYER_MESG(diag::mlog[diag::INFO]) 
+              << "last instruction in block is not Cil_ret (or like), is 0x" 
+              << std::hex << int(instr->get_anyKind()) << std::dec 
+              << std::endl;
+    }
   }
 
   return { sb::buildBasicBlock(lst), bdyState };
@@ -3617,7 +3624,14 @@ parseFatEHClause(SgAsmPEFileHeader& fhdr, Rose::BinaryAnalysis::Address sectionR
   std::size_t  nread = fhdr.get_loaderMap()->readQuick(buf, sectionRva, SECLEN);
   
   if (nread != SECLEN)
+  {
+    diag::mlog[diag::ERROR] << "parseFatEHClause: read " << SECLEN 
+                            << " @" << std::hex << sectionRva << std::dec
+                            << " got " << nread
+                            << std::endl;
+
     return { nullptr, SgAsmCilMethodDef::BDY_INVALID_CLAUSE_LENGTH };
+  }
 
   return exceptionData( leToHost(*reinterpret_cast<const std::uint32_t*>(buf + 0)),
                         leToHost(*reinterpret_cast<const std::uint32_t*>(buf + 4)),
@@ -3639,7 +3653,13 @@ parseTinyEHClause(SgAsmPEFileHeader& fhdr, Rose::BinaryAnalysis::Address section
   std::size_t  nread = fhdr.get_loaderMap()->readQuick(buf, sectionRva, SECLEN);
 
   if (nread != SECLEN)
+  {
+    diag::mlog[diag::ERROR] << "parseTinyEHClause: read " << SECLEN 
+                            << " @" << std::hex << sectionRva << std::dec
+                            << " got " << nread
+                            << std::endl;
     return { nullptr, SgAsmCilMethodDef::BDY_INVALID_CLAUSE_LENGTH };
+  }
 
   return exceptionData( leToHost(*reinterpret_cast<const std::uint16_t*>(buf + 0)),
                         leToHost(*reinterpret_cast<const std::uint16_t*>(buf + 2)),
@@ -3734,19 +3754,38 @@ parseSection(SgAsmPEFileHeader& fhdr, Rose::BinaryAnalysis::Address sectionRva)
 
   std::uint8_t   kind /* = uninitialized */;
   std::size_t    nread1   = fhdr.get_loaderMap()->readQuick(&kind, sectionRva, 1);
-  if (nread1 == 1)
+  if (nread1 != 1)
+  {
+    diag::mlog[diag::ERROR] << "parseSection: expected 1 byte "
+                            << " @" << std::hex << (sectionRva) << std::dec
+                            << " got " << nread1
+                            << std::endl;
+    
     return { nullptr, 0, SgAsmCilMethodDef::BDY_INVALID_SECTION_HEADER };
+  }
 
   // buffer for 3 bytes
   std::uint8_t   buf[4]   = {};
   std::size_t    nread3   = fhdr.get_loaderMap()->readQuick(buf, sectionRva+1, 3);
-  if (nread3 == 3)
+  if (nread3 != 3)
+  {
+    diag::mlog[diag::ERROR] << "parseSection: expected 3 bytes "
+                            << " @" << std::hex << (sectionRva+1) << std::dec
+                            << " got " << nread3
+                            << std::endl;
+
     return { nullptr, 0, SgAsmCilMethodDef::BDY_INVALID_SECTION_HEADER };
+  }
   
   std::uint8_t   fatFlag  = SgAsmCilMethodData::CorILMethod_Sect_FatFormat;
   const bool     fat      = (kind & fatFlag) == fatFlag;
   if (!fat && ((buf[1] != 0) || (buf[2] != 0)))
+  {
+    diag::mlog[diag::ERROR] << "parseSection: invalid section header"
+                            << std::endl;
+    
     return { nullptr, 0, SgAsmCilMethodDef::BDY_INVALID_SECTION_HEADER };
+  }
   
   std::uint32_t  dataSize = buf[0] + (std::uint32_t(buf[1]) << 8) + (std::uint32_t(buf[2]) << 16);
   
