@@ -140,16 +140,13 @@ RHEL9-Main:
     tags:
         - workpool:large:rhel9
 
+RHEL9-Min:
+    extends: .develop-base
+
 RHEL8-Main:
     extends: .develop-base
     tags:
         - workpool:large:rhel9
-
-RHEL9-Min:
-    extends: .develop-base
-
-RHEL9-CMake:
-    extends: .develop-base
 
 RHEL8-CMake:
     extends: .develop-base
