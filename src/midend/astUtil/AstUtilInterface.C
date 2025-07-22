@@ -14,19 +14,23 @@ namespace AstUtilInterface {
 class VariableSignatureDictionary {
 private:
   static DependenceTable* dict;
+  static bool do_save;
   
 public:
   static void set_doit(bool doit) {
     if (doit && dict == 0) {
        dict = new DependenceTable(/*update annotations=*/false);
     }
+    do_save = doit;
   }
 
+  static bool do_it() { return do_save; }
   static DependenceTable* get_dictionary() {
     return dict;
   } 
 };
 DependenceTable* VariableSignatureDictionary::dict = 0;
+bool VariableSignatureDictionary::do_save = false;
 
 };
 
@@ -241,7 +245,8 @@ bool AstUtilInterface::IsLocalRef(SgNode* ref, SgNode* scope, bool* has_ptr_dere
 std::string AstUtilInterface::GetVariableSignature(const AstNodePtr&  variable) {
   auto sig = AstInterface::GetVariableSignature(variable);
   auto* dict_table = VariableSignatureDictionary::get_dictionary();
-  if (dict_table != 0 && variable.get_ptr() != 0) {
+  if (VariableSignatureDictionary::do_it() && 
+      dict_table != 0 && variable.get_ptr() != 0) {
      std::string filename;
      int lineno = -1; 
      if (AstInterface::get_fileInfo(variable, &filename, &lineno)) {
