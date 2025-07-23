@@ -2906,9 +2906,11 @@ namespace {
 //  We need to do this b/c lal does not create nodes for compiler-generated sections, unlike ASIS.
 //  So any references to instantiated packages/subps in the lal tree point back to the generic package/subp,
 //  which causes "invalid prefix in selected component" errors in the generated code.
-void createInstantiationDecl(ada_base_entity* lal_element, std::string ident, AstContext ctx){
+SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, std::string ident, AstContext ctx){
   //Get the kind of this node
   ada_node_kind_enum kind = ada_node_kind(lal_element);
+
+  SgDeclarationStatement* instDecl = nullptr;
 
   switch(kind)
   {
@@ -2971,6 +2973,8 @@ void createInstantiationDecl(ada_base_entity* lal_element, std::string ident, As
       //This won't point to a "real" location, but that's okay since it will be marked as compiler-generated
       attachSourceLocation(sgnode, lal_element, ctx);
       ctx.appendStatement(sgnode);
+
+      instDecl = &sgnode;
 
       break;
     }
@@ -3045,6 +3049,8 @@ void createInstantiationDecl(ada_base_entity* lal_element, std::string ident, As
         }
       }
 
+      instDecl = &sgnode;
+
       break;
     }
     default:
@@ -3053,6 +3059,7 @@ void createInstantiationDecl(ada_base_entity* lal_element, std::string ident, As
       break;
     }
   }
+  return instDecl;
 }
 
 void handlePragma(ada_base_entity* lal_element, SgStatement* stmtOpt, AstContext ctx){
@@ -3624,6 +3631,60 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         if(ty.inheritsRoutines()){
           processInheritedSubroutines(SG_DEREF(si::getDeclaredType(&sgnode)), ty.definitionStruct(), ctx);
         }
+
+        assocdecl = &sgnode;
+        break;
+      }
+    case ada_generic_formal_package:             // 12.7(2)
+      {
+        logKind("ada_generic_formal_package", kind);
+
+        //Get the ada_generic_package_instantiation
+        ada_base_entity lal_generic_package_instantiation;
+        ada_generic_formal_f_decl(lal_element, &lal_generic_package_instantiation);
+
+        //Get the name of the instantiated package
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_generic_package_instantiation_f_name(&lal_generic_package_instantiation, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        std::string ident = getFullName(&lal_identifier);
+
+        //Get the generic package
+        ada_base_entity lal_generic_package, lal_generic_name;
+        ada_generic_instantiation_p_designated_generic_decl(&lal_generic_package_instantiation, &lal_generic_package);
+        ada_generic_package_decl_f_package_decl(&lal_generic_package, &lal_generic_name);
+        ada_base_package_decl_f_package_name(&lal_generic_name, &lal_generic_name);
+        SgDeclarationStatement*   basedecl = findFirst(libadalangDecls(), hash_node(&lal_generic_name), hash_node(&lal_generic_package));
+
+        // generic actual part
+        ada_base_entity lal_params;
+        ada_generic_package_instantiation_f_params(&lal_generic_package_instantiation, &lal_params);
+        std::vector<SgExpression*> args;
+        int count = ada_node_children_count(&lal_params);
+        for(int i = 0; i < count; ++i){
+          ada_base_entity lal_param;
+          if(ada_node_child(&lal_params, i, &lal_param) != 0){
+            args.push_back(&getArg(&lal_param, ctx));
+          }
+        }
+        SgExprListExp& sg_args = mkExprListExp(args);
+
+        // PP (3/31/22): In contrast to the instantiations above (check correctness),
+        //               the scope should be the current (generic parameter) scope.
+        SgScopeStatement&         scope    = ctx.scope();
+        SgAdaFormalPackageDecl&   sgnode   = mkAdaFormalPackageDecl(ident, SG_DEREF(basedecl), sg_args, scope);
+
+        int hash = hash_node(&lal_generic_package_instantiation); //This seems to be the node other nodes will refer back to
+        int name_hash = hash_node(&lal_defining_name);
+        recordNode(libadalangDecls(), hash, sgnode);
+        recordNode(libadalangDecls(), name_hash, sgnode);
+
+        attachSourceLocation(sgnode, lal_element, ctx);
+        //~ privatize(sgnode, isPrivate);
+        ctx.appendStatement(sgnode);
+
+        SgDeclarationStatement* protoDecl = createInstantiationDecl(&lal_generic_package, ident, ctx.scope(SG_DEREF(sgnode.get_prototypeScope())));
+        sgnode.set_prototype(protoDecl);
 
         assocdecl = &sgnode;
         break;
@@ -4297,7 +4358,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //  whereas ASIS' Corresponding_Declaration points to a compiler generated instance (which Libadalang does not have).
         //  Not sure how to translate this to Libadalang.
         // PP (4/1/22): fill in the declaration
-        createInstantiationDecl(&lal_generic_decl, ident, ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope())));
+        SgDeclarationStatement* instDecl = createInstantiationDecl(&lal_generic_decl, ident, ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope())));
 
         // mark whole subtree under sgnode.get_instantiatedScope() as instantiated
         si::Ada::setSourcePositionInSubtreeToCompilerGenerated(sgnode.get_instantiatedScope());

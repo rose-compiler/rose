@@ -360,6 +360,7 @@ namespace
       void handle(SgAdaTaskSpecDecl& n)        { res = &mkAdaTaskRefExp(n); }
       void handle(SgAdaProtectedSpecDecl& n)   { res = &mkAdaProtectedRefExp(n); }
       void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
+      void handle(SgAdaFormalPackageDecl& n)   { res = &mkAdaUnitRefExp(SG_DEREF(n.get_prototype())); }
       void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaTaskTypeDecl& n)        { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
       void handle(SgAdaProtectedTypeDecl& n)   { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
