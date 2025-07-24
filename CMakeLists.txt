@@ -1513,9 +1513,8 @@ if(ENABLE-C)
       OUTPUT_VARIABLE C_includeString)
     string(STRIP "${C_includeString}" C_includeString)
     set(C_INCLUDE_STRING "${C_INCLUDE_STRING} ${C_includeString}")
-    #HACK the get_compiler_header_dirs script does the same thing if the compiler vendor is gnu or clang, so just pass "gnu" every time
     execute_process(
-      COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH} c gnu
+      COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH} c ${CMAKE_C_COMPILER_ID}
       OUTPUT_VARIABLE C_backend_includes)
     string(REPLACE "\n" ";" C_backend_includes "${C_backend_includes}")
     foreach(C_include_dir ${C_backend_includes})
@@ -1530,9 +1529,8 @@ if(ENABLE-C)
       OUTPUT_VARIABLE CXX_includeString)
     string(STRIP "${CXX_includeString}" CXX_includeString)
     set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING} ${CXX_includeString}")
-    #HACK the get_compiler_header_dirs script does the same thing if the compiler vendor is gnu or clang, so just pass "gnu" every time
     execute_process(
-      COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH} c++ gnu
+      COMMAND ${shell} ${CMAKE_SOURCE_DIR}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER_NAME_WITHOUT_PATH} c++ ${CMAKE_C_COMPILER_ID}
       OUTPUT_VARIABLE CXX_backend_includes)
     string(REPLACE "\n" ";" CXX_backend_includes "${CXX_backend_includes}")
     foreach(CXX_include_dir ${CXX_backend_includes})
