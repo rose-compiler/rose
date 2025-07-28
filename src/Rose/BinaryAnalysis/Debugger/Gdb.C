@@ -94,6 +94,26 @@ operator<<(std::ostream &out, const Gdb::Specimen &specimen) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RegInfo
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Gdb::RegInfo::RegInfo(const RegisterDescriptor reg)
+    : reg_(reg) {}
+
+Gdb::RegInfo::RegInfo(const size_t nBits)
+    : nBits_(nBits) {}
+
+RegisterDescriptor
+Gdb::RegInfo::reg() const {
+    return reg_;
+}
+
+size_t
+Gdb::RegInfo::nBits() const {
+    return reg_ ? reg_.nBits() : nBits_;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Gdb
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -115,6 +135,16 @@ Gdb::instance(const Specimen &specimen) {
     auto gdb = instance();
     gdb->attach(specimen);
     return gdb;
+}
+
+bool
+Gdb::checkWrites() const {
+    return checkWrites_;
+}
+
+void
+Gdb::checkWrites(bool b) {
+    checkWrites_ = b;
 }
 
 // Reads lines of GDB output asynchronously and adds them to a queue of lines in a thread-safe manner.
@@ -267,6 +297,10 @@ gdbIoThread(const std::vector<std::string> &argv, OutputHandler &outputHandler, 
 
 void
 Gdb::attach(const Specimen &specimen) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    Sawyer::Message::Stream warn(mlog[WARN]);
+    Sawyer::Message::Stream error(mlog[ERROR]);
+    SAWYER_MESG(debug) <<"command: attach(specimen=" <<specimen <<")\n";
     if (isAttached())
         throw Exception("already attached");
 
@@ -301,6 +335,8 @@ Gdb::attach(const Specimen &specimen) {
                     disassembler_ = Architecture::findByName("nxp-coldfire").orThrow()->newInstructionDecoder();
                 } else if ("powerpc:common" == arch) {
                     disassembler_ = Architecture::findByName("ppc32-be").orThrow()->newInstructionDecoder();
+                } else if ("i386" == arch) {
+                    disassembler_ = Architecture::findByName("intel-pentium4").orThrow()->newInstructionDecoder();
                 } else {
                     ASSERT_not_implemented("unrecognized architecture: " + arch);
                 }
@@ -310,17 +346,50 @@ Gdb::attach(const Specimen &specimen) {
     ASSERT_not_null(disassembler_);
 
     // Get the list of register names for this architecture.
+    //
+    //  The response JSON is an array of names, but some of those names might be empty. Empty names seem to be a result of the
+    //  remote GDB server having a full list of names but providing only a subset based on the architecture. Our `registers_` list
+    //  will include the empty names so that our register numbers (the vector index) are the same as GDBs register index.
+    std::map<std::string, size_t> seen;                 // track registers we've seen so we can report duplicates
     for (const GdbResponse &response: sendCommand("-data-list-register-names")) {
-        if (GdbResponse::ResultClass::DONE == response.result.rclass) {
+        if (GdbResponse::ResultClass::ERROR == response.result.rclass) {
+            SAWYER_MESG(error) <<response.result.results["msg"].as<std::string>() <<"\n";
+        } else if (GdbResponse::ResultClass::DONE == response.result.rclass) {
             if (Yaml::Node names = response.result.results["register-names"]) {
                 ASSERT_require(names.isSequence());
                 for (const auto &pair: names) {
                     const std::string name = pair.second.as<std::string>();
-                    const RegisterDescriptor reg = registerDictionary()->find(name);
-                    registers_.push_back(std::make_pair(name, reg));
-                    if (!reg && !name.empty()) {
-                        mlog[ERROR] <<"GDB register #" <<(registers_.size()-1) <<" \"" <<name <<"\""
-                                    <<" is not present in dictionary \"" <<registerDictionary()->name() <<"\"\n";
+                    if (name.empty()) {
+                        // GDB gave us an empty name, so push an empty placeholder.
+                        registers_.push_back(std::make_pair("", RegInfo(0)));
+
+                    } else if (const RegisterDescriptor reg = registerDictionary()->find(name)) {
+                        // GDB gave us a register name that we know.
+                        registers_.push_back(std::make_pair(name, RegInfo(reg)));
+
+                    } else {
+                        // GDB gave us a name that we don't know. At a minimum, we need to know its size, so we need to ask GDB for
+                        // it. The response to this query will be something like "value=\"4\"".
+                        for (const GdbResponse &response: sendCommand("-data-evaluate-expression \"sizeof($" + name + ")\"")) {
+                            if (GdbResponse::ResultClass::ERROR == response.result.rclass) {
+                                SAWYER_MESG(error) <<response.result.results["msg"].as<std::string>() <<"\n";
+                            } else if (GdbResponse::ResultClass::DONE == response.result.rclass) {
+                                const size_t nbits = 8 * response.result.results["value"].as<size_t>();
+                                registers_.push_back(std::make_pair(name, RegInfo(nbits)));
+                            }
+                        }
+                    }
+
+                    // Check for duplicates. This could happen for many different reasons given GDB and/or QEMUs history and the way
+                    // they organize their registers.
+                    ASSERT_forbid(registers_.empty());
+                    if (!registers_.back().first.empty()) {
+                        const size_t idx = registers_.size() - 1;
+                        const auto inserted = seen.insert(std::make_pair(name, idx));
+                        if (!inserted.second) {
+                            SAWYER_MESG(warn) <<"register \"" <<name <<"\" at index " <<idx
+                                              <<" was previously seen at index " <<inserted.first->second <<"\n";
+                        }
                     }
                 }
                 break;
@@ -339,6 +408,9 @@ Gdb::isAttached() {
 
 void
 Gdb::detach() {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"command: detach()\n";
+
     if (!isAttached())
         throw Exception("not attached to subordinate process");
     sendCommand("-gdb-exit");
@@ -353,6 +425,9 @@ Gdb::detach() {
 
 void
 Gdb::terminate() {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"command: terminate()\n";
+
     if (!isAttached())
         throw Exception("not attached to subordinate process");
     sendCommand("kill");
@@ -373,6 +448,10 @@ Gdb::gdbHandlesBreakPoints() const {
 
 void
 Gdb::setBreakPoint(const AddressInterval &where) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    Sawyer::Message::Stream error(mlog[ERROR]);
+    SAWYER_MESG(debug) <<"command: setBreakPoint(" <<StringUtility::addrToString(where) <<")\n";
+
     if (!isAttached())
         throw Exception("not attached to subordinate process");
 
@@ -381,7 +460,9 @@ Gdb::setBreakPoint(const AddressInterval &where) {
         // any). Therefore, make GDB handle this break point too.
         if (gdbBreakPoints_.find(where.least()) == gdbBreakPoints_.end()) {
             for (const auto &response: sendCommand("-break-insert *" + boost::lexical_cast<std::string>(where.least()))) {
-                if (GdbResponse::ResultClass::DONE == response.result.rclass) {
+                if (GdbResponse::ResultClass::ERROR == response.result.rclass) {
+                    SAWYER_MESG(error) <<response.result.results["msg"].as<std::string>() <<"\n";
+                } else if (GdbResponse::ResultClass::DONE == response.result.rclass) {
                     if (Yaml::Node id = response.result.results["bkpt"]["number"]) {
                         gdbBreakPoints_.insert(std::make_pair(where.least(), id.as<unsigned>()));
                         break;
@@ -412,6 +493,9 @@ Gdb::breakPoints() {
 
 void
 Gdb::clearBreakPoint(const AddressInterval &where) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"command: clearBreakPoint(" <<StringUtility::addrToString(where) <<")\n";
+
     if (!isAttached())
         throw Exception("not attached to subordinate process");
 
@@ -431,6 +515,9 @@ Gdb::clearBreakPoint(const AddressInterval &where) {
 
 void
 Gdb::clearBreakPoints() {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"command: clearBreakPoints()\n";
+
     if (!isAttached())
         throw Exception("not attached to subordinate process");
 
@@ -444,14 +531,20 @@ Gdb::clearBreakPoints() {
 }
 
 void
-Gdb::singleStep(ThreadId) {
+Gdb::singleStep(const ThreadId tid) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"command: singleStep(thread=" <<tid <<")\n";
+
     if (!isAttached())
         throw Exception("not attached to subordinate process");
     sendCommand("-exec-step-instruction");
 }
 
 void
-Gdb::runToBreakPoint(ThreadId tid) {
+Gdb::runToBreakPoint(const ThreadId tid) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"command: runToBreakPoint(thread=" <<tid <<")\n";
+
     if (!isAttached())
         throw Exception("not attached to subordinate process");
 
@@ -477,20 +570,21 @@ Gdb::runToBreakPoint(ThreadId tid) {
 }
 
 Sawyer::Optional<size_t>
-Gdb::findRegisterIndex(RegisterDescriptor reg) const {
+Gdb::findRegisterIndex(const RegisterDescriptor reg) const {
     ASSERT_forbid(registers_.empty());
     for (size_t i = 0; i < registers_.size(); ++i) {
-        if (reg.majorNumber() == registers_[i].second.majorNumber() && reg.minorNumber() == registers_[i].second.minorNumber())
+        if (reg.majorNumber() == registers_[i].second.reg().majorNumber() &&
+            reg.minorNumber() == registers_[i].second.reg().minorNumber())
             return i;
     }
     return Sawyer::Nothing();
 }
 
 RegisterDescriptor
-Gdb::findRegister(RegisterDescriptor reg) const {
+Gdb::findRegister(const RegisterDescriptor reg) const {
     if (auto i = findRegisterIndex(reg)) {
         ASSERT_require(*i < registers_.size());
-        return registers_[*i].second;
+        return registers_[*i].second.reg();
     } else {
         return RegisterDescriptor();
     }
@@ -500,13 +594,19 @@ std::vector<RegisterDescriptor>
 Gdb::availableRegisters() {
     std::vector<RegisterDescriptor> retval;
     retval.reserve(registers_.size());
-    for (const auto &r: registers_)
-        retval.push_back(r.second);
+    for (const auto &r: registers_) {
+        if (r.second.reg())
+            retval.push_back(r.second.reg());
+    }
     return retval;
 }
 
 Sawyer::Container::BitVector
-Gdb::readAllRegisters(ThreadId) {
+Gdb::readAllRegisters(const ThreadId tid) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    Sawyer::Message::Stream error(mlog[ERROR]);
+    SAWYER_MESG(debug) <<"command: readAllRegisters(thread=" <<tid <<")\n";
+
     resetResponses();
 
     // Find the offset for each register, and the total number of bits for all registers.
@@ -519,21 +619,44 @@ Gdb::readAllRegisters(ThreadId) {
         totalBits += registers_[i].second.nBits();
     }
 
+#ifndef NDEBUG
+    std::map<std::string /*name*/, std::pair<size_t /*index*/, std::string /*value*/>> seen;
+#endif
+
     // Ask GDB for all the register values
     Sawyer::Container::BitVector retval(totalBits);
     for (const GdbResponse &response: sendCommand("-data-list-register-values x")) {
-        if (GdbResponse::ResultClass::DONE == response.result.rclass) {
+        if (GdbResponse::ResultClass::ERROR == response.result.rclass) {
+            SAWYER_MESG(error) <<response.result.results["msg"].as<std::string>() <<"\n";
+        } else if (GdbResponse::ResultClass::DONE == response.result.rclass) {
             if (const Yaml::Node sequence = response.result.results["register-values"]) {
                 ASSERT_require(sequence.isSequence());
                 for (const auto &elmt: sequence) {
                     ASSERT_require(elmt.second.isMap());
                     const size_t idx = elmt.second["number"].as<size_t>();
                     ASSERT_require(idx < registers_.size());
-                    const RegisterDescriptor reg = registers_[idx].second;
-                    const std::string strval = elmt.second["value"].as<std::string>();
-                    ASSERT_require2(boost::starts_with(strval, "0x"), strval);
-                    const auto range = Sawyer::Container::BitVector::BitRange::baseSize(offsets[idx], reg.nBits());
-                    retval.fromHex(range, strval.substr(2));
+                    const std::string &regName = registers_[idx].first;
+                    const size_t nBits = registers_[idx].second.nBits();
+                    ASSERT_require2(nBits > 0, "idx = " + boost::lexical_cast<std::string>(idx) + ", name = \"" + regName + "\"");
+
+                    const std::string hexstr = parseDataListRegisterValuesValue(elmt.second["value"].as<std::string>());
+
+#ifndef NDEBUG
+                    // Have we already seen this register with a different value?
+                    {
+                        const auto inserted = seen.insert(std::make_pair(regName, std::make_pair(idx, hexstr)));
+                        if (!inserted.second && hexstr != inserted.first->second.second) {
+                            SAWYER_MESG(error) <<"register \"" <<regName <<" at index " <<idx <<" with value " <<hexstr
+                                               <<" was already seen at index " <<inserted.first->second.first
+                                               <<" with value " <<inserted.first->second.second <<"\n";
+                        }
+                    }
+#endif
+
+                    // Insert the value into the bit vector we're returning.
+                    const auto range = Sawyer::Container::BitVector::BitRange::baseSize(offsets[idx], nBits);
+                    ASSERT_require(boost::starts_with(hexstr, "0x"));
+                    retval.fromHex(range, hexstr.substr(2));
                 }
             }
         }
@@ -541,14 +664,67 @@ Gdb::readAllRegisters(ThreadId) {
     return retval;
 }
 
+std::string
+Gdb::parseDataListRegisterValuesValue(const std::string &valstr) {
+    std::regex vectorRe("[^_a-zA-Z0-9]uint[0-9]+ = (0x[0-9a-f]+)");
+    std::smatch found;
+    if (boost::starts_with(valstr, "0x")) {
+        return valstr;
+    } else if (std::regex_search(valstr, found, vectorRe)) {
+        return found.str(1);
+    } else {
+        ASSERT_not_implemented("unrecognized output from -data-list-register-values: \"" + valstr + "\"");
+    }
+}
+
 Sawyer::Container::BitVector
-Gdb::readRegister(ThreadId, RegisterDescriptor reg) {
+Gdb::readRegisterIndexed(const ThreadId tid, const size_t idx) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    Sawyer::Message::Stream error(mlog[ERROR]);
+    SAWYER_MESG(debug) <<"command: readRegister(thread=" <<tid <<", index=" <<idx <<")\n";
+    ASSERT_require(idx < registers_.size());
+    ASSERT_forbid(registers_[idx].first.empty());       // GDB never gave us a name for this register
+
+    if (!isAttached())
+        throw Exception("not attached to subordinate process");
+    resetResponses();
+
+    for (const GdbResponse &response: sendCommand("-data-list-register-values x " + boost::lexical_cast<std::string>(idx))) {
+        if (GdbResponse::ResultClass::ERROR == response.result.rclass) {
+            SAWYER_MESG(error) <<response.result.results["msg"].as<std::string>() <<"\n";
+        } else if (GdbResponse::ResultClass::DONE == response.result.rclass) {
+            if (const Yaml::Node sequence = response.result.results["register-values"]) {
+                ASSERT_require(sequence.isSequence());
+                for (const auto &elmt: sequence) {
+                    ASSERT_require(elmt.second.isMap());
+                    ASSERT_require(elmt.second["number"].as<size_t>() == idx);
+
+                    // Hexadecimal string value for the register
+                    const std::string hexstr = parseDataListRegisterValuesValue(elmt.second["value"].as<std::string>());
+
+                    // Insert the value into the bit vector we're returning.
+                    Sawyer::Container::BitVector retval(registers_[idx].second.nBits());
+                    retval.fromHex(hexstr.substr(2));
+                    return retval;
+                }
+            }
+        }
+    }
+    throw Exception("no \"register-values\" response from debugger for \"data-list-register-values\"");
+}
+
+Sawyer::Container::BitVector
+Gdb::readRegister(const ThreadId tid, const RegisterDescriptor reg) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    Sawyer::Message::Stream error(mlog[ERROR]);
+    SAWYER_MESG(debug) <<"command: readRegister(thread=" <<tid <<", reg=" <<reg <<")\n";
+
     ASSERT_require(reg);
     if (!isAttached())
         throw Exception("not attached to subordinate process");
     resetResponses();
 
-    // Find the GDB register of which `reg` is a part.
+    // Find the GDB register of which `reg` is a part, then read it using the GDB register index.
     Sawyer::Optional<size_t> idx = findRegisterIndex(reg);
     if (!idx) {
         std::string s = "register ";
@@ -557,45 +733,19 @@ Gdb::readRegister(ThreadId, RegisterDescriptor reg) {
         s += reg.toString() + " not found in debugger";
         if (!registers_.empty()) {
             s += "\n  available registers are:";
-            for (const std::pair<std::string, RegisterDescriptor> &r: registers_)
-                s += (boost::format("\n    %-10s %s") % r.first % r.second.toString()).str();
+            for (const std::pair<std::string, RegInfo> &r: registers_)
+                s += (boost::format("\n    %-10s %s") % r.first % r.second.reg().toString()).str();
         }
         throw Exception(s);
     }
-    const RegisterDescriptor gdbReg = registers_[*idx].second;
-
-    // Send the data-list-register-values command and wait for its response. Then process the reponse to find
-    // 'register-values=[{number="I", value="0xVALUE"}]' and parse the value. Extract from the value that portion to which
-    // `reg` corresponds.
-    for (const GdbResponse &response: sendCommand("-data-list-register-values x " + boost::lexical_cast<std::string>(*idx))) {
-        if (GdbResponse::ResultClass::DONE == response.result.rclass) {
-            if (const Yaml::Node sequence = response.result.results["register-values"]) {
-                ASSERT_require(sequence.isSequence());
-                for (const auto &elmt: sequence) {
-                    ASSERT_require(elmt.second.isMap());
-                    ASSERT_require(elmt.second["number"].as<size_t>() == *idx);
-                    const std::string strval = elmt.second["value"].as<std::string>();
-                    Sawyer::Container::BitVector whole(gdbReg.nBits());
-                    ASSERT_require2(boost::starts_with(strval, "0x"), strval);
-                    whole.fromHex(strval.substr(2));
-
-                    if (reg == gdbReg) {
-                        return whole;
-                    } else {
-                        Sawyer::Container::BitVector retval(reg.nBits());
-                        retval.copy(retval.hull(), whole, reg.bits());
-                        return retval;
-                    }
-                }
-            }
-        }
-    }
-
-    throw Exception("no \"register-values\" response from debugger for \"data-list-register-values\"");
+    return readRegisterIndexed(tid, *idx);
 }
 
 void
-Gdb::writeAllRegisters(ThreadId, const Sawyer::Container::BitVector &allValues) {
+Gdb::writeAllRegisters(const ThreadId tid, const Sawyer::Container::BitVector &allValues) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"command: writeAllRegisters(thread=" <<tid <<")\n";
+
     // Calculate the starting bit offset for each register, and the total number of bits needed.
     // offsets[i] is the bit offset in retval for the start of register i
     std::vector<size_t> offsets;
@@ -608,17 +758,54 @@ Gdb::writeAllRegisters(ThreadId, const Sawyer::Container::BitVector &allValues) 
     ASSERT_always_require(allValues.size() >= totalBits);
 
     // GDB MI doesn't have a command to set multiple registers at the same time, so we have to do them one at a time.
-    for (size_t i = 0; i < registers_.size(); ++i) {
-        const auto range = Sawyer::Container::BitVector::BitRange::baseSize(offsets[i], registers_[i].second.nBits());
-        const auto valueString = "0x" + allValues.toHex(range);
-        sendCommand("-var-create temp_reg * $" + registers_[i].first);
-        sendCommand("-var-assign temp_reg " + valueString);
-        sendCommand("-var-delete temp_reg");
+    for (size_t register_idx = 0; register_idx < registers_.size(); ++register_idx) {
+        if (const size_t nBits = registers_[register_idx].second.nBits()) {
+            const std::string &regName = registers_[register_idx].first;
+            ASSERT_forbid(regName.empty());
+            const auto range = Sawyer::Container::BitVector::BitRange::baseSize(offsets[register_idx], nBits);
+            const std::string valueString = "0x" + allValues.toHex(range);
+
+            if (nBits <= 64 || nBits == 80) {
+#if 1 // [Robb Matzke 2025-07-24]: this seems to work and is faster than the three commands below.
+                sendCommand("-gdb-set $" + regName + "=" + valueString);
+#else // [Robb Matzke 2025-07-25]: this also works, and I'm saving it here in case there's a problem with the one above.
+                sendCommand("-var-create temp_reg * $" + regName);
+                sendCommand("-var-assign temp_reg " + valueString);
+                sendCommand("-var-delete temp_reg");
+#endif
+            } else if (nBits % 32 == 0) {
+                // Vector register that can be treated as an array of 32-bit integers.
+                const size_t nWords = nBits / 32;
+                for (size_t word_idx = 0; word_idx < nWords; ++word_idx) {
+                    const auto range = Sawyer::Container::BitVector::BitRange::baseSize(offsets[register_idx] + word_idx*32, 32);
+                    const std::string valueString = "0x" + allValues.toHex(range);
+                    const auto cmd = boost::format("-gdb-set $%1%.v%2%_int32[%3%]=%4%") % regName % nWords % word_idx % valueString;
+                    sendCommand(cmd.str());
+                }
+            } else {
+                ASSERT_not_implemented("nBits = " + boost::lexical_cast<std::string>(nBits));
+            }
+
+            // Check that the register was written successfully.
+            if (checkWrites_) {
+                const std::string check = "0x" + readRegisterIndexed(tid, register_idx).toHex();
+                ASSERT_always_require2(valueString == check,
+                                       "write to register \"" + regName + "\""
+                                       " at index " + boost::lexical_cast<std::string>(register_idx) +
+                                       " failed; wrote " + valueString + " but read back " + check);
+            }
+        } else {
+            // This was a register slot for which GDB didn't originally give a name when we first attached.
+            ASSERT_require(registers_[register_idx].first.empty());
+        }
     }
 }
 
 void
-Gdb::writeRegister(ThreadId tid, RegisterDescriptor reg, const Sawyer::Container::BitVector &value) {
+Gdb::writeRegister(const ThreadId tid, const RegisterDescriptor reg, const Sawyer::Container::BitVector &value) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"command: writeRegister(thread=" <<tid <<", reg=" <<reg <<", value=0x" <<value.toHex()<<")\n";
+
     ASSERT_require(reg);
     if (!isAttached())
         throw Exception("not attached to subordinate process");
@@ -628,7 +815,8 @@ Gdb::writeRegister(ThreadId tid, RegisterDescriptor reg, const Sawyer::Container
     Sawyer::Optional<size_t> idx = findRegisterIndex(reg);
     if (!idx)
         throw Exception("register " + boost::lexical_cast<std::string>(reg) + " not found in debugger");
-    const RegisterDescriptor gdbReg = registers_[*idx].second;
+    const std::string &regName = registers_[*idx].first;
+    const RegisterDescriptor gdbReg = registers_[*idx].second.reg();
     Sawyer::Container::BitVector gdbValue;
 
     // Obtain the value to be written to the GDB register. If we're writing to only part of the register, then we need
@@ -643,11 +831,21 @@ Gdb::writeRegister(ThreadId tid, RegisterDescriptor reg, const Sawyer::Container
         gdbValue = value;
     }
 
-    // Write the value.  There is no command to write directly to a register (not that I can find), so we need to
-    // create a variable first, then write to the variable, and finally delete the variable.
-    sendCommand("-var-create temp_reg * $" + registers_[*idx].first);
+#if 1 // [Robb Matzke 2025-07-25]: this seems to work and is faster than the three commands below.
+    sendCommand("-gdb-set $" + regName + "=0x" + gdbValue.toHex());
+#else // [Robb Matzke 2025-07-25]: this also works, and I'm saving it here in case there's a problem with the one above.
+    sendCommand("-var-create temp_reg * $" + regName);
     sendCommand("-var-assign temp_reg 0x" + gdbValue.toHex());
     sendCommand("-var-delete temp_reg");
+#endif
+
+    if (checkWrites_) {
+        // Check that the register was written successfully.
+        const std::string check = readRegisterIndexed(tid, *idx).toHex();
+        ASSERT_always_require2(gdbValue.toHex() == check,
+                               "write to register \"" + regName + "\" at index " + boost::lexical_cast<std::string>(*idx) +
+                               " failed; wrote 0x" + gdbValue.toHex() + " but read back 0x" + check);
+    }
 }
 
 void
@@ -660,11 +858,17 @@ Gdb::writeRegister(ThreadId tid, RegisterDescriptor reg, uint64_t value) {
 
 size_t
 Gdb::readMemory(Address va, size_t nBytes, uint8_t *buffer) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    Sawyer::Message::Stream error(mlog[ERROR]);
+    SAWYER_MESG(debug) <<"command: readMemory(addr=" <<StringUtility::addrToString(va) <<", nbytes=" <<nBytes <<")\n";
+
     if (!isAttached())
         throw Exception("not attached to subordinate process");
     sendCommand("-data-read-memory-bytes " + boost::lexical_cast<std::string>(va) + " " + boost::lexical_cast<std::string>(nBytes));
     for (const GdbResponse &response: responses()) {
-        if (GdbResponse::ResultClass::DONE == response.result.rclass) {
+        if (GdbResponse::ResultClass::ERROR == response.result.rclass) {
+            SAWYER_MESG(error) <<response.result.results["msg"].as<std::string>() <<"\n";
+        } else if (GdbResponse::ResultClass::DONE == response.result.rclass) {
             if (const Yaml::Node memoryList = response.result.results["memory"]) {
                 ASSERT_require(memoryList.isSequence());
                 for (const auto &elmt: memoryList) {
@@ -730,7 +934,11 @@ Gdb::readMemory(Address va, size_t nBytes, ByteOrder::Endianness sex) {
 }
 
 size_t
-Gdb::writeMemory(Address va, size_t nBytes, const uint8_t *bytes) {
+Gdb::writeMemory(const Address va, const size_t nBytes, const uint8_t *bytes) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    Sawyer::Message::Stream error(mlog[ERROR]);
+    SAWYER_MESG(debug) <<"command: writeMemory(addr=" <<StringUtility::addrToString(va) <<", nbytes=" <<nBytes <<")\n";
+
     if (!isAttached())
         throw Exception("not attached to subordinate process");
     std::string s = "-data-write-memory-bytes " + StringUtility::intToHex(va) + " \"";
@@ -740,7 +948,20 @@ Gdb::writeMemory(Address va, size_t nBytes, const uint8_t *bytes) {
     s += "\"";
     sendCommand(s);
     for (const GdbResponse &response: responses()) {
-        if (GdbResponse::ResultClass::DONE == response.result.rclass) {
+        if (GdbResponse::ResultClass::ERROR == response.result.rclass) {
+            SAWYER_MESG(error) <<response.result.results["msg"].as<std::string>() <<"\n";
+        } else if (GdbResponse::ResultClass::DONE == response.result.rclass) {
+            if (checkWrites_) {
+                const std::vector<uint8_t> readBytes = readMemory(va, nBytes, ByteOrder::EL).toBytes();
+                ASSERT_always_require2(readBytes.size() == nBytes,
+                                       "wrote " + StringUtility::plural(nBytes, "bytes") +
+                                       " but read only " + StringUtility::plural(readBytes.size(), "bytes"));
+                for (size_t i = 0; i < nBytes; ++i) {
+                    ASSERT_always_require2(bytes[i] == readBytes[i],
+                                           (boost::format("wrote 0x%02x at %s, but read back 0x%02x")
+                                            % bytes[i] % (va + i) % readBytes[i]).str());
+                }
+            }
             return nBytes;
         }
     }
@@ -763,7 +984,7 @@ Gdb::howTerminated() {
     }
 }
 
-const std::vector<std::pair<std::string, RegisterDescriptor>>&
+const std::vector<std::pair<std::string, Gdb::RegInfo>>&
 Gdb::registerNames() const {
     return registers_;
 }

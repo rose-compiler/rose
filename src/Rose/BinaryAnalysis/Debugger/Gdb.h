@@ -184,6 +184,16 @@ public:
         std::list<ResultRecord> resultRecord;
     };
 
+    // A register descriptor or just a size in bits.
+    class RegInfo {
+        RegisterDescriptor reg_;                        // might be invalid (default constructed, false)
+        size_t nBits_ = 0;                              // valid only if `reg` is invalid
+    public:
+        explicit RegInfo(RegisterDescriptor);
+        explicit RegInfo(size_t);
+        RegisterDescriptor reg() const;
+        size_t nBits() const;
+    };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Data members
@@ -195,12 +205,17 @@ private:
     boost::process::async_pipe gdbOutputPipe_;
     boost::process::opstream gdbInput_;
     boost::asio::streambuf gdbOutputBuffer_;
-    std::vector<std::pair<std::string, RegisterDescriptor>> registers_;
+    std::vector<std::pair<std::string, RegInfo>> registers_;    // info about registers obtained from GDB; some entries empty
     std::list<GdbResponse> responses_;                          // accumulated responses
     AddressIntervalSet breakPoints_;                            // all break points
     std::map<Address, unsigned /*bp_id*/> gdbBreakPoints_;      // subset of breakpoints known to GDB
     std::future<int> exitCodeFuture_;                           // exit code returned from GDB thread
     Sawyer::Optional<int> exitCode_;                            // exit code from the GDB process
+#ifdef NDEBUG
+    bool checkWrites_ = false;                                  // perform a read after each write to verify what we wrote
+#else
+    bool checkWrites_ = true;
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Constructors and destructors
@@ -220,6 +235,21 @@ public:
      *
      *  Create a new debugger and attach it to the specified specimen. */
     static Ptr instance(const Specimen&);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Whether to check that writes were successful.
+     *
+     *  If set, then writes to registers and memory are followed by an immediate read to ensure that the data was written.  Panic
+     *  ensues if errors are detected. This is enabled by default when ROSE is configured in Debug mode, and is disabled when
+     *  ROSE is configured in Release mode.
+     *
+     * @{ */
+    bool checkWrites() const;
+    void checkWrites(bool);
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Attaching and detaching
@@ -265,7 +295,7 @@ public:
     /** Get the list of register names and descriptors for this architecture.
      *
      *  These registers are reported in the same order as used by GDB. */
-    const std::vector<std::pair<std::string, RegisterDescriptor>>& registerNames() const;
+    const std::vector<std::pair<std::string, RegInfo>>& registerNames() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Overrides for methods declared and documented in the super class.
@@ -305,13 +335,25 @@ private:
     // Find the index for the GDB register whose major and minor numbers match the specified register.
     Sawyer::Optional<size_t> findRegisterIndex(RegisterDescriptor) const;
 
-    // Find the register descriptor for the GDB register whose major and minor numbers match the specified register. Returns
-    // an empty descriptor if not found.
+    // Find the register descriptor for the GDB register whose major and minor numbers match the specified register. Returns an
+    // empty descriptor if not found.
     RegisterDescriptor findRegister(RegisterDescriptor) const;
 
     // True if GDB should handle the break points; false if ROSE should handle the break points.
     bool gdbHandlesBreakPoints() const;
+
+    // Parse a result from -data-list-register-values. Specifically, the command returns a vector of objects each of which has
+    // a "number" and a "value" field. The number is the GDB register index, and the "value" is the string that this function
+    // is attempting to parse. The value (assuming the first argument to the command was "x") is either a hexadecimal string
+    // of arbitrary length, or a string that starts with "{uint<N> = <HEX>," where "<N>" is the number of bits and "<HEX>" is
+    // the string this function returns.
+    std::string parseDataListRegisterValuesValue(const std::string&);
+
+    // Read a register according to its GDB index.
+    Sawyer::Container::BitVector readRegisterIndexed(ThreadId, size_t);
 };
+
+std::ostream& operator<<(std::ostream&, const Gdb::Specimen&);
 
 } // namespace
 } // namespace
