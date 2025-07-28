@@ -92,6 +92,12 @@ public:
         void remote(const Remote&);
         void remote(const std::string &host, uint16_t port);
         /** @} */
+
+        /** Display this object. */
+        void print(std::ostream&) const;
+
+        /** String representation of this object. */
+        std::string toString() const;
     };
 
     // Thread-safe FIFO

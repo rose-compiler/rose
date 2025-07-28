@@ -75,6 +75,24 @@ Gdb::Specimen::remote(const std::string &host, uint16_t port) {
     remote(Gdb::Specimen::Remote{host, port});
 }
 
+void
+Gdb::Specimen::print(std::ostream &out) const {
+    out <<executable_;
+    if (!remote_.host.empty())
+        out <<" at tcp:" <<remote_.host <<":" <<remote_.port;
+}
+
+std::string
+Gdb::Specimen::toString() const {
+    return boost::lexical_cast<std::string>(*this);
+}
+
+std::ostream&
+operator<<(std::ostream &out, const Gdb::Specimen &specimen) {
+    specimen.print(out);
+    return out;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Gdb
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
