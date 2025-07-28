@@ -4,6 +4,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <RoseFirst.h>
 
+#include <ostream>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Debugger {
@@ -20,7 +22,15 @@ public:
      *
      *  This is used by debugger implementations that don't operate on threads. */
     static ThreadId unspecified();
+
+    /** Display the thread ID. */
+    void print(std::ostream&) const;
+
+    /** String representation of the thread ID. */
+    std::string toString() const;
 };
+
+std::ostream& operator<<(std::ostream&, ThreadId);
 
 } // namespace
 } // namespace
