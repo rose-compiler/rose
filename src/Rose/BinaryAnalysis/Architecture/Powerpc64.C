@@ -158,7 +158,31 @@ Powerpc64::registerDictionary() const {
         // Other special purpose registers.
         regs->insert("dsisr", powerpc_regclass_spr, powerpc_spr_dsisr, 0, 64);
         regs->insert("dar", powerpc_regclass_spr, powerpc_spr_dar, 0, 64);
+        regs->insert("decr", powerpc_regclass_spr, powerpc_spr_dec, 0, 64); // GDB's name for "dec"
         regs->insert("dec", powerpc_regclass_spr, powerpc_spr_dec, 0, 64);
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Vector registers (VMX/AltiVec). These are not present in all PowerPC64 implementations. These 32 registers overlap
+        // with "vs32" through "vs63" (defined below).
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        // Vector registers
+        for (unsigned i = 0; i < 32; ++i)
+            regs->insert("vr" + boost::lexical_cast<std::string>(i), powerpc_regclass_vector, i, 0, 128);
+
+        // Vector status and control register.
+        regs->insert("vscr", powerpc_regclass_vector, 32, 0, 32);
+        regs->insert("vscr_nj", powerpc_regclass_vector, 32, 16, 1); // non-java mode; flush denormals to zero
+
+        // Vector save bit mask
+        regs->insert("vrsave", powerpc_regclass_vector, 33, 0, 32);
+
+        // Vector scalar registers. The low-order 64 bits of the first 32 of these overlap with the floating point "fN" registers,
+        // and the second 32 of these are aliases for the 32 "vrN" registers defined just above.
+        for (unsigned i = 0; i < 32; ++i)
+            regs->insert("vs" + boost::lexical_cast<std::string>(i), powerpc_regclass_fpr, i, 0, 128);
+        for (unsigned i = 0; i < 32; ++i)
+            regs->insert("vs" + boost::lexical_cast<std::string>(i + 32), powerpc_regclass_vector, i, 0, 128);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Time base registers. There are 1024 of these, some of which have special names. We name all 1024 consistently and create

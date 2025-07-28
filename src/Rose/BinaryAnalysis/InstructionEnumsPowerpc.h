@@ -515,6 +515,7 @@ enum PowerpcRegisterClass {
     powerpc_regclass_sr,                                // Segment register.
     powerpc_regclass_iar,                               // instruction address (pseudo) register.
     powerpc_regclass_pvr,                               // processor version register.
+    powerpc_regclass_vector,                            // vector registers
     powerpc_last_register_class                         // last enum value.
 };
 

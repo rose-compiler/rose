@@ -159,6 +159,7 @@ Powerpc32::registerDictionary() const {
         // Other special purpose registers.
         regs->insert("dsisr", powerpc_regclass_spr, powerpc_spr_dsisr, 0, 32);
         regs->insert("dar", powerpc_regclass_spr, powerpc_spr_dar, 0, 32);
+        regs->insert("decr", powerpc_regclass_spr, powerpc_spr_dec, 0, 32); // GDB's name for "dec"
         regs->insert("dec", powerpc_regclass_spr, powerpc_spr_dec, 0, 32);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -181,6 +182,19 @@ Powerpc32::registerDictionary() const {
         regs->stackPointerRegister("r1");
         regs->stackFrameRegister("r31");
         regs->callReturnRegister("lr");
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Some software (GDB, QEMU) isn't too careful about the distinction between PowerPC and PowerPC64 registers. For instance,
+        // when GDB connects to `qemu_system_ppc` (32-bit PowerPC) and asks for the names of all the registers, the response
+        // includes many registers that are only defined for PowerPC64.  Thefore, we will now add all the PowerPC64 registers
+        // to this dictionary unless there's aready a register here with the same name (since it might be narrower).
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        const auto rd64 = findByName("ppc64-el").expect("ppc64-el should exist")->registerDictionary();
+        for (const auto &entry: rd64->registers()) {    // entry.first is the name; entry.second is the register
+            if (!regs->find(entry.first))
+                regs->insert(entry.first, entry.second);
+        }
 
         registerDictionary_ = regs;
     }
