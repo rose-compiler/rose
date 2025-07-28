@@ -167,9 +167,7 @@ void CollectTransitiveDependences:: Compute(
     for (auto dependence : dependences) {
         if (what_to_do == 0 || (*what_to_do)(dependence)) {
            save_dependence(dependence);
-           if (current_start(dependence) != input) {
-              Compute(current_start(dependence), result, what_to_do);
-           } else {
+           if (current_start(dependence) == input) {
               Compute(next_start(dependence), result, what_to_do);
            }
         }

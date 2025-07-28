@@ -373,6 +373,10 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
         return new SymbolicFunction( opr, ">>", v1,v2);
      case AstInterface::BOP_BIT_LSHIFT:
         return new SymbolicFunction( opr, "<<", v1,v2);
+     case AstInterface::BOP_BIT_AND:
+        return new SymbolicFunction( opr, "&", v1,v2);
+     case AstInterface::BOP_BIT_OR:
+        return new SymbolicFunction( opr, "|", v1,v2);
      default:
      {
          cerr<<"Error in SymbolicValGenerator::GetSymbolicVal(): unhandled type of binary operator "<< AstInterface::toString(opr) <<endl;
