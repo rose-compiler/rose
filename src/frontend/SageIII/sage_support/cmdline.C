@@ -6191,6 +6191,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
       // DQ (7/26/2020): This macro is required in GNU 10.x header files to gain access to the
       // coroutine support ("coroutine" header file returns an error with out it).
          inputCommandLine.push_back("-D__cpp_impl_coroutine");
+
+      // Turn off the concepts feature because this is not supported yet.
+         inputCommandLine.push_back("-D__cpp_concepts=0");
          break;
        }
        case e_cxx23_standard: {
@@ -6199,6 +6202,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
       // DQ (7/26/2020): This macro is required in GNU 10.x header files to gain access to the
       // coroutine support ("coroutine" header file returns an error with out it).
          inputCommandLine.push_back("-D__cpp_impl_coroutine");
+
+      // Turn off the concepts feature because this is not supported yet.
+         inputCommandLine.push_back("-D__cpp_concepts=0");
          break;
        }
        case e_cxx26_standard: {
@@ -6207,6 +6213,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
       // DQ (7/26/2020): This macro is required in GNU 10.x header files to gain access to the
       // coroutine support ("coroutine" header file returns an error with out it).
          inputCommandLine.push_back("-D__cpp_impl_coroutine");
+
+      // Turn off the concepts feature because this is not supported yet.
+         inputCommandLine.push_back("-D__cpp_concepts=0");
          break;
        }
        case e_upcxx_standard: {

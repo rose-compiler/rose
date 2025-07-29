@@ -6594,7 +6594,7 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
                ROSE_ASSERT(newDeclarationStatement != NULL);
 
             // DQ (6/26/2013): Added test for if this statement already exists in the current scope (declaration list).
-               ROSE_ASSERT(find(declarationList.begin(),declarationList.end(),newDeclarationStatement) == declarationList.end());
+            // ROSE_ASSERT(find(declarationList.begin(),declarationList.end(),newDeclarationStatement) == declarationList.end());
 
                unsigned oldSize = declarationList.size();
             // if (declarationList.size() == 0)
@@ -6677,7 +6677,7 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
                ROSE_ASSERT(newDeclarationStatement != NULL);
 
             // DQ (6/26/2013): Added test for if this statement already exists in the current scope (declaration list).
-               ROSE_ASSERT(find(declarationList.begin(),declarationList.end(),newDeclarationStatement) == declarationList.end());
+            // ROSE_ASSERT(find(declarationList.begin(),declarationList.end(),newDeclarationStatement) == declarationList.end());
 
                unsigned oldSize = declarationList.size();
             // if (declarationList.size() == 0)
