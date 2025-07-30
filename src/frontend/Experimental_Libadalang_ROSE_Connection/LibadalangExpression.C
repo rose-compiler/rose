@@ -1398,10 +1398,8 @@ namespace{
             //Find the correct decl in the defining name list
             for(int i = 0; i < defining_name_list->n; ++i){
               ada_base_entity defining_name = defining_name_list->items[i];
-              ada_base_entity lal_full_name;
-              ada_defining_name_f_name(&defining_name, &lal_full_name);
               ada_base_entity name_identifier;
-              findBaseName(&lal_full_name, name_identifier);
+              ada_name_p_relative_name(&defining_name, &name_identifier);
               const std::string test_name = canonical_text_as_string(&name_identifier);
               if(name == test_name){
                 hash = hash_node(&defining_name);
@@ -1550,7 +1548,7 @@ namespace{
 
             //Get the f_name, and check if it is a type
             ada_base_entity lal_name;
-            findBaseName(&lal_full_name, lal_name);
+            ada_name_p_relative_name(&lal_full_name, &lal_name);
             ada_node_kind_enum name_kind = ada_node_kind(&lal_name);
 
             if(name_kind == ada_identifier){
@@ -2333,6 +2331,7 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier)
     //Instead use p_referenced_decl
     ada_name_p_referenced_decl(lal_identifier, 1, &corresponding_decl);
   }
+
   ada_ada_node_array defining_name_list;
   ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
 
@@ -2340,7 +2339,7 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier)
   for(int i = 0; i < defining_name_list->n; ++i){
     ada_base_entity defining_name = defining_name_list->items[i];
     ada_base_entity name_identifier;
-    ada_defining_name_f_name(&defining_name, &name_identifier);
+    ada_name_p_relative_name(&defining_name, &name_identifier);
     const std::string test_name = canonical_text_as_string(&name_identifier);
     if(name == test_name){
       hash = hash_node(&defining_name);

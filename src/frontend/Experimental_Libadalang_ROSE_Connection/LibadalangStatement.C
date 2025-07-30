@@ -2906,7 +2906,7 @@ namespace {
 //  We need to do this b/c lal does not create nodes for compiler-generated sections, unlike ASIS.
 //  So any references to instantiated packages/subps in the lal tree point back to the generic package/subp,
 //  which causes "invalid prefix in selected component" errors in the generated code.
-SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, std::string ident, AstContext ctx){
+SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, std::string ident, SgScopeStatement* parent_scope, AstContext ctx){
   //Get the kind of this node
   ada_node_kind_enum kind = ada_node_kind(lal_element);
 
@@ -2944,7 +2944,6 @@ SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, st
 
       const bool              isFunc = subp_kind_kind == ada_subp_kind_function;
       const bool          overriding = (lal_overriding_kind == ada_overriding_overriding); //TODO ada_overriding_unspecified might count?
-      SgScopeStatement* parent_scope = &ctx.scope();
       SgType&                rettype = isFunc ? getDeclType(&subp_returns, ctx)
                                                 : mkTypeVoid();
 
@@ -2982,8 +2981,6 @@ SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, st
     {
       logKind("ada_generic_package_decl", kind);
       //Treat this node as an ada_package_decl
-
-      SgScopeStatement*     parent_scope = &ctx.scope();
 
       SgAdaPackageSpecDecl& sgnode       = mkAdaPackageSpecDecl(ident, SG_DEREF(parent_scope));
       SgAdaPackageSpec&     pkgspec      = SG_DEREF(sgnode.get_definition());
@@ -3062,6 +3059,10 @@ SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, st
   return instDecl;
 }
 
+//Forward decl of this func b/c it is used in handleDeclaration
+SgScopeStatement* determineParentScope(ada_base_entity* lal_element, AstContext ctx);
+
+
 void handlePragma(ada_base_entity* lal_element, SgStatement* stmtOpt, AstContext ctx){
   ctx.appendStatement(createPragma_common(lal_element, stmtOpt, ctx));
 }
@@ -3097,10 +3098,10 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Get the name for this package
         ada_base_entity lal_defining_name, lal_identifier;
         ada_base_package_decl_f_package_name(lal_element, &lal_defining_name);
-        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        ada_name_p_relative_name(&lal_defining_name, &lal_identifier);
 
         std::string           ident        = getFullName(&lal_identifier);
-        SgScopeStatement*     parent_scope = &ctx.scope();
+        SgScopeStatement*     parent_scope = determineParentScope(&lal_defining_name, ctx);
 
         SgAdaPackageSpecDecl& sgnode       = mkAdaPackageSpecDecl(ident, SG_DEREF(parent_scope));
         SgAdaPackageSpec&     pkgspec      = SG_DEREF(sgnode.get_definition());
@@ -3174,13 +3175,11 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       {
         logKind("ada_package_body", kind);
 
-        //Get the name for this package
-        ada_base_entity lal_identifier;
-        ada_package_body_f_package_name(lal_element, &lal_identifier);
-        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        //Get the defining name for this package
+        ada_base_entity lal_defining_name;
+        ada_package_body_f_package_name(lal_element, &lal_defining_name);
 
-        std::string             ident        = getFullName(&lal_identifier);
-        SgScopeStatement*       parent_scope = &ctx.scope();
+        SgScopeStatement*       parent_scope = determineParentScope(&lal_defining_name, ctx);
 
         //Get the decl for this package body
         ada_base_entity previous_decl;
@@ -3249,7 +3248,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity lal_package_internal, lal_defining_name, lal_identifier;
         ada_generic_package_decl_f_package_decl(lal_element, &lal_package_internal);
         ada_base_package_decl_f_package_name(&lal_package_internal, &lal_defining_name);
-        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        ada_name_p_relative_name(&lal_defining_name, &lal_identifier);
         std::string ident = getFullName(&lal_identifier);
         int hash = hash_node(&lal_defining_name);
 
@@ -3259,8 +3258,8 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_generic_formal_part_f_decls(&lal_formal_list, &lal_formal_list);
 
         // create generic declaration
-        SgScopeStatement&       logicalScope = ctx.scope();
-        SgAdaGenericDecl&       sgnode     = mkAdaGenericDecl(ident, logicalScope);
+        SgScopeStatement*       logicalScope = determineParentScope(&lal_defining_name, ctx);
+        SgAdaGenericDecl&       sgnode     = mkAdaGenericDecl(ident, SG_DEREF(logicalScope));
         SgAdaGenericDefn&       gen_defn   = SG_DEREF(sgnode.get_definition());
 
         // create package in the scope of the generic
@@ -3356,14 +3355,14 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Get the name of this decl
         ada_base_entity lal_defining_name, lal_identifier;
         ada_subp_spec_f_subp_name(&lal_subp_spec, &lal_defining_name);
-        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        ada_name_p_relative_name(&lal_defining_name, &lal_identifier);
         std::string ident = getFullName(&lal_identifier);
 
-        SgScopeStatement&      logicalScope = ctx.scope();
+        SgScopeStatement*      logicalScope = determineParentScope(&lal_defining_name, ctx);
 
         // PP (20/10/21): the assertion does not hold for proc/func defined in their own unit
         //~ ADA_ASSERT (adaname.fullName == adaname.ident);
-        SgAdaGenericDecl&      sgnode     = mkAdaGenericDecl(ident, logicalScope);
+        SgAdaGenericDecl&      sgnode     = mkAdaGenericDecl(ident, SG_DEREF(logicalScope));
         SgAdaGenericDefn&      gen_defn   = SG_DEREF(sgnode.get_definition());
 
         // PP (20/10/21): use the logical scope
@@ -3457,13 +3456,13 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Get the name
         ada_base_entity lal_defining_name, lal_identifier;
         ada_subp_spec_f_subp_name(&subp_spec, &lal_defining_name);
-        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        ada_name_p_relative_name(&lal_defining_name, &lal_identifier);
 
         ada_node_kind_enum lal_overriding_kind = ada_node_kind(&lal_overriding);
 
         const bool              isFunc = subp_kind_kind == ada_subp_kind_function;
         const bool          overriding = (lal_overriding_kind == ada_overriding_overriding); //TODO ada_overriding_unspecified might count?
-        SgScopeStatement* parent_scope = &ctx.scope();
+        SgScopeStatement* parent_scope = determineParentScope(&lal_defining_name, ctx);
         std::string              ident = getFullName(&lal_identifier);
         SgType&                rettype = isFunc ? getDeclType(&subp_returns, ctx)
                                                 : mkTypeVoid();
@@ -3519,13 +3518,13 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_subp_spec_f_subp_returns(&subp_spec, &subp_returns);
 
         //Get the name
-        ada_base_entity lal_identifier;
-        ada_subp_spec_f_subp_name(&subp_spec, &lal_identifier);
-        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_subp_spec_f_subp_name(&subp_spec, &lal_defining_name);
+        ada_name_p_relative_name(&lal_defining_name, &lal_identifier);
 
         std::string             ident        = getFullName(&lal_identifier);
         const bool              isFunc       = (subp_kind_kind == ada_subp_kind_function);
-        SgScopeStatement*       parent_scope = &ctx.scope();
+        SgScopeStatement*       parent_scope = determineParentScope(&lal_defining_name, ctx);
         SgType&                 rettype      = isFunc ? getDeclType(&subp_returns, ctx)
                                                       : mkTypeVoid();
 
@@ -3683,7 +3682,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //~ privatize(sgnode, isPrivate);
         ctx.appendStatement(sgnode);
 
-        SgDeclarationStatement* protoDecl = createInstantiationDecl(&lal_generic_package, ident, ctx.scope(SG_DEREF(sgnode.get_prototypeScope())));
+        SgDeclarationStatement* protoDecl = createInstantiationDecl(&lal_generic_package, ident, &scope, ctx.scope(SG_DEREF(sgnode.get_prototypeScope())));
         sgnode.set_prototype(protoDecl);
 
         assocdecl = &sgnode;
@@ -3708,7 +3707,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Get the name of this decl
         ada_base_entity lal_defining_name, lal_identifier;
         ada_subp_spec_f_subp_name(&lal_subp_spec, &lal_defining_name);
-        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        ada_name_p_relative_name(&lal_defining_name, &lal_identifier);
         std::string ident = getFullName(&lal_identifier);
 
         //Get the params & return type
@@ -3719,7 +3718,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         SgType&                rettype = isFormalFuncDecl ? getDeclType(&lal_return_type, ctx)
                                                           : mkTypeVoid();
 
-        SgScopeStatement&      logicalScope = ctx.scope();
+        SgScopeStatement&      logicalScope = SG_DEREF(determineParentScope(&lal_defining_name, ctx));
         SgAdaSubroutineType&   funty   = mkAdaSubroutineType(rettype, ParameterCompletion{&lal_params, ctx}, ctx.scope(), false  /*isProtected*/ );
         SgExpression&          defaultInit = mkNullExpression();//getDefaultFunctionExpr(lal_element, funty, ctx); TODO Find this in the lal tree
         SgAdaRenamingDecl&     sgnode  = mkAdaRenamingDecl(ident, defaultInit, funty, logicalScope);
@@ -3795,7 +3794,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         //Element_ID              specID  = queryAsisIDOfDeclaration(decl, A_Protected_Body_Stub, ctx);
         SgDeclarationStatement& podecl  = lookupNode(libadalangDecls(), decl_hash);
-        SgScopeStatement&       logicalScope = SG_DEREF(&ctx.scope());
+        SgScopeStatement&       logicalScope = SG_DEREF(determineParentScope(&lal_defining_name, ctx));
         SgAdaProtectedBodyDecl& sgnode  = mkAdaProtectedBodyDecl(podecl, nondef, pobody, logicalScope);
 
         attachSourceLocation(sgnode, lal_element, ctx);
@@ -3830,9 +3829,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         logKind("ada_task_body", kind);
 
         //Get the name
-        ada_base_entity lal_identifier;
-        ada_task_body_f_name(lal_element, &lal_identifier);
-        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_task_body_f_name(lal_element, &lal_defining_name);
+        ada_name_p_relative_name(&lal_defining_name, &lal_identifier);
 
         //Get the hash for the decl
         ada_base_entity p_decl_part, lal_decl_defining_name;
@@ -3858,7 +3857,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Element_ID              specID  = queryAsisIDOfDeclaration(decl, A_Task_Body_Stub, ctx);
         SgDeclarationStatement& tskdecl = lookupNode(libadalangDecls(), decl_hash); //TODO What is specID?
 
-        SgScopeStatement&       logicalScope = ctx.scope();
+        SgScopeStatement&       logicalScope = SG_DEREF(determineParentScope(&lal_defining_name, ctx));
         SgAdaTaskBodyDecl&      sgnode  = mkAdaTaskBodyDecl(tskdecl, nondef, tskbody, logicalScope);
 
         attachSourceLocation(sgnode, lal_element, ctx);
@@ -3987,12 +3986,12 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         logKind(isFunc ? "A_Function_Body_Stub" : "A_Procedure_Body_Stub", kind);
 
         //Get the name
-        ada_base_entity lal_identifier;
-        ada_subp_spec_f_subp_name(&subp_spec, &lal_identifier);
-        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_subp_spec_f_subp_name(&subp_spec, &lal_defining_name);
+        ada_name_p_relative_name(&lal_defining_name, &lal_identifier);
 
         std::string             ident        = getFullName(&lal_identifier);
-        SgScopeStatement*       parent_scope = &ctx.scope();
+        SgScopeStatement*       parent_scope = determineParentScope(&lal_defining_name, ctx);
         SgType&                 rettype      = isFunc ? getDeclType(&subp_returns, ctx)
                                                       : mkTypeVoid();
 
@@ -4029,7 +4028,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //Get the name for this decl
         ada_base_entity lal_defining_name, lal_identifier;
         ada_task_body_stub_f_name(lal_element, &lal_defining_name);
-        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        ada_name_p_relative_name(&lal_defining_name, &lal_identifier);
 
         //Get the full decl
         ada_base_entity lal_previous_decl;
@@ -4041,7 +4040,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         int                        hash = hash_node(&lal_defining_name);
         std::string               ident = getFullName(&lal_identifier);
         SgDeclarationStatement& tskdecl = lookupNode(libadalangDecls(), previous_hash);
-        SgScopeStatement&       logicalScope = ctx.scope();
+        SgScopeStatement&       logicalScope = SG_DEREF(determineParentScope(&lal_defining_name, ctx));
         SgAdaTaskBodyDecl&      sgnode  = mkAdaTaskBodyDecl_nondef(tskdecl, logicalScope);
 
         setAdaSeparate(sgnode, true /* separate */);
@@ -4294,13 +4293,26 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         } else {
           ada_generic_subp_instantiation_f_subp_name(lal_element, &lal_defining_name);
         }
-        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
+        ada_name_p_relative_name(&lal_defining_name, &lal_identifier);
         std::string  ident = getFullName(&lal_identifier);
         int           hash = hash_node(&lal_defining_name);
 
         //Get the decl we are instantiating off of
         ada_base_entity lal_generic_decl, lal_generic_decl_name;
-        ada_generic_instantiation_p_designated_generic_decl(lal_element, &lal_generic_decl);
+        int generic_return = ada_generic_instantiation_p_designated_generic_decl(lal_element, &lal_generic_decl);
+        if(generic_return == 0 || ada_node_is_null(&lal_generic_decl)){
+          logWarn() << "p_designated_generic_decl is null for instantiation named " << ident << std::endl;
+          //Since p_designated_generic_decl didn't work, try p_referenced_decl
+          if(kind == ada_generic_package_instantiation){
+            ada_generic_package_instantiation_f_generic_pkg_name(lal_element, &lal_generic_decl);
+          } else {
+            ada_generic_subp_instantiation_f_subp_name(lal_element, &lal_generic_decl);
+          }
+          ada_name_p_referenced_decl(&lal_generic_decl, 1, &lal_generic_decl);
+          if(ada_node_is_null(&lal_generic_decl)){
+            logFatal() << "Could not find base decl in Libadalang tree!\n";
+          }
+        }
         //Get the kind of the decl, and use that to get its defining_name
         ada_node_kind_enum lal_generic_decl_kind = ada_node_kind(&lal_generic_decl);
         if(lal_generic_decl_kind == ada_generic_package_decl){
@@ -4316,6 +4328,12 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         int base_decl_hash = hash_node(&lal_generic_decl_name);
         SgDeclarationStatement*   basedecl = findFirst(libadalangDecls(), base_decl_hash);
 
+        if(basedecl == nullptr)
+        {
+          logFlaw() << "Could not find base decl for ada_generic_package_instantiation!\n";
+          logFlaw() << "  lal_generic_decl_kind = " << lal_generic_decl_kind << "\n";
+        }
+
         //Get the params
         ada_base_entity lal_params;
         if(kind == ada_generic_package_instantiation){
@@ -4324,15 +4342,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           ada_generic_subp_instantiation_f_params(lal_element, &lal_params);
         }
 
-        if(basedecl == nullptr)
-        {
-          logFlaw() << "Could not find base decl for ada_generic_package_instantiation!\n";
-          logFlaw() << "  lal_generic_decl_kind = " << lal_generic_decl_kind << "\n";
-        }
-
         // PP (2/2/22): the base decl can also be a renamed generic declaration
-        SgScopeStatement&         logicalScope = ctx.scope();
-        SgAdaGenericInstanceDecl&       sgnode = mkAdaGenericInstanceDecl(ident, SG_DEREF(basedecl), logicalScope);
+        SgScopeStatement*         logicalScope = determineParentScope(&lal_defining_name, ctx);
+        SgAdaGenericInstanceDecl&       sgnode = mkAdaGenericInstanceDecl(ident, SG_DEREF(basedecl), SG_DEREF(logicalScope));
 
         {
           // generic actual part
@@ -4358,7 +4370,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //  whereas ASIS' Corresponding_Declaration points to a compiler generated instance (which Libadalang does not have).
         //  Not sure how to translate this to Libadalang.
         // PP (4/1/22): fill in the declaration
-        SgDeclarationStatement* instDecl = createInstantiationDecl(&lal_generic_decl, ident, ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope())));
+        SgDeclarationStatement* instDecl = createInstantiationDecl(&lal_generic_decl, ident, logicalScope, ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope())));
 
         // mark whole subtree under sgnode.get_instantiatedScope() as instantiated
         si::Ada::setSourcePositionInSubtreeToCompilerGenerated(sgnode.get_instantiatedScope());
@@ -4872,22 +4884,6 @@ SgDeclarationStatement* typeDeclarationFromStandard(int hash1, int hash2){
   return nullptr;
 }
 
-void findBaseName(ada_base_entity* lal_element, ada_base_entity& lal_return_name){
-  ada_node_kind_enum kind = ada_node_kind(lal_element);
-  lal_return_name = *lal_element;
-  if(kind == ada_attribute_ref){
-    //If we have an attribute ref, get the prefix
-    //The ada_attribute_ref should always be the top node of the tree, if it exists
-    ada_attribute_ref_f_prefix(&lal_return_name, &lal_return_name);
-    kind = ada_node_kind(&lal_return_name);
-  }
-  while(kind == ada_dotted_name){
-    //If we have a chain of dotted_names, iterate until we find a leaf suffix
-    ada_dotted_name_f_suffix(&lal_return_name, &lal_return_name);
-    kind = ada_node_kind(&lal_return_name);
-  }
-}
-
 [[noreturn]]
 bool useClauseFatalError(std::string name, AstContext ctx){
   logFatal() << "using unknown package/type: "
@@ -4902,7 +4898,7 @@ bool useClauseFatalError(std::string name, AstContext ctx){
 void createUseClause(ada_base_entity* lal_element, map_t<int, SgDeclarationStatement*>& m, AstContext ctx){
  //Get the rightmost node for this name (get the suffix until we don't have ada_dotted_name)
   ada_base_entity lal_name;
-  findBaseName(lal_element, lal_name);
+  ada_name_p_relative_name(lal_element, &lal_name);
 
   SgDeclarationStatement*      used = nullptr;
   std::string             full_name = getFullName(lal_element); //TODO This might break for some ada_use_type_clauses
@@ -4973,7 +4969,7 @@ void createUseClause(ada_base_entity* lal_element, map_t<int, SgDeclarationState
 SgExpression& createWithClause(ada_base_entity* lal_element, AstContext ctx){
   //Get the rightmost node for this name (get the suffix until we don't have ada_dotted_name)
   ada_base_entity lal_name;
-  findBaseName(lal_element, lal_name);
+  ada_name_p_relative_name(lal_element, &lal_name);
 
   ada_node_kind_enum kind = ada_node_kind(lal_element);
   while(kind == ada_dotted_name){
@@ -5448,7 +5444,50 @@ namespace {
 
 } // end anonymous namespace
 
+  //Find the scope specified by a given ada_defining_name node.
+  //  If the ada_defining_name_f_name node is ada_dotted_name, find the node for the parent and use that.
+  //  E.g., If the defining name is a.b.c, return the scope of a.b
+  //  Otherwise, return ctx.scope().
+  SgScopeStatement* determineParentScope(ada_base_entity* lal_element, AstContext ctx)
+  {
+    //Check that this is an ada_defining_name node
+    ASSERT_require(ada_node_kind(lal_element) == ada_defining_name);
 
+    //Get the f_name, and check its type
+    ada_base_entity lal_name;
+    ada_defining_name_f_name(lal_element, &lal_name);
+    ada_node_kind_enum lal_name_kind = ada_node_kind(&lal_name);
+
+    if(lal_name_kind == ada_dotted_name){
+      //The suffix points to the name of the variable, which we don't want.
+      //  We instead want the rightmost name that is not the suffix.
+      //  So, take the prefix, then take the suffix if the prefix is ada_dotted_name
+      //  ada_dotted_name trees work as below, where o = ada_dotted_name
+      //       o
+      //      / \
+      //     o   d
+      //    / \
+      //   o   c
+      //  / \
+      // a   b
+      ada_base_entity lal_rightmost_prefix;
+      ada_dotted_name_f_prefix(&lal_name, &lal_rightmost_prefix);
+      if(ada_node_kind(&lal_rightmost_prefix) == ada_dotted_name){
+        ada_dotted_name_f_suffix(&lal_rightmost_prefix, &lal_rightmost_prefix);
+      }
+      //Now, call queryCorrespondingAstNode on the prefix
+      SgNode* scope_decl = queryCorrespondingAstNode(&lal_rightmost_prefix);
+      if(scope_decl == nullptr)
+      {
+        logFatal() << "Unable to find scope/declaration for " << getFullName(&lal_name)
+                   << std::endl;
+        ASSERT_require(false);
+      }
+      return ScopeQuery::find(scope_decl);
+    } else {
+      return &ctx.scope();
+    }
+  }
 
   /// returns the ROSE scope of an already converted Asis element \ref elem.
   SgScopeStatement&
