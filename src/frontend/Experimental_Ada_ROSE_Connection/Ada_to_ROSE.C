@@ -1435,6 +1435,12 @@ namespace
     return ty && ty == systemAddressType();
   }
 
+  bool isStandardIntegerType(const SgType* ty)
+  {
+    return ty && ty == standardIntegerType();
+  }
+
+
   bool hasSystemAddressType(const SgExpression* e)
   {
     return isSystemAddressType(si::Ada::typeOfExpr(e).dominantTyperep());
@@ -2205,39 +2211,72 @@ namespace
              );
     }
 
+    SgType* findAllowableType(const SgExpressionPtrList& lst)
+    {
+      auto  allowableType =
+               [](const SgExpression* exp)->bool
+               {
+                 SgType* ty = si::Ada::typeOfExpr(exp).typerep();
+
+                 return !((ty == nullptr) || isSystemAddressType(ty) || isStandardIntegerType(ty));
+               };
+
+      auto  lim = lst.end();
+      auto  pos = std::find_if(lst.begin(), lim, allowableType);
+
+      return (pos != lim) ? si::Ada::typeOfExpr(*pos).typerep()
+                          : nullptr;
+    }
+
     SgType& findTargetType(SgType& ty, const SgFunctionCallExp& call)
     {
-      if (  (standardIntegerType() != &ty)
+      if (  (!isStandardIntegerType(&ty))
          || isRelationalOp(call.get_function())
          )
         return ty;
 
+      // try to find a suitable type from the argument list or return type
+      const SgExprListExp& explst = SG_DEREF(call.get_args());
+      SgExpressionPtrList  lst = explst.get_expressions();
+
+      lst.push_back(isSgExpression(explst.get_parent()));
+
+      if (SgType* cand = findAllowableType(lst))
+        return *cand;
+
+      // try to infer the type from the context
       const SgNode* callParent = call.get_parent();
 
+      // from the left hand side of an assignment - should have a proper type
       if (const SgAssignOp* assign = isSgAssignOp(callParent))
         return si::Ada::typeOfExpr(*assign).typerep_ref();
 
+      // from the context of a call
       if (const SgExprListExp* explst = isSgExprListExp(callParent))
         if (const SgFunctionCallExp* parentCall = isSgFunctionCallExp(explst->get_parent()))
           return findTargetType(si::Ada::typeOfExpr(*parentCall).typerep_ref(), *parentCall);
 
+      // return default
       return ty;
     }
 
     void operator()(SgExpression* exp)
     {
-      ASSERT_not_null(exp);
-      ASSERT_not_null(*pos);
-
-      const bool applyTypecast = (  hasSystemAddressType(exp)
-                                 && !isSystemAddressType((*pos)->get_type())
-                                 );
-
-      if (applyTypecast)
+      // alternatively we could find the default arguments and use those.
+      if (exp)
       {
-        SgType& targetType = findTargetType(SG_DEREF((*pos)->get_type()), callexp);
+        ASSERT_not_null(*pos);
 
-        decorateWithTypeCast(*exp, targetType);
+        const bool applyTypecast = (  hasSystemAddressType(exp)
+                                   && !isSystemAddressType((*pos)->get_type())
+                                   );
+
+        if (applyTypecast)
+        {
+          SgType& targetType = findTargetType(SG_DEREF((*pos)->get_type()), callexp);
+
+          decorateWithTypeCast(*exp, targetType);
+        }
       }
 
       ++pos;
@@ -2267,7 +2306,7 @@ namespace
                 return;
 
               const SgInitializedNamePtrList& calleeParms = calleeParamList->get_args();
-              const SgExpressionPtrList       callerArgs  = si::Ada::normalizedCallArguments(*callexp);
+              const SgExpressionPtrList       callerArgs  = si::Ada::normalizedCallArguments(*callexp, false /* without defaults */);
 
               ASSERT_require(calleeParms.size() == callerArgs.size());
               std::for_each( callerArgs.begin(), callerArgs.end(),

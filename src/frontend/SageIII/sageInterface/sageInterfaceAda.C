@@ -1835,6 +1835,7 @@ namespace Ada
         {}
 
         void handle(const SgNode& n)              { SG_UNEXPECTED_NODE(n); }
+        void handle(const SgExprStatement&)       { /* res = nullptr; */ }
         void handle(const SgExpression&)          { /* res = nullptr; */ }
 
         void handle(const SgExprListExp& n)
