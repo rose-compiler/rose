@@ -1,13 +1,14 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-
-bin_PROGRAMS =
-tests =
 
 lib_LIBRARIES = libbatSupport.a
 libbatSupport_a_SOURCES = batSupport.C
 libbatSupport_a_CPPFLAGS = $(ROSE_INCLUDES)
 pkginclude_HEADERS = batSupport.h
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
+bin_PROGRAMS =
+tests =
 
 bin_PROGRAMS += bat-ana
 bat_ana_SOURCES = bat-ana.C

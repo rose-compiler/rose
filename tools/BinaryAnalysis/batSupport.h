@@ -1,5 +1,7 @@
 #ifndef ROSE_BatSupport_H
 #define ROSE_BatSupport_H
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 
 #include <Rose/As.h>
@@ -622,4 +624,5 @@ printInsnHistogram(const InsnHistogram&, std::ostream&);
 
 } // namespace
 
+#endif
 #endif

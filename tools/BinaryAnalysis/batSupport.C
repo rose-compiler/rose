@@ -1,4 +1,6 @@
 // Library for all bat toolstState
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <rose.h>
 
@@ -1093,3 +1095,4 @@ printInsnHistogram(const InsnHistogram &histogram, std::ostream &out) {
 #endif
 
 } // namespace
+#endif
