@@ -1,5 +1,24 @@
 include_rules
 
-run $(librose_compile) Driver.C API.C Factory.C
+run $(librose_compile)				\
+    API.C					\
+    Driver.C					\
+    Factory.C					\
+    SymbolScanner.C
 
-run $(public_header) -o include/rose/Rose/SourceCode/CodeGen Driver.h Object.h API.h API.txx Factory.h
+run $(public_header) -o include/rose/Rose/SourceCode/CodeGen	\
+    API.h							\
+    API.txx							\
+    Driver.h							\
+    Factory.h							\
+    Object.h							\
+    SymbolScanner.h						\
+    SymbolScanner.txx
+
+run $(public_header) -o include/rose/Rose/SourceCode/CodeGen/factory	\
+    factory/factory.txx							\
+    factory/namespaces.txx						\
+    factory/classes.txx							\
+    factory/typedefs.txx						\
+    factory/variables.txx						\
+    factory/functions.txx

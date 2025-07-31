@@ -15,7 +15,7 @@ run $(librose_compile)				\
     io/share.C
 
 run $(public_header) -o include/rose/Rose/SourceCode/AST	\
-    Checker.h					\
-    cmdline.h					\
-    Defect.h					\
+    Checker.h							\
+    cmdline.h							\
+    Defect.h							\
     IO.h
