@@ -9,6 +9,7 @@
 #include <Rose/StringUtility/Escape.h>
 #include <Rose/StringUtility/NumberToString.h>
 #include <rose_getline.h>
+#include <ROSE_UNUSED.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
@@ -636,6 +637,7 @@ Gdb::readAllRegisters(const ThreadId tid) {
                     const size_t idx = elmt.second["number"].as<size_t>();
                     ASSERT_require(idx < registers_.size());
                     const std::string &regName = registers_[idx].first;
+                    ROSE_UNUSED(regName);
                     const size_t nBits = registers_[idx].second.nBits();
                     ASSERT_require2(nBits > 0, "idx = " + boost::lexical_cast<std::string>(idx) + ", name = \"" + regName + "\"");
 
