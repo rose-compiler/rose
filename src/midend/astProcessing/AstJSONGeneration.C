@@ -48,12 +48,10 @@ AstJSONGeneration_private::generateWithinFile(SgFile* node) {
 
 void
 AstJSONGeneration_private::generateWithinFile(const std::string& jsonfilename, SgFile* node) {
-  //mlog[INFO] << ": generating json file for " << jsonfilename << std::endl;
   json_setup(jsonfilename + ".json");
   JSONInheritedAttribute jIA;
   traverseWithinFile(node, jIA);
   json_finalize();
-  //mlog[INFO] << ": done generating json" << std::endl;
 }
 
 void
@@ -61,7 +59,7 @@ AstJSONGeneration_private::generate(SgProject* projectNode) {
   const SgFilePtrList& fList = projectNode->get_fileList();
   for (SgFilePtrList::const_iterator fl_iter = fList.begin();
        fl_iter != fList.end(); fl_iter++) {
-    ROSE_ASSERT(*fl_iter!=0);
+    ASSERT_require(*fl_iter != 0);
     SgFile* fp = *fl_iter;
     std::string filename = fp->getFileName();
     filename = Rose::StringUtility::stripPathFromFileName(filename);
@@ -74,7 +72,7 @@ AstJSONGeneration_private::generateInputFiles(SgProject* projectNode) {
   const SgFilePtrList& fList = projectNode->get_fileList();
   for (SgFilePtrList::const_iterator fl_iter = fList.begin();
        fl_iter != fList.end(); fl_iter++) {
-    ROSE_ASSERT(*fl_iter!=0);
+    ASSERT_require(*fl_iter != 0);
     generateWithinFile(*fl_iter);
   }
 }
@@ -92,7 +90,7 @@ void AstJSONGeneration_private::generate(std::string filename, SgNode *node) {
 }
 
 // modeled on AstPDFGeneration_private::edit_page
-void AstJSONGeneration_private::handle_node(SgNode *node, JSONInheritedAttribute inheritedValue)
+void AstJSONGeneration_private::handle_node(SgNode* node, JSONInheritedAttribute /*inheritedValue*/)
 {
   nlohmann::json jdata;
 
@@ -154,7 +152,7 @@ void AstJSONGeneration_private::handle_node(SgNode *node, JSONInheritedAttribute
   }
   jdata["rti"] = jRTI;
 
-  if (node->get_attributeMechanism() != NULL) {
+  if (node->get_attributeMechanism() != nullptr) {
     AstAttributeMechanism::AttributeIdentifiers aidents =
       node->get_attributeMechanism()->getAttributeIdentifiers();
 
