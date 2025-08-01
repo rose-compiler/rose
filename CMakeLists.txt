@@ -606,8 +606,9 @@ if(ENABLE-ADA)
   set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME "$ENV{GNAT_HOME}") # if this causes errors, set to Autoconf default
   message(WARNING "Ada Analysis may work and pass compile tests in this setup but one macro is still needed to be defined"
                   "ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION currently causes compilation errors")
-  # TODO: Define this 
   set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION ON)
+  set(BACKEND_ADA_COMPILER "gnat" CACHE STRING "Specify backend Ada compiler, default is gnat")
+  set(BACKEND_ADA_COMPILER_NAME_WITH_PATH ${BACKEND_ADA_COMPILER})
 endif()
 
 # Jovial
