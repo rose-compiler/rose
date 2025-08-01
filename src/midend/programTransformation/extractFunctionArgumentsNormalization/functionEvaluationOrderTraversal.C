@@ -18,9 +18,9 @@ FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInherit
     SgWhileStmt* parentWhileLoop = isSgWhileStmt(parentAttribute.currentScope);
     SgDoWhileStmt* parentDoWhileLoop = isSgDoWhileStmt(parentAttribute.currentScope);
     
-    SgConditionalExp* parentSgConditionalExp = astNode->get_parent() ? isSgConditionalExp(astNode->get_parent()) : NULL;
-    SgAndOp* parentAndOp =  astNode->get_parent() ?isSgAndOp(astNode->get_parent()) : NULL;
-    SgOrOp* parentOrOp =  astNode->get_parent() ? isSgOrOp(astNode->get_parent()) : NULL;
+    SgConditionalExp* parentSgConditionalExp = astNode->get_parent() ? isSgConditionalExp(astNode->get_parent()) : nullptr;
+    SgAndOp* parentAndOp = astNode->get_parent() ?isSgAndOp(astNode->get_parent()) : nullptr;
+    SgOrOp* parentOrOp = astNode->get_parent() ? isSgOrOp(astNode->get_parent()) : nullptr;
 
     if (isSgForStatement(astNode))
         result.currentScope = isSgForStatement(astNode);
@@ -35,34 +35,34 @@ FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInherit
     //else if (isSgOrOp(astNode))
     //    result.currentScope = isSgOrOp(astNode);
     else if (isSgForInitStatement(astNode)) {
-        ROSE_ASSERT(result.scopeStatus == FunctionCallInheritedAttribute::IN_SAFE_PLACE);
+        ASSERT_require(result.scopeStatus == FunctionCallInheritedAttribute::IN_SAFE_PLACE);
         result.scopeStatus = FunctionCallInheritedAttribute::INSIDE_FOR_INIT;
-        ROSE_ASSERT(isSgForStatement(result.currentScope));
-    } else if (parentForLoop != NULL && parentForLoop->get_test() == astNode) {
-        ROSE_ASSERT(result.scopeStatus == FunctionCallInheritedAttribute::IN_SAFE_PLACE);
+        ASSERT_not_null(isSgForStatement(result.currentScope));
+    } else if (parentForLoop != nullptr && parentForLoop->get_test() == astNode) {
+        ASSERT_require(result.scopeStatus == FunctionCallInheritedAttribute::IN_SAFE_PLACE);
         result.scopeStatus = FunctionCallInheritedAttribute::INSIDE_FOR_TEST;
-    } else if (parentForLoop != NULL && parentForLoop->get_increment() == astNode) {
-        ROSE_ASSERT(result.scopeStatus == FunctionCallInheritedAttribute::IN_SAFE_PLACE);
+    } else if (parentForLoop != nullptr && parentForLoop->get_increment() == astNode) {
+        ASSERT_require(result.scopeStatus == FunctionCallInheritedAttribute::IN_SAFE_PLACE);
         result.scopeStatus = FunctionCallInheritedAttribute::INSIDE_FOR_INCREMENT;
-    } else if (parentWhileLoop != NULL && parentWhileLoop->get_condition() == astNode) {
-        ROSE_ASSERT(result.scopeStatus == FunctionCallInheritedAttribute::IN_SAFE_PLACE);
+    } else if (parentWhileLoop != nullptr && parentWhileLoop->get_condition() == astNode) {
+        ASSERT_require(result.scopeStatus == FunctionCallInheritedAttribute::IN_SAFE_PLACE);
         result.scopeStatus = FunctionCallInheritedAttribute::INSIDE_WHILE_CONDITION;
-    } else if (parentDoWhileLoop != NULL && parentDoWhileLoop->get_condition() == astNode) {
-        ROSE_ASSERT(result.scopeStatus == FunctionCallInheritedAttribute::IN_SAFE_PLACE);
+    } else if (parentDoWhileLoop != nullptr && parentDoWhileLoop->get_condition() == astNode) {
+        ASSERT_require(result.scopeStatus == FunctionCallInheritedAttribute::IN_SAFE_PLACE);
         result.scopeStatus = FunctionCallInheritedAttribute::INSIDE_DO_WHILE_CONDITION;
-    } else if( parentSgConditionalExp != NULL && parentSgConditionalExp->get_true_exp() == astNode) {
+    } else if( parentSgConditionalExp != nullptr && parentSgConditionalExp->get_true_exp() == astNode) {
         // if the scope status was safe, turn it into unsafe
         if (IsStatusSafe(result.scopeStatus))
             result.scopeStatus = FunctionCallInheritedAttribute::INSIDE_CONDITIONAL_EXP_TRUE_ARM;
-    } else if(parentSgConditionalExp != NULL && parentSgConditionalExp->get_false_exp() == astNode) {
+    } else if(parentSgConditionalExp != nullptr && parentSgConditionalExp->get_false_exp() == astNode) {
         // if the scope status was safe, turn it into unsafe
         if (IsStatusSafe(result.scopeStatus))
             result.scopeStatus = FunctionCallInheritedAttribute::INSIDE_CONDITIONAL_EXP_FALSE_ARM;
-    } else if( parentOrOp != NULL && parentOrOp->get_rhs_operand () == astNode) {
+    } else if( parentOrOp != nullptr && parentOrOp->get_rhs_operand () == astNode) {
         // if the scope status was safe, turn it into unsafe
         if (IsStatusSafe(result.scopeStatus))
             result.scopeStatus = FunctionCallInheritedAttribute::INSIDE_SHORT_CIRCUIT_EXP_RHS;
-    } else if( parentAndOp != NULL && parentAndOp->get_rhs_operand () == astNode)  {
+    } else if( parentAndOp != nullptr && parentAndOp->get_rhs_operand () == astNode)  {
         // if the scope status was safe, turn it into unsafe
         if (IsStatusSafe(result.scopeStatus))
             result.scopeStatus = FunctionCallInheritedAttribute::INSIDE_SHORT_CIRCUIT_EXP_RHS;
@@ -79,16 +79,15 @@ FunctionCallInheritedAttribute FunctionEvaluationOrderTraversal::evaluateInherit
 }
 
 // Returns false in the absence of any analysis information
-bool FunctionEvaluationOrderTraversal::IsFunctionCallSideEffectFree(SgFunctionCallExp* functionCall) {
+bool FunctionEvaluationOrderTraversal::IsFunctionCallSideEffectFree(SgFunctionCallExp* /*functionCall*/) {
     return false;
 }
-
 
 /** Visits AST nodes in post-order. This is function-evaluation order. */
 bool FunctionEvaluationOrderTraversal::evaluateSynthesizedAttribute(SgNode* astNode, FunctionCallInheritedAttribute parentAttribute, SynthesizedAttributesList)
 {
     SgFunctionCallExp* functionCall = isSgFunctionCallExp(astNode);
-    if (functionCall == NULL)
+    if (functionCall == nullptr)
         return false; //dummy return value
     
     FunctionCallInfo functionCallInfo(functionCall);
@@ -113,7 +112,7 @@ bool FunctionEvaluationOrderTraversal::evaluateSynthesizedAttribute(SgNode* astN
 
         // ***** FOR UNSAFE TRANSFORMATION *******
         //Temporary variables should be declared before the stmt
-        ROSE_ASSERT(isSgStatement(parentAttribute.currentScope));
+        ASSERT_not_null(isSgStatement(parentAttribute.currentScope));
         functionCallInfo.tempVarDeclarationLocation = isSgStatement(parentAttribute.currentScope);
         functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
 
@@ -130,7 +129,7 @@ bool FunctionEvaluationOrderTraversal::evaluateSynthesizedAttribute(SgNode* astN
             
             // ***** FOR UNSAFE TRANSFORMATION *******
             //Temporary variables should be declared before the stmt
-            ROSE_ASSERT(parentAttribute.lastStatement);
+            ASSERT_not_null(parentAttribute.lastStatement);
             functionCallInfo.tempVarDeclarationLocation = parentAttribute.lastStatement;
             functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
 
@@ -143,7 +142,7 @@ bool FunctionEvaluationOrderTraversal::evaluateSynthesizedAttribute(SgNode* astN
     if (parentAttribute.scopeStatus == FunctionCallInheritedAttribute::INSIDE_FOR_INIT)
     {
         SgForStatement* forLoop = isSgForStatement(parentAttribute.currentScope);
-        ROSE_ASSERT(forLoop != NULL);
+        ASSERT_not_null(forLoop);
         //Temporary variables should be declared before the loop
         functionCallInfo.tempVarDeclarationLocation = forLoop;
         functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
@@ -151,14 +150,14 @@ bool FunctionEvaluationOrderTraversal::evaluateSynthesizedAttribute(SgNode* astN
     else if (parentAttribute.scopeStatus == FunctionCallInheritedAttribute::IN_SAFE_PLACE)
     {
         //Assume we're in a basic block. Then just insert right before the current statement
-        ROSE_ASSERT(parentAttribute.scopeStatus = FunctionCallInheritedAttribute::IN_SAFE_PLACE);
+        ASSERT_require(parentAttribute.scopeStatus = FunctionCallInheritedAttribute::IN_SAFE_PLACE);
         functionCallInfo.tempVarDeclarationLocation = parentAttribute.lastStatement;
         functionCallInfo.tempVarDeclarationInsertionMode = FunctionCallInfo::INSERT_BEFORE;
     }
     else
     {
         //Unhandled condition?!
-        ROSE_ABORT();
+        ASSERT_require2(false, "unhandled condition encountered");
     }
 
     normalizableFunctionCalls.push_back(functionCallInfo);
