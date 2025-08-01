@@ -1,7 +1,6 @@
 #ifndef AST_REWRITE_PREFIX_GENERATION_C
 #define AST_REWRITE_PREFIX_GENERATION_C
 
-// #include "rose.h"
 #include "rewrite.h"
 
 template <class ASTNodeCollection>
@@ -10,8 +9,7 @@ PrefixSuffixGenerationTraversal ( bool inputGenerateIncludeDirectives )
    : generateIncludeDirectives(inputGenerateIncludeDirectives)
    {
   // Variable to help us recognise when we change scopes during the reverse traversal
-  // previousStatement = NULL;
-     previousScope = NULL;
+     previousScope = nullptr;
 
   // Keep track of the number of #if and #endif so that they match up 
   // (force them to match up by adding a trailing #endif if required).
@@ -37,9 +35,6 @@ evaluateInheritedAttribute (
   //       a) leaving the current scope alone
   //       b) pushing a new scope onto the stack of scopes
 
-     static int counter = -1;
-     counter++;
-
 #undef PRINT_DEBUGGING_INFO
 
 #ifdef _MSC_VER
@@ -48,34 +43,23 @@ evaluateInheritedAttribute (
 #define PRINT_DEBUGGING_INFO false
 #endif
 
-#if 0
-     printf ("!!! In PrefixSuffixGenerationTraversal::evaluateInheritedAttribute: astNode = %p = %s stackOfScopes = %d \n",
-          astNode,astNode->sage_class_name(),stackOfScopes.size());
-#endif
-
-     ROSE_ASSERT (previousScope != NULL);
+     ASSERT_not_null(previousScope);
 
   // Setup the current scope
      SgStatement* currentStatement = isSgStatement(astNode);
-     if ( currentStatement != NULL )
+     if (currentStatement != nullptr)
         {
        // The global scope is unconditionally pushed onto the stack of scopes so don't do it here.
        // A few other scope statements don't generate "{}" parings (generally because the basic 
        // block contained within them generates the "{}" and only one pair is required.
-          if ( isSgFunctionParameterList(currentStatement) == NULL && 
-#if 0
-            // DQ (1/29/2004): Trying to debug replacement of basic block in function definition
-               isSgFunctionDefinition(currentStatement) == NULL &&
-#endif
-               isSgCatchOptionStmt(currentStatement) == NULL &&
-               isSgGlobal(currentStatement) == NULL )
+          if ( isSgFunctionParameterList(currentStatement) == nullptr &&
+               isSgCatchOptionStmt(currentStatement) == nullptr &&
+               isSgGlobal(currentStatement) == nullptr )
              {
             // Skip the SgFunctionParameterList statement since unparsing
             // the function declaration will generate parameter list
 
                std::string targetFilename      = Rose::getFileNameByTraversalBackToFileNode(currentStatement);
-            // string declarationFilename = Rose::getFileName(currentStatement);
-            // string declarationFilename = currentStatement->get_file_info()->get_filename();
 
             // DQ (7/19/2005):
             // Within: "int y; switch(x){case 0:{y++;break;}default:{y++;break;}}"
@@ -94,17 +78,6 @@ evaluateInheritedAttribute (
                     declarationFilename = currentStatement->get_file_info()->get_filename();
                   }
 
-#if 0
-               printf ("targetFilename = %s declarationFilename = %s counter = %d (*i)->sage_class_name() = %s \n",
-                    targetFilename.c_str(),declarationFilename.c_str(),counter,astNode->sage_class_name());
-
-               printf ("Found a statement = %s \n",currentStatement->sage_class_name());
-               printf ("--- Current Scope = %s \n",currentStatement->get_scope()->sage_class_name());
-               printf ("In PrefixSuffixGenerationTraversal::evaluateInheritedAttribute(): Current statement = %s \n",
-                    currentStatement->unparseToString().c_str());
-#endif
-            // DQ (7/25/2005): Note that string equality operator could use get_file_id() 
-            // and be replaced by integer equality test.
             // Check if the current statment is located in the current file
                if ( generateIncludeDirectives == false || declarationFilename == targetFilename )
                   {
@@ -112,39 +85,24 @@ evaluateInheritedAttribute (
                     printf ("Found a statement important to the prefix mechanism currentScope.size() = %" PRIuPTR " \n",currentScope.size());
 #endif
 
-#if 0
-                 // DQ (1/31/2004): Allow basic block to be replaced in SgFunctionDefinition
                     bool qualifiedScopeStatement =
-                         isSgScopeStatement(currentStatement) != NULL;
-                    bool basicBlockPartOfFunctionDefinition = false;
-                    bool basicBlockPartOfSwitchStatement =
-                         isSgBasicBlock(currentStatement) != NULL &&
-                         isSgSwitchStatement(currentStatement->get_scope()) != NULL;
-                    bool qualifiedOtherStatement = (isSgFunctionDeclaration(currentStatement) != NULL) ||
-                                                   (isSgClassDeclaration(currentStatement)    != NULL) ||
-                                                   (isSgCaseOptionStmt(currentStatement)      != NULL) ||
-                                                   (isSgDefaultOptionStmt(currentStatement)   != NULL);
-#else
-                    bool qualifiedScopeStatement =
-                         isSgScopeStatement(currentStatement) != NULL &&
-                         isSgFunctionDefinition(currentStatement) == NULL;
+                         isSgScopeStatement(currentStatement) != nullptr &&
+                         isSgFunctionDefinition(currentStatement) == nullptr;
                     bool basicBlockPartOfFunctionDefinition =
-                         isSgBasicBlock(currentStatement) != NULL &&
-                         isSgFunctionDefinition(currentStatement->get_scope()) != NULL;
+                         isSgBasicBlock(currentStatement) != nullptr &&
+                         isSgFunctionDefinition(currentStatement->get_scope()) != nullptr;
                     bool basicBlockPartOfSwitchStatement =
-                         isSgBasicBlock(currentStatement) != NULL &&
-                         isSgSwitchStatement(currentStatement->get_scope()) != NULL;
+                         isSgBasicBlock(currentStatement) != nullptr &&
+                         isSgSwitchStatement(currentStatement->get_scope()) != nullptr;
 
-                 // DQ (8/8/2005): This is a structural question!
                     bool basicBlockPartOfForStatement =
-                         isSgBasicBlock(currentStatement) != NULL &&
-                         isSgForStatement(currentStatement->get_parent()) != NULL;
+                         isSgBasicBlock(currentStatement) != nullptr &&
+                         isSgForStatement(currentStatement->get_parent()) != nullptr;
 
-                    bool qualifiedOtherStatement = (isSgFunctionDeclaration(currentStatement) != NULL) ||
-                                                   (isSgClassDeclaration(currentStatement)    != NULL) ||
-                                                   (isSgCaseOptionStmt(currentStatement)      != NULL) ||
-                                                   (isSgDefaultOptionStmt(currentStatement)   != NULL);
-#endif
+                    bool qualifiedOtherStatement = (isSgFunctionDeclaration(currentStatement) != nullptr) ||
+                                                   (isSgClassDeclaration(currentStatement)    != nullptr) ||
+                                                   (isSgCaseOptionStmt(currentStatement)      != nullptr) ||
+                                                   (isSgDefaultOptionStmt(currentStatement)   != nullptr);
 
                     bool qualifiedStatement = 
                          !basicBlockPartOfFunctionDefinition &&
@@ -154,16 +112,15 @@ evaluateInheritedAttribute (
                          (qualifiedScopeStatement || qualifiedOtherStatement);
 
                     SgScopeStatement* currentStatementScope  = isSgScopeStatement(currentStatement->get_scope());
-                    ROSE_ASSERT (currentStatementScope  != NULL);
+                    ASSERT_not_null(currentStatementScope);
+                    ASSERT_not_null(previousScope);
 
-                    ROSE_ASSERT (previousScope != NULL);
-                 // bool isInSameScope = (previousScope == currentStatementScope);
                     bool isInNestedScope = false;
                     SgScopeStatement* tempScope = currentStatementScope;
 #if PRINT_DEBUGGING_INFO
                     printf ("Initial tempScope = %s \n",tempScope->sage_class_name());
 #endif
-                    while (tempScope != NULL && tempScope->variantT() != V_SgGlobal && tempScope != previousScope)
+                    while (tempScope != nullptr && tempScope->variantT() != V_SgGlobal && tempScope != previousScope)
                        {
                          tempScope = tempScope->get_scope();
 #if PRINT_DEBUGGING_INFO
@@ -213,10 +170,9 @@ evaluateInheritedAttribute (
                       // Empty the current scope stack so that it can be used
                       // to accumulate new statements for the next scope.
                          currentScope.erase(currentScope.begin(),currentScope.end());
-                         ROSE_ASSERT (currentScope.size() == 0);
+                         ASSERT_require(currentScope.size() == 0);
 
                       // reset the previousStatement pointer used to recognize when the scopes are changed
-                      // previousStatement = currentStatement;
                          previousScope = currentStatement->get_scope();
                        }
 #if PRINT_DEBUGGING_INFO
@@ -225,8 +181,8 @@ evaluateInheritedAttribute (
                          printf ("$$$$$$$$$$$$$$$$  Skipped pushing current scope  $$$$$$$$$$$$$$$$ \n");
                        }
 #endif
-                    bool isCaseOrDefaultOptionStatement = (isSgCaseOptionStmt(currentStatement) != NULL) ||
-                                                          (isSgDefaultOptionStmt(currentStatement)   != NULL);
+                    bool isCaseOrDefaultOptionStatement = (isSgCaseOptionStmt(currentStatement) != nullptr) ||
+                                                          (isSgDefaultOptionStmt(currentStatement) != nullptr);
                     bool includeInPrefix = (isInNestedScope) || isCaseOrDefaultOptionStatement;
                     DeclarationOrCommentListElement listElement (currentStatement,includeInPrefix);
 
@@ -265,12 +221,11 @@ evaluateInheritedAttribute (
              }
 #endif
 
-          if ( isSgGlobal(currentStatement) != NULL )
+          if (isSgGlobal(currentStatement) != nullptr)
              {
             // push current scope onto stack of scopes (even if size == 0,
             // since top of stack is defined to be the global scope).
 
-            // printf ("$$$$$ Pushing Global Scope $$$$$ \n");
                stackOfScopes.push(currentScope);
 
 #if PRINT_DEBUGGING_INFO
@@ -317,19 +272,15 @@ DeclarationOrCommentListElement ( SgStatement* astNode, bool includeInPrefix )
   // If the astNode is in the same scope as a previous statement then 
   // don't save this node as a prefixStatement.
 
-     prefixStatement = NULL;
+     prefixStatement = nullptr;
      comments        = astNode->getAttachedPreprocessingInfo();
 
      originatingStatement = astNode;
-     ROSE_ASSERT (originatingStatement != NULL);
-
-#if 0
-     printf ("In DeclarationOrCommentListElement constructor: astNode = %s includeInPrefix = %s \n",astNode->sage_class_name(),includeInPrefix ? "true" : "false");
-#endif
+     ASSERT_not_null(originatingStatement);
 
   // Handle simple case of if the node is a declaration
      SgDeclarationStatement* declaration = isSgDeclarationStatement(astNode);
-     if ( declaration != NULL )
+     if (declaration != nullptr)
         {
           prefixStatement = declaration;
         }
@@ -348,28 +299,18 @@ DeclarationOrCommentListElement ( SgStatement* astNode, bool includeInPrefix )
                     case V_SgIfStmt:
                     case V_SgCatchOptionStmt:
                          prefixStatement = astNode;
-                    break;
+                         break;
 
                  // Other statements
                     case V_SgCaseOptionStmt:
                     case V_SgDefaultOptionStmt:
                          prefixStatement = astNode;
-                    break;
+                         break;
 
                     default:
-                       {
-#if 0
-                         printf ("Not an acceptable prefix statement (copied any attached comments, but ignoring this statement in generating prefix) \n");
-#endif
-                       }
+                         break;
                   }
              }
-#if 0
-            else
-             {
-               printf ("Statement is in same scope as previous statement (so just extract comments only) \n");
-             }
-#endif
         }
    }
 
@@ -378,9 +319,8 @@ bool
 MidLevelRewrite<ASTNodeCollection>::PrefixSuffixGenerationTraversal::DeclarationOrCommentListElement::
 isValidDeclarationOrCommentListElement() const
    {
-     return ((prefixStatement != NULL) || (comments != NULL)) ? true : false;
+     return ((prefixStatement != nullptr) || (comments != nullptr)) ? true : false;
    }
-
 
 // DQ (3/28/2006): declaration required by g++ 3.4.x and 4.x compilers)
 std::string unparseDeclarationToString ( SgDeclarationStatement* declaration, bool unparseAsDeclaration);
@@ -397,58 +337,45 @@ generateString(
      bool skipTrailingDirectives,
      bool unparseAsDeclaration )
    {
-#if 1
      printf ("In DeclarationOrCommentListElement::generateString(): \n");
      printf ("     openingIfCounter          = %d \n",openingIfCounter);
      printf ("     closingEndifCounter       = %d \n",closingEndifCounter);
      printf ("     generateIncludeDirectives = %s \n",generateIncludeDirectives ? "true" : "false");
      printf ("     skipTrailingDirectives    = %s \n",skipTrailingDirectives ? "true" : "false");
      printf ("     unparseAsDeclaration      = %s \n",unparseAsDeclaration ? "true" : "false");
-#endif
 
      std::string returnString;
 
   // If we only have a comment, then the declaration pointer is NULL!
-     if (prefixStatement != NULL)
+     if (prefixStatement != nullptr)
         {
        // Handle the different sorts of statements that contribute to
        // the context info contained in the final prefix
           printf ("     prefixStatement           = %s \n",prefixStatement->sage_class_name());
           SgDeclarationStatement* declaration = isSgDeclarationStatement(prefixStatement);
-          if (declaration != NULL)
+          if (declaration != nullptr)
              {
-            // printf ("     generateString(): declaration->sage_class_name() = %s \n",declaration->sage_class_name());
-
             // DQ (1/7/2004): New version of EDG (ver 3.3) normalizes member function definitions when 
             // they appear in a class declaration where the class is  declaration in global scope.  
             // It builds only a member function declaration in place of the definition and builds 
             // a member function definition in the global scope.  This is equivalent semanticly, 
             // but not structurally (syntacticly).  This effects the prefix generation and the fix 
             // is to non generate the declaration of member functions within global scope.
-            // returnString = unparseDeclarationToString(declaration,unparseAsDeclaration);
                SgMemberFunctionDeclaration *memberFuctionDeclaration = 
                     isSgMemberFunctionDeclaration(prefixStatement);
 
-            // printf ("In generateString(): memberFuctionDeclaration = %p \n",memberFuctionDeclaration);
-               if (memberFuctionDeclaration != NULL)
+               if (memberFuctionDeclaration != nullptr)
                   {
-                    ROSE_ASSERT(memberFuctionDeclaration->get_parent() != NULL);
+                    ASSERT_not_null(memberFuctionDeclaration->get_parent());
                     printf ("In generateString(): memberFuctionDeclaration->get_parent() = %s \n",
                          memberFuctionDeclaration->get_parent()->sage_class_name());
                   }
-#if 1
+
             // DQ (12/5/2004): Even in the case of a member function we might not want to unparse it except as a declaration!
-               if ( (memberFuctionDeclaration != NULL) && 
+               if ( (memberFuctionDeclaration != nullptr) &&
                     (unparseAsDeclaration == true) )
-#else
-            // DQ (1/31/2004): member functions should have a prefix
-               if ( (memberFuctionDeclaration != NULL) && 
-                    (isSgGlobal(memberFuctionDeclaration->get_parent()) != NULL) && 
-                    (unparseAsDeclaration == true) )
-#endif
                   {
                     returnString = "/* skipped member function declaration in global scope */";
-                 // returnString += unparseDeclarationToString(declaration,unparseAsDeclaration);
                   }
                  else
                   {
@@ -458,7 +385,7 @@ generateString(
             else
              {
                SgScopeStatement* scope = isSgScopeStatement(prefixStatement);
-               if (scope != NULL)
+               if (scope != nullptr)
                   {
                  // Unparse scope statements without their body (without SgBasicBlock)
                     returnString = unparseScopeStatementWithoutBasicBlockToString(scope);
@@ -466,35 +393,18 @@ generateString(
                  else
                   {
                  // Other statements (e.g. SgCaseOptionStmt and SgDefaultOptionStmt)
-                 // returnString = prefixStatement->unparseToString();
                     SgStatement* statement = isSgStatement(prefixStatement);
-                    ROSE_ASSERT (statement != NULL);
+                    ASSERT_not_null(statement);
                     returnString = unparseStatementWithoutBasicBlockToString(statement);
                   }
              }
         }
-       else
-        {
-       // printf ("     generateString(): prefixStatement == NULL \n");
-        }
 
      printf ("     After prefix statement processing: returnString = %s \n",returnString.c_str());
-
-  // printf ("     generateIncludeDirectives = %s \n",generateIncludeDirectives ? "true" : "false");
-  // printf ("     Comments: %s \n",comments ? "FOUND COMMENTS" : "NO COMMENTS FOUND");
-
-     ROSE_ASSERT (originatingStatement != NULL);
-#if 0
-     if (comments != NULL)
-        {
-       // Show where the comment came from!
-          printf ("          originatingStatement = %s \n",originatingStatement->sage_class_name());
-          printf ("          originatingStatement = %s \n",originatingStatement->unparseToString().c_str());
-        }
-#endif
+     ASSERT_not_null(originatingStatement);
 
   // Don't prepend or append comments
-     if (generateIncludeDirectives == true && comments != NULL)
+     if (generateIncludeDirectives == true && comments != nullptr)
         {
        // DQ (2/3/2004): prefixDesign.txt shows the counter example for why we can't ignore 
        // more than comments if we are processing #include directives.  The same applies for 
@@ -502,22 +412,15 @@ generateString(
        // then we have to get all the other related (dependent) directive processing correct 
        // as well.
 
-       // printf ("     Processing found comments! \n");
-
           std::string commentPrefix;
           std::string commentSuffix;
           AttachedPreprocessingInfoType::iterator j;
           for (j = comments->begin(); j != comments->end(); j++)
              {
-               ROSE_ASSERT ( (*j) != NULL );
-#if 0
-               printf ("Attached Comment (relativePosition=%s): %s",
-                    ((*j)->relativePosition == PreprocessingInfo::before) ? "before" : "after",(*j)->getString());
-#endif
+               ASSERT_not_null(*j);
             // We have to keep track of any open #if #endif pairings and make sure 
             // that they match of the the remaining #if gts closed off with an #endif
             // But we only want ot count directives that are NOT skipped
-//#ifndef USE_ROSE_BOOST_WAVE_SUPPORT2
                if ((*j)->getRelativePosition() == PreprocessingInfo::before || (skipTrailingDirectives == false))
                   {
                     switch ( (*j)->getTypeOfDirective() )
@@ -541,7 +444,6 @@ generateString(
                               break;
                        }
                   }
-//#endif
 
                // AS Since Wave is a full preprocessor all the PreprocessorInfo with directive type
                // PreprocessingInfo::CpreprocessorIncludeDeclaration is actually the include files
@@ -553,7 +455,6 @@ generateString(
 
             // Only use the CPP directive in certain cases (ignore comments, etc.)
                if ( (*j)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration 
-//#ifndef USE_ROSE_BOOST_WAVE_SUPPORT2
                  || (*j)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration  ||
                     (*j)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorUndefDeclaration   ||
                     (*j)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIfdefDeclaration   ||
@@ -564,10 +465,7 @@ generateString(
                     (*j)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorEndifDeclaration   ||
                     (*j)->getTypeOfDirective() == PreprocessingInfo::ClinkageSpecificationStart      ||
                     (*j)->getTypeOfDirective() == PreprocessingInfo::ClinkageSpecificationEnd 
-//#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
                     || (*j)->getTypeOfDirective() == PreprocessingInfo::CSkippedToken
-//#endif
-//#endif
                     )
                   {
                     if ((*j)->getRelativePosition() == PreprocessingInfo::before)
@@ -590,12 +488,6 @@ generateString(
                commentSuffix = std::string("\n") + commentSuffix;
 
           returnString = commentPrefix + returnString + commentSuffix;
-
-       // printf ("     After comment/directive processing: returnString = %s \n",returnString.c_str());
-        }
-       else
-        {
-       // printf ("     Skipping comments processing \n");
         }
 
      return returnString;
@@ -611,21 +503,8 @@ generatePrefixString()
   // them together.
 
      std::string prefixString;
-
-//   printf ("In generatePrefixString() stackOfScopes.size() = %" PRIuPTR " \n",stackOfScopes.size());
-
-//   printf ("Calling generatePrefixStringGlobalDeclarations() \n");
      prefixString += generatePrefixStringGlobalDeclarations();
-
-//   printf ("Calling generatePrefixStringLocalDeclarations() \n");
      prefixString += generatePrefixStringLocalDeclarations();
-//   printf ("DONE: calling generatePrefixStringLocalDeclarations() \n");
-
-#if 0
-     printf ("############################### \n");
-     printf ("In generatePrefixString() prefixString = \n%s\n",prefixString.c_str());
-     printf ("############################### \n");
-#endif
 
      return prefixString;
    }
@@ -636,8 +515,6 @@ MidLevelRewrite<ASTNodeCollection>::PrefixSuffixGenerationTraversal::
 generatePrefixStringFromStatementList(
      ListOfStatementsType & statementList,
      bool skipStatementListTrailingDirectives, 
-  // int & openingIfCounter, 
-  // int & closingEndifCounter, 
      bool containsAdditionalScopes )
    {
      std::string scopePrefixString;
@@ -645,60 +522,26 @@ generatePrefixStringFromStatementList(
   // Make a copy to avoid distroying the original list
      ListOfStatementsType tempList = statementList;
      const int lastDeclarationIndex = tempList.size()-1;
-     int declarationCounter   = 0;
+     int declarationCounter = 0;
 
-  // printf ("In generatePrefixStringFromStatementList(): containsAdditionalScopes = %s \n",containsAdditionalScopes ? "true" : "false");
      typename ListOfStatementsType::iterator lastDeclaration = tempList.end();
      for (typename ListOfStatementsType::iterator j = tempList.begin(); j != tempList.end(); j++)
         {
-          if ( containsAdditionalScopes && (*j).prefixStatement != NULL )
+          if ( containsAdditionalScopes && (*j).prefixStatement != nullptr )
              {
                lastDeclaration = j;
-            // printf ("Setting the lastDeclaration to lastDeclaration.prefixStatement = %s \n",(*lastDeclaration).prefixStatement->unparseToString().c_str());
              }
         }
 
-//   ROSE_ASSERT (lastDeclaration != tempList.end());
-//   printf ("lastDeclaration.prefixStatement = %s \n",(*lastDeclaration).prefixStatement->unparseToString().c_str());
-
      for (typename ListOfStatementsType::iterator i = tempList.begin(); i != tempList.end(); i++)
         {
-#if 0
-           if ( (*i).prefixStatement != NULL )
-              {
-            // output the file, line, and column of the current declaration
-               printf ("filename = %s line# = %d column# = %d \n",(*i).prefixStatement->get_file_info()->get_filename(),(*i).prefixStatement->get_file_info()->get_line(),(*i).prefixStatement->get_file_info()->get_col());
-               printf ("(*i).prefixStatement->unparseToString() = %s \n",(*i).prefixStatement->unparseToString().c_str());
-              }
-             else
-              {
-                printf ("(*i).prefixStatement == NULL \n");
-              }
-#endif
-
        // Check for last declaration is the list and unparse without ";" if 
        // it is a function, otherwise unparse as a regular declaration
-       // bool unparseAsDeclaration = containsAdditionalScopes && ( i == lastDeclaration ) ? false : true;
           bool unparseAsDeclaration = ( i == lastDeclaration ) ? false : true;
-       // ROSE_ASSERT (unparseAsDeclaration == true);
-       // printf ("Before call to unparseToString(): unparseAsDeclaration = %s \n",(unparseAsDeclaration) ? "true" : "false");
 
-#if 1
        // Skip all trailing directives on the last element of each list (except maybe the last one)
-          bool skipTrailingDirectives = ( skipStatementListTrailingDirectives && 
+          bool skipTrailingDirectives = ( skipStatementListTrailingDirectives &&
                                           (declarationCounter == lastDeclarationIndex) );
-#else
-          bool skipTrailingDirectives = false;
-#endif
-
-       // printf ("skipTrailingDirectives = %s \n",skipTrailingDirectives ? "true" : "false");
-
-#if 0
-       // DQ (1/6/2004):  Skip unparsing member function declarations (since they are defined in the class anyway)
-          if ( (*i).prefixStatement != NULL)
-               printf ("In generatePrefixStringFromStatementList(): (*i).prefixStatement->sage_class_name() = %s \n",(*i).prefixStatement->sage_class_name());
-#endif
-
           std::string declarationString = (*i).generateString(openingIfCounter,closingEndifCounter,
                                                          generateIncludeDirectives,skipTrailingDirectives,
                                                          unparseAsDeclaration);
@@ -708,8 +551,6 @@ generatePrefixStringFromStatementList(
           declarationCounter++;
         }
 
-  // printf ("openingIfCounter = %d closingEndifCounter = %d \n",openingIfCounter,closingEndifCounter);
-
      return scopePrefixString;
    }
 
@@ -717,7 +558,6 @@ template <class ASTNodeCollection>
 std::string
 MidLevelRewrite<ASTNodeCollection>::PrefixSuffixGenerationTraversal::
 generateEndifForPrefixString(
-  // int openingIfCounter, int closingEndifCounter
     )
    {
   // The name of this function should be changed from generateEndifForPrefixString 
@@ -733,30 +573,11 @@ generateEndifForPrefixString(
   // Add a trailing set of #endif directives if the #if and #endif directive counters don't match
      if (openingIfCounter != closingEndifCounter)
         {
-       // printf ("---- Adding #endif to correct mismatched #if #endif pairings \n");
           int numberOfOpeningIfDirectives    = closingEndifCounter - openingIfCounter;
-       // int numberOfClosingEndifDirectives = openingIfCounter - closingEndifCounter;
           int numberOfClosingEndifDirectives = -numberOfOpeningIfDirectives;
 
-       // printf ("---- (before) numberOfOpeningIfDirectives    = %d \n",numberOfOpeningIfDirectives);
-       // printf ("---- (before) numberOfClosingEndifDirectives = %d \n",numberOfClosingEndifDirectives);
-
-#if 1
-          ROSE_ASSERT (numberOfOpeningIfDirectives < 0);
-          ROSE_ASSERT (numberOfClosingEndifDirectives > 0);
-#else
-       // Add any require #if directives
-          for (int i = 0; i < numberOfOpeningIfDirectives; i++)
-             {
-               if (i==0)
-                    prefixString = std::string("\n// Prefix generated matching #if\n#if 1\n") + prefixString;
-                 else
-                    prefixString += std::string("// Prefix generated matching #if\n#if 1\n") + prefixString;
-
-            // DQ (2/2/2004): Increment the closingEndifCounter to reflect the added endif
-               openingIfCounter++;
-             }
-#endif
+          ASSERT_require(numberOfOpeningIfDirectives < 0);
+          ASSERT_require(numberOfClosingEndifDirectives > 0);
 
        // Add any require #endif directives
           for (int i = 0; i < numberOfClosingEndifDirectives; i++)
@@ -766,16 +587,10 @@ generateEndifForPrefixString(
                  else
                     prefixString += "// Prefix generated matching endif\n#endif\n";
 
-            // DQ (2/2/2004): Increment the closingEndifCounter to reflect the added endif
                closingEndifCounter++;
              }
         }
 
-#if 0
-     printf ("---- prefixString = %s \n",prefixString.c_str());
-     printf ("---- (after) openingIfCounter    = %d \n",openingIfCounter);
-     printf ("---- (after) closingEndifCounter = %d \n",closingEndifCounter);
-#endif
      return prefixString;
    }
 
@@ -786,35 +601,18 @@ generatePrefixStringGlobalDeclarations()
    {
      std::string globalPrefixString;
 
-  // printf ("In generatePrefixStringGlobalDeclarations() stackOfScopes.size() = %" PRIuPTR " \n",stackOfScopes.size());
-
   // We need to handle the case of a prefix generated for SgGlobal 
   // (in which case the stack of scopes is empty!).  
 
-#if 0
-  // For now return early.
-     printf ("NOTE: multiple returns in generatePrefixStringGlobalDeclarations() \n");
-     if (stackOfScopes.size() == 0)
-          return globalPrefixString;
-#endif
-
      if (stackOfScopes.size() > 0)
         {
-          ROSE_ASSERT (stackOfScopes.size() > 0);
+          ASSERT_require(stackOfScopes.size() > 0);
 
           StackOfListsType tempStack = stackOfScopes;
-
-          int stackCounter   = 0;
+          int stackCounter = 0;
           int stackSize = tempStack.size();
           int lastScopeIndex = stackSize-1;
           bool skipStatementListTrailingDirectives = stackCounter < lastScopeIndex;
-
-#if 0
-       // Keep track of the number of #if and #endif so that they match up 
-       // (force them to match up by adding a trailing #endif if required).
-          int openingIfCounter    = 0;
-          int closingEndifCounter = 0;
-#endif
 
        // If additional scopes are included then the last declaration will be treated 
        // as a function declaration instead of a function prototype (with the next 
@@ -824,23 +622,11 @@ generatePrefixStringGlobalDeclarations()
           ListOfStatementsType globalScopeList = tempStack.top();
           globalPrefixString = generatePrefixStringFromStatementList (
                                     globalScopeList,skipStatementListTrailingDirectives,
-//                                  openingIfCounter,closingEndifCounter,
                                     containsAdditionalScopes);
 
        // DQ (2/2/2004): Only call this once to avoid premature generation of #endif
           globalPrefixString += generateEndifForPrefixString ( /* openingIfCounter,closingEndifCounter */ );
         }
-
-#if 0
-     printf ("############################### \n");
-     printf ("In generatePrefixString() globalPrefixString = \n%s\n",globalPrefixString.c_str());
-     printf ("############################### \n");
-#endif
-
-#if 0
-     printf ("Exiting at base of generatePrefixStringGlobalDeclarations() \n");
-     ROSE_ABORT();
-#endif
 
      return globalPrefixString;
    }
@@ -855,15 +641,6 @@ generatePrefixStringLocalDeclarations()
   // We need to handle the case of a prefix generated for SgGlobal 
   // (in which case the stack of scopes is empty!).  
 
-#if 0
-  // For now return early.
-     printf ("NOTE: multiple returns in generatePrefixStringLocalDeclarations() \n");
-     if (stackOfScopes.size() < 2)
-          return localPrefixString;
-#endif
-
-  // printf ("In generatePrefixStringLocalDeclarations() stackOfScopes.size() = %" PRIuPTR " \n",stackOfScopes.size());
-
      if (stackOfScopes.size() > 1)
         {
        // Make a copy of the stack to avoid distroying it while traversing it
@@ -871,42 +648,15 @@ generatePrefixStringLocalDeclarations()
           int stackSize = tempStack.size();
           int stackCounter = 0;
 
-#if 0
-       // Keep track of the number of #if and #endif so that they match up 
-       // (force them to match up by adding a trailing #endif if required).
-          int openingIfCounter    = 0;
-          int closingEndifCounter = 0;
-#endif
-       // bool firstOpenParen = true;
-
        // Pop off the global scope (which is on top of the stack)
-       // printf ("In generatePrefixStringLocalDeclarations() pop off the global scope: tempStack.size() = %" PRIuPTR " \n",tempStack.size());
-          ROSE_ASSERT(tempStack.size() > 0);
+          ASSERT_require(tempStack.size() > 0);
           tempStack.pop();
           stackSize--;
-
-       // printf ("In generatePrefixStringLocalDeclarations(): stackSize = %d \n",stackSize);
 
           int lastScopeIndex = tempStack.size()-1;
           for (int j=0; j < stackSize; j++)
              {
                ListOfStatementsType tempList = tempStack.top();
-#if 0
-               printf ("In generatePrefixStringLocalDeclarations(): stackCounter = %d lastScopeIndex = %d tempList.size() = %" PRIuPTR " \n",stackCounter,lastScopeIndex,tempList.size());
-
-               typename ListOfStatementsType::iterator i = tempList.begin();
-               while (i != tempList.end())
-                  {
-                    printf ("---(*i).prefixStatement = %p (*i).comments = %p \n",(*i).prefixStatement,(*i).comments);
-                    if ((*i).prefixStatement != NULL)
-                       {
-                         printf ("   IR Node (*i).prefixStatement = %s \n",(*i).prefixStatement->sage_class_name());
-                         printf ("   IR Node (*i).prefixStatement = %s \n",(*i).prefixStatement->unparseToString().c_str());
-                       }
-                    i++;
-                  }
-#endif
-
                bool skipStatementListTrailingDirectives = stackCounter < lastScopeIndex;
                bool containsAdditionalScopes = stackCounter < lastScopeIndex;
 
@@ -923,17 +673,6 @@ generatePrefixStringLocalDeclarations()
              }
         }
 
-#if 0
-     printf ("############################### \n");
-     printf ("In generatePrefixString() localPrefixString = \n%s\n",localPrefixString.c_str());
-     printf ("############################### \n");
-#endif
-
-#if 0
-     printf ("Exiting at base of generatePrefixStringLocalDeclarations! \n");
-     ROSE_ABORT();
-#endif
-
      return localPrefixString;
    }
 
@@ -943,11 +682,8 @@ MidLevelRewrite<ASTNodeCollection>::PrefixSuffixGenerationTraversal::
 generateSuffixString()
    {
      std::string suffixString;
-
-  // DQ (8/8/2005): Fixed output to reflect more accurate reproduction of scopes (so that Milind's
-  // AST Merge mechansim would be able to match names that included the scope depth).
      int lastScopeIndex = stackOfScopes.size()-0;
-  // for (unsigned int i = 1; i < stackOfScopes.size(); i++)
+
      for (int i = 1; i < lastScopeIndex; i++)
         {
        // DQ (11/23/2003): Added ";" to close off class declararation statements
@@ -955,13 +691,9 @@ generateSuffixString()
           suffixString += "   };  ";
         }
 
-  // DQ (2/2/2004): Add this to prefix to close off any remaining directives
-  // suffixString += generateEndifForPrefixString();
-
      return suffixString;
    }
 
-// endif for AST_REWRITE_PREFIX_GENERATION_C
 #endif
 
 

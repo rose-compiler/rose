@@ -1,8 +1,11 @@
 #ifndef AST_REWRITE_FRAGMENT_COLLECTOR_TRAVERSAL_C
 #define AST_REWRITE_FRAGMENT_COLLECTOR_TRAVERSAL_C
 
-// #include "rose.h"
 #include "rewrite.h"
+
+// Notify compiler that explicit instantiation occurs elsewhere
+extern template class AbstractInterfaceNodeCollection<MidLevelCollectionTypedefs>;
+extern template class AbstractInterfaceNodeCollection<HighLevelCollectionTypedefs>;
 
 // ####################################################################
 // Functions for AST_FragmentIdentificationInheritedAttributeType class
@@ -12,7 +15,6 @@ template <class ASTNodeCollection>
 MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationInheritedAttributeType::
 ~AST_FragmentIdentificationInheritedAttributeType ()
    {
-  // recordTreeFragments = false;
      treeFragmentFromCorrectFile = false;
    }
 
@@ -20,7 +22,6 @@ template <class ASTNodeCollection>
 MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationInheritedAttributeType::
 AST_FragmentIdentificationInheritedAttributeType ()
    {
-  // recordTreeFragments = false;
      treeFragmentFromCorrectFile = false;
    }
 
@@ -36,7 +37,6 @@ typename MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationInherited
 MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationInheritedAttributeType::
 operator=( const AST_FragmentIdentificationInheritedAttributeType & X )
    {
-  // recordTreeFragments         = X.recordTreeFragments;
      treeFragmentFromCorrectFile = X.treeFragmentFromCorrectFile;
      currentFileName             = X.currentFileName;
 
@@ -53,7 +53,7 @@ MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationSynthesizedAttribu
    {
      isAMarker = false;
      markerString = "";
-     treeFragment = NULL;
+     treeFragment = nullptr;
    }
 
 template <class ASTNodeCollection>
@@ -62,7 +62,7 @@ AST_FragmentIdentificationSynthesizedAttributeType()
    {
      isAMarker = false;
      markerString = "";
-     treeFragment = NULL;
+     treeFragment = nullptr;
 
   // Make sure the vector of SgStatementPtrList is initialized to be the correct size
      initializeNodeListToCorrectSize();
@@ -87,8 +87,8 @@ operator=( const AST_FragmentIdentificationSynthesizedAttributeType & X )
 
      treeFragementListArray = X.treeFragementListArray;
 
-     ROSE_ASSERT ( unsigned(ASTNodeCollection::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG) == 
-                   treeFragementListArray.size() );
+     ASSERT_require( unsigned(ASTNodeCollection::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG) ==
+                     treeFragementListArray.size() );
 
      return *this;
    }
@@ -105,12 +105,10 @@ initializeNodeListToCorrectSize ()
           treeFragementListArray.push_back(tempList);
         }
 
-  // printf ("treeFragementListArray.size() = %" PRIuPTR " \n",treeFragementListArray.size());
-     ROSE_ASSERT ( unsigned(ASTNodeCollection::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG) == 
-                   treeFragementListArray.size() );
+     ASSERT_require( unsigned(ASTNodeCollection::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG) ==
+                     treeFragementListArray.size() );
    }
 
-#if 1
 template <class ASTNodeCollection>
 typename MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationSynthesizedAttributeType &
 MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationSynthesizedAttributeType::
@@ -128,33 +126,17 @@ operator+= ( const AST_FragmentIdentificationSynthesizedAttributeType & X )
      for (int i = ASTNodeCollection::GlobalScopePreamble; 
           i < ASTNodeCollection::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG; i++)
         {
-       // treeFragementListArray[i] += X.treeFragementListArray[i];
-          // ROSE_ASSERT ( treeFragementListArray[i].size() == 0 || X.treeFragementListArray[i].size() >= 0 ); -- JJW 10-18-2007 always true
           if ( X.treeFragementListArray[i].size() > 0 )
              {
-#if 0
-            // If not empty then what is there
-               printf ("treeFragementListArray[d].size() = %" PRIuPTR " \n",i,treeFragementListArray[i].size());
-               if (treeFragementListArray[i].size() != 0)
-                  {
-                    list<SgStatement*>::iterator j;
-                    for (j = treeFragementListArray[i].begin(); j != treeFragementListArray[i].end(); j++)
-                       {
-                         printf ("Mysterious code fragment = %s \n",(*j)->unparseToString().c_str());
-                       }
-                  }
-#endif
             // The existing list should be empty
-               ROSE_ASSERT(treeFragementListArray[i].size() == 0);
+               ASSERT_require(treeFragementListArray[i].size() == 0);
             // Since the existing list is empty we can just use the assignment operator to fill it
                treeFragementListArray[i] = X.treeFragementListArray[i];
-//             printf ("In operator+=(): treeFragementListArray[%d].size() = %" PRIuPTR " \n",i,treeFragementListArray[i].size());
              }
         }
 
      return *this;
    }
-#endif
 
 template <class ASTNodeCollection>
 void
@@ -166,61 +148,37 @@ display ( std::string s ) const
      printf ("     Marker string = %s \n",markerString.c_str());
      printf ("     treeFragment = %p \n",treeFragment);
 
-  // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-  // bool treeFragmentCodeAttached    = false;
-  // bool listOfTreeFragmentsAttached = false;
-
      std::string treeFragmentCodeString;
-     if (treeFragment != NULL)
+     if (treeFragment != nullptr)
         {
-#if 1
           treeFragmentCodeString = treeFragment->unparseToString();
-#endif
-       // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-       // treeFragmentCodeAttached = true;
         }
-     
      printf ("     treeFragment code = %s \n",treeFragmentCodeString.c_str());
 
      for (int i = 0; i < ASTNodeCollection::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG; i++)
         {
        // Get the name of the position (better than using just an index value)
-          ROSE_ASSERT (treeFragementListArray[i].size() >= 0);
+          ASSERT_require(treeFragementListArray[i].size() >= 0);
           std::string positionName = ASTNodeCollection::markerStrings[i][0] + "/" + 
                                 ASTNodeCollection::markerStrings[i][1];
-          ROSE_ASSERT (positionName.c_str() != NULL);
+          ASSERT_not_null(positionName.c_str());
           printf ("     treeFragementListArray[%2d:%80s].size() = %" PRIuPTR " \n",
                i,positionName.c_str(),treeFragementListArray[i].size());
 
-#if 1
           std::vector<SgStatement*>::const_iterator j;
           for (j = treeFragementListArray[i].begin(); j != treeFragementListArray[i].end(); j++)
              {
-            // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-            // listOfTreeFragmentsAttached = true;
-               ROSE_ASSERT ( *j != NULL);
+               ASSERT_not_null(*j);
 
             // Make sure this is a SgStatement object
-               ROSE_ASSERT ( dynamic_cast<SgStatement*>(*j) != NULL);
+               ASSERT_not_null( dynamic_cast<SgStatement*>(*j) );
 
             // generate the string and output it for debugging
-#if 1
                std::string sourceCode = (*j)->unparseToString();
-#else
-               std::string sourceCode = "Skipped call to unparseToString()";
-#endif
                printf ("          ((*j)->sage_class_name() = %s) sourceCode = %s \n",
                     (*j)->sage_class_name(),sourceCode.c_str());
              }
-#endif
         }
-
-  // They can't both be true
-//   ROSE_ASSERT ( !(listOfTreeFragmentsAttached && treeFragmentCodeAttached) );
-
-#if 0
-     printf ("Leaving MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationSynthesizedAttributeType::display() \n");
-#endif
    }
 
 template <class ASTNodeCollection>
@@ -237,7 +195,7 @@ std::string
 MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationSynthesizedAttributeType::
 getMarker()
    {
-     ROSE_ASSERT (isAMarker == true);
+     ASSERT_require(isAMarker == true);
      return markerString;
    }
 
@@ -246,10 +204,6 @@ void
 MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationSynthesizedAttributeType::
 setTreeFragment ( SgStatement* astNode)
    {
-//   isAMarker    = false;
-//   markerString = "";
-//   ROSE_ASSERT (isAMarker == false);
-//   ROSE_ASSERT (markerString == "");
      treeFragment = astNode;
    }
 
@@ -258,8 +212,6 @@ SgStatement*
 MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationSynthesizedAttributeType::
 getTreeFragment()
    {
-//   ROSE_ASSERT (isAMarker == false);
-//   ROSE_ASSERT (markerString == "");
      return treeFragment;
    }
 
@@ -290,45 +242,21 @@ location()
      typename ASTNodeCollection::IntermediateFileStringPositionEnum returnValue = 
           ASTNodeCollection::unknownIntermediatePositionInScope;
 
-#if 0
-     printf ("In AST_FragmentIdentificationSynthesizedAttributeType::location(): isAMarker = %s \n",(isAMarker == true) ? "true" : "false");
-#endif
-
      if (isAMarker == true)
         {
-       // printf ("markerString = %s \n",markerString.c_str());
-
        // Compare against static string values in ASTFragmentRequirementStrings::targetStringArray
-       // IntermediateFileStringPositionEnum i;
           int i;
           for (i = ASTNodeCollection::GlobalScopePreamble; // Used to start loop with GlobalScopeTopOfScope;
                i < ASTNodeCollection::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG;
                i++)
              {
-#if 0
-               printf ("i = %d ASTFragmentRequirementStrings::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG = %d \n",
-                    i,ASTNodeCollection::LAST_INTERMEDIATE_SOURCE_CODE_PLACEMENT_TAG);
-               printf ("ASTNodeCollection::markerStrings[%d][0] = %s \n",i,ASTNodeCollection::markerStrings[i][0].c_str());
-               printf ("ASTNodeCollection::markerStrings[%d][1] = %s \n",i,ASTNodeCollection::markerStrings[i][1].c_str());
-#endif
-
                if ( (markerString == ASTNodeCollection::markerStrings[i][0]) ||
                     (markerString == ASTNodeCollection::markerStrings[i][1]) )
                   {
-//                  printf ("Set the returnValue to non default value \n");
                     returnValue = typename ASTNodeCollection::IntermediateFileStringPositionEnum(i);
                   }
              }
         }
-       else
-        {
-       // printf ("isAMarker == false \n");
-        }
-
-#if 0
-     printf ("Inside of AST_FragmentIdentificationSynthesizedAttributeType::location() = %d (%s) \n",
-          returnValue,ASTNodeCollection::positionName(returnValue).c_str());
-#endif
 
      return returnValue;
    }
@@ -341,12 +269,8 @@ isStartOrEndMarker( std::string markerString, int startOrEnd )
   // Supporting function for isStartingMarker() and isEndingMarker() member functions
      bool returnValue = false;
 
-     ROSE_ASSERT (startOrEnd == 0 || startOrEnd == 1);
+     ASSERT_require(startOrEnd == 0 || startOrEnd == 1);
 
-#if 0
-  // faster implementation but without the error checking
-     returnValue = isAMarker;
-#else
   // error checking (a more efficent implementation could just return the isAMarker data member)
   // Compare against static string values in ASTFragmentRequirementStrings::targetStringArray
      int i;
@@ -354,15 +278,9 @@ isStartOrEndMarker( std::string markerString, int startOrEnd )
         {
           if (markerString == ASTNodeCollection::markerStrings[i][startOrEnd])
              {
-            // printf ("Found matching marker string = %s \n",markerString.c_str());
                returnValue = true;
              }
         }
-#endif
-
-#if 0
-     printf ("Inside of isStartOrEndMarker(%s) returnValue = %s \n",markerString.c_str(),(returnValue == true) ? "true" : "false");
-#endif
 
      return returnValue;
    }
@@ -372,8 +290,6 @@ void
 MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationSynthesizedAttributeType::
 consistancyCheck(const std::string&) const
    {
-  // printf ("AST_FragmentIdentificationSynthesizedAttributeType::consistancyCheck(%s) \n",s.c_str());
-
   // Note that markers now have a valid treeFragement pointer
 
      bool  foundString = false;
@@ -382,7 +298,6 @@ consistancyCheck(const std::string&) const
         {
           if (markerString == ASTNodeCollection::markerStrings[i][0])
              {
-//             printf ("Found matching START marker string = %s \n",markerString.c_str());
                foundString = true;
              }
         }
@@ -405,7 +320,6 @@ consistancyCheck(const std::string&) const
              {
                if (markerString == ASTNodeCollection::markerStrings[i][1])
                   {
-//                  printf ("Found matching END marker string = %s \n",markerString.c_str());
                     foundAlternativeMarkerString = true;
                   }
              }
@@ -434,7 +348,7 @@ consistancyCheck(const std::string&) const
                isAMarker ? "true" : "false",markerString.c_str());
         }
 
-     ROSE_ASSERT (foundError == false);
+     ASSERT_require(foundError == false);
    }
 
 
@@ -468,14 +382,7 @@ evaluateInheritedAttribute (
   // we extract AST fragments and sets the value of the returnAttribute.currentFileName
   // and returnAttribute.recordTreeFragments member data.
 
-     ROSE_ASSERT (astNode != NULL);
-
-#if 0
-     printf ("$$$$$ In AST_FragmentIdentificationTraversal::evaluateInheritedAttribute(): astNode = %p astNode->sage_class_name() = %s inheritedValue.treeFragmentFromCorrectFile = %s \n",
-             astNode,astNode->sage_class_name(),
-             (inheritedValue.treeFragmentFromCorrectFile) ? "true" : "false");
-#endif
-
+     ASSERT_not_null(astNode);
      AST_FragmentIdentificationInheritedAttributeType returnAttribute;
 
   // Should we use the copy constructor (or special constructor) when we first build returnAttribute?
@@ -483,21 +390,17 @@ evaluateInheritedAttribute (
 
   // Don't accept a project node since we only want to process SgFile 
   // nodes as intermediate files for AST fragment generation (not sure why!)
-     ROSE_ASSERT (astNode->variantT() != V_SgProject);
+     ASSERT_require(astNode->variantT() != V_SgProject);
 
   // Make sure that we start off the traversal correctly (with the correct file name)
   // This way the use need not set the file name in the inherited attribute before 
   // starting the traversal.
 
-  // DQ (9/2/2008): Fixup to support SgSourceFile and SgBinaryFile IR nodes.
-  // if (astNode->variantT() == V_SgFile)
-     if ( isSgFile(astNode) != NULL )
+     if (isSgFile(astNode) != nullptr)
         {
        // Record the filename associated with the SgFile (the current file)
           SgFile* file = dynamic_cast<SgFile*>(astNode);
-          ROSE_ASSERT(file != NULL);
-
-       // returnAttribute.currentFileName             = Rose::getFileName(file);
+          ASSERT_not_null(file);
           returnAttribute.currentFileName             = file->getFileName();
           returnAttribute.treeFragmentFromCorrectFile = true;
         }
@@ -513,33 +416,12 @@ evaluateInheritedAttribute (
        // previously seen which will be referenced later when we use the rewrite mechanism again!
        // So we have to include these IR nodes if they are not in the primary AST.  Not clear how to 
        // figure that out, except to test the symbol tables for declarations of the same name.
-          if (statementNode != NULL)
+          if (statementNode != nullptr)
              {
-            // DQ (5/26/2005): Modified to use minimalist Sage III interface (trying to remove several Rose::xxx() member functions)
-            // std::string nodeFileName = Rose::getFileName(statementNode);
                std::string nodeFileName = statementNode->get_file_info()->get_filename();
-#if 0
-               printf ("nodeFileName = %s returnAttribute.currentFileName = %s \n",
-                    nodeFileName.c_str(),returnAttribute.currentFileName.c_str());
-#endif
-
-            // DQ (1/11/2006): Even statements from other files must be included 
-            // in the AST (just MARKED as coming from different files).  Declarations 
-            // from files included via include directives must show up in the AST to 
-            // be used later.
-            // OLD COMMENT: Check if the file names match (we only record fragments from the
-            // OLD COMMENT: same file to provide consistant semantics in transformations).
-            // if (nodeFileName == returnAttribute.currentFileName)
-            //      returnAttribute.treeFragmentFromCorrectFile = true;
                returnAttribute.treeFragmentFromCorrectFile = true;
              }
         }
-
-#if 0
-  // returnAttribute.display("Called from inside AST_FragmentIdentificationTraversal::evaluateInheritedAttribute()");
-     printf ("$$$$$ Leaving AST_FIT::evalInherAttr() returnAttribute.treeFragmentFromCorrectFile = %s \n",
-             (returnAttribute.treeFragmentFromCorrectFile) ? "true" : "false");
-#endif
 
      return returnAttribute;
    }
@@ -552,45 +434,17 @@ evaluateSynthesizedAttribute (
    typename MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationInheritedAttributeType inheritedValue,
    typename MidLevelRewrite<ASTNodeCollection>::AST_FragmentIdentificationTraversal::SubTreeSynthesizedAttributes synthesizedAttributeList )
    {
-#if 0
-     printf ("##### In AST_FIT::evalSynthAttr(#attr=%3d): astNode = %p recordStatements = %5s treeFragmentFromCorrectFile = %5s sage_class_name = %s \n",
-          synthesizedAttributeList.size(),
-          astNode,
-          (recordStatements) ? "true" : "false",
-          (inheritedValue.treeFragmentFromCorrectFile) ? "true" : "false",
-          astNode->sage_class_name());
-#endif
-#if 0
-     if (dynamic_cast<SgStatement*>(astNode) != NULL)
-          printf ("----- In AST_FIT::evalSynthAttr(): astNode->unparseToString() = %s \n",astNode->unparseToString().c_str());
-#endif
-
-  // ROSE_ASSERT (synthesizedAttributeList.size() < 100);
-
      AST_FragmentIdentificationSynthesizedAttributeType returnAttribute;
 
   // Mark the AST fragments as being transformations so that they will be unparsed properly with the
   // other statements even though they have a different filename associated with them. This approach
   // is better than changing the filenames.
-     ROSE_ASSERT (astNode != NULL);
-     if (astNode->get_file_info() != NULL)
+     ASSERT_not_null(astNode);
+     if (astNode->get_file_info() != nullptr)
         {
-          ROSE_ASSERT (astNode->get_file_info() != NULL);
+          ASSERT_not_null(astNode->get_file_info());
           astNode->get_file_info()->set_isPartOfTransformation(true);
         }
-
-#if 0
-     if (isSgStatement(astNode) != NULL)
-        {
-          SgStatement* statement = isSgStatement(astNode);
-          printf ("Rose::getLineNumber(statement) = %d \n",Rose::getLineNumber(statement));
-          printf ("statement->sage_class_name() = %s \n",statement->sage_class_name());
-          printf ("statement->unparseToString() = %s \n",statement->unparseToString().c_str());
-
-       // We can't assert this since a SgGlobal is defined to have a linenumber == 0
-       // ROSE_ASSERT (Rose::getLineNumber(statement) > 0);
-        }
-#endif
 
   // Master switch statement of semantic actions attached to each node
      switch (astNode->variantT())
@@ -603,12 +457,8 @@ evaluateSynthesizedAttribute (
           case V_SgClassDefinition:
              {
                SgStatement* statement = isSgStatement(astNode);
-               ROSE_ASSERT (statement != NULL);
-#if 0
-               printf ("Found a statement sage_class_name() = %s \n",astNode->sage_class_name());
-               printf ("inheritedValue.treeFragmentFromCorrectFile = %s \n",
-                    (inheritedValue.treeFragmentFromCorrectFile == true) ? "true" : "false");
-#endif
+               ASSERT_not_null(statement);
+
                if (inheritedValue.treeFragmentFromCorrectFile == true)
                   {
                  // Go through the list of attributes and separate out (bin) the ones that are
@@ -618,9 +468,6 @@ evaluateSynthesizedAttribute (
                  // Save the index of each starting marker as we iterate through the
                  // synthesizedAttributeList
                     int startingMarkerAttributeIndex = 0;
-
-//                  printf ("In AST_FragmentIdentificationTraversal::evaluateSynthesizedAttribute(): synthesizedAttributeList.size() = %d \n",
-//                       synthesizedAttributeList.size());
 
                     bool startingMarkerFound = false; // default value (assume starting marker has not been seen)
                     bool endingMarkerFound   = true;  // default value (assume ending marker has been seen)
@@ -633,47 +480,29 @@ evaluateSynthesizedAttribute (
 
                     for (i = 0; i < synthesizedAttributeList.size(); i++)
                        {
-#if 0
-                         printf ("\n\n");
-                         printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
-                         printf ("Looping through the synthesizedAttributeList (element #%d) (size=%d) \n",
-                              i,synthesizedAttributeList.size());
-                         printf ("     Looking for %s/%s \n",
-                              ASTNodeCollection::markerStrings[(int)locationCounter][0].c_str(),
-                              ASTNodeCollection::markerStrings[(int)locationCounter][1].c_str());
-                         printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
-#endif
-
                       // error checking
                          synthesizedAttributeList[i].consistancyCheck("Checking the child list");
 
-                      // display each attribute
-//                       synthesizedAttributeList[i].display("Called in evaluateSynthesizedAttribute");
-
                          if (synthesizedAttributeList[i].isStartingMarker() == true)
                             {
-#if 0
-                              printf ("Found the starting marker at statement #%d (count starting at zero) \n",i);
-#endif
                               startingMarkerFound          = true;
                               startingMarkerAttributeIndex = i;
 
                            // error checking (must have found starting marker before ending marker)
-                              ROSE_ASSERT (endingMarkerFound == true);
+                              ASSERT_require(endingMarkerFound == true);
                               endingMarkerFound = false;
 
                            // Turn ON statement recording
-//                            printf ("RECORDING ON: all statements between markers pushed onto list \n");
                               recordStatements = true;
 
                               locationCounter = synthesizedAttributeList[startingMarkerAttributeIndex].location();
-                              ROSE_ASSERT (locationCounter != ASTNodeCollection::unknownIntermediatePositionInScope);
+                              ASSERT_require(locationCounter != ASTNodeCollection::unknownIntermediatePositionInScope);
 
                            // But add the starting marker variable to the list of tree fragements
                            // so that attachments to the marker nodes can be preserved and 
                            // placed into the final AST.
-                              ROSE_ASSERT (synthesizedAttributeList[i].treeFragment != NULL);
-                              ROSE_ASSERT (locationCounter != ASTNodeCollection::unknownIntermediatePositionInScope);
+                              ASSERT_not_null(synthesizedAttributeList[i].treeFragment);
+                              ASSERT_require(locationCounter != ASTNodeCollection::unknownIntermediatePositionInScope);
 
                            // insert statement into list of statements
                               returnAttribute.treeFragementListArray[locationCounter].push_back( synthesizedAttributeList[i].treeFragment );
@@ -684,110 +513,56 @@ evaluateSynthesizedAttribute (
                                  {
                                 // Nothing to do here (since the locationCounter is incremented when
                                 // we find the starting marker)
-#if 0
-                                   printf ("Found the ending marker at statement #%d (starting marker was at statement #%d) (count starting at zero) \n",i,startingMarkerAttributeIndex);
-#endif
                                 // error checking (must have found starting marker before ending marker)
-                                   ROSE_ASSERT (startingMarkerFound == true);
+                                   ASSERT_require(startingMarkerFound == true);
                                    startingMarkerFound = false;
                                    endingMarkerFound   = true;
 
                                 // But add the ending marker variable to the list of tree fragements
                                 // so that attachments to the marker nodes can be preserved and 
                                 // placed into the final AST.
-                                   ROSE_ASSERT (synthesizedAttributeList[i].treeFragment != NULL);
-                                   ROSE_ASSERT (locationCounter != ASTNodeCollection::unknownIntermediatePositionInScope);
+                                   ASSERT_not_null(synthesizedAttributeList[i].treeFragment);
+                                   ASSERT_require(locationCounter != ASTNodeCollection::unknownIntermediatePositionInScope);
 
                                 // insert statement into list of statements
                                    returnAttribute.treeFragementListArray[locationCounter].push_back( synthesizedAttributeList[i].treeFragment );
 
                                 // Turn OFF statement recording
-//                                 printf ("RECORDING OFF: all statements between markers pushed onto list \n");
                                    recordStatements = false;
                                  }
                                 else
                                  {
-                                // Not true for functions appearing in the global scope!
-                                // ROSE_ASSERT (startingMarkerFound == true);
-                                // synthesizedAttributeList[i].display("Processing AST fragement between markers");
-
-                                // printf ("Neither a starting nor ending marker! startingMarkerAttributeIndex = %d \n",startingMarkerAttributeIndex);
-
-#if 0
-                                   printf ("synthesizedAttributeList[%d].treeFragment = %s POINTER \n",
-                                        i,(synthesizedAttributeList[i].treeFragment == NULL) ? "NULL" : "VALID");
-                                   printf ("recordStatements = %s \n",recordStatements ? "true" : "false");
-#endif
                                    if ( (recordStatements == true) && 
-                                        (synthesizedAttributeList[i].treeFragment != NULL) )
+                                        (synthesizedAttributeList[i].treeFragment != nullptr) )
                                       {
-                                        ROSE_ASSERT (recordStatements == true);
-                                        ROSE_ASSERT (synthesizedAttributeList[i].treeFragment != NULL);
-                                        ROSE_ASSERT (locationCounter != ASTNodeCollection::unknownIntermediatePositionInScope);
-                                        ROSE_ASSERT (unsigned(locationCounter) < returnAttribute.treeFragementListArray.size());
-
-#if 0
-                                        printf ("RECORDING: synthesizedAttributeList[%d].treeFragment \n",i);
-                                        printf ("     locationCounter = %d (%s) \n",locationCounter,
-                                             ASTNodeCollection::getIntermediateFilePositionName(locationCounter).c_str());
-                                        printf ("returnAttribute.treeFragementListArray.size() = %d \n",
-                                             returnAttribute.treeFragementListArray.size());
-                                        printf ("returnAttribute.treeFragementListArray[locationCounter].size() = %d \n",
-                                             returnAttribute.treeFragementListArray[locationCounter].size());
-#endif
+                                        ASSERT_require(recordStatements == true);
+                                        ASSERT_not_null(synthesizedAttributeList[i].treeFragment);
+                                        ASSERT_require(locationCounter != ASTNodeCollection::unknownIntermediatePositionInScope);
+                                        ASSERT_require(unsigned(locationCounter) < returnAttribute.treeFragementListArray.size());
 
                                      // insert statement into list of statements
                                         returnAttribute.treeFragementListArray[locationCounter].push_back( synthesizedAttributeList[i].treeFragment );
-                                        ROSE_ASSERT (returnAttribute.treeFragementListArray[locationCounter].size() > 0);
-#if 0
-                                        returnAttribute.display("Processing AST fragement between markers");
-#endif
+                                        ASSERT_require(returnAttribute.treeFragementListArray[locationCounter].size() > 0);
                                       }
                                      else
                                       {
                                      // Could still be a synthesized attribute from a function
                                      // containing AST fragments so check for that (call the operator+=).
-
-#if 0
-                                        synthesizedAttributeList[i].display("defalue case: synthesizedAttributeList[i]");
-#endif
                                         SgStatement* statement = isSgStatement(astNode);
-                                        ROSE_ASSERT (statement != NULL);
-
-                                     // printf ("Calling returnAttribute.setTreeFragment(SgBasicBlock) \n");
+                                        ASSERT_not_null(statement);
                                         returnAttribute.setTreeFragment(statement);
-
-#if 0
-                                        returnAttribute.display("AFTER call to operator+=()");
-#endif
                                       }
                                  }
                             }
                        }
                   }
-                 else
-                  {
-                 // We have to include any SgBasicBlock that could appear between markers
-                 // printf ("SgBasicBlock not located in current file \n");
-                  }
-
-#if 0
-               printf ("Found the SgBasicBlock node ... exiting at base of case ... \n");
-               ROSE_ABORT();
-#endif
                break;
              }
 
           case V_SgVariableDeclaration:
              {
-#if 0
-               printf ("\n\n");
-               printf ("************************************** \n");
-               printf ("Found a variable declaration statement \n");
-               printf ("************************************** \n");
-#endif
                SgVariableDeclaration* varDeclaration = isSgVariableDeclaration (astNode);
-               ROSE_ASSERT(varDeclaration != NULL);
+               ASSERT_not_null(varDeclaration);
                SgInitializedNamePtrList & nameList = varDeclaration->get_variables();
                if (nameList.size() == 1)
                   {
@@ -798,38 +573,19 @@ evaluateSynthesizedAttribute (
 
                  // This could be done in the inherited attribute!!!
                     bool foundMarker = ASTNodeCollection::isAMarkerString(variableName);
-#if 0
-                    printf ("foundMarker = %s: variableName = %s \n",
-                         foundMarker ? "true" : "false",variableName.c_str());
-#endif
                     if ( foundMarker == true )
                        {
-//                       printf ("foundMarker = true: variableName = %s \n",variableName.c_str());
                       // Setting the marker here simplifies the test for the marker in the
                       // SgBasicBlock and SgGlobal cases above (though it does make for more 
                       // convoluted code so this implementation might be changed to simplify 
                       // the logic later)
-                      // printf ("Setting marker string in synthesized attribute \n");
                          returnAttribute.setMarker(variableName);
                        }
-#if 0
-                      else
-                       {
-                      // printf ("Not a marker variable \n");
-                         if ( inheritedValue.treeFragmentFromCorrectFile == true )
-                            {
-                           // Attach the current statement to the synthesized attribute so that 
-                           // they can be collected in the SgGlobal and SgBasicBlock cases (above).
-                              returnAttribute.setTreeFragment(varDeclaration);
-                            }
-                       }
-#endif
                  // error checking
                     returnAttribute.consistancyCheck("Checking the returnAttribute: SgVariableDeclaration case");
                   }
 
             // NOTE: FALL THROUGH OF CASE!!!
-            // break;
              }
 
           case V_SgFunctionDefinition:
@@ -862,29 +618,21 @@ evaluateSynthesizedAttribute (
           case V_SgReturnStmt:
           case V_SgPragmaDeclaration:
 
-       // DQ (11/14/2003): Added previously forgotten cases
           case V_SgCaseOptionStmt:
           case V_SgDefaultOptionStmt:
 
-       // DQ (1/10/2006): Added case of SgNamespaceDefinitionStatement and SgNullStatement
           case V_SgNamespaceDefinitionStatement:
           case V_SgNullStatement:
 
-       // DQ (4/30/2006): Added support for Using Directives (bug for 3.4.3 compiler, likely due to different header files internally)
           case V_SgUsingDirectiveStatement:
-
-       // DQ (1/11/2006): Added case of SgNamespaceDeclarationStatement,
-       // SgUsingDeclarationStatement and SgTemplateInstantiationFunctionDecl
           case V_SgNamespaceDeclarationStatement:
           case V_SgUsingDeclarationStatement:
           case V_SgTemplateInstantiationFunctionDecl:
           case V_SgTemplateInstantiationMemberFunctionDecl:
           case V_SgTemplateInstantiationDirectiveStatement:
-
              {
-            // printf ("Found a statement sage_class_name() = %s \n",astNode->sage_class_name());
                SgStatement* statement = isSgStatement(astNode);
-               ROSE_ASSERT (statement != NULL);
+               ASSERT_not_null(statement);
             // Can't make this conditional dependent upon if recording is set since the child 
             // synthesised attributes a build before processin the basic block or global scope 
             // attributes.
@@ -892,7 +640,6 @@ evaluateSynthesizedAttribute (
                   {
                  // Attach the current statement to the synthesized attribute so that 
                  // they can be collected in the SgGlobal and SgBasicBlock cases (above).
-                 // printf ("calling setTreeFragment for statement \n");
                     returnAttribute.setTreeFragment(statement);
                   }
                  else
@@ -911,21 +658,15 @@ evaluateSynthesizedAttribute (
                returnAttribute.consistancyCheck("Checking the returnAttribute: general SgStatement case");
                break;
              }
-#if 0
-          case V_SgNullStatement:
-             {
-            // ignore this case
-               printf ("Ignoring case of SgNullStatement in evaluateSynthesizedAttribute() in ASTFragmentCollectorTraversal.C \n");
-               break;
-             }
-#endif
+
           default:
              {
             // Make sure this is not a SgStatement (they should all be handled 
             // above (so this is error checking)).
-               if (isSgStatement(astNode) != NULL)
+               if (isSgStatement(astNode) != nullptr) {
                     printf ("Error Default reached in switch: astNode->sage_class_name = %s \n",astNode->sage_class_name());
-               ROSE_ASSERT (isSgStatement(astNode) == NULL);
+               }
+               ASSERT_require(isSgStatement(astNode) == nullptr);
              }
         }
 
@@ -935,38 +676,17 @@ evaluateSynthesizedAttribute (
   // Accumulate data from child synthesized attributes into the returnAttribute
      for (unsigned int i = 0; i < synthesizedAttributeList.size(); i++)
         {
-#if 0
-          printf ("\n\n");
-          printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-          printf ("Looping through the synthesizedAttributeList (element #%d) \n",i);
-          printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-
-          printf ("(%s)->unparseToString() = %s \n",astNode->sage_class_name(),astNode->unparseToString().c_str());
-       // printf ("astNode->sage_class_name() = %s \n",astNode->sage_class_name());
-       // printf ("astNode->unparseToString() = %s \n",astNode->unparseToString().c_str());
-#endif
-
        // Can't have both non-empty lists and valid treeFragment pointer
-          if (synthesizedAttributeList[i].treeFragment != NULL)
+          if (synthesizedAttributeList[i].treeFragment != nullptr)
              {
-            // printf ("Reset the synthesizedAttributeList[%d].treeFragment pointer \n",i);
-               synthesizedAttributeList[i].treeFragment = NULL;
+               synthesizedAttributeList[i].treeFragment = nullptr;
              }
 
        // error checking
           synthesizedAttributeList[i].consistancyCheck("Checking the child list");
-#if 0
-       // display each attribute
-          synthesizedAttributeList[i].display("Called in evaluateSynthesizedAttribute");
-#endif
        // Accumulate all the SgStatements in the different lists
           returnAttribute += synthesizedAttributeList[i];
         }
-
-#if 0
-     printf ("At BASE of AST_FragmentIdentificationTraversal::evaluateSynthesizedAttribute() \n");
-  // ROSE_ABORT();
-#endif
 
   // error checking
      returnAttribute.consistancyCheck("Checking the returnAttribute");
