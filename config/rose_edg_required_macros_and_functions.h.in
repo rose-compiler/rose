@@ -27,6 +27,12 @@
 */
 #ifndef SKIP_ROSE_BUILTIN_DECLARATIONS
 
+/* DQ (7/30/2025): Adding support for some macros required by Group 7c C code that are
+   not being picked up in the traversal through the GNU gcc header files by EDG. */
+#define F_SETOWN 8
+#define FASYNC   00020000     /* fcntl, for BSD compatibility */
+#define CRTSCTS  020000000000 /* flow control */
+
 /* Must use C style comments so that "--edg:old_c" options will work! */
 /* DQ (7/13/2006): Undefine these before defining them to avoid warnings. */
 /* DQ (12/23/2006): Let EDG define this if possible, but we reset it for 64 bit systems
