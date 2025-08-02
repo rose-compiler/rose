@@ -413,6 +413,8 @@ Powerpc::makeRegister(State &state, PowerpcRegisterClass reg_class, int reg_numb
             name = "pvr";
             registerType = SageBuilderAsm::buildTypeU32();
             break;
+        case powerpc_regclass_vector:
+            throw ExceptionPowerpc("register class not implemented yet", state);
         case powerpc_regclass_unknown:
         case powerpc_last_register_class:
             throw ExceptionPowerpc("not a real register", state);
@@ -1833,37 +1835,41 @@ Powerpc::UI(State &state) const {
 
 SgAsmMemoryReferenceExpression*
 Powerpc::memref(State &state, SgAsmType* t) const {
-    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(state), D(state)), NULL, t);
+    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(state), D(state)),
+                                                          nullptr, t);
 }
 
 SgAsmMemoryReferenceExpression*
 Powerpc::memrefds(State &state, SgAsmType *t) const {
-    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(state), DS(state)), NULL, t);
+    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(state), DS(state)),
+                                                          nullptr, t);
 }
 
 SgAsmMemoryReferenceExpression*
 Powerpc::memrefra(State &state, SgAsmType *t) const {
-    return SageBuilderAsm::buildMemoryReferenceExpression(RA_or_zero(state), NULL, t);
+    return SageBuilderAsm::buildMemoryReferenceExpression(RA_or_zero(state), nullptr, t);
 }
 
 SgAsmMemoryReferenceExpression*
 Powerpc::memrefx(State &state, SgAsmType* t) const {
     return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA_or_zero(state), RB(state)),
-                                                          NULL, t);
+                                                          nullptr, t);
 }
 
 SgAsmMemoryReferenceExpression*
 Powerpc::memrefu(State &state, SgAsmType* t) const {
     if (fld<11, 15>(state) == 0)
         throw ExceptionPowerpc("bits 11-15 must be nonzero", state);
-    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA(state), D(state)), NULL, t);
+    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA(state), D(state)),
+                                                          nullptr, t);
 }
 
 SgAsmMemoryReferenceExpression*
 Powerpc::memrefux(State &state, SgAsmType* t) const {
     if (fld<11, 15>(state) == 0)
         throw ExceptionPowerpc("bits 11-15 must be nonzero", state);
-    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA(state), RB(state)), NULL, t);
+    return SageBuilderAsm::buildMemoryReferenceExpression(SageBuilderAsm::buildAddExpression(RA(state), RB(state)),
+                                                          nullptr, t);
 }
 
 void
