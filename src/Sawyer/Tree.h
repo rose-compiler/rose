@@ -310,7 +310,7 @@ private:
         // an `Edge` or a non-null pointer to an `EdgeVector`.
         std::vector<const EdgeBase*> baseEdgeList() const {
             std::vector<const EdgeBase*> retval;
-            for (EdgeBase *child = this; child; child = prev)
+            for (const EdgeBase *child = this; child; child = prev)
                 retval.push_back(child);
             std::reverse(retval.begin(), retval.end());
             return retval;
