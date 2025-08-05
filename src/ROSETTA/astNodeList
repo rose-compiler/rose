@@ -1068,3 +1068,4 @@ SgTypeSymbol
 SgAsmJvmSynthetic
 SgAsmJvmDeprecated
 SgSignedCharVal
+SgAsmCilErrorHeap

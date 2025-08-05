@@ -38,15 +38,16 @@ class SgAsmCilMetadataRoot: public SgAsmCilNode {
     [[using Rosebud: rosetta]]
     uint16_t NumberOfStreams = 0;
 
-
     /** Property: Metadata streams. */
-    // FIXME[Robb Matzke 2023-03-22]: these were implemented elsewhere, but could be auto generated
     [[using Rosebud: rosetta, traverse, accessors(get_Streams), mutators(), large]]
     std::vector<SgAsmCilDataStream*> Streams;
-    //const std::vector<SgAsmCilDataStream*>& get_Streams() const;
-    //std::vector<SgAsmCilDataStream*>& get_Streams();
+    
+    /** Property: Flag indicating whether the entire CIL metadata section was parsed without errors. */
+    [[using Rosebud: rosetta]]
+    bool ErrorFree = true;
+
 private:
-    /** indices to efficienty access the different heaps
+    /** indices to efficiently access the different heaps
      * @{ */
     mutable int8_t idxStringHeap = -1;
     mutable int8_t idxBlobHeap = -1;

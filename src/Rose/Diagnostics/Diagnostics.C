@@ -31,6 +31,7 @@ namespace Rose {
 namespace BinaryAnalysis {
     namespace Architecture { void initDiagnostics(); }
     namespace CallingConvention { void initDiagnostics(); }
+    namespace Cil { void initDiagnostics(); }
     namespace Dwarf { void initDiagnostics(); }
     namespace Partitioner2 {
         void initDiagnostics();
@@ -136,6 +137,7 @@ void initialize() {
         BinaryAnalysis::BestMapAddress::initDiagnostics();
         BinaryAnalysis::BinaryLoader::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
+        BinaryAnalysis::Cil::initDiagnostics();
         BinaryAnalysis::CodeInserter::initDiagnostics();
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING                     // conditionally defined in Rose/BinaryAnalysis/Concolic.h
         BinaryAnalysis::Concolic::initDiagnostics();

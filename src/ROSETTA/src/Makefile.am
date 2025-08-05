@@ -137,6 +137,7 @@ rosetta_generated_definitions =				\
 	  SgAsmCilDeclSecurity.h			\
 	  SgAsmCilDeclSecurityTable.h			\
 	  SgAsmCilEvent.h				\
+	  SgAsmCilErrorHeap.h				\
 	  SgAsmCilEventMap.h				\
 	  SgAsmCilEventMapTable.h			\
 	  SgAsmCilEventTable.h				\

@@ -34969,6 +34969,12 @@ class SgAsmCilMetadataRoot: public SgAsmCilNode {
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
+#ifndef DOCUMENTATION
+    AsmCilMetadataRoot.setDataPrototype(
+        "bool", "ErrorFree", "= true",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
     DECLARE_OTHERS(AsmCilMetadataRoot);
 #if defined(SgAsmCilMetadataRoot_OTHERS) || defined(DOCUMENTATION)
 
@@ -34991,6 +34997,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Flags);
         s & BOOST_SERIALIZATION_NVP(p_NumberOfStreams);
         s & BOOST_SERIALIZATION_NVP(p_Streams);
+        s & BOOST_SERIALIZATION_NVP(p_ErrorFree);
         debugSerializationEnd("SgAsmCilMetadataRoot");
     }
 #endif // ROSE_ENABLE_BOOST_SERIALIZATION
@@ -35066,7 +35073,7 @@ public:
     uint16_t const& get_NumberOfStreams() const;
     void set_NumberOfStreams(uint16_t const&);
     /** @} */
-    // FIXME[Robb Matzke 2023-03-22]: these were implemented elsewhere, but could be auto generated
+
 public:
     /** Property: Metadata streams. 
      * 
@@ -35074,10 +35081,16 @@ public:
     std::vector<SgAsmCilDataStream*> const& get_Streams() const;
     std::vector<SgAsmCilDataStream*>& get_Streams();
     /** @} */
-    //const std::vector<SgAsmCilDataStream*>& get_Streams() const;
-    //std::vector<SgAsmCilDataStream*>& get_Streams();
+
+public:
+    /** Property: Flag indicating whether the entire CIL metadata section was parsed without errors. 
+     * 
+     * @{ */
+    bool const& get_ErrorFree() const;
+    void set_ErrorFree(bool const&);
+    /** @} */
 private:
-    /** indices to efficienty access the different heaps
+    /** indices to efficiently access the different heaps
      * @{ */
     mutable int8_t idxStringHeap = -1;
     mutable int8_t idxBlobHeap = -1;
@@ -38749,6 +38762,70 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmCilErrorHeap           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmCilErrorHeap);
+IS_SERIALIZABLE(AsmCilErrorHeap);
+
+#ifndef DOCUMENTATION
+AsmCilErrorHeap.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+#ifdef DOCUMENTATION
+/** Base class for CIL branch of binary analysis IR nodes. */
+class SgAsmCilErrorHeap: public SgAsmCilDataStream {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmCilErrorHeap);
+#if defined(SgAsmCilErrorHeap_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmCilErrorHeap -----------------------
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilErrorHeap");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilDataStream);
+        debugSerializationEnd("SgAsmCilErrorHeap");
+    }
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
+public:
+    void parse(const std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+    void unparse(std::vector<uint8_t>& buf, size_t startOfMetaData) const override;
+    void dump(std::ostream& os) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmCilErrorHeap();
+
+public:
+    /** Default constructor. */
+    SgAsmCilErrorHeap();
+
+public:
+    /** Constructor. */
+    SgAsmCilErrorHeap(uint32_t const& Offset,
+                      uint32_t const& Size,
+                      std::string const& Name,
+                      uint32_t const& NamePadding);
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmCilErrorHeap_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmCilDeclSecurityTable           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38936,6 +39013,7 @@ AstNodeClass& AsmCilDataStream = nonTerminalConstructor(
     "AsmCilDataStream",
     "AsmCilDataStreamTag",
     SubclassListBuilder()
+        | AsmCilErrorHeap
         | AsmCilMetadataHeap
         | AsmCilUint32Heap
         | AsmCilUint8Heap

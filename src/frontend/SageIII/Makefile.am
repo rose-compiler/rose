@@ -178,6 +178,7 @@ GENERATED_SOURCE =						\
         SgAsmCilDataStream.h					\
         SgAsmCilDeclSecurity.h					\
         SgAsmCilDeclSecurityTable.h				\
+        SgAsmCilErrorHeap.h						\
         SgAsmCilEvent.h						\
         SgAsmCilEventMap.h					\
         SgAsmCilEventMapTable.h					\
@@ -588,6 +589,7 @@ GENERATED_SOURCE =						\
 	SgAsmCilDataStream.h					\
 	SgAsmCilDeclSecurity.h					\
 	SgAsmCilDeclSecurityTable.h				\
+	SgAsmCilErrorHeap.h						\
 	SgAsmCilEvent.h						\
 	SgAsmCilEventMap.h					\
 	SgAsmCilEventMapTable.h					\
@@ -1145,6 +1147,7 @@ nodist_pkginclude_HEADERS =			\
    SgAsmCilDataStream.h				\
    SgAsmCilDeclSecurity.h			\
    SgAsmCilDeclSecurityTable.h			\
+   SgAsmCilErrorHeap.h				\
    SgAsmCilEvent.h				\
    SgAsmCilEventMap.h				\
    SgAsmCilEventMapTable.h			\

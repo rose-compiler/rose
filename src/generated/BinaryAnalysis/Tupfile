@@ -54,6 +54,7 @@ run $(librose_compile) \
     SgAsmCilDataStream.C \
     SgAsmCilDeclSecurity.C \
     SgAsmCilDeclSecurityTable.C \
+    SgAsmCilErrorHeap.C \
     SgAsmCilEvent.C \
     SgAsmCilEventMap.C \
     SgAsmCilEventMapTable.C \

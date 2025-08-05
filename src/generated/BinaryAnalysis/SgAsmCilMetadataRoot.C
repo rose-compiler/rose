@@ -116,6 +116,17 @@ SgAsmCilMetadataRoot::get_Streams() {
     return p_Streams;
 }
 
+bool const&
+SgAsmCilMetadataRoot::get_ErrorFree() const {
+    return p_ErrorFree;
+}
+
+void
+SgAsmCilMetadataRoot::set_ErrorFree(bool const& x) {
+    this->p_ErrorFree = x;
+    set_isModified(true);
+}
+
 SgAsmCilMetadataRoot::~SgAsmCilMetadataRoot() {
     destructorHelper();
 }
@@ -128,7 +139,8 @@ SgAsmCilMetadataRoot::SgAsmCilMetadataRoot()
     , p_Length(0)
     , p_VersionPadding(0)
     , p_Flags(0)
-    , p_NumberOfStreams(0) {}
+    , p_NumberOfStreams(0)
+    , p_ErrorFree(true) {}
 
 void
 SgAsmCilMetadataRoot::initializeProperties() {
@@ -140,6 +152,7 @@ SgAsmCilMetadataRoot::initializeProperties() {
     p_VersionPadding = 0;
     p_Flags = 0;
     p_NumberOfStreams = 0;
+    p_ErrorFree = true;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

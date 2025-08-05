@@ -53,6 +53,7 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmCilDataStream.C
   SgAsmCilDeclSecurity.C
   SgAsmCilDeclSecurityTable.C
+  SgAsmCilErrorHeap.C
   SgAsmCilEvent.C
   SgAsmCilEventMap.C
   SgAsmCilEventMapTable.C

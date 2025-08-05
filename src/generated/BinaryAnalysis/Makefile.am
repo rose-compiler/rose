@@ -57,6 +57,7 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmCilDataStream.C \
         SgAsmCilDeclSecurity.C \
         SgAsmCilDeclSecurityTable.C \
+        SgAsmCilErrorHeap.C \
         SgAsmCilEvent.C \
         SgAsmCilEventMap.C \
         SgAsmCilEventMapTable.C \
