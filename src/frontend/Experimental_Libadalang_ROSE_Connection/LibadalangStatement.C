@@ -1984,6 +1984,7 @@ void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatem
       ada_params_f_params(range, &param_list);
     } else if(range_kind == ada_entry_completion_formal_params){
       ada_entry_completion_formal_params_f_params(range, &param_list);
+      ada_params_f_params(&param_list, &param_list);
     }
 
     int count = ada_node_children_count(&param_list);
@@ -4297,22 +4298,29 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         std::string  ident = getFullName(&lal_identifier);
         int           hash = hash_node(&lal_defining_name);
 
-        //Get the decl we are instantiating off of
+        //Get the decl we are instantiating off of (It's either generic or a renaming of a generic)
         ada_base_entity lal_generic_decl, lal_generic_decl_name;
-        int generic_return = ada_generic_instantiation_p_designated_generic_decl(lal_element, &lal_generic_decl);
-        if(generic_return == 0 || ada_node_is_null(&lal_generic_decl)){
-          logWarn() << "p_designated_generic_decl is null for instantiation named " << ident << std::endl;
-          //Since p_designated_generic_decl didn't work, try p_referenced_decl
-          if(kind == ada_generic_package_instantiation){
-            ada_generic_package_instantiation_f_generic_pkg_name(lal_element, &lal_generic_decl);
-          } else {
-            ada_generic_subp_instantiation_f_subp_name(lal_element, &lal_generic_decl);
-          }
-          ada_name_p_referenced_decl(&lal_generic_decl, 1, &lal_generic_decl);
-          if(ada_node_is_null(&lal_generic_decl)){
-            logFatal() << "Could not find base decl in Libadalang tree!\n";
-          }
+        int generic_return = 1;
+        //First try p_first_corresponding_decl, then p_referenced_decl, then p_designated_generic_decl
+        if(kind == ada_generic_package_instantiation){
+          ada_generic_package_instantiation_f_generic_pkg_name(lal_element, &lal_generic_decl_name);
+        } else {
+          ada_generic_subp_instantiation_f_subp_name(lal_element, &lal_generic_decl_name);
         }
+
+        generic_return = ada_expr_p_first_corresponding_decl(&lal_generic_decl_name, &lal_generic_decl);
+        if(generic_return == 0 || ada_node_is_null(&lal_generic_decl)){
+          generic_return = ada_name_p_referenced_decl(&lal_generic_decl_name, 1, &lal_generic_decl);
+        }
+
+        if(generic_return == 0 || ada_node_is_null(&lal_generic_decl)){
+          generic_return = ada_generic_instantiation_p_designated_generic_decl(lal_element, &lal_generic_decl);
+        }
+
+        if(generic_return == 0 || ada_node_is_null(&lal_generic_decl)){
+          logFatal() << "Could not find base decl in Libadalang tree!\n";
+        }
+
         //Get the kind of the decl, and use that to get its defining_name
         ada_node_kind_enum lal_generic_decl_kind = ada_node_kind(&lal_generic_decl);
         if(lal_generic_decl_kind == ada_generic_package_decl){
@@ -4321,6 +4329,11 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         } else if(lal_generic_decl_kind == ada_generic_subp_decl){
           ada_generic_subp_decl_f_subp_decl(&lal_generic_decl, &lal_generic_decl_name);
           ada_generic_subp_internal_f_subp_spec(&lal_generic_decl_name, &lal_generic_decl_name);
+          ada_subp_spec_f_subp_name(&lal_generic_decl_name, &lal_generic_decl_name);
+        } else if(lal_generic_decl_kind == ada_generic_package_renaming_decl){
+          ada_generic_package_renaming_decl_f_name(&lal_generic_decl, &lal_generic_decl_name);
+        } else if(lal_generic_decl_kind == ada_generic_subp_internal){
+          ada_generic_subp_internal_f_subp_spec(&lal_generic_decl, &lal_generic_decl_name);
           ada_subp_spec_f_subp_name(&lal_generic_decl_name, &lal_generic_decl_name);
         } else {
           logError() << "Unhandled base decl kind: " << lal_generic_decl_kind << "!\n";
@@ -4365,6 +4378,16 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         attachSourceLocation(sgnode, lal_element, ctx);
         privatize(sgnode, isPrivate);
         ctx.appendStatement(sgnode);
+
+        //If lal_generic_decl is a renaming, get the generic decl it renames before calling createInstantiationdecl
+        if(lal_generic_decl_kind == ada_generic_package_renaming_decl){
+          ada_generic_package_renaming_decl_f_renames(&lal_generic_decl, &lal_generic_decl);
+          ada_expr_p_first_corresponding_decl(&lal_generic_decl, &lal_generic_decl);
+        } else if(lal_generic_decl_kind == ada_generic_subp_internal){
+          ada_generic_subp_internal_f_subp_spec(&lal_generic_decl, &lal_generic_decl);
+          ada_subp_spec_f_subp_name(&lal_generic_decl, &lal_generic_decl);
+          ada_expr_p_first_corresponding_decl(&lal_generic_decl, &lal_generic_decl);
+        }
 
         //LAL_REP_ISSUE: Libadalang's first_corresponding_decl points to the generic,
         //  whereas ASIS' Corresponding_Declaration points to a compiler generated instance (which Libadalang does not have).

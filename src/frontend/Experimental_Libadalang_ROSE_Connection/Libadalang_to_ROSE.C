@@ -459,6 +459,7 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
       case ada_protected_type_decl:
       case ada_generic_subp_renaming_decl:
       case ada_task_body_stub:
+      case ada_entry_body:
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;
