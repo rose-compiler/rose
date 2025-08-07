@@ -1358,6 +1358,13 @@ void handleStdDecl(MapT& map1, StringMap& map2, ada_base_entity* lal_decl, SgAda
         recordNode(libadalangVars(), hash, sgnode);
       }
     }
+    //Also record the full type in LibadalangTypes
+    ada_base_entity lal_defining_name;
+    ada_base_type_decl_f_name(lal_decl, &lal_defining_name);
+    int type_hash = hash_node(lal_decl);
+    int name_hash = hash_node(&lal_defining_name);
+    recordNode(libadalangTypes(), type_hash, boolDecl);
+    recordNode(libadalangTypes(), name_hash, boolDecl);
   } else if(canonical_fully_qualified_name.find("INTEGER") != std::string::npos){
     //All Ada int types have a range of -(2**<exp>)..(2**<exp>)-1, so find the exp
     ada_base_entity lal_exponent;

@@ -424,54 +424,80 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
 
     switch(kind)
     {
-      case ada_subp_body:             // Asis.Declarations
-      case ada_subp_decl:
-      case ada_null_subp_decl:
-      case ada_subp_body_stub:
-      case ada_abstract_subp_decl:
-      case ada_package_body:
-      case ada_package_decl:
-      case ada_object_decl:
-      case ada_subtype_decl:
-      case ada_type_decl:
-      case ada_task_type_decl:
-      case ada_single_task_decl:
-      case ada_task_body:
-      case ada_entry_decl:
-      case ada_component_decl:
-      case ada_exception_decl:
-      case ada_number_decl:
-      case ada_single_protected_decl:
-      case ada_protected_body:
-      case ada_generic_subp_decl:
-      case ada_generic_formal_obj_decl:
-      case ada_generic_package_decl:
-      case ada_generic_formal_package:
-      case ada_generic_formal_subp_decl:
-      case ada_generic_formal_type_decl:
-      case ada_package_renaming_decl:
-      case ada_subp_renaming_decl:
-      case ada_generic_package_instantiation:
-      case ada_generic_subp_instantiation:
-      case ada_generic_package_renaming_decl:
-      case ada_incomplete_type_decl:
-      case ada_incomplete_tagged_type_decl:
-      case ada_protected_type_decl:
-      case ada_generic_subp_renaming_decl:
-      case ada_task_body_stub:
-      case ada_entry_body:
+    // Asis.Declarations                         //ada_node_kind
+//      case ada_abstract_state_decl:              //62
+//      case ada_anonymous_expr_decl:              //63
+      case ada_component_decl:                   //64
+//      case ada_discriminant_spec:                //65
+      case ada_generic_formal_obj_decl:          //66
+      case ada_generic_formal_package:           //67
+      case ada_generic_formal_subp_decl:         //68
+      case ada_generic_formal_type_decl:         //69
+        //case ada_param_spec:                     //70
+        //case ada_generic_package_internal:       //71
+      case ada_package_decl:                     //72
+//      case ada_discrete_base_subtype_decl:       //73
+      case ada_subtype_decl:                     //74
+//      case ada_classwide_type_decl:              //75
+      case ada_incomplete_type_decl:             //76
+      case ada_incomplete_tagged_type_decl:      //77
+      case ada_protected_type_decl:              //78
+      case ada_task_type_decl:                   //79
+//      case ada_single_task_type_decl:            //80
+      case ada_type_decl:                        //81
+//      case ada_anonymous_type_decl:              //82
+//      case ada_synth_anonymous_type_decl:        //83
+      case ada_abstract_subp_decl:               //84
+//      case ada_abstract_formal_subp_decl:        //85
+//      case ada_concrete_formal_subp_decl:        //86
+      case ada_subp_decl:                        //87
+      case ada_entry_decl:                       //88
+//      case ada_enum_literal_decl:                //89
+//      case ada_generic_subp_internal:            //90
+//      case ada_expr_function:                    //91
+      case ada_null_subp_decl:                   //92
+      case ada_subp_body:                        //93
+      case ada_subp_renaming_decl:               //94
+//      case ada_package_body_stub:                //95
+//      case ada_protected_body_stub:              //96
+      case ada_subp_body_stub:                   //97
+      case ada_task_body_stub:                   //98
+      case ada_entry_body:                       //99
+      case ada_package_body:                     //100
+      case ada_protected_body:                   //101
+      case ada_task_body:                        //102
+//      case ada_entry_index_spec:                 //103
+//~        ada_error_decl is handled separately  //104
+      case ada_exception_decl:                   //105
+//      case ada_exception_handler:                //106
+//      case ada_for_loop_var_decl:                //107
+      case ada_generic_package_decl:             //108
+      case ada_generic_subp_decl:                //109
+      case ada_generic_package_instantiation:    //110
+      case ada_generic_subp_instantiation:       //111
+      case ada_generic_package_renaming_decl:    //112
+      case ada_generic_subp_renaming_decl:       //113
+//      case ada_label_decl:                       //114
+//      case ada_named_stmt_decl:                  //115
+      case ada_number_decl:                      //116
+      case ada_object_decl:                      //117
+//      case ada_extended_return_stmt_object_decl:  //118
+      case ada_package_renaming_decl:            //119
+      case ada_single_protected_decl:            //120
+      case ada_single_task_decl:                 //121
         {
           handleDeclaration(lal_element, ctx, isPrivate);
           break;
         }
 
-      case ada_use_package_clause:          // Asis.Clauses
-      case ada_use_type_clause:
-      case ada_with_clause:
-      case ada_attribute_def_clause:
-      case ada_record_rep_clause:
-      case ada_enum_rep_clause:
-      case ada_at_clause:
+    // Asis.Clauses                   //ada_node_kind
+      case ada_at_clause:             //40
+      case ada_attribute_def_clause:  //41
+      case ada_enum_rep_clause:       //42
+      case ada_record_rep_clause:     //43
+      case ada_use_package_clause:    //294
+      case ada_use_type_clause:       //295
+      case ada_with_clause:           //298
         {
           handleClause(lal_element, ctx);
           break;
@@ -501,20 +527,22 @@ void handleElement(ada_base_entity* lal_element, AstContext ctx, bool isPrivate)
           ROSE_ABORT();
         }*/
 
-      case ada_variant_part:          // Asis.Definitions
-      case ada_null_component_decl:
+    // Asis.Definitions              //ada_node_kind
+      case ada_null_component_decl:  //217
+      case ada_variant_part:         //297
         {
           handleDefinition(lal_element, ctx);
           break;
         }
 
-      case ada_pragma_node:              // Asis.Elements
+    // Asis.Elements         //ada_node_kind
+      case ada_pragma_node:  //224
         {
           handlePragma(lal_element, nullptr, ctx);
           break;
         }
 
-      case ada_error_decl:              // If this node exists, the input code is malformed
+      case ada_error_decl:  //104            // If this node exists, the input code is malformed
         {
           //TODO Do we want the frontend to break on malformed code? This could just be a warning.
           logFatal() << "ada_error_decl encountered!\n";

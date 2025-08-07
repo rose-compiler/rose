@@ -495,16 +495,17 @@ namespace {
 
     //Get the range of inherited decls
     ada_base_entity lal_inherited_decl_list;
-    ada_type_decl_f_type_def(&lal_inherited_decl_list, &lal_inherited_decl_list);
+    ada_type_decl_f_type_def(&lal_base_type, &lal_inherited_decl_list);
     ada_enum_type_def_f_enum_literals(&lal_inherited_decl_list, &lal_inherited_decl_list);
     int count = ada_node_children_count(&lal_inherited_decl_list);
+
+    SgType& enumty = SG_DEREF(derivedTypeDcl.get_type());
 
     // just traverse the IDs, as the elements are not present
     for(int i = 0; i < count ; ++i){
       ada_base_entity lal_inherited_decl;
       if(ada_node_child(&lal_inherited_decl_list, i, &lal_inherited_decl) != 0){
         //TODO How will this work? It isn't a unique node.
-        SgType& enumty = SG_DEREF(derivedTypeDcl.get_type());
 
         //Get the name
         ada_base_entity lal_defining_name, lal_identifier;
@@ -2483,7 +2484,10 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
 
             //Get the name
             lal_call_name = lal_call_expr;
-          }else {
+          } else if(lal_call_expr_kind == ada_attribute_ref){
+            //Even though this has args, the args are handled by getExpr, so we only need the name.
+            lal_call_name = lal_call_expr;
+          } else {
             logFlaw() << "Unhandled call expr kind " << lal_call_expr_kind << " in handleStmt for ada_call_stmt.\n";
           }
 

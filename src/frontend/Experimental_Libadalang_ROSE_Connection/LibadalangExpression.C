@@ -992,7 +992,7 @@ namespace
 
       void handle(const SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
 
-      // scope qual requried for
+      // scope qual required for
       void handle(const SgDeclarationStatement&)   { res = true; } // default for declarations
       void handle(const SgInitializedName&)        { res = true; }
       void handle(const SgAdaEntryDecl&)           { res = true; } // overrides SgFunctionDeclaration
@@ -1069,13 +1069,6 @@ namespace
       return    roseRequiresPrefix(&lal_prefix, true, ctx)
              || roseRequiresPrefix(&lal_suffix, fromPrefix, ctx);
     }
-
-    /*if (expr.Expression_Kind == An_Indexed_Component)
-    {
-      logTrace() << "An_Indexed_Component?" << std::endl;
-      // \todo should this always return true (like the cases below)?
-      return roseRequiresPrefix(expr.Prefix, fromPrefix, ctx);
-    }*/ //TODO This is probably ada_call_expr in lal, but I haven't seen an example
 
     if(kind == ada_explicit_deref)
     {
@@ -1256,12 +1249,7 @@ namespace{
           logKind("ada_char_literal", kind);
 
           //Get the value of this char
-          uint32_t lal_denoted_value;
-          ada_char_literal_p_denoted_value(lal_element, &lal_denoted_value);
-          //Add ' around the char, so that mkValue works properly
-          std::string denoted_char = "\'";
-          denoted_char += char(lal_denoted_value);
-          denoted_char += '\'';
+          std::string denoted_char = canonical_text_as_string(lal_element);
 
           res = &mkValue<SgCharVal>(denoted_char.c_str());
           break;
@@ -1318,11 +1306,11 @@ namespace{
 
           //Check if this is an enum value instead of a variable
           //Get the expression type & check for ada_enum_type_def
-          ada_base_entity lal_expr_type;
+          ada_base_entity lal_first_expr_type, lal_expr_type;
           ada_node_kind_enum lal_expr_type_kind;
-          ada_expr_p_expression_type(lal_element, &lal_expr_type);
-          if(!ada_node_is_null(&lal_expr_type)){
-            ada_type_decl_f_type_def(&lal_expr_type, &lal_expr_type);
+          ada_expr_p_expression_type(lal_element, &lal_first_expr_type);
+          if(!ada_node_is_null(&lal_first_expr_type)){
+            ada_type_decl_f_type_def(&lal_first_expr_type, &lal_expr_type);
             lal_expr_type_kind = ada_node_kind(&lal_expr_type);
             //Find the original type if this is a derived type
             while(lal_expr_type_kind == ada_derived_type_def){
@@ -1342,6 +1330,43 @@ namespace{
           {
             logInfo() << "identifier " << name << " is being treated as an enum value.\n";
 
+            //LAL_REP_ISSUE: Derived types do not have inherited enum values in the Libadalang tree.
+            //  We add the inherited enum values to the ROSE tree, but p_corresponding decl will point to the original type, not the derived type
+            //  example:
+            //  type new_bool is new boolean;
+            //  bool_var : new_bool := TRUE;
+            //                         ^This TRUE will have p_corresponding decl as Standard TRUE, since new_bool TRUE isn't a Libadalang node
+            //  To find the correct enum literal, get the expression type, find the ROSE node that matches said type, then search that node's
+            //  enumerators for a matching name
+            if(!ada_node_is_null(&lal_first_expr_type)){
+              ada_base_entity lal_expr_name;
+              ada_base_type_decl_f_name(&lal_first_expr_type, &lal_expr_name);
+              int name_hash = hash_node(&lal_expr_name);
+              int type_hash = hash_node(&lal_first_expr_type);
+              SgEnumDeclaration* enum_type = isSgEnumDeclaration(findFirst(libadalangTypes(), type_hash, name_hash));
+              if(enum_type == nullptr){
+                logFlaw() << "unable to find enum type for enum val " << name
+                          << std::endl;
+              } else {
+                SgInitializedNamePtrList enumerators = enum_type->get_enumerators();
+                logInfo() << "  " << enumerators.size() << std::endl;
+                for(SgInitializedName* enumitem : enumerators){
+                  std::string enumerator_name = enumitem->get_qualified_name().getString();
+                  if(name == enumerator_name){
+                    SgEnumType&        enumtype = SG_DEREF( isSgEnumType(enumitem->get_type()) );
+                    SgEnumDeclaration& enumdecl = SG_DEREF( isSgEnumDeclaration(enumtype.get_declaration()) );
+
+                    res = &mkEnumeratorRef(enumdecl, *enumitem);
+                    break;
+                  }
+                }
+                if(res != nullptr){
+                  break;
+                }
+              }
+            }
+
+            //If the above didn't work, fall back to the old method of searching for the enum_literal_decl itself (will not be accurate for derived types)
             //Get the hash for the decl
             int decl_hash = hash_node(&corresponding_decl);
 
