@@ -69,7 +69,7 @@ class SelectDependences : public CollectDependences{
     std::string tag_first_, tag_second_, tag_type_;
   protected:
     virtual void save_dependence(const DependenceEntry& e) {
-       if (tag_first_ == e.first_entry() && (tag_second_ == "" || tag_second_ == e.second_entry()) && 
+       if ((tag_first_ == "" || tag_first_ == e.first_entry()) && (tag_second_ == "" || tag_second_ == e.second_entry()) && 
            (tag_type_ == "" || tag_type_ == e.type_entry())) {
           result.push_back(e);
        }
