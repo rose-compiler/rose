@@ -339,10 +339,33 @@ EngineJvm::pathToClass(const std::string &fqcn) {
     std::replace(className.begin(), className.end(), '.', '/');
     className += ".class";
 
+    // Search order used by JVM loader:
+    //
+    // Loads from:
+    //   1. The CLASSPATH environment variable (if set), or
+    //   2. The -cp / -classpath option on the java or javac command, or
+    //   3. Current directory (.) if nothing else is specified
+    //
+    // Note that -cp / -classpath overrides CLASSPATH
+    //
+
+    // However, let's search jars_ first as a jar file could be from command line (require -classpath instead?)
     for (auto zip : jars_) {
         if (zip->present(className)) {
             classFilePath = fs::path{className};
             break;
+        }
+    }
+
+    // Search classpath
+    if (!bfs::exists(classFilePath)) {
+        for (auto cp : classPath()) {
+            // 1. Search cp as directory
+            fs::path fullPath{cp + "/" + className};
+            if (bfs::exists(fullPath)) {
+                classFilePath = fullPath;
+                break;
+            }
         }
     }
 
