@@ -762,6 +762,7 @@ CxxGrammarMetaProgram_GENDEFN =		     	  	      	    	\
  $(ROSE)/src/ROSETTA/src/SgAsmCilDataStream.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmCilDeclSecurity.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmCilDeclSecurityTable.h			\
+ $(ROSE)/src/ROSETTA/src/SgAsmCilErrorHeap.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmCilEvent.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmCilEventMap.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmCilEventMapTable.h			\
