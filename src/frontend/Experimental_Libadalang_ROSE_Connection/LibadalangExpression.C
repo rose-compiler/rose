@@ -1349,7 +1349,6 @@ namespace{
                           << std::endl;
               } else {
                 SgInitializedNamePtrList enumerators = enum_type->get_enumerators();
-                logInfo() << "  " << enumerators.size() << std::endl;
                 for(SgInitializedName* enumitem : enumerators){
                   std::string enumerator_name = enumitem->get_qualified_name().getString();
                   if(name == enumerator_name){
@@ -2356,6 +2355,24 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier)
     //Instead use p_referenced_decl
     ada_name_p_referenced_decl(lal_identifier, 1, &corresponding_decl);
   }
+  if(ada_node_is_null(&corresponding_decl)){
+    //LAL_REP_ISSUE: Sometimes the suffix of an ada_dotted_name will not have p_first_corresponding_decl &
+    //  p_referenced_decl set. Not sure why this happens. Hail Mary fix is to get this identifier's parent,
+    //  check if it is a name, and try its p_referenced_decl if so. This will work for the ada_dotted_name
+    //  case mentioned above.
+    ada_base_entity lal_parent;
+    ada_ada_node_parent(lal_identifier, &lal_parent);
+    ada_node_kind_enum lal_parent_kind = ada_node_kind(&lal_parent);
+    if(lal_parent_kind >= 154 && lal_parent_kind <= 164){
+      ada_name_p_referenced_decl(&lal_parent, 1, &corresponding_decl);
+    }
+  }
+
+  if(ada_node_is_null(&corresponding_decl)){
+    logError() << "Both p_first_corresponding_decl & p_referenced_decl are null for ada_identifier"
+              << name << " with hash " << hash_node(lal_identifier) << "!\n";
+    return nullptr;
+  }
 
   ada_ada_node_array defining_name_list;
   ada_basic_decl_p_defining_names(&corresponding_decl, &defining_name_list);
@@ -2383,6 +2400,10 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier)
   || (res = findFirst(libadalangBlocks(), hash))
   || (res = queryBuiltIn(hash))
   ;
+
+  if(res == nullptr){
+    logFlaw() << "queryCorrespondingAstNode could not find node for " << name << "!\n";
+  }
 
   return res;
 }
