@@ -547,6 +547,19 @@ endif()
 # Ada
 option(ENABLE-ADA "Enable Ada analysis" OFF)
 if(ENABLE-ADA)
+  set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME "$ENV{GNAT_HOME}")
+  set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION ON)
+endif()
+
+# Libadalang
+# I think this name is terrible, considering the autotools equivalent is --enable-experimental_libadalang_frontend, but it follows the established pattern
+option(ENABLE-LIBADALANG "Enable experimental libadalang frontend" OFF)
+if(ENABLE-LIBADALANG)
+  set(ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION_GNAT_HOME "$ENV{GNAT_HOME}")
+  set(ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION ON)
+endif()
+
+if(ENABLE-ADA OR ENABLE-LIBADALANG)
   message(STATUS "Checking the environment variables GNAT_HOME and BOOST_HOME have been set.") 
   
   # Force user to define GNAT_HOME 
@@ -600,13 +613,6 @@ if(ENABLE-ADA)
     message(STATUS "Found $ENV{BOOST_HOME}/lib")
   endif()
 
-  # Define macros for source code 
-  set(ROSE_BUILD_ADA_LANGUAGE_SUPPORT 1)
-  # Autoconf sets this macro below as "no" when enable-ada-frontend=yes 
-  set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME "$ENV{GNAT_HOME}") # if this causes errors, set to Autoconf default
-  message(WARNING "Ada Analysis may work and pass compile tests in this setup but one macro is still needed to be defined"
-                  "ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION currently causes compilation errors")
-  set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION ON)
   set(BACKEND_ADA_COMPILER "gnat" CACHE STRING "Specify backend Ada compiler, default is gnat")
   set(BACKEND_ADA_COMPILER_NAME_WITH_PATH ${BACKEND_ADA_COMPILER})
 endif()

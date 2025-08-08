@@ -660,9 +660,12 @@ if(ENABLE-JOVIAL)
 endif()
 
 if(ENABLE-ADA)
-  # only do this is experimentalRoseAda is built as an obj library
   list(APPEND rose_LIB_OBJS experimentalRoseAda)
 endif() 
+
+if(ENABLE-LIBADALANG)
+  list(APPEND rose_LIB_OBJS experimentalRoseLibadalang)
+endif()
 
 if(ENABLE-PHP)
   list(APPEND rose_LIB_OBJS phpFrontend)
@@ -825,6 +828,13 @@ if(ENABLE-ADA)
   target_link_libraries(ROSE_DLL ${ASIS_ADAPTER_LIB})
   list(APPEND LINK_FILES experimentalRoseAda)
 endif()
+
+if(ENABLE-LIBADALANG)
+  list(APPEND rose_library_dir_list ${ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION_GNAT_HOME}/lib)
+  list(APPEND rose_library_dir_list /opt/rosedev/GNAT/2021/lib/gcc/x86_64-pc-linux-gnu/10.3.1/adalib)
+  #HACK
+endif()
+
 
 set(ROSE_TARGET_LINK ${LINK_FILES})
 if(WIN32)

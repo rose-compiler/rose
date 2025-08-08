@@ -9,7 +9,11 @@ add_subdirectory(PythonFrontend)
 
 if(ENABLE-ADA)
   add_subdirectory(Experimental_Ada_ROSE_Connection)
-endif() 
+endif()
+
+if(ENABLE-LIBADALANG)
+  add_subdirectory(Experimental_Libadalang_ROSE_Connection)
+endif()
 
 if(ENABLE-JOVIAL) 
   add_subdirectory(Experimental_General_Language_Support)

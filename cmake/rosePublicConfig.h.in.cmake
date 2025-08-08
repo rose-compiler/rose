@@ -65,7 +65,14 @@
 // defines for sage_support.C, SageTreeBuilder.C, and utility_functions.C 
 #cmakedefine ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION 
 
-#cmakedefine ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME "@ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME@" 
+/* Path to GNAT Ada compiler used in development of experimental ada frontend */
+#cmakedefine ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME "@ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME@"
+
+/* Enables development of experimental ada frontend using libadalang */
+#cmakedefine ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION
+
+/* Path to GNAT Ada compiler used in development of experimental ada frontend */
+#cmakedefine ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION_GNAT_HOME "@ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION_GNAT_HOME@"
 
 /* Have the SQLITE3 library */
 #cmakedefine ROSE_HAVE_SQLITE3

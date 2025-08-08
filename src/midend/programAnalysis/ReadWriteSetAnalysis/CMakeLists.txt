@@ -19,7 +19,7 @@ include_directories(
 #  SageUtils.C
 #)
 # Define the library to be built from the source files
-#add_library(ReadWriteSet STATIC ${readWriteSetSources})
+#add_library(ReadWriteSet OBJECT ${readWriteSetSources})
 
 # Not sure  if this is needed 
 set(CXX_TEMPLATE_REPOSITORY_PATH ".")

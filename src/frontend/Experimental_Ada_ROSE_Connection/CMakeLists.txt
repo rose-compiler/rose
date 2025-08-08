@@ -13,27 +13,14 @@ if(ENABLE-ADA)
       AdaStatement.C 
       AdaType.C)
 
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug") 
-    message(STATUS "Environment vairable GNAT_HOME: $ENV{GNAT_HOME}")
-  endif()
-
-  # Check that these directories exist before including header files from them when building the target  
-  set(ADA_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
-  if(NOT EXISTS ${ADA_SRC_DIR}/parser/asis_adapter/include)
-    message(FATAL_ERROR "Trying to include a directory that does not exist"
-                        "${ADA_SRC_DIR}/parser/asis_adapter/include")
-  endif()
-  if(NOT EXISTS ${ADA_SRC_DIR}/parser/a_nodes/include)
-    message(FATAL_ERROR "Trying to include a directory that does not exist"
-                        "${ADA_SRC_DIR}/parser/a_nodes/include")
-  endif()
-
   # Create the library experimentalRoseAda 
   add_library(experimentalRoseAda OBJECT ${experimental_rose_ada_LIB_SRC})
   
   # Use headers located here 
-  target_include_directories(experimentalRoseAda PUBLIC ${ADA_SRC_DIR}/parser/asis_adapter/include ${ADA_SRC_DIR}/parser/a_nodes/include)
+  target_include_directories(experimentalRoseAda PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/parser/asis_adapter/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/parser/a_nodes/include
+  )
   
   # Wait until sage3 and asis_adapter are built 
   add_dependencies(experimentalRoseAda sage3 asis_adapter)
