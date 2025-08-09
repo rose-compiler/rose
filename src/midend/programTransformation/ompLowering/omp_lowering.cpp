@@ -2817,11 +2817,12 @@ void extractMapClauses(Rose_STL_Container<SgOmpClause*> map_clauses,
   // These DDE functions internally will keep track of data allocated and try to reuse enclosing data environment.
 static void generateMappedArrayMemoryHandling(
     /* the array and the map information */
-    SgSymbol* sym, 
-    SgOmpMapClause* map_alloc_clause, SgOmpMapClause* map_to_clause, SgOmpMapClause* map_from_clause, SgOmpMapClause* map_tofrom_clause, 
+    SgSymbol* sym,
+    SgOmpMapClause* /*map_alloc_clause*/,
+    SgOmpMapClause* map_to_clause, SgOmpMapClause* map_from_clause, SgOmpMapClause* map_tofrom_clause,
     std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > > & array_dimensions, SgExpression* device_expression,
     /*Where to insert generated function calls*/
-    SgBasicBlock* insertion_scope, SgStatement* insertion_anchor_stmt, 
+    SgBasicBlock* insertion_scope, SgStatement* insertion_anchor_stmt,
     bool need_generate_data_stmt
     )
 {
@@ -5476,7 +5477,7 @@ static void insertInnerThreadBlockReduction(SgOmpClause::omp_reduction_operator_
   // }
   //
   //! Translation driver
-  void translationDriver::visit(SgNode* node)
+  void translationDriver::visit(SgNode* /*node*/)
   {
 #if 0 // not in use
     switch (node->variantT())
