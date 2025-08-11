@@ -1940,21 +1940,47 @@ namespace {
 /// converts a libadalang parameter declaration to a ROSE parameter (i.e., variable)
 ///   declaration.
 SgVariableDeclaration&
-getParm(ada_base_entity* lal_param_spec, AstContext ctx)
+getParm(ada_base_entity* lal_element, AstContext ctx)
 {
-  logTrace() << "getParm called\n";
+  ada_node_kind_enum lal_element_kind = ada_node_kind(lal_element);
+  if(lal_element_kind != ada_param_spec && lal_element_kind != ada_object_decl){
+    logError() << "getParm called with improper node of kind " << lal_element_kind << "!\n";
+  }
 
+  //Get the names
   ada_base_entity defining_name_list;
-  ada_param_spec_f_ids(lal_param_spec, &defining_name_list);
+  if(lal_element_kind == ada_param_spec){
+    ada_param_spec_f_ids(lal_element, &defining_name_list);
+  } else {
+    ada_object_decl_f_ids(lal_element, &defining_name_list);
+  }
 
+  //Get the aliased status
   ada_base_entity has_aliased;
-  ada_param_spec_f_has_aliased(lal_param_spec, &has_aliased);
+  if(lal_element_kind == ada_param_spec){
+    ada_param_spec_f_has_aliased(lal_element, &has_aliased);
+  } else {
+    ada_object_decl_f_has_aliased(lal_element, &has_aliased);
+  }
   ada_node_kind_enum aliased_status = ada_node_kind(&has_aliased);
   const bool               aliased  = (aliased_status == ada_aliased_present);
 
   //Get the type of this parameter
   ada_base_entity subtype_indication;
-  ada_param_spec_f_type_expr(lal_param_spec, &subtype_indication);
+  if(lal_element_kind == ada_param_spec){
+    ada_param_spec_f_type_expr(lal_element, &subtype_indication);
+  } else {
+    ada_object_decl_f_type_expr(lal_element, &subtype_indication);
+  }
+
+  //Get the mode
+  ada_base_entity lal_mode;
+  if(lal_element_kind == ada_param_spec){
+    ada_param_spec_f_mode(lal_element, &lal_mode);
+  } else {
+    ada_object_decl_f_mode(lal_element, &lal_mode);
+  }
+
   SgType&                  basety   = getDeclType(&subtype_indication, ctx);
 
   SgType&                  parmtype = aliased ? mkAliasedType(basety) : basety;
@@ -1963,14 +1989,13 @@ getParm(ada_base_entity* lal_param_spec, AstContext ctx)
                                                                        libadalangVars(),
                                                                        &defining_name_list,
                                                                        parmtype,
-                                                                       getVarInit(lal_param_spec, &parmtype, ctx)
+                                                                       getVarInit(lal_element, &parmtype, ctx)
                                                                      );
 
-  ada_base_entity mode;
-  ada_param_spec_f_mode(lal_param_spec, &mode);
-  SgVariableDeclaration&   sgnode   = mkParameter(dclnames, getMode(&mode), ctx.scope());
 
-  attachSourceLocation(sgnode, lal_param_spec, ctx);
+  SgVariableDeclaration&   sgnode   = mkParameter(dclnames, getMode(&lal_mode), ctx.scope());
+
+  attachSourceLocation(sgnode, lal_element, ctx);
 
   return sgnode;
 }
@@ -3583,12 +3608,16 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_object_decl_f_has_constant(&lal_object_decl, &lal_has_constant);
         ada_node_kind_enum lal_has_constant_kind = ada_node_kind(&lal_has_constant);
 
+        SgDeclarationStatement* sgnode = nullptr;
         //If it is const, call with mkConstType
         if(lal_has_constant_kind == ada_constant_absent){
-          assocdecl = &handleVarCstDecl(&lal_object_decl, ctx, isPrivate, tyIdentity);
+          sgnode = &getParm(&lal_object_decl, ctx);
         } else {
-          assocdecl = &handleVarCstDecl(&lal_object_decl, ctx, isPrivate, mkConstType);
+          sgnode = &handleVarCstDecl(&lal_object_decl, ctx, isPrivate, mkConstType);
         }
+
+        ctx.appendStatement(SG_DEREF(sgnode));
+        assocdecl = sgnode;
 
         break;
       }

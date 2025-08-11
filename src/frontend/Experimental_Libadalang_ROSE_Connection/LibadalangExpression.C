@@ -1138,6 +1138,105 @@ namespace
     return sgnode;
   }
 
+  /// Handles a single ada_abstract_state_decl, by processing all of its assocs & their aspects
+  /// Expects lal_element to be an ada_abstract_state_decl or ada_paren_abstract_state_decl
+  /// Does not handle ada_multi_abstract_state_decl
+  /// The Abstract_State aspect declares a state, which represents a set of hidden variables.
+  /// We handle this by creating a type decl for the state, then getting a reference to that type decl
+  SgExpression&
+  getAbstractState(ada_base_entity* lal_element, AstContext ctx)
+  {
+    //Get the decl in a form we can use
+    ada_base_entity lal_abstract_state_decl = *lal_element;
+    ada_node_kind_enum lal_abstract_state_decl_kind = ada_node_kind(&lal_abstract_state_decl);
+
+    std::vector<SgExpression*> components;
+
+    bool has_aspect = false;
+
+    //First, check if parens are necessary
+    bool need_paren = false;
+    if(lal_abstract_state_decl_kind == ada_paren_abstract_state_decl){
+      logKind("ada_paren_abstract_state_decl", lal_abstract_state_decl_kind);
+      ada_paren_abstract_state_decl_f_decl(&lal_abstract_state_decl, &lal_abstract_state_decl);
+      lal_abstract_state_decl_kind = ada_node_kind(&lal_abstract_state_decl);
+      need_paren = true;
+    }
+
+    if(lal_abstract_state_decl_kind == ada_abstract_state_decl) {
+      logKind("ada_abstract_state_decl", lal_abstract_state_decl_kind);
+
+      //Get the name
+      ada_base_entity lal_defining_name, lal_identifier;
+      ada_abstract_state_decl_f_name(&lal_abstract_state_decl, &lal_defining_name);
+      ada_name_p_relative_name(&lal_defining_name, &lal_identifier);
+      std::string ident = getFullName(&lal_identifier);
+
+      //Get the aspects
+      ada_base_entity lal_aspects;
+      ada_basic_decl_f_aspects(&lal_abstract_state_decl, &lal_aspects);
+
+      //Make a decl for this identifier
+      SgTypedefDeclaration& sgnode = mkTypeDecl(ident, mkTypeUnknown(), ctx.scope());
+
+      //Record this decl
+      int decl_hash = hash_node(&lal_abstract_state_decl);
+      int name_hash = hash_node(&lal_defining_name);
+      recordNode(libadalangTypes(), decl_hash, sgnode);
+      recordNode(libadalangTypes(), name_hash, sgnode);
+
+      //Now that we've made the decl for the new variable, create a reference to it
+      //SgExpression* res = &getExpr(&lal_identifier, ctx);
+      SgExpression* res = sg::dispatch(TypeRefMaker{ctx}, &sgnode);
+      components.push_back(&mkAdaAncestorInitializer(SG_DEREF(res)));
+
+      //Handle the aspects (not using processAspects, since that is deferred & only works for decls)
+      if(!ada_node_is_null(&lal_aspects)){
+        has_aspect = true;
+        //Get the list of assocs
+        ada_base_entity lal_aspect_assoc_list;
+        ada_aspect_spec_f_aspect_assocs(&lal_aspects, &lal_aspect_assoc_list);
+        int count = ada_node_children_count(&lal_aspect_assoc_list);
+        for(int i = 0; i < count; ++i){
+          ada_base_entity lal_aspect_assoc;
+          if(ada_node_child(&lal_aspect_assoc_list, i, &lal_aspect_assoc) != 0){
+            //Get the id & expr for this aspect_assoc
+            ada_base_entity lal_aspect_id, lal_aspect_expr;
+            ada_aspect_assoc_f_id(&lal_aspect_assoc, &lal_aspect_id);
+            ada_aspect_assoc_f_expr(&lal_aspect_assoc, &lal_aspect_expr);
+
+            std::vector<SgExpression*> exprs;
+            exprs.push_back(&getExpr(&lal_aspect_id, ctx)); //I'm pretty sure there can only be 1 id here
+            SgExprListExp& aspectid   = mkExprListExp(exprs);
+            SgExpression&  aspectexpr = getExpr(&lal_aspect_expr, ctx);
+
+            SgExpression* aspectfull = &mkAdaNamedInitializer(aspectid, aspectexpr);
+            attachSourceLocation(SG_DEREF(aspectfull), &lal_aspect_assoc, ctx);
+            components.push_back(aspectfull);
+          }
+        }
+      }
+    }  else {
+      logError() << "Unhandled kind " << lal_abstract_state_decl_kind << " in getAbstractState()!\n";
+    }
+
+    SgExprListExp& sgnode = mkExprListExp(components);
+
+    attachSourceLocation(sgnode, lal_element, ctx);
+
+    sgnode.set_need_paren(need_paren);
+
+    if(has_aspect) {
+      SgAggregateInitializer& res = mkAggregateInitializer(sgnode);
+
+      attachSourceLocation(res, lal_element, ctx);
+
+      return res;
+    } else {
+      return sgnode;
+    }
+  }
+
 } //end unnamed namespace
 
 /// Handles a single argument provided in a function call
@@ -1817,6 +1916,44 @@ namespace{
           break;
         }
 
+      case ada_abstract_state_decl_expr:  // GNAT-defined attribute
+        {
+          logKind("ada_abstract_state_decl_expr", kind);
+
+          //Get the decl
+          ada_base_entity lal_abstract_state_decl;
+          ada_abstract_state_decl_expr_f_state_decl(lal_element, &lal_abstract_state_decl);
+
+          if(ada_node_kind(&lal_abstract_state_decl) != ada_multi_abstract_state_decl){
+            //Only 1 state name, call getAbstractState on the current node
+            SgExpression& sgnode = getAbstractState(&lal_abstract_state_decl, ctx);
+
+            res = &sgnode;
+          } else {
+            //Multiple state names, get the list & call getAbstractState on each
+            ada_base_entity lal_abstract_state_decl_list;
+            ada_multi_abstract_state_decl_f_decls(&lal_abstract_state_decl, &lal_abstract_state_decl_list);
+            int count = ada_node_children_count(&lal_abstract_state_decl_list);
+            std::vector<SgExpression*> abstract_state_decls;
+            for(int i = 0; i < count; ++i){
+              ada_base_entity lal_decl;
+              if(ada_node_child(&lal_abstract_state_decl_list, i, &lal_decl) != 0){
+                abstract_state_decls.push_back(&getAbstractState(&lal_decl, ctx));
+              }
+            }
+
+            SgExprListExp& sgnode = mkExprListExp(abstract_state_decls);
+
+            attachSourceLocation(sgnode, lal_element, ctx);
+
+            sgnode.set_need_paren(true); //Multis always need enclosing parens
+
+            res = &sgnode;
+          }
+
+          break;
+        }
+
       case ada_aggregate:                        // 4.3
       case ada_null_record_aggregate:                    // 4.3
         {
@@ -2046,6 +2183,7 @@ namespace{
 
       default:
         logFlaw() << "Unhandled expression: " << kind_name_string << std::endl;
+        logFlaw() << "  sloc: " << dot_ada_full_sloc(lal_element) << std::endl;
         res = sb::buildIntVal();
         //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
@@ -2071,6 +2209,7 @@ namespace{
     {
       case ada_aggregate:                             // 4.3
       case ada_null_record_aggregate:                 // 4.3
+//      case ada_abstract_state_decl_expr:              //GNAT-specific aspect that happens to resemble A_Record_Aggregate
       /*case A_Named_Array_Aggregate:                   // 4.3 TODO: Are there more aggregate nodes to worry about?
       case A_Record_Aggregate:                        // 4.3*/
         {
