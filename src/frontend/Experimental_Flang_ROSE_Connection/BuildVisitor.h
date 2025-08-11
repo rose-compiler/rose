@@ -78,8 +78,9 @@ public:
         [&] (Fortran::parser::IntrinsicTypeSpec::DoublePrecision &y) { return; },
         [&] (Fortran::parser::IntrinsicTypeSpec::Character &y) { return; },
         [&] (Fortran::parser::IntrinsicTypeSpec::DoubleComplex &y) { return; },
-        [&] (Fortran::parser::IntegerTypeSpec &y) { setKindSelectorType(y.v); },
-        [&] (auto &y) { setKindSelectorType(y.kind); }
+//TODO: put back setting kind selector by integrating with latest flang version
+        [&] (Fortran::parser::IntegerTypeSpec &y) { /*setKindSelectorType(y.v);*/ },
+        [&] (auto &y) { /*setKindSelectorType(y.kind);*/ }
       },
       x.u);
   }
@@ -142,6 +143,7 @@ public:
   void Build(Fortran::parser::FailImageStmt &);
   void Build(Fortran::parser::ReturnStmt &);
   void Build(Fortran::parser::StopStmt &);
+  void Build(Fortran::parser::WriteStmt &);
 
   void Done() const { std::cerr << "Done()\n"; }
 

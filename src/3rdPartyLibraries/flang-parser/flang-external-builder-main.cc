@@ -28,9 +28,25 @@
 #include "sage3basic.h"
 #include "../../frontend/Experimental_Flang_ROSE_Connection/sage-build.h"
 
-#include "flang/Common/Fortran-features.h"
-#include "flang/Common/default-kinds.h"
+//TODO: This should be an command line option, look for it
+#define DUMP_PARSE_TREE 0
+
 #include "flang/Parser/characters.h"
+
+//TODO: Not finding this from unparse.h???
+#if 1
+// Functions to handle unparsing of analyzed expressions and related
+// objects rather than their original parse trees.
+struct AnalyzedObjectsAsFortran {
+  std::function<void(llvm::raw_ostream &, const Fortran::evaluate::GenericExprWrapper &)>
+      expr;
+  std::function<void(
+      llvm::raw_ostream &, const Fortran::evaluate::GenericAssignmentWrapper &)>
+      assignment;
+  std::function<void(llvm::raw_ostream &, const Fortran::evaluate::ProcedureRef &)> call;
+};
+#endif
+
 #include "flang/Parser/dump-parse-tree.h"
 #include "flang/Parser/message.h"
 #include "flang/Parser/parse-tree-visitor.h"
@@ -38,6 +54,9 @@
 #include "flang/Parser/parsing.h"
 #include "flang/Parser/provenance.h"
 #include "flang/Parser/unparse.h"
+#include "flang/Support/Fortran-features.h"
+#include "flang/Support/LangOptions.h"
+#include "flang/Support/default-kinds.h"
 #include "llvm/Support/Errno.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Program.h"
@@ -74,13 +93,16 @@ void CleanUpAtExit() {
 // Turn on CPU timing
 #if _POSIX_C_SOURCE >= 199309L && _POSIX_TIMERS > 0 && _POSIX_CPUTIME && \
     defined CLOCK_PROCESS_CPUTIME_ID
-#endif
 static constexpr bool canTime{true};
 double CPUseconds() {
   struct timespec tspec;
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tspec);
-  return tspec.tv_nsec * 1.0e-6 + tspec.tv_sec;
+  return tspec.tv_nsec * 1.0e-9 + tspec.tv_sec;
 }
+#else
+static constexpr bool canTime{false};
+double CPUseconds() { return 0; }
+#endif
 
 struct DriverOptions {
   DriverOptions() {}
@@ -88,8 +110,10 @@ struct DriverOptions {
   bool compileOnly{false}; // -c
   std::string outputPath; // -o path
   std::vector<std::string> searchDirectories{"."s}; // -I dir
+  Fortran::common::LangOptions langOpts;
   bool forcedForm{false}; // -Mfixed or -Mfree appeared
   bool warnOnNonstandardUsage{false}; // -Mstandard
+  bool warnOnSuspiciousUsage{false}; // -pedantic
   bool warningsAreErrors{false}; // -Werror
   Fortran::parser::Encoding encoding{Fortran::parser::Encoding::LATIN_1};
   bool lineDirectives{true}; // -P disables
@@ -197,7 +221,7 @@ std::string CompileFortran(
   if (driver.timeParse) {
     if (canTime) {
       llvm::outs() << "parse time for " << path << ": " << (stop - start)
-                   << " CPU milliseconds\n";
+                   << " CPU seconds\n";
     } else {
       llvm::outs() << "no timing information due to lack of clock_gettime()\n";
     }
@@ -239,16 +263,21 @@ std::string CompileFortran(
     }
 
     // Always dump the parse tree for now
+#if DUMP_PARSE_TREE
     Fortran::parser::DumpTree(llvm::outs(), parseTreeCopy);
+#endif
     return {};
   }
 
   if (driver.dumpParseTree) {
+#if DUMP_PARSE_TREE
     Fortran::parser::DumpTree(llvm::outs(), parseTree);
+#endif
     return {};
   }
   if (driver.dumpUnparse) {
-    Unparse(llvm::outs(), parseTree, driver.encoding, true /*capitalize*/,
+    Unparse(llvm::outs(), parseTree, driver.langOpts, driver.encoding,
+        true /*capitalize*/,
         options.features.IsEnabled(
             Fortran::common::LanguageFeature::BackslashEscapes));
     return {};
@@ -269,7 +298,8 @@ std::string CompileFortran(
       std::exit(EXIT_FAILURE);
     }
     llvm::raw_fd_ostream tmpSource(fd, /*shouldClose*/ true);
-    Unparse(tmpSource, parseTree, driver.encoding, true /*capitalize*/,
+    Unparse(tmpSource, parseTree, driver.langOpts, driver.encoding,
+        true /*capitalize*/,
         options.features.IsEnabled(
             Fortran::common::LanguageFeature::BackslashEscapes));
   }
@@ -393,6 +423,9 @@ int flang_external_builder_main(int argc, char *const argv[], SgSourceFile* rose
           Fortran::common::LanguageFeature::BackslashEscapes);
     } else if (arg == "-Mstandard") {
       driver.warnOnNonstandardUsage = true;
+    } else if (arg == "-pedantic") {
+      driver.warnOnNonstandardUsage = true;
+      driver.warnOnSuspiciousUsage = true;
     } else if (arg == "-fopenmp") {
       options.features.Enable(Fortran::common::LanguageFeature::OpenMP);
       options.predefinitions.emplace_back("_OPENMP", "201511");
@@ -444,6 +477,7 @@ int flang_external_builder_main(int argc, char *const argv[], SgSourceFile* rose
       defaultKinds.set_defaultRealKind(8);
     } else if (arg == "-i8" || arg == "-fdefault-integer-8") {
       defaultKinds.set_defaultIntegerKind(8);
+      defaultKinds.set_defaultLogicalKind(8);
     } else if (arg == "-help" || arg == "--help" || arg == "-?") {
       llvm::errs()
           << "f18-parse-demo options:\n"
@@ -487,6 +521,9 @@ int flang_external_builder_main(int argc, char *const argv[], SgSourceFile* rose
   if (driver.warnOnNonstandardUsage) {
     options.features.WarnOnAllNonstandard();
   }
+  if (driver.warnOnSuspiciousUsage) {
+    options.features.WarnOnAllUsage();
+  }
   if (!options.features.IsEnabled(
           Fortran::common::LanguageFeature::BackslashEscapes)) {
     driver.fcArgs.push_back("-fno-backslash"); // PGI "-Mbackslash"
@@ -512,6 +549,5 @@ int flang_external_builder_main(int argc, char *const argv[], SgSourceFile* rose
   if (!relocatables.empty()) {
     Link(relocatables, driver);
   }
-
   return exitStatus;
 }

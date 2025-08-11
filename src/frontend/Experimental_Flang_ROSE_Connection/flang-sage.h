@@ -987,6 +987,8 @@ template <typename M> void Walk(CompilerDirective &x, M &mutator, SgExpression* 
 #endif
 }
 
+//TODO: OmpLinearClause
+#if 0
 template <typename V>
 void Walk(const OmpLinearClause::WithModifier &x, V &visitor, SgExpression* &sg) {
 #if 0
@@ -1029,6 +1031,10 @@ void Walk(OmpLinearClause::WithoutModifier &x, M &mutator, SgExpression* &sg) {
   }
 #endif
 }
+
+//TODO: OmpLinearClause
+#endif
+
 
 //---------------------- finished? ------------
 

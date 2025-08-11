@@ -180,10 +180,12 @@ void Build(parser::Program &x, parser::AllCookedSources &cooked) {
 
   // TODO: make go away
   cooked_ = &cooked;
+  // TODO: make go away
+  common::LangOptions langOpts{};
 
   // Testing...
   parser::Encoding encoding{Fortran::parser::Encoding::LATIN_1};
-  parser::Unparse(llvm::outs(), x, encoding, true /*capitalize*/, false, cooked_, nullptr);
+  parser::Unparse(llvm::outs(), x, langOpts, encoding, true /*capitalize*/, false, nullptr, cooked_);
 
   // Initialize SageBuilder global scope
   SgScopeStatement* scope{nullptr};
@@ -686,6 +688,27 @@ void Build(parser::FunctionStmt &x, std::list<std::string> &dummy_arg_name_list,
     Build(opt.value(), result_name);
   }
 #endif
+}
+
+void BuildVisitor::Build(parser::WriteStmt &x) {
+   SgProcessControlStatement* stmt{nullptr};
+   std::cerr << "...Build(WriteStmt)...\n";
+   if (x.iounit) {
+     std::cerr << "...Build(WriteStmt)...   has IoUnit!\n";
+   } else {
+     std::cerr << "...Build(WriteStmt)...    no IoUnit!\n";
+   }
+   if (x.format) {
+     std::cerr << "...Build(WriteStmt)...   has Format!\n";
+   } else {
+     std::cerr << "...Build(WriteStmt)...    no Format!\n";
+   }
+   for (auto & spec : x.controls) {
+     std::cerr << "...Build(WriteStmt)...    IoControlSpec...list\n";
+   }
+
+   //   builder.Enter(stmt, "fail_image", boost::none, boost::none);
+   //   builder.Leave(stmt, getLabels());
 }
 
 void BuildVisitor::

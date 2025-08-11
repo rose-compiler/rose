@@ -8,15 +8,22 @@
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
+#ifndef FORTRAN_PARSER_UNPARSE_H_
+#define FORTRAN_PARSER_UNPARSE_H_
 
 #include "flang/Parser/char-block.h"
 #include "flang/Parser/characters.h"
 #include <functional>
 #include <iosfwd>
 
+#include "flang/Support/LangOptions.h"
+
 namespace llvm {
 class raw_ostream;
+}
+
+namespace Fortran::common {
+class LangOptions;
 }
 
 namespace Fortran::evaluate {
@@ -36,7 +43,7 @@ using preStatementType =
 
 // Functions to handle unparsing of analyzed expressions and related
 // objects rather than their original parse trees.
-#if 0
+#if 0 //original
 struct AnalyzedObjectsAsFortran {
   std::function<void(llvm::raw_ostream &, const evaluate::GenericExprWrapper &)>
       expr;
@@ -48,31 +55,41 @@ struct AnalyzedObjectsAsFortran {
 #endif
 
 // Converts parsed program (or fragment) to out as Fortran.
-#if 0
+#if 0 //original
 template <typename A>
-void Unparse(llvm::raw_ostream &out, /*const*/ A &root,
-    Encoding encoding = Encoding::UTF_8, bool capitalizeKeywords = true,
-    bool backslashEscapes = true, preStatementType *preStatement = nullptr,
+void Unparse(llvm::raw_ostream &out, const A &root,
+    const common::LangOptions &langOpts, Encoding encoding = Encoding::UTF_8,
+    bool capitalizeKeywords = true, bool backslashEscapes = true,
+    preStatementType *preStatement = nullptr,
     AnalyzedObjectsAsFortran * = nullptr);
 
-extern template void Unparse(llvm::raw_ostream &out, /*const*/ Program &program,
-    Encoding encoding, bool capitalizeKeywords, bool backslashEscapes,
+extern template void Unparse(llvm::raw_ostream &out, const Program &program,
+    const common::LangOptions &langOpts, Encoding encoding,
+    bool capitalizeKeywords, bool backslashEscapes,
     preStatementType *preStatement, AnalyzedObjectsAsFortran *);
-extern template void Unparse(llvm::raw_ostream &out, /*const*/ Expr &expr,
-    Encoding encoding, bool capitalizeKeywords, bool backslashEscapes,
+extern template void Unparse(llvm::raw_ostream &out, const Expr &expr,
+    const common::LangOptions &langOpts, Encoding encoding,
+    bool capitalizeKeywords, bool backslashEscapes,
     preStatementType *preStatement, AnalyzedObjectsAsFortran *);
-#else
+};
+#else //modified for Rose (no const, no AnalyzedObjectsAsFortran, added parser::AllCookedSourced*
 template <typename A>
-void Unparse(llvm::raw_ostream &out, A &root, Encoding encoding = Encoding::UTF_8,
+void Unparse(llvm::raw_ostream &out, /*const*/ A &root,
+    const common::LangOptions &langOpts, Encoding encoding = Encoding::UTF_8,
     bool capitalizeKeywords = true, bool backslashEscapes = true,
-    parser::AllCookedSources* cooked = nullptr, preStatementType* preStatement = nullptr);
+    preStatementType *preStatement = nullptr,
+    parser::AllCookedSources *cooked = nullptr);
 
-extern template void Unparse(llvm::raw_ostream &out, Program &program,
-    Encoding encoding, bool capitalizeKeywords, bool backslashEscapes,
-    parser::AllCookedSources *, preStatementType *preStatement);
+extern template void Unparse(llvm::raw_ostream &out, /*const*/ Program &program,
+    const common::LangOptions &langOpts, Encoding encoding,
+    bool capitalizeKeywords, bool backslashEscapes,
+    preStatementType *preStatement, parser::AllCookedSources *);
 extern template void Unparse(llvm::raw_ostream &out, /*const*/ Expr &expr,
-    Encoding encoding, bool capitalizeKeywords, bool backslashEscapes,
-    parser::AllCookedSources *, preStatementType *preStatement);
+    const common::LangOptions &langOpts, Encoding encoding,
+    bool capitalizeKeywords, bool backslashEscapes,
+    preStatementType *preStatement, parser::AllCookedSources *);
 #endif
 
 } // namespace Fortran::parser
+
+#endif
