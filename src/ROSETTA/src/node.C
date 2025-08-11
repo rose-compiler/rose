@@ -303,26 +303,42 @@ Grammar::setUpNodes ()
   // at the IR node which has the qlocal qualifier).  Thus we can support multiple references
   // to an IR node which might have different qualified names.  This is critical to the
   // qualified name support.
-     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForNames","",
+  // Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForNames","",
+  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+  // Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTypes","",
+  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+  // Node.setDataPrototype("static SgUnorderedMapNodeToString","globalQualifiedNameMapForNames","",
+  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+  // Node.setDataPrototype("static SgUnorderedMapNodeToString","globalQualifiedNameMapForTypes","",
+  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     Node.setDataPrototype("static std::unordered_map<SgNode*,std::string>","globalQualifiedNameMapForNames","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTypes","",
+     Node.setDataPrototype("static std::unordered_map<SgNode*,std::string>","globalQualifiedNameMapForTypes","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // DQ (9/7/2014): Added support for template headers as part of name qualification.
-     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTemplateHeaders","",
+  // Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTemplateHeaders","",
+  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+  // Node.setDataPrototype("static SgUnorderedMapNodeToString","globalQualifiedNameMapForTemplateHeaders","",
+  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     Node.setDataPrototype("static std::unordered_map<SgNode*,std::string>","globalQualifiedNameMapForTemplateHeaders","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // DQ (6/3/2011): Names of types that can have embedded qualified names have names that are dependent
   // upon the location where they are referenced.  This map stored the generated names of such types
   // which are then used in the unparsing.  This is relevant only for C++ and is a part of the name
   // qualification support in the unparser.
-     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalTypeNameMap","",
+     Node.setDataPrototype("static std::unordered_map<SgNode*,std::string>","globalTypeNameMap","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // DQ (3/13/2019): The fix for referencing types than contain many parts is to have a map of maps
   // to the generated name qualification substrings for each type, all associted with a single reference
   // node to the statement refering to the type.
-     Node.setDataPrototype("static std::map<SgNode*,std::map<SgNode*,std::string> >","globalQualifiedNameMapForMapsOfTypes","",
+  // Node.setDataPrototype("static std::map<SgNode*,std::map<SgNode*,std::string> >","globalQualifiedNameMapForMapsOfTypes","",
+  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+  // Node.setDataPrototype("static std::map<SgNode*,SgUnorderedMapNodeToString>","globalQualifiedNameMapForMapsOfTypes","",
+  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     Node.setDataPrototype("static std::map<SgNode*,std::unordered_map<SgNode*,std::string> >","globalQualifiedNameMapForMapsOfTypes","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // Not clear how to best to this, perhaps ROSETTA should define a function.
@@ -1039,24 +1055,3 @@ Grammar::setUpNodes ()
 
 
    } // end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

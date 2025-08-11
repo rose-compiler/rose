@@ -150,7 +150,7 @@ namespace
 
     void prnNameQual(const SgNode& n)
     {
-      using NodeQualMap = std::map<SgNode*, std::string>;
+      using NodeQualMap = SgUnorderedMapNodeToString;
       using Iterator = NodeQualMap::const_iterator;
 
       const NodeQualMap& nameQualMap = unparser.nameQualificationMap();

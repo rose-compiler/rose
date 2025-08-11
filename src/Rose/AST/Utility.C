@@ -9,6 +9,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 namespace Rose {
 namespace AST {

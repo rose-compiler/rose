@@ -8443,7 +8443,9 @@ SgDeclarationStatement::get_qualified_name_prefix() const
   // different and so it depends upon where the type is referenced.  Thus the qualified name is
   // stored in a map to the IR node that references the type.
      SgName nameQualifier;
-     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgDeclarationStatement*>(this));
+  // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgDeclarationStatement*>(this));
+     SgUnorderedMapNodeToString::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgDeclarationStatement*>(this));
   // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
 
      if (i != SgNode::get_globalQualifiedNameMapForNames().end())
@@ -12102,7 +12104,9 @@ SgFunctionDeclaration::get_qualified_name_prefix_for_return_type() const
   // different and so it depends upon where the type is referenced.  Thus the qualified name is
   // stored in a map to the IR node that references the type.
      SgName nameQualifier;
-     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgFunctionDeclaration*>(this));
+  // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgFunctionDeclaration*>(this));
+     SgUnorderedMapNodeToString::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgFunctionDeclaration*>(this));
   // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
 
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
@@ -12122,7 +12126,9 @@ SgFunctionDeclaration::get_template_header() const
   // DQ (9/7/2014): Added to support template headers in template declarations (member and non-member function declarations).
 
      SgName template_header;
-     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTemplateHeaders().find(const_cast<SgFunctionDeclaration*>(this));
+  // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTemplateHeaders().find(const_cast<SgFunctionDeclaration*>(this));
+     SgUnorderedMapNodeToString::iterator i = SgNode::get_globalQualifiedNameMapForTemplateHeaders().find(const_cast<SgFunctionDeclaration*>(this));
   // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
 
      if (i != SgNode::get_globalQualifiedNameMapForTemplateHeaders().end())
@@ -17254,7 +17260,9 @@ SgTypedefDeclaration::get_qualified_name_prefix_for_base_type() const
   // different and so it depends upon where the type is referenced.  Thus the qualified name is
   // stored in a map to the IR node that references the type.
      SgName nameQualifier;
-     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTypedefDeclaration*>(this));
+  // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTypedefDeclaration*>(this));
+     SgUnorderedMapNodeToString::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTypedefDeclaration*>(this));
   // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
 
 #if 0

@@ -51,7 +51,7 @@ SgExpression::get_qualified_name_prefix() const
   // different and so it depends upon where the type is referenced.  Thus the qualified name is
   // stored in a map to the IR node that references the type.
      SgName nameQualifier;
-     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgExpression*>(this));
+     auto const /*iterator*/ i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgExpression*>(this));
   // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
 
      if (i != SgNode::get_globalQualifiedNameMapForNames().end())
@@ -85,7 +85,7 @@ SgExpression::get_qualified_name_prefix_for_referenced_type() const
   // different and so it depends upon where the type is referenced.  Thus the qualified name is
   // stored in a map to the IR node that references the type.
      SgName nameQualifier;
-     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgExpression*>(this));
+     auto const /*iterator*/ i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgExpression*>(this));
 
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {

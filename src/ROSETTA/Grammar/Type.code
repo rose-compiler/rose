@@ -2295,7 +2295,9 @@ SgPointerMemberType::get_qualified_name_prefix_for_class_of() const
   // different and so it depends upon where the type is referenced.  Thus the qualified name is
   // stored in a map to the IR node that references the type.
      SgName nameQualifier;
-     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgPointerMemberType*>(this));
+  // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgPointerMemberType*>(this));
+     SgUnorderedMapNodeToString::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(const_cast<SgPointerMemberType*>(this));
 
      if (i != SgNode::get_globalQualifiedNameMapForNames().end())
         {
@@ -2339,7 +2341,9 @@ SgPointerMemberType::get_qualified_name_prefix_for_base_type() const
   // different and so it depends upon where the type is referenced.  Thus the qualified name is
   // stored in a map to the IR node that references the type.
      SgName nameQualifier;
-     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgPointerMemberType*>(this));
+  // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgPointerMemberType*>(this));
+     SgUnorderedMapNodeToString::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgPointerMemberType*>(this));
 
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {

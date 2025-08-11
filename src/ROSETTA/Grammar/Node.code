@@ -5,7 +5,8 @@ HEADER_NODE_PREDECLARATION_START
 #include <semaphore.h>
 #include <rosePublicConfig.h>
 #include "setup.h"
-#include "Map.h"
+// #include "Map.h"
+#include <sageContainer.h>
 #include <boost/format.hpp>
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
@@ -195,14 +196,18 @@ HEADER_START
           This qualified name is stored with reference to where the name is used (as required) instead
           of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
        */
-          static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForNames();
+       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+       // static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForNames();
+          static SgUnorderedMapNodeToString & get_globalQualifiedNameMapForNames();
 
       /*! \brief Access function for name qualification support (for names).
 
           This qualified name is stored with reference to where the name is used (as required) instead
           of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
        */
-          static void set_globalQualifiedNameMapForNames ( const std::map<SgNode*,std::string> & X );
+       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+       // static void set_globalQualifiedNameMapForNames ( const std::map<SgNode*,std::string> & X );
+          static void set_globalQualifiedNameMapForNames ( const SgUnorderedMapNodeToString & X );
 
       /*! \brief Access function for name qualification support (for type).
 
@@ -210,7 +215,9 @@ HEADER_START
           of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
-          static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTypes();
+       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+       // static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTypes();
+          static SgUnorderedMapNodeToString & get_globalQualifiedNameMapForTypes();
 
       /*! \brief Access function for name qualification support (for type).
 
@@ -218,7 +225,9 @@ HEADER_START
           of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
-          static void set_globalQualifiedNameMapForTypes ( const std::map<SgNode*,std::string> & X );
+       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+       // static void set_globalQualifiedNameMapForTypes ( const std::map<SgNode*,std::string> & X );
+          static void set_globalQualifiedNameMapForTypes ( const SgUnorderedMapNodeToString & X );
 
        // DQ (3/13/2019): Added name qualification support for references to types than can embed many types.
       /*! \brief Access function for name qualification support (for maps of types).
@@ -227,7 +236,9 @@ HEADER_START
           of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
-          static std::map<SgNode*,std::map<SgNode*,std::string> > & get_globalQualifiedNameMapForMapsOfTypes();
+       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+       // static std::map<SgNode*,std::map<SgNode*,std::string> > & get_globalQualifiedNameMapForMapsOfTypes();
+          static std::map<SgNode*,SgUnorderedMapNodeToString> & get_globalQualifiedNameMapForMapsOfTypes();
 
        // DQ (3/13/2019): Added name qualification support for references to types than can embed many types.
       /*! \brief Access function for name qualification support (for maps of types).
@@ -236,7 +247,9 @@ HEADER_START
           of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
-          static void set_globalQualifiedNameMapForMapsOfTypes ( const std::map<SgNode*,std::map<SgNode*,std::string> > & X );
+       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+       // static void set_globalQualifiedNameMapForMapsOfTypes ( const std::map<SgNode*,std::map<SgNode*,std::string> > & X );
+          static void set_globalQualifiedNameMapForMapsOfTypes ( const std::map<SgNode*,SgUnorderedMapNodeToString> & X );
 
       /*! \brief Access function for name qualification support (for template headers in template declarations).
 
@@ -247,13 +260,16 @@ HEADER_START
           name qualification of template declarations (along with the more common form of name qualication
           that also applies to template declarations).
        */
-          static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTemplateHeaders();
+       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
+       // static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTemplateHeaders();
+          static SgUnorderedMapNodeToString & get_globalQualifiedNameMapForTemplateHeaders();
 
       /*! \brief Access function for name qualification support (for template headers in template declarations).
 
           See documentation in get_globalQualifiedNameMapForTemplateHeaders() (above).
        */
-          static void set_globalQualifiedNameMapForTemplateHeaders ( const std::map<SgNode*,std::string> & X );
+       // static void set_globalQualifiedNameMapForTemplateHeaders ( const std::map<SgNode*,std::string> & X );
+          static void set_globalQualifiedNameMapForTemplateHeaders ( const SgUnorderedMapNodeToString & X );
 
       /*! \brief Access function for name qualification support (for names of types).
 
@@ -261,14 +277,14 @@ HEADER_START
           of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
-          static std::map<SgNode*,std::string> & get_globalTypeNameMap();
+          static SgUnorderedMapNodeToString& get_globalTypeNameMap();
 
       /*! \brief Access function for name qualification support (for names of types).
 
           This qualified name is stored with reference to where the name is used (as required) instead
           of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
        */
-          static void set_globalTypeNameMap ( const std::map<SgNode*,std::string> & X );
+          static void set_globalTypeNameMap ( const SgUnorderedMapNodeToString& X );
 
      /* name Persistant Attribute Mechanism
 
@@ -755,15 +771,22 @@ std::map<std::string,uint64_t> SgNode::p_shortMangledNameCache;
 // at the IR node which has the qlocal qualifier).  Thus we can support multiple references
 // to an IR node which might have different qualified names.  This is critical to the
 // qualified name support.
-std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForNames;
-std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTypes;
-std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTemplateHeaders;
-std::map<SgNode*,std::string> SgNode::p_globalTypeNameMap;
+// DQ (8/11/2025): Adding support for unordered maps for name qualification.
+// std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForNames;
+// std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTypes;
+// std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTemplateHeaders;
+SgUnorderedMapNodeToString SgNode::p_globalQualifiedNameMapForNames;
+SgUnorderedMapNodeToString SgNode::p_globalQualifiedNameMapForTypes;
+SgUnorderedMapNodeToString SgNode::p_globalQualifiedNameMapForTemplateHeaders;
+
+std::unordered_map<SgNode*,std::string> SgNode::p_globalTypeNameMap;
 
 // DQ (3/13/2019): The fix for referencing types than contain many parts is to have a map of maps
 // to the generated name qualification substrings for each type, all associted with a single reference
 // node to the statement refering to the type.
-std::map<SgNode*,std::map<SgNode*,std::string> > SgNode::p_globalQualifiedNameMapForMapsOfTypes;
+// std::map<SgNode*,std::map<SgNode*,std::string> > SgNode::p_globalQualifiedNameMapForMapsOfTypes;
+// DQ (8/11/2025): Adding support for unordered maps for name qualification.
+std::map<SgNode*,SgUnorderedMapNodeToString> SgNode::p_globalQualifiedNameMapForMapsOfTypes;
 
 // DQ (7/22/2011): array dimensions may include expressions that require name qualification.
 // std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForArrayTypeDimensions;
@@ -870,63 +893,80 @@ SgNode::clearGlobalMangledNameMap()
    }
 
 // DQ (5/28/2011): Added support for holding the name qualification map.
-std::map<SgNode*,std::string> &
+
+// DQ (8/11/2025): Adding support for unordered maps for name qualification.
+// std::map<SgNode*,std::string> & SgNode::get_globalQualifiedNameMapForNames()
+SgUnorderedMapNodeToString &
 SgNode::get_globalQualifiedNameMapForNames()
    {
      return p_globalQualifiedNameMapForNames;
    }
 
+// DQ (8/11/2025): Adding support for unordered maps for name qualification.
 // DQ (5/28/2011): Added support for holding the name qualification map.
+// void SgNode::set_globalQualifiedNameMapForNames(const std::map<SgNode*,std::string> & X)
 void
-SgNode::set_globalQualifiedNameMapForNames(const std::map<SgNode*,std::string> & X)
+SgNode::set_globalQualifiedNameMapForNames(const SgUnorderedMapNodeToString & X)
    {
      p_globalQualifiedNameMapForNames = X;
    }
 
+// DQ (8/11/2025): Adding support for unordered maps for name qualification.
 // DQ (5/28/2011): Added support for holding the name qualification map.
-std::map<SgNode*,std::string> &
+// std::map<SgNode*,std::string> & SgNode::get_globalQualifiedNameMapForTypes()
+SgUnorderedMapNodeToString &
 SgNode::get_globalQualifiedNameMapForTypes()
    {
      return p_globalQualifiedNameMapForTypes;
    }
 
+// DQ (8/11/2025): Adding support for unordered maps for name qualification.
 // DQ (5/28/2011): Added support for holding the name qualification map.
+// void SgNode::set_globalQualifiedNameMapForTypes(const std::map<SgNode*,std::string> & X)
 void
-SgNode::set_globalQualifiedNameMapForTypes(const std::map<SgNode*,std::string> & X)
+SgNode::set_globalQualifiedNameMapForTypes(const SgUnorderedMapNodeToString & X)
    {
      p_globalQualifiedNameMapForTypes = X;
    }
 
+// DQ (8/11/2025): Adding support for unordered maps for name qualification.
 // DQ (3/13/2019): Added support for holding the name qualification map.
-std::map<SgNode*,std::map<SgNode*,std::string> > &
+// std::map<SgNode*,std::map<SgNode*,std::string> > & SgNode::get_globalQualifiedNameMapForMapsOfTypes()
+std::map<SgNode*,SgUnorderedMapNodeToString> &
 SgNode::get_globalQualifiedNameMapForMapsOfTypes()
    {
      return p_globalQualifiedNameMapForMapsOfTypes;
    }
 
+// DQ (8/11/2025): Adding support for unordered maps for name qualification.
 // DQ (3/13/2019): Added support for holding the name qualification map.
+// void SgNode::set_globalQualifiedNameMapForMapsOfTypes(const std::map<SgNode*,std::map<SgNode*,std::string> > & X)
 void
-SgNode::set_globalQualifiedNameMapForMapsOfTypes(const std::map<SgNode*,std::map<SgNode*,std::string> > & X)
+SgNode::set_globalQualifiedNameMapForMapsOfTypes(const std::map<SgNode*,SgUnorderedMapNodeToString> & X)
    {
      p_globalQualifiedNameMapForMapsOfTypes = X;
    }
 
+// DQ (8/11/2025): Adding support for unordered maps for name qualification.
 // DQ (5/28/2011): Added support for holding the name qualification map.
-std::map<SgNode*,std::string> &
+// std::map<SgNode*,std::string> & SgNode::get_globalQualifiedNameMapForTemplateHeaders()
+SgUnorderedMapNodeToString &
 SgNode::get_globalQualifiedNameMapForTemplateHeaders()
    {
      return p_globalQualifiedNameMapForTemplateHeaders;
    }
 
+// DQ (8/11/2025): Adding support for unordered maps for name qualification.
 // DQ (5/28/2011): Added support for holding the name qualification map.
+// void SgNode::set_globalQualifiedNameMapForTemplateHeaders(const std::map<SgNode*,std::string> & X)
 void
-SgNode::set_globalQualifiedNameMapForTemplateHeaders(const std::map<SgNode*,std::string> & X)
+SgNode::set_globalQualifiedNameMapForTemplateHeaders(const SgUnorderedMapNodeToString & X)
    {
      p_globalQualifiedNameMapForTemplateHeaders = X;
    }
 
 // DQ (6/3/2011): Added support for holding the map of type names that require qualification and at this position dependent.
-std::map<SgNode*,std::string> &
+SgUnorderedMapNodeToString&
 SgNode::get_globalTypeNameMap()
    {
      return p_globalTypeNameMap;
@@ -934,7 +974,7 @@ SgNode::get_globalTypeNameMap()
 
 // DQ (6/3/2011): Added support for holding the map of type names that require qualification and at this position dependent.
 void
-SgNode::set_globalTypeNameMap(const std::map<SgNode*,std::string> & X)
+SgNode::set_globalTypeNameMap(const SgUnorderedMapNodeToString& X)
    {
      p_globalTypeNameMap = X;
    }
@@ -1203,7 +1243,7 @@ SgNode::set_parent ( SgNode* parent )
           ROSE_ASSERT(false);
         }
 #if 0
-  // DQ (3/3/2022): Adding debugging support for where the parent pointer is used and to make sure 
+  // DQ (3/3/2022): Adding debugging support for where the parent pointer is used and to make sure
   // it is not used for types in some specific instances.
      const SgType* type = isSgType(this);
      if (type != NULL)
@@ -1325,7 +1365,7 @@ SgNode::get_parent () const
 #endif
 
 #if 0
-  // DQ (3/3/2022): After discussion with Tristan, this is alternative semantics to assert for NULL value 
+  // DQ (3/3/2022): After discussion with Tristan, this is alternative semantics to assert for NULL value
   // instead of returning NULL value.
   // if ( isSgType( const_cast<SgNode*>(this) ) != NULL )
   // if ( (isSgType( const_cast<SgNode*>(this) ) != NULL) || (isSgSymbol( const_cast<SgNode*>(this) ) != NULL) )
@@ -1364,12 +1404,12 @@ SgNode::get_parent () const
             // I don't think we have to worry aboud this case.
              }
 #else
-       // DQ (3/4/2022): The code below implements the testing and as a result defines the rule that is implmented (independent of 
+       // DQ (3/4/2022): The code below implements the testing and as a result defines the rule that is implmented (independent of
        // what might have been a simpler goal for the symantics).
 
           if (isSgType( const_cast<SgNode*>(this) ) != NULL)
              {
-            // DQ (3/5/2022): This should prevend the error from happening in the isSgFunctionTypeSymbol() function when 
+            // DQ (3/5/2022): This should prevend the error from happening in the isSgFunctionTypeSymbol() function when
             // the point is not a valid pointer to a node in the memory pool.
                if (p_parent != NULL)
                   {

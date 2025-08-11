@@ -35,7 +35,7 @@ void Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info) {
      }
 
      if (nodeReferenceToType != NULL) {
-       std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToType);
+       auto const /* iterator */ i = SgNode::get_globalTypeNameMap().find(nodeReferenceToType);
        if (i != SgNode::get_globalTypeNameMap().end()) {
          if (!info.isTypeSecondPart()) {
            using_generated_name = true;

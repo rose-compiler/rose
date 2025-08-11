@@ -395,7 +395,7 @@ namespace
     /// \todo use const std::string& as return type as soon as the old name qualification
     ///       has been phased out.
     std::string
-    getQualification(const std::map<SgNode*, std::string>& qualMap, const SgNode& n);
+    getQualification(const SgUnorderedMapNodeToString& qualMap, const SgNode& n);
 
     std::string
     getQualification(const SgNode& n);
@@ -1792,9 +1792,9 @@ namespace
   };
 
   std::string
-  AdaStatementUnparser::getQualification(const std::map<SgNode*, std::string>& qualMap, const SgNode& n)
+  AdaStatementUnparser::getQualification(const SgUnorderedMapNodeToString& qualMap, const SgNode& n)
   {
-    using Iterator = std::map<SgNode*, std::string>::const_iterator;
+    using Iterator = SgUnorderedMapNodeToString::const_iterator;
 
     static const std::string NOQUAL;
 

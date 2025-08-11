@@ -33,12 +33,16 @@
 // Rasmussen (1/6/2025): JVM unparsing
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesJvm.h>
 
+// DQ (8/1/2025): Adding the nameQualificationSupport.h file so that generateNameQualificationSupport() will be defined.
+#include "nameQualificationSupport.h"
+
 using namespace std;
 using namespace Rose;
 using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 namespace SI = SageInterface;
 
-void generateNameQualificationSupport(SgNode* node, std::set<SgNode*> &referencedNameSet);
+// DQ (8/1/2025): This should be defined in the nameQualificationSupport.h file.
+// void generateNameQualificationSupport(SgNode* node, std::set<SgNode*> &referencedNameSet);
 void buildTokenStreamFrontier(SgSourceFile* sourceFile, bool traverseHeaderFiles);
 
 //-----------------------------------------------------------------------------------
@@ -184,7 +188,10 @@ Unparser::computeNameQualification(SgSourceFile* file)
      if ((isCxxFile == true) || SageInterface::is_Ada_language())
         {
        // Build the local set to use to record when declaration that might required qualified references have been seen.
-          std::set<SgNode*> referencedNameSet;
+       // std::set<SgNode*> referencedNameSet;
+          NameQualificationTraversal::NameQualificationSetType referencedNameSet;
+
+       // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
           std::set<SgLocatedNode*> modifiedLocatedNodesSet_1 = SageInterface::collectModifiedLocatedNodes(file);
           size_t numberOfModifiedNodesBeforeNameQualification = modifiedLocatedNodesSet_1.size();
           if (SgProject::get_verbose() > 0)
@@ -196,9 +203,9 @@ Unparser::computeNameQualification(SgSourceFile* file)
        // After discussion with Tristan, this is specific to Jovial to C++ translator, and supports the development of
        // separate header files that are built, instead of using the single translation unit and the unparse header file
        // support that has been recently built into ROSE (last year).  This is fine, but it brings up a possible somewhat
-       // philosophical discussion about how to define a translation unit in C and C++, nameily that the SgFile and SgSourceFile
+       // philosophical discussion about how to define a translation unit in C and C++, namely that the SgFile and SgSourceFile
        // is really a translation unit for the source code in any source file (and does not refer to only the source file
-       // to the exclusion of associated included file via CPP #include directives.
+       // to the exclusion of associated included file via CPP #include directives).
           SgNodePtrList & nodes_for_namequal_init = file->get_extra_nodes_for_namequal_init();
           for (SgNodePtrList::iterator it = nodes_for_namequal_init.begin(); it != nodes_for_namequal_init.end(); ++it) {
             generateNameQualificationSupport(*it, referencedNameSet);
@@ -229,6 +236,8 @@ Unparser::computeNameQualification(SgSourceFile* file)
         }
    }
 
+
+// DQ (9/2/2008): Separate out the details of unparsing source files from binary files.
 void
 Unparser::unparseFile(SgSourceFile* file, SgUnparse_Info& info, SgScopeStatement* unparseScope)
    {
@@ -3539,7 +3548,7 @@ computeFileAndScopeRelations()
                          printf ("declarationStatementList.size() = %zu \n",declarationStatementList.size());
 #endif
                          printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                         ROSE_ABORT();
                        }
                       else
                        {
@@ -3592,7 +3601,7 @@ computeFileAndScopeRelations()
                     printf ("Scopes of the first and last statements are different (rare case not implemented (supported) yet) \n");
 #endif
                     printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
+                    ROSE_ABORT();
                   }
 
 #error "DEAD CODE!"
@@ -5432,7 +5441,6 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
                          ASSERT_not_null(project);
                          string applicationRootDirectory = project->get_applicationRootDirectory();
-
                          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
                             {
                               printf ("applicationRootDirectory = %s \n",applicationRootDirectory.c_str());

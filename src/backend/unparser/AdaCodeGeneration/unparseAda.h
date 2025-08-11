@@ -88,7 +88,7 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           using VisibleScopeContainer  = std::set<const SgScopeStatement*>;
           using UsePkgContainer        = std::set<const SgScopeStatement*>;
           using ScopeRenamingContainer = std::map<const SgScopeStatement*, const SgDeclarationStatement*>;
-          using NameQualMap            = std::map<SgNode*, std::string>;
+          using NameQualMap            = SgUnorderedMapNodeToString;
 
           //
           // in unparseAda_statements.C
@@ -158,6 +158,3 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
    };
 
 #endif
-
-
-

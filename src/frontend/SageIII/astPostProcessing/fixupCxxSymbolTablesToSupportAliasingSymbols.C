@@ -1516,7 +1516,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
        // insist that we inject all symbols in namespaces that we can't see explicitly.
           if (referencedScope != NULL)
              {
-#if USING_PERFORMANCE_TRACING || 1
+#if USING_PERFORMANCE_TRACING || 0
                TimingPerformance timer1 ("Fixup symbol tables: FixupAstSymbolTablesToSupportAliasedSymbols::visit: using directives");
 #endif
             // DQ (7/16/2025): Calling performance counters in AstPerformance (static data members).

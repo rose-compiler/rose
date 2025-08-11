@@ -1112,12 +1112,14 @@ namespace
     return res;
   }
 
+/*
   SgExpression& withSourceLocation(SgExpression& e, Element_Struct& el, AstContext ctx)
   {
     attachSourceLocation(e, el, ctx);
 
     return e;
   }
+*/
 
   SgExpression&
   createExceptionRef_aux(Element_Struct& el, AstContext ctx)

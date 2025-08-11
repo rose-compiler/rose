@@ -1615,7 +1615,7 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
      SgInitializedName* iname = var_ref->get_symbol()->get_declaration();
      ASSERT_not_null(iname);
 
-     std:string name = iname->get_name().getString();
+     std::string name = iname->get_name().getString();
      bool isAnonymousName = (name.substr(0,14) == "__anonymous_0x");
 
 #if DEBUG__Unparse_ExprStmt__unparseVarRef
@@ -1681,7 +1681,7 @@ Unparse_ExprStmt::unparseCompoundLiteral (SgExpression* expr, SgUnparse_Info& in
      ROSE_ASSERT(aggregateInitializer->get_uses_compound_literal() == true);
 
      unparseAggrInit(aggregateInitializer,info);
- 
+
 #if DEBUG_unparseCompoundLiteral
      printf ("Leave unparseCompoundLiteral() \n");
 #endif
@@ -1792,7 +1792,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
           printf ("rrrrrrrrrrrr In unparseFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",
                nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
 #endif
-          std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToFunction);
+          auto const /* iterator */ i = SgNode::get_globalTypeNameMap().find(nodeReferenceToFunction);
           if (i != SgNode::get_globalTypeNameMap().end())
              {
                usingGeneratedNameQualifiedFunctionNameString = true;
@@ -2273,7 +2273,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 #endif
 
             // DQ (6/23/2013): This will get any generated name for the member function (typically only generated if template argument name qualification was required).
-               std::map<SgNode*,std::string>::iterator j = SgNode::get_globalTypeNameMap().find(mfunc_ref);
+               auto const /* iterator */ j = SgNode::get_globalTypeNameMap().find(mfunc_ref);
                if (j != SgNode::get_globalTypeNameMap().end())
                   {
                  // I think this branch supports non-template member functions in template classes (called with explicit template arguments).
@@ -4575,7 +4575,7 @@ void Unparse_ExprStmt::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
 
   // DQ (7/20/2024): This should be a non-null pointer.
      ROSE_ASSERT(expr_cond->get_true_exp() != NULL);
-     
+
      unparseExpression(expr_cond->get_true_exp(), info);
 
   // Liao, 2/16/2009. We have to have space to avoid first?x:::std::string("") Three colons in a row!
@@ -4585,7 +4585,7 @@ void Unparse_ExprStmt::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
 
   // DQ (7/20/2024): This should be a non-null pointer.
      ROSE_ASSERT(expr_cond->get_false_exp() != NULL);
-     
+
      unparseExpression(expr_cond->get_false_exp(), info);
   // if (! toplevel_expression || expr_cond->get_is_lvalue())
   // if (!toplevel_expression)

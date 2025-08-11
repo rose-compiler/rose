@@ -5,6 +5,7 @@
 #include <Cxx_GrammarDeclarations.h>
 #include <Cxx_GrammarVariants.h>
 
+#include <Rose/BinaryAnalysis/Address.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 
 #include <map>
@@ -167,6 +168,11 @@ typedef SgNodeSet*                          SgNodeSetPtr;
 // PP (7/28/2025): Added support for STL unordered_set of SgNode*
 using SgUnorderedNodeSet    = std::unordered_set<SgNode*>;
 using SgUnorderedNodeSetPtr = SgUnorderedNodeSet*;
+
+// DQ (8/1/2025): We need a more global typedef to use for were the name qualification
+// connects to the rest of ROSE.
+using SgUnorderedMapNodeToString    = std::unordered_map<SgNode*,std::string>;
+using SgUnorderedMapNodeToStringPtr = SgUnorderedMapNodeToString*;
 
 class ROSEAttributesList;
 typedef ROSEAttributesList*                 ROSEAttributesListPtr;

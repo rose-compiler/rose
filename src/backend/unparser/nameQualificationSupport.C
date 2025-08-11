@@ -241,6 +241,17 @@ namespace
                                           NameQualificationSynthesizedAttribute
                                         >
   {
+   // DQ (8/1/2025): Adding support for typedef to this map so that we can later change it to an unordered_map.
+      typedef std::unordered_map<SgNode*,std::string> NameQualificationMapType;
+      typedef std::map<SgNode*,NameQualificationMapType> NameQualificationMapOfMapsType;
+#if 0
+      typedef std::set<SgNode*> NameQualificationSetType;
+#else
+   // This must match the setting in the NameQualificationTraversal class.
+   // typedef std::unordered_set<SgNode*> NameQualificationSetType;
+      typedef NameQualificationTraversal::NameQualificationSetType NameQualificationSetType;
+#endif
+
       using InheritedAttribute   = NameQualificationInheritedAttributeAda;
       using SynthesizedAttribute = NameQualificationSynthesizedAttribute;
       using base = AstTopDownBottomUpProcessing<InheritedAttribute, SynthesizedAttribute>;
@@ -251,8 +262,12 @@ namespace
       using ScopeRenamingContainer = NameQualificationTraversalState::ScopeRenamingContainer;
 
       /// constructor for primary traversal
-      NameQualificationTraversalAda( std::map<SgNode*,std::string> & input_qualifiedNameMapForNames,
-                                     std::map<SgNode*,std::map<SgNode*,std::string> > & input_qualifiedNameMapForMapsOfTypes,
+      // NameQualificationTraversalAda( std::map<SgNode*,std::string> & input_qualifiedNameMapForNames,
+      //                                std::map<SgNode*,std::map<SgNode*,std::string> > & input_qualifiedNameMapForMapsOfTypes,
+      //                                NameQualificationTraversalState& traversalState
+      //                              )
+         NameQualificationTraversalAda( NameQualificationMapType & input_qualifiedNameMapForNames,
+                                     NameQualificationMapOfMapsType & input_qualifiedNameMapForMapsOfTypes,
                                      NameQualificationTraversalState& traversalState
                                    )
       : base(),
@@ -264,8 +279,11 @@ namespace
       /// constructor for sub traversal
       /// \details
       ///   like a copy constructor except that it allows to pass in the name map
+      // NameQualificationTraversalAda( const NameQualificationTraversalAda& orig,
+      //                                std::map<SgNode*,std::string>& input_qualifiedNameMapForNames
+      //                              )
       NameQualificationTraversalAda( const NameQualificationTraversalAda& orig,
-                                     std::map<SgNode*,std::string>& input_qualifiedNameMapForNames
+                                     NameQualificationMapType& input_qualifiedNameMapForNames
                                    )
       : base(orig),
         qualifiedNameMapForNames(input_qualifiedNameMapForNames),
@@ -309,7 +327,7 @@ namespace
 
       /// records that a node \ref n needs to be qualified with \ref qual.
       void recordNameQual(const SgNode& n, std::string qual);
-      void recordNameQual(std::map<SgNode*, std::string>& m, const SgNode& n, std::string qual);
+      void recordNameQual(NameQualificationMapType& m, const SgNode& n, std::string qual);
 
       /// Constructs a path from a scope statement to the top-level (global)
       /// scope.
@@ -326,14 +344,16 @@ namespace
       /// creates a type mapping that is used for the type-subtree with reference node \ref n.
       /// Note, the subtree is NOT created iff already in type traversal mode. In this case,
       ///   the current mapping is returned.
-      std::map<SgNode*,std::string>& createQualMapForTypeSubtreeIfNeeded(const SgNode& n);
+      // std::map<SgNode*,std::string>& createQualMapForTypeSubtreeIfNeeded(const SgNode& n);
+      NameQualificationMapType& createQualMapForTypeSubtreeIfNeeded(const SgNode& n);
 
       // PP (04/05/24): referencedNameSet currently not in use by Ada
       //~ /// returns referencedNameSet
       //~ std::set<SgNode*>& get_referencedNameSet() { return referencedNameSet; }
 
       /// returns current qualifiedNameMapForNames
-      std::map<SgNode*,std::string>& get_qualifiedNameMapForNames() { return qualifiedNameMapForNames; }
+      // std::map<SgNode*,std::string>& get_qualifiedNameMapForNames() { return qualifiedNameMapForNames; }
+      NameQualificationMapType& get_qualifiedNameMapForNames() { return qualifiedNameMapForNames; }
 
       /// called after a unit change in global scope is detected.
       void resetNameQualificationContext();
@@ -357,11 +377,15 @@ namespace
       // \{
       // PP (04/05/24): referencedNameSet currently not in use by Ada
       //~ std::set<SgNode*>&                                referencedNameSet;
-      std::map<SgNode*,std::string>&                    qualifiedNameMapForNames;
+      // std::map<SgNode*,std::string>&                    qualifiedNameMapForNames;
+      NameQualificationMapType&                    qualifiedNameMapForNames;
+
       // std::map<SgNode*,std::string>&                    qualifiedNameMapForTypes;
       //~ std::map<SgNode*,std::string> & qualifiedNameMapForTemplateHeaders;
       //~ std::map<SgNode*,std::string>&                    typeNameMap;
-      std::map<SgNode*,std::map<SgNode*,std::string> >& qualifiedNameMapForMapsOfTypes;
+      // std::map<SgNode*,std::map<SgNode*,std::string> >& qualifiedNameMapForMapsOfTypes;
+      // std::map<SgNode*,NameQualificationMapType>& qualifiedNameMapForMapsOfTypes;
+      NameQualificationMapOfMapsType& qualifiedNameMapForMapsOfTypes;
       // \}
 
       NameQualificationTraversalState& state; ///< traversal state
@@ -377,7 +401,7 @@ namespace
   };
 
   void
-  NameQualificationTraversalAda::recordNameQual( std::map<SgNode*, std::string>& m,
+  NameQualificationTraversalAda::recordNameQual( NameQualificationMapType& m,
                                                  const SgNode& n,
                                                  std::string qual
                                                )
@@ -1071,6 +1095,7 @@ namespace
   {
       using InheritedAttribute = NameQualificationTraversalAda::InheritedAttribute;
       using base = sg::DispatchHandler<InheritedAttribute>;
+      using NameQualificationMapType = NameQualificationTraversalAda::NameQualificationMapType;
 
       AdaPreNameQualifier(NameQualificationTraversalAda& trav, InheritedAttribute inh)
       : base(std::move(inh)), traversal(trav), skipNameQualification()
@@ -1093,7 +1118,7 @@ namespace
       /// \param n     a declaration of a node referenced in the active scope
       /// \param scope the scope where n was declared
       void recordNameQualIfNeeded(const SgNode& n, const SgScopeStatement* scope);
-      void recordNameQualIfNeeded(std::map<SgNode*, std::string>& m, const SgNode& n, const SgScopeStatement* scope);
+      void recordNameQualIfNeeded(NameQualificationMapType& m, const SgNode& n, const SgScopeStatement* scope);
 
       /// computes the name qualification for \ref n with reference node \ref ref.
       /// \details
@@ -1946,7 +1971,7 @@ namespace
   }
 
   void
-  AdaPreNameQualifier::recordNameQualIfNeeded( std::map<SgNode*, std::string>& m,
+  AdaPreNameQualifier::recordNameQualIfNeeded( NameQualificationMapType& m,
                                                const SgNode& n,
                                                const SgScopeStatement* scope
                                              )
@@ -1965,9 +1990,7 @@ namespace
                                                    const SgScopeStatement* scope
                                                  )
   {
-    using NameQualMap = std::map<SgNode*, std::string>;
-
-    NameQualMap& localQualMapForTypes = traversal.createQualMapForTypeSubtreeIfNeeded(ref);
+    NameQualificationMapType& localQualMapForTypes = traversal.createQualMapForTypeSubtreeIfNeeded(ref);
 
     recordNameQualIfNeeded(localQualMapForTypes, n, scope);
   }
@@ -1993,7 +2016,7 @@ namespace
   {
     using NameQualMap = std::map<SgNode*, std::string>;
 
-    NameQualMap& localQualMapForTypes = traversal.createQualMapForTypeSubtreeIfNeeded(ref);
+    NameQualificationMapType&     localQualMapForTypes = traversal.createQualMapForTypeSubtreeIfNeeded(ref);
     NameQualificationTraversalAda sub{traversal, localQualMapForTypes};
     InheritedAttribute            attr{res};
 
@@ -2036,7 +2059,8 @@ namespace
     res.get_nameQualIgnoreSet().insert(child);
   }
 
-  std::map<SgNode*,std::string>&
+// std::map<SgNode*,std::string>&
+  NameQualificationTraversalAda::NameQualificationMapType&
   NameQualificationTraversalAda::createQualMapForTypeSubtreeIfNeeded(const SgNode& n)
   {
     // are we already in type traversal mode?
@@ -2045,7 +2069,8 @@ namespace
 
     // not yet in type traversal => create a new qualified name map for types
     SgNode*                        key = const_cast<SgNode*>(&n);
-    std::map<SgNode*,std::string>& res = qualifiedNameMapForMapsOfTypes[key];
+    // std::map<SgNode*,std::string>& res = qualifiedNameMapForMapsOfTypes[key];
+    NameQualificationMapType& res = qualifiedNameMapForMapsOfTypes[key];
 
     // do we see this reference node for the first time?
     /*
@@ -2082,8 +2107,9 @@ namespace
   }
 
 
+// void generateNameQualificationSupportAda(SgNode* node, std::set<SgNode*>&)
    void
-   generateNameQualificationSupportAda(SgNode* node, std::set<SgNode*>&)
+   generateNameQualificationSupportAda(SgNode* node, NameQualificationTraversalAda::NameQualificationSetType&)
    {
      NameQualificationTraversalState nqState;
      NameQualificationTraversalAda   nqual{ SgNode::get_globalQualifiedNameMapForNames(),
@@ -2100,8 +2126,9 @@ namespace
 // ***********************************************************
 
 
+// void generateNameQualificationSupport( SgNode* node, std::set<SgNode*>& referencedNameSet )
 void
-generateNameQualificationSupport( SgNode* node, std::set<SgNode*>& referencedNameSet )
+generateNameQualificationSupport( SgNode* node, NameQualificationTraversal::NameQualificationSetType& referencedNameSet )
    {
   // This function is the top level API for Name Qualification support.
   // This is the only function that need be seen by ROSE.  This function
@@ -2399,13 +2426,20 @@ NameQualificationSynthesizedAttribute::NameQualificationSynthesizedAttribute ( c
 // NameQualificationTraversal
 // *******************
 
+// NameQualificationTraversal::NameQualificationTraversal(
+//      std::map<SgNode*,std::string> & input_qualifiedNameMapForNames,
+//      std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,
+//      std::map<SgNode*,std::string> & input_qualifiedNameMapForTemplateHeaders,
+//      std::map<SgNode*,std::string> & input_typeNameMap,
+//      std::map<SgNode*,std::map<SgNode*,std::string> > & input_qualifiedNameMapForMapsOfTypes,
+//      std::set<SgNode*> & input_referencedNameSet)
 NameQualificationTraversal::NameQualificationTraversal(
-     std::map<SgNode*,std::string> & input_qualifiedNameMapForNames,
-     std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,
-     std::map<SgNode*,std::string> & input_qualifiedNameMapForTemplateHeaders,
-     std::map<SgNode*,std::string> & input_typeNameMap,
-     std::map<SgNode*,std::map<SgNode*,std::string> > & input_qualifiedNameMapForMapsOfTypes,
-     std::set<SgNode*> & input_referencedNameSet)
+     NameQualificationMapType & input_qualifiedNameMapForNames,
+     NameQualificationMapType & input_qualifiedNameMapForTypes,
+     NameQualificationMapType & input_qualifiedNameMapForTemplateHeaders,
+     NameQualificationMapType & input_typeNameMap,
+     NameQualificationMapOfMapsType & input_qualifiedNameMapForMapsOfTypes,
+     NameQualificationSetType & input_referencedNameSet)
    : referencedNameSet(input_referencedNameSet),
      qualifiedNameMapForNames(input_qualifiedNameMapForNames),
      qualifiedNameMapForTypes(input_qualifiedNameMapForTypes),
@@ -2453,28 +2487,33 @@ NameQualificationTraversal::NameQualificationTraversal(
 
 
 // DQ (5/28/2011): Added support to set the static global qualified name map in SgNode.
-const std::map<SgNode*,std::string> &
+// const std::map<SgNode*,std::string> &
+const NameQualificationTraversal::NameQualificationMapType &
 NameQualificationTraversal::get_qualifiedNameMapForNames() const
    {
      return qualifiedNameMapForNames;
    }
 
 // DQ (5/28/2011): Added support to set the static global qualified name map in SgNode.
-const std::map<SgNode*,std::string> &
+// const std::map<SgNode*,std::string> &
+const NameQualificationTraversal::NameQualificationMapType &
 NameQualificationTraversal::get_qualifiedNameMapForTypes() const
    {
      return qualifiedNameMapForTypes;
    }
 
 // DQ (3/13/2019): Added support to set the static global qualified name map in SgNode.
-const std::map<SgNode*,std::map<SgNode*,std::string> > &
+// const std::map<SgNode*,std::map<SgNode*,std::string> > &
+// const std::map<SgNode*,NameQualificationTraversal::NameQualificationMapType> &
+const NameQualificationTraversal::NameQualificationMapOfMapsType &
 NameQualificationTraversal::get_qualifiedNameMapForMapsOfTypes() const
    {
      return qualifiedNameMapForMapsOfTypes;
    }
 
 // DQ (9/7/2014): Added support to set the template headers in template declarations.
-const std::map<SgNode*,std::string> &
+// const std::map<SgNode*,std::string> &
+const NameQualificationTraversal::NameQualificationMapType &
 NameQualificationTraversal::get_qualifiedNameMapForTemplateHeaders() const
    {
      return qualifiedNameMapForTemplateHeaders;
@@ -6043,13 +6082,15 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
 
 
 // DQ (3/14/2019): Adding debugging support to output the map of names.
+// void NameQualificationTraversal::outputNameQualificationMap( const std::map<SgNode*,std::string> & qualifiedNameMap )
 void
-NameQualificationTraversal::outputNameQualificationMap( const std::map<SgNode*,std::string> & qualifiedNameMap )
+NameQualificationTraversal::outputNameQualificationMap( const NameQualificationMapType & qualifiedNameMap )
    {
      mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::outputNameQualificationMap(): qualifiedNameMap.size() = %zu \n",qualifiedNameMap.size());
 
      int counter = 0;
-     std::map<SgNode*,std::string>::const_iterator i = qualifiedNameMap.begin();
+  // std::map<SgNode*,std::string>::const_iterator i = qualifiedNameMap.begin();
+     NameQualificationMapType::const_iterator i = qualifiedNameMap.begin();
      while (i != qualifiedNameMap.end())
        {
          ASSERT_not_null(i->first);
@@ -6167,7 +6208,8 @@ NameQualificationTraversal::addToNameMap ( SgNode* nodeReference, string typeNam
             else
              {
             // If it already exists, then overwrite the existing information.
-               std::map<SgNode*,std::string>::iterator i = typeNameMap.find(nodeReference);
+            // std::map<SgNode*,std::string>::iterator i = typeNameMap.find(nodeReference);
+               NameQualificationMapType::iterator i = typeNameMap.find(nodeReference);
                ROSE_ASSERT (i != typeNameMap.end());
 
                string previousTypeName = i->second.c_str();
@@ -6927,7 +6969,8 @@ NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDecla
         }
 
      printf ("Output referencedNameSet: \n");
-     for (std::set<SgNode*>::iterator i = referencedNameSet.begin(); i != referencedNameSet.end(); i++)
+  // for (std::set<SgNode*>::iterator i = referencedNameSet.begin(); i != referencedNameSet.end(); i++)
+     for (NameQualificationSetType::iterator i = referencedNameSet.begin(); i != referencedNameSet.end(); i++)
         {
        // printf (" --- referencedNameSet: element: \n");
 
@@ -9592,7 +9635,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             {
                            // DQ (6/20/2011): We see this case in test2011_87.C.
                            // If it already existes then overwrite the existing information.
-                              std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(memberFunctionRefExp);
+                           // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(memberFunctionRefExp);
+                              NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(memberFunctionRefExp);
                               ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if DEBUG_MEMBER_FUNCTION_REF
@@ -10244,7 +10288,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                             {
                            // DQ (6/20/2011): We see this case in test2011_87.C.
                            // If it already existes then overwrite the existing information.
-                              std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(varRefExp);
+                           // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(varRefExp);
+                              NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(varRefExp);
                               ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -11522,7 +11567,8 @@ void NameQualificationTraversal::setNameQualificationOnClassOf ( SgPointerMember
        // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(pointerMemberType);
        // ROSE_ASSERT (i != qualifiedNameMapForNames.end());
        // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(pointerMemberType);
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(pointerMemberType);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(pointerMemberType);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(pointerMemberType);
        // ROSE_ASSERT (i != qualifiedNameMapForTypes.end());
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
@@ -11597,7 +11643,8 @@ void NameQualificationTraversal::setNameQualificationOnBaseType ( SgPointerMembe
        // If it already existes then overwrite the existing information.
        // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(pointerMemberType);
        // ROSE_ASSERT (i != qualifiedNameMapForNames.end());
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(pointerMemberType);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(pointerMemberType);
+          NameQualificationMapType::iterator i = qualifiedNameMapForTypes.find(pointerMemberType);
           ROSE_ASSERT (i != qualifiedNameMapForTypes.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -11781,7 +11828,8 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
              {
             // DQ (6/20/2011): We see this case in test2011_87.C.
             // If it already existes then overwrite the existing information.
-               std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(varRefExp);
+            // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(varRefExp);
+               NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(varRefExp);
                ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -11832,7 +11880,8 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
                   {
                  // DQ (6/20/2011): We see this case in test2011_87.C.
                  // If it already existes then overwrite the existing information.
-                    std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(varRefExp);
+                 // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(varRefExp);
+                    NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(varRefExp);
                     ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -11943,7 +11992,8 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
        else
         {
        // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(functionRefExp);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(functionRefExp);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(functionRefExp);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -12003,7 +12053,8 @@ NameQualificationTraversal::setNameQualification(SgMemberFunctionRefExp* functio
        else
         {
        // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(functionRefExp);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(functionRefExp);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(functionRefExp);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
@@ -12067,7 +12118,8 @@ NameQualificationTraversal::setNameQualification(SgPseudoDestructorRefExp* pseud
        else
         {
        // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(pseudoDestructorRefExp);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(pseudoDestructorRefExp);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(pseudoDestructorRefExp);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
@@ -12135,7 +12187,8 @@ NameQualificationTraversal::setNameQualification(SgConstructorInitializer* const
        // new EDG 4.3 support.  This has been added because of the requirements of that support.
 
        // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(constructorInitializer);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(constructorInitializer);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(constructorInitializer);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -12197,8 +12250,9 @@ NameQualificationTraversal::setNameQualification(SgEnumVal* enumVal, SgEnumDecla
         }
        else
         {
-       // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(enumVal);
+       // If it already exists then overwrite the existing information.
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(enumVal);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(enumVal);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -12259,8 +12313,9 @@ NameQualificationTraversal::setNameQualification ( SgBaseClass* baseClass, SgCla
        // DQ (6/17/2013): I think it is reasonable that this might have been previously set and
        // we have to overwrite the last value as we handle it again in a different context.
 
-       // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(baseClass);
+       // If it already exists then overwrite the existing information.
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(baseClass);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(baseClass);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
@@ -12408,7 +12463,8 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
        else
         {
        // If it already exists then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(functionDeclaration);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(functionDeclaration);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(functionDeclaration);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
           if (i->second != qualifier)
              {
@@ -12435,7 +12491,8 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
             else
              {
             // If it already exists then overwrite the existing information.
-               std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTemplateHeaders.find(functionDeclaration);
+            // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTemplateHeaders.find(functionDeclaration);
+               NameQualificationMapType::iterator i = qualifiedNameMapForTemplateHeaders.find(functionDeclaration);
                ROSE_ASSERT (i != qualifiedNameMapForTemplateHeaders.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -12498,7 +12555,8 @@ NameQualificationTraversal::setNameQualificationReturnType ( SgFunctionDeclarati
        else
         {
        // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(functionDeclaration);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(functionDeclaration);
+          NameQualificationMapType::iterator i = qualifiedNameMapForTypes.find(functionDeclaration);
           ROSE_ASSERT (i != qualifiedNameMapForTypes.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -12555,7 +12613,8 @@ NameQualificationTraversal::setNameQualification ( SgUsingDeclarationStatement* 
        else
         {
        // If it already exists then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(usingDeclaration);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(usingDeclaration);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(usingDeclaration);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -12847,7 +12906,8 @@ NameQualificationTraversal::setNameQualificationOnType(SgInitializedName* initia
        else
         {
        // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(initializedName);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(initializedName);
+          NameQualificationMapType::iterator i = qualifiedNameMapForTypes.find(initializedName);
           ROSE_ASSERT (i != qualifiedNameMapForTypes.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -12927,7 +12987,8 @@ NameQualificationTraversal::setNameQualificationOnName(SgInitializedName* initia
        else
         {
        // If it already exists then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(initializedName);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(initializedName);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(initializedName);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -12978,7 +13039,8 @@ NameQualificationTraversal::setNameQualification(SgVariableDeclaration* variable
      mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualification(): variableDeclaration->get_global_qualification_required() = %s \n",variableDeclaration->get_global_qualification_required() ? "true" : "false");
 #endif
 
-     std::map<SgNode*,std::string>::iterator it_qualifiedNameMapForNames = qualifiedNameMapForNames.find(variableDeclaration);
+  // std::map<SgNode*,std::string>::iterator it_qualifiedNameMapForNames = qualifiedNameMapForNames.find(variableDeclaration);
+     NameQualificationMapType::iterator it_qualifiedNameMapForNames = qualifiedNameMapForNames.find(variableDeclaration);
      if (it_qualifiedNameMapForNames == qualifiedNameMapForNames.end())
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -12992,7 +13054,8 @@ NameQualificationTraversal::setNameQualification(SgVariableDeclaration* variable
        else
         {
        // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(variableDeclaration);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(variableDeclaration);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(variableDeclaration);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -13053,7 +13116,8 @@ NameQualificationTraversal::setNameQualificationOnBaseType(SgTypedefDeclaration*
        else
         {
        // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(typedefDeclaration);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(typedefDeclaration);
+          NameQualificationMapType::iterator i = qualifiedNameMapForTypes.find(typedefDeclaration);
           ROSE_ASSERT (i != qualifiedNameMapForTypes.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -13124,7 +13188,8 @@ NameQualificationTraversal::setNameQualificationOnPointerMemberClass(SgTypedefDe
        // If it already existes then overwrite the existing information.
        // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(typedefDeclaration);
        // ROSE_ASSERT (i != qualifiedNameMapForTypes.end());
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(typedefDeclaration);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(typedefDeclaration);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(typedefDeclaration);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -13370,7 +13435,8 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
        else
         {
        // If it already exists then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(templateArgument);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(templateArgument);
+          NameQualificationMapType::iterator i = qualifiedNameMapForTypes.find(templateArgument);
           ROSE_ASSERT (i != qualifiedNameMapForTypes.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -13400,7 +13466,8 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
                if (defining_templateArgument != NULL && defining_templateArgument != templateArgument)
                   {
                     ROSE_ASSERT(qualifiedNameMapForTypes.find(defining_templateArgument) != qualifiedNameMapForTypes.end());
-                    std::map<SgNode*,std::string>::iterator j = qualifiedNameMapForTypes.find(defining_templateArgument);
+                 // std::map<SgNode*,std::string>::iterator j = qualifiedNameMapForTypes.find(defining_templateArgument);
+                    NameQualificationMapType::iterator j = qualifiedNameMapForTypes.find(defining_templateArgument);
                     ROSE_ASSERT (j != qualifiedNameMapForTypes.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -13437,7 +13504,8 @@ NameQualificationTraversal::setNameQualification(SgTemplateArgument* templateArg
                if (defining_templateArgument != NULL && defining_templateArgument != templateArgument)
                   {
                     ROSE_ASSERT(qualifiedNameMapForTypes.find(defining_templateArgument) != qualifiedNameMapForTypes.end());
-                    std::map<SgNode*,std::string>::iterator j = qualifiedNameMapForTypes.find(defining_templateArgument);
+                 // std::map<SgNode*,std::string>::iterator j = qualifiedNameMapForTypes.find(defining_templateArgument);
+                    NameQualificationMapType::iterator j = qualifiedNameMapForTypes.find(defining_templateArgument);
                     ROSE_ASSERT (j != qualifiedNameMapForTypes.end());
                  // ROSE_ASSERT(j->second == qualifier);
                     if (j->second != qualifier)
@@ -13505,7 +13573,8 @@ NameQualificationTraversal::setNameQualification(SgExpression* exp, SgDeclaratio
        // DQ (6/21/2011): Now we are catching this case...
 
        // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(exp);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(exp);
+          NameQualificationMapType::iterator i = qualifiedNameMapForTypes.find(exp);
           ROSE_ASSERT (i != qualifiedNameMapForTypes.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -13563,7 +13632,8 @@ NameQualificationTraversal::setNameQualificationForPointerToMember(SgExpression*
         }
        else
         {
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(exp);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(exp);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(exp);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -13622,7 +13692,8 @@ NameQualificationTraversal::setNameQualification(SgNonrealRefExp* exp, SgDeclara
        // DQ (6/21/2011): Now we are catching this case...
 
        // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(exp);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(exp);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(exp);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -13691,7 +13762,8 @@ NameQualificationTraversal::setNameQualification(SgAggregateInitializer* exp, Sg
        // DQ (6/21/2011): Now we are catching this case...
 
        // If it already existes then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(exp);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForTypes.find(exp);
+          NameQualificationMapType::iterator i = qualifiedNameMapForTypes.find(exp);
           ROSE_ASSERT (i != qualifiedNameMapForTypes.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -13759,7 +13831,8 @@ NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclar
        else
         {
        // If it already exists then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(classDeclaration);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(classDeclaration);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(classDeclaration);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
@@ -13820,7 +13893,8 @@ NameQualificationTraversal::setNameQualification(SgEnumDeclaration* enumDeclarat
        else
         {
        // If it already exists then overwrite the existing information.
-          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(enumDeclaration);
+       // std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(enumDeclaration);
+          NameQualificationMapType::iterator i = qualifiedNameMapForNames.find(enumDeclaration);
           ROSE_ASSERT (i != qualifiedNameMapForNames.end());
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)

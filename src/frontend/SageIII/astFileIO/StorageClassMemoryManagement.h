@@ -1166,6 +1166,25 @@ class EasyStorage < std::map<SgNode*, std::map<SgNode*, std::string> > >
      static void readFromFile (std::istream& in);
    };
 
+// DQ (3/13/2019): Added to support mapping of SgNode* to a map of SgNode* to strings for name mangling support
+// EasyStorage for ROSEAttributesListContainerPtr (PreprocessingInfo*)
+// * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
+template <>
+class EasyStorage < std::map<SgNode*, std::unordered_map<SgNode*, std::string> > >
+   : public StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, std::unordered_map<SgNode*, std::string> > >
+   {
+     typedef StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, std::unordered_map<SgNode*, std::string> > > Base;
+    public:
+     void storeDataInEasyStorageClass(const std::map<SgNode*,std::unordered_map<SgNode*, std::string> >& data_);
+     std::map<SgNode*,std::unordered_map<SgNode*,std::string> > rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock();
+     static void deleteMemoryPool();
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+
+
 // Liao 1/23/2013, placeholder for storing std::map <SgSymbol*, std::vector <std::pair <SgExpression*, SgExpression*> > >
 // this is used for representing array dimension information of the map clause.
 // TODO: provide real storage support once the OpenMP Accelerator Model is standardized.
