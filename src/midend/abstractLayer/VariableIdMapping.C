@@ -172,7 +172,7 @@ std::string VariableIdMapping::toCSVString(VariableId varId) {
     ss<<","<<"<non-symbol-string-literal-id>";
   } else if(isTemporaryVariableId(varId)) {
     ss<<","<<"<non-symbol-memory-region-id>";
-  } else if(SgSymbol* sym=getSymbol(varId)) {
+  } else if(getSymbol(varId)) {
     ss<<","<<variableName(varId);
   } else {
     ss<<","<<"<missing-symbol>";

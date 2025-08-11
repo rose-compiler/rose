@@ -931,7 +931,7 @@ TimingPerformance::TimingPerformance ( std::string s , bool outputReport )
         }
    }
 
-TraceOnlyPerformance::TraceOnlyPerformance ( std::string s, bool outputReport )
+TraceOnlyPerformance::TraceOnlyPerformance(std::string s, bool /*outputReport*/)
   : TracingPerformance()
 {
   label = s;
