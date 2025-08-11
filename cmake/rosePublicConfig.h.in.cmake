@@ -161,7 +161,9 @@
 
 #cmakedefine ROSE_SUPPORT_GNU_EXTENSIONS
 #cmakedefine ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-#cmakedefine ROSE_SUPPORT_MICROSOFT_EXTENSIONS
+
+/* Controls use of Microsoft MSVC features */
+#cmakedefine ROSE_USE_MICROSOFT_EXTENSIONS
 
 /* Create the configuration synopsis token for use by Rose::initialize */
 #define ROSE_CONFIG_TOKEN "@ROSE_CONFIG_TOKEN@"

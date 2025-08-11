@@ -778,6 +778,7 @@ endif()
 option(ENABLE-MICROSOFT-EXTENSIONS "Enable internal support in ROSE for GNU language extensions" OFF)
 if(ENABLE-MICROSOFT-EXTENSIONS)
   set(ROSE_SUPPORT_MICROSOFT_EXTENSIONS TRUE)
+  set(ROSE_USE_MICROSOFT_EXTENSIONS TRUE)
 endif()
 
 if(ENABLE-JOVIAL) # Find dependencies Aterm and Stratego 
