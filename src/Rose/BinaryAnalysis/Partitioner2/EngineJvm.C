@@ -652,6 +652,13 @@ EngineJvm::discoverFunctionCalls(SgAsmJvmMethod* sgMethod, SgAsmJvmConstantPool*
 SgProject*
 EngineJvm::roseFrontendReplacement(const std::vector<std::string> &fileNames) {
     std::vector<fs::path> paths{};
+
+    // Load jar files from classpath (do this early so jars_ can be used)
+    for (auto path : classPath()) {
+       loadJarFile(path);
+    }
+
+    // Save file names from command line
     for (auto name : fileNames) {
       paths.push_back(fs::path{name});
     }
