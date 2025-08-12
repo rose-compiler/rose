@@ -193,4 +193,6 @@ SymbolicVal ApplyBinOP( OPApplicator& op,
                         const SymbolicVal &_v1, const SymbolicVal &_v2);
 SymbolicVal GetExprVal( SymbolicExpr *exp); 
    // delete exp if return value if different from exp
+SymbolicVal ApplyUnaryOP( OPApplicator& op, 
+                        const SymbolicVal &_v);
 #endif

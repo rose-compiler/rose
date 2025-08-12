@@ -109,8 +109,8 @@ std::pair<PrePostConditionAnalysis::PrePostConditions, PrePostConditionAnalysis:
             DebugPrePostCondition([&strippedCond](){return "Condition: " + AstInterface::AstToString(strippedCond);});
             trueCond.addPrecondition(SymbolicValGenerator::GetSymbolicVal(fa, strippedCond));
             
-            //TODO: Negate strippedCond and insert to falseCond as a precondition
-            falseCond.addPrecondition(SymbolicValGenerator::GetSymbolicVal(fa, strippedCond));
+            //Negate condition and accumulate precondition
+            falseCond.addPrecondition(ApplyUnaryOP(SYMOP_NOT, SymbolicValGenerator::GetSymbolicVal(fa, strippedCond)));
         }
     }
     if(truebody != 0){
@@ -121,7 +121,6 @@ std::pair<PrePostConditionAnalysis::PrePostConditions, PrePostConditionAnalysis:
     }
     if(falsebody != 0){
         DebugPrePostCondition([&falsebody](){return "false: " + AstInterface::AstToString(falsebody);});
-        
         falseBodyConds.push_back(falseCond);
         analyze(falsebody, falseBodyConds);
         collectedConds.insert(collectedConds.end(), falseBodyConds.begin(), falseBodyConds.end());

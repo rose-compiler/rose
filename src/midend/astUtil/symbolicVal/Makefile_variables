@@ -12,6 +12,7 @@ mauSymbolicVal_includeHeaders=\
 	$(mauSymbolicValPath)/SymbolicMultiply.h \
 	$(mauSymbolicValPath)/SymbolicPlus.h \
 	$(mauSymbolicValPath)/BooleanOperators.h \
+	$(mauSymbolicValPath)/UnaryOperators.h \
 	$(mauSymbolicValPath)/SymbolicVal.h \
 	$(mauSymbolicValPath)/SymbolicExpr.h \
 	$(mauSymbolicValPath)/SymbolicSelect.h \

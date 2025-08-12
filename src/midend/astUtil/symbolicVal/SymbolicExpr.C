@@ -127,6 +127,16 @@ std::string SymbolicTerm :: toString() const
 
 std::string SymbolicExpr :: toString() const
 {
+   // Output for unary operators
+   if (GetOpType() == SYMOP_NOT) {
+      std::string r = GetOPName() + "(";
+      for (OpdIterator iter = GetOpdIterator(); !iter.ReachEnd(); iter.Advance()){
+         r = r + iter.Current().toString();}
+      r = r + ")";
+      return r;
+  }
+
+  // output for binary operators
   std::string r = "(";
   bool begin = true;
   for (OpdIterator iter = GetOpdIterator();
@@ -418,3 +428,10 @@ SymbolicVal ApplyBinOP( OPApplicator& op,
   return tmp(v1,v2);
 }
 
+SymbolicVal ApplyUnaryOP(OPApplicator& op, const SymbolicVal &v)
+{
+   SymbolicExpr* r = op.CreateExpr();
+   // r->AddOpd(v, &op);
+   r->AddOpd(v);
+   return SymbolicVal(r);
+}

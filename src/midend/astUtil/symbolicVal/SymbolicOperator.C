@@ -3,6 +3,7 @@
 #include "SymbolicPlus.h"
 #include "SymbolicMultiply.h"
 #include "BooleanOperators.h"
+#include "UnaryOperators.h"
 #include "SymbolicSelect.h"
 #include "CommandOptions.h"
 #include <ROSE_ASSERT.h>
@@ -25,6 +26,22 @@ bool DebugOp()
   return r == 1;
 }
 
+SymbolicVal ApplyUnaryOP(SymOpType t, const SymbolicVal &v)
+{
+  SymbolicVal r;
+  switch(t){
+    case SYMOP_NOT:
+      {
+        NotApplicator op;
+        r = ApplyUnaryOP(op, v);
+        if (DebugOp())
+          std::cerr << " ! " + v.toString() + " = " << r.toString() << std::endl;
+        return r;
+      }
+    default:
+      ROSE_ABORT();
+  }
+}
 
 SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
                                const SymbolicVal &v2)

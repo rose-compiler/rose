@@ -23,7 +23,7 @@ distclean-local:
 
 include_HEADERS =  SymbolicMultiply.h  SymbolicPlus.h    SymbolicVal.h \
                    SymbolicExpr.h  SymbolicSelect.h  SymbolicBound.h \
-                   BooleanOperators.h
+                   BooleanOperators.h UnaryOperators.h
 
 
 

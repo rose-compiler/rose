@@ -35,7 +35,8 @@ typedef enum {VAL_BASE = 0, VAL_CONST = 1, VAL_VAR = 2, VAL_AST = 4,
       SymbolicValType;
 typedef enum { SYMOP_NIL = 0, SYMOP_MULTIPLY=1, SYMOP_PLUS = 2,
                SYMOP_MIN=3, SYMOP_MAX=4, SYMOP_POW = 5,
-               SYMOP_AND = 6, SYMOP_OR = 7, SYMOP_EQ = 8} SymOpType;
+               SYMOP_AND = 6, SYMOP_OR = 7, SYMOP_EQ = 8,
+               SYMOP_NOT = 9} SymOpType;
 
 class SymbolicValImpl 
 {
@@ -310,6 +311,7 @@ class SymbolicValGenerator
 
 SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
                         const SymbolicVal &v2);
+SymbolicVal ApplyUnaryOP(SymOpType t, const SymbolicVal &v);
 inline SymbolicVal operator + (const SymbolicVal &v1, const SymbolicVal &v2)
   { return ApplyBinOP(SYMOP_PLUS, v1, v2); }
 SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2);
