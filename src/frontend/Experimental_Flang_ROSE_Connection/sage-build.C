@@ -690,6 +690,48 @@ void Build(parser::FunctionStmt &x, std::list<std::string> &dummy_arg_name_list,
 #endif
 }
 
+void BuildVisitor::Build(parser::PrintStmt &x) {
+  // std::tuple<Format, std::list<OutputItem>> t;
+
+  SgPrintStatement* stmt{nullptr};
+  SgExpression* format{nullptr};
+
+  // OutputItem
+  // std::variant<Expr, common::Indirection<OutputImpliedDo>> u;
+  std::list<SgExpression*> items{};
+
+  // OutputItems
+  // TODO: move to BuildVisitor:: function
+  for (auto &item : std::get<1>(x.t)) {
+    common::visit(common::visitors{
+        [&](parser::Expr &y) {
+               WalkExpr(y, format);
+               ASSERT_not_null(format);
+               items.push_back(format);
+        },
+        [&] (auto &y) {
+               std::cout << "[WARN] IMPL_ME_ common::Indirection<OutputImpliedDo\n";
+               ASSERT_require(false);
+        }
+      },
+      item.u);
+  }
+
+#if 0
+  // Format: TODO: all variants
+  std::variant<Expr, Label, Star> u;
+  Fortran::parser::Format & parserFormat{std::get<Fortran::parser::Format>(x.t)};
+#else
+  // SgAsteriskShapeExp used to represent Star
+  // Fortran::parser::Star assumed, not parsed
+  format = SageBuilderCpp17::buildAsteriskShapeExp_nfi();
+#endif
+
+  // Enter/Leave SageTreeBuilder
+  builder.Enter(stmt, format, items);
+  builder.Leave(stmt);
+}
+
 void BuildVisitor::Build(parser::WriteStmt &x) {
    SgProcessControlStatement* stmt{nullptr};
    std::cerr << "...Build(WriteStmt)...\n";
@@ -706,9 +748,6 @@ void BuildVisitor::Build(parser::WriteStmt &x) {
    for (auto & spec : x.controls) {
      std::cerr << "...Build(WriteStmt)...    IoControlSpec...list\n";
    }
-
-   //   builder.Enter(stmt, "fail_image", boost::none, boost::none);
-   //   builder.Leave(stmt, getLabels());
 }
 
 void BuildVisitor::
@@ -1950,26 +1989,6 @@ void BuildImpl(parser::PointerAssignmentStmt &x)
 {
   std::cout << "BuildImpl(PointerAssignmentStmt)\n";
   ABORT_NO_IMPL;
-}
-
-void BuildImpl(parser::PrintStmt &x)
-{
-  std::cout << "BuildImpl(PrintStmt)\n";
-  ABORT_NO_IMPL;
-
-#if 0
-   std::list<SgExpression*> output_item_list;
-
-   SgExpression* format = nullptr;
-
-   Build(std::get<0>(x.t), format);           // Format
-   Build(std::get<1>(x.t), output_item_list); // std::list<OutputItem>
-
-   SgPrintStatement* print_stmt = nullptr;
-
-   builder.Enter(print_stmt, format, output_item_list);
-   builder.Leave(print_stmt);
-#endif
 }
 
 void Build(parser::DefaultCharExpr&x, SgExpression* &expr)

@@ -151,7 +151,7 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
      ASSERT_not_null(tmp_statement);
 
   // Check for either a SgIOStatement or a SgReturnStatement (not the special case we are looking for)
-     if (isSgIOStatement(tmp_statement) == NULL && isSgReturnStmt(tmp_statement) == NULL)
+     if (isSgIOStatement(tmp_statement) == nullptr && isSgReturnStmt(tmp_statement) == nullptr)
         {
        // Output "*" if this is NOT a SgIOStatement (OK since I think that only functions in a function CALL statement can be used with alternative IO, is this true?
           curprint("*");

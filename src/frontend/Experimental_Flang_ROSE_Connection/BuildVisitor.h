@@ -144,6 +144,7 @@ public:
   void Build(Fortran::parser::ReturnStmt &);
   void Build(Fortran::parser::StopStmt &);
   void Build(Fortran::parser::WriteStmt &);
+  void Build(Fortran::parser::PrintStmt &);
 
   void Done() const { std::cerr << "Done()\n"; }
 

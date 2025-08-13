@@ -14165,8 +14165,6 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
         // there was a format label then we will have a integer literal on the stack.
 
         // DQ (1/26/2009): Avoid getting things from the stack that are at least wrong to be used in a print format.
-        // if (astExpressionStack.empty() == false)
-        // if (astExpressionStack.empty() == false && isSgBinaryOp(astExpressionStack.front()) == NULL)
         if (astExpressionStack.empty() == false)
         {
             SgExpression* formatLabel = astExpressionStack.front();
@@ -14176,13 +14174,10 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
             // ROSE_ASSERT(isSgBinaryOp(formatLabel) == NULL);
 
             // R914 should have pushed a "fmt" token onto the astNameStack
-            // ROSE_ASSERT(astNameStack.empty() == false);
             if (astNameStack.empty() == false)
             {
                 Token_t* name = astNameStack.front();
-
-                // printf ("In c_action_print_stmt(): processing token = %s with expression = %p = %s \n",name->text,formatLabel,formatLabel->class_name().c_str());
-                ROSE_ASSERT (strncasecmp(name->text,"fmt",3) == 0);
+                ASSERT_require(strncasecmp(name->text,"fmt",3) == 0);
 
                 // The "unit=" string is optional, if it was not present then a toekn was pushed onto the stack with the text value "defaultString"
                 // if ( (strncasecmp(name->text,"fmt",3) == 0) || (strncmp(name->text,"defaultString",13) == 0) && (writeStatement->get_format() == NULL) && numberOfDefaultOptions == 2)

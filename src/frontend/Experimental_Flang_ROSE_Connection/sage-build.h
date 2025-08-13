@@ -158,6 +158,7 @@ void Build(Fortran::parser::            CycleStmt &, const OptLabel &);
 void Build(Fortran::parser::        FailImageStmt &, const OptLabel &);
 void Build(Fortran::parser::             StopStmt &, const OptLabel &);
 void Build(Fortran::parser::            WriteStmt &, const OptLabel &);
+void Build(Fortran::parser::            PrintStmt &, const OptLabel &);
 
 void Build(Fortran::parser::        FailImageStmt &);
 
