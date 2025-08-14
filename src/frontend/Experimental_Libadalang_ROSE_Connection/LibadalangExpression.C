@@ -439,6 +439,7 @@ namespace
 
     //Get the kind of this node
     ada_node_kind_enum kind = ada_node_kind(lal_expr);
+    int lal_expr_hash = hash_node(lal_expr);
 
     logTrace() << "In getOperator_fallback for node of kind " << kind << std::endl;
 
@@ -482,7 +483,7 @@ namespace
 
       if (pos != unaryMakerMap.end())
       {
-        logKind(pos->second.first, kind);
+        logKind(pos->second.first, lal_expr_hash);
 
         SgExpression* res = pos->second.second();
 
@@ -495,7 +496,7 @@ namespace
 
     if (pos != makerMap.end())
     {
-      logKind(pos->second.first, kind);
+      logKind(pos->second.first, lal_expr_hash);
 
       SgExpression* res = pos->second.second();
 
@@ -1149,6 +1150,7 @@ namespace
     //Get the decl in a form we can use
     ada_base_entity lal_abstract_state_decl = *lal_element;
     ada_node_kind_enum lal_abstract_state_decl_kind = ada_node_kind(&lal_abstract_state_decl);
+    int lal_abstract_state_decl_hash = hash_node(&lal_abstract_state_decl);
 
     std::vector<SgExpression*> components;
 
@@ -1157,14 +1159,14 @@ namespace
     //First, check if parens are necessary
     bool need_paren = false;
     if(lal_abstract_state_decl_kind == ada_paren_abstract_state_decl){
-      logKind("ada_paren_abstract_state_decl", lal_abstract_state_decl_kind);
+      logKind("ada_paren_abstract_state_decl", lal_abstract_state_decl_hash);
       ada_paren_abstract_state_decl_f_decl(&lal_abstract_state_decl, &lal_abstract_state_decl);
       lal_abstract_state_decl_kind = ada_node_kind(&lal_abstract_state_decl);
       need_paren = true;
     }
 
     if(lal_abstract_state_decl_kind == ada_abstract_state_decl) {
-      logKind("ada_abstract_state_decl", lal_abstract_state_decl_kind);
+      logKind("ada_abstract_state_decl", lal_abstract_state_decl_hash);
 
       //Get the name
       ada_base_entity lal_defining_name, lal_identifier;
@@ -1245,10 +1247,11 @@ getArg(ada_base_entity* lal_element, AstContext ctx)
 {
   //Get the kind
   ada_node_kind_enum kind = ada_node_kind(lal_element);
+  int lal_element_hash = hash_node(lal_element);
 
   LibadalangText kind_name(kind);
   std::string kind_name_string = kind_name.string_value();
-  logKind(kind_name_string.c_str(), kind);
+  logKind(kind_name_string.c_str(), lal_element_hash);
 
   ada_base_entity actual_parameter;
   ada_base_entity formal_parameter;
@@ -1315,6 +1318,9 @@ namespace{
     //Get the kind
     ada_node_kind_enum kind = ada_node_kind(lal_element);
 
+    //Get the hash
+    int lal_element_hash = hash_node(lal_element);
+
     LibadalangText kind_name(kind);
     std::string kind_name_string = kind_name.string_value();
 
@@ -1324,7 +1330,7 @@ namespace{
     {
       case ada_int_literal:                        // 2.4
         {
-          logKind("ada_int_literal", kind);
+          logKind("ada_int_literal", lal_element_hash);
 
           /*ada_big_integer denoted_value; //TODO This way strips the formatting, but the other way won't work after lal_2021
 
@@ -1345,7 +1351,7 @@ namespace{
 
       case ada_char_literal:                       // 4.1
         {
-          logKind("ada_char_literal", kind);
+          logKind("ada_char_literal", lal_element_hash);
 
           //Get the value of this char
           std::string denoted_char = canonical_text_as_string(lal_element);
@@ -1356,12 +1362,15 @@ namespace{
 
       case ada_string_literal:                          // 2.6
         {
-          logKind("ada_string_literal", kind);
+          logKind("ada_string_literal", lal_element_hash);
           //Get if this string is an operator name
           ada_bool lal_is_operator_name;
           ada_name_p_is_operator_name(lal_element, &lal_is_operator_name);
 
-          if(lal_is_operator_name){
+          //LAL_REP_ISSUE: Sometimes, p_is_operator_name is a false negative. Not sure why this happens.
+          // To fix this, check if there are args in suppl. I can't think of any case where ada_string_literal
+          // would have args but not be an operator. Ex: cxg1005.adb:333
+          if(lal_is_operator_name || suppl.args_valid()){
             //If the string is for an op, call getOperator
             res = &getOperator(lal_element, suppl, unary, ctx);
             break;
@@ -1380,7 +1389,7 @@ namespace{
 
       case ada_real_literal:                            // 2.4.1
         {
-          logKind("ada_real_literal", kind);
+          logKind("ada_real_literal", lal_element_hash);
           //Get the value
           std::string value_image = canonical_text_as_string(lal_element); //TODO this won't work after lal 2021
           const char* c_value_image = value_image.c_str();
@@ -1394,7 +1403,7 @@ namespace{
         {
           // \todo use the queryCorrespondingAstNode function and the
           //       generate the expression based on that result.
-          logKind("ada_identifier", kind);
+          logKind("ada_identifier", lal_element_hash);
 
           //Get the text of this identifier
           const std::string name = canonical_text_as_string(lal_element);
@@ -1613,7 +1622,7 @@ namespace{
 
       case ada_explicit_deref:                   // 4.1
         {
-          logKind("ada_explicit_deref", kind);
+          logKind("ada_explicit_deref", lal_element_hash);
 
           //Get the prefix
           ada_base_entity lal_prefix;
@@ -1630,7 +1639,7 @@ namespace{
       case ada_relation_op:
       case ada_call_expr:                           // 4.1
         {
-          logKind("A_Function_Call", kind);
+          logKind("A_Function_Call", lal_element_hash);
 
           //If this is an ada_call_expr, we might want to treat it like a_type_conversion or an_indexed_component instead
           if(kind == ada_call_expr){
@@ -1852,7 +1861,7 @@ namespace{
       case ada_op_not:
       case ada_op_double_dot:
         {
-          logKind("An_Operator_Symbol", kind);
+          logKind("An_Operator_Symbol", lal_element_hash);
 
           res = &getOperator(lal_element, suppl, unary, ctx);
           break;
@@ -1860,7 +1869,7 @@ namespace{
 
       case ada_dotted_name:                      // 4.1.3
         {
-          logKind("ada_dotted_name", kind);
+          logKind("ada_dotted_name", lal_element_hash);
 
           ada_base_entity lal_prefix, lal_suffix;
           ada_dotted_name_f_prefix(lal_element, &lal_prefix);
@@ -1909,7 +1918,7 @@ namespace{
 
       case ada_attribute_ref:
         {
-          logKind("ada_attribute_ref", kind);
+          logKind("ada_attribute_ref", lal_element_hash);
 
           res = &getAttributeExpr(lal_element, ctx);
 
@@ -1918,7 +1927,7 @@ namespace{
 
       case ada_abstract_state_decl_expr:  // GNAT-defined attribute
         {
-          logKind("ada_abstract_state_decl_expr", kind);
+          logKind("ada_abstract_state_decl_expr", lal_element_hash);
 
           //Get the decl
           ada_base_entity lal_abstract_state_decl;
@@ -1957,7 +1966,7 @@ namespace{
       case ada_aggregate:                        // 4.3
       case ada_null_record_aggregate:                    // 4.3
         {
-          logKind("ada_aggregate?", kind);
+          logKind("ada_aggregate?", lal_element_hash);
 
           //Get the ancestor expr
           ada_base_entity lal_ancestor_expr;
@@ -1977,7 +1986,7 @@ namespace{
 
       case ada_paren_expr:                // 4.4
         {
-          logKind("ada_paren_expr", kind);
+          logKind("ada_paren_expr", lal_element_hash);
 
           ada_base_entity lal_expr;
           ada_paren_expr_f_expr(lal_element, &lal_expr);
@@ -1990,7 +1999,7 @@ namespace{
 
       case ada_null_literal:                            // 4.4
         {
-          logKind("ada_null_literal", kind);
+          logKind("ada_null_literal", lal_element_hash);
 
           res = sb::buildNullptrValExp();
           break;
@@ -1998,7 +2007,7 @@ namespace{
 
       case ada_membership_expr:                  // 4.4  Ada 2012
         {
-          logKind("ada_membership_expr", kind);
+          logKind("ada_membership_expr", lal_element_hash);
 
           //Get the op to tell if this is "in" or "not in"
           ada_base_entity lal_op;
@@ -2038,7 +2047,7 @@ namespace{
         {
           const bool isConv = (kind != ada_qual_expr);
 
-          logKind(isConv ? "A_Type_Conversion" : "ada_qual_expr", kind);
+          logKind(isConv ? "A_Type_Conversion" : "ada_qual_expr", lal_element_hash);
 
           //Get the id for the expression
           ada_base_entity lal_prefix;
@@ -2070,16 +2079,17 @@ namespace{
 
       case ada_allocator:   // 4.8
         {
-          logKind("ada_allocator", kind);
+          logKind("ada_allocator", lal_element_hash);
 
           //Get the expression
           ada_base_entity lal_expr;
           ada_allocator_f_type_or_expr(lal_element, &lal_expr);
           ada_node_kind_enum lal_expr_kind = ada_node_kind(&lal_expr);
+          int lal_expr_hash = hash_node(&lal_expr);
 
           //lal_expr can either be a qual_expr or a subtype_indication
           if(lal_expr_kind == ada_qual_expr){
-            logKind("An_Allocation_From_Qualified_Expression", lal_expr_kind);
+            logKind("An_Allocation_From_Qualified_Expression", lal_expr_hash);
 
             //Get the id for the expression
             ada_base_entity lal_prefix;
@@ -2100,7 +2110,7 @@ namespace{
 
             res = &mkNewExp(ty, &inilst);
           } else {
-            logKind("An_Allocation_From_Subtype", lal_expr_kind);
+            logKind("An_Allocation_From_Subtype", lal_expr_hash);
 
             SgType& ty = getDefinitionType(&lal_expr, ctx);
 
@@ -2112,7 +2122,7 @@ namespace{
 
       case ada_others_designator:
         {
-          logKind("ada_others_designator", kind);
+          logKind("ada_others_designator", lal_element_hash);
 
           res = &mkAdaOthersExp();
           break;
@@ -2120,7 +2130,7 @@ namespace{
 
       case ada_box_expr:                          // Ada 2005 4.3.1(4): 4.3.3(3:6)
         {
-          logKind("ada_box_expr", kind);
+          logKind("ada_box_expr", lal_element_hash);
 
           res = &mkAdaBoxExp();
           break;
@@ -2128,7 +2138,7 @@ namespace{
 
       case ada_if_expr:                          // Ada 2012
         {
-          logKind("ada_if_expr", kind);
+          logKind("ada_if_expr", lal_element_hash);
 
           res = &createIfExpr(lal_element, ctx);
           break;
@@ -2136,7 +2146,7 @@ namespace{
 
       case ada_target_name: //Ada 2022
         {
-          logKind("ada_target_name", kind);
+          logKind("ada_target_name", lal_element_hash);
 
           //Get the ada_identifier this node references, then call getExpr on that
           ada_base_entity lal_relative_name;
@@ -2155,7 +2165,7 @@ namespace{
 
       case ada_quantified_expr: //Ada 2012
         {
-          logKind("ada_quantified_expr", kind);
+          logKind("ada_quantified_expr", lal_element_hash);
           logFlaw() << "ada_quantified_expr has not been implemented!\n";
           res = sb::buildIntVal();
           break;
@@ -2183,7 +2193,6 @@ namespace{
 
       default:
         logFlaw() << "Unhandled expression: " << kind_name_string << std::endl;
-        logFlaw() << "  sloc: " << dot_ada_full_sloc(lal_element) << std::endl;
         res = sb::buildIntVal();
         //ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
@@ -2249,22 +2258,25 @@ namespace{
   getDiscreteRangeGeneric(ada_base_entity* lal_element, AstContext ctx)
   {
     ada_node_kind_enum kind = ada_node_kind(lal_element);
+    int lal_element_hash = hash_node(lal_element);
     SgExpression* res = nullptr;
 
     switch(kind)
     {
-      /*case A_Discrete_Subtype_Indication:         // 3.6.1(6), 3.2.2
+      case ada_dotted_name:         // 3.6.1(6), 3.2.2
         {
-          logKind("A_Discrete_Subtype_Indication", el.ID);
+          logKind("A_Discrete_Subtype_Indication", lal_element_hash);
 
-          SgType& ty = getDiscreteSubtypeID(range.Subtype_Mark, range.Subtype_Constraint, ctx);
+          ada_base_entity* lal_constraint = nullptr; //no constraint
+
+          SgType& ty = getDiscreteSubtype(lal_element, lal_constraint, ctx);
 
           res = &mkTypeExpression(ty);
           break;
-        }*/
+        }
       case ada_bin_op:    // 3.6.1, 3.5
         {
-          logKind("A_Discrete_Simple_Expression_Range", kind);
+          logKind("A_Discrete_Simple_Expression_Range", lal_element_hash);
 
           //Get the bounds
           ada_base_entity lal_lower_bound, lal_upper_bound;
@@ -2279,7 +2291,7 @@ namespace{
         }
       case ada_attribute_ref: //A_Discrete_Range_Attribute_Reference:  // 3.6.1, 3.5
         {
-          logKind("ada_attribute_ref", kind);
+          logKind("ada_attribute_ref", lal_element_hash);
 
           res = &getExpr(lal_element, ctx);
           break;
@@ -2323,13 +2335,14 @@ SgExpression&
 getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx)
 {
   ada_node_kind_enum kind = ada_node_kind(lal_element);
+  int lal_element_hash = hash_node(lal_element);
   SgExpression*      res = nullptr;
 
   switch(kind)
   {
     case ada_bin_op:
     {
-      logKind("A_Discrete_Range", kind);
+      logKind("A_Discrete_Range", lal_element_hash);
 
       //Get the bounds
       ada_base_entity lal_lower_bound, lal_upper_bound;
@@ -2344,7 +2357,7 @@ getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx)
     }
     case ada_identifier: //TODO Does this only correspond to A_Discrete_Subtype_Definition?
     {
-      logKind("A_Discrete_Subtype_Definition", kind);
+      logKind("A_Discrete_Subtype_Definition", lal_element_hash);
 
       ada_base_entity* lal_constraint = nullptr; //identifiers don't have constraints
       SgType& ty = getDiscreteSubtype(lal_element, lal_constraint, ctx);
@@ -2356,7 +2369,7 @@ getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx)
     case ada_constrained_subtype_indication:
     case ada_discrete_subtype_indication:
     {
-      logKind("A_Discrete_Subtype_Indication?", kind);
+      logKind("A_Discrete_Subtype_Indication?", lal_element_hash);
 
       ada_base_entity lal_identifier;
       ada_subtype_indication_f_name(lal_element, &lal_identifier);
@@ -2376,8 +2389,15 @@ getDefinitionExpr(ada_base_entity* lal_element, AstContext ctx)
     }
     case ada_others_designator:
     {
-      logKind("ada_others_designator", kind);
+      logKind("ada_others_designator", lal_element_hash);
       res = &mkAdaOthersExp();
+      break;
+    }
+    case ada_dotted_name:
+    {
+      logKind("ada_dotted_name", lal_element_hash);
+      //Get the relative name
+      res = &getDiscreteRangeGeneric(lal_element, ctx);
       break;
     }
     /*case A_Constraint:
@@ -2508,7 +2528,7 @@ queryCorrespondingAstNode(ada_base_entity* lal_identifier)
   }
 
   if(ada_node_is_null(&corresponding_decl)){
-    logError() << "Both p_first_corresponding_decl & p_referenced_decl are null for ada_identifier"
+    logError() << "Both p_first_corresponding_decl & p_referenced_decl are null for ada_identifier "
               << name << " with hash " << hash_node(lal_identifier) << "!\n";
     return nullptr;
   }

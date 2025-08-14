@@ -367,7 +367,6 @@ namespace {
     if(kind != ada_pragma_node){
       logError() << "createPragma_common called on node of kind " << kind << " (not an ada_pragma_node)!\n";
     }
-    logKind("ada_pragma_node", kind);
 
     if(false){ //TODO Test p_associated_decls more to see if it might be of use in placing pragmas
       ada_ada_node_array associated_decls;
@@ -383,6 +382,8 @@ namespace {
 
     //Pragma nodes don't use defining_name, so just hash the ada_pragma_node itself?
     int hash = hash_node(lal_element);
+
+    logKind("ada_pragma_node", hash);
 
     //Get the name
     ada_base_entity lal_id;
@@ -631,6 +632,7 @@ namespace {
   setTypeModifiers(SgDeclarationStatement& dcl, ada_base_entity* lal_element)
   {
     ada_node_kind_enum kind = ada_node_kind(lal_element);
+    int lal_element_hash = hash_node(lal_element);
     switch(kind)
     {
       /*case A_Private_Type_Definition:
@@ -642,7 +644,7 @@ namespace {
         }*/
       case ada_derived_type_def:
         {
-          logKind("A_Private_Extension_Definition", kind);
+          logKind("A_Private_Extension_Definition", lal_element_hash);
           ada_base_entity lal_has_abstract, lal_has_limited;
 
           ada_derived_type_def_f_has_abstract(lal_element, &lal_has_abstract);
@@ -658,7 +660,7 @@ namespace {
         }
      case ada_private_type_def:
        {
-          logKind("ada_private_type_def", kind);
+          logKind("ada_private_type_def", lal_element_hash);
           ada_base_entity lal_has_abstract, lal_has_limited, lal_has_tagged;
 
           ada_private_type_def_f_has_abstract(lal_element, &lal_has_abstract);
@@ -678,7 +680,7 @@ namespace {
        }
      case ada_record_type_def:
        {
-          logKind("ada_record_type_def", kind);
+          logKind("ada_record_type_def", lal_element_hash);
           ada_base_entity lal_has_abstract, lal_has_limited, lal_has_tagged;
 
           ada_record_type_def_f_has_abstract(lal_element, &lal_has_abstract);
@@ -920,7 +922,7 @@ namespace {
 
     if(!ada_node_is_null(lal_element) && kind == ada_known_discriminant_part)
     {
-      logKind("ada_known_discriminant_part", kind);
+      logKind("ada_known_discriminant_part", hash_node(lal_element));
       //Get the list of discrs
       ada_base_entity lal_discr_list;
       ada_known_discriminant_part_f_discr_specs(lal_element, &lal_discr_list);
@@ -1153,27 +1155,30 @@ namespace {
     ada_node_kind_enum kind;
     kind = ada_node_kind(lal_mode);
 
+    //Get the hash
+    int lal_mode_hash = hash_node(lal_mode);
+
     SgTypeModifier res;
 
     switch(kind)
     {
       case ada_mode_default:
-        Libadalang_ROSE_Translation::logKind("ada_mode_default", kind);
+        Libadalang_ROSE_Translation::logKind("ada_mode_default", lal_mode_hash);
         res.setDefault();
        break;
 
       case ada_mode_in:
-        Libadalang_ROSE_Translation::logKind("ada_mode_in", kind);
+        Libadalang_ROSE_Translation::logKind("ada_mode_in", lal_mode_hash);
         res.setIntent_in();
         break;
 
       case ada_mode_out:
-        Libadalang_ROSE_Translation::logKind("ada_mode_out", kind);
+        Libadalang_ROSE_Translation::logKind("ada_mode_out", lal_mode_hash);
         res.setIntent_out();
         break;
 
       case ada_mode_in_out:
-        Libadalang_ROSE_Translation::logKind("ada_mode_in_out", kind);
+        Libadalang_ROSE_Translation::logKind("ada_mode_in_out", lal_mode_hash);
         res.setIntent_inout();
         break;
 
@@ -1305,8 +1310,8 @@ namespace {
 
         if(!ada_node_is_null(lal_element))
         {
-          ada_node_kind_enum kind = ada_node_kind(lal_element);
-          logKind("ada_entry_index_spec", kind);
+          int lal_element_hash = hash_node(lal_element);
+          logKind("ada_entry_index_spec", lal_element_hash);
 
           //Get the subtype
           ada_base_entity lal_subtype;
@@ -1507,8 +1512,8 @@ namespace {
   std::pair<SgAdaTaskSpec*, DeferredPragmaBodyCompletion>
   getTaskSpec(ada_base_entity* lal_element, AstContext ctx)
   {
-    ada_node_kind_enum kind = ada_node_kind(lal_element);
-    logKind("A_Task_Definition", kind);
+    int lal_element_hash = hash_node(lal_element);
+    logKind("A_Task_Definition", lal_element_hash);
 
     //Task_Definition_Struct* tasknode = &def.The_Union.The_Task_Definition;
     SgAdaTaskSpec&          sgnode   = mkAdaTaskSpec();
@@ -1593,7 +1598,7 @@ namespace {
     if(kind != ada_protected_def){
       logFlaw() << "getProtectedSpec called with kind = " << kind << std::endl;
     } else {
-      logKind("ada_protected_def", kind);
+      logKind("ada_protected_def", hash_node(lal_element));
     }
 
     //Get the private status
@@ -1912,19 +1917,19 @@ namespace {
   /// Returns the hash for the label referenced by \ref lal_element
   int getLabelRef(ada_base_entity* lal_element, AstContext ctx)
   {
-    logTrace() << "In getLabelRef()\n";
     ada_node_kind_enum kind = ada_node_kind(lal_element);
+    int lal_element_hash = hash_node(lal_element);
 
     if(kind == ada_dotted_name)
     {
-      logKind("ada_dotted_name", kind);
+      logKind("ada_dotted_name", lal_element_hash);
       //Get the suffix
       ada_base_entity lal_suffix;
       ada_dotted_name_f_suffix(lal_element, &lal_suffix);
       return getLabelRef(&lal_suffix, ctx);
     }
 
-    logKind("ada_identifier", kind);
+    logKind("ada_identifier", lal_element_hash);
     ada_base_entity lal_label_decl;
     ada_expr_p_first_corresponding_decl(lal_element, &lal_label_decl);
     if(ada_node_is_null(&lal_label_decl)){
@@ -2072,12 +2077,15 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
       return;
     }
 
+    //Get the hash
+    int lal_stmt_hash = hash_node(lal_stmt);
+
     SgStatement*            assocstmt = nullptr;
 
     switch(kind){
       case ada_null_stmt:                    // 5.1
         {
-          logKind("ada_null_stmt", kind);
+          logKind("ada_null_stmt", lal_stmt_hash);
 
           SgNullStatement& sgnode = mkNullStatement();
 
@@ -2088,7 +2096,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_assign_stmt:             // 5.2
         {
-          logKind("ada_assign_stmt", kind);
+          logKind("ada_assign_stmt", lal_stmt_hash);
 
           //Get the destination & expr to assign
           ada_base_entity lal_dest, lal_expr;
@@ -2107,7 +2115,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_if_stmt:                     // 5.3
         {
-          logKind("ada_if_stmt", kind);
+          logKind("ada_if_stmt", lal_stmt_hash);
 
           SgIfStmt&   sgnode = mkIfStmt();
           SgIfStmt*   ifStmt = &sgnode;
@@ -2153,7 +2161,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_case_stmt:                    // 5.4
         {
-          logKind("ada_case_stmt", kind);
+          logKind("ada_case_stmt", lal_stmt_hash);
 
           //Get the case_expr
           ada_base_entity lal_case_expr;
@@ -2184,7 +2192,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_named_stmt:
         {
-          logKind("ada_named_stmt", kind);
+          logKind("ada_named_stmt", lal_stmt_hash);
           //Get the name
           ada_base_entity lal_decl;
           ada_named_stmt_f_decl(lal_stmt, &lal_decl);
@@ -2203,7 +2211,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_while_loop_stmt:              // 5.5
         {
-          logKind("ada_while_loop_stmt", kind);
+          logKind("ada_while_loop_stmt", lal_stmt_hash);
 
           //Get the spec
           ada_base_entity lal_spec;
@@ -2236,7 +2244,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_loop_stmt:                    // 5.5
         {
-          logKind("ada_loop_stmt", kind);
+          logKind("ada_loop_stmt", lal_stmt_hash);
 
           SgBasicBlock&   block    = mkBasicBlock();
           SgAdaLoopStmt&  sgnode   = mkAdaLoopStmt(block);
@@ -2264,7 +2272,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_for_loop_stmt:                // 5.5
         {
-          logKind("ada_for_loop_stmt", kind);
+          logKind("ada_for_loop_stmt", lal_stmt_hash);
 
           SgBasicBlock&          block  = mkBasicBlock();
           SgForStatement&        sgnode = mkForStatement(block);
@@ -2321,7 +2329,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_label:
         {
-          logKind("ada_label", kind);
+          logKind("ada_label", lal_stmt_hash);
 
           //Make a null stmt for this label to attach to
           SgNullStatement& sgnode = mkNullStatement();
@@ -2350,7 +2358,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
       case ada_begin_block:
       case ada_decl_block:                   // 5.6
         {
-          logKind(kind == ada_decl_block ? "ada_decl_block" : "ada_begin_block", kind);
+          logKind(kind == ada_decl_block ? "ada_decl_block" : "ada_begin_block", lal_stmt_hash);
 
           SgBasicBlock& sgnode = mkBasicBlock();
 
@@ -2408,7 +2416,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_exit_stmt:                   // 5.7
         {
-          logKind("ada_exit_stmt", kind);
+          logKind("ada_exit_stmt", lal_stmt_hash);
 
           //Determine the loop we are trying to exit
           ada_base_entity lal_loop_name;
@@ -2448,7 +2456,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_goto_stmt:                    // 5.8
         {
-          logKind("ada_goto_stmt", kind);
+          logKind("ada_goto_stmt", lal_stmt_hash);
           SgGotoStatement& sgnode = SG_DEREF( sb::buildGotoStatement() );
 
           //Get the label we will goto
@@ -2465,7 +2473,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
       //case An_Entry_Call_Statement:             // 9.5.3
       case ada_call_stmt:          // 6.4
         {
-          logKind("ada_call_stmt", kind);
+          logKind("ada_call_stmt", lal_stmt_hash);
 
           //Get the call_expr node
           ada_base_entity lal_call_expr;
@@ -2529,7 +2537,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_return_stmt:
         {
-          logKind("ada_return_stmt", kind);
+          logKind("ada_return_stmt", lal_stmt_hash);
 
           //Get the expr
           ada_base_entity return_expr;
@@ -2544,7 +2552,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
       case ada_accept_stmt:                 // 9.5.2
       case ada_accept_stmt_with_stmts:
         {
-          logKind("ada_accept_stmt", kind);
+          logKind("ada_accept_stmt", lal_stmt_hash);
           //Get the name
           ada_base_entity lal_identifier;
           ada_accept_stmt_f_name(lal_stmt, &lal_identifier);
@@ -2622,7 +2630,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_requeue_stmt:                 // 9.5.4
         {
-          logKind("ada_requeue_stmt", kind);
+          logKind("ada_requeue_stmt", lal_stmt_hash);
 
           //Get the abort status for this stmt
           ada_base_entity lal_has_abort;
@@ -2643,7 +2651,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_delay_stmt:             // 9.6
         {
-          logKind("ada_delay_stmt", kind);
+          logKind("ada_delay_stmt", lal_stmt_hash);
 
           //Get the until status of this node
           ada_base_entity lal_has_until;
@@ -2664,7 +2672,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_raise_stmt:                   // 11.3
         {
-          logKind("ada_raise_stmt", kind);
+          logKind("ada_raise_stmt", lal_stmt_hash);
           //Get the exception
           ada_base_entity lal_exception;
           ada_raise_stmt_f_exception_name(lal_stmt, &lal_exception);
@@ -2685,7 +2693,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_select_stmt:    // 9.7.4
         {
-          logKind("ada_select_stmt", kind);
+          logKind("ada_select_stmt", lal_stmt_hash);
 
           //Get the various paths that can be taken
           ada_base_entity lal_guard_list, lal_else_list, lal_abort_list;
@@ -2727,7 +2735,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_abort_stmt:                  // 9.8
         {
-          logKind("ada_abort_stmt", kind);
+          logKind("ada_abort_stmt", lal_stmt_hash);
 
           //Get the list of tasks to abort
           ada_base_entity lal_name_list;
@@ -2752,7 +2760,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         }
       case ada_terminate_alternative:   // 9.7.1
         {
-          logKind("ada_terminate_alternative", kind);
+          logKind("ada_terminate_alternative", lal_stmt_hash);
 
           SgAdaTerminateStmt& sgnode = mkTerminateStmt();
 
@@ -2807,7 +2815,7 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
         logWarn() << "handleExceptionHandler given " << kind << std::endl;
     }
 
-    logKind("ada_exception_handler", kind);
+    logKind("ada_exception_handler", hash_node(lal_element));
 
     //Get the name for this handler
     ada_base_entity lal_name;
@@ -2940,13 +2948,16 @@ SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, st
   //Get the kind of this node
   ada_node_kind_enum kind = ada_node_kind(lal_element);
 
+  //Get the hash
+  int lal_element_hash = hash_node(lal_element);
+
   SgDeclarationStatement* instDecl = nullptr;
 
   switch(kind)
   {
     case ada_generic_subp_decl:
     {
-      logKind("ada_generic_subp_decl", kind);
+      logKind("ada_generic_subp_decl", lal_element_hash);
       //Treat this node as an ada_subp_decl
 
       //Get the subp spec node & whether this decl is overriding another
@@ -3009,7 +3020,7 @@ SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, st
     }
     case ada_generic_package_decl:
     {
-      logKind("ada_generic_package_decl", kind);
+      logKind("ada_generic_package_decl", lal_element_hash);
       //Treat this node as an ada_package_decl
 
       SgAdaPackageSpecDecl& sgnode       = mkAdaPackageSpecDecl(ident, SG_DEREF(parent_scope));
@@ -3101,9 +3112,6 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 {
   using PragmaContainer = AstContext::PragmaContainer;
 
-  //ADA_ASSERT (elem.Element_Kind == A_Declaration);
-  //logKind("A_Declaration", elem.ID);
-
   SgDeclarationStatement* assocdecl = nullptr;
 
   //Get the kind of this node
@@ -3114,6 +3122,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
   std::string kind_name_string = kind_name.string_value();
   logTrace()   << "handleDeclaration called on a " << kind_name_string << std::endl;
 
+  //Get the hash
+  int lal_element_hash = hash_node(lal_element);
+
   //std::vector<Element_ID> pragmaVector;
 
   //std::copy(pragmaRange.first, pragmaRange.second, std::back_inserter(pragmaVector));
@@ -3123,7 +3134,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
     case ada_package_decl:                    // 7.1(2)
       {
-        logKind("ada_package_decl", kind);
+        logKind("ada_package_decl", lal_element_hash);
 
         //Get the name for this package
         ada_base_entity lal_defining_name, lal_identifier;
@@ -3203,7 +3214,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_package_body:               // 7.2(2)
       {
-        logKind("ada_package_body", kind);
+        logKind("ada_package_body", lal_element_hash);
 
         //Get the defining name for this package
         ada_base_entity lal_defining_name;
@@ -3272,7 +3283,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_generic_package_decl:            // 12.1(2)
       {
-        logKind("ada_generic_package_decl", kind);
+        logKind("ada_generic_package_decl", lal_element_hash);
 
         //Get the name of this package
         ada_base_entity lal_package_internal, lal_defining_name, lal_identifier;
@@ -3379,7 +3390,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         logKind( isFunc
                     ? "A_Generic_Function_Declaration"
                     : "A_Generic_Procedure_Declaration"
-               , kind
+               , lal_element_hash
                );
 
         //Get the name of this decl
@@ -3458,7 +3469,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
     case ada_abstract_subp_decl:
     //case A_Procedure_Declaration:                  // 6.1(4)   -> Trait_Kinds
       {
-        logKind("ada_subp_decl?", kind);
+        logKind("ada_subp_decl?", lal_element_hash);
 
         //Get the subp spec node & whether this decl is overriding another
         ada_base_entity subp_spec;
@@ -3497,7 +3508,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         SgType&                rettype = isFunc ? getDeclType(&subp_returns, ctx)
                                                 : mkTypeVoid();
 
-        logKind(isFunc ? "A_Function_Declaration" : "A_Procedure_Declaration", kind);
+        logKind(isFunc ? "A_Function_Declaration" : "A_Procedure_Declaration", lal_element_hash);
 
         SgScopeStatement&      logicalScope = SG_DEREF(parent_scope);
         const bool             renamingAsBody = false; //definedByRenamingID(decl.Corresponding_Body, ctx); //TODO Can lal do this?
@@ -3524,7 +3535,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
     case ada_null_subp_decl:             // 6.7
     case ada_subp_body:              // 6.3(2)
       {
-        logKind("ada_subp_body?", kind);
+        logKind("ada_subp_body?", lal_element_hash);
 
         //Get the subp spec node
         ada_base_entity subp_spec;
@@ -3598,7 +3609,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_generic_formal_obj_decl: //12.4
       {
-        logKind("ada_generic_formal_obj_decl", kind);
+        logKind("ada_generic_formal_obj_decl", lal_element_hash);
 
         ada_base_entity lal_object_decl;
         ada_generic_formal_f_decl(lal_element, &lal_object_decl);
@@ -3623,7 +3634,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_generic_formal_type_decl:                // 12.5(2)
       {
-        logKind("ada_generic_formal_type_decl", kind);
+        logKind("ada_generic_formal_type_decl", lal_element_hash);
 
         //Get the name for this type
         ada_base_entity lal_type_decl, lal_defining_name, lal_identifier;
@@ -3670,7 +3681,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_generic_formal_package:             // 12.7(2)
       {
-        logKind("ada_generic_formal_package", kind);
+        logKind("ada_generic_formal_package", lal_element_hash);
 
         //Get the ada_generic_package_instantiation
         ada_base_entity lal_generic_package_instantiation;
@@ -3735,7 +3746,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         const bool             isFormalFuncDecl  = (lal_subp_type_kind == ada_subp_kind_function);
 
         logKind( isFormalFuncDecl ? "A_Formal_Function_Declaration" : "A_Formal_Procedure_Declaration"
-               , kind
+               , lal_element_hash
                );
 
         //Get the name of this decl
@@ -3768,19 +3779,20 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_subtype_decl:                    // 3.2.2(2)
       {
-        logKind("ada_subtype_decl", kind);
+        logKind("ada_subtype_decl", lal_element_hash);
 
         //Get the name
-        ada_base_entity lal_identifier;
-        ada_base_type_decl_f_name(lal_element, &lal_identifier);
-        ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+        ada_base_entity lal_defining_name, lal_identifier;
+        ada_base_type_decl_f_name(lal_element, &lal_defining_name);
+        ada_defining_name_f_name(&lal_defining_name, &lal_identifier);
         std::string ident = getFullName(&lal_identifier);
 
         //Get the subtype indication
         ada_base_entity lal_subtype_indication;
         ada_subtype_decl_f_subtype(lal_element, &lal_subtype_indication);
 
-        int                   hash = hash_node(lal_element);
+        int                   decl_hash = hash_node(lal_element);
+        int                   name_hash = hash_node(&lal_defining_name);
         const bool            forceSubtype = true;
         SgType&               subtype = getDefinitionType(&lal_subtype_indication, ctx, forceSubtype);
         SgScopeStatement&     scope   = ctx.scope();
@@ -3789,14 +3801,15 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, lal_element, ctx);
         ctx.appendStatement(sgnode);
-        recordNode(libadalangTypes(), hash, sgnode);
+        recordNode(libadalangTypes(), decl_hash, sgnode);
+        recordNode(libadalangTypes(), name_hash, sgnode);
 
         assocdecl = &sgnode;
         break;
       }
     case ada_number_decl:            // 3.3.2(2), 3.5.6(2)
       {
-        logKind("ada_number_decl", kind);
+        logKind("ada_number_decl", lal_element_hash);
 
         //Get the expr to see what kind it is (int, real, etc.)
         ada_base_entity lal_expr;
@@ -3810,7 +3823,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_protected_body:             // 9.4(7)
       {
-        logKind("ada_protected_body", kind);
+        logKind("ada_protected_body", lal_element_hash);
 
         //Get the defining name of the decl
         ada_base_entity lal_defining_name;
@@ -3860,7 +3873,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_task_body:                  // 9.1(6)
       {
-        logKind("ada_task_body", kind);
+        logKind("ada_task_body", lal_element_hash);
 
         //Get the name
         ada_base_entity lal_defining_name, lal_identifier;
@@ -3925,7 +3938,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_entry_body:                // 9.5.2(5)
       {
-        logKind("ada_entry_body", kind);
+        logKind("ada_entry_body", lal_element_hash);
 
         //Get the defining name for the ada_entry_decl
         ada_base_entity lal_decl_name;
@@ -4017,7 +4030,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_base_entity subp_returns;
         ada_subp_spec_f_subp_returns(&subp_spec, &subp_returns);
 
-        logKind(isFunc ? "A_Function_Body_Stub" : "A_Procedure_Body_Stub", kind);
+        logKind(isFunc ? "A_Function_Body_Stub" : "A_Procedure_Body_Stub", lal_element_hash);
 
         //Get the name
         ada_base_entity lal_defining_name, lal_identifier;
@@ -4057,7 +4070,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_task_body_stub:                         // 10.1.3(5)
       {
-        logKind("ada_task_body_stub", kind);
+        logKind("ada_task_body_stub", lal_element_hash);
 
         //Get the name for this decl
         ada_base_entity lal_defining_name, lal_identifier;
@@ -4089,7 +4102,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_exception_decl:                 // 11.1(2)
       {
-        logKind("ada_exception_decl", kind);
+        logKind("ada_exception_decl", lal_element_hash);
 
         //Get a list of names
         ada_base_entity lal_excp_names;
@@ -4139,7 +4152,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_component_decl:                  // 3.8(6)
       {
-        logKind("ada_component_decl", kind);
+        logKind("ada_component_decl", lal_element_hash);
 
         handleVarCstDecl(lal_element, ctx, isPrivate, tyIdentity);
 
@@ -4149,7 +4162,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
     case ada_generic_package_renaming_decl:   // 8.5.3(2)
     case ada_package_renaming_decl:           // 8.5.3(2)
       {
-        logKind("ada_generic_package_renaming_decl?", kind);
+        logKind("ada_generic_package_renaming_decl?", lal_element_hash);
 
         //Get the name for this decl
         ada_base_entity lal_defining_name, lal_identifier;
@@ -4171,13 +4184,20 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
             ada_renaming_clause_f_renamed_object(&lal_renames, &lal_renames);
         }
 
+        int check_package_return = 1;
         if(kind == ada_generic_package_renaming_decl){
-            ada_expr_p_first_corresponding_decl(&lal_renames, &lal_renamed_object);
+            check_package_return = ada_expr_p_first_corresponding_decl(&lal_renames, &lal_renamed_object);
         } else {
-            ada_package_renaming_decl_p_final_renamed_package(lal_element, &lal_renamed_object);
+            check_package_return = ada_package_renaming_decl_p_final_renamed_package(lal_element, &lal_renamed_object);
         }
 
-        if(ada_node_is_null(&lal_renamed_object)) {
+        //LAL_REP_ISSUE: Sometimes, ada_package_renaming_decl and the ada_identifier in its ada_renaming_clause
+        // will not link to a real node. The package will exist, other nodes will previous have had p_referenced_decl
+        // or p_first_corresponding_decl correctly point to it, but this node & its children will point to null nodes instead.
+        // Moreover, lal-dot-tree will display the fields as pointing to the package, but ROSE will not match this.
+        // This implies there is a difference in how Libadalang is configured/fed info between lal-dot-tree and ROSE,
+        // but I have no idea what it might be at the moment. Ex: c393ao6
+        if(check_package_return == 0 || ada_node_is_null(&lal_renamed_object)) {
           logWarn() << "skipping unknown package renaming: " << ident << std::endl;
           return;
         }
@@ -4208,7 +4228,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_subp_renaming_decl:         // 8.5.4(2)
       {
-        logKind("ada_subp_renaming_decl", kind);
+        logKind("ada_subp_renaming_decl", lal_element_hash);
 
         //Get the name of this decl
         ada_base_entity lal_subp_spec, lal_defining_name, lal_identifier;
@@ -4283,7 +4303,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       {
         // \todo consider folding the code into generic_package_renaming
 
-        logKind("ada_generic_subp_renaming_decl", kind);
+        logKind("ada_generic_subp_renaming_decl", lal_element_hash);
 
         //Get the name of this decl
         ada_base_entity lal_defining_name, lal_identifier;
@@ -4315,9 +4335,9 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       {
         // generic instantiation
         if(kind == ada_generic_package_instantiation){
-          logKind("ada_generic_package_instantiation", kind);
+          logKind("ada_generic_package_instantiation", lal_element_hash);
         } else {
-          logKind("ada_generic_subp_instantiation", kind);
+          logKind("ada_generic_subp_instantiation", lal_element_hash);
         }
 
         //Get the name for this instantiation
@@ -4436,7 +4456,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_for_loop_spec:           // 5.5(4)   -> Trait_Kinds
       {
-        logKind("ada_for_loop_spec", kind);
+        logKind("ada_for_loop_spec", lal_element_hash);
 
         //Get the var decl
         ada_base_entity lal_for_var;
@@ -4471,7 +4491,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_protected_type_decl:             // 9.4(2)
       {
-        logKind("ada_protected_type_decl", kind);
+        logKind("ada_protected_type_decl", lal_element_hash);
 
         //Get the name for this decl
         ada_base_entity lal_defining_name, lal_identifier;
@@ -4527,7 +4547,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_task_type_decl:                  // 9.1(2)
       {
-        logKind("ada_task_type_decl", kind);
+        logKind("ada_task_type_decl", lal_element_hash);
 
         auto                        spec    = getTaskSpec_opt(lal_element, ctx);
 
@@ -4588,7 +4608,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_single_protected_decl:           // 3.3.1(2):9.4(2)
       {
-        logKind("ada_single_protected_decl", kind);
+        logKind("ada_single_protected_decl", lal_element_hash);
 
         //Get the name of this decl
         ada_base_entity lal_defining_name, lal_identifier;
@@ -4610,7 +4630,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_single_task_decl:                // 3.3.1(2):9.1(3)
       {
-        logKind("ada_single_task_decl", kind);
+        logKind("ada_single_task_decl", lal_element_hash);
 
         //Get the name for this task
         ada_base_entity lal_defining_name, lal_identifier;
@@ -4635,7 +4655,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_entry_decl:                     // 9.5.2(2)
       {
-        logKind("ada_entry_decl", kind);
+        logKind("ada_entry_decl", lal_element_hash);
 
         //Get the name
         ada_base_entity entry_spec;
@@ -4671,7 +4691,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_object_decl:
       {
-        logKind("ada_object_decl", kind);
+        logKind("ada_object_decl", lal_element_hash);
 
         //Get the renaming clause, if it exists
         ada_base_entity lal_renaming_clause;
@@ -4730,7 +4750,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         logKind( kind == ada_incomplete_type_decl
                         ? "ada_incomplete_type_decl"
                         : "ada_incomplete_tagged_type_decl"
-               , kind
+               , lal_element_hash
                );
 
         //Get the full definition of this type from later on, if it exists
@@ -4766,7 +4786,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
       }
     case ada_type_decl:            //3.2.1(3)
       {
-        logKind("ada_type_decl", kind);
+        logKind("ada_type_decl", lal_element_hash);
         //Get the type definition
         ada_base_entity lal_type_def;
         ada_type_decl_f_type_def(lal_element, &lal_type_def);
@@ -5059,7 +5079,7 @@ SgExpression& createEnumValue(ada_base_entity* lal_element, AstContext ctx){
     logError() << "createEnumValue given node kind " << kind << " (not an ada_aggregate_assoc)!\n";
     return mkNullExpression();
   }
-  logKind("ada_aggregate_assoc", kind);
+  logKind("ada_aggregate_assoc", hash_node(lal_element));
 
   //Get the expr for this assoc
   ada_base_entity lal_expr;
@@ -5093,7 +5113,7 @@ void createComponentClause(ada_base_entity* lal_element, AstContext ctx){
     return;
   }
 
-  logKind("ada_component_clause", kind);
+  logKind("ada_component_clause", hash_node(lal_element));
 
   //Get the name for this clause
   ada_base_entity lal_name;
@@ -5134,10 +5154,13 @@ void handleClause(ada_base_entity* lal_element, AstContext ctx)
   std::string kind_name_string = kind_name.string_value();
   logTrace()   << "handleClause called on a " << kind_name_string << std::endl;
 
+  //Get the hash
+  int lal_element_hash = hash_node(lal_element);
+
   switch(kind){
     case ada_with_clause:                // 10.1.2
       {
-        logKind("ada_with_clause", kind);
+        logKind("ada_with_clause", lal_element_hash);
 
         //Get the list of names for this with clause
         ada_base_entity lal_name_list;
@@ -5170,7 +5193,7 @@ void handleClause(ada_base_entity* lal_element, AstContext ctx)
       {
         const bool typeClause = (kind == ada_use_type_clause);
 
-        logKind(typeClause ? "ada_use_type_clause" : "ada_use_package_clause", kind);
+        logKind(typeClause ? "ada_use_type_clause" : "ada_use_package_clause", lal_element_hash);
 
         //Get the list of names for this clause
         ada_base_entity lal_name_list;
@@ -5195,7 +5218,7 @@ void handleClause(ada_base_entity* lal_element, AstContext ctx)
       {
         using SageRecordClause = SgAdaRepresentationClause;
 
-        logKind("ada_record_rep_clause", kind);
+        logKind("ada_record_rep_clause", lal_element_hash);
 
         //Get the name of this clause
         ada_base_entity lal_name;
@@ -5234,7 +5257,7 @@ void handleClause(ada_base_entity* lal_element, AstContext ctx)
       {
         using SageRecordClause = SgAdaRepresentationClause;
 
-        logKind("ada_at_clause", kind);
+        logKind("ada_at_clause", lal_element_hash);
 
         //Get the name for this clause
         ada_base_entity lal_name;
@@ -5258,7 +5281,7 @@ void handleClause(ada_base_entity* lal_element, AstContext ctx)
       }
     case ada_attribute_def_clause:           // 13.3
       {
-        logKind("ada_attribute_def_clause", kind);
+        logKind("ada_attribute_def_clause", lal_element_hash);
 
         //Get the attribute & expr for this clause
         ada_base_entity lal_attribute, lal_expr;
@@ -5276,7 +5299,7 @@ void handleClause(ada_base_entity* lal_element, AstContext ctx)
       }
     case ada_enum_rep_clause:     // 13.4
       {
-        logKind("ada_enum_rep_clause", kind);
+        logKind("ada_enum_rep_clause", lal_element_hash);
 
         //Get the name for this clause
         ada_base_entity lal_name;
@@ -5338,7 +5361,7 @@ void handleVariant(ada_base_entity* lal_element, AstContext ctx)
 
 void handleDefinition(ada_base_entity* lal_element, AstContext ctx){
   ada_node_kind_enum kind = ada_node_kind(lal_element);
-  logKind("A_Definition", kind);
+  logKind("A_Definition", hash_node(lal_element));
 
   // many definitions are handled else where
   // here we want to convert the rest that can appear in declarative context

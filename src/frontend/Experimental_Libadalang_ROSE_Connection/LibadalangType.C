@@ -143,8 +143,8 @@ namespace
   /// Handles a discriminant association, placing each name into \ref elems
   void createDiscriminantAssoc(ada_base_entity* lal_element, SgExpressionPtrList& elems, AstContext ctx)
   {
-    ada_node_kind_enum kind = ada_node_kind(lal_element);
-    logKind("ada_discriminant_assoc", kind);
+    int lal_element_hash = hash_node(lal_element);
+    logKind("ada_discriminant_assoc", lal_element_hash);
 
     //Get the list of names
     ada_base_entity lal_name_list;
@@ -388,7 +388,9 @@ namespace
         ada_node_kind_enum lal_has_constant_kind = ada_node_kind(&lal_has_constant);
         const bool isConstant = (lal_has_constant_kind == ada_constant_present);
 
-        logKind(isConstant ? "An_Anonymous_Access_To_Constant" : "An_Anonymous_Access_To_Variable", lal_type_access_kind);
+        int lal_type_access_hash = hash_node(&lal_type_access);
+
+        logKind(isConstant ? "An_Anonymous_Access_To_Constant" : "An_Anonymous_Access_To_Variable", lal_type_access_hash);
 
         //Get the not null state
         ada_base_entity lal_has_not_null;
@@ -459,16 +461,19 @@ namespace
     //ADA_ASSERT(elem.Element_Kind == A_Definition);
 
     //Get the kind of this node
-    ada_node_kind_enum kind;
-    kind = ada_node_kind(lal_def);
+    ada_node_kind_enum kind = ada_node_kind(lal_def);
+
+    int lal_def_hash = hash_node(lal_def);
 
     SgType*            res = nullptr;
 
     switch(kind)
     {
       case ada_subtype_indication:
+      case ada_constrained_subtype_indication:
+      case ada_discrete_subtype_indication:
         {
-          logKind("ada_subtype_indication", kind);
+          logKind("ada_subtype_indication", lal_def_hash);
 
           res = &getDeclType(lal_def, ctx);
 
@@ -495,7 +500,7 @@ namespace
         }
       case ada_component_def:
         {
-          logKind("ada_component_def", kind);
+          logKind("ada_component_def", lal_def_hash);
 
           //Get the type expr
           ada_base_entity lal_type_expr;
@@ -516,14 +521,14 @@ namespace
         }
       case ada_anonymous_type: //TODO Does this node match multiple asis nodes?
         {
-          logKind("ada_anonymous_type", kind);
+          logKind("ada_anonymous_type", lal_def_hash);
           res = &getAnonymousAccessType(lal_def, ctx);
 
           break;
         }
       case ada_bin_op:
         {
-          logKind("ada_bin_op (range)", kind);
+          logKind("ada_bin_op (range)", lal_def_hash);
 
           //Get the upper and lower bounds
           ada_base_entity lal_upper, lal_lower;
@@ -575,7 +580,7 @@ namespace
     ada_base_entity lal_type_def;
     ada_type_decl_f_type_def(lal_element, &lal_type_def);
     ada_node_kind_enum kind = ada_node_kind(&lal_type_def);
-    logKind("A_Formal_Type_Definition", kind);
+    int lal_type_def_hash = hash_node(&lal_type_def);
 
     SgAdaFormalTypeDecl&           sgnode = mkAdaFormalTypeDecl(name, ctx.scope());
     FormalTypeData                 res{&lal_type_def, &sgnode};
@@ -587,7 +592,7 @@ namespace
       case ada_private_type_def:         // 12.5.1(2)   -> Trait_Kinds
       //case A_Formal_Tagged_Private_Type_Definition:  // 12.5.1(2)   -> Trait_Kinds
         {
-          logKind("ada_private_type_def", kind);
+          logKind("ada_private_type_def", lal_type_def_hash);
 
           //Get the abstract, tagged, & limited status
           ada_base_entity lal_has_abstract, lal_has_tagged, lal_has_limited;
@@ -612,7 +617,7 @@ namespace
         }
       case ada_derived_type_def:         // 12.5.1(3)   -> Trait_Kinds
         {
-          logKind("ada_derived_type_def", kind);
+          logKind("ada_derived_type_def", lal_type_def_hash);
 
           //Get the abstract & limited status
           ada_base_entity lal_has_abstract, lal_has_limited;
@@ -638,49 +643,49 @@ namespace
         }
       case ada_type_access_def:          // 3.10(3),3.10(5)
         {
-          logKind("ada_type_access_def", kind);
+          logKind("ada_type_access_def", lal_type_def_hash);
           formalBaseType = &getAccessType(&lal_type_def, ctx);
 
           break;
         }
       case ada_signed_int_type_def:  // 12.5.2(3)
         {
-          logKind("ada_signed_int_type_def", kind);
+          logKind("ada_signed_int_type_def", lal_type_def_hash);
           formalBaseType = &mkIntegralType();
 
           break;
         }
       case ada_mod_int_type_def:         // 12.5.2(4)
         {
-          logKind("ada_mod_int_type_def", kind);
+          logKind("ada_mod_int_type_def", lal_type_def_hash);
           formalBaseType = &mkAdaModularType(mkNullExpression());
 
           break;
         }
       case ada_floating_point_def:       // 12.5.2(5)
         {
-          logKind("ada_floating_point_def", kind);
+          logKind("ada_floating_point_def", lal_type_def_hash);
           formalBaseType = &mkRealType();
 
           break;
         }
       case ada_formal_discrete_type_def:        // 12.5.2(2)
         {
-          logKind("ada_formal_discrete_type_def", kind);
+          logKind("ada_formal_discrete_type_def", lal_type_def_hash);
           formalBaseType = &mkAdaDiscreteType();
 
           break;
         }
       case ada_ordinary_fixed_point_def: // 12.5.2(6)
         {
-          logKind("ada_ordinary_fixed_point_def", kind);
+          logKind("ada_ordinary_fixed_point_def", lal_type_def_hash);
           formalBaseType = &mkFixedType();
 
           break;
         }
       case ada_decimal_fixed_point_def:  // 12.5.2(7)
         {
-          logKind("ada_decimal_fixed_point_def", kind);
+          logKind("ada_decimal_fixed_point_def", lal_type_def_hash);
           SgType&               fixed   = mkFixedType();
           SgAdaDeltaConstraint& decimal = mkAdaDeltaConstraint(mkNullExpression(), true, nullptr);
 
@@ -689,7 +694,7 @@ namespace
         }
       case ada_array_type_def:  // 3.6(3), 3.6(5)
         {
-          logKind("ada_array_type_def", kind);
+          logKind("ada_array_type_def", lal_type_def_hash);
           formalBaseType = &createArrayType(&lal_type_def, ctx);
           break;
         }
@@ -936,19 +941,32 @@ namespace
     ada_node_kind_enum kind = ada_node_kind(lal_id);
     ada_base_entity lal_declaration;
 
-    if(kind == ada_subtype_indication){
+    if(kind == ada_subtype_indication
+    || kind == ada_constrained_subtype_indication
+    || kind == ada_discrete_subtype_indication){
       //Call getDeclType on the f_name property
       ada_subtype_indication_f_name(lal_id, &lal_declaration);
       return getDeclType(&lal_declaration, ctx);
-    } else if(kind == ada_identifier || kind == ada_dotted_name){
+    } else if(kind == ada_identifier){
       //Get the type this references
-      ada_expr_p_first_corresponding_decl(lal_id, &lal_declaration);
+      int return_check = ada_expr_p_first_corresponding_decl(lal_id, &lal_declaration);
+      if(return_check == 0 || ada_node_is_null(&lal_declaration)){
+        ada_name_p_referenced_decl(lal_id, 1, &lal_declaration);
+      }
     } else if(kind == ada_anonymous_type){
       //Can ada_anonymous_type ever not be an access?
       return getAnonymousAccessType(lal_id, ctx);
     } else if(kind == ada_attribute_ref){
       //Pass this node on to getExprType
       lal_declaration = *lal_id;
+    } else if(kind == ada_dotted_name){
+      //Get the relative name, then the type it references
+      ada_base_entity lal_identifier;
+      ada_name_p_relative_name(lal_id, &lal_identifier);
+      int return_check = ada_expr_p_first_corresponding_decl(&lal_identifier, &lal_declaration);
+      if(return_check == 0 || ada_node_is_null(&lal_declaration)){
+        ada_name_p_referenced_decl(&lal_identifier, 1, &lal_declaration);
+      }
     } else {
       logError() << "getDeclType: unhandled definition kind: " << kind
                  << std::endl;
@@ -988,9 +1006,12 @@ namespace
     //Get the kind
     ada_node_kind_enum kind = ada_node_kind(lal_record);
 
+    //Get the hash
+    int lal_record_hash = hash_node(lal_record);
+
     if(kind == ada_null_record_def)
     {
-      logKind("ada_null_record_def", kind);
+      logKind("ada_null_record_def", lal_record_hash);
 
       attachSourceLocation(sgnode, lal_record, ctx);
       return sgnode;
@@ -998,7 +1019,7 @@ namespace
 
 
     if(kind == ada_record_def){
-      logKind("ada_record_def", kind);
+      logKind("ada_record_def", lal_record_hash);
 
       //~ ElemIdRange               implicits  = idRange(rec.Implicit_Components);
 
@@ -1038,8 +1059,8 @@ namespace
   void addEnumLiteral(ada_base_entity* lal_element, SgEnumDeclaration& enumdef, int enum_position, AstContext ctx)
   {
     SgType& enumty = SG_DEREF(enumdef.get_type());
-    ada_node_kind_enum kind = ada_node_kind(lal_element);
-    logKind("ada_enum_literal_decl", kind);
+    int lal_element_hash = hash_node(lal_element);
+    logKind("ada_enum_literal_decl", lal_element_hash);
 
     //Get the name
     ada_base_entity lal_defining_name, lal_identifier;
@@ -1098,14 +1119,15 @@ namespace
     //Get the kind of this node
     ada_node_kind_enum kind = ada_node_kind(lal_def);
 
-    logKind("A_Type_Definition", kind);
+    //Get the hash
+    int lal_def_hash = hash_node(lal_def);
 
     TypeData                res{lal_def, nullptr, false, false, false};
 
     switch(kind){
       case ada_derived_type_def:              // 3.4(2)     -> Trait_Kinds
         {
-          logKind("ada_derived_type_def", kind);
+          logKind("ada_derived_type_def", lal_def_hash);
 
           //Get the subtype indication
           ada_base_entity subtype_indication;
@@ -1133,7 +1155,7 @@ namespace
         }
       case ada_enum_type_def:         // 3.5.1(2)
         {
-          logKind("ada_enum_type_def", kind);
+          logKind("ada_enum_type_def", lal_def_hash);
 
           SgEnumDeclaration& sgnode = mkEnumDefn(name, ctx.scope());
 
@@ -1154,7 +1176,7 @@ namespace
         }
       case ada_signed_int_type_def:           // 3.5.4(3)
         {
-          logKind("ada_signed_int_type_def", kind);
+          logKind("ada_signed_int_type_def", lal_def_hash);
 
           //Get the constraint
           ada_base_entity int_constraint;
@@ -1169,7 +1191,7 @@ namespace
         }
       case ada_mod_int_type_def:              // 3.5.4(4)
         {
-          logKind("ada_mod_int_type_def", kind);
+          logKind("ada_mod_int_type_def", lal_def_hash);
 
           //Get the expression for this type
           ada_base_entity lal_expr;
@@ -1183,7 +1205,7 @@ namespace
         }
       case ada_floating_point_def:            // 3.5.7(2)
         {
-          logKind("ada_floating_point_def", kind);
+          logKind("ada_floating_point_def", lal_def_hash);
 
           //Get the range constraint
           ada_base_entity lal_range_spec;
@@ -1203,7 +1225,7 @@ namespace
         }
       case ada_ordinary_fixed_point_def:     // 3.5.9(3)
         {
-          logKind("ada_ordinary_fixed_point_def", kind);
+          logKind("ada_ordinary_fixed_point_def", lal_def_hash);
 
           //Get the range constraint
           ada_base_entity lal_range_spec;
@@ -1222,7 +1244,7 @@ namespace
         }
       case ada_decimal_fixed_point_def:       // 3.5.9(6)
         {
-          logKind("ada_decimal_fixed_point_def", kind);
+          logKind("ada_decimal_fixed_point_def", lal_def_hash);
 
           //Get the range constraint
           ada_base_entity lal_range_spec;
@@ -1246,14 +1268,14 @@ namespace
         }
       case ada_array_type_def:      // 3.6(2)
         {
-          logKind("ada_array_type_def", kind);
+          logKind("ada_array_type_def", lal_def_hash);
 
           res.sageNode(createArrayType(lal_def, ctx));
           break;
         }
       case ada_record_type_def:               // 3.8(2)     -> Trait_Kinds
         {
-          logKind("ada_record_type_def", kind);
+          logKind("ada_record_type_def", lal_def_hash);
 
           //Get the definition
           ada_base_entity record_def;
@@ -1279,14 +1301,14 @@ namespace
         }
       case ada_access_to_subp_def:              // 3.10(2)    -> Access_Type_Kinds
         {
-          logKind("ada_access_to_subp_def", kind);
+          logKind("ada_access_to_subp_def", lal_def_hash);
           SgType& access_t = getAccessType(lal_def, ctx);
           res.sageNode(access_t);
           break;
         }
       case ada_type_access_def:              // 3.10(2)    -> Access_Type_Kinds
         {
-          logKind("ada_type_access_def", kind);
+          logKind("ada_type_access_def", lal_def_hash);
           SgType& access_t = getAccessType(lal_def, ctx);
           res.sageNode(access_t);
           break;
@@ -1886,14 +1908,14 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
   SgAdaTypeConstraint*  res = nullptr;
 
   ada_node_kind_enum kind = ada_node_kind(lal_constraint);
-  logKind("A_Constraint", kind);
+  int lal_constraint_hash = hash_node(lal_constraint);
 
   switch(kind)
   {
     case ada_range_constraint:             // 3.2.2: 3.5(3)
     case ada_range_spec:
       {
-        logKind("ada_range_constraint", kind);
+        logKind("ada_range_constraint", lal_constraint_hash);
 
         //Get the lower/upper bounds of the range
         ada_base_entity lal_range_op, lal_lower, lal_upper;
@@ -1914,7 +1936,7 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
       }
     case ada_index_constraint:                   // 3.2.2: 3.6.1
       {
-        logKind("ada_index_constraint", kind);
+        logKind("ada_index_constraint", lal_constraint_hash);
 
         //Get the constraint list
         ada_base_entity lal_constraint_list;
@@ -1935,7 +1957,7 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
       }
     case ada_discriminant_constraint:             // 3.2.2
       {
-        logKind("ada_discriminant_constraint", kind);
+        logKind("ada_discriminant_constraint", lal_constraint_hash);
 
         //Get the list of associations
         ada_base_entity lal_assoc_list;
@@ -1956,6 +1978,8 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
       }
     case ada_digits_constraint:                   // 3.2.2: 3.5.9
       {
+        logKind("ada_digits_constraint", lal_constraint_hash);
+
         //Get the range constraint
         ada_base_entity lal_range_spec;
         ada_digits_constraint_f_range(lal_constraint, &lal_range_spec);
@@ -1968,6 +1992,25 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
         SgExpression&        digits = getExpr(&lal_digits, ctx);
 
         res = &mkAdaDigitsConstraint(digits, rangeConstr);
+        break;
+      }
+    case ada_delta_constraint:                    // 3.2.2: J.3
+      {
+        logKind("ada_delta_constraint", lal_constraint_hash);
+
+        //Get the range constraint
+        ada_base_entity lal_range_spec;
+        ada_delta_constraint_f_range(lal_constraint, &lal_range_spec);
+
+        //Get the delta
+        ada_base_entity lal_digits;
+        ada_delta_constraint_f_digits(lal_constraint, &lal_digits);
+
+        SgAdaTypeConstraint* rangeConstr = getConstraint_opt(&lal_range_spec, ctx);
+        SgExpression&        delta = getExpr(&lal_digits, ctx);
+
+        // PP \todo can we get a decimal constraint, and how can we recognize it?
+        res = &mkAdaDeltaConstraint(delta, false /* not a decimal constraint */, rangeConstr);
         break;
       }
     default:
@@ -2075,6 +2118,12 @@ SgType* getNumberDeclType(ada_base_entity* lal_element, AstContext ctx){
         SgAdaAttributeExp& attributeType = getAttributeExpr(lal_element, ctx);
         return attributeType.get_attrType();
         break;
+      }
+    case ada_paren_expr:
+      {
+        //Get the expr
+        ada_paren_expr_f_expr(&lal_expr, &lal_expr);
+        return getNumberDeclType(&lal_expr, ctx);
       }
     default:
       logError() << "Unexpected expr kind " << lal_expr_kind << " for ada_number_decl!\n";
