@@ -2186,16 +2186,66 @@ generateNameQualificationSupport( SgNode* node, NameQualificationTraversal::Name
      mfprintf(mlog [ WARN ] ) ("Calling SageInterface::buildDeclarationSets(node = %p = %s) \n",node,node->class_name().c_str());
 #endif
 
-  // DQ (4/3/2014): Added assertion.
-     t.declarationSet = SageInterface::buildDeclarationSets(node);
-     ASSERT_not_null(t.declarationSet);
+        {
+       // DQ (8/14/2025): Adding performance timer for call to buildDeclarationSets().
+          TimingPerformance timer ("Name qualification support: buildDeclarationSets");
 
+       // DQ (4/3/2014): Added assertion.
+          t.declarationSet = SageInterface::buildDeclarationSets(node);
+          ASSERT_not_null(t.declarationSet);
+        }
 #if 0
      mfprintf(mlog [ WARN ] ) ("DONE: Calling SageInterface::buildDeclarationSets(node = %p = %s) t.declarationSet = %p \n",node,node->class_name().c_str(),t.declarationSet);
 #endif
 
+  // DQ (8/14/2025): Adding a performance optimization to only do name qualification on the part of the AST that will unparsed.
+  // This should be a significant subset of the number of lines of code (O(1000) or so, since the source files is typically
+  // such a small part of the whole translation unit.  Note that the default is still to process the whole translation unit,
+  // but this optimization will support the better handling of large files ($1M line translation units).
   // Call the traversal.
-     t.traverse(node,ih);
+  // t.traverse(node,ih);
+  // Get the project from a traversal over the parents back to the root of the AST.
+  // SgProject* project = SageInterface::getProject(node);
+  // Or we can use this function which does not require a traversal.
+     SgProject* project = SageInterface::getProject();
+     ROSE_ASSERT(project != NULL);
+
+#if 0
+     printf ("project->get_suppressNameQualificationAcrossWholeTranslationUnit() = %s \n",project->get_suppressNameQualificationAcrossWholeTranslationUnit() ? "true" : "false");
+#endif
+
+#if 0
+  // DQ (8/18/2025): We do not call this function recursively, but for the case of multiple files
+  // on the command line we do call it multiple times, which is not a problem for the
+  // suppressNameQualificationAcrossWholeTranslationUnit mode.
+  // DQ (8/14/2025): Since we are using the traverseInputFiles() based traversal, we have to input
+  // the project, and so we need to make sure this function is not called recursively.
+     static int invocation = 0;
+     invocation++;
+     if (invocation > 1)
+        {
+          printf("Error: We can't be calling this function recursively: invocation = %d \n",invocation);
+          ROSE_ASSERT(false);
+        }
+#endif
+
+     if (project->get_suppressNameQualificationAcrossWholeTranslationUnit() == true)
+        {
+          t.set_suppressNameQualificationAcrossWholeTranslationUnit(true);
+
+       // DQ (8/14/2025): Adding performance timer for call to traverseInputFiles().
+          TimingPerformance timer ("Name qualification support: traverseInputFiles:");
+
+       // t.traverseInputFiles(node,ih);
+          t.traverseInputFiles(project,ih);
+        }
+       else
+        {
+       // DQ (8/14/2025): Adding performance timer for call to traverse().
+          TimingPerformance timer ("Name qualification support: traverse:");
+
+          t.traverse(node,ih);
+        }
 
 #if 0
   // DQ (5/3/2024): Debugging non-terminating name qualification case in unit testing.
@@ -2216,6 +2266,22 @@ void NameQualificationTraversal::initDiagnostics()
         {
           initialized = true;
         }
+   }
+
+// DQ (8/14/2025): Adding optimization (default is false) to support name qualification
+// retricted to just the input source file (instead of the whole translation unit).
+void
+NameQualificationTraversal::set_suppressNameQualificationAcrossWholeTranslationUnit(bool value)
+   {
+     suppressNameQualificationAcrossWholeTranslationUnit = value;
+   }
+
+// DQ (8/14/2025): Adding optimization (default is false) to support name qualification
+// retricted to just the input source file (instead of the whole translation unit).
+bool
+NameQualificationTraversal::get_suppressNameQualificationAcrossWholeTranslationUnit()
+   {
+     return suppressNameQualificationAcrossWholeTranslationUnit;
    }
 
 void
@@ -2483,6 +2549,10 @@ NameQualificationTraversal::NameQualificationTraversal(
   // template instantiation function has been processed.  This is debug code to trace down
   // a problem with name qualification growing too large and consuming all memory.
      disableNameQualification = false;
+
+  // DQ (8/14/2025): Adding optimization (default is false) to support name qualification
+  // retricted to just the input source file (instead of the whole translation unit).
+     suppressNameQualificationAcrossWholeTranslationUnit = false;
    }
 
 
@@ -7474,6 +7544,46 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      mfprintf(mlog [ WARN ] ) ("****************************************************** \n");
 #endif
 
+  // DQ (8/14/2025): This is an optimization to skip the traversal of the AST outside of what is in the source tree.
+     if (suppressNameQualificationAcrossWholeTranslationUnit == true)
+        {
+       // SgStatement* statement = isSgStatement(n);
+          SgLocatedNode* locatedNode = isSgLocatedNode(n);
+       // if (statement != NULL)
+          if (locatedNode != NULL)
+             {
+            // DQ (8/14/2025): Adding support to count the number of statements traversed in the name qualification when using traverseInputFile().
+            // It should be only the statements in the source file, but it appears to include statements marked as compilerGenerated.
+               AstPerformance::numberOfStatementsProcessedInNameQualificationUsingTraverseInputFile++;
+
+            // if (statement->get_file_info()->get_filenameString() != "compilerGenerated")
+            // if (statement->isCompilerGenerated() == true)
+               if (locatedNode->isCompilerGenerated() == false)
+                  {
+                 // We could just check is the nearest parent statement is compiler generated.
+                 // Or we could see if this is from a header file...(let's not do that).
+                    SgStatement* statement = SageInterface::getEnclosingStatement(locatedNode);
+                    if (statement->isCompilerGenerated() == false)
+                       {
+#if 0
+                         printf("Inside of NameQualificationTraversal::evaluateInheritedAttribute(): counter = %d node = %s = %s = %p \n",
+                              AstPerformance::numberOfStatementsProcessedInNameQualificationUsingTraverseInputFile,n->class_name().c_str(),SageInterface::get_name(n).c_str(),n);
+                         printf(" --- statement->get_file_info()->get_filenameString() = %s \n",statement->get_file_info()->get_filenameString().c_str());
+                      // printf(" --- locatedNode->get_file_info()->get_filenameString() = %s \n",locatedNode->get_file_info()->get_filenameString().c_str());
+#endif
+                       }
+                      else
+                       {
+                         return NameQualificationInheritedAttribute(inheritedAttribute);
+                       }
+                  }
+                 else
+                  {
+                    return NameQualificationInheritedAttribute(inheritedAttribute);
+                  }
+             }
+        }
+
 #if DEBUG_NONTERMINATION
   // DQ (5/3/2024): Debugging non-terminating name qualification case in unit testing.
      printf("In evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
@@ -11319,6 +11429,45 @@ NameQualificationTraversal::evaluateSynthesizedAttribute(SgNode* n, NameQualific
      mfprintf(mlog [ WARN ] ) ("Inside of NameQualificationTraversal::evaluateSynthesizedAttribute(): node = %p = %s = %s \n",n,n->class_name().c_str(),SageInterface::get_name(n).c_str());
      mfprintf(mlog [ WARN ] ) ("****************************************************** \n");
 #endif
+
+  // DQ (8/14/2025): This is an optimization to skip the traversal of the AST outside of what is in the source tree.
+     if (suppressNameQualificationAcrossWholeTranslationUnit == true)
+        {
+       // SgStatement* statement = isSgStatement(n);
+          SgLocatedNode* locatedNode = isSgLocatedNode(n);
+       // if (statement != NULL)
+          if (locatedNode != NULL)
+             {
+            // DQ (8/14/2025): Adding support to count the number of statements traversed in the name qualification when using traverseInputFile().
+            // It should be only the statements in the source file, but it appears to include statements marked as compilerGenerated.
+            // AstPerformance::numberOfStatementsProcessedInNameQualificationUsingTraverseInputFile++;
+
+            // if (statement->get_file_info()->get_filenameString() != "compilerGenerated")
+            // if (statement->isCompilerGenerated() == true)
+               if (locatedNode->isCompilerGenerated() == false)
+                  {
+                 // We could just check is the nearest parent statement is compiler generated.
+                 // Or we could see if this is from a header file...(let's not do that).
+                    SgStatement* statement = SageInterface::getEnclosingStatement(locatedNode);
+                    if (statement->isCompilerGenerated() == false)
+                       {
+#if 0
+                         printf("Inside of NameQualificationTraversal::evaluateSynthesizedAttribute(): counter = %d node = %s = %s = %p \n",
+                              AstPerformance::numberOfStatementsProcessedInNameQualificationUsingTraverseInputFile,n->class_name().c_str(),SageInterface::get_name(n).c_str(),n);
+                         printf(" --- statement->get_file_info()->get_filenameString() = %s \n",statement->get_file_info()->get_filenameString().c_str());
+#endif
+                       }
+                      else
+                       {
+                         return returnAttribute;
+                       }
+                  }
+                 else
+                  {
+                    return returnAttribute;
+                  }
+             }
+        }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
   // DQ (6/23/2013): Output the generated name with required name qualification for debugging.

@@ -7325,6 +7325,9 @@ hash_Name::operator()(const SgName & name) const
 
      ROSE_ASSERT(hash_multimap != NULL);
 
+  // DQ (8/15/2025): Tracking the number of times this function is called...
+     AstPerformance::numberOfCallsToHashOperator++;
+
      if (hash_multimap->get_case_insensitive_semantics() == true)
         {
        // We need to compute the hash on the normalized form of the name (pick lower case).
@@ -7338,7 +7341,10 @@ hash_Name::operator()(const SgName & name) const
         }
        else
         {
-          return hasher(name.str());
+       // DQ (8/14/2025): Since we are using a C++ string now, we don't want to convert this
+       // to a C stype string, just to have it be converted back into a C++ string later.
+       // return hasher(name.str());
+          return hasher(name.getString());
         }
    }
 

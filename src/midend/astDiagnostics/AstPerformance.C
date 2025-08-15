@@ -51,6 +51,10 @@ size_t AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyE
 size_t AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_false_addingNewSgAliasSymbol             = 0;
 size_t AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_addingCausalNode                    = 0;
 
+// DQ (8/14/2025): Adding support to count the number of statements traversed in the name qualification when using traverseInputFile().
+// It should be only the statements in the source file, but it appears to include statements marked as compilerGenerated.
+size_t AstPerformance::numberOfStatementsProcessedInNameQualificationUsingTraverseInputFile = 0;
+size_t AstPerformance::numberOfCallsToHashOperator                                          = 0;
 
 using namespace std;
 
@@ -693,7 +697,7 @@ struct rusage
             printf("Memory usage information from system is not available.\n");
           }
         }
-     
+
      while (i != data.end())
         {
           (*i)->outputReport(5);
@@ -736,6 +740,12 @@ struct rusage
      printf ("AstPerformance::injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_addingCausalNode                    = %zu \n",
           injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_addingCausalNode);
 
+  // DQ (8/14/2025): Adding support to count the number of statements traversed in the name qualification when using traverseInputFile().
+  // It should be only the statements in the source file, but it appears to include statements marked as compilerGenerated.
+     printf ("AstPerformance::numberOfStatementsProcessedInNameQualificationUsingTraverseInputFile                                    = %zu \n",
+             numberOfStatementsProcessedInNameQualificationUsingTraverseInputFile);
+     printf ("AstPerformance::numberOfCallsToHashOperator                                                                             = %zu \n",
+             numberOfCallsToHashOperator);
 
 #if 0
  // DQ (6/22/2011): Now that the code associated with these variables has been removed, these are no longer needed.

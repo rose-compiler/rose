@@ -1277,6 +1277,18 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           ROSE_ASSERT (get_suppressConstantFoldingPostProcessing() == true);
         }
 
+  // DQ (8/14/2025): Added support to supress name qualification on the whole translation unit (focus only on the source file which will be unparsed).
+  // The optional default behaviour is to support name qualification across the whole translation using, this is a performance only option
+  // since the name qualification represents about 40% of the total cost of processing large files ($1M line translation units, source file
+  // plus expanded header files).
+     set_suppressNameQualificationAcrossWholeTranslationUnit(false);
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(suppressNameQualificationAcrossWholeTranslationUnit)",true) == true )
+        {
+          printf ("Using -rose:suppressNameQualificationAcrossWholeTranslationUnit \n");
+          p_suppressNameQualificationAcrossWholeTranslationUnit = true;
+          ROSE_ASSERT (get_suppressNameQualificationAcrossWholeTranslationUnit() == true);
+        }
+
   // AST I/O
 
      // `-rose:ast:read in0.ast,in2.ast` (extension does not matter)
@@ -3256,6 +3268,9 @@ SgFile::usage ( int status )
 "                             This option has only shown an effect on the 2.5 million line\n"
 "                             wireshark application\n"
 "                             (not presently compatable with OpenMP or C++ code)\n"
+"     -rose:suppressNameQualificationAcrossWholeTranslationUnit\n"
+"                             This option skips the name qualification on the parts of the \n"
+"                             translation unit that are not meant to be unparsed.\n"
 "     -rose:noclobber_output_file\n"
 "                             force error on rewrite of existing output file (default: false).\n"
 "     -rose:noclobber_if_different_output_file\n"
@@ -5434,6 +5449,10 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
           for (size_t i=0; i < argv.size(); i++)
              printf ("     argv[%" PRIuPTR "] = %s \n",i,argv[i].c_str());
         }
+
+  // DQ (8/18/2025): Added option to support better performance of handling large source code
+  // (name qualification on only the source file, not on the whole translation unit).
+     optionCount = sla(argv, "-rose:", "($)", "(suppressNameQualificationAcrossWholeTranslationUnit)",1);
    }
 
 void

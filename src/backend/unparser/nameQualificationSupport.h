@@ -209,6 +209,10 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // a problem with name qualification growing too large and consuming all memory.
           bool disableNameQualification;
 
+       // DQ (8/14/2025): Adding optimization (default is false) to support name qualification
+       // retricted to just the input source file (instead of the whole translation unit).
+          bool suppressNameQualificationAcrossWholeTranslationUnit;
+     
      public:
        // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
        // static Sawyer::Message::Facility mlog;
@@ -424,6 +428,12 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // DQ (3/14/2019): Adding debugging support to output the map of names.
        // void outputNameQualificationMap( const std::map<SgNode*,std::string> & qualifiedNameMap );
           void outputNameQualificationMap( const NameQualificationMapType & qualifiedNameMap );
+
+       // DQ (8/14/2025): Adding optimization (default is false) to support name qualification
+       // retricted to just the input source file (instead of the whole translation unit).
+          void set_suppressNameQualificationAcrossWholeTranslationUnit(bool value);
+          bool get_suppressNameQualificationAcrossWholeTranslationUnit();
+     
    };
 
 // DQ (8/1/2025): This has been moved to after the NameQualificationTraversal so that we could use the same typedef.

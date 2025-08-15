@@ -214,6 +214,10 @@ class ROSE_DLL_API AstPerformance
           static size_t injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_false_addingNewSgAliasSymbol;
           static size_t injectSymbolsFromReferencedScopeIntoCurrentScope_alreadyExists_true_addingCausalNode;
 
+       // DQ (8/14/2025): Adding support to count the number of statements traversed in the name qualification when using traverseInputFile().
+       // It should be only the statements in the source file, but it appears to include statements marked as compilerGenerated.
+          static size_t numberOfStatementsProcessedInNameQualificationUsingTraverseInputFile;
+          static size_t numberOfCallsToHashOperator;
 
           static void set_project(SgProject* projectParameter);
 

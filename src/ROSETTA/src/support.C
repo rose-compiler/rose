@@ -1971,6 +1971,12 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "suppressConstantFoldingPostProcessing", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/14/2025): This is a performance optimization, name qualification is about 40% of the
+  // performance cost (time) and need only be done on the part of the translation unit that will be
+  // unparsed (the source file, and any transformations (modified or added code) of the source file).
+     Project.setDataPrototype("bool", "suppressNameQualificationAcrossWholeTranslationUnit", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Pei-Hung (8/6/2014): This option -rose:appendPID appends PID into the temporary output name to avoid issues in parallel compilation.
      Project.setDataPrototype("bool", "appendPID", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
