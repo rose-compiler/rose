@@ -2,10 +2,15 @@
 #include <sage3basic.h>
 #include <Rose/SourceCode/Analysis/Analyzer.h>
 #include <Rose/SourceCode/AST/IO.h>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace Rose {
 namespace SourceCode {
 namespace Analysis {
+
+static std::string const rose_analysis_namespace = "12a37ea2-14a5-4e64-aabd-120921af7e4f";
 
 bool Analyzer::parse_args__(std::vector<std::string> & args) {
   analysis->commandLine(args);
@@ -78,6 +83,13 @@ Sarif::RulePtr Analyzer::add_rule(
 ) {
   Sarif::RulePtr rule = Sarif::Rule::instance(name, desc);
   rules[name] = rule;
+
+  boost::uuids::string_generator str_gen;
+  boost::uuids::uuid rose_analysis_namespace_uuid = str_gen(rose_analysis_namespace);
+  boost::uuids::name_generator_sha1 rose_analysis_namespace_gen(rose_analysis_namespace_uuid);
+
+  rule->uuid(rose_analysis_namespace_gen(this->name + ":" + name));
+
   analysis->rules().push_back(rule);
   return rule;
 }
