@@ -109,7 +109,7 @@ OperatorDeclaration:: OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast,
     AstInterface::AstTypeList::const_iterator p2 = params.begin(); 
     while (p2 != params.end() && p1 != argp->end()) {
        DebugOperatorDescriptor([&fa, &p1](){ return "Adding operator parameter:" + fa.GetVarName(*p1); });
-       pars.add_param(fa.GetTypeName(*p2), AstInterface::GetVarName(*p1));
+       pars.add_param(fa.GetTypeName(*p2), AstInterface::GetVariableSignature(*p1));
        ++p1; ++p2;
     }
     assert(params.size() == pars.num_of_params());

@@ -2048,13 +2048,8 @@ std::string AstInterface::GetVarName( const AstNodePtr& exp, bool use_global_uni
   if (IsVarRef(exp, 0, &name, 0, 0, use_global_unique_name)) {
     return name;
   }
-  {
-   AstNodeType alloc_type; 
-   if (IsMemoryAllocation(exp, &alloc_type)) {
-      return GetGlobalUniqueName(exp, GetTypeName(alloc_type));
-   }
-  }
-  DebugVariable([&exp](){ return "Error: expecting a variable reference but getting:" + AstToString(exp); });
+  std::cerr << "Error: expecting a variable reference but getting:" + AstToString(exp); ;
+  assert(false);
   return "";
 }
 
@@ -4437,6 +4432,7 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
           return OperatorDeclaration::operator_signature(variable);
      default: break;
     }
+    
     if (AstInterface::IsFunctionDefinition(variable)) {
         return OperatorDeclaration::operator_signature(variable);
     } 
@@ -4449,24 +4445,34 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
     {
     AstNodePtr f;
     AstNodeList args;
-    if (AstInterface::IsFunctionCall(variable, &f, &args)) {
-       std::string result = res + GetVariableSignature(f.get_ptr()) + "(";
+    bool is_function_call = AstInterface::IsFunctionCall(variable, &f, &args);
+    bool is_array_ref = AstInterface::IsArrayAccess(variable, &f, &args); 
+    if (is_function_call || is_array_ref) {
+       res += GetVariableSignature(f.get_ptr()) + "(";
        bool is_first = true;
        for (auto x : args) {
-         if (!is_first) { result = result + ","; }
+         if (!is_first) { res += ","; }
          else { is_first = false; }
-         result = result + GetVariableSignature(x.get_ptr());
+         res += AstToString(x, /*output_class_name=*/false);
        }
-       return result + ")";
+       res  +=  ")";
+       return res;
     }
     }
-    // An empty string will be returned AstInterface::IsVarRef(variable) returns false.
-    std::string name = AstInterface::GetVarName(variable, /*use_global_unique_name=*/true);
-    if (name == "" && res == "") {
-        name = "_UNKNOWN_";
+    {
+     AstNodeType alloc_type; 
+     if (IsMemoryAllocation(variable, &alloc_type)) {
+        return res + GetGlobalUniqueName(variable, GetTypeName(alloc_type));
+     }
     }
-    DebugVariable([&variable,&name](){ return "variable is " + AstInterface::AstToString(variable) + " name is " + name; });
-    return res + name;
+    {
+    std::string name;
+    if (IsVarRef(variable, 0, &name, 0, 0, /*use_global_unique_name=*/true)) {
+      return res + name;
+    }
+    }
+    res += "_UNKNOWN_" + AstInterface::AstToString(variable, /*use_class_name=*/true);
+    return res;
 }
 
 bool AstInterface::IsLocalRef(SgNode* ref, SgNode* scope, bool* has_ptr_deref) {
