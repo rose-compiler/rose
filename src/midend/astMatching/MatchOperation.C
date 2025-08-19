@@ -22,10 +22,10 @@ SingleMatchResult::isSMRMarkedLocation(RoseAst::iterator& i) {
   return false;
 }
 
-
 bool
-MatchOperation::performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& smr) {
+MatchOperation::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMatchResult& smr) {
   std::cout<<"performing default operation.\n";
+  (void)status; (void)i; (void)smr; // unused
   return true;
 }
 
@@ -176,7 +176,7 @@ MatchOpCheckNodeSet::toString() {
 }
 
 bool
-MatchOpCheckNodeSet::performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& smr) {
+MatchOpCheckNodeSet::performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& /*smr*/) {
   if(status.debug)
     std::cout << "CheckNodeSet: ";
   SgNode* node=*i;
@@ -212,7 +212,7 @@ MatchOpArityCheck::toString() {
 }
 
 bool
-MatchOpArityCheck::performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& smr) {
+MatchOpArityCheck::performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& /*smr*/) {
   if(status.debug)
     std::cout << "arity_check: ";
   SgNode* node=*i;
@@ -233,7 +233,7 @@ MatchOpForward::MatchOpForward() {}
 std::string MatchOpForward::toString() {
   return "forward()";
 }
-bool MatchOpForward::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMatchResult& smr) {
+bool MatchOpForward::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMatchResult& /*smr*/) {
   if(status.debug)
     std::cout << "forward()";
   ++i;
@@ -244,7 +244,7 @@ MatchOpSkipChildOnForward::MatchOpSkipChildOnForward() {}
 std::string MatchOpSkipChildOnForward::toString() {
   return "skip_child_on_forward()";
 }
-bool MatchOpSkipChildOnForward::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMatchResult& smr) {
+bool MatchOpSkipChildOnForward::performOperation(MatchStatus& status, RoseAst::iterator& i, SingleMatchResult& /*smr*/) {
   if(status.debug)
     std::cout << "skip_child_on_forward";
   SgNode* node=*i;
@@ -284,6 +284,7 @@ std::string MatchOpCheckNull::toString() {
   return "null";
 }
 bool MatchOpCheckNull::performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& smr) {
+  (void)smr; // unused
   if(status.debug)
     std::cout << "check_null";
   return (*i)==0;
@@ -294,6 +295,7 @@ std::string MatchOpDotDot::toString() {
   return "dotdot";
 }
 bool MatchOpDotDot::performOperation(MatchStatus&  status, RoseAst::iterator& i, SingleMatchResult& smr) {
+  (void)i; (void)smr; // unused
   if(status.debug)
     std::cout << "dotdot";
   return true;
