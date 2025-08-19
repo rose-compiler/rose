@@ -2938,13 +2938,89 @@ namespace {
 
     ctx.storeDeferredUnitCompletion( std::move(deferredAspectCompletion) );
   }
+
+  //Handle a single type or object decl as part of an instantiation of a generic package or subp
+  // \ref lal_element: an ada_generic_formal<type/obj>_decl that the instantiated decl will be based off
+  // \ref lal_expr: The value/configuration that the instantiation set for this variable/type
+  // \ref ctx: The scope of the instantiated package/subp
+  void handleFormalDeclInstantiation(ada_base_entity* lal_element, ada_base_entity* lal_expr, AstContext ctx)
+  {
+    //Get the kind
+    ada_node_kind_enum lal_element_kind = ada_node_kind(lal_element);
+
+    //Get the hash
+    int lal_element_hash = hash_node(lal_element);
+
+    //Get the decl
+    ada_base_entity lal_formal_decl;
+    ada_generic_formal_f_decl(lal_element, &lal_formal_decl);
+
+    if(lal_element_kind == ada_generic_formal_type_decl){
+      logKind("ada_generic_formal_type_decl", lal_element_hash);
+      //Treat this as a subtype declaration, with lal_expr as the original type
+
+      //Get the name
+      ada_base_entity lal_identifier;
+      ada_base_type_decl_f_name(&lal_formal_decl, &lal_identifier);
+      ada_defining_name_f_name(&lal_identifier, &lal_identifier);
+      std::string ident = getFullName(&lal_identifier);
+
+      //Get the original type & make a subtype
+      SgType& baseType = getDeclType(lal_expr, ctx);
+      SgAdaTypeConstraint& range = getConstraint(nullptr, ctx); //I don't think we can have a constraint?
+      SgType& subtype = mkAdaSubtype(baseType, range);
+
+      SgScopeStatement&     scope   = ctx.scope();
+      SgTypedefDeclaration& sgnode  = mkTypeDecl(ident, subtype, scope);
+
+      //~privatize(sgnode, isPrivate); //Cannot be private
+      attachSourceLocation(sgnode, lal_element, ctx);
+      ctx.appendStatement(sgnode);
+      //~recordNode(libadalangTypes(), hash_node(lal_element), sgnode); //Do not record this node
+    } else if(lal_element_kind == ada_generic_formal_obj_decl){
+      logKind("ada_generic_formal_obj_decl", lal_element_hash);
+      logInfo() << "  lal_expr name is " << canonical_text_as_string(lal_expr) << std::endl;
+      //Treat this as a constant declaration, with lal_expr as the value
+
+      //We can't just use handleVarCstDecl b/c we have a different varinit
+      SgType& basety = mkConstType(getVarType(&lal_formal_decl, ctx));
+
+      //Get the aliased status
+      ada_base_entity lal_has_aliased;
+      ada_object_decl_f_has_aliased(lal_element, &lal_has_aliased);
+
+      ada_node_kind_enum aliased_status = ada_node_kind(&lal_has_aliased);
+      const bool               aliased  = (aliased_status == ada_aliased_present);
+      SgType& varty  = aliased ? mkAliasedType(basety) : basety;
+
+      //Get the names
+      ada_base_entity lal_ids;
+      ada_object_decl_f_ids(&lal_formal_decl, &lal_ids);
+
+      SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
+                                                                           libadalangVars(),
+                                                                           &lal_ids,
+                                                                           basety,
+                                                                           &getExpr(lal_expr, ctx)
+                                                                         );
+
+      SgVariableDeclaration&   sgnode   = mkVarDecl(dclnames, ctx.scope());
+
+      attachSourceLocation(sgnode, lal_element, ctx);
+      ctx.appendStatement(sgnode);
+    } else {
+      logError() << "Unhandled kind " << lal_element_kind << " in handleFormalDeclInstantiation!\n";
+    }
+  }
+
 } //end unnamed namespace
+
 
 //Iterate over an ada_generic_<package/subp>_decl node to create a new node for the instantiated decl
 //  We need to do this b/c lal does not create nodes for compiler-generated sections, unlike ASIS.
 //  So any references to instantiated packages/subps in the lal tree point back to the generic package/subp,
 //  which causes "invalid prefix in selected component" errors in the generated code.
-SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, std::string ident, SgScopeStatement* parent_scope, AstContext ctx){
+SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, std::string ident, ada_base_entity* lal_param_list, SgScopeStatement* parent_scope, AstContext ctx){
   //Get the kind of this node
   ada_node_kind_enum kind = ada_node_kind(lal_element);
 
@@ -2952,6 +3028,30 @@ SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, st
   int lal_element_hash = hash_node(lal_element);
 
   SgDeclarationStatement* instDecl = nullptr;
+
+  //Process the param list. We'll need to do this for both kinds of decl, so here is good.
+  std::vector<std::pair<std::string, ada_base_entity>> named_param_list;
+  int lal_param_count = ada_node_children_count(lal_param_list);
+  int last_unnamed_param_position = -1;
+  for(int i = 0; i < lal_param_count; ++i){
+    ada_base_entity lal_param;
+    if(ada_node_child(lal_param_list, i, &lal_param) != 0){
+      //Check if this param has a name
+      std::string name = "";
+      ada_base_entity lal_name;
+      ada_param_assoc_f_designator(&lal_param, &lal_name);
+      if(!ada_node_is_null(&lal_name)){
+        name = canonical_text_as_string(&lal_name);
+      } else {
+        last_unnamed_param_position = i;
+      }
+      //Get the expr
+      ada_base_entity lal_expr;
+      ada_param_assoc_f_r_expr(&lal_param, &lal_expr);
+      named_param_list.push_back(std::make_pair(name, lal_expr));
+    }
+  }
+
 
   switch(kind)
   {
@@ -3014,6 +3114,9 @@ SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, st
       attachSourceLocation(sgnode, lal_element, ctx);
       ctx.appendStatement(sgnode);
 
+      //TODO This just creates the subp declaration, not the body. Do we need the body?
+      // I'm not sure how the instantiated body would differ from the generic body.
+
       instDecl = &sgnode;
 
       break;
@@ -3046,6 +3149,55 @@ SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, st
       //Get the package internal
       ada_base_entity lal_package_internal;
       ada_generic_package_decl_f_package_decl(lal_element, &lal_package_internal);
+
+      //Process the params into completed declarations
+      ada_base_entity lal_formal_decls;
+      ada_generic_decl_f_formal_part(lal_element, &lal_formal_decls);
+      ada_generic_formal_part_f_decls(&lal_formal_decls, &lal_formal_decls);
+      int formal_decl_count = ada_node_children_count(&lal_formal_decls);
+      for(int i = 0; i < formal_decl_count; ++i){
+        ada_base_entity lal_formal_decl;
+        if(ada_node_child(&lal_formal_decls, i, &lal_formal_decl) != 0){
+          //Check to see if there is a matching param in lal_param_list. Params can either be positional or named.
+          // If they are named, we need to match by this decl's name, if they are positional, we match by the position instead.
+          // A param list can have both positional & named, but all positional params need to come first.
+
+          ada_base_entity lal_expr;
+          //Check if the param at this decl's position has a name
+          if(i <= last_unnamed_param_position){
+            //Just use param_list(i)
+            lal_expr = named_param_list.at(i).second;
+
+          } else {
+            //Get the name of this decl and search param_list for a matching name
+            ada_base_entity lal_decl_name;
+            ada_generic_formal_f_decl(&lal_formal_decl, &lal_decl_name);
+            ada_basic_decl_p_defining_name(&lal_decl_name, &lal_decl_name);
+            ada_defining_name_f_name(&lal_decl_name, &lal_decl_name);
+            std::string decl_name = canonical_text_as_string(&lal_decl_name);
+
+            auto vecpos = std::find_if(
+                named_param_list.begin(),
+                named_param_list.end(),
+                [&decl_name](std::pair<std::string, ada_base_entity> i) { return i.first == decl_name; });
+
+            if(vecpos == named_param_list.end()){
+              //If there wasn't a matching name, use the default for this decl
+              //Make sure this isn't a type decl, since type decls cannot have default values
+              if(ada_node_kind(&lal_formal_decl) == ada_generic_formal_type_decl){
+                logError() << "Instantiation " << ident << " is missing actual " << decl_name << "!\n";
+                return nullptr;
+              }
+              ada_generic_formal_f_decl(&lal_formal_decl, &lal_expr);
+              ada_object_decl_f_default_expr(&lal_expr, &lal_expr);
+            } else {
+              lal_expr = vecpos->second;
+            }
+          }
+          handleFormalDeclInstantiation(&lal_formal_decl, &lal_expr, ctx.scope(pkgspec));
+        }
+      }
+
 
       //TODO: Calling handleElement on the same lal node twice will produce the same hash & overwrite the first record in the maps,
       //  which I thought would be a big problem. This hasn't caused any issues in any example I've run, though. Not sure why.
@@ -3097,6 +3249,7 @@ SgDeclarationStatement* createInstantiationDecl(ada_base_entity* lal_element, st
       break;
     }
   }
+
   return instDecl;
 }
 
@@ -3727,7 +3880,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         //~ privatize(sgnode, isPrivate);
         ctx.appendStatement(sgnode);
 
-        SgDeclarationStatement* protoDecl = createInstantiationDecl(&lal_generic_package, ident, &scope, ctx.scope(SG_DEREF(sgnode.get_prototypeScope())));
+        SgDeclarationStatement* protoDecl = createInstantiationDecl(&lal_generic_package, ident, &lal_params, &scope, ctx.scope(SG_DEREF(sgnode.get_prototypeScope())));
         sgnode.set_prototype(protoDecl);
 
         assocdecl = &sgnode;
@@ -4437,16 +4590,14 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
           ada_generic_package_renaming_decl_f_renames(&lal_generic_decl, &lal_generic_decl);
           ada_expr_p_first_corresponding_decl(&lal_generic_decl, &lal_generic_decl);
         } else if(lal_generic_decl_kind == ada_generic_subp_internal){
-          ada_generic_subp_internal_f_subp_spec(&lal_generic_decl, &lal_generic_decl);
-          ada_subp_spec_f_subp_name(&lal_generic_decl, &lal_generic_decl);
-          ada_expr_p_first_corresponding_decl(&lal_generic_decl, &lal_generic_decl);
+          ada_generic_instantiation_p_designated_generic_decl(lal_element, &lal_generic_decl);
         }
 
         //LAL_REP_ISSUE: Libadalang's first_corresponding_decl points to the generic,
         //  whereas ASIS' Corresponding_Declaration points to a compiler generated instance (which Libadalang does not have).
-        //  Not sure how to translate this to Libadalang.
+        //  Use createInstantiationDecl to fake having the compiler-generated section.
         // PP (4/1/22): fill in the declaration
-        SgDeclarationStatement* instDecl = createInstantiationDecl(&lal_generic_decl, ident, logicalScope, ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope())));
+        SgDeclarationStatement* instDecl = createInstantiationDecl(&lal_generic_decl, ident, &lal_params, logicalScope, ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope())));
 
         // mark whole subtree under sgnode.get_instantiatedScope() as instantiated
         si::Ada::setSourcePositionInSubtreeToCompilerGenerated(sgnode.get_instantiatedScope());

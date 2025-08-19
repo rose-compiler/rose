@@ -918,14 +918,14 @@ namespace
         return SG_DEREF(res);
       }*/ //TODO Does Libadalang do def pointers?
 
-      // PP 08/03/23
-      // UNCLEAR_LINK_2
-      // under some unclear circumstances ASIS does not link a callee (i.e., A_PLUS_OPERATOR representing a unary call)
-      // to its available definition, but only to its declaration (A_UNARY_PLUS_OPERATOR).
-      // ACATS test: c87b04b
-      // => to resolve the issue, look up the declaration by expr.Corresponding_Name_Declaration;
-      //    to avoid the case described by UNCLEAR_LINK_1, test if the operator declaration has
-      //    the same name as used for the call.
+      //LAL_REP_ISSUE: Libadalang can be wrong about what the first corresponding definition is.
+      // Libadalang does not link correctly to instantiated operators from generic packages with parameters.
+      // This is most obvious with instantiations of the Ada.Numerics.Generic_Elementary_Functions, Ada.Numerics.Generic_Complex_Types,
+      // & Ada.Numerics.Generic_Complex_Elementary_Functions packages. All of these packages define the "**" operator for new types,
+      // & any subsequent calls to these new operators may not have the correct first_corresponding_decl/referenced_decl properties.
+      // This issue only happens with operators when they are used with prefix call syntax (e.g. "**"(1, 1)), since they cannot be 
+      // scoped otherwise.
+      // First seen in cxg1005.adb
       if(decl_exists){
         if (SgDeclarationStatement* dcl = findFirst(libadalangDecls(), decl_hash)) {
           const std::string dclname = si::Ada::convertRoseOperatorNameToAdaName(si::get_name(dcl));
@@ -1681,9 +1681,10 @@ namespace{
             //Get the f_name, and check if it is a type
             ada_base_entity lal_name;
             ada_name_p_relative_name(&lal_full_name, &lal_name);
-            ada_node_kind_enum name_kind = ada_node_kind(&lal_name);
+            ada_node_kind_enum full_name_kind = ada_node_kind(&lal_full_name);
+            ada_node_kind_enum name_kind      = ada_node_kind(&lal_name);
 
-            if(name_kind == ada_identifier){
+            if(full_name_kind != ada_attribute_ref && name_kind == ada_identifier){
               //Check the decl to see if this name refers to a type
               ada_base_entity lal_decl;
               ada_expr_p_first_corresponding_decl(&lal_name, &lal_decl);
@@ -2218,7 +2219,6 @@ namespace{
     {
       case ada_aggregate:                             // 4.3
       case ada_null_record_aggregate:                 // 4.3
-//      case ada_abstract_state_decl_expr:              //GNAT-specific aspect that happens to resemble A_Record_Aggregate
       /*case A_Named_Array_Aggregate:                   // 4.3 TODO: Are there more aggregate nodes to worry about?
       case A_Record_Aggregate:                        // 4.3*/
         {
@@ -2483,7 +2483,7 @@ queryBuiltIn(int hash)
   || (res = findFirst(adaTypes(), hash))
   || (res = findFirst(adaPkgs(),  hash))
   || (res = findFirst(adaVars(),  hash))
-  //|| (res = findFirst(adaExcps(), hash))
+  || (res = findFirst(adaExcps(), hash))
   ;
 
   return res;
