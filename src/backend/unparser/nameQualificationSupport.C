@@ -2204,10 +2204,14 @@ generateNameQualificationSupport( SgNode* node, NameQualificationTraversal::Name
   // but this optimization will support the better handling of large files ($1M line translation units).
   // Call the traversal.
   // t.traverse(node,ih);
+
+  // Pei-Hung (8/19/2025): revert to use the traversal over parents
+  // SageInterface::getProject() would find multiple SgProject in copyAST_tests and break the assertion
+
   // Get the project from a traversal over the parents back to the root of the AST.
-  // SgProject* project = SageInterface::getProject(node);
+     SgProject* project = SageInterface::getProject(node);
   // Or we can use this function which does not require a traversal.
-     SgProject* project = SageInterface::getProject();
+  //   SgProject* project = SageInterface::getProject();
      ROSE_ASSERT(project != NULL);
 
 #if 0
