@@ -1418,14 +1418,25 @@ namespace{
           ada_node_kind_enum lal_expr_type_kind;
           ada_expr_p_expression_type(lal_element, &lal_first_expr_type);
           if(!ada_node_is_null(&lal_first_expr_type)){
-            ada_type_decl_f_type_def(&lal_first_expr_type, &lal_expr_type);
-            lal_expr_type_kind = ada_node_kind(&lal_expr_type);
-            //Find the original type if this is a derived type
-            while(lal_expr_type_kind == ada_derived_type_def){
-              ada_derived_type_def_f_subtype_indication(&lal_expr_type, &lal_expr_type);
-              ada_type_expr_p_designated_type_decl(&lal_expr_type, &lal_expr_type);
-              ada_type_decl_f_type_def(&lal_expr_type, &lal_expr_type);
+            //First check if this type's name matches the identifier's name
+            ada_base_entity lal_type_name;
+            ada_name_p_relative_name(&lal_first_expr_type, &lal_type_name);
+            std::string type_name = canonical_text_as_string(&lal_type_name);
+            if(name == type_name){
+              //This is an enum type, not an enum value
+              //Set lal_expr_type to the type decl
+              ada_expr_p_expression_type(lal_element, &lal_expr_type);
               lal_expr_type_kind = ada_node_kind(&lal_expr_type);
+            } else {
+              ada_type_decl_f_type_def(&lal_first_expr_type, &lal_expr_type);
+              lal_expr_type_kind = ada_node_kind(&lal_expr_type);
+              //Find the original type if this is a derived type
+              while(lal_expr_type_kind == ada_derived_type_def){
+                ada_derived_type_def_f_subtype_indication(&lal_expr_type, &lal_expr_type);
+                ada_type_expr_p_designated_type_decl(&lal_expr_type, &lal_expr_type);
+                ada_type_decl_f_type_def(&lal_expr_type, &lal_expr_type);
+                lal_expr_type_kind = ada_node_kind(&lal_expr_type);
+              }
             }
           }
 
@@ -2263,6 +2274,23 @@ namespace{
 
     switch(kind)
     {
+      case ada_subtype_indication:
+        {
+          logKind("A_Discrete_Subtype_Indication", lal_element_hash);
+
+          //Get the name
+          ada_base_entity lal_name;
+          ada_subtype_indication_f_name(lal_element, &lal_name);
+
+          //Get the constraint
+          ada_base_entity lal_constraint;
+          ada_subtype_indication_f_constraint(lal_element, &lal_constraint);
+
+          SgType& ty = getDiscreteSubtype(&lal_name, &lal_constraint, ctx);
+
+          res = &mkTypeExpression(ty);
+          break;
+        }
       case ada_dotted_name:         // 3.6.1(6), 3.2.2
         {
           logKind("A_Discrete_Subtype_Indication", lal_element_hash);
@@ -2321,6 +2349,10 @@ namespace{
       if(lal_op_kind == ada_op_double_dot){
         needs_generic = true;
       }
+    }
+
+    if(kind == ada_subtype_indication){
+      needs_generic = true;
     }
 
     if(needs_generic){

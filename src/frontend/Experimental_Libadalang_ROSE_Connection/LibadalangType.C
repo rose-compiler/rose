@@ -185,6 +185,24 @@ namespace
     }
   }
 
+  /// Check if \ref lal_element is an ada_discriminant_assoc with no ids.
+  /// This is meant to see if the discr_expr should be evaluated as a range,
+  /// instead of as a discriminant. It seems like the only check needed is
+  /// for ids.
+  bool checkDiscrAttribute(ada_base_entity* lal_element)
+  {
+    if(ada_node_kind(lal_element) != ada_discriminant_assoc) return false;
+
+    //Get the ids
+    ada_base_entity lal_ids;
+    ada_discriminant_assoc_f_ids(lal_element, &lal_ids);
+    if(ada_node_children_count(&lal_ids) != 0) return false;
+
+    //TODO Is that really the only check required?
+
+    return true;
+  }
+
   /// Creates an integer subtype from the standard package, with a name and range
   SgTypedefDeclaration&
   declareIntSubtype(const std::string& name, int64_t lo, int64_t hi, SgAdaPackageSpec& scope)
@@ -1963,17 +1981,39 @@ getConstraint(ada_base_entity* lal_constraint, AstContext ctx)
         ada_base_entity lal_assoc_list;
         ada_discriminant_constraint_f_constraints(lal_constraint, &lal_assoc_list);
 
-        SgExpressionPtrList constraints;
-
+        //Sometimes, ada_discriminant_constraint in LAL corresponds to An_Index_Constraint in ASIS
+        //To fix, check if all discr_exprs are range attributes, and if so, treat like a range constraint
         int count = ada_node_children_count(&lal_assoc_list);
+        std::vector<ada_base_entity> lal_assocs;
+        bool all_range_constraints = true;
+        lal_assocs.resize(count);
         for(int i = 0; i < count; ++i){
-          ada_base_entity lal_discr_assoc;
-          if(ada_node_child(&lal_assoc_list, i, &lal_discr_assoc) != 0){
-            createDiscriminantAssoc(&lal_discr_assoc, constraints, ctx);
+          if(ada_node_child(&lal_assoc_list, i, &lal_assocs.at(i)) != 0){
+            all_range_constraints = checkDiscrAttribute(&lal_assocs.at(i));
           }
         }
 
-        res = &mkAdaDiscriminantConstraint(std::move(constraints));
+        if(!all_range_constraints){
+          SgExpressionPtrList constraints;
+          for(int i = 0; i < count; ++i){
+            createDiscriminantAssoc(&lal_assocs.at(i), constraints, ctx);
+          }
+          res = &mkAdaDiscriminantConstraint(std::move(constraints));
+
+        } else {
+          logTrace() << "ada_discriminant_constraint is actually a range constraint.\n";
+          SgExpressionPtrList ranges;
+
+          //Call getDiscreteRange on all constraints instead, then make an index constraint
+          for(int i = 0; i < count; ++i){
+            ada_base_entity lal_range_constraint;
+            ada_discriminant_assoc_f_discr_expr(&lal_assocs.at(i), &lal_range_constraint);
+            SgExpression& range_constraint = getDiscreteRange(&lal_range_constraint, ctx);
+            ranges.push_back(&range_constraint);
+          }
+          res = &mkAdaIndexConstraint(std::move(ranges));
+        }
+
         break;
       }
     case ada_digits_constraint:                   // 3.2.2: 3.5.9

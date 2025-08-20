@@ -5576,6 +5576,15 @@ processInheritedSubroutines( SgNamedType& derivedType,
          ada_derived_type_def_f_subtype_indication(&lal_tydef, &lal_super_type);
          ada_type_expr_p_designated_type_decl(&lal_super_type, &lal_super_type);
 
+         //Make sure that lal_super_type isn't a subtype
+         ada_node_kind_enum lal_super_type_kind = ada_node_kind(&lal_super_type);
+         while(lal_super_type_kind == ada_subtype_decl){
+           //Get the type this subtype is derived from
+           ada_subtype_decl_f_subtype(&lal_super_type, &lal_super_type);
+           ada_type_expr_p_designated_type_decl(&lal_super_type, &lal_super_type);
+           lal_super_type_kind = ada_node_kind(&lal_super_type);
+         }
+
          //  Get the programs that use the original type
          //Get the name of the type
          ada_text_type lal_unique_identifying_name;
