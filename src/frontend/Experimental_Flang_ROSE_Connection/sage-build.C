@@ -692,6 +692,10 @@ void Build(parser::FunctionStmt &x, std::list<std::string> &dummy_arg_name_list,
 
 void BuildVisitor::Build(parser::PrintStmt &x) {
   // std::tuple<Format, std::list<OutputItem>> t;
+  info(x, "Rose::builder::Build(PrintStmt)");
+
+  // TODO: get unparse to work (may need const)
+  // Fortran::parser::Unparse(llvm::errs(), x, /*encoding=*/true);
 
   SgPrintStatement* stmt{nullptr};
   SgExpression* format{nullptr};
@@ -969,9 +973,12 @@ void BuildImpl(parser::BOZLiteralConstant &x, SgExpression* &expr)
 
 void BuildImpl(parser::CharLiteralConstant &x, SgExpression* &expr)
 {
-  std::cout << "BuildImpl(CharLiteralConstant)\n";
-  ABORT_NO_IMPL;
+  // std::tuple<std::optional<KindParam>, std::string> t;
 
+  if (std::get<0>(x.t)) {
+    // KindParam
+    ABORT_NO_IMPL;
+  }
   expr = SageBuilder::buildStringVal_nfi(x.GetString());
 }
 
