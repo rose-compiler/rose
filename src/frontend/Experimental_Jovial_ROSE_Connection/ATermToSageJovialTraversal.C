@@ -8995,15 +8995,15 @@ setSourcePositions(ATerm term, RB::SourcePosition &start, RB::SourcePosition &en
 }
 
 void ATermToSageJovialTraversal::
-setDeclarationModifier(SgVariableDeclaration* var_decl, int def_or_ref)
+setDeclarationModifier(SgVariableDeclaration* varDecl, int defOrRef)
 {
    using namespace LanguageTranslation;
 
-   if (def_or_ref == e_storage_modifier_jovial_def) {
-      var_decl->get_declarationModifier().setJovialDef();
+   if (defOrRef == e_storage_modifier_jovial_def) {
+      varDecl->get_declarationModifier().setJovialDef();
    }
-   else if (def_or_ref == e_storage_modifier_jovial_ref) {
-      var_decl->get_declarationModifier().setJovialRef();
+   else if (defOrRef == e_storage_modifier_jovial_ref) {
+      varDecl->get_declarationModifier().setJovialRef();
    }
 }
 

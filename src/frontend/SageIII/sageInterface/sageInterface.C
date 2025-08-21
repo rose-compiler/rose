@@ -14604,17 +14604,13 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
         cerr<<"Error: you cannot insert a variable declaration stmt inside a case option statement without enclosing brances in between."<<endl;
         cerr<<"parent of target is a case option stmt:"<<parent <<endl; 
         cerr<<"new statement is a variable statement:"<<newStmt <<endl; 
-        ROSE_ASSERT (false);
+        ASSERT_require(false);
       }
     }
 
-     if (isSgLabelStatement(parent) != NULL)
+     if (isSgLabelStatement(parent) != nullptr)
         {
-#if 0
-          printf ("In SageInterface::insertStatement(): Detected case of label statement as parent, using parent of label statement \n");
-#endif
           SgLabelStatement* labelStatement = isSgLabelStatement(parent);
-       // parent = labelStatement->get_scope();
           parent = labelStatement->get_parent();
           ROSE_ASSERT(isSgLabelStatement(parent) == NULL);
         }
