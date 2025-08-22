@@ -60,7 +60,7 @@ numberOfNodeInAST (SgExpression* node)
 
                NodeCounter() : nodeCount(0) {}
           
-               void visit (SgNode* node)
+               void visit (SgNode* /*node*/)
                   {
                     nodeCount++;
                   }
@@ -81,11 +81,8 @@ fixupFunctionDefaultArguments( SgNode* node )
      ASSERT_not_null(node);
 
      TimingPerformance timer ("Fixup function default arguments:");
-
      SgSourceFile* file = nullptr;
 
-     static size_t totalNumberOfNodedDeleted = 0;
-     
      if (node->get_parent() == nullptr)
         {
           SgProject *project = isSgProject(node);
@@ -145,10 +142,6 @@ fixupFunctionDefaultArguments( SgNode* node )
 
                     ASSERT_not_null(firstNondefiningDeclaration);
                     ASSERT_not_null(setStructure);
-#if 0
-                 // DQ (7/20/2025): This is called more often that I wish to worry about being processed.
-                    TimingPerformance timer ("Fixup function default arguments: processing the sets");
-#endif
                     SgFunctionDeclaration* bestFunctionDeclarationForDefaultArguments = setStructure->associatedFunctionDeclaration;
                     std::set<SgFunctionDeclaration*> & setOfFunctionDeclarations = setStructure->setOfFunctionDeclarations;
                     std::set<SgFunctionDeclaration*>::iterator j = setOfFunctionDeclarations.begin();
@@ -177,12 +170,6 @@ fixupFunctionDefaultArguments( SgNode* node )
 #if USING_PERFORMANCE_TRACING
                                              TimingPerformance timer ("Fixup function default arguments: traversal to process sets: deleteAST (now skipping deleteAST)");
 #endif
-#if 0
-                                             size_t numberOfNodesToDelete = numberOfNodeInAST(defaultArgument);
-                                             totalNumberOfNodedDeleted += numberOfNodesToDelete;
-                                             printf ("In fixupFunctionDefaultArguments(): defaultArgument = %p = %s numberOfNodesToDelete = %zu totalNumberOfNodedDeleted = %zu \n",
-                                                  defaultArgument,defaultArgument->class_name().c_str(),numberOfNodesToDelete,totalNumberOfNodedDeleted);
-#endif
                                           // DQ (7/20/2025): After discussion with Tristan, we will skip the call to deleteAST() because
                                           // it is expensive (after the performance bug with symbol table fixup, it now takes 1/3 of the
                                           // time to just call deleteAST() (on a input program including rose.h header file as a benchmark).
@@ -190,7 +177,6 @@ fixupFunctionDefaultArguments( SgNode* node )
                                           // so this is an insignificant memory issue. A plan is to at a later date use a function that
                                           // Tristan wrote to identify and delete all of the IR nodes that are disconected from the AST
                                           // (as defined with a root at SgProject).
-                                          // SageInterface::deleteAST(defaultArgument);
                                              defaultArgument->set_parent(NULL);
                                              arg->set_initializer(NULL);
                                            }

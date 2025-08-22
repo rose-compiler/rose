@@ -180,7 +180,7 @@ BinaryLoaderPe::isLinked(SgAsmInterpretation *interp, const std::string &filenam
 }
 
 void
-BinaryLoaderPe::addLibDefaults(SgAsmGenericHeader *hdr/*=NULL*/) {
+BinaryLoaderPe::addLibDefaults(SgAsmGenericHeader* /*hdr=nullptr*/) {
     /* The LD_PRELOAD environment variable may contain space-separated library names */
     const char* ld_preload_env = getenv("LD_PRELOAD");
     if (ld_preload_env) {
@@ -293,7 +293,7 @@ BinaryLoaderPe::link(SgAsmInterpretation* interp) {
 }
 
 void
-BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
+BinaryLoaderPe::fixup(SgAsmInterpretation* interp, FixupErrors* /*errors*/) {
     SgAsmGenericHeaderPtrList& headers = interp->get_headers()->get_headers();
     map<pair<string,string>,SgAsmPEExportEntry*> exportEntryMap;
     map<pair<string,unsigned>,SgAsmPEExportEntry*> exportEntryOrdinalMap;
