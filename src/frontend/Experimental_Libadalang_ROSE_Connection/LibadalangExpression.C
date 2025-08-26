@@ -49,10 +49,12 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
   static const std::unordered_set<std::string> known_attrs{
     "access",                       // 3.10.2(24), 3.10.2(32), K(2), K(4)
     "address",                      // 13.3(11), J.7.1(5), K(6)
-    "address_size",                 // GNAT-specific attribute
+    "address_size",                 // GNAT-specific attribute 4.2
     "adjacent",                     // A.5.3(48), K(8)
     "aft",                          // 3.5.10(5), K(12)
     "alignment",                    // 13.3(23), K(14)
+    "asm_input",                    // GNAT-specific attribute 4.3
+    "asm_output",                   // GNAT-specific attribute 4.4
     "base",                         // 3.5(15), K(17)
     "bit_order",                    // 13.5.3(4), K(19)
     "body_version",                 // E.3(4), K(21)
@@ -78,12 +80,12 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
     "floor",                        // A.5.3(30), K(74)
     "fore",                         // 3.5.10(4), K(78)
     "fraction",                     // A.5.3(21), K(80)
-    "has_access_values",            // GNAT-specific attribute
-    "has_discriminants",            // GNAT-specific attribute
-    "has_tagged_values",            // GNAT-specific attribute
+    "has_access_values",            // GNAT-specific attribute 4.28
+    "has_discriminants",            // GNAT-specific attribute 4.29
+    "has_tagged_values",            // GNAT-specific attribute 4.30
     "identity",                     // 11.4.1(9), C.7.1(12), K(84), K(86)
     "image",                        // 3.5(35), K(88)
-    "img",                          // GNAT-specific attribute
+    "img",                          // GNAT-specific attribute 4.31
     "input",                        // 13.13.2(22), 13.13.2(32), K(92), K(96)
     "last",                         // 3.5(13), 3.6.2(5), K(102), K(104)
     "last_bit",                     // 13.5.2(4), K(106)
@@ -101,9 +103,9 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
     "mantissa",                     // GNAT-specific attribute (Ada83 3.5.8)
     "max",                          // 3.5(19), K(141)
     "max_alignment_for_allocation", // 13.11.1(4), K(144)
-    "max_integer_size",             // GNAT-specific attribute
+    "max_integer_size",             // GNAT-specific attribute 4.41
     "max_size_in_storage_elements", // 13.11.1(3), K(145)
-    "maximum_alignment",            // GNAT-specific attribute
+    "maximum_alignment",            // GNAT-specific attribute 4.40
     "min",                          // 3.5(16), K(147)
     "mod",                          // 3.5.4(16), K(150)
     "model",                        // A.5.3(68), G.2.2(7), K(151)
@@ -112,7 +114,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
     "model_mantissa",               // A.5.3(64), G.2.2(3), K(159)
     "model_small",                  // A.5.3(67), K(161)
     "modulus",                      // 3.5.4(17), K(163)
-    "object_size",                  // GNAT-specific attribute
+    "object_size",                  // GNAT-specific attribute 4.44
     "old",                          // 6.1.1(26)
     "output",                       // 13.13.2(19), 13.13.2(29), K(165), K(169)
     "overlaps_storage",             // 13.3(73), K(172)
@@ -139,7 +141,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
     "small",                        // 3.5.10(2), K(230)
     "storage_pool",                 // 13.11(13), K(232)
     "storage_size",                 // 13.3(60), 13.11(14), J.9(2), K(234), K(236)
-    "storage_unit",                 // GNAT-specific attribute
+    "storage_unit",                 // GNAT-specific attribute 4.60
     "stream_size",                  // 13.13.2(1), K(237)
     "succ",                         // 3.5(22), K(238)
     "tag",                          // 3.9(16), 3.9(18), K(242), K(244)
@@ -147,13 +149,13 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
     "truncation",                   // A.5.3(42), K(248)
     "unbiased_rounding",            // A.5.3(39), K(252)
     "unchecked_access",             // 13.10(3), H.4(18), K(256)
-    "unconstrained_array",          // GNAT-specific attribute
-    "unrestricted_access",          // GNAT-specific attribute
+    "unconstrained_array",          // GNAT-specific attribute 4.69
+    "unrestricted_access",          // GNAT-specific attribute 4.71
     "val",                          // 3.5.5(5), K(258)
     "valid",                        // 13.9.2(3), H(6), K(262)
     "value",                        // 3.5(52), K(264)
     "version",                      // E.3(3), K(268)
-    "wchar_t_size",                 // GNAT-specific attribute
+    "wchar_t_size",                 // GNAT-specific attribute 4.77
     "wide_image",                   // 3.5(28), K(270)
     "wide_value",                   // 3.5(40), K(274)
     "wide_wide_image",              // 3.5(27), K(277)
@@ -161,7 +163,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
     "wide_wide_width",              // 2.5(37), K(277)
     "wide_width",                   // 3.5(38), K(278)
     "width",                        // 3.5(39), K(280)
-    "word_size",                    // GNAT-specific attribute
+    "word_size",                    // GNAT-specific attribute 4.78
     "write",                        // 13.13.2(3), 13.13.2(11), K(282), K(286)
   };
   /* Unhandled cases:

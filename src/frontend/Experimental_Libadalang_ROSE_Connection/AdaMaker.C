@@ -2513,6 +2513,8 @@ namespace
                                      , { "address_size",         &integralTypeAttr }
                                      , { "adjacent",             &argTypeAttr }
                                      , { "aft",                  &integralTypeAttr }
+                                     , { "asm_input",            &exprTypeAttr }
+                                     , { "asm_output",           &exprTypeAttr }
                                      , { "alignment",            &integralTypeAttr }
                                      , { "base",                 &exprTypeAttr } // \todo not entirely correct
                                      , { "bit",                  &integralTypeAttr }

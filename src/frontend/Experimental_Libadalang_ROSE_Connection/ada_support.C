@@ -78,9 +78,9 @@ void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_c
 
        //Get the parent unit (if this isn't a system include, get both .adb and .ads)
        if(parent_name.rfind("ada.", 0) != 0 && parent_name.rfind("gnat.", 0) != 0 && parent_name.rfind("system.", 0) != 0){
-           units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &parent_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_BODY, NULL, 0));
+           units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &parent_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_BODY, nullptr, 0));
        }
-       units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &parent_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, NULL, 0));
+       units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &parent_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, nullptr, 0));
     }
   }
 
@@ -116,9 +116,9 @@ void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_c
 
             //Get the withed unit (if this isn't a system include, get both .adb and .ads)
             if(full_package_name.rfind("ada.", 0) != 0 && full_package_name.rfind("gnat.", 0) != 0 && full_package_name.rfind("system.", 0) != 0){
-              units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_BODY, NULL, 0));
+              units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_BODY, nullptr, 0));
             }
-            units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, NULL, 0));
+            units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, nullptr, 0));
           }
         }
       }
@@ -146,8 +146,8 @@ void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_c
     ada_text parent_name_text = { full_parent_name_chars, full_parent_name_length, true };
 
     //Get the parent unit (we can't know whether it's .ads or .adb, so try both)
-    units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &parent_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_BODY, NULL, 0));
-    units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &parent_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, NULL, 0));
+    units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &parent_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_BODY, nullptr, 0));
+    units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &parent_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, nullptr, 0));
   }
 
   //Look over the units_to_check, & add any valid ones to comp_units
@@ -230,7 +230,7 @@ void add_text_io_subpackages(const std::string& parent_package_name, int positio
     ada_text package_name_text = { full_package_name_chars, full_package_name_length, true };
 
     //Get the child unit
-    ada_analysis_unit child_unit = ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, NULL, 0);
+    ada_analysis_unit child_unit = ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, nullptr, 0);
 
     if(child_unit == nullptr || ada_unit_diagnostic_count(child_unit) > 0){
       mlog[Sawyer::Message::ERROR] << "Could not get compilation unit for " << full_package_name << std::endl;
@@ -471,7 +471,25 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
          ada_text ads_name = { ads_name_chars, srcFileStem.size(), true };
 
          //Get the .ads (if it exists)
-         analysis_units.push_back(ada_get_analysis_unit_from_provider(ctx, &ads_name, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, NULL, 0));
+         analysis_units.push_back(ada_get_analysis_unit_from_provider(ctx, &ads_name, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, nullptr, 0));
+
+         if(ada_unit_diagnostic_count(analysis_units.at(1)) > 0){
+           mlog[Sawyer::Message::INFO] << "Attempting fallback to get " << srcFileStem << ".ads\n";
+           //Also try getting the .ads file by filename (this helps if the file name does not match unit name)
+           //Check each of the include paths & the src file's directory for the .ads
+           std::string srcFileNoExtOrPath = srcFileStem.substr(srcFileStem.find_last_of("/") + 1);
+           std::vector<std::string> allSearchPaths = includePaths;
+           allSearchPaths.push_back(srcDir);
+
+           for(std::string searchPath : allSearchPaths){
+             std::string specificationFile = searchPath + "/" + srcFileNoExtOrPath + ".ads";
+             if(boostfs::is_regular_file(specificationFile)){
+               char* cstring_SpecificationFile = const_cast<char*>(specificationFile.c_str());
+               analysis_units.at(1) = ada_get_analysis_unit_from_file(ctx, cstring_SpecificationFile, nullptr, 0, ada_default_grammar_rule);
+               break;
+             }
+           }
+         }
        }
 
        //Check if we got any diagnostics for the units
@@ -507,7 +525,7 @@ int libadalang_main(const std::vector<std::string>& args, SgSourceFile* file)
      int num_source_files = analysis_units.size();
      std::vector<ada_base_entity> root_storage(num_source_files);
 
-     //Add the initial compilation units to the vectors, then recursively add any dependencies
+     //Add the initial compilation units to the vector, then recursively add any dependencies
      for(int i = 0; i < num_source_files; ++i){
        ada_unit_root(analysis_units.at(i), &root_storage.at(i));
      }

@@ -2979,7 +2979,6 @@ namespace {
       //~recordNode(libadalangTypes(), hash_node(lal_element), sgnode); //Do not record this node
     } else if(lal_element_kind == ada_generic_formal_obj_decl){
       logKind("ada_generic_formal_obj_decl", lal_element_hash);
-      logInfo() << "  lal_expr name is " << canonical_text_as_string(lal_expr) << std::endl;
       //Treat this as a constant declaration, with lal_expr as the value
 
       //We can't just use handleVarCstDecl b/c we have a different varinit
@@ -4195,25 +4194,19 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         SgType&                 rettype      = isFunc ? getDeclType(&subp_returns, ctx)
                                                       : mkTypeVoid();
 
-        ada_base_entity lal_previous_decl;
-        ada_basic_decl_p_previous_part_for_decl(lal_element, 1, &lal_previous_decl);
-        SgDeclarationStatement* ndef    = nullptr;
+        //This node can have a non-null p_previous_part, but that is only because LAL is weird.
+        // Since this node represents an 'is separate' decl, it is always the first defining declaration.
+        // So, there is no need to search for a previous decl, because even if we found something it would be wrong.
         SgFunctionDeclaration*  nondef  = nullptr;
-
-        //If this isn't the first decl, set up nondef
-        if(!ada_node_is_null(&lal_previous_decl)){
-          int decl_hash = hash_node(&lal_previous_decl);
-          ndef          = findFirst(libadalangDecls(), decl_hash);
-          nondef        = getFunctionDeclaration(ndef);
-        }
-
         SgScopeStatement&       logicalScope = SG_DEREF(parent_scope);
         SgFunctionDeclaration&  sgnode  = createFunDcl(nondef, ident, logicalScope, rettype, ParameterCompletion{&subp_params, ctx});
 
         setAdaSeparate(sgnode, true /* separate */);
 
-        int hash = hash_node(lal_element);
-        recordNode(libadalangDecls(), hash, sgnode);
+        int decl_hash = hash_node(lal_element);
+        int name_hash = hash_node(&lal_defining_name);
+        recordNode(libadalangDecls(), decl_hash, sgnode);
+        recordNode(libadalangDecls(), name_hash, sgnode);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, lal_element, ctx);
         ctx.appendStatement(sgnode);
