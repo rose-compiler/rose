@@ -136,9 +136,9 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
       if (collect != 0) (*collect)(var, init, OperatorSideEffect::Decl);
       return true;
     };
-    std::function<bool(AstNodePtr, AstNodePtr)> save_allocate = [&collect] (AstNodePtr var, AstNodePtr init) {
-      DebugAstUtil([&var](){ return "save allocate:" + AstInterface::AstToString(var); });
-      if (collect != 0) return (*collect)(var, init, OperatorSideEffect::Allocate);
+    std::function<bool(AstNodePtr, AstNodePtr)> save_allocate = [&collect] (AstNodePtr op, AstNodePtr init) {
+      DebugAstUtil([&op,&init](){ return "save allocate:" + AstInterface::AstToString(op) + ":" + AstInterface::AstToString(init); });
+      if (collect != 0) return (*collect)(op, init, OperatorSideEffect::Allocate);
       return true;
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_free = [&collect] (AstNodePtr var, AstNodePtr init) {

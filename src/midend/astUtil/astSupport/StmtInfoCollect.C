@@ -361,8 +361,9 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
 }
 void StmtSideEffectCollect::
 AppendMemoryAllocate( AstInterface& /* fa */, const AstNodePtr& s) {
-   if (allocate_collect != 0 && AstInterface::IsMemoryAllocation(s)) {
-      (*allocate_collect)(s, curstmt);
+   AstNodePtr init;
+   if (allocate_collect != 0 && AstInterface::IsMemoryAllocation(s, 0, &init)) {
+      (*allocate_collect)(s, init);
    }
 }
 void StmtSideEffectCollect::

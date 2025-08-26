@@ -92,7 +92,6 @@ void WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* r
         SgNode* details = second.get_ptr();
         switch (relation) {
           case AstUtilInterface::OperatorSideEffect::Decl: 
-          case AstUtilInterface::OperatorSideEffect::Allocate: 
           case AstUtilInterface::OperatorSideEffect::Free:  {
                SgType* t = AstInterface::GetExpressionType(first).get_ptr();
                assert(t != 0);

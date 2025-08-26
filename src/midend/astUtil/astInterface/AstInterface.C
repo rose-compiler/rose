@@ -2323,7 +2323,7 @@ IsAddressOfOp( const AstNodePtr& _s)
 
 
 bool AstInterface::
-IsMemoryAllocation( const AstNodePtr& s, AstNodeType* exptype)
+IsMemoryAllocation( const AstNodePtr& s, AstNodeType* exptype, AstNodePtr* init)
 {
   AstNodePtrImpl s1 = SkipCasting(s.get_ptr()), f;
   if (IsFunctionCall(s1, &f)) {
@@ -2335,6 +2335,9 @@ IsMemoryAllocation( const AstNodePtr& s, AstNodeType* exptype)
        if (exptype != 0) {
           *exptype = GetExpressionType(s);
        }
+       if (init != 0) {
+          *init = AST_NULL;
+       }
        return true;
     }
     return false;
@@ -2343,6 +2346,9 @@ IsMemoryAllocation( const AstNodePtr& s, AstNodeType* exptype)
   if (is_new != 0) {
      if (exptype != 0) {
        *exptype = AstNodeTypeImpl(is_new->get_type()); 
+     }
+     if (init != 0) {
+       *init = is_new->get_constructor_args();
      }
     return true;
   }
@@ -4462,7 +4468,7 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
     {
      AstNodeType alloc_type; 
      if (IsMemoryAllocation(variable, &alloc_type)) {
-        return res + GetGlobalUniqueName(variable, GetTypeName(alloc_type));
+        return res + "new_" + GetGlobalUniqueName(variable, GetTypeName(alloc_type));
      }
     }
     {

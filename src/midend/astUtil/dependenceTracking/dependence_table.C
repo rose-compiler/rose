@@ -463,7 +463,8 @@ bool DependenceTable::
      AstUtilInterface::AddOperatorSideEffectAnnotation(op, varref, relation);
   }
   if (details != 0) {
-       attr = AstInterface::AstToString(details,/*output_class_name=*/false);
+       Log.push("Side effect details: " + AstInterface::AstToString(AstNodePtrImpl(details)));
+       attr = AstUtilInterface::GetVariableSignature(details);
   }
   DependenceEntry e(AstUtilInterface::GetVariableSignature(op), AstUtilInterface::GetVariableSignature(varref), 
                                     AstUtilInterface::OperatorSideEffectName(relation), attr); 
