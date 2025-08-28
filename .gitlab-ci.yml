@@ -4,6 +4,7 @@ variables:
     TEST_SCRIPTS: "ssh://git@rosecompiler2.llnl.gov:10022/main/rose-compiler/testing-scripts.git"
     TEST_SCRIPTS_BRANCH: "master"
     ROSE_REMOTE_URL: "rose-github:rose-compiler/rose.git"
+    ROSE_GENERATED_REMOTE_URL: "rose-github:rose-compiler/rose-full.git"
     TEST_SUITE: "ssh://git@rosecompiler2.llnl.gov:10022/main/rose-compiler/rose-tests.git"
     TEST_DIRECTORY: "testing-scripts"
     GIT_SUBMODULE_STRATEGY: recursive
@@ -427,3 +428,16 @@ Coverage-Analysis-Combine:
 
 Blame-Warnings:
     extends: .release-base
+
+Create-Generated:
+    extends: .release-base
+
+Push-Weekly-Generated:
+    extends: .release-base
+    tags:
+        - network
+    resource_group: deployment
+    needs:
+      - job: Create-Generated
+    script:
+        - ./$TEST_DIRECTORY/util/push_weekly_generated.sh
