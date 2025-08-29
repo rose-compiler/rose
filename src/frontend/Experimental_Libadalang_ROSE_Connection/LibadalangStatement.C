@@ -355,6 +355,57 @@ namespace Libadalang_ROSE_Translation
 
 namespace {
 
+  SgExpression&
+  getDefaultFunctionExpr(ada_base_entity* lal_element, SgAdaSubroutineType& ty, AstContext ctx)
+  {
+    SgExpression* res = nullptr;
+
+    if(ada_node_is_null(lal_element)){
+      return mkNullExpression();
+    }
+
+    ada_node_kind_enum kind = ada_node_kind(lal_element);
+
+    switch (kind)
+    {
+      case ada_box_expr:
+        res = &mkAdaBoxExp();
+        break;
+
+      case ada_dotted_name:
+      case ada_identifier:
+      case ada_string_literal:
+        {
+          SgFunctionParameterList&  fnparams = SG_DEREF(ty.get_parameterList());
+          SgInitializedNamePtrList& parmlst  = fnparams.get_args();
+          OperatorCallSupplement::ArgDescList arglist;
+          auto argDescExtractor = [](SgInitializedName* ini) -> ArgDesc
+                                  {
+                                    return { "", ini->get_type() };
+                                  };
+
+          arglist.reserve(parmlst.size());
+          std::transform(parmlst.begin(), parmlst.end(), std::back_inserter(arglist), argDescExtractor);
+
+          res = &getExpr(lal_element, ctx, OperatorCallSupplement(std::move(arglist), ty.get_return_type()));
+          break;
+        }
+
+      case ada_null_literal:
+        res = sb::buildNullptrValExp();
+        break;
+
+      /*case A_Nil_Default:
+        res = &mkNullExpression();
+        break;*/
+
+      default:
+        logError() << "Unhandled kind " << kind << " in getDefaultFunctionExpr!\n";
+    }
+
+    return SG_DEREF(res);
+  }
+
   // may need special processing for pragmas in body
   using DeferredPragmaBodyCompletion = std::function<void(AstContext::PragmaContainer)>;
   //
@@ -476,9 +527,28 @@ namespace {
                             )
   {
     //Get the base type
-    ada_base_entity lal_subtype_indication, lal_base_type;
+    ada_base_entity lal_subtype_indication, lal_base_type, lal_type_def;
     ada_derived_type_def_f_subtype_indication(tydef, &lal_subtype_indication);
     ada_type_expr_p_designated_type_decl(&lal_subtype_indication, &lal_base_type);
+    ada_type_decl_f_type_def(&lal_base_type, &lal_type_def);
+
+    //Handle the case where lal_base_type is a derived type, not ada_enum_type_def
+    ada_node_kind_enum lal_type_def_kind = ada_node_kind(&lal_type_def);
+    while(lal_type_def_kind != ada_enum_type_def){
+      if(lal_type_def_kind == ada_private_type_def){
+        ada_base_type_decl_p_private_completion(&lal_base_type, &lal_base_type);
+        ada_type_decl_f_type_def(&lal_base_type, &lal_type_def);
+      } else if(lal_type_def_kind == ada_derived_type_def){
+        ada_derived_type_def_f_subtype_indication(&lal_type_def, &lal_subtype_indication);
+        ada_type_expr_p_designated_type_decl(&lal_subtype_indication, &lal_base_type);
+        ada_type_decl_f_type_def(&lal_base_type, &lal_type_def);
+      } else {
+        logFlaw() << "Unhandled lal_type_def_kind " << lal_type_def_kind << " in processInheritedEnumValues!\n";
+        break;
+      }
+
+      lal_type_def_kind = ada_node_kind(&lal_type_def);
+    }
 
     //We process the subps in a different function, so just handle the decls
 
@@ -772,24 +842,29 @@ namespace {
     } else if(!typeview || lal_type_def_kind == ada_private_type_def || lal_type_def_kind == ada_derived_type_def){ //If it isn't an access, we need to find the original type to see if it's a type, record, or enum
       ada_base_entity lal_base_type_def;
       ada_type_decl_f_type_def(&lal_base_type_decl, &lal_base_type_def);
-      lal_type_def_kind = ada_node_kind(&lal_base_type_def); //TODO If this is ada_derived_type_def, we might need to go further
+      lal_type_def_kind = ada_node_kind(&lal_base_type_def);
 
       // if the ultimate base type is an enum, the derived type also shall be an enum.
       // if not an enum, then an intermediate type decl is created.
       // firstLevelIsDerived is set to indicate if the first level was a derived type
       const bool firstLevelIsDerived = lal_type_def_kind == ada_derived_type_def;
 
-      while(lal_type_def_kind == ada_derived_type_def){
-        //If this is a derived type, get the type it is derived from
+      while(lal_type_def_kind == ada_derived_type_def || lal_type_def_kind == ada_private_type_def){
         ada_base_entity lal_subtype_indication;
-        ada_derived_type_def_f_subtype_indication(&lal_base_type_def, &lal_subtype_indication);
-        ASSERT_require(!ada_node_is_null(&lal_subtype_indication));
+        //If this is a derived type, get the type it is derived from
+        if(lal_type_def_kind == ada_derived_type_def){
+          ada_derived_type_def_f_subtype_indication(&lal_base_type_def, &lal_subtype_indication);
+          ASSERT_require(!ada_node_is_null(&lal_subtype_indication));
 
-        logTrace() << "kind = " << ada_node_kind(&lal_subtype_indication)
-                   << "   hash = " << hash_node(&lal_subtype_indication)
-                   << std::endl;
+          logTrace() << "kind = " << ada_node_kind(&lal_subtype_indication)
+                     << "   hash = " << hash_node(&lal_subtype_indication)
+                     << std::endl;
 
-        ada_type_expr_p_designated_type_decl(&lal_subtype_indication, &lal_base_type_decl);
+          ada_type_expr_p_designated_type_decl(&lal_subtype_indication, &lal_base_type_decl);
+        } else {
+          //For ada_private_type_def, get the type decl
+          ada_base_type_decl_p_private_completion(&lal_base_type_decl, &lal_base_type_decl);
+        }
         if (!ada_node_is_null(&lal_base_type_decl)) {
 
           //Check what type lal_base_type_decl is
@@ -809,17 +884,20 @@ namespace {
           ASSERT_require(!ada_node_is_null(&lal_base_type_def));
 
           if(hash_node(&lal_base_type_def) == old_type_def_hash){
+            //If there is an infinite loop, make our best guess
             SgNode& tyrep = getExprType(&lal_base_type_decl, ctx);
             const bool isEnum = si::Ada::baseEnumDeclaration(isSgType(&tyrep)) != nullptr;
 
             lal_type_def_kind = isEnum ? ada_enum_type_def : ada_private_type_def /* anything */;
           } else {
+            //If everything is fine, keep looping
             lal_type_def_kind = ada_node_kind(&lal_base_type_def);
           }
         } else {
+          //If we encounter a null node, just give up
           ada_base_entity lal_name;
 
-          ada_subtype_indication_f_name(&lal_subtype_indication, &lal_name);
+          ada_subtype_indication_f_name(&lal_subtype_indication, &lal_name); //TODO This could use lal_subtype_indication before it is initialized
           SgNode& tyrep = getExprType(&lal_name, ctx);
 
           const bool isEnum = si::Ada::baseEnumDeclaration(isSgType(&tyrep)) != nullptr;
@@ -2556,8 +2634,13 @@ void handleStmt(ada_base_entity* lal_stmt, AstContext ctx, const std::string& lb
           //Get the name
           ada_base_entity lal_identifier;
           ada_accept_stmt_f_name(lal_stmt, &lal_identifier);
+
+          //Get the entry_index
+          ada_base_entity lal_entry_index_expr;
+          ada_accept_stmt_f_entry_index_expr(lal_stmt, &lal_entry_index_expr);
+
           SgExpression&            entryref = getExpr(&lal_identifier, ctx);
-          SgExpression&            idx      = getExpr_opt(nullptr, ctx); //TODO What is Accept_Entry_Index?
+          SgExpression&            idx      = getExpr_opt(&lal_entry_index_expr, ctx);
           SgAdaAcceptStmt&         sgnode   = mkAdaAcceptStmt(entryref, idx);
 
           //Set the SgFunctionParameterScope to have the correct parent
@@ -2945,6 +3028,7 @@ namespace {
   // \ref ctx: The scope of the instantiated package/subp
   void handleFormalDeclInstantiation(ada_base_entity* lal_element, ada_base_entity* lal_expr, AstContext ctx)
   {
+    //TODO: lal_expr can be ada_box_expr, and types can be private. Neither case is handled well at the moment.
     //Get the kind
     ada_node_kind_enum lal_element_kind = ada_node_kind(lal_element);
 
@@ -2976,7 +3060,7 @@ namespace {
       //~privatize(sgnode, isPrivate); //Cannot be private
       attachSourceLocation(sgnode, lal_element, ctx);
       ctx.appendStatement(sgnode);
-      //~recordNode(libadalangTypes(), hash_node(lal_element), sgnode); //Do not record this node
+      recordNode(libadalangTypes(), hash_node(&lal_formal_decl), sgnode); //This overwrites the generic's decl
     } else if(lal_element_kind == ada_generic_formal_obj_decl){
       logKind("ada_generic_formal_obj_decl", lal_element_hash);
       //Treat this as a constant declaration, with lal_expr as the value
@@ -3728,9 +3812,23 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
 
         //If this isn't the first decl, set up ndef & nondef
         if(!ada_node_is_null(&lal_previous_decl)){
-          int decl_hash = hash_node(&lal_previous_decl);
-          ndef          = findFirst(libadalangDecls(), decl_hash);
-          nondef        = getFunctionDeclaration(ndef ? ndef->get_firstNondefiningDeclaration() : nullptr);
+          //First, check if lal_previous_decl has the same unique_identifying_name
+          // Sometimes LAL connects to an incorrect previous decl; this is to catch some of those times
+          // Only do this check if the decl isn't an ada_subp_body_stub: these do not have unique_identifying_name
+          bool unique_names_match = true;
+          if(ada_node_kind(&lal_previous_decl) != ada_subp_body_stub){
+            ada_text_type lal_body_unique_name, lal_decl_unique_name;
+            ada_basic_decl_p_unique_identifying_name(lal_element, &lal_body_unique_name);
+            ada_basic_decl_p_unique_identifying_name(&lal_previous_decl, &lal_decl_unique_name);
+            LibadalangText body_unique_name(lal_body_unique_name);
+            LibadalangText decl_unique_name(lal_decl_unique_name);
+            unique_names_match = (body_unique_name.string_value() == decl_unique_name.string_value());
+          }
+          if(unique_names_match){
+            int decl_hash = hash_node(&lal_previous_decl);
+            ndef          = findFirst(libadalangDecls(), decl_hash);
+            nondef        = getFunctionDeclaration(ndef ? ndef->get_firstNondefiningDeclaration() : nullptr);
+          }
         }
 
         //~ logError() << "proc body: " << nondef << std::endl;
@@ -3888,10 +3986,10 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
     case ada_generic_formal_subp_decl:           // 12.6(2)
       {
         //Get whether this is a func or a proc, & the overriding status
-        ada_base_entity lal_subp_spec, lal_subp_type, lal_overriding;
-        ada_generic_formal_f_decl(lal_element, &lal_subp_spec);
-        ada_classic_subp_decl_f_overriding(&lal_subp_spec, &lal_overriding); //TODO overriding isn't needed?
-        ada_classic_subp_decl_f_subp_spec(&lal_subp_spec, &lal_subp_spec);
+        ada_base_entity lal_subp_decl, lal_subp_spec, lal_subp_type, lal_overriding;
+        ada_generic_formal_f_decl(lal_element, &lal_subp_decl);
+        ada_classic_subp_decl_f_overriding(&lal_subp_decl, &lal_overriding); //TODO overriding isn't needed?
+        ada_classic_subp_decl_f_subp_spec(&lal_subp_decl, &lal_subp_spec);
         ada_subp_spec_f_subp_kind(&lal_subp_spec, &lal_subp_type);
         ada_node_kind_enum lal_subp_type_kind = ada_node_kind(&lal_subp_type);
 
@@ -3912,12 +4010,16 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         ada_subp_spec_f_subp_returns(&lal_subp_spec, &lal_return_type);
         ada_subp_spec_f_subp_params(&lal_subp_spec, &lal_params);
 
+        //Get the default expr
+        ada_base_entity lal_default_expr;
+        ada_formal_subp_decl_f_default_expr(&lal_subp_decl, &lal_default_expr);
+
         SgType&                rettype = isFormalFuncDecl ? getDeclType(&lal_return_type, ctx)
                                                           : mkTypeVoid();
 
         SgScopeStatement&      logicalScope = SG_DEREF(determineParentScope(&lal_defining_name, ctx));
         SgAdaSubroutineType&   funty   = mkAdaSubroutineType(rettype, ParameterCompletion{&lal_params, ctx}, ctx.scope(), false  /*isProtected*/ );
-        SgExpression&          defaultInit = mkNullExpression();//getDefaultFunctionExpr(lal_element, funty, ctx); TODO Find this in the lal tree
+        SgExpression&          defaultInit = getDefaultFunctionExpr(&lal_default_expr, funty, ctx);
         SgAdaRenamingDecl&     sgnode  = mkAdaRenamingDecl(ident, defaultInit, funty, logicalScope);
 
         int hash = hash_node(&lal_defining_name);

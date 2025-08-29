@@ -885,7 +885,7 @@ mkAdaFormalPackageDecl(const std::string& name, SgDeclarationStatement& gendecl,
   sgnode.set_firstNondefiningDeclaration(&sgnode);
   scope.insert_symbol(name, &mkBareNode<SgAdaFormalPackageSymbol>(&sgnode));
 
-  logTrace() << "ins sym: " << name << std::endl;
+  //~logTrace() << "ins sym: " << name << std::endl;
   ASSERT_not_null(scope.find_symbol_from_declaration(&sgnode));
   return sgnode;
 }

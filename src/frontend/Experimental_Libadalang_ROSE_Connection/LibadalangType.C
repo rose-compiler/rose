@@ -600,6 +600,10 @@ namespace
     ada_node_kind_enum kind = ada_node_kind(&lal_type_def);
     int lal_type_def_hash = hash_node(&lal_type_def);
 
+    //Get the discriminants(if they exist)
+    ada_base_entity lal_discriminant_list;
+    ada_type_decl_f_discriminants(lal_element, &lal_discriminant_list);
+
     SgAdaFormalTypeDecl&           sgnode = mkAdaFormalTypeDecl(name, ctx.scope());
     FormalTypeData                 res{&lal_type_def, &sgnode};
     SgAdaFormalType&               formal = SG_DEREF(sgnode.get_type());
@@ -727,16 +731,16 @@ namespace
 
     formal.set_formal_type(formalBaseType);
 
-/*
-    if (inheritsDeclarationsAndSubprograms)
-    {
-      processInheritedSubroutines( formal,
-                                   idRange(typenode.Implicit_Inherited_Subprograms),
-                                   idRange(typenode.Implicit_Inherited_Declarations),
-                                   ctx.scope(inheritedRoutineScope)
-                                 );
+    if(SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDecl_opt(&lal_discriminant_list, nullptr, ctx)){
+      SgScopeStatement&           genericScope = ctx.scope();
+      SgScopeStatement&           discScope = SG_DEREF(discr->get_discriminantScope());
+      SgDeclarationStatement&     sgdecl = res.sageNode();
+
+      sg::linkParentChild(*discr, sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
+
+      res.sageNode(*discr);
     }
-*/
+
     return res;
   }
 

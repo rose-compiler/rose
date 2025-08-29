@@ -96,6 +96,10 @@ namespace Libadalang_ROSE_Translation
   /// returns the ROSE scope of an already converted Asis element \ref elem.
   SgScopeStatement&
   queryScopeOf(int declHash, AstContext);
+
+  /// If \ref primary or \ref secondary exist, creates a discriminated decl using them, otherwise returns nullptr
+  SgAdaDiscriminatedTypeDecl*
+  createDiscriminatedDecl_opt(ada_base_entity* primary, ada_base_entity* secondary, AstContext ctx);
 }
 
 
