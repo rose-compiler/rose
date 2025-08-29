@@ -4445,7 +4445,7 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
     {
       std::string value;
       if (AstInterface::IsConstant(variable, 0, &value)) {
-         return value;
+         return "CONSTANT";
       }
     }
     {
@@ -4459,7 +4459,7 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
        for (auto x : args) {
          if (!is_first) { res += ","; }
          else { is_first = false; }
-         res += AstToString(x, /*output_class_name=*/false);
+         res += AstInterface::GetVariableSignature(x);
        }
        res  +=  ")";
        return res;
@@ -4477,7 +4477,7 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
       return res + name;
     }
     }
-    res += "_UNKNOWN_" + AstInterface::AstToString(variable, /*use_class_name=*/true);
+    res += "_UNKNOWN_" + variable->class_name();
     return res;
 }
 
