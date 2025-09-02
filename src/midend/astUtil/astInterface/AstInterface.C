@@ -4443,8 +4443,11 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
         return OperatorDeclaration::operator_signature(variable);
     } 
     {
-      std::string value;
-      if (AstInterface::IsConstant(variable, 0, &value)) {
+      std::string value, valtype;
+      if (AstInterface::IsConstant(variable, &valtype, &value)) {
+         if (valtype == "int") {
+             return value;
+         }
          return "CONSTANT";
       }
     }
