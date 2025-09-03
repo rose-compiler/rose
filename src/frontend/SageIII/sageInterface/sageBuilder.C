@@ -519,8 +519,8 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 #endif
                  // I think that we need to strip off any pointer or reference modifier types.
                  // unsigned char bit_array == (SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_POINTER_MEMBER_TYPE);
-                    unsigned char bit_array = (SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_POINTER_MEMBER_TYPE);
-                    type = type->stripType(bit_array);
+                 // unsigned char bit_array = (SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_POINTER_MEMBER_TYPE);
+                 // type = type->stripType(bit_array);
 
 #if DEBUG_TEMPLATE_ARGUMENT_NAMES
                     printf ("In SageBuilder::appendTemplateArgumentsToName(): case SgTemplateArgument::type_argument: AFTER stripType: type = %p = %s \n",type,type->class_name().c_str());
