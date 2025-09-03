@@ -5,7 +5,6 @@ HEADER_NODE_PREDECLARATION_START
 #include <semaphore.h>
 #include <rosePublicConfig.h>
 #include "setup.h"
-// #include "Map.h"
 #include <sageContainer.h>
 #include <boost/format.hpp>
 
@@ -101,20 +100,6 @@ HEADER_START
        */
           bool get_containsTransformation() const;
 
-#if 0
-       // DQ (5/2/2021): I think we need a flag to record when a transformation is contained directly in the current file.
-      /*! \brief Many nodes can hide other AST nodes and we need to track when outer nodes contain modified nodes even if they are not themselves modified.
-
-          This flag is required to support the unparsing using the token stream.
-       */
-          void set_containsTransformationRelativeToNodeFile( bool containsTransformationRelativeToNodeFile );
-
-      /*! \brief Acess function for containsTransformationRelativeToNodeFile flag
-
-          This flag records if the current IR node has a nested AST node that is marked as being modified.
-       */
-          bool get_containsTransformationRelativeToNodeFile() const;
-#endif
       //! All nodes in the AST contain a reference to a parent node
           void set_parent ( SgNode* parent );
 
@@ -128,15 +113,9 @@ HEADER_START
       //! Query function for if the input IR nodes is a child of the current IR node.
           bool isChild ( SgNode* node ) const;
 
-        // DQ (4/4/2006): Added optional parameter to customize unparsing
        //! This function unparses the AST node (excluding comments and unnecessary white space)
-        // virtual std::string unparseToString(SgUnparse_Info* info = NULL) const;
-        // Jeremiah (11/9/2007): The default value is not recognized by gdb.
            virtual std::string unparseToString(SgUnparse_Info* info) const;
 
-        // DQ (9/6/2010): Move this to the source file (we want to eliminate function definitions in header files).
-        // The existence of this function addresses a bug in gdb (see comment from Jeremiah (11/9/2007) above).
-        // inline std::string unparseToString() const { return this->unparseToString(NULL); }
            std::string unparseToString() const;
 
        //! This function unparses the AST node (including comments and white space)
@@ -336,7 +315,6 @@ HEADER_START
          AstAttributeMechanism.
       */
          virtual void set_attributeMechanism(AstAttributeMechanism* a);
-     /* */
 
 #if ALT_FIXUP_COPY
       /* name AST Copy Support Functions
@@ -349,11 +327,9 @@ HEADER_START
           \implementation These functions are used internally inside the AST copy mechanism.
            The public interface for this functionality is given below this section.
        */
-      /* */
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
           virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
-      /* */
 #else
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
@@ -364,7 +340,7 @@ HEADER_START
           These are the virtual function definitions, they are overloaded for SgLocatedNode
           and a few of the SgSupport IR nodes.
        */
-      /* */
+
       /*! \brief File information containing filename, line number, column number,
                  and if the SgNode is a part of a new transformation, etc.
 
@@ -384,7 +360,6 @@ HEADER_START
                location of contruct (typically the closing brace).
      */
           virtual Sg_File_Info* get_endOfConstruct(void) const { return nullptr; }
-      /* */
 
       /* name Control flow graph public functions
 
@@ -426,20 +401,12 @@ HEADER_START
       /*! \brief Find the in edges of a CFG node -- internal version. */
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index = false);
 #endif
-      /* */
 
-       // DQ (1/31/2006): These must be built to be static access member functions (so they can't be built by ROSETTA).
-      /* name Function Type Information
-             Support for global view of function types used in ROSE.
-       */
-      /* */
        //! Access function for symbol table specific to function types.
           static SgFunctionTypeTable* get_globalFunctionTypeTable();
        //! Access function for symbol table specific to function types.
           static void set_globalFunctionTypeTable(SgFunctionTypeTable* globalFunctionTypeTable);
-      /* */
 
-       // DQ (7/22/2010): Added seperate type table to support construction of unique types.
        //! Access function for symbol table specific to non-function types.
           static SgTypeTable* get_globalTypeTable();
        //! Access function for symbol table specific to non-function types.
@@ -453,7 +420,6 @@ HEADER_START
       /* \brief Mangled name cache for improved performance of mangled name generation
           This mangle name caching is implemented to support better performance.
        */
-       // static std::map<SgNode*,std::string> & get_globalMangledNameMap();
 
       /*! \brief Computes the number of nodes in the defined subtree of the AST.
 
@@ -646,29 +612,7 @@ private:
     // through the base classes versus traversing through data members. In the output, we use one character of indentation per
     // recursion level, with spaces (' ') representing recursion due to data members and dots ('.') representing recursion due to
     // base classes.
-#if 0
-    // Debugging version
-    size_t objectSerializationDepth_ = 0;               // incremented as we traverse through base classes
-    void debugSerializationHelper(const char *className, bool isBegin) {
-        static size_t classSerializationDepth = 0;      // incremented by both base classes and data members
-        if (isBegin) {
-            ASSERT_require(classSerializationDepth >= objectSerializationDepth_);
-            const size_t memberTraversalDepth = classSerializationDepth - objectSerializationDepth_;
-            std::cerr <<"serializing: " <<std::string(memberTraversalDepth, ' ') <<std::string(objectSerializationDepth_, '.')
-                      <<className <<" " <<this <<"\n";
-            ++classSerializationDepth;
-            ++objectSerializationDepth_;
-        } else {
-            ASSERT_require2(classSerializationDepth > 0, className);
-            ASSERT_require2(objectSerializationDepth_ > 0, className);
-            --classSerializationDepth;
-            --objectSerializationDepth_;
-        }
-    }
-#else
-    // Production version
     void debugSerializationHelper(const char*, bool) {}
-#endif
 
 protected:
     /** This gets called by all Rosebud-generated destructors.
@@ -751,16 +695,10 @@ SOURCE_START
 // ###############################
 
 // Support for global function type symbol table (moved to be static data pointer)
-// DQ (1/31/2006): Modified to build all types in the memory pools
-// SgFunctionTypeTable* SgNode::Sgfunc_type_table = new SgFunctionTypeTable();
-// SgFunctionTypeTable* SgNode::p_globalFunctionTypeTable = new SgFunctionTypeTable();
 SgFunctionTypeTable* SgNode::p_globalFunctionTypeTable = nullptr;
 
 // DQ (7/22/2010): Added type table for non-function types (supports construction of unique types).
 SgTypeTable*         SgNode::p_globalTypeTable         = nullptr;
-
-// Static variable used to hold language specific information for each IR node
-// long SgNode::language_classification_bit_vector;
 
 // DQ (3/12/2007): Added mangled name map to improve performance of generating mangled names
 std::map<SgNode*,std::string> SgNode::p_globalMangledNameMap;
@@ -771,10 +709,6 @@ std::map<std::string,uint64_t> SgNode::p_shortMangledNameCache;
 // at the IR node which has the qlocal qualifier).  Thus we can support multiple references
 // to an IR node which might have different qualified names.  This is critical to the
 // qualified name support.
-// DQ (8/11/2025): Adding support for unordered maps for name qualification.
-// std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForNames;
-// std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTypes;
-// std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTemplateHeaders;
 SgUnorderedMapNodeToString SgNode::p_globalQualifiedNameMapForNames;
 SgUnorderedMapNodeToString SgNode::p_globalQualifiedNameMapForTypes;
 SgUnorderedMapNodeToString SgNode::p_globalQualifiedNameMapForTemplateHeaders;
@@ -784,29 +718,24 @@ std::unordered_map<SgNode*,std::string> SgNode::p_globalTypeNameMap;
 // DQ (3/13/2019): The fix for referencing types than contain many parts is to have a map of maps
 // to the generated name qualification substrings for each type, all associted with a single reference
 // node to the statement refering to the type.
-// std::map<SgNode*,std::map<SgNode*,std::string> > SgNode::p_globalQualifiedNameMapForMapsOfTypes;
 // DQ (8/11/2025): Adding support for unordered maps for name qualification.
 std::map<SgNode*,SgUnorderedMapNodeToString> SgNode::p_globalQualifiedNameMapForMapsOfTypes;
 
-// DQ (7/22/2011): array dimensions may include expressions that require name qualification.
-// std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForArrayTypeDimensions;
-
-
 #if ALT_FIXUP_COPY
 void
-SgNode::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
+SgNode::fixupCopy_scopes(SgNode* /*copy*/, SgCopyHelp & /*help*/) const
    {
   // This is the empty default inplementation, not a problem if it is called!
    }
 
 void
-SgNode::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
+SgNode::fixupCopy_symbols(SgNode* /*copy*/, SgCopyHelp & /*help*/) const
    {
   // This is the empty default inplementation, not a problem if it is called!
    }
 
 void
-SgNode::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
+SgNode::fixupCopy_references(SgNode* /*copy*/, SgCopyHelp & /*help*/) const
    {
   // This is the empty default inplementation, not a problem if it is called!
    }
@@ -815,20 +744,16 @@ SgNode::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
 // Usually this will correct scopes and in a few cases build child IR nodes that are not traversed
 // (and thus shared in the result from the automatically generated copy function).
 void
-SgNode::fixupCopy(SgNode* copy, SgCopyHelp & help) const
+SgNode::fixupCopy(SgNode* /*copy*/, SgCopyHelp & /*help*/) const
    {
   // This is the empty default inplementation, not a problem if it is called!
    }
 #endif
 
-// DQ (1/31/2006): We might want this function to be automaticaly generated
-// except that then we could not support the assertion.  Also we
-// don't have to set this function, though perhaps the interface function
-// should be implemented to set it just on general principles.
 SgFunctionTypeTable*
 SgNode::get_globalFunctionTypeTable()
    {
-  // DQ (1/31/2006): If there is no global function type symbol table then build one
+  // If there is no global function type symbol table then build one
      if (p_globalFunctionTypeTable == nullptr)
         {
           p_globalFunctionTypeTable = new SgFunctionTypeTable();
@@ -847,7 +772,7 @@ SgNode::set_globalFunctionTypeTable ( SgFunctionTypeTable* globalFunctionTypeTab
 SgTypeTable*
 SgNode::get_globalTypeTable()
    {
-  // DQ (1/31/2006): If there is no global function type symbol table then build one
+  // If there is no global function type symbol table then build one
      if (p_globalTypeTable == nullptr)
         {
           p_globalTypeTable = new SgTypeTable();
@@ -884,15 +809,7 @@ SgNode::clearGlobalMangledNameMap()
    {
   // Remove all elements from the globalMangledNameMap
      p_globalMangledNameMap.clear();
-
-  // DQ (6/26/2007): The function types require the same mangled names be generated across
-  // clears of the p_globalMangledNameMap cache. Clearing the short name map breaks this.
-  // It might be that we don't want to clear the short name map to permit the same mangled
-  // names to be regenerated. However, for the purposes of AST merge this is not a problem.
-  // p_shortMangledNameCache.clear();
    }
-
-// DQ (5/28/2011): Added support for holding the name qualification map.
 
 // DQ (8/11/2025): Adding support for unordered maps for name qualification.
 // std::map<SgNode*,std::string> & SgNode::get_globalQualifiedNameMapForNames()
@@ -903,8 +820,6 @@ SgNode::get_globalQualifiedNameMapForNames()
    }
 
 // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-// DQ (5/28/2011): Added support for holding the name qualification map.
-// void SgNode::set_globalQualifiedNameMapForNames(const std::map<SgNode*,std::string> & X)
 void
 SgNode::set_globalQualifiedNameMapForNames(const SgUnorderedMapNodeToString & X)
    {
@@ -912,8 +827,6 @@ SgNode::set_globalQualifiedNameMapForNames(const SgUnorderedMapNodeToString & X)
    }
 
 // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-// DQ (5/28/2011): Added support for holding the name qualification map.
-// std::map<SgNode*,std::string> & SgNode::get_globalQualifiedNameMapForTypes()
 SgUnorderedMapNodeToString &
 SgNode::get_globalQualifiedNameMapForTypes()
    {
@@ -921,8 +834,6 @@ SgNode::get_globalQualifiedNameMapForTypes()
    }
 
 // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-// DQ (5/28/2011): Added support for holding the name qualification map.
-// void SgNode::set_globalQualifiedNameMapForTypes(const std::map<SgNode*,std::string> & X)
 void
 SgNode::set_globalQualifiedNameMapForTypes(const SgUnorderedMapNodeToString & X)
    {
@@ -930,8 +841,6 @@ SgNode::set_globalQualifiedNameMapForTypes(const SgUnorderedMapNodeToString & X)
    }
 
 // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-// DQ (3/13/2019): Added support for holding the name qualification map.
-// std::map<SgNode*,std::map<SgNode*,std::string> > & SgNode::get_globalQualifiedNameMapForMapsOfTypes()
 std::map<SgNode*,SgUnorderedMapNodeToString> &
 SgNode::get_globalQualifiedNameMapForMapsOfTypes()
    {
@@ -939,8 +848,6 @@ SgNode::get_globalQualifiedNameMapForMapsOfTypes()
    }
 
 // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-// DQ (3/13/2019): Added support for holding the name qualification map.
-// void SgNode::set_globalQualifiedNameMapForMapsOfTypes(const std::map<SgNode*,std::map<SgNode*,std::string> > & X)
 void
 SgNode::set_globalQualifiedNameMapForMapsOfTypes(const std::map<SgNode*,SgUnorderedMapNodeToString> & X)
    {
@@ -948,8 +855,6 @@ SgNode::set_globalQualifiedNameMapForMapsOfTypes(const std::map<SgNode*,SgUnorde
    }
 
 // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-// DQ (5/28/2011): Added support for holding the name qualification map.
-// std::map<SgNode*,std::string> & SgNode::get_globalQualifiedNameMapForTemplateHeaders()
 SgUnorderedMapNodeToString &
 SgNode::get_globalQualifiedNameMapForTemplateHeaders()
    {
@@ -957,8 +862,6 @@ SgNode::get_globalQualifiedNameMapForTemplateHeaders()
    }
 
 // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-// DQ (5/28/2011): Added support for holding the name qualification map.
-// void SgNode::set_globalQualifiedNameMapForTemplateHeaders(const std::map<SgNode*,std::string> & X)
 void
 SgNode::set_globalQualifiedNameMapForTemplateHeaders(const SgUnorderedMapNodeToString & X)
    {
@@ -979,52 +882,48 @@ SgNode::set_globalTypeNameMap(const SgUnorderedMapNodeToString& X)
      p_globalTypeNameMap = X;
    }
 
-// DQ (4/10/2006): These are the default virtual function definitions (each returns an error)
 void
-SgNode::addNewAttribute( std::string s, AstAttribute* a )
+SgNode::addNewAttribute(std::string s, AstAttribute* /*a*/)
    {
      printf ("Error: calling SgNode::addNewAttribute(%s) \n",s.c_str());
-     ROSE_ASSERT(false);
+     ASSERT_require(false);
    }
 
 void
-SgNode::setAttribute( std::string s, AstAttribute* a )
+SgNode::setAttribute(std::string s, AstAttribute* /*a*/)
    {
      printf ("Error: calling SgNode::setAttribute(%s) \n",s.c_str());
-     ROSE_ASSERT(false);
+     ASSERT_require(false);
    }
 
 AstAttribute*
 SgNode::getAttribute(std::string s) const
    {
      printf ("Error: calling SgNode::getAttribute(%s) \n",s.c_str());
-     ROSE_ASSERT(false);
+     ASSERT_require(false);
 
      return nullptr;
    }
 
 void
-SgNode::updateAttribute( std::string s, AstAttribute* a )
+SgNode::updateAttribute( std::string s, AstAttribute* /*a*/)
    {
-  // formerly called: replace
      printf ("Error: calling SgNode::updateAttribute(%s) \n",s.c_str());
-     ROSE_ASSERT(false);
+     ASSERT_require(false);
    }
 
 void
 SgNode::removeAttribute(std::string s)
    {
      printf ("Error: calling SgNode::removeAttribute(%s) \n",s.c_str());
-     ROSE_ASSERT(false);
+     ASSERT_require(false);
    }
 
 bool
 SgNode::attributeExists(std::string s) const
    {
      printf ("Error: calling SgNode::attributeExists(%s) on node = %s \n",s.c_str(),class_name().c_str());
-     ROSE_ASSERT(false);
-
-  // tps (12/9/2009) : MSC requires a return value
+     ASSERT_require(false);
      return false;
    }
 
@@ -1038,20 +937,16 @@ SgNode::numberOfAttributes() const
 AstAttributeMechanism*
 SgNode::get_attributeMechanism() const
    {
-  // DQ (4/10/2006): virtual function defined at the SgNode and redefined whereever there is
-  // an AstAttributeMechanism defined!  Note that there is no set function defined.
      return nullptr;
    }
 
 void
-SgNode::set_attributeMechanism(AstAttributeMechanism* a)
+SgNode::set_attributeMechanism(AstAttributeMechanism* /*a*/)
    {
   // Nothing to do here, but we need this virtual function so that the correct access
   // function will be call on IR nodes where the AstAttributeMechanism is defined as
   // a data member.
-
-     printf ("Error: SgNode::set_attributeMechanism(AstAttributeMechanism* a) has been called \n");
-     ROSE_ASSERT(false);
+     ASSERT_require2(false,"SgNode::set_attributeMechanism(AstAttributeMechanism* a) has been called\n");
    }
 
 void
@@ -1061,157 +956,59 @@ SgNode::post_construction_initialization()
    }
 
 void
-SgNode::set_isModified ( bool isModified)
+SgNode::set_isModified(bool isModified)
    {
-  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
      ASSERT_this();
-
-#if 0
-  // DQ (6/4/2019): Use this to debug the outlining to seperate file mechanism (remove some spew by ignoring some IR nodes).
-     if (variantT() != V_Sg_File_Info && variantT() != V_SgUnparse_Info)
-        {
-          printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
-        }
-#endif
-
-#if 0
-  // DQ (6/22/2021): Adding debugging information.
-     if (isModified_debug_access == true)
-        {
-          printf ("SgNode::set_isModified(%s): isModified_debug_access == true: called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
-
-          if (isModified == true)
-             {
-               printf ("Exiting as a test in SgNode::set_isModified \n");
-               ROSE_ASSERT(false);
-             }
-        }
-#endif
-
-#if 0
-  // DQ (6/6/2019): Testing where isModified is being reset.
-     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(this);
-     if (functionDeclaration != NULL && functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
-        {
-          if (functionDeclaration->get_name() == "OUT_1_transformation_0")
-             {
-               printf ("%%%%%%%%%%%%%%%%%% Setting SgFunctionDeclaration: OUT_1_transformation_0: isModified = %s \n",isModified ? "true" : "false");
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
-#endif
-             }
-        }
-#endif
-
-#if 0
-  // DQ (4/14/2015): Adding testing to identify side-effects in the AST.
-     if (SgProject::get_verbose() >= 3)
-        {
-       // DQ (10/6/2015): Skip the output of this debug info for SgUnparse_Info IR nodes.
-       // printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
-       // if (!(isSgUnparse_Info(this) != NULL || isSgToken(this) != NULL))
-          if (isSgUnparse_Info(this) == NULL && isSgToken(this) == NULL)
-             {
-               printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
-#if 0
-               if (SgProject::get_verbose() >= 4)
-                  {
-                    printf ("Exiting as a test (when verbose >= 3) in SgNode::set_isModified \n");
-                    ROSE_ASSERT(false);
-                  }
-#endif
-             }
-#if 0
-       // DQ (10/13/2015): Chasing a issue in the move tool.
-          if (isSgForStatement(this) != NULL)
-             {
-               printf ("Exiting as a test in SgNode::set_isModified (found SgForStatemen) \n");
-               ROSE_ASSERT(false);
-             }
-#endif
-#if 0
-          printf ("Exiting as a test in SgNode::set_isModified \n");
-          ROSE_ASSERT(false);
-#endif
-        }
-#endif
-
      p_isModified = isModified;
    }
 
 bool
 SgNode::get_isModified () const
    {
-  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
      ASSERT_this();
-
      return p_isModified;
    }
 
-// DQ (12/3/2014): Added support to recode when an AST subtree holds an AST node (or subtree) that has been modified.
+// Records when an AST subtree holds an AST node (or subtree) that has been modified.
 void
 SgNode::set_containsTransformation ( bool containsTransformation)
    {
-  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
      ASSERT_this();
-
      p_containsTransformation = containsTransformation;
    }
 
-// DQ (12/3/2014): Added support to recode when an AST subtree holds an AST node (or subtree) that has been modified.
+// Records when an AST subtree holds an AST node (or subtree) that has been modified.
 bool
-SgNode::get_containsTransformation () const
+SgNode::get_containsTransformation() const
    {
      ASSERT_this();
-
      return p_containsTransformation;
    }
 
-
 bool
-SgNode::get_isVisited () const
+SgNode::get_isVisited() const
    {
-  // The p_isVisited flag has been removed, it is an error to call this function.
-
      ASSERT_this();
-
-     printf ("Error: The p_isVisited flag has been removed, it is an error to call this function (get_isVisited). \n");
-     ROSE_ASSERT(false);
-
+     ASSERT_require2(false,"The p_isVisited flag has been removed, it is an error to call this function\n");
      return true;
    }
 
 void
-SgNode::set_isVisited ( bool isVisited )
+SgNode::set_isVisited(bool /*isVisited*/)
    {
-  // The p_isVisited flag has been removed, it is an error to call this function.
      ASSERT_this();
-
-     printf ("Error: The p_isVisited flag has been removed, it is an error to call this function (set_isVisited). \n");
-     ROSE_ASSERT(false);
-
+     ASSERT_require2(false,"The p_isVisited flag has been removed, it is an error to call this function\n");
      set_isModified(true);
    }
-
 
 //  ! Permits specification of parent node (connects the AST tree)
 /*  ! This function is called internally to connect the elements of the grammar to form the AST.
  */
 void
-SgNode::set_parent ( SgNode* parent )
+SgNode::set_parent(SgNode* parent)
    {
-  // ROSE_ASSERT (parent != NULL);  // QY: should allow setting parent to NULL when detaching SgNodes
-  // DQ (9/24/2004): Enforce this simple rule!
      ASSERT_this();
-     ROSE_ASSERT(this != parent);
-
-#if 0
-     printf ("In SgNode::set_parent():\n");
-     printf (" - this     = %p (%s)\n", this,     class_name().c_str());
-     printf (" - parent   = %p (%s)\n", parent,   parent ? parent->class_name().c_str() : "" );
-     printf (" - p_parent = %p (%s)\n", p_parent, p_parent ? p_parent->class_name().c_str() : "" );
-#endif
+     ASSERT_require(this != parent);
      p_parent = parent;
 
   // I think this should be always be true, so let's inforce it (this happends for test2005_64.C)
@@ -1225,7 +1022,7 @@ SgNode::set_parent ( SgNode* parent )
      if ( ( variantT() == V_SgTemplateDeclaration ) && ( parent != nullptr && parent->variantT() == V_SgTemplateInstantiationFunctionDecl ) )
         {
           printf ("Warning: Found case in set_parent() where this is a SgTemplateDeclaration and parent is a SgTemplateInstantiationFunctionDecl \n");
-          ROSE_ASSERT(false);
+          ASSERT_require(false);
         }
 
      if ( ( variantT() == V_SgClassDeclaration ) && ( parent != nullptr && parent->variantT() == V_SgGlobal ) )
@@ -1238,93 +1035,9 @@ SgNode::set_parent ( SgNode* parent )
      if ( ( variantT() == V_SgTemplateInstantiationDecl ) && ( parent != nullptr && parent->variantT() == V_SgClassType ) )
         {
           printf ("Warning: Found case in set_parent() where this is a SgTemplateInstantiationDecl and parent is a SgClassType \n");
-
           printf ("Exiting in this case! \n");
-          ROSE_ASSERT(false);
+          ASSERT_require(false);
         }
-#if 0
-  // DQ (3/3/2022): Adding debugging support for where the parent pointer is used and to make sure
-  // it is not used for types in some specific instances.
-     const SgType* type = isSgType(this);
-     if (type != NULL)
-        {
-#if 0
-          printf ("In SgNode::set_parent(): this = %p = %s \n",this,this->class_name().c_str());
-#endif
-        }
-
-  // DQ (3/4/2022): This may be a simpler solution, ant least to get started.
-  // SgNode* tmp_parent = get_parent();
-     SgNode* tmp_parent = p_parent;
-
-     if (tmp_parent == NULL)
-        {
-#if 0
-          printf ("In SgNode::set_parent(): this = %p = %s tmp_parent == NULL \n",this,this->class_name().c_str());
-#endif
-        }
-       else
-        {
-#if 0
-          printf ("In SgNode::set_parent(): this = %p = %s tmp_parent = %p = %s \n",this,this->class_name().c_str(),tmp_parent,tmp_parent->class_name().c_str());
-#endif
-          if (type != NULL)
-             {
-#if 0
-               printf ("Error SgNode::set_parent(): this is a SgType IR node: this = %p = %s \n",this,this->class_name().c_str());
-#endif
-               if (isSgNonrealType(type) != NULL)
-                  {
-                    SgDeclarationScope* declarationScope = isSgDeclarationScope(tmp_parent);
-                    SgTypeTraitBuiltinOperator* typeTraitBuiltinOperator = isSgTypeTraitBuiltinOperator(tmp_parent);
-                    if (declarationScope != NULL || typeTraitBuiltinOperator != NULL)
-                       {
-                         if (declarationScope != NULL)
-                            {
-                           // This appears to be a common case.
-                            }
-                           else
-                            {
-                           // This is less typical case... tracking it.
-                              printf ("In SgNode::set_parent(): this = %p = %s tmp_parent = %p = %s \n",this,this->class_name().c_str(),tmp_parent,tmp_parent->class_name().c_str());
-                            }
-                       }
-                      else
-                       {
-                         printf ("In SgNode::set_parent(): this is a SgNonrealType, however the parent is not a SgDeclarationScope: Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-                       }
-                  }
-                 else
-                  {
-                    if ( ( (isSgTypedefType(type) != NULL) && (isSgTypeTraitBuiltinOperator(tmp_parent) != NULL) )         ||
-                         ( (isSgClassType(type) != NULL) && (isSgTypeTraitBuiltinOperator(tmp_parent) != NULL) )           ||
-                         ( (isSgReferenceType(type) != NULL) && (isSgTypeTraitBuiltinOperator(tmp_parent) != NULL) )       ||
-                         ( (isSgRvalueReferenceType(type) != NULL) && (isSgTypeTraitBuiltinOperator(tmp_parent) != NULL) ) ||
-                         ( (isSgPointerType(type) != NULL) && (isSgTypeTraitBuiltinOperator(tmp_parent) != NULL) )         ||
-                         ( (isSgTypeOfType(type) != NULL) && (isSgTypeTraitBuiltinOperator(tmp_parent) != NULL) )          ||
-                         ( (isSgArrayType(type) != NULL) && (isSgTypeTraitBuiltinOperator(tmp_parent) != NULL) ) )
-                       {
-                      // I think this may be an error...
-#if 1
-                         printf ("In SgNode::set_parent(): this = %p = %s tmp_parent = %p = %s \n",this,this->class_name().c_str(),tmp_parent,tmp_parent->class_name().c_str());
-#endif
-                       }
-                      else
-                       {
-                         SgSymbol* symbol = isSgSymbol(tmp_parent);
-                         if (symbol == NULL)
-                            {
-                           // printf ("In SgNode::set_parent(): parent is not a SgSymbol: Exiting as a test! \n");
-                              printf ("In SgNode::set_parent(): this = %p = %s parent = %p = %s is not a SgSymbol: Exiting as a test! \n",
-                                   this,this->class_name().c_str(),tmp_parent,(tmp_parent != NULL) ? tmp_parent->class_name().c_str() : "");
-                              ROSE_ASSERT(false);
-                            }
-                       }
-                  }
-             }
-        }
-#endif
    }
 
 /*! \brief Get the parent node.
@@ -1336,187 +1049,11 @@ SgNode::set_parent ( SgNode* parent )
     In the case of a SgType this function returns NULL, because types are shared by design.
  */
 SgNode*
-SgNode::get_parent () const
+SgNode::get_parent() const
    {
      ASSERT_this();
-
-     SgNode* returnNode = p_parent;
-
-  // DQ (3/3/2022): Tristan commented out the logic below that returned NULL for SgType nodes. After some
-  // discussion, I will try a different approach so that we can at least always see the value of p_parent.
-  // DQ (5/24/2006): I would like to allow SgSymbols to have a valid parent pointer since it can be used to reference
-  // the symbol table as a way to support better debugging within the AST merge mechanims.
-  // Sage II semantics: Types and Symbols always have a NULL parent (This is the way it is implemented (from Sage II))
-
-
-#if 0
-#if 0
-     printf ("In SgNode::get_parent(): calling checkDataMemberPointersIfInMemoryPool() virtual function to check child IR node pointer values \n");
-#endif
-
-  // DQ (3/5/2022): We would not need to cast away const if this function was a const function, and I think it could be trivialy.
-     SgNode* this_pointer = const_cast<SgNode*>(this);
-     ROSE_ASSERT(this_pointer != NULL);
-     this_pointer->checkDataMemberPointersIfInMemoryPool();
-
-#if 0
-     printf ("In SgNode::get_parent(): DONE: calling checkDataMemberPointersIfInMemoryPool() virtual function to check child IR node pointer values \n");
-#endif
-#endif
-
-#if 0
-  // DQ (3/3/2022): After discussion with Tristan, this is alternative semantics to assert for NULL value
-  // instead of returning NULL value.
-  // if ( isSgType( const_cast<SgNode*>(this) ) != NULL )
-  // if ( (isSgType( const_cast<SgNode*>(this) ) != NULL) || (isSgSymbol( const_cast<SgNode*>(this) ) != NULL) )
-     if ( (isSgType( const_cast<SgNode*>(this) ) != NULL) || (isSgSymbol( const_cast<SgNode*>(this) ) != NULL) )
-        {
-#if 0
-       // printf ("this = %p = %s p_parent = %p = %s \n",this,this->class_name().c_str(),p_parent,p_parent->class_name().c_str());
-          printf ("this = %p p_parent = %p \n",this,p_parent);
-          printf ("this class_name = %s \n",this->class_name().c_str());
-
-          if (p_parent != NULL)
-             {
-               unsigned int* bytePointer = (unsigned int*)p_parent;
-            // printf ("*bytePointer = %p \n",*bytePointer);
-               printf ("*bytePointer = %u \n",*bytePointer);
-
-               printf ("p_parent->get_freepointer() = %p \n",p_parent->get_freepointer());
-             }
-
-          if (isSgPointerType( const_cast<SgNode*>(this) ) == NULL)
-             {
-               printf ("p_parent variantT = %d \n",(p_parent != NULL) ? p_parent->variantT() : -1);
-               printf ("p_parent class_name = %s \n",(p_parent != NULL) ? p_parent->class_name().c_str() : "");
-               printf ("this = %p = %s p_parent = %p = %s \n",this,this->class_name().c_str(),p_parent,(p_parent != NULL) ? p_parent->class_name().c_str() : "");
-             }
-#endif
-       // DQ (3/3/2022): The case of a SgType will have a vailid p_parent pointer, but only to a SgSymbol.
-#if 0
-       // if (isSgType( const_cast<SgNode*>(this) ) != NULL && (isSgSymbol( const_cast<SgNode*>(this) ) == NULL) )
-          if (isSgType( const_cast<SgNode*>(this) ) != NULL && (isSgSymbol(returnNode) == NULL) )
-             {
-               ROSE_ASSERT(returnNode == NULL);
-             }
-            else
-             {
-            // I don't think we have to worry aboud this case.
-             }
-#else
-       // DQ (3/4/2022): The code below implements the testing and as a result defines the rule that is implmented (independent of
-       // what might have been a simpler goal for the symantics).
-
-          if (isSgType( const_cast<SgNode*>(this) ) != NULL)
-             {
-            // DQ (3/5/2022): This should prevend the error from happening in the isSgFunctionTypeSymbol() function when
-            // the point is not a valid pointer to a node in the memory pool.
-               if (p_parent != NULL)
-                  {
-                    ROSE_ASSERT(p_parent->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
-                  }
-
-               if ( isSgFunctionTypeSymbol(returnNode) != NULL )
-                  {
-                 // The parent pointer on SgType nodes is used to point to the entry in the global symbol table (which is a SgFunctionTypeSymbol).
-                 // This was a change in ROSE around 2010, to provide more information specific to the global type table information.
-                    ROSE_ASSERT(returnNode != NULL);
-#if 0
-                 // Debugging code to support understanding if non SgNamedType nodes have a valie p_parent pointer.
-                    printf ("In SgNode::get_parent(): this is a SgType and the parent is SgFunctionTypeSymbol: Exiting as a test! \n");
-                    ROSE_ASSERT(false);
-#endif
-                  }
-                 else
-                  {
-                    if ( ( (isSgNonrealType( const_cast<SgNode*>(this) ) != NULL) && (isSgDeclarationScope(returnNode) != NULL) ) ||
-                         ( (isSgNonrealType( const_cast<SgNode*>(this) ) != NULL) && (isSgTypeTraitBuiltinOperator(returnNode) != NULL) ) )
-                       {
-                      // The parent pointer on SgNonrealType nodes is used to point to an associated SgDeclarationScope.
-#if 1
-                         printf ("In SgNode::get_parent(): this == SgNonrealType && parent is SgDeclarationScope or SgTypeTraitBuiltinOperator \n");
-#endif
-                         ROSE_ASSERT(returnNode != NULL);
-                       }
-                      else
-                       {
-                      // In this case the p_parent pointer should be NULL, but I don't know if this case ever happens.
-                      // if ( (isSgTypedefType( const_cast<SgNode*>(this) ) != NULL) && (isSgTypeTraitBuiltinOperator(returnNode) != NULL) )
-                         if ( ( (isSgTypedefType( const_cast<SgNode*>(this) ) != NULL) && (isSgTypeTraitBuiltinOperator(returnNode) != NULL) )   ||
-                              ( (isSgTypeOfType( const_cast<SgNode*>(this) ) != NULL) && (isSgTypeTraitBuiltinOperator(returnNode) != NULL) )    ||
-                              ( (isSgReferenceType( const_cast<SgNode*>(this) ) != NULL) && (isSgTypeTraitBuiltinOperator(returnNode) != NULL) ) ||
-                              ( (isSgClassType( const_cast<SgNode*>(this) ) != NULL) && (isSgTypeTraitBuiltinOperator(returnNode) != NULL) )     ||
-                              ( (isSgRvalueReferenceType( const_cast<SgNode*>(this) ) != NULL) && (isSgTypeTraitBuiltinOperator(returnNode) != NULL) ) ||
-                              ( (isSgArrayType( const_cast<SgNode*>(this) ) != NULL) && (isSgTypeTraitBuiltinOperator(returnNode) != NULL) ) )
-                            {
-                           // This case may be an error.
-#if 1
-                              printf ("In SgNode::get_parent(): found case of this = SgTypedefType and p_parent == SgTypeTraitBuiltinOperator \n");
-#endif
-                              ROSE_ASSERT(returnNode != NULL);
-                            }
-                           else
-                            {
-                              ROSE_ASSERT(returnNode == NULL);
-
-                              if ( (isSgTypeComplex( const_cast<SgNode*>(this) ) != NULL)         ||
-                                   (isSgTypeDefault( const_cast<SgNode*>(this) ) != NULL)         ||
-                                   (isSgModifierType( const_cast<SgNode*>(this) ) != NULL)        ||
-                                   (isSgFunctionType( const_cast<SgNode*>(this) ) != NULL)        ||
-                                   (isSgArrayType( const_cast<SgNode*>(this) ) != NULL)           ||
-                                   (isSgPointerType( const_cast<SgNode*>(this) ) != NULL)         ||
-                                   (isSgReferenceType( const_cast<SgNode*>(this) ) != NULL)       ||
-                                   (isSgRvalueReferenceType( const_cast<SgNode*>(this) ) != NULL) ||
-                                   (isSgTypeOfType( const_cast<SgNode*>(this) ) != NULL)          ||
-                                   (isSgAutoType( const_cast<SgNode*>(this) ) != NULL) )
-                                 {
-                                // these are the cases we are allowing... as part of testing.
-                                   printf ("Note: testing in get_parent(): SgTypeComplex and SgTypeDefault have NULL p_parent values \n");
-                                 }
-                                else
-                                 {
-                                // These cases are not allowed to be NULL.
-#if 1
-                                // Debugging code to support understanding if non SgNamedType nodes have a valie p_parent pointer.
-                                   printf ("In SgNode::get_parent(): this is a SgType but the parent is NOT a SgSymbol: Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
-#endif
-                                 }
-                            }
-#if 0
-                      // Debugging code to support understanding if non SgNamedType nodes have a valie p_parent pointer.
-                         printf ("In SgNode::get_parent(): this is a SgType but the parent is NOT a SgSymbol: Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
-                       }
-                  }
-             }
-            else
-             {
-            // Everything else should have a parent pointer unless it is under construction or is the SgProject (root of the AST).
-               if (isSgProject( const_cast<SgNode*>(this) ) == NULL)
-                  {
-                 // ROSE_ASSERT(returnNode != NULL);
-                    if (isSgVariableSymbol( const_cast<SgNode*>(this) ) != NULL)
-                       {
-                         if (returnNode == NULL)
-                            {
-                              printf ("In SgNode::get_parent(): Found a case of this SgVariableSymbol: parent == NULL \n");
-                            }
-                       }
-                      else
-                       {
-                         ROSE_ASSERT(returnNode != NULL);
-                       }
-                  }
-             }
-#endif
-        }
-#endif
-
-     return returnNode;
+     return p_parent;
    }
-
 
 /*! \brief Get the parent node.
     This function is provides access to the p_parent value directly. It is provided for debugging purposes only.
@@ -1524,25 +1061,18 @@ SgNode::get_parent () const
     a NULL value for SgType nodes.
  */
 SgNode*
-SgNode::get_raw_parent () const
+SgNode::get_raw_parent() const
    {
-  // DQ (3/4/2022): Added access function for p_parent for debugging.
-     ROSE_ASSERT(this != NULL);
-
-     SgNode* returnNode = p_parent;
-
-     return returnNode;
+     ASSERT_this();
+     return p_parent;
    }
 
-
-// DQ (3/8/2007): Added more efficent implementation to support AST consitency tests and other work.
 //! Query function for if the input IR nodes is a child of the current IR node.
 bool
 SgNode::isChild ( SgNode* node ) const
    {
      return (getChildIndex(node) != -1);
    }
-
 
 vector<string>
 $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>& argv, std::string newFileName )
@@ -1552,8 +1082,6 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
 
   // return a copy of the commandline input to this function
      vector<string> transformation_argv(argv.size());
-
-  // printf ("In buildCommandLineToSubstituteTransformationFile(): argc = %d \n",argc);
 
   // copy all the entries in the command line.
      for (unsigned int i=0; i < argv.size(); i++)
@@ -1567,13 +1095,11 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
           if ( argv[i].size() < 1 || (argv[i][0] != '-') || (argv[i][0] != '+') )
              {
                unsigned int length = argv[i].size();
-            // printf ("Look for file names:  argv[%d] = %s length = %d \n",i,argv[i],length);
 
             // look only for .c and .C files (source code files)
             // The length has to be greater then 2 or else we will generate a purify error!
                if ( (length > 2) && (argv[i][length-2] == '.') && ( (argv[i][length-1] == 'c') || (argv[i][length-1] == 'C') ) )
                   {
-                 // printf ("Found a filename = %s \n",argv[i]);
                     transformation_argv[i] = strdup(newFileName.c_str());
 
                  // record the location of the filename in the command line and the number of filenames
@@ -1592,8 +1118,8 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
         }
 
   // For now ets only debug the case of a single file specified on the command line
-     ROSE_ASSERT (fileNameCounter == 1);
-     ROSE_ASSERT (fileNameLocation > 0);
+     ASSERT_require(fileNameCounter == 1);
+     ASSERT_require(fileNameLocation > 0);
 
   // We have found the location of the filename in the command line (now modify it)
 
@@ -1603,7 +1129,6 @@ $CLASSNAME::buildCommandLineToSubstituteTransformationFile( const vector<string>
 std::string
 $CLASSNAME::unparseToString(SgUnparse_Info* info) const
    {
-  // DQ (4/4/2006): Added optional parameter to customize unparsing
   // Generate the string (don't pass a SgUnparse_Info object so that we can use the
   // default settings).
      std::string outputString = globalUnparseToString(this,info);
@@ -1613,7 +1138,6 @@ $CLASSNAME::unparseToString(SgUnparse_Info* info) const
 std::string
 $CLASSNAME::unparseToString() const
    {
-  // DQ (9/6/2010): Move this to the source file (we want to eliminate function definitions in header files).
      return this->unparseToString(nullptr);
    }
 
@@ -1694,13 +1218,11 @@ SgTreeCopy::copyAst( const SgNode *n )
 
 // DQ (8/10/2008): Added to support binary file format.
 std::ostream &
-operator<< ( std::ostream & os, const struct stat & sb )
+operator<< (std::ostream & os, const struct stat & /*sb*/)
    {
      return os;
    }
 
-// DQ (4/5/2017): Moved these function definition out of the header file to avoid warnings from
-// assertion from the header file (OK if it appears once from compiling the source file).
 VirtualCFG::CFGNode
 SgNode::cfgForBeginning()
    {
