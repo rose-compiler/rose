@@ -463,8 +463,9 @@ bool DependenceTable::
      AstUtilInterface::AddOperatorSideEffectAnnotation(op, varref, relation);
   }
   if (details != 0) {
-       Log.push("Side effect details: " + AstInterface::AstToString(AstNodePtrImpl(details)));
-       attr = AstUtilInterface::GetVariableSignature(details);
+       Log.push("Skipping Side effect details: " + AstInterface::AstToString(AstNodePtrImpl(details)));
+       // QY: Do not save side effect details in annotation as we currently don't use it.
+       //attr = AstUtilInterface::GetVariableSignature(details);
   }
   DependenceEntry e(AstUtilInterface::GetVariableSignature(op), AstUtilInterface::GetVariableSignature(varref), 
                                     AstUtilInterface::OperatorSideEffectName(relation), attr); 
