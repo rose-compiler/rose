@@ -4,7 +4,7 @@
 # If we want it to work on Windows in the future
 #
 option(ENABLE-CODETHORN "Enable CodeThorn program analysis and verification" TRUE)
-if(NOT WIN32 AND ENABLE-CODETHORN AND NOT ENABLE-CLANG-FRONTEND AND ENABLE-C STREQUAL "ON")
+if(NOT WIN32 AND ENABLE-CODETHORN AND NOT ENABLE-CLANG-FRONTEND AND ENABLE-C)
   if(NOT ENABLE_OPENMP)
     # Codethorn has openmp directives
     find_package(OpenMP QUIET)
@@ -60,6 +60,7 @@ if(NOT WIN32 AND ENABLE-CODETHORN AND NOT ENABLE-CLANG-FRONTEND AND ENABLE-C STR
   # TOOL: CODETHORN
   # ##########################################################################
   add_executable(codethorn1 CodeThornCommandLineOptions.C codethorn.C)
+  set_target_properties(codethorn1 PROPERTIES OUTPUT_NAME "codethorn")
   target_link_libraries(
     codethorn1 PRIVATE codethorn ltlthorn ROSE_DLL
     $<$<BOOL:${ENABLE-C}>:OpenMP::OpenMP_C>)

@@ -1120,6 +1120,13 @@ else()
     set(ACTUAL_CXX ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH})
 endif()
 
+# Remove duplicates and any system directories
+list(REMOVE_DUPLICATES rose_library_dir_list)
+list(FILTER rose_library_dir_list EXCLUDE REGEX "^/lib.*")
+list(FILTER rose_library_dir_list EXCLUDE REGEX "^/usr/lib.*")
+list(FILTER rose_library_dir_list EXCLUDE REGEX "^/usr/local/lib.*")
+list(FILTER rose_library_dir_list EXCLUDE REGEX "^/var/lib.*")
+
 set(ROSE_LIBDIRS "")
 set(ROSE_LINK_RPATHS "")
 set(ROSE_RPATHS "")
