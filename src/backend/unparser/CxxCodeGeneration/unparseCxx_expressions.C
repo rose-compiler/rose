@@ -71,6 +71,10 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case UNSIGNED_LONG_INT_VAL: { unparseULongIntVal(expr, info); break; }
           case FLOAT_VAL:             { unparseFloatVal(expr, info); break; }
           case LONG_DOUBLE_VAL:       { unparseLongDoubleVal(expr, info); break; }
+          case FLOAT_16_VAL:          { unparseFloat16Val(expr, info); break; }
+          case BFLOAT_16_VAL:         { unparseBFloat16Val(expr, info); break; }
+          case FLOAT_32_VAL:          { unparseFloat32Val(expr, info); break; }
+          case FLOAT_64_VAL:          { unparseFloat64Val(expr, info); break; }
        // Liao, 6/18/2008 , UPC identifiers
           case UPC_THREADS:           { unparseUpcThreads(expr, info); break; }
           case UPC_MYTHREAD:          { unparseUpcMythread(expr, info); break; }
@@ -2941,6 +2945,70 @@ Unparse_ExprStmt::unparseFloatVal(SgExpression* expr, SgUnparse_Info& info)
                     }
                   }
              }
+        }
+   }
+
+void
+Unparse_ExprStmt::unparseBFloat16Val(SgExpression* expr, SgUnparse_Info &)
+   {
+     SgBFloat16Val* float_val = isSgBFloat16Val(expr);
+     ASSERT_not_null(float_val);
+
+     if (float_val->get_valueString() == "")
+        {
+          curprint ( tostring(float_val->get_value()) + "bf16");
+        }
+       else
+        {
+          curprint ( float_val->get_valueString());
+        }
+   }
+
+void
+Unparse_ExprStmt::unparseFloat16Val(SgExpression* expr, SgUnparse_Info &)
+   {
+     SgFloat16Val* float_val = isSgFloat16Val(expr);
+     ASSERT_not_null(float_val);
+
+     if (float_val->get_valueString() == "")
+        {
+          curprint ( tostring(float_val->get_value()) + "f16");
+        }
+       else
+        {
+          curprint ( float_val->get_valueString());
+        }
+   }
+
+void
+Unparse_ExprStmt::unparseFloat32Val(SgExpression* expr, SgUnparse_Info &)
+   {
+     SgFloat32Val* float_val = isSgFloat32Val(expr);
+     ASSERT_not_null(float_val);
+
+     if (float_val->get_valueString() == "")
+        {
+          curprint ( tostring(float_val->get_value()) + "f32");
+        }
+       else
+        {
+          curprint ( float_val->get_valueString());
+        }
+   }
+
+void
+Unparse_ExprStmt::unparseFloat64Val(SgExpression* expr, SgUnparse_Info &)
+   {
+     SgFloat64Val* float_val = isSgFloat64Val(expr);
+     ASSERT_not_null(float_val);
+
+     if (float_val->get_valueString() == "")
+        {
+          curprint ( tostring(float_val->get_value()) + "f64");
+        }
+       else
+        {
+          curprint ( float_val->get_valueString());
         }
    }
 

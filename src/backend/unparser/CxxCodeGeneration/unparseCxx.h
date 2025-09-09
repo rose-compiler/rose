@@ -138,6 +138,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseULongLongIntVal         (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseULongIntVal             (SgExpression* expr, SgUnparse_Info& info); 
           virtual void unparseFloatVal                (SgExpression* expr, SgUnparse_Info& info); 
+          virtual void unparseBFloat16Val             (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseFloat16Val              (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseFloat32Val              (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseFloat64Val              (SgExpression* expr, SgUnparse_Info& info);
        // virtual void unparseDoubleVal               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseLongDoubleVal           (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseComplexVal              (SgExpression* expr, SgUnparse_Info& info);
