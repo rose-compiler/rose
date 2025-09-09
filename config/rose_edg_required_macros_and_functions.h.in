@@ -444,15 +444,12 @@ extern int fegetexcept (void) throw();
 typedef long double __float128;
 #else
 // TV (01/06/2019): case of _Float128: fix from https://software.intel.com/en-us/forums/intel-c-compiler/topic/742701
-// PL (9/9/2025): Comment out these macros because they are now supported by native SgType nodes
-#if 0
 #ifndef __cplusplus
 #define _Float32 float
 #define _Float64 double
 #define _Float128 long double
 #define _Float32x float
 #define _Float64x double
-#endif
 #endif
 #endif
 
