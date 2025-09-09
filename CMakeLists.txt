@@ -343,22 +343,8 @@ set(USE_ROSE_BOOST_WAVE_SUPPORT ${Boost_WAVE_FOUND})
 ########################################################################################################################
 # Compiler toolchain features
 ########################################################################################################################
-# Define and initialize cache variables for optimization flags
-set(WITH_C_OPTIMIZE "-O2" CACHE STRING "Custom C optimization flags")
-set(WITH_CXX_OPTIMIZE "-O2" CACHE STRING "Custom C++ optimization flags")
-set(WITH_OPTIMIZE "-O2" CACHE STRING "Global optimization flags")
 
-# If CMAKE_BUILD_TYPE is empty, default to -O0 for WITH_OPTIMIZE
-if(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
-  set(WITH_OPTIMIZE "-O0" CACHE STRING "Global optimization flags" FORCE)
-endif()
-
-# If CMAKE_BUILD_TYPE is Release, default to -O3 for WITH_OPTIMIZE 
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-  set(WITH_OPTIMIZE "-O3" CACHE STRING "Global optimization flags" FORCE)
-endif()
-
-if(WIN32)
+if(MSVC)
   set(CMAKE_BUILD_TYPE Release)
   # Compiler flags
   # /TP to indicate files are C++
@@ -386,37 +372,12 @@ if(WIN32)
   set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${WINDOWS_EXTRA_LINKER_FLAGS}")
   set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} ${WINDOWS_EXTRA_LINKER_FLAGS}")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${WINDOWS_EXTRA_LINKER_FLAGS}")
-endif()
-if(NOT WIN32)
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC ")
-  #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions -DHAVE_CONFIG_H -fPIC ")
-  
+
+else()
+
   if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_compile_options(-w) 
-  endif() 
-
-  # Extract and set C optimization flags
-  if(CMAKE_C_COMPILER_ID STREQUAL "KCC")
-    set(C_OPTIMIZE " -g +K0 --no_exceptions --no_rtti --keep_gen_c ")
-  else()
-    set(C_OPTIMIZE "${WITH_C_OPTIMIZE}")
+    add_compile_options(-w)
   endif()
-
-  # Extract and set CXX optimization flags
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "KCC")
-    set(CXX_OPTIMIZE " -g +K0 --no_exceptions --no_rtti --keep_gen_c ")
-  else()
-    set(CXX_OPTIMIZE "${WITH_CXX_OPTIMIZE}")
-  endif()
-
-  # Set global optimization flags, if specified
-  if(WITH_OPTIMIZE)
-    set(C_OPTIMIZE "${WITH_OPTIMIZE}")
-    set(CXX_OPTIMIZE "${WITH_OPTIMIZE}")
-  endif()
-
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_OPTIMIZE} ")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_OPTIMIZE} ")
 
   # Ensure C++11 ABI compatibility
   if(CMAKE_COMPILER_IS_GNUCXX)
