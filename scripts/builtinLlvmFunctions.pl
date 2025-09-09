@@ -39,6 +39,7 @@ my $status = 0;                 # exit status
 #     | c -> char                                                                    |
 #     | s -> short                                                                   |
 #     | i -> int                                                                     |
+#     | h -> _Float16                                                                |
 #     | f -> float                                                                   |
 #     | d -> double                                                                  |
 #     | z -> size_t                                                                  |
@@ -82,7 +83,7 @@ my $status = 0;                 # exit status
 sub parseTypes {
     local($_) = @_;             # a string containing the return type and argument type specifications
     my(%translation) = (v => 'void', b => 'boolean', c => 'char', s => 'short', i => 'int', f => 'float',
-                        d => 'double', z => 'size_t', F => 'NSConstantString',
+                        d => 'double', z => 'size_t', h => '_Float16', F => 'NSConstantString',
                         a => '__builtin_va_list', A => '__builtin_va_list&', X => '_Complex',
                         P => 'FILE', J => 'jmp_buf', '.' => '...',
                         L => 'long', S => 'signed', U => 'unsigned', I => '',
@@ -90,7 +91,7 @@ sub parseTypes {
                         ',' => ',');
 
     # Split the types into a comma-separated list
-    s/([LSUI]*[vbcsifdzFGHaAVXPJ.][*&CD]*)/$1,/g;
+    s/([LSUI]*[vbcsihfdzFGHaAVXPJ.][*&CD]*)/$1,/g;
 
     # Expand the letters into type names
     $_ = join " ", map { exists $translation{$_} ? $translation{$_} : "ERROR('$_')" } split //;

@@ -25,6 +25,7 @@
 //  c -> char
 //  s -> short
 //  i -> int
+//  h -> _Float16
 //  f -> float
 //  d -> double
 //  z -> size_t
@@ -90,6 +91,7 @@ BUILTIN(__builtin_abs  , "ii"  , "ncF")
 BUILTIN(__builtin_copysign, "ddd", "ncF")
 BUILTIN(__builtin_copysignf, "fff", "ncF")
 BUILTIN(__builtin_copysignl, "LdLdLd", "ncF")
+BUILTIN(__builtin_copysignf16, "hhh", "Fnc")
 
 // DQ (12/16/2016): These must be represented as constexpr only for EDG versions strictly greater than 4.9 (so they are listed explicitly).
 // BUILTIN(__builtin_fabs , "dd"  , "ncF")
@@ -107,6 +109,9 @@ BUILTIN(__builtin_frexpl, "LdLdi*", "Fnc")
 // BUILTIN(__builtin_huge_val, "d", "nc")
 // BUILTIN(__builtin_huge_valf, "f", "nc")
 // BUILTIN(__builtin_huge_vall, "Ld", "nc")
+BUILTIN(__builtin_huge_valf16, "h", "nc")
+BUILTIN(__builtin_huge_valf32, "f", "nc")
+BUILTIN(__builtin_huge_valf64, "d", "nc")
 
 BUILTIN(__builtin_inf  , "d"   , "nc")
 BUILTIN(__builtin_inff , "f"   , "nc")
@@ -125,6 +130,12 @@ BUILTIN(__builtin_modfl, "LdLdLd*", "Fnc")
 // BUILTIN(__builtin_nans,  "dcC*" , "ncF")
 // BUILTIN(__builtin_nansf, "fcC*" , "ncF")
 // BUILTIN(__builtin_nansl, "LdcC*", "ncF")
+BUILTIN(__builtin_nanf16, "hcC*", "ncF")
+BUILTIN(__builtin_nanf32, "fcC*", "ncF")
+BUILTIN(__builtin_nanf64, "dcC*", "ncF")
+BUILTIN(__builtin_nansf16, "hcC*", "ncF")
+BUILTIN(__builtin_nansf32, "fcC*", "ncF")
+BUILTIN(__builtin_nansf64, "dcC*", "ncF")
 
 BUILTIN(__builtin_powi , "ddi"  , "Fnc")
 BUILTIN(__builtin_powif, "ffi"  , "Fnc")
@@ -238,6 +249,7 @@ BUILTIN(__builtin_nearbyintl, "LdLd", "Fnc")
 BUILTIN(__builtin_nextafter , "ddd", "Fnc")
 BUILTIN(__builtin_nextafterf, "fff", "Fnc")
 BUILTIN(__builtin_nextafterl, "LdLdLd", "Fnc")
+BUILTIN(__builtin_nextafterf16, "hhh", "Fnc")
 BUILTIN(__builtin_nexttoward , "ddd", "Fnc")
 BUILTIN(__builtin_nexttowardf, "fff", "Fnc")
 BUILTIN(__builtin_nexttowardl, "LdLdLd", "Fnc")

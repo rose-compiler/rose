@@ -444,6 +444,8 @@ extern int fegetexcept (void) throw();
 typedef long double __float128;
 #else
 // TV (01/06/2019): case of _Float128: fix from https://software.intel.com/en-us/forums/intel-c-compiler/topic/742701
+// PL (9/9/2025): Comment out these macros because they are now supported by native SgType nodes
+#if 0
 #ifndef __cplusplus
 #define _Float32 float
 #define _Float64 double
@@ -451,6 +453,35 @@ typedef long double __float128;
 #define _Float32x float
 #define _Float64x double
 #endif
+#endif
+#endif
+
+#if defined(__GNUC__) && __GNUC__ >= 13
+/* These macros are considered out-of-range by EDG when imported from GCC */
+#  ifdef __FLT16_MAX__
+#    undef __FLT16_MAX__
+#    define __FLT16_MAX__ ((_Float16)6.55040000000000000000000000000000000e+4)
+#  endif
+#  ifdef __FLT16_DENORM_MIN__
+#    undef __FLT16_DENORM_MIN__
+#    define __FLT16_DENORM_MIN__ ((_Float16)5.96046447753906250000000000000000000e-8)
+#  endif
+#  ifdef __FLT32_MAX__
+#    undef __FLT32_MAX__
+#    define __FLT32_MAX__ ((_Float32)3.40282346638528859811704183484516925e+38)
+#  endif
+#  ifdef __FLT32_DENORM_MIN__
+#    undef __FLT32_DENORM_MIN__
+#    define __FLT32_DENORM_MIN__ ((_Float32)1.40129846432481707092372958328991613e-45)
+#  endif
+#  ifdef __FLT64_MAX__
+#    undef __FLT64_MAX__
+#    define __FLT64_MAX__ ((_Float64)1.79769313486231570814527423731704357e+308)
+#  endif
+#  ifdef __FLT64_DENORM_MIN__
+#    undef __FLT64_DENORM_MIN__
+#    define __FLT64_DENORM_MIN__ ((_Float64)4.94065645841246544176568792868221372e-324)
+#  endif
 #endif
 
 /* DQ (10/22/2015): Change point at which this is applied from 4.8.3 to 4.8.0. */
