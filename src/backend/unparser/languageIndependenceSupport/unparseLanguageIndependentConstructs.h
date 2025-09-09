@@ -175,6 +175,10 @@ class UnparseLanguageIndependentConstructs
           virtual void unparseDoubleVal               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseLongDoubleVal           (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseComplexVal              (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseBFloat16Val             (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseFloat16Val              (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseFloat32Val              (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseFloat64Val              (SgExpression* expr, SgUnparse_Info& info);
 
        // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
           virtual void unparseNullptrVal              (SgExpression* expr, SgUnparse_Info& info);  

@@ -95,6 +95,13 @@ void Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info) {
          case T_IMAGINARY:
          case T_DEFAULT:
          case T_ELLIPSE:
+         case T_FLOAT16:
+         case T_FP16:
+         case T_BFLOAT16:
+         case T_FLOAT32X:
+         case T_FLOAT64X:
+         case T_FLOAT32:
+         case T_FLOAT64:
            if ( !( info.isWithType() && info.SkipBaseType() ) && !info.isTypeSecondPart() )
              curprint ( get_type_name(type) + " ");
            break;

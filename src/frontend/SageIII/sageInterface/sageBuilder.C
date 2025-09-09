@@ -4506,6 +4506,70 @@ SgFloat80Val* SageBuilder::buildFloat80Val_nfi(long double value, const string& 
   return result;
 }
 
+SgBFloat16Val* SageBuilder::buildBFloat16Val(float value /*= 0.0*/)
+{
+  SgBFloat16Val* result = new SgBFloat16Val(value,"");
+  ASSERT_not_null(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgBFloat16Val* SageBuilder::buildBFloat16Val_nfi(float value, const string& str)
+{
+  SgBFloat16Val* result = new SgBFloat16Val(value,str);
+  ASSERT_not_null(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgFloat16Val* SageBuilder::buildFloat16Val(float value /*= 0.0*/)
+{
+  SgFloat16Val* result = new SgFloat16Val(value,"");
+  ASSERT_not_null(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgFloat16Val* SageBuilder::buildFloat16Val_nfi(float value, const string& str)
+{
+  SgFloat16Val* result = new SgFloat16Val(value,str);
+  ASSERT_not_null(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgFloat32Val* SageBuilder::buildFloat32Val(float value /*= 0.0*/)
+{
+  SgFloat32Val* result = new SgFloat32Val(value,"");
+  ASSERT_not_null(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgFloat32Val* SageBuilder::buildFloat32Val_nfi(float value, const string& str)
+{
+  SgFloat32Val* result = new SgFloat32Val(value,str);
+  ASSERT_not_null(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgFloat64Val* SageBuilder::buildFloat64Val(double value /*= 0.0*/)
+{
+  SgFloat64Val* result = new SgFloat64Val(value,"");
+  ASSERT_not_null(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgFloat64Val* SageBuilder::buildFloat64Val_nfi(double value, const string& str)
+{
+  SgFloat64Val* result = new SgFloat64Val(value,str);
+  ASSERT_not_null(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgFloat128Val* SageBuilder::buildFloat128Val(long double value /*= 0.0*/)
 {
   SgFloat128Val* result = new SgFloat128Val(value,"");
@@ -8448,6 +8512,48 @@ SgTypeFloat80*  SageBuilder::buildFloat80Type() {
 
 SgTypeFloat128* SageBuilder::buildFloat128Type() {
   SgTypeFloat128 * result = SgTypeFloat128::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+SgTypeFloat16* SageBuilder::buildFloat16Type() {
+  SgTypeFloat16 * result = SgTypeFloat16::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+SgTypeFp16* SageBuilder::buildFp16Type() {
+  SgTypeFp16 * result = SgTypeFp16::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+SgTypeBFloat16* SageBuilder::buildBFloat16Type() {
+  SgTypeBFloat16 * result = SgTypeBFloat16::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+SgTypeFloat32x* SageBuilder::buildFloat32xType() {
+  SgTypeFloat32x * result = SgTypeFloat32x::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+SgTypeFloat64x* SageBuilder::buildFloat64xType() {
+  SgTypeFloat64x * result = SgTypeFloat64x::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+SgTypeFloat32* SageBuilder::buildFloat32Type() {
+  SgTypeFloat32 * result = SgTypeFloat32::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+SgTypeFloat64* SageBuilder::buildFloat64Type() {
+  SgTypeFloat64 * result = SgTypeFloat64::createType();
   ROSE_ASSERT(result);
   return result;
 }

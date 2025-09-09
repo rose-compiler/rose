@@ -189,6 +189,13 @@ ROSE_DLL_API SgTypeLongLong * buildLongLongType();
 ROSE_DLL_API SgTypeShort*    buildShortType();
 ROSE_DLL_API SgTypeFloat80*  buildFloat80Type();
 ROSE_DLL_API SgTypeFloat128* buildFloat128Type();
+ROSE_DLL_API SgTypeFloat16* buildFloat16Type();
+ROSE_DLL_API SgTypeFp16* buildFp16Type();
+ROSE_DLL_API SgTypeBFloat16* buildBFloat16Type();
+ROSE_DLL_API SgTypeFloat32x* buildFloat32xType();
+ROSE_DLL_API SgTypeFloat64x* buildFloat64xType();
+ROSE_DLL_API SgTypeFloat32* buildFloat32Type();
+ROSE_DLL_API SgTypeFloat64* buildFloat64Type();
 
 // CR (2/20/2020): Added builder for Jovial fixed type
 //! Build a Jovial fixed type with a fraction specifier and a scale specifier
@@ -487,6 +494,22 @@ ROSE_DLL_API SgFloat80Val* buildFloat80Val_nfi(long double value, const std::str
 
 ROSE_DLL_API SgFloat128Val* buildFloat128Val(long double value = 0.0);
 ROSE_DLL_API SgFloat128Val* buildFloat128Val_nfi(long double value, const std::string& str);
+
+//! Build a bfloat16
+ROSE_DLL_API SgBFloat16Val* buildBFloat16Val(float v = 0);
+ROSE_DLL_API SgBFloat16Val* buildBFloat16Val_nfi(float v, const std::string& str);
+
+//! Build a float16
+ROSE_DLL_API SgFloat16Val* buildFloat16Val(float v = 0);
+ROSE_DLL_API SgFloat16Val* buildFloat16Val_nfi(float v, const std::string& str);
+
+//! Build a float32
+ROSE_DLL_API SgFloat32Val* buildFloat32Val(float v = 0);
+ROSE_DLL_API SgFloat32Val* buildFloat32Val_nfi(float v, const std::string& str);
+
+//! Build a float64
+ROSE_DLL_API SgFloat64Val* buildFloat64Val(double v = 0);
+ROSE_DLL_API SgFloat64Val* buildFloat64Val_nfi(double v, const std::string& str);
 
 ROSE_DLL_API SgShortVal* buildShortVal(short value = 0);
 ROSE_DLL_API SgShortVal* buildShortValHex(short value = 0);

@@ -6845,6 +6845,10 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
                case V_SgUnsignedLongVal:        { unparseULongIntVal(expr, info);     break; }
                case V_SgFloatVal:               { unparseFloatVal(expr, info);        break; }
                case V_SgDoubleVal:              { unparseDoubleVal(expr, info);       break; }
+               case V_SgBFloat16Val:            { unparseBFloat16Val(expr, info);     break; }
+               case V_SgFloat16Val:             { unparseFloat16Val(expr, info);      break; }
+               case V_SgFloat32Val:             { unparseFloat32Val(expr, info);      break; }
+               case V_SgFloat64Val:             { unparseFloat64Val(expr, info);      break; }
                case V_SgLongDoubleVal:          { unparseLongDoubleVal(expr, info);   break; }
                case V_SgComplexVal:             { unparseComplexVal(expr, info);      break; }
                case V_SgNullptrValExp:          { unparseNullptrVal(expr, info);      break; }
@@ -7053,6 +7057,70 @@ UnparseLanguageIndependentConstructs::unparseSCharVal(SgExpression* expr, SgUnpa
        else
         {
           curprint ( schar_val->get_valueString());
+        }
+   }
+
+void
+UnparseLanguageIndependentConstructs::unparseBFloat16Val(SgExpression* expr, SgUnparse_Info &)
+   {
+     SgBFloat16Val* float_val = isSgBFloat16Val(expr);
+     ASSERT_not_null(float_val);
+
+     if (float_val->get_valueString() == "")
+        {
+          curprint ( tostring(float_val->get_value()) + "bf16");
+        }
+       else
+        {
+          curprint ( float_val->get_valueString());
+        }
+   }
+
+void
+UnparseLanguageIndependentConstructs::unparseFloat16Val(SgExpression* expr, SgUnparse_Info &)
+   {
+     SgFloat16Val* float_val = isSgFloat16Val(expr);
+     ASSERT_not_null(float_val);
+
+     if (float_val->get_valueString() == "")
+        {
+          curprint ( tostring(float_val->get_value()) + "f16");
+        }
+       else
+        {
+          curprint ( float_val->get_valueString());
+        }
+   }
+
+void
+UnparseLanguageIndependentConstructs::unparseFloat32Val(SgExpression* expr, SgUnparse_Info &)
+   {
+     SgFloat32Val* float_val = isSgFloat32Val(expr);
+     ASSERT_not_null(float_val);
+
+     if (float_val->get_valueString() == "")
+        {
+          curprint ( tostring(float_val->get_value()) + "f32");
+        }
+       else
+        {
+          curprint ( float_val->get_valueString());
+        }
+   }
+
+void
+UnparseLanguageIndependentConstructs::unparseFloat64Val(SgExpression* expr, SgUnparse_Info &)
+   {
+     SgFloat64Val* float_val = isSgFloat64Val(expr);
+     ASSERT_not_null(float_val);
+
+     if (float_val->get_valueString() == "")
+        {
+          curprint ( tostring(float_val->get_value()) + "f64");
+        }
+       else
+        {
+          curprint ( float_val->get_valueString());
         }
    }
 
@@ -9378,6 +9446,10 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgComplexVal:             // return 0;
           case V_SgMatrixExp:
           case V_SgEnumVal:
+          case V_SgBFloat16Val:
+          case V_SgFloat16Val:
+          case V_SgFloat32Val:
+          case V_SgFloat64Val:
                                      precedence_value = 0; break;
 
           case V_SgCAFCoExpression:        // return 16;

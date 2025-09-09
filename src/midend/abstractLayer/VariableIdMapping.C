@@ -123,7 +123,8 @@ bool VariableIdMapping::isOfEnumType(VariableId varId) {
 
 bool VariableIdMapping::isOfFloatingPointType(VariableId varId) {
   SgType* type=getType(varId);
-  return isSgTypeFloat(type)||isSgTypeDouble(type)||isSgTypeLongDouble(type)||isSgTypeFloat80(type)||isSgTypeFloat128(type);
+  return isSgTypeFloat(type)||isSgTypeDouble(type)||isSgTypeLongDouble(type)||isSgTypeFloat80(type)||isSgTypeFloat128(type)||isSgTypeFloat16(type)||
+    isSgTypeFp16(type)||isSgTypeBFloat16(type)||isSgTypeFloat32x(type)||isSgTypeFloat64x(type)||isSgTypeFloat32(type)||isSgTypeFloat64(type);
 }
 
 bool VariableIdMapping::isOfPointerType(VariableId varId) {

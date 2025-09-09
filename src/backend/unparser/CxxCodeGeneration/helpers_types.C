@@ -83,6 +83,13 @@ std::string get_type_name(SgType* t) {
     case T_UNSIGNED_128BIT_INTEGER: return "unsigned __int128";
     case T_LONG_DOUBLE:             return "long double";
     case T_STRING:                  return "char*";
+    case T_FLOAT16:                 return "_Float16";
+    case T_FP16:                    return "__fp16";
+    case T_BFLOAT16:                return "__bf16";
+    case T_FLOAT32X:                return "_Float32x";
+    case T_FLOAT64X:                return "_Float64x";
+    case T_FLOAT32:                 return "_Float32";
+    case T_FLOAT64:                 return "_Float64";
 
     case T_BOOL:
       return (SageInterface::is_C99_language() || SageInterface::is_C_language()) ? "_Bool" : "bool";

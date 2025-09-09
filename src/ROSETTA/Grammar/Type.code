@@ -1136,6 +1136,15 @@ SgType::isFloatType() const
           case T_FLOAT80 :
           case T_FLOAT128 :
 
+       // PL (9/9/2025): Added additional floating point types to be classified by this function
+          case T_FP16:
+          case T_FLOAT16:
+          case T_BFLOAT16:
+          case T_FLOAT32:
+          case T_FLOAT64:
+          case T_FLOAT32X:
+          case T_FLOAT64X:
+
           case T_DOUBLE:
           case T_LONG_DOUBLE:
                return 1;
@@ -1209,6 +1218,15 @@ SgType::isPrimativeType() const
           case T_FLOAT128 :
           case T_DOUBLE:
           case T_LONG_DOUBLE:
+
+       // PL (9/9/2025): Added additional floating point types to be classified by this function
+          case T_FP16:
+          case T_FLOAT16:
+          case T_BFLOAT16:
+          case T_FLOAT32:
+          case T_FLOAT64:
+          case T_FLOAT32X:
+          case T_FLOAT64X:
 
        // Other kinds of float types.
           case T_COMPLEX:

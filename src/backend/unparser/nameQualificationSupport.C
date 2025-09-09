@@ -2886,6 +2886,14 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgTypeFloat80:
           case V_SgTypeFloat128:
 
+          case V_SgTypeFloat16:
+          case V_SgTypeFp16:
+          case V_SgTypeBFloat16:
+          case V_SgTypeFloat32x:
+          case V_SgTypeFloat64x:
+          case V_SgTypeFloat32:
+          case V_SgTypeFloat64:
+
           case V_SgTypeFixed:
           case V_SgJovialTableType:
        // TV (09/06/2018): Type of an unresolved auto keyword

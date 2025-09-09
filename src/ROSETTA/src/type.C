@@ -38,6 +38,13 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeFloat128        , "TypeFloat128",         "T_FLOAT128" );
      NEW_TERMINAL_MACRO ( TypeString          , "TypeString",           "T_STRING" );
      NEW_TERMINAL_MACRO ( TypeBool            , "TypeBool",             "T_BOOL" );
+     NEW_TERMINAL_MACRO ( TypeFloat16         , "TypeFloat16",          "T_FLOAT16" );
+     NEW_TERMINAL_MACRO ( TypeFp16            , "TypeFp16",             "T_FP16" );
+     NEW_TERMINAL_MACRO ( TypeBFloat16        , "TypeBFloat16",         "T_BFLOAT16" );
+     NEW_TERMINAL_MACRO ( TypeFloat32x        , "TypeFloat32x",         "T_FLOAT32X" );
+     NEW_TERMINAL_MACRO ( TypeFloat64x        , "TypeFloat64x",         "T_FLOAT64X" );
+     NEW_TERMINAL_MACRO ( TypeFloat32         , "TypeFloat32",          "T_FLOAT32" );
+     NEW_TERMINAL_MACRO ( TypeFloat64         , "TypeFloat64",          "T_FLOAT64" );
 
   // Rasmussen (2/18/2020): Added TypeFixed for Jovial
      NEW_TERMINAL_MACRO ( TypeFixed           , "TypeFixed",            "T_FIXED" );
@@ -235,8 +242,9 @@ Grammar::setUpTypes ()
        "IntegralType","IntegralTypeTag", false);
 
      NEW_NONTERMINAL_MACRO (FloatingType,
-         TypeFloat      | TypeFloat128 | TypeFloat80 | TypeDouble |
-         TypeLongDouble,
+         TypeFloat      | TypeFloat128 | TypeFloat80  | TypeDouble |
+         TypeLongDouble | TypeFloat16  | TypeBFloat16 | TypeFp16   |
+         TypeFloat32x   | TypeFloat64x | TypeFloat32  | TypeFloat64,
        "FloatingType","FloatingTypeTag", false);
 
   // DQ (5/7/2004): Added TemplateType to be derived from SgType (this leaves room later to
@@ -457,6 +465,15 @@ Grammar::setUpTypes ()
      TypeLongDouble.setDataPrototype       ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeFloat80.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeFloat128.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // PL (9/8/2025): Added support for C++23 fixed-width floating-point types
+     TypeFloat16.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeFp16.setDataPrototype             ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeBFloat16.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeFloat32x.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeFloat64x.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeFloat32.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeFloat64.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // This type now has a length parameter, so we cannot use a single static builtin_type to represent all of the variations.
   // TypeString.setDataPrototype           ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -1287,6 +1304,15 @@ Grammar::setUpTypes ()
   // TV (12/29/2018): using literal suffixes
      TypeFloat80.editSubstitute( "MANGLED_ID_STRING", "w" );
      TypeFloat128.editSubstitute( "MANGLED_ID_STRING", "q" );
+
+  // PL (9/8/2025): Added support for C++23 fixed-width floating-point types
+     TypeFloat16.editSubstitute( "MANGLED_ID_STRING", "f16" );
+     TypeFp16.editSubstitute( "MANGLED_ID_STRING", "fp16" );
+     TypeBFloat16.editSubstitute( "MANGLED_ID_STRING", "bf" );
+     TypeFloat32x.editSubstitute( "MANGLED_ID_STRING", "f32x" );
+     TypeFloat64x.editSubstitute( "MANGLED_ID_STRING", "f64x" );
+     TypeFloat32.editSubstitute( "MANGLED_ID_STRING", "f32" );
+     TypeFloat64.editSubstitute( "MANGLED_ID_STRING", "f64" );
 
   // DQ (3/24/2014): Adding support for 128 bit integers.
      TypeSigned128bitInteger.editSubstitute( "MANGLED_ID_STRING", "SL128" );

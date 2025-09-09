@@ -1082,3 +1082,14 @@ SgSignedIntegralType
 SgUnsignedIntegralType
 SgFloatingType
 SgAsmJvmIndexedAttribute
+SgTypeFloat16
+SgTypeFp16
+SgTypeBFloat16
+SgTypeFloat32x
+SgTypeFloat64x
+SgTypeFloat32
+SgTypeFloat64
+SgBFloat16Val
+SgFloat16Val
+SgFloat32Val
+SgFloat64Val

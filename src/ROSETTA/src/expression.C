@@ -1054,6 +1054,46 @@ Grammar::setUpExpressions () {
     Float80Val.editSubstitute             ( "GENERIC_TYPE", "SgTypeFloat80" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    NEW_TERMINAL_MACRO (BFloat16Val,        "BFloat16Val",        "BFLOAT_16_VAL" );
+    BFloat16Val.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+    BFloat16Val.setDataPrototype ( "float", "value", "= 0",
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    BFloat16Val.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    BFloat16Val.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+    BFloat16Val.editSubstitute        ( "GENERIC_TYPE", "SgTypeBFloat16" );
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    NEW_TERMINAL_MACRO (Float16Val,        "Float16Val",        "FLOAT_16_VAL" );
+    Float16Val.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+    Float16Val.setDataPrototype ( "float", "value", "= 0",
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    Float16Val.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    Float16Val.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+    Float16Val.editSubstitute        ( "GENERIC_TYPE", "SgTypeFloat16" );
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    NEW_TERMINAL_MACRO (Float32Val,        "Float32Val",        "FLOAT_32_VAL" );
+    Float32Val.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+    Float32Val.setDataPrototype ( "float", "value", "= 0",
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    Float32Val.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    Float32Val.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+    Float32Val.editSubstitute        ( "GENERIC_TYPE", "SgTypeFloat32" );
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    NEW_TERMINAL_MACRO (Float64Val,        "Float64Val",        "FLOAT_64_VAL" );
+    Float64Val.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+    Float64Val.setDataPrototype ( "double", "value", "= 0",
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    Float64Val.setDataPrototype ( "std::string", "valueString", "= \"\"",
+                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    Float64Val.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+    Float64Val.editSubstitute        ( "GENERIC_TYPE", "SgTypeFloat64" );
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (FloatVal,               "FloatVal",               "FLOAT_VAL" );
     FloatVal.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     FloatVal.setDataPrototype ( "float", "value", "= 0.0",
@@ -2899,7 +2939,8 @@ Grammar::setUpExpressions () {
                             LongIntVal           | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        |
                             DoubleVal            | LongDoubleVal    | ComplexVal             | UpcThreads      | UpcMythread     |
                             TemplateParameterVal | NullptrValExp    | Char16Val              | Char32Val       | Float80Val      |
-                            Float128Val          | VoidVal          | AdaFloatVal            | SignedCharVal   |
+                            Float128Val          | VoidVal          | AdaFloatVal            | SignedCharVal   | BFloat16Val     |
+                            Float16Val           | Float32Val       | Float64Val             |
                             *lookupTerminal(terminalList, "JovialBitVal"),
                             "ValueExp","ValueExpTag", false);
 
