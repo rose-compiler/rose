@@ -481,9 +481,12 @@ typedef long double __float128;
 #  endif
 #endif
 
+#if __cplusplus
 #if defined(__GNUC__) && __GNUC__ < 13
 /* We add some _Float16 intrinsics for GCC 13 support, but GCC < 13 doesn't support the necessary _Float16 type. */
+/* It should only be added for C++! At least on GNU 8.5, _Float16 exists for C */
 typedef struct __rose_float16 {} _Float16;
+#endif
 #endif
 
 /* DQ (10/22/2015): Change point at which this is applied from 4.8.3 to 4.8.0. */
