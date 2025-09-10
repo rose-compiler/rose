@@ -1423,6 +1423,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
   }
   
   switch (d->variantT()) {
+  case V_SgProcedureHeaderStatement:
   case V_SgFunctionDeclaration: 
     { 
       SgFunctionDeclaration *decl = isSgFunctionDeclaration(d);
@@ -1457,17 +1458,6 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
     case V_SgProgramHeaderStatement:
     {
      SgProgramHeaderStatement* decl = isSgProgramHeaderStatement(d);
-       if (returntype != 0)
-         *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
-       if (name != 0) 
-         *name =  std::string(decl->get_name().str());
-       if (paramtype != 0 || params != 0) 
-         l = decl->get_parameterList();
-       break;
-   } 
-  case V_SgProcedureHeaderStatement:
-  {
-    SgProcedureHeaderStatement* decl = isSgProcedureHeaderStatement(d);
        if (returntype != 0)
          *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
        if (name != 0) 
@@ -2834,6 +2824,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args, AstTypeList* paramt
     }
     break;
   default:
+    DebugVariable([&exp](){ return "Not Function call:" + exp->class_name(); });
     return false;
   }
   
