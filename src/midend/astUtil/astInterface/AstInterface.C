@@ -1423,6 +1423,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
   }
   
   switch (d->variantT()) {
+  case V_SgTemplateInstantiationFunctionDecl: 
   case V_SgProcedureHeaderStatement:
   case V_SgFunctionDeclaration: 
     { 
@@ -1467,6 +1468,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
        break;
    } 
   case V_SgTemplateMemberFunctionDeclaration:
+  case V_SgTemplateInstantiationMemberFunctionDecl: 
   case V_SgMemberFunctionDeclaration:
     {
       SgMemberFunctionDeclaration* decl = isSgMemberFunctionDeclaration(d);
@@ -1492,40 +1494,16 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
             }
          }
       } 
+      if (outpars != 0) {
+         auto init = decl->get_CtorInitializerList()->get_ctors();
+         for (auto p = init.begin(); p != init.end(); ++p) {
+            SgInitializedName* name = *p;
+            outpars->push_back(name); 
+         }
+      }
       def = AstInterface::GetFunctionDefinitionFromDeclaration(decl);
       break;
     }
-  // Liao, 11/18/2008: add support for instantiated template (member) function declarations  
-  case V_SgTemplateInstantiationMemberFunctionDecl: 
-  {
-     SgTemplateInstantiationMemberFunctionDecl* decl = isSgTemplateInstantiationMemberFunctionDecl(d);
-     if (returntype != 0)
-        *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
-      if (name != 0) {
-        SgName cn = decl->get_scope()->get_qualified_name(); 
-        SgName fn = decl->get_name();
-        *name =  ::StripGlobalQualifier(std::string(cn.str())) + "::" + ::StripGlobalQualifier(std::string(fn.str()));
-      }
-      if (paramtype != 0 || params != 0) 
-        l = decl->get_parameterList();
-      def = decl->get_definition();
-      break;
-  }  
-  case V_SgTemplateInstantiationFunctionDecl: 
-  {
-     SgTemplateInstantiationFunctionDecl* decl = isSgTemplateInstantiationFunctionDecl(d);
-     if (returntype != 0)
-        *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
-      if (name != 0) {
-        SgName cn = decl->get_scope()->get_qualified_name(); 
-        SgName fn = decl->get_name();
-        *name =  StripGlobalQualifier(std::string(cn.str())) + "::" + StripGlobalQualifier(std::string(fn.str()));
-      }
-      if (paramtype != 0 || params != 0) 
-        l = decl->get_parameterList();
-      def = decl->get_definition();
-      break;
-  }  
   case V_SgInitializedName:
   {
       SgInitializedName* var = isSgInitializedName(d);
@@ -2742,8 +2720,8 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
              AstIdentical<AstTypeList, AstNodeType>(paramtypes1, paramtypes2, call_on_diff_type) &&
              AstIdentical(returntype1, returntype2, call_on_diff_type);
   }
-  if ((IsFunctionDefinition(first, &name1, &params1, 0, &body1, &paramtypes1, &returntype1) &&
-      IsFunctionDefinition(_second,&name2, &params2, 0, &body2, &paramtypes2, &returntype2))) {
+  if ((IsFunctionDefinition(first, &name1, &params1, &args1, &body1, &paramtypes1, &returntype1) &&
+      IsFunctionDefinition(_second,&name2, &params2, &args2, &body2, &paramtypes2, &returntype2))) {
       if (name1 != name2 &&   (call_on_diff == 0 || (*call_on_diff)(_first, _second))) {
          DebugDiff([&_first,&_second](){ return "AST different function name: " + AstToString(_first) + " vs " + AstToString(_second); });
          return false;

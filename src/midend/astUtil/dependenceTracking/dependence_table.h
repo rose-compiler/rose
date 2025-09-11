@@ -66,18 +66,29 @@ class CollectDependences{
 class SelectDependences : public CollectDependences{
   private:
     std::vector<DependenceEntry> result;
-    std::string tag_first_, tag_second_, tag_type_;
+    std::set<std::string> tag_first_, tag_second_, tag_type_;
   protected:
     virtual void save_dependence(const DependenceEntry& e) {
-       if ((tag_first_ == "" || tag_first_ == e.first_entry()) && (tag_second_ == "" || tag_second_ == e.second_entry()) && 
-           (tag_type_ == "" || tag_type_ == e.type_entry())) {
+       if ((tag_first_ .empty() || tag_first_.find(e.first_entry()) != tag_first_.end())  && (tag_second_ .empty() || tag_second_.find(e.second_entry()) != tag_second_.end())
+   && (tag_type_.empty() || tag_type_.find(e.type_entry())!=tag_type_.end())) {
           result.push_back(e);
        }
     }
   public:
-    SelectDependences(const std::string& _tag_first, const std::string& _tag_second = "", const std::string& _tag_type = "") : tag_first_(_tag_first), tag_second_(_tag_second), tag_type_(_tag_type) {}
+    void add_selection(const std::string& _tag_first, const std::string& _tag_second = "", const std::string& _tag_type = "") { 
+      if (!_tag_first.empty()) {
+        tag_first_.insert(_tag_first); 
+      } 
+      if (!_tag_second.empty()) {
+        tag_second_.insert(_tag_second);
+      }
+      if (!_tag_type.empty()) {
+         tag_type_.insert(_tag_type);
+      }
+    }
     // Read the system dependence table from an input file.
     using CollectDependences::CollectFromFile;
+    
     const std::vector<DependenceEntry>& get_result() { return result; }
 };
 
