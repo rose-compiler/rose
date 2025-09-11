@@ -950,11 +950,6 @@ if(NOT WIN32 AND NOT APPLE)
     find_library(C_LIB c REQUIRED) 
     # libm.so 
     find_library(M_LIB m REQUIRED)
-    # Find libquadmath.so, prioritize ${GCC_LIB_DIRS}
-    file(GLOB GCC_LIB_DIRS "/usr/lib/gcc/x86_64-redhat-linux/*") 
-    find_library(QM_LIB 
-                 NAMES quadmath libquadmath.so.0 libquadmath.so.0.0.0 libquadmath.so
-                 HINTS ${GCC_LIB_DIRS})
   endif()
   # libdl.so 
   find_library(DL_LIB dl REQUIRED) 
@@ -1062,8 +1057,8 @@ if(NOT WIN32 AND NOT APPLE)
     list(APPEND link_with_libraries ${DL_LIB})
   endif()
   # Conditionally append libquadmath.so to list of libraries rose will link to 
-  if(QM_LIB AND NOT QM_LIB STREQUAL "QM_LIB-NOTFOUND")
-    list(APPEND link_with_libraries ${QM_LIB})    
+  if(HAVE_QUADMATH_COMPILE)
+    list(APPEND link_with_libraries quadmath)
   endif()
   # Conditionally append librt.so to list of libraries rose will link to  
   if(RT_LIB AND NOT RT_LIB STREQUAL "RT_LIB-NOTFOUND")
