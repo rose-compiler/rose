@@ -491,12 +491,15 @@ typedef long double __float128;
 #endif
 /* Next we can check if __is_identifier is available. This is available in Clang versions I've looked at */
 /* Using __is_identifier is nice because we can directly check if this type is available, and define it if not */
+/* EDG 6.5 has a bug with __is_identifier where it misclassifies _Float16, so we can't use this */
+#if 0
 #if !defined(ROSE_DECLARE_FLOAT16) && defined(__is_identifier)
 #  define __has_keyword(__x) !(__is_identifier(__x))
 #  if !__has_keyword(_Float16)
 #    define ROSE_DECLARE_FLOAT16
 #  endif
 #  undef __has_keyword
+#endif
 #endif
 /* MSVC does not have _Float16 as far as I can tell, so we always need to enable it for MSVC */
 #if !defined(ROSE_DECLARE_FLOAT16) && defined(_MSC_VER)
