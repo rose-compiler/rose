@@ -974,15 +974,16 @@ namespace Libadalang_ROSE_Translation
 
   /// creates a symbol for the inherited function \ref fn for inherited type \ref assocType.
   ///   adds the symbol to the scope \ref scope of the derived type.
-  /// \param basesym   the symbol from which the new symbol is derived from
-  /// \param assocType the newly derived type that triggered the derivation
-  /// \param scope     the scope where the new symbol needs to be inserted
+  /// \param basesym      the symbol from which the new symbol is derived from
+  /// \param assocType    the newly derived type that triggered the derivation
+  /// \param baseRootType the base type that the derived type will replace
+  /// \param scope        the scope where the new symbol needs to be inserted
   /// \note
   ///    currently derived type can either be an Ada derived type or an extension record ("class").
   /// \todo
   ///    support derived enum types
   SgAdaInheritedFunctionSymbol&
-  mkAdaInheritedFunctionSymbol(SgFunctionSymbol& basesym, SgNamedType& assocType, SgScopeStatement& scope);
+  mkAdaInheritedFunctionSymbol(SgFunctionSymbol& basesym, SgNamedType& assocType, SgType& baseRootType, SgScopeStatement& scope);
 
   //
   // conversions

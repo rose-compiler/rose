@@ -406,10 +406,165 @@ namespace {
     return SG_DEREF(res);
   }
 
+  /// Imitates gnatkr (gnatkrunch)
+  /// \param package_name The name of the package to reduce
+  /// \param krunch_length The length to reduce it to (default 8)
+  /// Returns the krunched package name, which is created by splitting \ref package_name
+  /// into multiple strings on any ".", "-", or "_" chars, removing said chars, then
+  /// repeatedly removing the last char of the longest substr until the combined
+  /// length of all remaining substrs is < \ref krunch_length. The substrs are then
+  /// recombined and the extension (if present) is appended.
+  std::string krunch_package_name(std::string package_name, int krunch_length = 8){
+    //Get rid of the extension, if we have it
+    std::size_t last_dot_pos = package_name.find_last_of('.');
+    std::string extension = "";
+    if(last_dot_pos != std::string::npos){
+      extension = package_name.substr(last_dot_pos);
+      package_name = package_name.substr(0, last_dot_pos);
+    }
+
+    //If this starts with ada, gnat, system, or interfaces, remove them and keep note
+    std::map<std::string, std::string> special_prefixes = {
+      {"ada-", "a-"}, {"gnat-", "g-"}, {"interfaces-", "i-"}, {"system-", "s-"}
+    };
+    std::string krunched_prefix = "";
+    for(const std::pair<std::string, std::string>& pair : special_prefixes){
+      if(package_name.find(pair.first, 0) == 0){
+          krunched_prefix = pair.second;
+          package_name = package_name.substr(package_name.find_first_of("-") + 1, std::string::npos);
+          break;
+      }
+    }
+    krunch_length -= krunched_prefix.size();
+
+    //Split the package name by the delimiters (-._)
+    std::vector<std::string> split_package_name;
+    std::size_t prev = 0, pos;
+    int split_length = 0;
+    while((pos = package_name.find_first_of(".-_", prev)) != std::string::npos)
+    {
+      if(pos > prev){
+        split_package_name.push_back(package_name.substr(prev, pos-prev));
+        split_length += split_package_name.back().size();
+      }
+      prev = pos+1;
+    }
+    if(prev < package_name.length()){
+      split_package_name.push_back(package_name.substr(prev, std::string::npos));
+      split_length += split_package_name.back().size();
+    }
+
+    while(split_length > krunch_length){
+      //Find the longest substring, and remove its last char
+      int longest_substr_pos = 0, longest_substr_len = 0;
+      for(int i = 0; i < split_package_name.size(); ++i){
+        if(split_package_name.at(i).size() > longest_substr_len){
+          longest_substr_pos = i;
+          longest_substr_len = split_package_name.at(i).size();
+        }
+      }
+      split_package_name.at(longest_substr_pos).pop_back();
+
+      //decrement split_length
+      split_length--;
+    }
+
+    std::string krunched_package_name = "";
+    for(std::string split_piece : split_package_name){
+      krunched_package_name = krunched_package_name + split_piece;
+    }
+
+    return krunched_prefix + krunched_package_name + extension;
+  }
+
   // may need special processing for pragmas in body
   using DeferredPragmaBodyCompletion = std::function<void(AstContext::PragmaContainer)>;
   //
   // pragma handling
+
+  void handleExtendSystem(ada_base_entity* lal_element){
+    //lal_element should be a list with one child, and that child should be the name of the package
+    ada_base_entity lal_package_name;
+    ada_node_child(lal_element, 0, &lal_package_name);
+    ada_pragma_argument_assoc_f_expr(&lal_package_name, &lal_package_name);
+    const std::string lal_package_name_string = getFullName(&lal_package_name);
+
+    logInfo() << "Extending System with package " << lal_package_name_string << std::endl;
+
+    //Get the expected file name from the package name
+    std::string package_specification_name = "s-" + krunch_package_name(lal_package_name_string, 6) + ".ads";
+
+    //Iterate through LibadalangTypes, find all types that come from this package, & add them to extendedTypesByName
+    for(const std::pair<int, SgDeclarationStatement*>& type_pair : libadalangTypes()){
+      SgDeclarationStatement* type_decl = type_pair.second;
+      const std::string& type_decl_filename = type_decl->getFilenameString();
+
+      if(type_decl_filename.size() >= package_specification_name.size()
+         && (type_decl_filename.compare(type_decl_filename.size()
+                                        - package_specification_name.size(),
+                                        package_specification_name.size(),
+                                        package_specification_name) == 0)){
+        //Get the SgType* & add it to extendedTypesByName
+        VariantT type_decl_class = type_decl->variantT();
+        SgType* type_to_add = nullptr;
+        std::string name_to_add = "NameError";
+        switch(type_decl_class){
+          case V_SgEnumDeclaration:
+            {
+              SgEnumDeclaration* enum_decl = isSgEnumDeclaration(type_decl);
+              type_to_add = enum_decl->get_type();
+              name_to_add = enum_decl->get_name().getString();
+              break;
+            }
+          case V_SgTypedefDeclaration:
+            {
+              SgTypedefDeclaration* typedef_decl = isSgTypedefDeclaration(type_decl);
+              type_to_add = typedef_decl->get_type();
+              name_to_add = typedef_decl->get_name().getString();
+              break;
+            }
+          case V_SgClassDeclaration:
+            {
+              //Records
+              SgClassDeclaration* class_decl = isSgClassDeclaration(type_decl);
+              type_to_add = class_decl->get_type();
+              name_to_add = class_decl->get_name().getString();
+              break;
+            }
+          case V_SgAdaFormalTypeDecl:
+            {
+              //Generics
+              SgAdaFormalTypeDecl* formal_decl = isSgAdaFormalTypeDecl(type_decl);
+              //Don't add these; they are part of a generic package/subp
+              break;
+            }
+          default:
+            logError() << "Unhandled SgTypeDeclaration subtype " << type_decl_class << " in handleExtendSystem!\n";
+            break;
+        }
+
+        if(type_to_add != nullptr){
+          AdaIdentifier name_to_add_converted{name_to_add};
+          //Check if we already have a value for this key in extendedTypesByName
+          if(extendedTypesByName().count(name_to_add_converted) != 0){
+            //Check if the value for this key is the same as what we currently have
+            SgType* type_from_map = extendedTypesByName().at(name_to_add_converted);
+            if(type_from_map->get_mangled() == type_to_add->get_mangled()){
+              //libadalangTypes often has duplicate values under different keys, that is likely what has happened here
+              //Do not rerecord
+              continue;
+            } else {
+              logError() << "Types from " << lal_package_name_string
+                         << " would overwrite types already extending System, canceling extension!\n";
+              return;
+            }
+          }
+          extendedTypesByName()[name_to_add_converted] = type_to_add;
+        }
+
+      }
+    }
+  }
 
   SgPragmaDeclaration&
   createPragma_common(ada_base_entity* lal_element, SgStatement* stmtOpt, AstContext ctx)
@@ -466,6 +621,11 @@ namespace {
     attachSourceLocation(sgnode, lal_element, ctx);
     attachSourceLocation(SG_DEREF(sgnode.get_pragma()), lal_element, ctx);
     recordNode(libadalangDecls(), hash, sgnode);
+
+    if(name == "extend_system"){
+      //Add all the types in the referenced package to extendedTypesByName()
+      handleExtendSystem(&lal_args);
+    }
 
     return sgnode;
   }
@@ -839,7 +999,8 @@ namespace {
       res = &mkAdaTaskTypeDecl(ident, nullptr /* no spec */, scope);
     } else if(lal_base_type_kind == ada_protected_type_decl){
       res = &mkAdaProtectedTypeDecl(ident, nullptr /* no spec */, scope);
-    } else if(!typeview || lal_type_def_kind == ada_private_type_def || lal_type_def_kind == ada_derived_type_def){ //If it isn't an access, we need to find the original type to see if it's a type, record, or enum
+    } else if(!typeview || lal_type_def_kind == ada_private_type_def || lal_type_def_kind == ada_derived_type_def){
+      //If it isn't an access, we need to find the original type to see if it's a type, record, or enum
       ada_base_entity lal_base_type_def;
       ada_type_decl_f_type_def(&lal_base_type_decl, &lal_base_type_def);
       lal_type_def_kind = ada_node_kind(&lal_base_type_def);
@@ -847,7 +1008,17 @@ namespace {
       // if the ultimate base type is an enum, the derived type also shall be an enum.
       // if not an enum, then an intermediate type decl is created.
       // firstLevelIsDerived is set to indicate if the first level was a derived type
-      const bool firstLevelIsDerived = lal_type_def_kind == ada_derived_type_def;
+      bool firstLevelIsDerived = lal_type_def_kind == ada_derived_type_def;
+
+      if(firstLevelIsDerived){
+        //Unfortunately, even if the first level is an ada_derived_type_def, it could still correspond to
+        // A_Derived_Record_Extension_Definition. So, check if it has a record extension.
+        ada_base_entity lal_record_ext;
+        int record_ext_return_check = ada_derived_type_def_f_record_extension(&lal_base_type_def, &lal_record_ext);
+        if(record_ext_return_check != 0 && !ada_node_is_null(&lal_record_ext)){
+          firstLevelIsDerived = false;
+        }
+      }
 
       while(lal_type_def_kind == ada_derived_type_def || lal_type_def_kind == ada_private_type_def){
         ada_base_entity lal_subtype_indication;
@@ -895,6 +1066,7 @@ namespace {
           }
         } else {
           //If we encounter a null node, just give up
+          logFlaw() << "Failed to find base type for " << ident << " in createOpaqueDecl!\n";
           ada_base_entity lal_name;
 
           ada_subtype_indication_f_name(&lal_subtype_indication, &lal_name); //TODO This could use lal_subtype_indication before it is initialized
@@ -1112,11 +1284,9 @@ namespace {
     //If this is a derived type, get the inherited elements
     //TODO Other lal_type_def_kinds may still inherit?
     if(!ada_node_is_null(&lal_type_def) && lal_type_def_kind == ada_derived_type_def){
-      SgDeclarationStatement* tydcl = discr ? discr : &sgdecl;
-
       TypeData ty = getTypeFoundation(ident, &lal_type_def, ctx);
 
-      processInheritedElementsOfDerivedTypes(ty, *tydcl, ctx);
+      processInheritedElementsOfDerivedTypes(ty, SG_DEREF(assocdecl), ctx);
     }
 
     return SG_DEREF(assocdecl);
@@ -1986,7 +2156,7 @@ namespace {
                 << std::endl;
     }
 
-    SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fnsym, derivedType, ctx.scope());
+    SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fnsym, derivedType, baseType, ctx.scope());
     const auto inserted = inheritedSymbols().insert(std::make_pair(InheritedSymbolKey{fn, &derivedType}, &sgnode));
 
     ASSERT_require(inserted.second);
@@ -3814,15 +3984,15 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         if(!ada_node_is_null(&lal_previous_decl)){
           //First, check if lal_previous_decl has the same unique_identifying_name
           // Sometimes LAL connects to an incorrect previous decl; this is to catch some of those times
-          // Only do this check if the decl isn't an ada_subp_body_stub: these do not have unique_identifying_name
+          // Only do this check if both the body & decl have valid unique_identifying_names
           bool unique_names_match = true;
-          if(ada_node_kind(&lal_previous_decl) != ada_subp_body_stub){
-            ada_text_type lal_body_unique_name, lal_decl_unique_name;
-            ada_basic_decl_p_unique_identifying_name(lal_element, &lal_body_unique_name);
-            ada_basic_decl_p_unique_identifying_name(&lal_previous_decl, &lal_decl_unique_name);
-            LibadalangText body_unique_name(lal_body_unique_name);
-            LibadalangText decl_unique_name(lal_decl_unique_name);
-            unique_names_match = (body_unique_name.string_value() == decl_unique_name.string_value());
+          ada_text_type lal_body_unique_name, lal_decl_unique_name;
+          int body_return = ada_basic_decl_p_unique_identifying_name(lal_element, &lal_body_unique_name);
+          int decl_return = ada_basic_decl_p_unique_identifying_name(&lal_previous_decl, &lal_decl_unique_name);
+          if(body_return != 0 && decl_return != 0){
+            std::string body_unique_name = dot_ada_text_type_to_string(lal_body_unique_name);
+            std::string decl_unique_name = dot_ada_text_type_to_string(lal_decl_unique_name);
+            unique_names_match = (body_unique_name == decl_unique_name);
           }
           if(unique_names_match){
             int decl_hash = hash_node(&lal_previous_decl);
@@ -5119,6 +5289,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         TypeData                ty        = getTypeFoundation(type_name, &lal_type_def, ctx.scope(scope));
         int                     type_hash = hash_node(lal_element);
         int                     name_hash = hash_node(&lal_defining_name);
+
         SgDeclarationStatement& sgdecl    = sg::dispatch(TypeDeclMaker{type_name, scope, ty, nondef}, &ty.sageNode());
 
         privatize(sgdecl, isPrivate);
@@ -5633,6 +5804,10 @@ void handleDefinition(ada_base_entity* lal_element, AstContext ctx){
   }
 }
 
+//LAL_REP_ISSUE: Everything to do with inherited subps. LAL does not have Implicit_Inherited_Subprograms,
+// so we have to manually locate any subps that used the base type. But, this system currently does not
+// account for multiple levels of derivation, each having its own subps. Currently, we only search for
+// subps that use the base type, not any middle types.
 void
 processInheritedSubroutines( SgNamedType& derivedType,
                              ada_base_entity* tydef,
@@ -5685,6 +5860,26 @@ processInheritedSubroutines( SgNamedType& derivedType,
          ada_text_type lal_unique_identifying_name;
          ada_basic_decl_p_unique_identifying_name(&lal_super_type, &lal_unique_identifying_name);
          std::string unique_identifying_name = dot_ada_text_type_to_string(lal_unique_identifying_name);
+
+         if(baseRootType->get_qualified_name().getString() != unique_identifying_name){
+           //In some cases, the baseRootType will be set to an intermediate derived type instead of the true base type.
+           // Since this search only looks for subps of the true base type, keeping this incorrect baseRootType will result in
+           // the subps being inherited unmodified (b/c we attempt to replace the nonexistent baseRootType with derivedType)
+           // To fix this, try to find the correct baseRootType using lal_super_type
+           logWarn() << "baseRootType does not match lal_super_type\n";
+           ada_base_entity lal_defining_name;
+           ada_base_type_decl_f_name(&lal_super_type, &lal_defining_name);
+           int name_hash = hash_node(&lal_defining_name);
+           int decl_hash = hash_node(&lal_super_type);
+           SgClassDeclaration* baseTypeDecl = isSgClassDeclaration(findFirst(libadalangTypes(), name_hash, decl_hash));
+           if(baseTypeDecl != nullptr){
+             SgNamedType* baseTypeAgain = isSgNamedType(baseTypeDecl->get_type());
+             if(baseTypeAgain != nullptr){
+                 logInfo() << "Fixed baseRootType\n";
+                 baseRootType = baseTypeAgain;
+             }
+           }
+         }
 
          ada_base_entity lal_node_list;
          ada_ada_node_parent(&lal_super_type, &lal_node_list);

@@ -192,6 +192,9 @@ map_t<int, SgInitializedName*>& adaVars();
 
 std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols();
 
+/// returns a mapping from string to types in packages used with "pragma extend_system"
+map_t<AdaIdentifier, SgType*>& extendedTypesByName();
+
 /// returns a map with all functions that a type supports
 /// \details
 ///   maps stores information about explicitly or implicitly defined operators on a principal type.
@@ -398,6 +401,7 @@ struct LibadalangText {
       cxx_text = toString(c_text);
     }
 
+#if 0
     //If init with ada_text_type, use pointers to construct ada_text value
     LibadalangText(ada_text_type text_type){
       if (text_type != nullptr)
@@ -419,6 +423,7 @@ struct LibadalangText {
       c_text = ada_text_to_locale_string(&internal_text);
       cxx_text = toString(c_text);
     }
+#endif
 
     //If init with ada_unbounded_text_type_array, use pointers to construct ada_text value from the entire array
     LibadalangText(ada_unbounded_text_type_array text_type_array){

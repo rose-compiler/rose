@@ -847,12 +847,16 @@ namespace
           //                the caller needs to pass in the
           //                ada_identifier node instead.
           // \todo is this the right place to handle incomplete information?
-          res = findFirst(adaTypesByName(), canonical_text_as_string(lal_expr));
+          const AdaIdentifier lal_expr_name = canonical_text_as_string(lal_expr);
+          findFirstOf
+          || (res = findFirst(adaTypesByName(), lal_expr_name))
+          || (res = findFirst(extendedTypesByName(), lal_expr_name))
+          ;
 
           if (res == nullptr)
           {
-            logError() << "unable to find type " << canonical_text_as_string(lal_expr)
-                       << " as Ada Standard type."
+            logError() << "unable to find type " << lal_expr_name
+                       << " as Ada Standard type (or type that extends system)."
                        << std::endl;
 
             res = &mkTypeUnknown();
@@ -996,10 +1000,16 @@ namespace
     }
 
     if(ada_node_is_null(&lal_declaration)){
+      //Fallback: if the declaration is null, pass lal_id on to getExprType to check the maps by name
       logError() << "getDeclType cannot find definition. kind = " << kind
                  << std::endl;
 
-      lal_declaration = *lal_id;
+      if(kind != ada_dotted_name){
+        lal_declaration = *lal_id;
+      } else {
+        //Pass only the relative name, instead of the whole dotted_name
+        ada_dotted_name_f_suffix(lal_id, &lal_declaration);
+      }
     }
 
     SgNode& basenode = getExprType(&lal_declaration, ctx);
@@ -1170,7 +1180,6 @@ namespace
             SgBaseClass&        parent = getParentType(&subtype_indication, ctx);
 
             sg::linkParentChild(def, parent, &SgClassDefinition::append_inheritance);
-
             res.sageNode(def);
             break;
           }

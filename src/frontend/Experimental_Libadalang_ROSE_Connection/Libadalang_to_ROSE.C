@@ -71,21 +71,25 @@ namespace{
 
   std::vector<SgExpression*> operatorExprsVector;
 
+  /// stores a mapping from string to types in packages used with "pragma extend_system"
+  map_t<AdaIdentifier, SgType*> extendedTypesByNameMap;
+
 } //end unnamed namespace
 
-map_t<int, SgInitializedName*>&                                libadalangVars() { return libadalangVarsMap;   }
-map_t<int, SgInitializedName*>&                               libadalangExcps() { return libadalangExcpsMap;  }
-map_t<int, SgDeclarationStatement*>&                          libadalangDecls() { return libadalangDeclsMap;  }
-map_t<int, SgDeclarationStatement*>&                          libadalangTypes() { return libadalangTypesMap;  }
-map_t<int, SgBasicBlock*>&                                   libadalangBlocks() { return libadalangBlocksMap; }
-map_t<int, SgType*>&                                                 adaTypes() { return adaTypesMap;         }
-map_t<AdaIdentifier, SgType*>&                                 adaTypesByName() { return adaTypesByNameMap;   }
-map_t<int, SgInitializedName*>&                                      adaExcps() { return adaExcpsMap;         }
-map_t<int, SgAdaPackageSpecDecl*>&                                    adaPkgs() { return adaPkgsMap;          }
-map_t<int, SgInitializedName*>&                                       adaVars() { return adaVarsMap;          }
-std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols() { return inheritedSymbolMap;  }
-std::vector<SgExpression*>&                                     operatorExprs() { return operatorExprsVector; }
-map_t<OperatorKey, std::vector<OperatorDesc> >&               operatorSupport() { return operatorSupportMap;  }
+map_t<int, SgInitializedName*>&                                libadalangVars() { return libadalangVarsMap;      }
+map_t<int, SgInitializedName*>&                               libadalangExcps() { return libadalangExcpsMap;     }
+map_t<int, SgDeclarationStatement*>&                          libadalangDecls() { return libadalangDeclsMap;     }
+map_t<int, SgDeclarationStatement*>&                          libadalangTypes() { return libadalangTypesMap;     }
+map_t<int, SgBasicBlock*>&                                   libadalangBlocks() { return libadalangBlocksMap;    }
+map_t<int, SgType*>&                                                 adaTypes() { return adaTypesMap;            }
+map_t<AdaIdentifier, SgType*>&                                 adaTypesByName() { return adaTypesByNameMap;      }
+map_t<int, SgInitializedName*>&                                      adaExcps() { return adaExcpsMap;            }
+map_t<int, SgAdaPackageSpecDecl*>&                                    adaPkgs() { return adaPkgsMap;             }
+map_t<int, SgInitializedName*>&                                       adaVars() { return adaVarsMap;             }
+std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols() { return inheritedSymbolMap;     }
+std::vector<SgExpression*>&                                     operatorExprs() { return operatorExprsVector;    }
+map_t<OperatorKey, std::vector<OperatorDesc> >&               operatorSupport() { return operatorSupportMap;     }
+map_t<AdaIdentifier, SgType*>&                            extendedTypesByName() { return extendedTypesByNameMap; }
 
 namespace
 {
@@ -578,6 +582,7 @@ namespace{
     inheritedSymbols().clear();
     operatorSupport().clear();
     operatorExprs().clear();
+    extendedTypesByName().clear();
   }
 
   void handleUnit(ada_base_entity* lal_unit, AstContext context, const std::string& src_file_name)

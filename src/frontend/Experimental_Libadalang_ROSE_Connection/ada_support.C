@@ -114,12 +114,40 @@ void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_c
 
             ada_text package_name_text = { full_package_name_chars, full_package_name_length, true };
 
+            // AS(9/5/2025): Adding withed .adb files causes infinite loops in some codes, and isn't necessary to construct the ROSE AST. Disabling for now.
             //Get the withed unit (if this isn't a system include, get both .adb and .ads)
-            if(full_package_name.rfind("ada.", 0) != 0 && full_package_name.rfind("gnat.", 0) != 0 && full_package_name.rfind("system.", 0) != 0){
-              units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_BODY, nullptr, 0));
-            }
+            //~ if(full_package_name.rfind("ada.", 0) != 0 && full_package_name.rfind("gnat.", 0) != 0 && full_package_name.rfind("system.", 0) != 0){
+            //~   units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_BODY, nullptr, 0));
+            //~ }
             units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &package_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, nullptr, 0));
           }
+        }
+      } else if(ada_node_kind(&lal_with_clause) == ada_pragma_node){
+        //Special case: if this is a pragma Extend_System(Aux_Dec), then we need to add the System.Aux_Dec specification
+        //Get the id
+        ada_base_entity lal_pragma_id;
+        ada_pragma_node_f_id(&lal_with_clause, &lal_pragma_id);
+        const std::string id_as_string = Libadalang_ROSE_Translation::getFullName(&lal_pragma_id);
+        if(id_as_string == "extend_system"){
+          //Get the arg (there should only be 1 for this pragma)
+          ada_base_entity lal_pragma_arg;
+          ada_pragma_node_f_args(&lal_with_clause, &lal_pragma_arg);
+          ada_node_child(&lal_pragma_arg, 0, &lal_pragma_arg);
+          ada_pragma_argument_assoc_f_expr(&lal_pragma_arg, &lal_pragma_arg);
+          const std::string system_extension_name = "system." + Libadalang_ROSE_Translation::getFullName(&lal_pragma_arg);
+          logInfo() << "Extending System with " << system_extension_name << std::endl;
+
+          //Make an ada_text for the full name
+          size_t system_extension_name_length = system_extension_name.size();
+          uint32_t system_extension_name_chars[system_extension_name_length];
+          for(int i = 0; i < system_extension_name_length; i++){
+            system_extension_name_chars[i] = system_extension_name.at(i);
+          }
+
+          ada_text system_extension_name_text = { system_extension_name_chars, system_extension_name_length, true };
+
+          //Add the specification file to units_to_check
+          units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &system_extension_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, nullptr, 0));
         }
       }
     }

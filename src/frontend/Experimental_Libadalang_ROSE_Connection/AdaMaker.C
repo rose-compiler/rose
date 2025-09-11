@@ -2698,10 +2698,10 @@ namespace
   /// replaces the original type of with \ref declaredDerivedType in \ref funcTy.
   /// returns \ref funcTy to indicate an error.
   SgFunctionType&
-  convertToDerivedType(SgFunctionType& funcTy, SgNamedType& derivedType)
+  convertToDerivedType(SgFunctionType& funcTy, SgNamedType& derivedType, SgType* baseRootType)
   {
-    SgType*              baseType     = si::Ada::baseType(derivedType);
-    SgType*              baseRootType = si::Ada::typeRoot(baseType).typerep();
+    //~SgType*              baseType     = si::Ada::baseType(derivedType);
+    //~SgType*              baseRootType = si::Ada::typeRoot(baseType).typerep();
 
     if (baseRootType == nullptr)
     {
@@ -2761,13 +2761,13 @@ namespace
 
 
 SgAdaInheritedFunctionSymbol&
-mkAdaInheritedFunctionSymbol(SgFunctionSymbol& baseSym, SgNamedType& assocType, SgScopeStatement& scope)
+mkAdaInheritedFunctionSymbol(SgFunctionSymbol& baseSym, SgNamedType& assocType, SgType& baseRootType, SgScopeStatement& scope)
 {
   static const std::string pthreadString = "pthread";
 
   SgFunctionDeclaration& fn     = SG_DEREF(baseSym.get_declaration());
   SgFunctionType&        functy = baseFunctionType(fn, baseSym);
-  SgFunctionType&        dervty = convertToDerivedType(functy, assocType);
+  SgFunctionType&        dervty = convertToDerivedType(functy, assocType, &baseRootType);
 
   if (&functy == &dervty)
   {
