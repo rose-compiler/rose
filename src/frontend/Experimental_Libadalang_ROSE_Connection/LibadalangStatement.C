@@ -4,6 +4,7 @@
 #include "sageGeneric.h"
 
 #include <numeric>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include "LibadalangStatement.h"
 
@@ -500,10 +501,8 @@ namespace {
       const std::string& type_decl_filename = type_decl->getFilenameString();
 
       if(type_decl_filename.size() >= package_specification_name.size()
-         && (type_decl_filename.compare(type_decl_filename.size()
-                                        - package_specification_name.size(),
-                                        package_specification_name.size(),
-                                        package_specification_name) == 0)){
+         && boost::algorithm::ends_with(type_decl_filename, package_specification_name)){
+
         //Get the SgType* & add it to extendedTypesByName
         VariantT type_decl_class = type_decl->variantT();
         SgType* type_to_add = nullptr;
@@ -545,23 +544,19 @@ namespace {
 
         if(type_to_add != nullptr){
           AdaIdentifier name_to_add_converted{name_to_add};
-          //Check if we already have a value for this key in extendedTypesByName
-          if(extendedTypesByName().count(name_to_add_converted) != 0){
+
+          const auto& insert_result = extendedTypesByName().insert({name_to_add_converted, type_to_add});
+
+          if(!insert_result.second){
             //Check if the value for this key is the same as what we currently have
-            SgType* type_from_map = extendedTypesByName().at(name_to_add_converted);
-            if(type_from_map->get_mangled() == type_to_add->get_mangled()){
-              //libadalangTypes often has duplicate values under different keys, that is likely what has happened here
-              //Do not rerecord
-              continue;
-            } else {
+            SgType* type_from_map = insert_result.first->second;
+            if(type_from_map->get_mangled() != type_to_add->get_mangled()){
               logError() << "Types from " << lal_package_name_string
                          << " would overwrite types already extending System, canceling extension!\n";
               return;
             }
           }
-          extendedTypesByName()[name_to_add_converted] = type_to_add;
         }
-
       }
     }
   }
