@@ -206,6 +206,16 @@ public:
         *this = Nothing();
     }
 
+    /** True if this optional contains a value. */
+    bool isSome() const {
+        return !isEmpty_;
+    }
+
+    /**  True if this optional does not contain a value.  */
+    bool isEmpty() const {
+        return isEmpty_;
+    }
+
     /** Dereference to obtain value.
      *
      *  If this optional contains a value then a reference to that value is returned. Otherwise an
