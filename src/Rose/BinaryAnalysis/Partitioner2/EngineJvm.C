@@ -692,7 +692,17 @@ EngineJvm::roseFrontendReplacement(const std::vector<fs::path> &paths) {
     // Loop over all paths, loading jar files and classes
     for (auto path : paths) {
         if (ModulesJvm::isJavaJarFile(path)) {
-          loadJarFile(path.string());
+            loadJarFile(path.string());
+
+            // Load all classes from the new jar file if requested
+            if (settings().engineJvm.loadAllClasses) {
+                auto zip = jars_.back();
+                for (auto file : zip->files()) {
+                    if (CommandlineProcessing::isJavaClassFile(file.filename())) {
+                        loadClassFile(file.filename(), fileList, baseVa);
+                    }
+                }
+            }
         }
         else {
             // Attempt to load class from file system or jar
