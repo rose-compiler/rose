@@ -10,4 +10,4 @@ if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
   libFlangParser_la_SOURCES = flang-external-builder-main.cc
 endif
 
-noinst_HEADERS = flang-external-builder-main.h
+noinst_HEADERS = FlangParseArgs.hh flang-external-builder-main.h
