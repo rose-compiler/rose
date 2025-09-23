@@ -692,7 +692,7 @@ endif()
 if(ENABLE-CPP)
   if(NOT ENABLE-CLANG-FRONTEND)  # USE EDG
     message(STATUS "ROSE will be using EDG for the CXX Frontend")
-    list(APPEND rose_LIB_OBJS RoseCxxFrontendEDG)
+    list(APPEND link_with_libraries RoseSourceCxxFrontendEdg)
   else()                         # USE CLANG
     message(STATUS "ROSE will be using Clang for the CXX Frontend")
     list(APPEND rose_LIB_OBJS roseClangFrontend)
