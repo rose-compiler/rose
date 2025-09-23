@@ -86,7 +86,7 @@ Sarif::RulePtr Analyzer::add_rule(
 
   boost::uuids::string_generator str_gen;
   boost::uuids::uuid rose_analysis_namespace_uuid = str_gen(rose_analysis_namespace);
-  boost::uuids::name_generator_sha1 rose_analysis_namespace_gen(rose_analysis_namespace_uuid);
+  boost::uuids::name_generator rose_analysis_namespace_gen(rose_analysis_namespace_uuid);
 
   rule->uuid(rose_analysis_namespace_gen(this->name + ":" + name));
 
