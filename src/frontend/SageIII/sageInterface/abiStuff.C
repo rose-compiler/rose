@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <climits>
+#include <cstdint>
 
 using namespace std;
 using namespace SageBuilder;
@@ -230,6 +231,7 @@ StructLayoutInfo X86_64PrimitiveTypeLayoutGenerator::layoutType(SgType* t) const
     //case V_SgTypeSignedLongLong: {layout.size = 8; layout.alignment = 8; break;}
     case V_SgTypeUnsignedLongLong: {layout.size = 8; layout.alignment = 8; break;}
 
+    case V_SgTypeFloat16: {layout.size = 2; layout.alignment = 4; break;}
     case V_SgTypeFloat: {layout.size = 4; layout.alignment = 4; break;}
     case V_SgTypeDouble: {layout.size = 8; layout.alignment = 8; break;}
     case V_SgTypeLongDouble: {layout.size = 16; layout.alignment = 16; break;}
@@ -340,6 +342,12 @@ StructLayoutInfo CustomizedPrimitiveTypeLayoutGenerator::layoutType(SgType* t) c
     {
       layout.size = custom_sizes->sz_longlong; 
       layout.alignment = custom_sizes->sz_alignof_longlong; 
+      break;
+    }
+    case V_SgTypeFloat16: 
+    {
+      layout.size = custom_sizes->sz_float16; 
+      layout.alignment = custom_sizes->sz_alignof_float16; 
       break;
     }
     case V_SgTypeFloat: 
@@ -462,6 +470,14 @@ StructLayoutInfo SystemPrimitiveTypeLayoutGenerator::layoutType(SgType* t) const
     //case V_SgTypeSignedLongLong: {layout.size = sizeof(); layout.alignment = rose_alignof<>::v; break;}
     case V_SgTypeUnsignedLongLong: {layout.size = sizeof(unsigned long long); layout.alignment = rose_alignof<unsigned long long>::v; break;}
 
+ // PL (9/24/2025): Cannot use _Float16 here because this type does not exist in every compiler
+ // We need to include _Float16 in here for the abiStuffTest test to pass (due to _Float16 being
+ // in the type signature for a C++23 intrinsic), but just like there must be a workaround in
+ // rose_edg_required_macros_and_functions.h.in to define _Float16 if the type doesn't exist,
+ // we can't rely on _Float16 existing here. I think since we know _Float16 is a 16-bit fixed-
+ // width float, it's safe to replace it with std::int16_t here. Not certain if the alignof is
+ // the same, but I imagine it should be.
+    case V_SgTypeFloat16: {layout.size = sizeof(std::int16_t); layout.alignment = rose_alignof<std::int16_t>::v; break;}
     case V_SgTypeFloat: {layout.size = sizeof(float); layout.alignment = rose_alignof<float>::v; break;}
     case V_SgTypeDouble: {layout.size = sizeof(double); layout.alignment = rose_alignof<double>::v; break;}
     case V_SgTypeLongDouble: {layout.size = sizeof(long double); layout.alignment = rose_alignof<long double>::v; break;}
