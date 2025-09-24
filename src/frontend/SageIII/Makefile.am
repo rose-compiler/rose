@@ -427,6 +427,10 @@ GENERATED_SOURCE =						\
         SgAsmJvmNestHost.h					\
         SgAsmJvmNestMembers.h					\
         SgAsmJvmNode.h						\
+        SgAsmJvmRuntimeAnnotation.h				\
+        SgAsmJvmRuntimeAnnotationPair.h 			\
+        SgAsmJvmRuntimeAnnotationValue.h			\
+        SgAsmJvmRuntimeVisibleAnnotations.h			\
         SgAsmJvmSignature.h					\
         SgAsmJvmSourceFile.h					\
         SgAsmJvmStackMapFrame.h					\
@@ -838,6 +842,10 @@ GENERATED_SOURCE =						\
 	SgAsmJvmNestHost.h					\
 	SgAsmJvmNestMembers.h					\
 	SgAsmJvmNode.h						\
+        SgAsmJvmRuntimeAnnotation.h				\
+        SgAsmJvmRuntimeAnnotationPair.h 			\
+        SgAsmJvmRuntimeAnnotationValue.h			\
+        SgAsmJvmRuntimeVisibleAnnotations.h			\
 	SgAsmJvmSignature.h					\
 	SgAsmJvmSourceFile.h					\
 	SgAsmJvmStackMapFrame.h					\
@@ -1396,6 +1404,10 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmNestHost.h				\
    SgAsmJvmNestMembers.h			\
    SgAsmJvmNode.h				\
+   SgAsmJvmRuntimeAnnotation.h			\
+   SgAsmJvmRuntimeAnnotationPair.h		\
+   SgAsmJvmRuntimeAnnotationValue.h		\
+   SgAsmJvmRuntimeVisibleAnnotations.h		\
    SgAsmJvmSignature.h				\
    SgAsmJvmSourceFile.h				\
    SgAsmJvmStackMapFrame.h			\

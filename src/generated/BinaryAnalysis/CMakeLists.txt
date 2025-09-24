@@ -302,6 +302,10 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmNestHost.C
   SgAsmJvmNestMembers.C
   SgAsmJvmNode.C
+  SgAsmJvmRuntimeAnnotation.C
+  SgAsmJvmRuntimeAnnotationPair.C
+  SgAsmJvmRuntimeAnnotationValue.C
+  SgAsmJvmRuntimeVisibleAnnotations.C
   SgAsmJvmSignature.C
   SgAsmJvmSourceFile.C
   SgAsmJvmStackMapFrame.C

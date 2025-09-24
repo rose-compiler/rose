@@ -1069,3 +1069,7 @@ SgAsmJvmSynthetic
 SgAsmJvmDeprecated
 SgSignedCharVal
 SgAsmCilErrorHeap
+SgAsmJvmRuntimeVisibleAnnotations
+SgAsmJvmRuntimeAnnotation
+SgAsmJvmRuntimeAnnotationValue
+SgAsmJvmRuntimeAnnotationPair

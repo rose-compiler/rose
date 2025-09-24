@@ -303,6 +303,10 @@ run $(librose_compile) \
     SgAsmJvmNestHost.C \
     SgAsmJvmNestMembers.C \
     SgAsmJvmNode.C \
+    SgAsmJvmRuntimeAnnotation.C \
+    SgAsmJvmRuntimeAnnotationPair.C \
+    SgAsmJvmRuntimeAnnotationValue.C \
+    SgAsmJvmRuntimeVisibleAnnotations.C \
     SgAsmJvmSignature.C \
     SgAsmJvmSourceFile.C \
     SgAsmJvmStackMapFrame.C \

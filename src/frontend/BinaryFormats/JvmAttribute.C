@@ -61,11 +61,26 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   else if (name == "Deprecated") { // 4.7.15
     return new SgAsmJvmDeprecated(parent);
   }
+  else if (name == "RuntimeVisibleAnnotations") { // 4.7.16
+    return new SgAsmJvmRuntimeVisibleAnnotations(parent);
+  }
+  else if (name == "AnnotationDefault") { // 4.7.22
+    //TODO
+  }
   else if (name == "BootstrapMethods") { // 4.7.23
     return new SgAsmJvmBootstrapMethods(parent);
   }
   else if (name == "MethodParameters") { // 4.7.24
     return new SgAsmJvmMethodParameters(parent);
+  }
+  else if (name == "Module") { // 4.7.25
+    //TODO
+  }
+  else if (name == "ModulePackages") { // 4.7.26
+    //TODO
+  }
+  else if (name == "ModuleMainClass") { // 4.7.27
+    //TODO
   }
   else if (name == "NestHost") { // 4.7.28
     return new SgAsmJvmNestHost(parent);
@@ -80,6 +95,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
 
   mlog[FATAL] << "--- attribute name: " << name << " ---\n"
               << "SgAsmJvmAttribute::instance(): skipping attribute of length " << attribute_length << "\n";
+  ASSERT_require2(false, "Missing attribute\n");
 
   SgAsmGenericHeader* header{pool->get_header()};
   ASSERT_not_null(header);
@@ -980,8 +996,254 @@ SgAsmJvmAttribute* SgAsmJvmDeprecated::parse(SgAsmJvmConstantPool* pool)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.16 The RuntimeVisibleAnnotations Attribute. RuntimeVisibleAnnotations_attribute represented by the TODO class.
+// 4.7.16 The RuntimeVisibleAnnotations Attribute. RuntimeVisibleAnnotations_attribute is represented by the
+// SgAsmJvmRuntimeVisibleAnnotations class.
 //
+SgAsmJvmRuntimeVisibleAnnotations::SgAsmJvmRuntimeVisibleAnnotations(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmRuntimeVisibleAnnotations* SgAsmJvmRuntimeVisibleAnnotations::parse(SgAsmJvmConstantPool* pool)
+{
+  uint16_t numAnnotations;
+  ASSERT_not_null(get_parent());
+
+  SgAsmJvmAttribute::parse(pool);
+  Jvm::read_value(pool, numAnnotations);
+
+  for (int ii = 0; ii < numAnnotations; ii++) {
+    auto annotation = new SgAsmJvmRuntimeAnnotation(this);
+    annotation->parse(pool);
+    get_annotations().push_back(annotation);
+  }
+
+  //TODO: check attribute_length
+  return this;
+}
+
+void SgAsmJvmRuntimeVisibleAnnotations::unparse(std::ostream& os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+
+  uint16_t numAnnotations = get_annotations().size();
+  Jvm::writeValue(os, numAnnotations);
+
+  for (auto annotation : get_annotations()) {
+    annotation->unparse(os);
+  }
+}
+
+void SgAsmJvmRuntimeVisibleAnnotations::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: SgAsmJvmRuntimeVisibleAnnotations::dump()\n", prefix, idx);
+  for (auto annotation : get_annotations()) {
+    annotation->dump(f, prefix, idx);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// The RuntimeAnnotation class used by the RuntimeVisibleAnnotations_attribute and the
+// RuntimeInvisibleAnnotations_attribute.
+//
+SgAsmJvmRuntimeAnnotation::SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeVisibleAnnotations* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmRuntimeAnnotation* SgAsmJvmRuntimeAnnotation::parse(SgAsmJvmConstantPool* pool)
+{
+  uint16_t numPairs;
+  Jvm::read_value(pool, p_type_index);
+  Jvm::read_value(pool, numPairs);
+
+  for (int ii = 0; ii < numPairs; ii++) {
+    auto pair = new SgAsmJvmRuntimeAnnotationPair(this);
+    pair->parse(pool);
+    get_element_value_pairs().push_back(pair);
+  }
+
+  return this;
+}
+
+void SgAsmJvmRuntimeAnnotation::unparse(std::ostream& os) const
+{
+  Jvm::writeValue(os, p_type_index);
+
+  uint16_t numPairs = get_element_value_pairs().size();
+  Jvm::writeValue(os, numPairs);
+
+  for (auto pair : get_element_value_pairs()) {
+    pair->unparse(os);
+  }
+}
+
+void SgAsmJvmRuntimeAnnotation::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: type_index:%d\n", prefix, idx, p_type_index);
+  for (auto pair : get_element_value_pairs()) {
+    pair->dump(f, prefix, idx);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// The RuntimeAnnotationPair class is used by the RuntimeAnnotation class.
+//
+SgAsmJvmRuntimeAnnotationPair::SgAsmJvmRuntimeAnnotationPair(SgAsmJvmRuntimeAnnotation* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmRuntimeAnnotationPair* SgAsmJvmRuntimeAnnotationPair::parse(SgAsmJvmConstantPool* pool)
+{
+  Jvm::read_value(pool, p_element_name_index);
+
+  p_value = new SgAsmJvmRuntimeAnnotationValue(this);
+  p_value->parse(pool);
+
+  return this;
+}
+
+void SgAsmJvmRuntimeAnnotationPair::unparse(std::ostream& os) const
+{
+  Jvm::writeValue(os, p_element_name_index);
+  p_value->unparse(os);
+}
+
+void SgAsmJvmRuntimeAnnotationPair::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: RuntimeAnnotationPair: element_name_index:%d\n", prefix, idx, p_element_name_index);
+  p_value->dump(f, prefix, idx);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// The RuntimeAnnotationValue class is used by the RuntimeAnnotation class.
+//
+SgAsmJvmRuntimeAnnotationValue::SgAsmJvmRuntimeAnnotationValue(SgAsmJvmRuntimeAnnotationValue* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+SgAsmJvmRuntimeAnnotationValue::SgAsmJvmRuntimeAnnotationValue(SgAsmJvmRuntimeAnnotationPair* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmRuntimeAnnotationValue* SgAsmJvmRuntimeAnnotationValue::parse(SgAsmJvmConstantPool* pool)
+{
+    Jvm::read_value(pool, p_tag);
+
+    switch (p_tag) {
+      // const_value_index tags
+      case 'B': case 'C': case 'D': case 'F': // byte, char, double, float
+      case 'I': case 'J': case 'S': case 'Z': // int, long, short, boolean
+      case 's': // String
+        Jvm::read_value(pool, p_const_value_index);
+        break;
+      case 'e': // enum_const_value
+        Jvm::read_value(pool, p_type_name_index);
+        Jvm::read_value(pool, p_const_name_index);
+        break;
+      case 'c': // class_info_index
+        Jvm::read_value(pool, p_class_info_index);
+        break;
+      case '@': // nested annotation
+        set_is_annotation_value(true);
+        ASSERT_require2(p_tag!='@', "tag '@' annotation_value unsupported\n");
+        break;
+      case '[': { // array_value
+        uint16_t numArrayValues;
+        Jvm::read_value(pool, numArrayValues);
+        for (uint16_t i = 0; i < numArrayValues; ++i) {
+          auto value = new SgAsmJvmRuntimeAnnotationValue(this);
+          value->parse(pool);
+          get_values().push_back(value);
+        }
+        break;
+      }
+      default:
+        throw std::runtime_error("Unknown element_value tag byte: " + std::to_string(p_tag));
+    }
+
+  return this;
+}
+
+void SgAsmJvmRuntimeAnnotationValue::unparse(std::ostream& os) const
+{
+  Jvm::writeValue(os, p_tag);
+
+  // Unparsing the rest depends on the tag value
+  switch (p_tag) {
+    // const_value_index tags
+    case 'B': case 'C': case 'D': case 'F': // byte, char, double, float
+    case 'I': case 'J': case 'S': case 'Z': // int, long, short, boolean
+    case 's': // String
+      Jvm::writeValue(os, p_const_value_index);
+      break;
+    case 'e': // enum_const_value
+        Jvm::writeValue(os, p_type_name_index);
+        Jvm::writeValue(os, p_const_name_index);
+        break;
+    case 'c': // class_info_index
+      Jvm::writeValue(os, p_class_info_index);
+      break;
+    case '@': // nested annotation
+      ASSERT_require(get_is_annotation_value());
+      ASSERT_require2(p_tag!='@', "tag '@' annotation_value unsupported\n");
+      break;
+    case '[': { // array_value
+      uint16_t numArrayValues = get_values().size();
+      Jvm::writeValue(os, numArrayValues);
+      for (auto value : get_values()) {
+        value->unparse(os);
+      }
+      break;
+    }
+    default:
+      throw std::runtime_error("Unknown element_value tag byte: " + std::to_string(p_tag));
+  }
+}
+
+void SgAsmJvmRuntimeAnnotationValue::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: RuntimeAnnotationValue: tag:%d\n", prefix, idx, p_tag);
+
+  switch (p_tag) {
+    // const_value_index tags
+    case 'B': case 'C': case 'D': case 'F': // byte, char, double, float
+    case 'I': case 'J': case 'S': case 'Z': // int, long, short, boolean
+    case 's': // String
+      fprintf(f, "%s:%ld:   RuntimeAnnotationValue: const_value_index:%d\n", prefix, idx, p_const_value_index);
+      break;
+    case 'e': // enum_const_value
+      fprintf(f, "%s:%ld:   RuntimeAnnotationValue: const_value_index:%d\n", prefix, idx, p_type_name_index);
+      fprintf(f, "%s:%ld:   RuntimeAnnotationValue: const_value_index:%d\n", prefix, idx, p_const_name_index);
+      break;
+    case 'c': // class_info_index
+      fprintf(f, "%s:%ld:   RuntimeAnnotationValue: class_info_index:%d\n", prefix, idx, p_class_info_index);
+      break;
+    case '@': // nested annotation
+      ASSERT_require(get_is_annotation_value());
+      fprintf(f, "%s:%ld:   RuntimeAnnotationValue: annotation_value unsupported:\n", prefix, idx);
+      break;
+    case '[': { // array_value
+      fprintf(f, "%s:%ld:   RuntimeAnnotationValue: num_values:%zu\n", prefix, idx, get_values().size());
+      for (auto value : get_values()) {
+        value->dump(f, prefix, idx);
+      }
+      break;
+    }
+    default:
+      throw std::runtime_error("Unknown element_value tag byte: " + std::to_string(p_tag));
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
