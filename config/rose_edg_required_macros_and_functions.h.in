@@ -193,6 +193,39 @@
 #  ifdef __cpp_concepts
 #    undef __cpp_concepts
 #  endif
+#  ifdef __cpp_if_consteval
+#    undef __cpp_if_consteval
+#  endif
+#endif
+
+/* PL (9/10/2025): _Float16 is a type used in some GNU 13 intrinsics, but not all compilers support _Float16 */
+/* Therefore we should do our best to detect if we expect _Float16 to be defined, and if not, define it ourselves */
+/* _Float16 is not defined in GNU C++ until GNU 13, but is defined in GNU C at least as far back as GNU 8.5 */
+#if __cplusplus
+#  if defined(__GNUC__) && __GNUC__ < 13
+#    define ROSE_DECLARE_FLOAT16
+#  endif
+#endif
+/* Next we can check if __is_identifier is available. This is available in Clang versions I've looked at */
+/* Using __is_identifier is nice because we can directly check if this type is available, and define it if not */
+/* EDG 6.5 has a bug with __is_identifier where it misclassifies _Float16, so we can't use this */
+#if 0
+#if !defined(ROSE_DECLARE_FLOAT16) && defined(__is_identifier)
+#  define __has_keyword(__x) !(__is_identifier(__x))
+#  if !__has_keyword(_Float16)
+#    define ROSE_DECLARE_FLOAT16
+#  endif
+#  undef __has_keyword
+#endif
+#endif
+/* MSVC does not have _Float16 as far as I can tell, so we always need to enable it for MSVC */
+#if !defined(ROSE_DECLARE_FLOAT16) && defined(_MSC_VER)
+#  define ROSE_DECLARE_FLOAT16
+#endif
+/* If we've decided we need to declare _Float16 from the above checks, typedef it to a float */
+#if defined(ROSE_DECLARE_FLOAT16)
+typedef float _Float16;
+#  undef ROSE_DECLARE_FLOAT16
 #endif
 
 /* DQ (4/23/2017): This is now added on the EDG command line to support handling of Microsoft options.
@@ -479,36 +512,6 @@ typedef long double __float128;
 #    undef __FLT64_DENORM_MIN__
 #    define __FLT64_DENORM_MIN__ ((_Float64)4.94065645841246544176568792868221372e-324)
 #  endif
-#endif
-
-/* PL (9/10/2025): _Float16 is a type used in some GNU 13 intrinsics, but not all compilers support _Float16 */
-/* Therefore we should do our best to detect if we expect _Float16 to be defined, and if not, define it ourselves */
-/* _Float16 is not defined in GNU C++ until GNU 13, but is defined in GNU C at least as far back as GNU 8.5 */
-#if __cplusplus
-#  if defined(__GNUC__) && __GNUC__ < 13
-#    define ROSE_DECLARE_FLOAT16
-#  endif
-#endif
-/* Next we can check if __is_identifier is available. This is available in Clang versions I've looked at */
-/* Using __is_identifier is nice because we can directly check if this type is available, and define it if not */
-/* EDG 6.5 has a bug with __is_identifier where it misclassifies _Float16, so we can't use this */
-#if 0
-#if !defined(ROSE_DECLARE_FLOAT16) && defined(__is_identifier)
-#  define __has_keyword(__x) !(__is_identifier(__x))
-#  if !__has_keyword(_Float16)
-#    define ROSE_DECLARE_FLOAT16
-#  endif
-#  undef __has_keyword
-#endif
-#endif
-/* MSVC does not have _Float16 as far as I can tell, so we always need to enable it for MSVC */
-#if !defined(ROSE_DECLARE_FLOAT16) && defined(_MSC_VER)
-#  define ROSE_DECLARE_FLOAT16
-#endif
-/* If we've decided we need to declare _Float16 from the above checks, typedef it to a float */
-#if defined(ROSE_DECLARE_FLOAT16)
-typedef float _Float16;
-#  undef ROSE_DECLARE_FLOAT16
 #endif
 
 /* DQ (10/22/2015): Change point at which this is applied from 4.8.3 to 4.8.0. */
