@@ -177,6 +177,7 @@ StructLayoutInfo I386PrimitiveTypeLayoutGenerator::layoutType(SgType* t) const {
     //case V_SgTypeSignedLongLong: {layout.size = 8; layout.alignment = 4; break;}
     case V_SgTypeUnsignedLongLong: {layout.size = 8; layout.alignment = 4; break;}
 
+    case V_SgTypeFloat16: {layout.size = 2; layout.alignment = 4; break;}
     case V_SgTypeFloat: {layout.size = 4; layout.alignment = 4; break;}
     case V_SgTypeDouble: {layout.size = 8; layout.alignment = 4; break;}
     case V_SgTypeLongDouble: {layout.size = 12; layout.alignment = 4; break;}

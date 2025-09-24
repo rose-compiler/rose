@@ -29,6 +29,8 @@ struct StructCustomizedSizes
     size_t sz_alignof_longlong;
     size_t sz_float;
     size_t sz_alignof_float;
+    size_t sz_float16;
+    size_t sz_alignof_float16;
     size_t sz_double;
     size_t sz_alignof_double;
     size_t sz_longdouble;
