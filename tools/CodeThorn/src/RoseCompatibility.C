@@ -159,9 +159,9 @@ namespace
     return SG_DEREF(fn).get_name();
   }
 
-  const SgFunctionType& functionType(ct::FunctionKeyType fn)
+  ct::FunctionTypeKeyType functionType(ct::FunctionKeyType fn)
   {
-    return SG_DEREF(SG_DEREF(fn).get_type());
+    return SG_DEREF(fn).get_type();
   }
 
   bool isSecondaryClassDefinition(const SgClassDefinition& n)
@@ -1126,25 +1126,35 @@ int compareTypes(const SgType& lhs, const SgType& rhs)
   return TypeComparator::compare(lhs, rhs, false, false);
 }
 
+int
+RoseCompatibilityBridge::compareTypes(TypeKeyType lhs, TypeKeyType rhs) const
+{
+  ASSERT_require(lhs != TypeKeyType{});
+  ASSERT_require(rhs != TypeKeyType{});
+
+  return ct::compareTypes(*lhs, *rhs);
+}
+
 
 int
 RoseCompatibilityBridge::compareFunctionTypes(FunctionTypeKeyType lhs, FunctionTypeKeyType rhs, bool exclReturn) const
 {
   static constexpr bool withArrayDecay = true;
 
-  return TypeComparator::compare(SG_DEREF(lhs), SG_DEREF(rhs), exclReturn, withArrayDecay);
+  ASSERT_require(lhs != FunctionTypeKeyType{});
+  ASSERT_require(rhs != FunctionTypeKeyType{});
+
+  return TypeComparator::compare(*lhs, *rhs, exclReturn, withArrayDecay);
 }
 
 
 int
-RoseCompatibilityBridge::compareTypes(FunctionKeyType lhs, FunctionKeyType rhs, bool exclReturn) const
+RoseCompatibilityBridge::compareFunctionsByType(FunctionKeyType lhs, FunctionKeyType rhs, bool exclReturn) const
 {
-  const SgFunctionType& lhsty = functionType(lhs);
-  const SgFunctionType& rhsty = functionType(rhs);
+  FunctionTypeKeyType lhsty = functionType(lhs);
+  FunctionTypeKeyType rhsty = functionType(rhs);
 
-  const int res = compareFunctionTypes(&lhsty, &rhsty, exclReturn);
-
-  return res;
+  return compareFunctionTypes(lhsty, rhsty, exclReturn);
 }
 
 VariableKeyType
@@ -1495,10 +1505,13 @@ RoseCompatibilityBridge::haveSameOrCovariantReturn( const ClassAnalysis& classes
                                                     FunctionKeyType drvId
                                                   ) const
 {
-  const SgFunctionType&      basTy = functionType(basId);
-  const SgFunctionType&      drvTy = functionType(drvId);
+  FunctionTypeKeyType basTy = functionType(basId);
+  FunctionTypeKeyType drvTy = functionType(drvId);
 
-  return areSameOrCovariant(classes, basTy.get_return_type(), drvTy.get_return_type());
+  ASSERT_require(basTy != FunctionTypeKeyType{});
+  ASSERT_require(drvTy != FunctionTypeKeyType{});
+
+  return areSameOrCovariant(classes, basTy->get_return_type(), drvTy->get_return_type());
 }
 
 

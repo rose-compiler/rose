@@ -1045,7 +1045,7 @@ namespace
 
       firstDecisiveComparison
       || (res = compat.compareNames(lhs, rhs))
-      || (res = compat.compareTypes(lhs, rhs))
+      || (res = compat.compareFunctionsByType(lhs, rhs))
       ;
 
       return res < 0;

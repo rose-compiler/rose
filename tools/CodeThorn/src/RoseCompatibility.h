@@ -1,5 +1,5 @@
-#ifndef ROSE_MAPPING
-#define ROSE_MAPPING 1
+#ifndef ROSE_COMPATIBILTY_BRIDGE
+#define ROSE_COMPATIBILTY_BRIDGE 1
 
 // minimal header for mapping rose onto the class hierarchy analysis
 
@@ -257,8 +257,17 @@ class RoseCompatibilityBridge
     ///          1 iff lhs > rhs
     ///          -1 iff lhs < rhs
     /// \details
-    ///    The comparison skips over typedef aliases and handles array to pointer decay.
-    int compareTypes(FunctionKeyType lhs, FunctionKeyType rhs, bool exclReturnType = true) const;
+    ///    The comparison skips over typedef aliases and handles array-pointer equivalence in parameter lists.
+    int compareFunctionsByType(FunctionKeyType lhs, FunctionKeyType rhs, bool exclReturnType = true) const;
+
+    /// compares the types \p lhs and \p rhs
+    /// \param lhs some type
+    /// \param rhs some type
+    /// \returns 0 iff lhs and rhs resolve to the same type
+    ///          1 iff lhs > rhs
+    ///          -1 iff lhs < rhs
+    int compareTypes(TypeKeyType lhs, TypeKeyType rhs) const;
+
 
     /// tests if \p drvId has the same or covariant return type with respect to \p basId
     /// \param classes the extracted class analysis
@@ -415,4 +424,4 @@ SgClassDefinition* getClassDefOpt(const SgInitializedName& n);
 SgFunctionDeclaration& keyDecl(SgFunctionDeclaration& fn);
 
 }
-#endif /* ROSE_MAPPING */
+#endif /* ROSE_COMPATIBILTY_BRIDGE */
