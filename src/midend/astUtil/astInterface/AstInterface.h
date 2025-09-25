@@ -18,14 +18,16 @@ class AstNodePtr {
   typedef SgNode BaseType;
   //! The UNKNOWN_AST and NULL_AST types have null as their values.
   //! The other types have concrete BaseType pointers as their values.
-  enum class SpecialAstType {SG_AST, UNKNOWN_FUNCTION_CALL, UNKNOWN_PTR_REF, UNKNOWN_AST, NULL_AST}; 
+  enum class SpecialAstType {SG_AST, GLOBAL_SIGNATURE, UNKNOWN_FUNCTION_CALL, UNKNOWN_PTR_REF, UNKNOWN_AST, NULL_AST}; 
  private:
   BaseType* repr_;
   SpecialAstType nodetype_;
+  std::string sig_;
  public:
   AstNodePtr(BaseType* _repr=0) : repr_(_repr), nodetype_(SpecialAstType::SG_AST) 
     { if (_repr == 0) nodetype_ = SpecialAstType::NULL_AST;  }
-  AstNodePtr( const AstNodePtr& that) : repr_(that.repr_), nodetype_(that.nodetype_) {}
+  AstNodePtr( const AstNodePtr& that) : repr_(that.repr_), nodetype_(that.nodetype_), sig_(that.sig_) {}
+  AstNodePtr(const std::string& sig) : repr_(0), nodetype_(SpecialAstType::GLOBAL_SIGNATURE), sig_(sig) {}
   AstNodePtr(SpecialAstType t, BaseType* repr = 0) : repr_(repr), nodetype_(t) {
       switch (t) {
        case SpecialAstType::UNKNOWN_AST : 
@@ -46,11 +48,11 @@ class AstNodePtr {
   void set_is_unknown_function_call() { nodetype_ = SpecialAstType::UNKNOWN_FUNCTION_CALL; }
   void set_is_unknown_reference() { nodetype_ = SpecialAstType::UNKNOWN_PTR_REF; }
   AstNodePtr& operator = (const AstNodePtr &that) 
-      { repr_ = that.repr_; nodetype_ = that.nodetype_; return *this; }
+      { repr_ = that.repr_; nodetype_ = that.nodetype_; sig_ = that.sig_; return *this; }
   bool operator != (const AstNodePtr &that) const
-    { return repr_ != that.repr_ || nodetype_ != that.nodetype_; }
+    { return repr_ != that.repr_ || nodetype_ != that.nodetype_ || sig_ != that.sig_; }
   bool operator == (const AstNodePtr &that) const
-    { return repr_ == that.repr_ && nodetype_ == that.nodetype_; }
+    { return repr_ == that.repr_ && nodetype_ == that.nodetype_ && sig_ == that.sig_; }
   bool operator == (BaseType *p) const
     { return repr_ == p; }
   bool operator != (BaseType *p) const
@@ -58,11 +60,12 @@ class AstNodePtr {
 
   // The < operator is required to allow AstNodePtr be stored in set containers. 
   bool operator < (const AstNodePtr &that) const
-    { return repr_ < that.repr_; }
+    { return repr_ < that.repr_ || (repr_ == that.repr_ && sig_ < that.sig_)
+           || (repr_ == that.repr_ && sig_ == that.sig_ && nodetype_ < that.nodetype_); }
   BaseType* operator -> () const { return repr_; }
   BaseType * get_ptr() const { return repr_; }
-  BaseType *& get_ptr() { return repr_; }
   SpecialAstType get_type() const { return nodetype_; }
+  std::string get_signature() const { return sig_; }
 };
 #define AST_NULL AstNodePtr(AstNodePtr::SpecialAstType::NULL_AST)
 #define AST_UNKNOWN AstNodePtr(AstNodePtr::SpecialAstType::UNKNOWN_AST)
@@ -204,6 +207,9 @@ public:
   bool IsDecls( const AstNodePtr& s) ;
   bool IsVariableDecl( const AstNodePtr& exp, AstList* vars = 0,
                                  AstList* inits = 0);
+  //! Check if exp declares a set of variables to be aliased to non-local storages, 
+  //! represented by the returned global_signatures.
+  bool IsAliasingDecl( const AstNodePtr& exp, AstList* vars = 0, AstList* aliases = 0);
   bool IsExecutableStmt( const AstNodePtr& s) ;
   static bool IsStatement( const AstNodePtr& s);
   //! Check whether the given AST n is an expresion statement, and if yes, save the expression in the given exp.
@@ -421,7 +427,7 @@ public:
 
   //! Returns whether the given ref reaches only local data within scope. 
   //! if has_ptr_deref != 0, it is set to true if ref has pointer deref.
-  static bool IsLocalRef(SgNode* ref, SgNode* scope, bool* has_ptr_deref = 0); 
+  static bool IsLocalRef(const AstNodePtr& ref, const AstNodePtr& scope, bool* has_ptr_deref = 0); 
 
   //! Returns a string that uniquely identifies the given variable.
   static std::string GetVariableSignature(const AstNodePtr& variable);

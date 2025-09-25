@@ -82,7 +82,7 @@ void WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* r
     Log.push("Computing dependences for " + input->unparseToString());
     for (const auto& p : params) {
         DebugSaveDep([&p](){return "saving for function parameter:" + AstInterface::AstToString(p); });
-        if (!annot_table.SaveOperatorSideEffect(input, p.get_ptr(), AstUtilInterface::OperatorSideEffect::Parameter, 0)) {
+        if (!annot_table.SaveOperatorSideEffect(input, p, AstUtilInterface::OperatorSideEffect::Parameter, 0)) {
            DebugSaveDep([](){return "Did not save dependene" ; });
         }
      }
@@ -103,17 +103,15 @@ void WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* r
                if (AstInterface::IsStatement(second)) {
                  details = 0;
                }
-               if (!AstInterface::IsVarRef(first) || (AstUtilInterface::IsLocalRef(first.get_ptr(), body.get_ptr()) && details == 0)) {
-                 return true;
-               } 
                break; 
            }
+          // Do not save kill information.
           case AstUtilInterface::OperatorSideEffect::Kill: 
-               details = 0; break; 
+             return true;
           default: break;
         }
         DebugSaveDep([&first,details](){return "saving side effect for:" + AstInterface::AstToString(first) + " = " + AstInterface::AstToString(details); });
-        if (!main_table.SaveOperatorSideEffect(input, first.get_ptr(), relation, details)) {
+        if (!main_table.SaveOperatorSideEffect(input, first, relation, details)) {
            DebugSaveDep([](){return "Did not save dependene" ; });
         } 
         return true;

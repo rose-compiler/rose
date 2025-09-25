@@ -32,6 +32,7 @@ class StmtInfoCollect : public ProcessAstTreeBase<AstInterface::AstNodePtr>
  protected:
   using ProcessAstTreeBase<AstInterface::AstNodePtr>::Skip;
   virtual void AppendVariableDecl(AstInterface& fa, const AstNodePtr& variable, const AstNodePtr& var_init) = 0; 
+  virtual void AppendAliasDecl(AstInterface& fa, const AstNodePtr& variable, const AstNodePtr& var_init) = 0;
   virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod, 
                               const AstNodePtr& rhs = AstNodePtr()) = 0;
   virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read, 
@@ -80,6 +81,7 @@ class StmtSideEffectCollect : public StmtInfoCollect, public SideEffectAnalysisI
     using StmtInfoCollect::AppendFuncCallArguments;
     using StmtInfoCollect::AppendFuncCallWrite;
     virtual void AppendVariableDecl(AstInterface& /* fa */, const AstNodePtr& variable, const AstNodePtr& var_init) override;
+    virtual void AppendAliasDecl(AstInterface& /*fa*/, const AstNodePtr& variable, const AstNodePtr& var_init) override;
     virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs = AstNodePtr()) override;
     virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read, 
@@ -158,6 +160,7 @@ class StmtVarAliasCollect
 
   UF_elem* get_alias_map( const std::string& varname, const AstNodePtr& scope);
   virtual void AppendVariableDecl(AstInterface& fa, const AstNodePtr& variable, const AstNodePtr& var_init) override; 
+  virtual void AppendAliasDecl(AstInterface& fa, const AstNodePtr& variable, const AstNodePtr& var_init) override; 
   virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs = AstNodePtr()) override;
   virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc) override;

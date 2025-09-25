@@ -38,7 +38,7 @@ AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc, AstNodePtr* cal
     // Correlate c with the function parameter it is passed to.
     // Do not increment p2 if it is already empty.
     if (p2 != params.end()) {
-       AppendReadLoc(fa, c, (*p2).get_ptr());
+       AppendReadLoc(fa, c, (*p2));
        p2++;
     }
   }
@@ -79,16 +79,19 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
    AstInterface::AstNodePtr lhs, rhs, body;
    AstInterface::AstNodeList vars, args;
    AstInterface::OperatorEnum opr;
-   bool readlhs = false;
+   std::vector<std::string> sigs;
+   bool additional = false;
 
-   AstNodePtr s_ptr = AstNodePtrImpl(s).get_ptr();
    if (fa.IsFunctionDefinition(s, 0, &vars, &args, &body)) {
       curstmt = AstNodePtrImpl(s).get_ptr();
       // Below is necessary for constructors that initialize member variables.
       for (AstInterface::AstNodePtr param : args) {
-         if (fa.IsAssignment(param, &lhs, &rhs, &readlhs)) {
+         if (fa.IsAssignment(param, &lhs, &rhs, /*read_lhs=*/&additional)) {
             if (rhs != 0) {
                operator()(fa, AstNodePtrImpl(rhs).get_ptr());
+            }
+            if (additional) { /*read_lhs*/
+               operator()(fa, AstNodePtrImpl(lhs).get_ptr());
             }
             AppendModLoc(fa, AstNodePtrImpl(lhs).get_ptr(), AstNodePtrImpl(rhs).get_ptr());
          } 
@@ -113,12 +116,12 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
       }
    }
 
-   if (fa.IsAssignment(s, &lhs, &rhs, &readlhs)) {
+   if (fa.IsAssignment(s, &lhs, &rhs, /*read_lhs*/&additional)) {
        DebugLocalInfoCollect([](){return "Is assignment"; });
        ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
        if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
-         modstack.push_back(s_ptr);
-         modstack.back().modmap[AstNodePtrImpl(lhs).get_ptr()] =  ModRecord(AstNodePtrImpl(rhs).get_ptr(),readlhs);
+         modstack.push_back(s);
+         modstack.back().modmap[AstNodePtrImpl(lhs).get_ptr()] =  ModRecord(AstNodePtrImpl(rhs).get_ptr(),additional);
        }
    }
    else if (fa.IsUnaryOp(s, &opr, &lhs) &&
@@ -126,22 +129,26 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
       DebugLocalInfoCollect([](){ return "Is unary operator."; });
       ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
       if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
-         modstack.push_back(s_ptr);
+         modstack.push_back(s);
          modstack.back().modmap[AstNodePtrImpl(lhs).get_ptr()] =  ModRecord(AstNodePtrImpl(s).get_ptr(),true);
       }
    }
-   else if (fa.IsVariableDecl( s, &vars, &args)) {
+   else if (fa.IsVariableDecl( s, &vars, &args) || (additional=fa.IsAliasingDecl( s, &vars, &args))) {
       DebugLocalInfoCollect([](){ return "Is variable declaration."; });
       AstInterface::AstNodeList::const_iterator pv = vars.begin();
       AstInterface::AstNodeList::const_iterator pa = args.begin();
-      modstack.push_back(s_ptr);
+      modstack.push_back(s);
       while (pv != vars.end()) {
-         AstNodePtr ast = AstNodePtrImpl(*pv).get_ptr();
-         AstNodePtr read_ast = AstNodePtrImpl(*pa).get_ptr();
+         AstNodePtr ast = *pv;
+         AstNodePtr read_ast = *pa;
          if (read_ast != 0) {
             operator()(fa, read_ast);
          }
-        AppendVariableDecl( fa, ast, read_ast);
+         if (!additional) {
+            AppendVariableDecl( fa, ast, read_ast);
+         } else {
+            AppendAliasDecl( fa, ast, read_ast);
+         }
          ++pv;
          ++pa;
       }
@@ -149,7 +156,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
    }
    else  if (fa.IsIOInputStmt(s, &args)) {
      DebugLocalInfoCollect([](){ return "Is IOInput stmt."; });
-     modstack.push_back(s_ptr);
+     modstack.push_back(s);
      for (AstInterface::AstNodeList::reverse_iterator p = args.rbegin();
            p != args.rend(); ++p) {
         AstNodePtr c = AstNodePtrImpl(*p).get_ptr();
@@ -175,8 +182,8 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
         DebugLocalInfoCollect([&s](){ return " append read set " + AstInterface::AstToString(s); });
         if (!fa.IsSameVarRef(s, fa.GetParent(s))) { /*QY: skip s if it refers to the same thing as parent*/
           ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
-          if (mp == 0 || mp->find(s_ptr) == mp->end() || (*mp)[s_ptr].readlhs) {
-              AppendReadLoc(fa, AstNodePtr(s_ptr));
+          if (mp == 0 || mp->find(s) == mp->end() || (*mp)[s].readlhs) {
+              AppendReadLoc(fa, s);
           }
         }
         AstNodeList arglist;
@@ -295,6 +302,17 @@ class CollectModRefWrap : public CollectReadRefWrap
       return true;
    }
 };
+
+void StmtSideEffectCollect::
+AppendAliasDecl(AstInterface& /* fa */, const AstNodePtr& variable, const AstNodePtr& var_init)
+    {
+     DebugLocalInfoCollect([&variable,&var_init](){ return "appending var decl " + AstInterface::AstToString(variable) + " = " + AstInterface::AstToString(var_init); });
+     AstNodeType vartype;
+     if(curstmt == 0) return;
+     if (alias_collect != 0) {
+        (*alias_collect)(variable, var_init);
+     } 
+    }
 
 void StmtSideEffectCollect::
 AppendVariableDecl(AstInterface& /* fa */, const AstNodePtr& variable, const AstNodePtr& var_init)
@@ -486,6 +504,11 @@ get_alias_map( const std::string& varname, const AstNodePtr& scope)
 
 void StmtVarAliasCollect::
 AppendVariableDecl( AstInterface& fa, const AstNodePtr& var, const AstNodePtr& init) {
+  return AppendModLoc(fa, var, init);
+}
+
+void StmtVarAliasCollect::
+AppendAliasDecl( AstInterface& fa, const AstNodePtr& var, const AstNodePtr& init) {
   return AppendModLoc(fa, var, init);
 }
 

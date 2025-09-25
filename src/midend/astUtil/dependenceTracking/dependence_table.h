@@ -194,7 +194,7 @@ class DependenceTable : public CollectDependences, public SaveOperatorSideEffect
     void ClearOperatorSideEffect(SgNode* op) override; 
     //
     //! The operator op accesses the given memory reference in nature of the given relation.
-    bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* sig = 0) override; 
+    bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* details = 0) override; 
 
 
   private:

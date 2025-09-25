@@ -13,7 +13,7 @@ namespace AstUtilInterface{
 
    class WholeProgramDependenceAnalysis;
    enum OperatorSideEffect {
-     Modify, Read, Kill, Call, Decl, Allocate, Free, Parameter, Return
+     Modify, Read, Kill, Alias, Call, Decl, Allocate, Free, Parameter, Return
    };
    inline std::string OperatorSideEffectName(OperatorSideEffect what) {
      switch (what) {
@@ -26,6 +26,7 @@ namespace AstUtilInterface{
       case OperatorSideEffect::Decl: return "decl";
       case OperatorSideEffect::Allocate: return "allocate";
       case OperatorSideEffect::Free: return "free";
+      case OperatorSideEffect::Alias: return "alias";
       default:
           std::cerr << "Error: Unexpected enum value:" << what << "\n";
           assert(false);
@@ -39,34 +40,29 @@ namespace AstUtilInterface{
        virtual void ClearOperatorSideEffect(SgNode* op) = 0;
     
        //! The operator op accesses the given memory reference in nature of the given relation.
-       virtual bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* sig = 0) = 0;
+       virtual bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& ref, AstUtilInterface::OperatorSideEffect relation, SgNode* details = 0) = 0;
    };
 
    //! A simplified interface, which
    //! accumulate all side effects into read and write vectors.
    class SaveOperatorSideEffectIntoVectors : public SaveOperatorSideEffectInterface {
        std::vector<AstNodePtr> *readp, *writep, *callp;
-       bool _has_unknown = false;
      public:
-      SaveOperatorSideEffectIntoVectors(std::vector<AstNodePtr>* readset = 0, std::vector<AstNodePtr>* writeset = 0, std::vector<AstNodePtr>* callset = 0) : readp(readset), writep(writeset), callp(callset), _has_unknown(false) {}
+      SaveOperatorSideEffectIntoVectors(std::vector<AstNodePtr>* readset = 0, std::vector<AstNodePtr>* writeset = 0, std::vector<AstNodePtr>* callset = 0) : readp(readset), writep(writeset), callp(callset) {}
 
        //! Erase existing side effects for the given operator. Do nothing b/c we accumulate.
        virtual void ClearOperatorSideEffect(SgNode* /*op*/) override {}
     
        //! The operator op accesses the given memory reference in nature of the given relation.
-       virtual bool SaveOperatorSideEffect(SgNode* /*op*/, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* /*sig*/ = 0) override {
-           if (varref == AST_UNKNOWN) {
-              _has_unknown = true;
-           } 
+       virtual bool SaveOperatorSideEffect(SgNode* /*op*/, const AstNodePtr& sig, AstUtilInterface::OperatorSideEffect relation, SgNode* /*details*/ = 0) override {
            switch (relation) {
-               case OperatorSideEffect::Modify: if (writep != 0) writep->push_back(varref); break;
-               case OperatorSideEffect::Read: if (readp != 0) readp->push_back(varref); break;
-               case OperatorSideEffect::Call: if (callp != 0) callp->push_back(varref); break;
+               case OperatorSideEffect::Modify: if (writep != 0) writep->push_back(sig); break;
+               case OperatorSideEffect::Read: if (readp != 0) readp->push_back(sig); break;
+               case OperatorSideEffect::Call: if (callp != 0) callp->push_back(sig); break;
                default: break;
            }
            return true;
        }
-       bool has_unknown() const { return _has_unknown; }
    };
 
 
@@ -84,10 +80,9 @@ namespace AstUtilInterface{
    //!Collect non-local variables that are read and written within the given ast. This is a wrapper
    //! of the ComputeAstSideEffects function to provide a more convenient user interface.
    //!Returns true if the returned variables are guaranteed to be complete; returns false otherwise.
-    inline bool CollectSideEffectVariables(SgNode* ast, std::vector<AstNodePtr>* writeVars = 0, std::vector<AstNodePtr>* readVars = 0, std::vector<AstNodePtr>* callVars = 0) {
+    inline void CollectSideEffectVariables(SgNode* ast, std::vector<AstNodePtr>* writeVars = 0, std::vector<AstNodePtr>* readVars = 0, std::vector<AstNodePtr>* callVars = 0) {
         SaveOperatorSideEffectIntoVectors save(readVars, writeVars, callVars);
         ComputeAstSideEffects(ast, 0, &save);
-        return !save.has_unknown(); 
     }
 
     //! Instruct the compiler to collect operator side effect annotation. The 

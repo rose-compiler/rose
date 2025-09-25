@@ -42,7 +42,7 @@ class SideEffectAnalysisInterface
  public:
   typedef std::function<bool(AstNodePtr,AstNodePtr)> CollectObject;
   SideEffectAnalysisInterface() : modcollect(0), 
-       readcollect(0), killcollect(0), callcollect(0), varcollect(0), allocate_collect(0), free_collect(0) {}
+       readcollect(0), killcollect(0), callcollect(0), varcollect(0), allocate_collect(0), free_collect(0), alias_collect(0) {}
  
   // returns false if stmts may ---modify-- unknown (non-collected) locations
   virtual bool get_side_effect( AstInterface& fa, const AstNodePtr& stmts) = 0;
@@ -55,8 +55,9 @@ class SideEffectAnalysisInterface
   void set_new_var_collect(CollectObject& c) { varcollect = &c; }
   void set_allocate_collect(CollectObject& c) { allocate_collect = &c; }
   void set_free_collect(CollectObject& c) { free_collect = &c; }
+  void set_alias_collect(CollectObject& c) { alias_collect = &c; }
  protected:
-    CollectObject *modcollect, *readcollect, *killcollect, *callcollect, *varcollect, *allocate_collect, *free_collect;
+    CollectObject *modcollect, *readcollect, *killcollect, *callcollect, *varcollect, *allocate_collect, *free_collect, *alias_collect;
 };
 
 class FunctionAliasInterface

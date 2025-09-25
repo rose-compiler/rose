@@ -441,27 +441,7 @@ ClearOperatorSideEffect(SgNode* op) {
 
 bool DependenceTable::
      SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* details) {
-  std::string prefix, attr;
-  bool save_annot = false;
-  switch (relation) {
-    case AstUtilInterface::OperatorSideEffect::Modify: save_annot=true; break;
-    case AstUtilInterface::OperatorSideEffect::Read:   save_annot=true; break;
-    case AstUtilInterface::OperatorSideEffect::Call:   break;
-    case AstUtilInterface::OperatorSideEffect::Parameter: break;
-    case AstUtilInterface::OperatorSideEffect::Return:   break;
-    case AstUtilInterface::OperatorSideEffect::Kill:  return false; 
-    case AstUtilInterface::OperatorSideEffect::Decl:  break;
-    case AstUtilInterface::OperatorSideEffect::Allocate:  break;
-    case AstUtilInterface::OperatorSideEffect::Free:  break;
-    default:
-     std::cerr << "Unexpected case:" << relation << "\n";
-     assert(0);
-  }
-
-
-  if (save_annot) {
-     AstUtilInterface::AddOperatorSideEffectAnnotation(op, varref, relation);
-  }
+  std::string attr;
   if (details != 0) {
        Log.push("Skipping Side effect details: " + AstInterface::AstToString(AstNodePtrImpl(details)));
        // QY: Do not save side effect details in annotation as we currently don't use it.

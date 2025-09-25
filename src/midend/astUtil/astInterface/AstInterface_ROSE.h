@@ -133,7 +133,7 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
                                   SgNode* loc=0);
 
   bool ReplaceAst( SgNode* orig, SgNode* n);
-  static SgScopeStatement* GetScope( SgNode* loc);
+  static SgStatement* GetScope( SgNode* loc);
 
  private:
   SgGlobal* global;
