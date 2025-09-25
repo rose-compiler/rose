@@ -3313,7 +3313,7 @@ SgFunctionType::SgFunctionType(SgPartialFunctionType *ft)
 void
 SgFunctionType::post_construction_initialization ()
    {
-     p_orig_return_type = nullptr;
+     // p_orig_return_type = nullptr;
      ROSE_ASSERT(p_argument_list == nullptr);
 
      p_argument_list = new SgFunctionParameterTypeList();
@@ -3322,8 +3322,6 @@ SgFunctionType::post_construction_initialization ()
      p_argument_list->set_parent(this);
 
      ASSERT_not_null(p_return_type);
-     set_orig_return_type(p_return_type);
-     ASSERT_not_null(p_orig_return_type);
    }
 
 const SgTypePtrList &
@@ -4355,7 +4353,6 @@ SgFunctionType::createType(SgPartialFunctionType* ft, SgExpression* optional_for
   // return types.  Here we set the orig_return_type stored explicitly (it seems it is always the
   // same as the return_type.
      ROSE_ASSERT (ft->get_return_type() != NULL);
-     theType->set_orig_return_type(ft->get_return_type());
 
      ROSE_ASSERT(theType != NULL);
      return theType;
@@ -4387,7 +4384,6 @@ SgMemberFunctionType::createType(SgPartialFunctionType* ft, SgExpression* option
   // return types.  Here we set the orig_return_type stored explicitly (it seems it is always the
   // same as the return_type.
      ROSE_ASSERT (ft->get_return_type() != NULL);
-     theType->set_orig_return_type(ft->get_return_type());
 
      ROSE_ASSERT(theType != NULL);
      return theType;

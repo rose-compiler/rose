@@ -2232,7 +2232,8 @@ DefaultFunctionGenerator::generateDefaultFunctionType(defaultEnumFunctionType en
                                                             buildFunctionParameterTypeList(func_param_type),
                                                             parentClassDef,
                                                             0);
-  func_type->set_orig_return_type(func_return_type); //unparser will complain otherwise,reason?
+  // PP (9/16/25): move orig_return type into declaration
+  // was: func_type->set_orig_return_type(func_return_type); //unparser will complain otherwise,reason?
   if (func_param_type != NULL)
      {
        func_type->append_argument(func_param_type);
@@ -2289,7 +2290,8 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
      SgMemberFunctionType *func_type = generateDefaultFunctionType(enumFunctionType, parentClassDef1);
 
      //     SgMemberFunctionType * func_type = new SgFunctionType(func_return_type,false);
-     func_type->set_orig_return_type(func_return_type); //unparser will complain otherwise,reason?
+     // PP (9/16/25): move orig_return type into declaration
+     // was: func_type->set_orig_return_type(func_return_type); //unparser will complain otherwise,reason?
 
      if (isSgTemplateInstantiationDefn(parentClassDef1))
         {

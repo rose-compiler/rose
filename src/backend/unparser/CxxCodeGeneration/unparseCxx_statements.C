@@ -987,75 +987,6 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
           initializedName->get_type()->class_name().c_str(),SageInterface::get_name(initializedName->get_type()).c_str());
 #endif
 
-  // DQ (9/14/2015): Test disabling this for C++11 mode.
-
-  // DQ (7/10/2014): Added support for using the original type syntax (saved as the declared function type).
-     if (funcdecl_stmt->get_type_syntax_is_available() == true)
-        {
-#if 0
-       // DQ (4/13/2018): Since the API permits the specification of the correct SgInitializedName we don't need this code
-       // which incedentally also set the type to be used incorectly (not matching the type syntax and initialized name
-       // used in the original syntax of the function prototype).
-
-       // Here we want to use the type syntax that originally appears with this function declaration in the original code.
-          SgFunctionType* function_type = funcdecl_stmt->get_type_syntax();
-          ASSERT_not_null(function_type);
-#if 0
-       // printf ("Found the original function type syntax: function_type = %p = %s \n",function_type,function_type->unparseToString().c_str());
-          printf ("In unparseFunctionParameterDeclaration(): Found the original function type syntax: function_type = %p = %s \n",function_type,function_type->class_name().c_str());
-#endif
-          SgFunctionParameterTypeList* type_argument_list = function_type->get_argument_list();
-          ASSERT_not_null(type_argument_list);
-
-       // DQ (4/13/2018): I think it is awkward that we need to introduce this test here (there might be a better API for this function).
-       // find the associated index from the initializedName.
-       // SgFunctionParameterList* name_argument_list = funcdecl_stmt->get_parameterList();
-          SgFunctionParameterList* name_argument_list = NULL;
-          if (funcdecl_stmt->get_type_syntax_is_available() == true)
-             {
-               name_argument_list = funcdecl_stmt->get_parameterList_syntax();
-             }
-            else
-             {
-               name_argument_list = funcdecl_stmt->get_parameterList();
-             }
-          ASSERT_not_null(name_argument_list);
-
-          SgInitializedNamePtrList & name_list = name_argument_list->get_args();
-
-          SgInitializedNamePtrList::iterator i = name_list.begin();
-          size_t counter = 0;
-          while (i != name_list.end() && (*i) != initializedName)
-             {
-#if 0
-               printf ("In unparseFunctionParameterDeclaration(): loop: counter = %" PRIuPTR " \n",counter);
-#endif
-               counter++;
-               i++;
-             }
-
-          ROSE_ASSERT(i != name_list.end());
-#if 0
-          printf ("In unparseFunctionParameterDeclaration(): counter = %" PRIuPTR " \n",counter);
-#endif
-       // SgTypePtrList & get_arguments()
-          tmp_type = type_argument_list->get_arguments()[counter];
-#endif
-
-#if 0
-          printf ("Resetting tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
-#endif
-#if 0
-          printf ("In unparseFunctionParameterDeclaration(): (funcdecl_stmt->get_type_syntax_is_available() == true): exiting as a test! \n");
-          ROSE_ABORT();
-#endif
-        }
-       else
-        {
-       // DQ (7/10/2014): Enforce this rule.
-          ROSE_ASSERT(funcdecl_stmt->get_type_syntax() == NULL);
-        }
-
 #if 0
      printf ("In unparseFunctionParameterDeclaration(): exiting as a test! \n");
      ROSE_ABORT();
@@ -1433,10 +1364,17 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
 
   // DQ (4/13/2018): I want to initialize this iterator, but it is not clear what to initialize it to...
      SgInitializedNamePtrList::iterator p_syntax = funcdecl_stmt->get_args().begin();
-     if (funcdecl_stmt->get_type_syntax_is_available() == true)
+     bool                               use_param_syntax = false;
+     // PP (9/19/25): * get_type_syntax_is_available() is not tied to get_parameterList_syntax()
+     //                 in EDG/parse_secondary_declaration get_type_syntax_is_available() only
+     //                 implies get_type_syntax() and not get_parameterList_syntax().
+     //               * For recording auto types in returns, only type_syntax is used,
+     //                 but not parameterList_syntax.
+     //               => check for get_parameterList_syntax() directly.
+     if (SgFunctionParameterList* paramSyntax = funcdecl_stmt->get_parameterList_syntax())
         {
-          p_syntax = funcdecl_stmt->get_parameterList_syntax()->get_args().begin();
-
+          use_param_syntax = true;
+          p_syntax = paramSyntax->get_args().begin();
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ABORT();
@@ -1468,7 +1406,7 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
 #endif
             // DQ (4/13/2018): If we have saved the original syntax then use it, else use the default (which is matching the defining function declaration).
             // unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
-               if (funcdecl_stmt->get_type_syntax_is_available() == true)
+               if (use_param_syntax)
                   {
                  // DQ (4/13/2018): One question would be are we using the correct name qualification for any type referenced.
 #if 0
@@ -1497,7 +1435,7 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
           p++;
 
        // DQ (4/13/2018): Increment the type syntax iterator in unison.
-          if (funcdecl_stmt->get_type_syntax_is_available() == true)
+          if (use_param_syntax)
              {
                p_syntax++;
              }
@@ -5117,11 +5055,10 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           ninfo.unset_CheckAccess();
           info.set_access_attribute(ninfo.get_access_attribute());
 
+          // get_orig_return_type queries return type from type_syntax(), if available,
+          //   and from type() otherwise.
           SgType *rtype = funcdecl_stmt->get_orig_return_type();
-          if (!rtype)
-             {
-               rtype = funcdecl_stmt->get_type()->get_return_type();
-             }
+
           ninfo.set_isTypeFirstPart();
 
           SgUnparse_Info ninfo_for_type(ninfo);
@@ -5634,16 +5571,10 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
                curprint ("/* In unparseReturnType(): NOT a constructor, destructor or conversion operator */ \n ");
 #endif
 #if 0
-               printf ("funcdecl_stmt->get_orig_return_type() = %p \n",funcdecl_stmt->get_orig_return_type());
-#endif
-               if (funcdecl_stmt->get_orig_return_type() != NULL)
-                  {
-#if 0
                     printf ("funcdecl_stmt->get_orig_return_type() = %p = %s \n",funcdecl_stmt->get_orig_return_type(),funcdecl_stmt->get_orig_return_type()->class_name().c_str());
 #endif
-                    rtype = funcdecl_stmt->get_orig_return_type();
 
-#if 1
+#if 0 /* EXPLICIT_TYPE_SYNTAX_CHECK */
                  // DQ (2/24/2019): Use the type syntax when it is available.
                     if (funcdecl_stmt->get_type_syntax_is_available() == true)
                        {
@@ -5655,25 +5586,15 @@ Unparse_ExprStmt::unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgTyp
                          SgFunctionType* functionType = isSgFunctionType(funcdecl_stmt->get_type_syntax());
                          ASSERT_not_null(functionType);
                       // return_syntax_type = memberFunctionDeclaration->get_type_syntax();
-                         if (functionType->get_orig_return_type() != NULL)
-                            {
-                              rtype = functionType->get_orig_return_type();
-                            }
-                           else
-                            {
-                              rtype = functionType->get_return_type();
-                            }
-                         ASSERT_not_null(rtype);
-                       }
-#endif
-                  }
-                 else
-                  {
-                    printf ("In unparseReturnType(): (should not happen) funcdecl_stmt->get_type()->get_return_type() = %p = %s \n",
-                         funcdecl_stmt->get_type()->get_return_type(),funcdecl_stmt->get_type()->get_return_type()->class_name().c_str());
-                    rtype = funcdecl_stmt->get_type()->get_return_type();
-                  }
-
+                         rtype = functionType->get_return_type();
+                      }
+                   if (rtype == nullptr)
+                      {
+                         rtype = funcdecl_stmt->get_orig_return_type();
+                      }
+#endif /* EXPLICIT_TYPE_SYNTAX_CHECK */
+                   rtype = funcdecl_stmt->get_orig_return_type();
+                   ASSERT_not_null(rtype);
 #if 0
                printf ("In unparseReturnType(): rtype = %p = %s \n",rtype,rtype->class_name().c_str());
 #endif
@@ -5987,13 +5908,13 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
               SgExpression* initializer = ctor_init->get_initializer();
               if (initializer != NULL) {
-                SgAggregateInitializer   * aggr_init = isSgAggregateInitializer(initializer);
+                // not used: SgAggregateInitializer   * aggr_init = isSgAggregateInitializer(initializer);
                 SgConstructorInitializer * ctor_init = isSgConstructorInitializer(initializer);
                 bool output_parenthesis = ctor_init == nullptr;
                 // if (ctor_init != nullptr) output_parenthesis = !ctor_init->get_need_parenthesis_after_name();
 
-                bool compiler_generated = initializer->get_startOfConstruct()->isCompilerGenerated();
 #if DEBUG_unparseMFuncDeclStmt
+                bool compiler_generated = initializer->get_startOfConstruct()->isCompilerGenerated();
                 printf ("     initializer = %p = %s\n", initializer, initializer->class_name().c_str());
                 printf ("     output_parenthesis = %s\n", output_parenthesis ? "true" : "false");
                 printf ("     compiler_generated = %s\n", compiler_generated ? "true" : "false");

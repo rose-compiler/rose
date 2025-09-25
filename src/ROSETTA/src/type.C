@@ -912,8 +912,6 @@ Grammar::setUpTypes ()
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      FunctionType.setDataPrototype     ("bool", "has_ellipses","= true",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     FunctionType.setDataPrototype     ("SgType*", "orig_return_type","= NULL",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (7/20/2004): Modified to NOT traverse this object (later: likely OK to traverse)
   // FunctionType.setDataPrototype("SgFunctionParameterTypeList*", "arguments", "= NULL",
   //           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL);

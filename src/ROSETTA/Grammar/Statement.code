@@ -1436,7 +1436,8 @@ HEADER_DECLARATION_SCOPE_END
 
 HEADER_FUNCTION_DECLARATION_STATEMENT_START
 
-      //! Support for C++ covariant return types (used in virtual function overloading).
+      //! Convenience function to access the return type as written in source; may be different
+      //!   from type()->get_return_type()
           SgType* get_orig_return_type() const;
 
        // Empty declaration substitution
@@ -1675,7 +1676,6 @@ HEADER_MEMBER_FUNCTION_DECLARATION_STATEMENT_START
 HEADER_LIST_DECLARATIONS
 
           virtual SgName get_qualified_name() const override;
-          void set_orig_return_type( SgType *);
 
          SgInitializedNamePtrList & get_ctors();
          const SgInitializedNamePtrList & get_ctors() const;
@@ -10118,7 +10118,7 @@ SgDeclarationStatement::get_template_name() const
   // DQ (12/22/2011): This is an ugly aspect of supporting template declarations as derived from that which they are associated.
   // (e.g. SgTemplateClassDeclaration derived from a SgClassDeclaration).
 
-  // But at least it is now islolated to a single function.
+  // But at least it is now isolated to a single function.
 
      SgName templateDeclarationName;
   // switch (templateDeclaration->variantT())
@@ -11641,7 +11641,15 @@ SgFunctionDeclaration::post_construction_initialization()
 SgType*
 SgFunctionDeclaration::get_orig_return_type() const
    {
-     return get_type()->get_orig_return_type();
+// PP (9/16/25): store the original return type with type_syntax.
+//               if nullptr, take it from type.
+     SgFunctionType* fntype = this->get_type_syntax();
+
+     if (fntype == nullptr)
+       fntype = this->get_type();
+
+     ASSERT_not_null(fntype);
+     return fntype->get_return_type();
    }
 
 void
@@ -11892,15 +11900,21 @@ SgFunctionDeclaration::get_mangled_name() const
              }
 
        // Compute a mangled name from this function's type
+
+
+
+
           SgName type_name;
           SgName ret_type_name;
           SgFunctionType const * func_type = get_type();
           if (func_type != NULL)
              {
-               type_name = func_type->get_mangled();
-               const SgType* ret_type = func_type->get_return_type();
-               if (ret_type)
-                    ret_type_name = ret_type->get_mangled();
+               // PP (09/16/2025): use return type from specified by type_syntax if available
+               //                  and the return type specified by type otherwise.
+               SgType* ret_type = this->get_orig_return_type();
+               ASSERT_not_null(ret_type);
+               ret_type_name = ret_type->get_mangled();
+               type_name = SgFunctionType::get_mangled(ret_type, func_type->get_argument_list());
              }
             else
              {
@@ -12988,17 +13002,6 @@ SgMemberFunctionDeclaration::get_qualified_name() const
      return returnName;
    }
 
-void
-SgMemberFunctionDeclaration::set_orig_return_type(SgType *t)
-   {
-   // QY: removed p_orig_return_type. reset p_type by making another member function type (the original p_type might be shared?)
-  // DQ (10/6/2004): Not sure why this works this way!
-     ROSE_ASSERT(t != NULL);
-
-     SgMemberFunctionType *ntype = isSgMemberFunctionType(get_type())->mkAnotherType(t);
-     ROSE_ASSERT (ntype != NULL);
-     set_type(ntype); // reset function type if necessary
-   }
 
 bool
 SgMemberFunctionDeclaration::replace_child(SgStatement *target,SgStatement *newstmt,

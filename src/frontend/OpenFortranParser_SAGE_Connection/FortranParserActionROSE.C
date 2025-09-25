@@ -3641,7 +3641,8 @@ void c_action_label(Token_t * lbl)
             SgFunctionType* functionType = isSgFunctionType(functionSymbol->get_type());
             ROSE_ASSERT(functionType != NULL);
             functionType->set_return_type(entityType);
-            functionType->set_orig_return_type(entityType);
+            // PP (09/16/25): move orig_return_type into decl
+            // functionType->set_orig_return_type(entityType); 
         }
         SgInitializedName* initializedName = NULL;
         if (variableSymbol != NULL)
@@ -3675,7 +3676,8 @@ void c_action_label(Token_t * lbl)
                       SgFunctionType* functionType = isSgFunctionType(functionDeclaration->get_type());
                       ROSE_ASSERT(functionType != NULL);
                       functionType->set_return_type(entityType);
-                      functionType->set_orig_return_type(entityType);
+                      // PP (09/16/25): move orig_return_type into decl
+                      // functionType->set_orig_return_type(entityType);
                   }
                   // Pei-Hung (07/19/2019) In test2019_common_block_name.f90,
                   // array dimension info can be specified in common block before the type specification
