@@ -1,6 +1,6 @@
 # -*- conf -*-
 
 responsibility = Tristan Vanderbruggen <vanderbrugge1@llnl.gov>
-CodeGen.h:  disable namespace_header_includes_all
+Generation.h:  disable namespace_header_includes_all
 AST.h:      disable namespace_header_includes_all
 Sarif.h:    disable no_using_in_headers

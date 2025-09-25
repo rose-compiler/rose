@@ -9,7 +9,7 @@ namespace Source {}
 }
 
 #include <Rose/Source/AST.h>
-#include <Rose/Source/CodeGen.h>
+#include <Rose/Source/Generation.h>
 #include <Rose/Source/Analysis.h>
 #include <Rose/Source/Sarif.h>
 

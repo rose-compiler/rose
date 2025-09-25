@@ -1,12 +1,12 @@
 
-#ifndef Rose_Source_CodeGen_SymbolScanner_txx
-#define Rose_Source_CodeGen_SymbolScanner_txx
+#ifndef ROSE_Source_Generation_SymbolScanner_TXX
+#define ROSE_Source_Generation_SymbolScanner_TXX
 
 #include "sage3basic.h"
 
 #include <iostream>
 
-namespace Rose { namespace Source { namespace CodeGen {
+namespace Rose { namespace Source { namespace Generation {
 
 template <typename CRT>
 void SymbolScannerBase<CRT>::visit(SgNode * node) {
@@ -63,5 +63,5 @@ void SymbolScanner<void>::visit(SymT * sym, std::map<std::string, std::set<SymT 
 
 } } }
 
-#endif /* Rose_Source_CodeGen_SymbolScanner_txx */
+#endif /* ROSE_Source_Generation_SymbolScanner_TXX */
 

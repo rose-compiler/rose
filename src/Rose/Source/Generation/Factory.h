@@ -1,9 +1,9 @@
-#ifndef Rose_Source_CodeGen_Factory_h
-#define Rose_Source_CodeGen_Factory_h
+#ifndef ROSE_Source_Generation_Factory_H
+#define ROSE_Source_Generation_Factory_H
 
-#include <Rose/Source/CodeGen/API.h>
+#include <Rose/Source/Generation/API.h>
 
-namespace Rose { namespace Source { namespace CodeGen {
+namespace Rose { namespace Source { namespace Generation {
 
 /**
  * \brief constructs expressions and types for the given API
@@ -125,11 +125,11 @@ class Factory {
 
 } } }
 
-#include "Rose/Source/CodeGen/factory/factory.txx"
-#include "Rose/Source/CodeGen/factory/namespaces.txx"
-#include "Rose/Source/CodeGen/factory/classes.txx"
-#include "Rose/Source/CodeGen/factory/typedefs.txx"
-#include "Rose/Source/CodeGen/factory/variables.txx"
-#include "Rose/Source/CodeGen/factory/functions.txx"
+#include "Rose/Source/Generation/factory/factory.txx"
+#include "Rose/Source/Generation/factory/namespaces.txx"
+#include "Rose/Source/Generation/factory/classes.txx"
+#include "Rose/Source/Generation/factory/typedefs.txx"
+#include "Rose/Source/Generation/factory/variables.txx"
+#include "Rose/Source/Generation/factory/functions.txx"
 
-#endif /* Rose_Source_CodeGen_Factory_h */
+#endif /* ROSE_Source_Generation_Factory_H */

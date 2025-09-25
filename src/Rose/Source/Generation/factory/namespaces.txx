@@ -1,8 +1,8 @@
 
-#ifndef Rose_Source_CodeGen_factory_namespaces_txx
-#define Rose_Source_CodeGen_factory_namespaces_txx
+#ifndef Rose_Source_Generation_factory_namespaces_txx
+#define Rose_Source_Generation_factory_namespaces_txx
 
-namespace Rose { namespace Source { namespace CodeGen {
+namespace Rose { namespace Source { namespace Generation {
 
 template <typename CRT, typename API>
 struct __factory_helper_t<CRT, API, Object::a_namespace> {
@@ -29,5 +29,5 @@ reference_t<Object::a_namespace> * __factory_helper_t<CRT, API, Object::a_namesp
 
 } } }
 
-#endif /* Rose_Source_CodeGen_factory_namespaces_txx */
+#endif /* Rose_Source_Generation_factory_namespaces_txx */
 

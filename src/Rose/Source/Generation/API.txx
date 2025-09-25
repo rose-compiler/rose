@@ -1,14 +1,14 @@
 
-#ifndef Rose_Source_Codegen_API_txx
-#define Rose_Source_Codegen_API_txx
+#ifndef Rose_Source_Generation_API_txx
+#define Rose_Source_Generation_API_txx
 
 #include "sage3basic.h"
 
 #include <iostream>
 
-#include <Rose/Source/CodeGen/SymbolScanner.h>
+#include <Rose/Source/Generation/SymbolScanner.h>
 
-namespace Rose { namespace Source { namespace CodeGen {
+namespace Rose { namespace Source { namespace Generation {
 
 template <typename CRT>
 void API<CRT>::load(Driver & driver) {
@@ -153,5 +153,5 @@ void API<CRT>::load_api(Driver & /*driver*/) {
 
 } } }
 
-#endif /* Rose_Source_Codegen_API_txx */
+#endif /* Rose_Source_Generation_API_txx */
 

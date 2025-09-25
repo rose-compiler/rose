@@ -648,7 +648,7 @@ set(rose_LIB_OBJS
   roseSource
   roseSourceAnalysis
   roseSourceAST
-  roseSourceCodegen
+  roseSourceGeneration
   roseStringUtility
   roseGeneratedBinaryAnalysis
   roseGeneratedJovial

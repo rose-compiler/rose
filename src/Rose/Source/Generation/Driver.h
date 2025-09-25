@@ -1,5 +1,6 @@
-#ifndef Rose_Source_CodeGen_Driver_h
-#define Rose_Source_CodeGen_Driver_h
+#ifndef ROSE_Source_Generation_Driver_H
+#define ROSE_Source_Generation_Driver_H
+
 #include <RoseFirst.h>
 
 #include <set>
@@ -14,7 +15,7 @@ class SgScopeStatement;
 class SgSymbol;
 class SgGlobal;
 
-namespace Rose { namespace Source { namespace CodeGen {
+namespace Rose { namespace Source { namespace Generation {
 
 /**
  * \brief facilitates the manipulation of source-files (esp. library headers and generated files).
@@ -83,4 +84,4 @@ class Driver {
 
 } } }
 
-#endif /* Rose_Source_CodeGen_Driver_h */
+#endif /* ROSE_Source_Generation_Driver_H */

@@ -1,7 +1,7 @@
 
-#include "Rose/Source/CodeGen/SymbolScanner.h"
+#include "Rose/Source/Generation/SymbolScanner.h"
 
-namespace Rose { namespace Source { namespace CodeGen {
+namespace Rose { namespace Source { namespace Generation {
 
 SymbolScanner<void>::SymbolScanner() : SymbolScannerBase<SymbolScanner<void>>(), api() {
   SgNamespaceSymbol::traverseMemoryPoolNodes(*this);

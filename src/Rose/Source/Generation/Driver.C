@@ -1,13 +1,13 @@
 
 #include "sage3basic.h"
 
-#include "Rose/Source/CodeGen/Driver.h"
+#include "Rose/Source/Generation/Driver.h"
 
 #ifndef VERBOSE
 # define VERBOSE 0
 #endif
 
-namespace Rose { namespace Source { namespace CodeGen {
+namespace Rose { namespace Source { namespace Generation {
 
 bool ignore(const std::string & name) {
   return name == "" || name.find("__builtin") == 0 || name.find("__frontend_specific_variable_to_provide_header_file_path") == 0;

@@ -1,13 +1,13 @@
-#ifndef Rose_Source_CodeGen_SymbolScanner_h
-#define Rose_Source_CodeGen_SymbolScanner_h
+#ifndef ROSE_Source_Generation_SymbolScanner_H
+#define ROSE_Source_Generation_SymbolScanner_H
 
-#include <Rose/Source/CodeGen/Object.h>
+#include <Rose/Source/Generation/Object.h>
 
 #include <vector>
 #include <map>
 #include <string>
 
-namespace Rose { namespace Source { namespace CodeGen {
+namespace Rose { namespace Source { namespace Generation {
 
 template <typename CRT>
 struct SymbolScannerBase : public ROSE_VisitTraversal {
@@ -47,6 +47,6 @@ struct SymbolScanner<void> : public SymbolScannerBase<SymbolScanner<void>> {
 
 } } }
 
-#include "Rose/Source/CodeGen/SymbolScanner.txx"
+#include "Rose/Source/Generation/SymbolScanner.txx"
 
-#endif /* Rose_Source_CodeGen_SymbolScanner_h */
+#endif /* ROSE_Source_Generation_SymbolScanner_H */

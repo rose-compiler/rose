@@ -1,12 +1,13 @@
-#ifndef Rose_Source_CodeGen_Object_h
-#define Rose_Source_CodeGen_Object_h
+#ifndef ROSE_Source_Generation_Object_H
+#define ROSE_Source_Generation_Object_H
+
 #include <RoseFirst.h>
 
 // FIXME it is a problem with MSVC ("cannot access protected member")
 //#include "Rose/Traits/Describe.h"
 #include "sage3basic.hhh"
 
-namespace Rose { namespace Source { namespace CodeGen {
+namespace Rose { namespace Source { namespace Generation {
 
 //! The five kind of objects manipulated by Rose::CodeGen::API and associated  Rose::CodeGen::Factory
 enum class Object {
@@ -122,4 +123,4 @@ struct object_helper<Object::a_function> {
 
 } } }
 
-#endif /* ROSE_Source_CodeGen_Object_H */
+#endif /* ROSE_Source_Generation_Object_H */

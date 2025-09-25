@@ -316,10 +316,10 @@ librose_partial_la_SOURCES =								\
 	Source/AST/io/load.C									\
 	Source/AST/io/merge.C									\
 	Source/AST/io/share.C									\
-	Source/CodeGen/SymbolScanner.C								\
-	Source/CodeGen/API.C									\
-	Source/CodeGen/Driver.C								\
-	Source/CodeGen/Factory.C								\
+	Source/Generation/SymbolScanner.C								\
+	Source/Generation/API.C									\
+	Source/Generation/Driver.C								\
+	Source/Generation/Factory.C								\
 	Source/Sarif.C								\
 	SourceLocation.C								\
 	StringUtility/Convert.C								\

@@ -1,8 +1,8 @@
 
-#ifndef Rose_Source_CodeGen_factory_factory_txx
-#define Rose_Source_CodeGen_factory_factory_txx
+#ifndef Rose_Source_Generation_factory_factory_txx
+#define Rose_Source_Generation_factory_factory_txx
 
-namespace Rose { namespace Source { namespace CodeGen {
+namespace Rose { namespace Source { namespace Generation {
 
 template <typename CRT, typename API>
 Factory<CRT, API>::Factory(Driver & driver_) :
@@ -210,5 +210,5 @@ typename Factory<CRT, API>::template access_return_t<otag> * Factory<CRT, API>::
 
 } } }
 
-#endif /* Rose_Source_CodeGen_factory_factory_txx */
+#endif /* Rose_Source_Generation_factory_factory_txx */
 

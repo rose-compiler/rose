@@ -1,8 +1,8 @@
 
-#ifndef Rose_Source_CodeGen_factory_functions_txx
-#define Rose_Source_CodeGen_factory_functions_txx
+#ifndef Rose_Source_Generation_factory_functions_txx
+#define Rose_Source_Generation_factory_functions_txx
 
-namespace Rose { namespace Source { namespace CodeGen {
+namespace Rose { namespace Source { namespace Generation {
 
 template <typename CRT, typename API>
 struct __factory_helper_t<CRT, API, Object::a_function> {
@@ -169,5 +169,5 @@ reference_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_functio
 
 } } }
 
-#endif /* Rose_Source_CodeGen_factory_functions_txx */
+#endif /* Rose_Source_Generation_factory_functions_txx */
 

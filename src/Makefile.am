@@ -634,20 +634,20 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Source/AST/cmdline.h								\
 	Rose/Source/AST/Defect.h								\
 	Rose/Source/AST/IO.h									\
-	Rose/Source/CodeGen.h									\
-	Rose/Source/CodeGen/SymbolScanner.h							\
-	Rose/Source/CodeGen/SymbolScanner.txx							\
-	Rose/Source/CodeGen/API.h								\
-	Rose/Source/CodeGen/API.txx								\
-	Rose/Source/CodeGen/Driver.h								\
-	Rose/Source/CodeGen/Factory.h								\
-	Rose/Source/CodeGen/factory/factory.txx						\
-	Rose/Source/CodeGen/factory/classes.txx						\
-	Rose/Source/CodeGen/factory/functions.txx						\
-	Rose/Source/CodeGen/factory/namespaces.txx						\
-	Rose/Source/CodeGen/factory/typedefs.txx						\
-	Rose/Source/CodeGen/factory/variables.txx						\
-	Rose/Source/CodeGen/Object.h								\
+	Rose/Source/Generation.h									\
+	Rose/Source/Generation/SymbolScanner.h							\
+	Rose/Source/Generation/SymbolScanner.txx							\
+	Rose/Source/Generation/API.h								\
+	Rose/Source/Generation/API.txx								\
+	Rose/Source/Generation/Driver.h								\
+	Rose/Source/Generation/Factory.h								\
+	Rose/Source/Generation/factory/factory.txx						\
+	Rose/Source/Generation/factory/classes.txx						\
+	Rose/Source/Generation/factory/functions.txx						\
+	Rose/Source/Generation/factory/namespaces.txx						\
+	Rose/Source/Generation/factory/typedefs.txx						\
+	Rose/Source/Generation/factory/variables.txx						\
+	Rose/Source/Generation/Object.h								\
 	Rose/Source/Sarif.h								\
 	Rose/SourceLocation.h								\
 	Rose/StringUtility.h								\

@@ -6,7 +6,7 @@ run $(librose_compile)				\
     Factory.C					\
     SymbolScanner.C
 
-run $(public_header) -o include/rose/Rose/Source/CodeGen	\
+run $(public_header) -o include/rose/Rose/Source/Generation	\
     API.h							\
     API.txx							\
     Driver.h							\
@@ -15,7 +15,7 @@ run $(public_header) -o include/rose/Rose/Source/CodeGen	\
     SymbolScanner.h						\
     SymbolScanner.txx
 
-run $(public_header) -o include/rose/Rose/Source/CodeGen/factory	\
+run $(public_header) -o include/rose/Rose/Source/Generation/factory	\
     factory/factory.txx							\
     factory/namespaces.txx						\
     factory/classes.txx							\
