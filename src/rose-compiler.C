@@ -1,7 +1,7 @@
 
 #include "sage3basic.h"
 
-#include "Rose/SourceCode/AST/IO.h"
+#include "Rose/Source/AST/IO.h"
 
 #include "midend/astDiagnostics/AstConsistencyTests.h"
 
@@ -42,7 +42,7 @@ int main( int argc, char * argv[] ) {
    TimingPerformance::generateReport();
 
 #if !defined(_WIN32) && !defined(__CYGWIN__)
-  Rose::SourceCode::AST::IO::free();
+  Rose::Source::AST::IO::free();
 #endif
 
   return status;

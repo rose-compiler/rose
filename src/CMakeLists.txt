@@ -645,10 +645,10 @@ set(rose_LIB_OBJS
   roseDiagnostics
   roseFileSystem
   roseSarif
-  roseSourceCode
-  roseSourceCodeAnalysis
-  roseSourceCodeAST
-  roseSourceCodeCodegen
+  roseSource
+  roseSourceAnalysis
+  roseSourceAST
+  roseSourceCodegen
   roseStringUtility
   roseGeneratedBinaryAnalysis
   roseGeneratedJovial

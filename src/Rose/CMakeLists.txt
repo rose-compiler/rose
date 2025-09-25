@@ -11,7 +11,7 @@ add_subdirectory(CommandLine)
 add_subdirectory(Diagnostics)
 add_subdirectory(FileSystem)
 add_subdirectory(Sarif)
-add_subdirectory(SourceCode)
+add_subdirectory(Source)
 add_subdirectory(StringUtility)
 add_subdirectory(Traits)
 
@@ -55,7 +55,7 @@ install(FILES
   Progress.h
   RecursionCounter.h
   Sarif.h
-  SourceCode.h
+  Source.h
   SourceLocation.h
   StringUtility.h
   Yaml.h

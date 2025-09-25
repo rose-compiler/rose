@@ -30,7 +30,7 @@ run $(public_header) -o include/rose/Rose	\
     Progress.h					\
     RecursionCounter.h				\
     Sarif.h					\
-    SourceCode.h					\
+    Source.h					\
     SourceLocation.h				\
     StringUtility.h				\
     Traits.h					\

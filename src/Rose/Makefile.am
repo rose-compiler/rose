@@ -302,25 +302,25 @@ librose_partial_la_SOURCES =								\
 	Sarif/Rule.C									\
 	Sarif/ThreadFlow.C								\
 	Sarif/ThreadFlowLocation.C							\
-	SourceCode/Analysis/Analyzer.C								\
-	SourceCode/Analysis/Visitor.C								\
-	SourceCode/AST/checker/checker.C								\
-	SourceCode/AST/checker/cmdline.C								\
-	SourceCode/AST/checker/integrity_declarations.C						\
-	SourceCode/AST/checker/integrity_edges.C							\
-	SourceCode/AST/checker/integrity_symbols.C							\
-	SourceCode/AST/checker/integrity_types.C							\
-	SourceCode/AST/graphviz.C									\
-	SourceCode/AST/io/delete.C									\
-	SourceCode/AST/io/link.C									\
-	SourceCode/AST/io/load.C									\
-	SourceCode/AST/io/merge.C									\
-	SourceCode/AST/io/share.C									\
-	SourceCode/CodeGen/SymbolScanner.C								\
-	SourceCode/CodeGen/API.C									\
-	SourceCode/CodeGen/Driver.C								\
-	SourceCode/CodeGen/Factory.C								\
-	SourceCode/Sarif.C								\
+	Source/Analysis/Analyzer.C								\
+	Source/Analysis/Visitor.C								\
+	Source/AST/checker/checker.C								\
+	Source/AST/checker/cmdline.C								\
+	Source/AST/checker/integrity_declarations.C						\
+	Source/AST/checker/integrity_edges.C							\
+	Source/AST/checker/integrity_symbols.C							\
+	Source/AST/checker/integrity_types.C							\
+	Source/AST/graphviz.C									\
+	Source/AST/io/delete.C									\
+	Source/AST/io/link.C									\
+	Source/AST/io/load.C									\
+	Source/AST/io/merge.C									\
+	Source/AST/io/share.C									\
+	Source/CodeGen/SymbolScanner.C								\
+	Source/CodeGen/API.C									\
+	Source/CodeGen/Driver.C								\
+	Source/CodeGen/Factory.C								\
+	Source/Sarif.C								\
 	SourceLocation.C								\
 	StringUtility/Convert.C								\
 	StringUtility/Diagnostics.C							\

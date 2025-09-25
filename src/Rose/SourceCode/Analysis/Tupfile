@@ -1,9 +1,0 @@
-include_rules
-
-run $(librose_compile)			\
-    Analyzer.C				\
-    Visitor.C				\
-
-run $(public_header) -o include/rose/Rose/SourceCode/Analysis	\
-    Analyzer.h							\
-    Visitor.h

@@ -12,7 +12,7 @@
 #include "keep_going.h"
 #include "FileUtility.h"
 #include <Rose/Diagnostics.h>
-#include "Rose/SourceCode/AST/cmdline.h"
+#include "Rose/Source/AST/cmdline.h"
 
 #include "Outliner.hh"
 
@@ -1314,10 +1314,10 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
      if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:ast:graphviz:", "(when)", rose_ast_option_param, true) == true ) {
        if (rose_ast_option_param == "both" || rose_ast_option_param=="frontend") {
-         Rose::SourceCode::AST::cmdline::graphviz.frontend.on = true;
+         Rose::Source::AST::cmdline::graphviz.frontend.on = true;
        }
        if (rose_ast_option_param == "both" || rose_ast_option_param=="backend") {
-         Rose::SourceCode::AST::cmdline::graphviz.backend.on = true;
+         Rose::Source::AST::cmdline::graphviz.backend.on = true;
        }
      }
 
@@ -1325,11 +1325,11 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        rose_ast_option_param_split.clear();
        split_string(rose_ast_option_param, rose_ast_option_param_split);
        unsigned idx = 0;
-       if (Rose::SourceCode::AST::cmdline::graphviz.frontend.on) {
-         Rose::SourceCode::AST::cmdline::graphviz.frontend.mode = Rose::SourceCode::AST::cmdline::graphviz_t::__mode(rose_ast_option_param_split[idx++]);
+       if (Rose::Source::AST::cmdline::graphviz.frontend.on) {
+         Rose::Source::AST::cmdline::graphviz.frontend.mode = Rose::Source::AST::cmdline::graphviz_t::__mode(rose_ast_option_param_split[idx++]);
        }
-       if (Rose::SourceCode::AST::cmdline::graphviz.backend.on) {
-         Rose::SourceCode::AST::cmdline::graphviz.backend.mode = Rose::SourceCode::AST::cmdline::graphviz_t::__mode(rose_ast_option_param_split[rose_ast_option_param_split.size() == 1 ? 0 : idx]);
+       if (Rose::Source::AST::cmdline::graphviz.backend.on) {
+         Rose::Source::AST::cmdline::graphviz.backend.mode = Rose::Source::AST::cmdline::graphviz_t::__mode(rose_ast_option_param_split[rose_ast_option_param_split.size() == 1 ? 0 : idx]);
        }
      }
 
@@ -1337,12 +1337,12 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        rose_ast_option_param_split.clear();
        split_string(rose_ast_option_param, rose_ast_option_param_split);
        unsigned idx = 0;
-       if (Rose::SourceCode::AST::cmdline::graphviz.frontend.on) {
-         Rose::SourceCode::AST::cmdline::graphviz.frontend.out = rose_ast_option_param_split[idx++];
+       if (Rose::Source::AST::cmdline::graphviz.frontend.on) {
+         Rose::Source::AST::cmdline::graphviz.frontend.out = rose_ast_option_param_split[idx++];
        }
-       if (Rose::SourceCode::AST::cmdline::graphviz.backend.on) {
+       if (Rose::Source::AST::cmdline::graphviz.backend.on) {
          ROSE_ASSERT(rose_ast_option_param_split.size() == idx + 1);
-         Rose::SourceCode::AST::cmdline::graphviz.backend.out = rose_ast_option_param_split[idx];
+         Rose::Source::AST::cmdline::graphviz.backend.out = rose_ast_option_param_split[idx];
        }
      }
 
@@ -1350,10 +1350,10 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
      if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:ast:checker:", "(when)", rose_ast_option_param, true) == true ) {
        if (rose_ast_option_param == "both" || rose_ast_option_param=="frontend") {
-         Rose::SourceCode::AST::cmdline::checker.frontend.on = true;
+         Rose::Source::AST::cmdline::checker.frontend.on = true;
        }
        if (rose_ast_option_param == "both" || rose_ast_option_param=="backend") {
-         Rose::SourceCode::AST::cmdline::checker.backend.on = true;
+         Rose::Source::AST::cmdline::checker.backend.on = true;
        }
      }
 
@@ -1361,14 +1361,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        rose_ast_option_param_split.clear();
        split_string(rose_ast_option_param, rose_ast_option_param_split);
        unsigned idx = 0;
-       if (Rose::SourceCode::AST::cmdline::checker.frontend.on) {
-         Rose::SourceCode::AST::cmdline::checker.frontend.modes.clear();
-         split_string(rose_ast_option_param_split[idx++], Rose::SourceCode::AST::cmdline::checker.frontend.modes, ':', Rose::SourceCode::AST::cmdline::checker_t::__mode);
+       if (Rose::Source::AST::cmdline::checker.frontend.on) {
+         Rose::Source::AST::cmdline::checker.frontend.modes.clear();
+         split_string(rose_ast_option_param_split[idx++], Rose::Source::AST::cmdline::checker.frontend.modes, ':', Rose::Source::AST::cmdline::checker_t::__mode);
        }
-       if (Rose::SourceCode::AST::cmdline::checker.backend.on) {
-         Rose::SourceCode::AST::cmdline::checker.backend.modes.clear();
+       if (Rose::Source::AST::cmdline::checker.backend.on) {
+         Rose::Source::AST::cmdline::checker.backend.modes.clear();
          idx = rose_ast_option_param_split.size() == 1 ? 0 : idx;
-         split_string(rose_ast_option_param_split[idx], Rose::SourceCode::AST::cmdline::checker.backend.modes, ':', Rose::SourceCode::AST::cmdline::checker_t::__mode);
+         split_string(rose_ast_option_param_split[idx], Rose::Source::AST::cmdline::checker.backend.modes, ':', Rose::Source::AST::cmdline::checker_t::__mode);
        }
      }
 
@@ -1376,11 +1376,11 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        rose_ast_option_param_split.clear();
        split_string(rose_ast_option_param, rose_ast_option_param_split);
        unsigned idx = 0;
-       if (Rose::SourceCode::AST::cmdline::checker.frontend.on) {
-         Rose::SourceCode::AST::cmdline::checker.frontend.effect = Rose::SourceCode::AST::cmdline::checker_t::__effect(rose_ast_option_param_split[idx++]);
+       if (Rose::Source::AST::cmdline::checker.frontend.on) {
+         Rose::Source::AST::cmdline::checker.frontend.effect = Rose::Source::AST::cmdline::checker_t::__effect(rose_ast_option_param_split[idx++]);
        }
-       if (Rose::SourceCode::AST::cmdline::checker.backend.on) {
-         Rose::SourceCode::AST::cmdline::checker.backend.effect = Rose::SourceCode::AST::cmdline::checker_t::__effect(rose_ast_option_param_split[rose_ast_option_param_split.size() == 1 ? 0 : idx]);
+       if (Rose::Source::AST::cmdline::checker.backend.on) {
+         Rose::Source::AST::cmdline::checker.backend.effect = Rose::Source::AST::cmdline::checker_t::__effect(rose_ast_option_param_split[rose_ast_option_param_split.size() == 1 ? 0 : idx]);
        }
      }
 
@@ -1388,12 +1388,12 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        rose_ast_option_param_split.clear();
        split_string(rose_ast_option_param, rose_ast_option_param_split);
        unsigned idx = 0;
-       if (Rose::SourceCode::AST::cmdline::checker.frontend.on) {
-         Rose::SourceCode::AST::cmdline::checker.frontend.log = rose_ast_option_param_split[idx++];
+       if (Rose::Source::AST::cmdline::checker.frontend.on) {
+         Rose::Source::AST::cmdline::checker.frontend.log = rose_ast_option_param_split[idx++];
        }
-       if (Rose::SourceCode::AST::cmdline::checker.backend.on) {
+       if (Rose::Source::AST::cmdline::checker.backend.on) {
          ROSE_ASSERT(rose_ast_option_param_split.size() == idx + 1);
-         Rose::SourceCode::AST::cmdline::checker.backend.log = rose_ast_option_param_split[idx];
+         Rose::Source::AST::cmdline::checker.backend.log = rose_ast_option_param_split[idx];
        }
      }
 
@@ -1401,12 +1401,12 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        rose_ast_option_param_split.clear();
        split_string(rose_ast_option_param, rose_ast_option_param_split);
        unsigned idx = 0;
-       if (Rose::SourceCode::AST::cmdline::checker.frontend.on) {
-         Rose::SourceCode::AST::cmdline::checker.frontend.save = rose_ast_option_param_split[idx++];
+       if (Rose::Source::AST::cmdline::checker.frontend.on) {
+         Rose::Source::AST::cmdline::checker.frontend.save = rose_ast_option_param_split[idx++];
        }
-       if (Rose::SourceCode::AST::cmdline::checker.backend.on) {
+       if (Rose::Source::AST::cmdline::checker.backend.on) {
          ROSE_ASSERT(rose_ast_option_param_split.size() == idx + 1);
-         Rose::SourceCode::AST::cmdline::checker.backend.save = rose_ast_option_param_split[idx];
+         Rose::Source::AST::cmdline::checker.backend.save = rose_ast_option_param_split[idx];
        }
      }
 

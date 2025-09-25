@@ -1,0 +1,10 @@
+include_rules
+
+run $(librose_compile)				\
+    Sarif.C
+
+run $(public_header) -o include/rose/Rose/Source	\
+    Analysis.h					\
+    AST.h					\
+    CodeGen.h					\
+    Sarif.h

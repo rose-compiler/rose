@@ -58,8 +58,8 @@
 // DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
 #include<signal.h>
 
-#include "Rose/SourceCode/AST/IO.h"
-#include "Rose/SourceCode/AST/cmdline.h"
+#include "Rose/Source/AST/IO.h"
+#include "Rose/Source/AST/cmdline.h"
 
 #include "AST_FILE_IO.h"
 // Note that this is required to define the Sg_File_Info_XXX symbols (need for file I/O)
@@ -777,12 +777,12 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
 
      std::list<std::string> const & astfiles = project->get_astfiles_in();
      if (astfiles.size() > 0) {
-       Rose::SourceCode::AST::IO::load(project, astfiles);
+       Rose::Source::AST::IO::load(project, astfiles);
        ASSERT_require(project->get_ast_merge());
      }
 
      if (project->get_ast_merge()) {
-       Rose::SourceCode::AST::IO::merge(project);
+       Rose::Source::AST::IO::merge(project);
      }
 
   // Set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
@@ -790,8 +790,8 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
      }
 
-     Rose::SourceCode::AST::cmdline::graphviz.frontend.exec(project);
-     Rose::SourceCode::AST::cmdline::checker.frontend.exec(project);
+     Rose::Source::AST::cmdline::graphviz.frontend.exec(project);
+     Rose::Source::AST::cmdline::checker.frontend.exec(project);
 
   // Connect to Ast Plugin Mechanism
 #ifdef _MSC_VER
@@ -904,8 +904,8 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 #ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
      signal(SIGABRT,SIG_DFL);
 #endif
-     Rose::SourceCode::AST::cmdline::graphviz.backend.exec(project);
-     Rose::SourceCode::AST::cmdline::checker.backend.exec(project);
+     Rose::Source::AST::cmdline::graphviz.backend.exec(project);
+     Rose::Source::AST::cmdline::checker.backend.exec(project);
 
      std::string const & astfile_out = project->get_astfile_out();
      if (astfile_out != "") {
