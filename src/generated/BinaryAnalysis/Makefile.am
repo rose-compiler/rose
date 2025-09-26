@@ -309,6 +309,7 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmRuntimeAnnotation.C \
         SgAsmJvmRuntimeAnnotationPair.C \
         SgAsmJvmRuntimeAnnotationValue.C \
+        SgAsmJvmRuntimeInvisibleAnnotations.C \
         SgAsmJvmRuntimeVisibleAnnotations.C \
         SgAsmJvmSignature.C \
         SgAsmJvmSourceFile.C \

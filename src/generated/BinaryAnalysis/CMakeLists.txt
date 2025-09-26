@@ -305,6 +305,7 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmRuntimeAnnotation.C
   SgAsmJvmRuntimeAnnotationPair.C
   SgAsmJvmRuntimeAnnotationValue.C
+  SgAsmJvmRuntimeInvisibleAnnotations.C
   SgAsmJvmRuntimeVisibleAnnotations.C
   SgAsmJvmSignature.C
   SgAsmJvmSourceFile.C

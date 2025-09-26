@@ -21,8 +21,13 @@ public:
  public:
     /** Initialize the object before parsing.
      *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+     *  This is one of the preferred constructors to use before parsing.  It shall set its parent. */
     explicit SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeVisibleAnnotations*);
+
+    /** Initialize the object before parsing.
+     *
+     *  This is one of the preferred constructors to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeInvisibleAnnotations*);
 
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmRuntimeAnnotation* parse(SgAsmJvmConstantPool*);
@@ -31,5 +36,5 @@ public:
     virtual void unparse(std::ostream&) const override;
 
     /** Print some debugging information. */
-    void dump(FILE*, const char *prefix, ssize_t idx) const override;
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };

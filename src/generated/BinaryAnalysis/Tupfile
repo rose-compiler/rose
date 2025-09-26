@@ -306,6 +306,7 @@ run $(librose_compile) \
     SgAsmJvmRuntimeAnnotation.C \
     SgAsmJvmRuntimeAnnotationPair.C \
     SgAsmJvmRuntimeAnnotationValue.C \
+    SgAsmJvmRuntimeInvisibleAnnotations.C \
     SgAsmJvmRuntimeVisibleAnnotations.C \
     SgAsmJvmSignature.C \
     SgAsmJvmSourceFile.C \

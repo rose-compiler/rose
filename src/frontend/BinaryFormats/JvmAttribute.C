@@ -64,6 +64,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   else if (name == "RuntimeVisibleAnnotations") { // 4.7.16
     return new SgAsmJvmRuntimeVisibleAnnotations(parent);
   }
+  else if (name == "RuntimeInvisibleAnnotations") { // 4.7.17
+    return new SgAsmJvmRuntimeInvisibleAnnotations(parent);
+  }
   else if (name == "AnnotationDefault") { // 4.7.22
     //TODO
   }
@@ -1019,7 +1022,6 @@ SgAsmJvmRuntimeVisibleAnnotations* SgAsmJvmRuntimeVisibleAnnotations::parse(SgAs
     get_annotations().push_back(annotation);
   }
 
-  //TODO: check attribute_length
   return this;
 }
 
@@ -1049,6 +1051,11 @@ void SgAsmJvmRuntimeVisibleAnnotations::dump(FILE* f, const char* prefix, ssize_
 // RuntimeInvisibleAnnotations_attribute.
 //
 SgAsmJvmRuntimeAnnotation::SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeVisibleAnnotations* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+SgAsmJvmRuntimeAnnotation::SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeInvisibleAnnotations* parent)
 {
   initializeProperties();
   set_parent(parent);
@@ -1247,8 +1254,51 @@ void SgAsmJvmRuntimeAnnotationValue::dump(FILE* f, const char* prefix, ssize_t i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.17 The RuntimeInvisibleAnnotations Attribute. RuntimeInvisibleAnnotations_attribute represented by the TODO class.
+// 4.7.17 The RuntimeInvisibleAnnotations Attribute. RuntimeInvisibleAnnotations_attribute is represented by the
+// SgAsmJvmRuntimeInvisibleAnnotations class.
 //
+SgAsmJvmRuntimeInvisibleAnnotations::SgAsmJvmRuntimeInvisibleAnnotations(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmRuntimeInvisibleAnnotations* SgAsmJvmRuntimeInvisibleAnnotations::parse(SgAsmJvmConstantPool* pool)
+{
+  uint16_t numAnnotations;
+  ASSERT_not_null(get_parent());
+
+  SgAsmJvmAttribute::parse(pool);
+  Jvm::read_value(pool, numAnnotations);
+
+  for (int ii = 0; ii < numAnnotations; ii++) {
+    auto annotation = new SgAsmJvmRuntimeAnnotation(this);
+    annotation->parse(pool);
+    get_annotations().push_back(annotation);
+  }
+
+  return this;
+}
+
+void SgAsmJvmRuntimeInvisibleAnnotations::unparse(std::ostream& os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+
+  uint16_t numAnnotations = get_annotations().size();
+  Jvm::writeValue(os, numAnnotations);
+
+  for (auto annotation : get_annotations()) {
+    annotation->unparse(os);
+  }
+}
+
+void SgAsmJvmRuntimeInvisibleAnnotations::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: SgAsmJvmRuntimeInvisibleAnnotations::dump()\n", prefix, idx);
+  for (auto annotation : get_annotations()) {
+    annotation->dump(f, prefix, idx);
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

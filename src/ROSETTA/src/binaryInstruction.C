@@ -10101,8 +10101,8 @@ public:
 public:
     /** Property: annotations
      *
-     *  List of pointers to annotation entries. The annotation structure is specified in section 4.7.16. 
-     *  
+     *  List of pointers to annotation entries. The annotation structure is specified in section 4.7.16.
+     *
      *  @{ */
     std::vector<SgAsmJvmRuntimeAnnotation*> const& get_annotations() const;
     std::vector<SgAsmJvmRuntimeAnnotation*>& get_annotations();
@@ -10138,6 +10138,100 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmRuntimeVisibleAnnotations_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmRuntimeInvisibleAnnotations           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmRuntimeInvisibleAnnotations);
+IS_SERIALIZABLE(AsmJvmRuntimeInvisibleAnnotations);
+
+#ifndef DOCUMENTATION
+AsmJvmRuntimeInvisibleAnnotations.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmJvmRuntimeInvisibleAnnotations);
+#if defined(SgAsmJvmRuntimeInvisibleAnnotations_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmRuntimeInvisibleAnnotations_HEADERS
+
+#ifdef DOCUMENTATION
+/** JVM RuntimeInvisibleAnnotations attribute.
+ *
+ *  The RuntimeInvisibleAnnotations attribute is a variable-length attribute in the attributes table of a ClassFile,
+ *  field_info, method_info, or record_component_info structure, see sections (4.1, 4.5, 4.6, 4.7.30).
+ *  The RuntimeInvisibleAnnotations attribute stores run-time invisible annotations on the declaration of the
+ *  corresponding class, method, field, or record component. See section 4.7.17 of the JVM specification. */
+class SgAsmJvmRuntimeInvisibleAnnotations: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmRuntimeInvisibleAnnotations.setDataPrototype(
+        "std::vector<SgAsmJvmRuntimeAnnotation*>", "annotations", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmRuntimeInvisibleAnnotations);
+#if defined(SgAsmJvmRuntimeInvisibleAnnotations_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmRuntimeInvisibleAnnotations -----------------------
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmRuntimeInvisibleAnnotations");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        s & BOOST_SERIALIZATION_NVP(p_annotations);
+        debugSerializationEnd("SgAsmJvmRuntimeInvisibleAnnotations");
+    }
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
+public:
+public:
+    /** Property: annotations
+     *
+     *  List of pointers to annotation entries. The annotation structure is specified in section 4.7.16.
+     *
+     *  @{ */
+    std::vector<SgAsmJvmRuntimeAnnotation*> const& get_annotations() const;
+    std::vector<SgAsmJvmRuntimeAnnotation*>& get_annotations();
+    /** @} */
+public:
+    /** Initialize the RuntimeInvisibleAnnotations attribute before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmRuntimeInvisibleAnnotations(SgAsmJvmAttributeTable*);
+
+    /** Initialize the attribute by parsing the file. */
+    virtual SgAsmJvmRuntimeInvisibleAnnotations* parse(SgAsmJvmConstantPool*) override;
+
+    /** Write the local variable table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmRuntimeInvisibleAnnotations();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmRuntimeInvisibleAnnotations();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmRuntimeInvisibleAnnotations_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -10579,8 +10673,13 @@ public:
  public:
     /** Initialize the object before parsing.
      *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+     *  This is one of the preferred constructors to use before parsing.  It shall set its parent. */
     explicit SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeVisibleAnnotations*);
+
+    /** Initialize the object before parsing.
+     *
+     *  This is one of the preferred constructors to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeInvisibleAnnotations*);
 
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmRuntimeAnnotation* parse(SgAsmJvmConstantPool*);
@@ -10589,7 +10688,7 @@ public:
     virtual void unparse(std::ostream&) const override;
 
     /** Print some debugging information. */
-    void dump(FILE*, const char *prefix, ssize_t idx) const override;
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
     virtual ~SgAsmJvmRuntimeAnnotation();
@@ -14608,6 +14707,7 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
         | AsmJvmModuleMainClass
         | AsmJvmNestHost
         | AsmJvmNestMembers
+        | AsmJvmRuntimeInvisibleAnnotations
         | AsmJvmRuntimeVisibleAnnotations
         | AsmJvmSignature
         | AsmJvmSourceFile
