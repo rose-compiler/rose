@@ -225,96 +225,117 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
 
        [ -n "$VERBOSE" ] && echo "In create system headers: this is processing C or C++: language = $language"
 
-     # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
-       tmpFile="`mktemp -t roseconfigtempXXXXXXXXXX`"
-       "$1" -E -dM -x $language /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
-
-       if [ -n "$VERBOSE" ]; then
-	   echo "******************************************************"
-	   echo "******** BEFORE INTEL SPECIFIC TRANSFORMATION ********"
-	   echo "******************************************************"
-	   echo "tmpFile name = $tmpFile"
-	   echo "******************************************************"
-	   cat "$tmpFile"
-	   echo "******************************************************"
-	   echo "******************************************************"
+       if [ "x$language" = xc ]; then
+           versions="c89 c99 c11 c17 c23 c2y"
+       elif [ "x$language" = "xc++" ]; then
+           versions="c++98 c++03 c++11 c++14 c++17 c++20 c++23 c++26"
+       else
+           echo "$0: error: expected language to be one of: c, c++, got $language" >&2
+           exit 1
        fi
 
-     # DQ (12/13/2016): Added edits specific to Intel defines for floating point values that EDG reports and not in range.
-     # This is thus far not reproducable except on non RZ systems using the Intel v16 compiler. We are editing:
-     #    #define __DBL_DENORM_MIN__ 4.9406564584124654e-324 
-     # to be:
-     #    #define __DBL_DENORM_MIN__ 4.9406564584124654e-324L
-     # and
-     #    #define __FLT_DENORM_MIN__ 1.40129846e-45F
-     # to be:
-     #    #define __FLT_DENORM_MIN__ 1.40129846e-45L
+     # PL (9/26/2025): Version-specific macros for different C++ versions
+       for version in $versions ; do
+       
+        # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
+          tmpFile="`mktemp -t roseconfigtemp$version-XXXXXXXXXX`"
 
-       [ -n "$VERBOSE" ] && echo "compilerVendorName = $compilerVendorName"
-       if [ "x$compilerVendorName" = "xintel" ]; then
-          # Build a new temp file to store the results of the editing.
-            tmpFile2="`mktemp -t roseconfigtempXXXXXXXXXX`"
-          # echo "tmpFile2 name = $tmpFile2"
+          "$1" -E -dM -x $language -std=$version /dev/null 2> /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
 
-            sed  's/^\(#define __\(DBL\|FLT\)_DENORM_MIN__[ \t]\+[0-9]*\.[0-9]*e-[0-9]*\)[LF]\?/\1L/' < "$tmpFile" > "$tmpFile2"
+          if [ $? -ne 0 ]; then
+   
+              if [ -n "$VERBOSE" ]; then
+                  echo "******************************************************"
+                  echo "******** BEFORE INTEL SPECIFIC TRANSFORMATION ********"
+                  echo "******************************************************"
+                  echo "tmpFile name = $tmpFile"
+                  echo "******************************************************"
+                  cat "$tmpFile"
+                  echo "******************************************************"
+                  echo "******************************************************"
+              fi
+       
+            # DQ (12/13/2016): Added edits specific to Intel defines for floating point values that EDG reports and not in range.
+            # This is thus far not reproducable except on non RZ systems using the Intel v16 compiler. We are editing:
+            #    #define __DBL_DENORM_MIN__ 4.9406564584124654e-324 
+            # to be:
+            #    #define __DBL_DENORM_MIN__ 4.9406564584124654e-324L
+            # and
+            #    #define __FLT_DENORM_MIN__ 1.40129846e-45F
+            # to be:
+            #    #define __FLT_DENORM_MIN__ 1.40129846e-45L
+       
+              [ -n "$VERBOSE" ] && echo "compilerVendorName = $compilerVendorName"
+              if [ "x$compilerVendorName" = "xintel" ]; then
+                 # Build a new temp file to store the results of the editing.
+                   tmpFile2="`mktemp -t roseconfigtempXXXXXXXXXX`"
+                 # echo "tmpFile2 name = $tmpFile2"
+       
+                   sed  's/^\(#define __\(DBL\|FLT\)_DENORM_MIN__[ \t]\+[0-9]*\.[0-9]*e-[0-9]*\)[LF]\?/\1L/' < "$tmpFile" > "$tmpFile2"
+       
+                 # Copy the edited file to replace the original version we use below.
+                   cp "$tmpFile2" "$tmpFile"
+              fi
+       
+            # echo "******************************************************"
+            # echo "******** AFTER INTEL SPECIFIC TRANSFORMATION ********"
+            # echo "******************************************************"
+            # cat "$tmpFile"
+            # echo "******************************************************"
+            # echo "******************************************************"
+       
+            # DQ (1/19/2017): Filer out GNU 4.9 specific macro that is a problem: #define __has_include(STR) __has_include__(STR)
+            # echo "compilerVendorName = $compilerVendorName"
+       
+              if [ "x$compilerVendorName" = "xgnu" ]; then
+                 # Build a new temp file to store the results of the editing.
+                   tmpFile2="`mktemp -t roseconfigtempXXXXXXXXXX`"
+       
+                 # echo "tmpFile2 name = $tmpFile2"
+       
+                 # sed '/match/s/.*/replacement/' file
+                   sed "/#define __has_include(STR) __has_include__(STR)/s/.*//" < "$tmpFile" > "$tmpFile2"
+       
+                 # Copy the edited file to replace the original version we use below.
+                   cp "$tmpFile2" "$tmpFile"
+       
+                 # echo "******************************************************"
+                 # echo "********** GNU 4.9 SPECIFIC TRANSFORMATION ***********"
+                 # echo "******************************************************"
+                 # cat "$tmpFile"
+                 # echo "******************************************************"
+                 # echo "******************************************************"
+              fi
+       
+            # echo "******************************************************"
+            # echo "******************************************************"
+            # cat "$tmpFile"
+            # echo "******************************************************"
+            # echo "******************************************************"
+       
+            # echo "Modified rose_edg_required_macros_and_functions.h file"
+            # cat "$mainTargetDir/rose_edg_required_macros_and_functions.h"
+            # echo "******************************************************"
+            # echo "******************************************************"
 
-          # Copy the edited file to replace the original version we use below.
-            cp "$tmpFile2" "$tmpFile"
-       fi
+          fi
 
-     # echo "******************************************************"
-     # echo "******** AFTER INTEL SPECIFIC TRANSFORMATION ********"
-     # echo "******************************************************"
-     # cat "$tmpFile"
-     # echo "******************************************************"
-     # echo "******************************************************"
+          cp "$tmpFile" "$mainTargetDir/rose_edg_required_compiler_macros_$version.h"
+   
+          rm "$tmpFile"
+       done
 
-     # DQ (1/19/2017): Filer out GNU 4.9 specific macro that is a problem: #define __has_include(STR) __has_include__(STR)
-     # echo "compilerVendorName = $compilerVendorName"
-
-       if [ "x$compilerVendorName" = "xgnu" ]; then
-          # Build a new temp file to store the results of the editing.
-            tmpFile2="`mktemp -t roseconfigtempXXXXXXXXXX`"
-
-          # echo "tmpFile2 name = $tmpFile2"
-
-          # sed '/match/s/.*/replacement/' file
-            sed "/#define __has_include(STR) __has_include__(STR)/s/.*//" < "$tmpFile" > "$tmpFile2"
-
-          # Copy the edited file to replace the original version we use below.
-            cp "$tmpFile2" "$tmpFile"
-
-          # echo "******************************************************"
-          # echo "********** GNU 4.9 SPECIFIC TRANSFORMATION ***********"
-          # echo "******************************************************"
-          # cat "$tmpFile"
-          # echo "******************************************************"
-          # echo "******************************************************"
-       fi
-
-       # DQ (2/25/2017): We need to support a different version of the buildin function support for EDG 4.9 because later versions 
-       # of this generated file cause the tests/roseTests/astFileIOTests makefile rule parallelMerge_short and parallelMerge_medium
-       # to fail randomly.  This can only so far be traced to it failing for EDG 4.9, but not EDG 4.12.  So the only practical solution 
-       # is to build a version of the rose_edg_required_macros_and_functions.h file specific for EDG 4.9 while we are in the transition 
-       # from EDG 4.9 to EDG 4.12.  I can't figure out the bug that is in EDG 4.9 and since it is fixed in later versions of EDG it
-       # is not pratical to focus more time on this issue.
-       sed "/REPLACE_ME_WITH_MACRO_DEFINITIONS/r$tmpFile" < "$roseHome/config/rose_edg_required_macros_and_functions.h.in" > "$mainTargetDir/rose_edg_required_macros_and_functions.h"
-
-     # echo "******************************************************"
-     # echo "******************************************************"
-     # cat "$tmpFile"
-     # echo "******************************************************"
-     # echo "******************************************************"
-
-     # echo "Modified rose_edg_required_macros_and_functions.h file"
-     # cat "$mainTargetDir/rose_edg_required_macros_and_functions.h"
-     # echo "******************************************************"
-     # echo "******************************************************"
-
-       rm "$tmpFile"
-
+     # DQ (2/25/2017): We need to support a different version of the buildin function support for EDG 4.9 because later versions 
+     # of this generated file cause the tests/roseTests/astFileIOTests makefile rule parallelMerge_short and parallelMerge_medium
+     # to fail randomly.  This can only so far be traced to it failing for EDG 4.9, but not EDG 4.12.  So the only practical solution 
+     # is to build a version of the rose_edg_required_macros_and_functions.h file specific for EDG 4.9 while we are in the transition 
+     # from EDG 4.9 to EDG 4.12.  I can't figure out the bug that is in EDG 4.9 and since it is fixed in later versions of EDG it
+     # is not pratical to focus more time on this issue.
+       cp "$roseHome/config/rose_edg_required_macros_and_functions.h.in" "$mainTargetDir/rose_edg_required_macros_and_functions.h"
+        
      # echo "PREPROCESSOR_DEFS = $PREPROCESSOR_DEFS"
        [ -n "$VERBOSE" ] && echo "Generating  $mainTargetDir/rose_edg_required_macros_and_functions.h"
+        
 else
        echo "$0: error: usage is create_system_headers compiler target_dir src_dir language" >&2
        exit 1
