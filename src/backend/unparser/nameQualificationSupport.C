@@ -2209,9 +2209,10 @@ generateNameQualificationSupport( SgNode* node, NameQualificationTraversal::Name
   // SageInterface::getProject() would find multiple SgProject in copyAST_tests and break the assertion
 
   // Get the project from a traversal over the parents back to the root of the AST.
-     SgProject* project = SageInterface::getProject(node);
+  // SgProject* project = SageInterface::getProject(node);
   // Or we can use this function which does not require a traversal.
-  //   SgProject* project = SageInterface::getProject();
+  // SgProject* project = SageInterface::getProject();
+     SgProject* project = SageInterface::getProject(node);
      ROSE_ASSERT(project != NULL);
 
 #if 0

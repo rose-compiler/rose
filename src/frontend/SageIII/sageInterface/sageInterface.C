@@ -11385,7 +11385,10 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
             )
          result = true;
       }
-      else if (is_Fortran_language())
+   // DQ (9/9/2025): Adding support for Jovial (similar to Fortran).
+   // else if (is_Fortran_language())
+   // else if (is_Jovial_language())
+      else if (is_Fortran_language() || is_Jovial_language())
       {
         if (func1->get_name() == func2->get_name())
           result = true;
