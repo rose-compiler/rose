@@ -357,17 +357,20 @@ Plumhall-XVS:
     script:
         - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME 3977 #Second arg is EXPECTED_SUCCESS
 
-SAPOH-Autoconf:
+SAPOH-initialize:
     extends: .release-base 
 
-SAPOH-CMake:
-    extends: .release-base 
+SAPOH-ubi9-cmake-cxx-binaries:
+    extends: .release-base
+    tags:
+      - workpool:large:rhel9
+    needs:
+      - job: SAPOH-initialize
 
-SAPOH-Post-Processing:
+SAPOH-reporting:
     extends: .release-base 
     needs:
-      - job: SAPOH-Autoconf
-      - job: SAPOH-CMake
+      - job: SAPOH-ubi9-cmake-cxx-binaries
     
 Doxygen:
     extends: .release-base 
