@@ -418,11 +418,10 @@ typedef long double __float128;
 #endif
 
 /* DQ (5/10/2016): Added support for GNU 5.x compilers (at least 5.1) */
-/* DQ (7/23/2020): Later versions of EDG support this properly (EDG 6.0 and maybe EDG 5.0).
+/* DQ (7/23/2020): Later versions of EDG support this properly (EDG 6.0 and maybe EDG 5.0). */
 #if ((__GNUC__ > 4) && (__GNUC_MINOR__ >= 1) && (__GNUC_PATCHLEVEL__ >= 0))
    #undef __has_include(STR)
 #endif
-*/
 
 /* DQ (10/22/2010): Isolate some of the OSX specific details. */
 #ifdef __APPLE__
