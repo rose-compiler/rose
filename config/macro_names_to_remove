@@ -12,3 +12,4 @@ _WCHAR_T
 __NO_STRING_INLINES
 __STDC_HOSTED__
 __STRICT_ANSI__
+__has_include
