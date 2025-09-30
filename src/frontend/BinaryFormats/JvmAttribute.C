@@ -68,7 +68,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmRuntimeInvisibleAnnotations(parent);
   }
   else if (name == "AnnotationDefault") { // 4.7.22
-    //TODO
+    return new SgAsmJvmAnnotationDefault(parent);
   }
   else if (name == "BootstrapMethods") { // 4.7.23
     return new SgAsmJvmBootstrapMethods(parent);
@@ -1132,6 +1132,11 @@ void SgAsmJvmRuntimeAnnotationPair::dump(FILE* f, const char* prefix, ssize_t id
 //
 // The RuntimeAnnotationValue class is used by the RuntimeAnnotation class.
 //
+SgAsmJvmRuntimeAnnotationValue::SgAsmJvmRuntimeAnnotationValue(SgAsmJvmAnnotationDefault* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
 SgAsmJvmRuntimeAnnotationValue::SgAsmJvmRuntimeAnnotationValue(SgAsmJvmRuntimeAnnotationValue* parent)
 {
   initializeProperties();
@@ -1324,6 +1329,33 @@ void SgAsmJvmRuntimeInvisibleAnnotations::dump(FILE* f, const char* prefix, ssiz
 //
 // 4.7.22 The AnnotationDefault Attribute. AnnotationDefault_attribute represented by the SgAsmJvmAnnotationDefault class.
 //
+SgAsmJvmAnnotationDefault::SgAsmJvmAnnotationDefault(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmAnnotationDefault* SgAsmJvmAnnotationDefault::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+
+  p_default_value = new SgAsmJvmRuntimeAnnotationValue(this);
+  p_default_value->parse(pool);
+
+  return this;
+}
+
+void SgAsmJvmAnnotationDefault::unparse(std::ostream& os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+  p_default_value->unparse(os);
+}
+
+void SgAsmJvmAnnotationDefault::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  SgAsmJvmAttribute::dump(f, prefix, idx);
+  fprintf(f, "SgAsmJvmAnnotationDefault:%p\n", p_default_value);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

@@ -268,6 +268,7 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmIntegerValueExpression.C
   SgAsmInterpretation.C
   SgAsmInterpretationList.C
+  SgAsmJvmAnnotationDefault.C
   SgAsmJvmAttribute.C
   SgAsmJvmAttributeTable.C
   SgAsmJvmBootstrapMethod.C

@@ -282,6 +282,7 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmIntegerValueExpression.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmInterpretation.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmInterpretationList.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmAnnotationDefault.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmAttribute.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmAttributeTable.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmBootstrapMethod.h

@@ -272,6 +272,7 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmIntegerValueExpression.C \
         SgAsmInterpretation.C \
         SgAsmInterpretationList.C \
+        SgAsmJvmAnnotationDefault.C \
         SgAsmJvmAttribute.C \
         SgAsmJvmAttributeTable.C \
         SgAsmJvmBootstrapMethod.C \

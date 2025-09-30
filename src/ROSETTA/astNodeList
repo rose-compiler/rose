@@ -1074,3 +1074,4 @@ SgAsmJvmRuntimeAnnotation
 SgAsmJvmRuntimeAnnotationValue
 SgAsmJvmRuntimeAnnotationPair
 SgAsmJvmRuntimeInvisibleAnnotations
+SgAsmJvmAnnotationDefault

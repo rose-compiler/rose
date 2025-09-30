@@ -351,6 +351,7 @@ rosetta_generated_definitions =				\
 	  SgAsmIntegerValueExpression.h			\
 	  SgAsmInterpretation.h				\
 	  SgAsmInterpretationList.h			\
+	  SgAsmJvmAnnotationDefault.h			\
 	  SgAsmJvmAttribute.h				\
 	  SgAsmJvmAttributeTable.h			\
 	  SgAsmJvmBootstrapMethod.h			\

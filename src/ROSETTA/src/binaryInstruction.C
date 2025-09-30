@@ -10447,7 +10447,7 @@ public:
      *
      *  The values property is represented by a list of pointers to annotation array entries.
      *  The annotation structure is specified in section 4.7.16.  This property is active for tags: '[' 
-     *  
+     *
      *  @{ */
     std::vector<SgAsmJvmRuntimeAnnotationValue*> const& get_values() const;
     std::vector<SgAsmJvmRuntimeAnnotationValue*>& get_values();
@@ -10455,13 +10455,18 @@ public:
  public:
     /** Initialize the object before parsing.
      *
-     *  One of the preferred constructor to use before parsing.  It shall set its parent. */
+     *  One of the preferred constructors to use before parsing.  It shall set its parent. */
     explicit SgAsmJvmRuntimeAnnotationValue(SgAsmJvmRuntimeAnnotationValue*);
 
     /** Initialize the object before parsing.
      *
-     *  One of the preferred constructor to use before parsing.  It shall set its parent. */
+     *  One of the preferred constructors to use before parsing.  It shall set its parent. */
     explicit SgAsmJvmRuntimeAnnotationValue(SgAsmJvmRuntimeAnnotationPair*);
+
+    /** Initialize the object before parsing.
+     *
+     *  One of the preferred constructors to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmRuntimeAnnotationValue(SgAsmJvmAnnotationDefault*);
 
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmRuntimeAnnotationValue* parse(SgAsmJvmConstantPool*);
@@ -14683,6 +14688,98 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmAnnotationDefault           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmAnnotationDefault);
+IS_SERIALIZABLE(AsmJvmAnnotationDefault);
+
+#ifndef DOCUMENTATION
+AsmJvmAnnotationDefault.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+#ifdef DOCUMENTATION
+/** JVM AnnotationDefault.
+ *
+
+ *  The AnnotationDefault attribute is a variable-length attribute in the attributes table of certain
+ *  method_info structures (section 4.6), namely those representing elements of annotation interfaces.
+ *  The AnnotationDefault attribute records the default value for the element represented by the
+ *  method_info structure.  See section 4.7.22 of the JVM specification. */
+class SgAsmJvmAnnotationDefault: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmAnnotationDefault.setDataPrototype(
+        "SgAsmJvmRuntimeAnnotationValue*", "default_value", "= nullptr",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmAnnotationDefault);
+#if defined(SgAsmJvmAnnotationDefault_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmAnnotationDefault -----------------------
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmAnnotationDefault");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        s & BOOST_SERIALIZATION_NVP(p_default_value);
+        debugSerializationEnd("SgAsmJvmAnnotationDefault");
+    }
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
+public:
+public:
+    /** Property: value
+     *
+     *  The default_value item (section 4.7.16.1) represents the default value of the annotation
+     *  interface element represented by the method_info structure enclosing this AnnotationDefault
+     *  attribute.
+     *
+     *  @{ */
+    SgAsmJvmRuntimeAnnotationValue* const& get_default_value() const;
+    void set_default_value(SgAsmJvmRuntimeAnnotationValue* const&);
+    /** @} */
+ public:
+    /** Initialize the object before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmAnnotationDefault(SgAsmJvmAttributeTable*);
+
+    /** Initialize the object by parsing content from the class file. */
+    virtual SgAsmJvmAnnotationDefault* parse(SgAsmJvmConstantPool*) override;
+
+    /** Write line number entry to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmAnnotationDefault();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmAnnotationDefault();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmAnnotationDefault_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmAttribute           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -14693,6 +14790,7 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
     "AsmJvmAttribute",
     "AsmJvmAttributeTag",
     SubclassListBuilder()
+        | AsmJvmAnnotationDefault
         | AsmJvmBootstrapMethods
         | AsmJvmCodeAttribute
         | AsmJvmConstantValue

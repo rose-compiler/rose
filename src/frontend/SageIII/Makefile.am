@@ -393,6 +393,7 @@ GENERATED_SOURCE =						\
         SgAsmIntegerValueExpression.h				\
         SgAsmInterpretation.h					\
         SgAsmInterpretationList.h				\
+        SgAsmJvmAnnotationDefault.h				\
         SgAsmJvmAttribute.h					\
         SgAsmJvmAttributeTable.h				\
         SgAsmJvmBootstrapMethod.h				\
@@ -809,6 +810,7 @@ GENERATED_SOURCE =						\
 	SgAsmIntegerValueExpression.h				\
 	SgAsmInterpretation.h					\
 	SgAsmInterpretationList.h				\
+	SgAsmJvmAnnotationDefault.h				\
 	SgAsmJvmAttribute.h					\
 	SgAsmJvmAttributeTable.h				\
 	SgAsmJvmBootstrapMethod.h				\
@@ -1372,6 +1374,7 @@ nodist_pkginclude_HEADERS =			\
    SgAsmIntegerValueExpression.h		\
    SgAsmInterpretation.h			\
    SgAsmInterpretationList.h			\
+   SgAsmJvmAnnotationDefault.h			\
    SgAsmJvmAttribute.h				\
    SgAsmJvmAttributeTable.h			\
    SgAsmJvmBootstrapMethod.h			\
