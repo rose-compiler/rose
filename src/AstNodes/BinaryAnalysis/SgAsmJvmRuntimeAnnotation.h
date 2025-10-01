@@ -22,6 +22,16 @@ public:
     /** Initialize the object before parsing.
      *
      *  This is one of the preferred constructors to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeAnnotationValue*);
+
+    /** Initialize the object before parsing.
+     *
+     *  This is one of the preferred constructors to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeParameterAnnotation*);
+
+    /** Initialize the object before parsing.
+     *
+     *  This is one of the preferred constructors to use before parsing.  It shall set its parent. */
     explicit SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeVisibleAnnotations*);
 
     /** Initialize the object before parsing.

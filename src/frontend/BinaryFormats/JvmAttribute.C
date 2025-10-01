@@ -67,6 +67,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   else if (name == "RuntimeInvisibleAnnotations") { // 4.7.17
     return new SgAsmJvmRuntimeInvisibleAnnotations(parent);
   }
+  else if (name == "RuntimeVisibleParameterAnnotations") { // 4.7.18
+    return new SgAsmJvmRuntimeVisibleParameterAnnotations(parent);
+  }
   else if (name == "AnnotationDefault") { // 4.7.22
     return new SgAsmJvmAnnotationDefault(parent);
   }
@@ -1050,12 +1053,22 @@ void SgAsmJvmRuntimeVisibleAnnotations::dump(FILE* f, const char* prefix, ssize_
 // The RuntimeAnnotation class used by the RuntimeVisibleAnnotations_attribute and the
 // RuntimeInvisibleAnnotations_attribute.
 //
+SgAsmJvmRuntimeAnnotation::SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeAnnotationValue* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
 SgAsmJvmRuntimeAnnotation::SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeVisibleAnnotations* parent)
 {
   initializeProperties();
   set_parent(parent);
 }
 SgAsmJvmRuntimeAnnotation::SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeInvisibleAnnotations* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+SgAsmJvmRuntimeAnnotation::SgAsmJvmRuntimeAnnotation(SgAsmJvmRuntimeParameterAnnotation* parent)
 {
   initializeProperties();
   set_parent(parent);
@@ -1167,8 +1180,9 @@ SgAsmJvmRuntimeAnnotationValue* SgAsmJvmRuntimeAnnotationValue::parse(SgAsmJvmCo
         Jvm::read_value(pool, p_class_info_index);
         break;
       case '@': // nested annotation
+        p_annotation_value = new SgAsmJvmRuntimeAnnotation(this);
+        p_annotation_value->parse(pool);
         set_is_annotation_value(true);
-        ASSERT_require2(p_tag!='@', "tag '@' annotation_value unsupported\n");
         break;
       case '[': { // array_value
         uint16_t numArrayValues;
@@ -1208,7 +1222,7 @@ void SgAsmJvmRuntimeAnnotationValue::unparse(std::ostream& os) const
       break;
     case '@': // nested annotation
       ASSERT_require(get_is_annotation_value());
-      ASSERT_require2(p_tag!='@', "tag '@' annotation_value unsupported\n");
+      p_annotation_value->unparse(os);
       break;
     case '[': { // array_value
       uint16_t numArrayValues = get_values().size();
@@ -1307,8 +1321,93 @@ void SgAsmJvmRuntimeInvisibleAnnotations::dump(FILE* f, const char* prefix, ssiz
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.18 The RuntimeVisibleParameterAnnotations Attribute. RuntimeVisibleParameterAnnotations_attribute represented by the TODO class.
+// 4.7.18 The RuntimeVisibleParameterAnnotations Attribute. RuntimeVisibleParameterAnnotations_attribute represented by the
+// SgAsmJvmRuntimeVisibleAnnotations class.
 //
+SgAsmJvmRuntimeVisibleParameterAnnotations::SgAsmJvmRuntimeVisibleParameterAnnotations(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmRuntimeVisibleParameterAnnotations* SgAsmJvmRuntimeVisibleParameterAnnotations::parse(SgAsmJvmConstantPool* pool)
+{
+  uint8_t numParams;
+  ASSERT_not_null(get_parent());
+
+  SgAsmJvmAttribute::parse(pool);
+  Jvm::read_value(pool, numParams);
+
+  for (int ii = 0; ii < numParams; ii++) {
+    auto paramAnnotation = new SgAsmJvmRuntimeParameterAnnotation(this);
+    paramAnnotation->parse(pool);
+    get_parameter_annotations().push_back(paramAnnotation);
+  }
+
+  return this;
+}
+
+void SgAsmJvmRuntimeVisibleParameterAnnotations::unparse(std::ostream& os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+
+  uint8_t numParams = get_parameter_annotations().size();
+  Jvm::writeValue(os, numParams);
+
+  for (auto paramAnnotation : get_parameter_annotations()) {
+    paramAnnotation->unparse(os);
+  }
+}
+
+void SgAsmJvmRuntimeVisibleParameterAnnotations::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: SgAsmJvmRuntimeVisibleAnnotations::dump()\n", prefix, idx);
+  for (auto paramAnnotation : get_parameter_annotations()) {
+    paramAnnotation->dump(f, prefix, idx);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// The RuntimeParameterAnnotation class is used by the RuntimeVisibleParametersAnnotations_attribute and the
+// RuntimeInvisibleParameterAnnotations_attribute.
+//
+SgAsmJvmRuntimeParameterAnnotation::SgAsmJvmRuntimeParameterAnnotation(SgAsmJvmRuntimeVisibleParameterAnnotations* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmRuntimeParameterAnnotation* SgAsmJvmRuntimeParameterAnnotation::parse(SgAsmJvmConstantPool* pool)
+{
+  uint16_t numAnnotations;
+  Jvm::read_value(pool, numAnnotations);
+
+  for (int ii = 0; ii < numAnnotations; ii++) {
+    auto annotation = new SgAsmJvmRuntimeAnnotation(this);
+    annotation->parse(pool);
+    get_annotations().push_back(annotation);
+  }
+
+  return this;
+}
+
+void SgAsmJvmRuntimeParameterAnnotation::unparse(std::ostream& os) const
+{
+  uint16_t numAnnotations = get_annotations().size();
+  Jvm::writeValue(os, numAnnotations);
+
+  for (auto annotation : get_annotations()) {
+    annotation->unparse(os);
+  }
+}
+
+void SgAsmJvmRuntimeParameterAnnotation::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  for (auto annotation : get_annotations()) {
+    annotation->dump(f, prefix, idx);
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

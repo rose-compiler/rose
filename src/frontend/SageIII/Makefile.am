@@ -431,7 +431,9 @@ GENERATED_SOURCE =						\
         SgAsmJvmRuntimeAnnotation.h				\
         SgAsmJvmRuntimeAnnotationPair.h 			\
         SgAsmJvmRuntimeAnnotationValue.h			\
+        SgAsmJvmRuntimeParameterAnnotation.h			\
         SgAsmJvmRuntimeVisibleAnnotations.h			\
+        SgAsmJvmRuntimeVisibleParameterAnnotations.h		\
         SgAsmJvmRuntimeInvisibleAnnotations.h			\
         SgAsmJvmSignature.h					\
         SgAsmJvmSourceFile.h					\
@@ -848,7 +850,9 @@ GENERATED_SOURCE =						\
         SgAsmJvmRuntimeAnnotation.h				\
         SgAsmJvmRuntimeAnnotationPair.h 			\
         SgAsmJvmRuntimeAnnotationValue.h			\
+        SgAsmJvmRuntimeParameterAnnotation.h			\
         SgAsmJvmRuntimeVisibleAnnotations.h			\
+        SgAsmJvmRuntimeVisibleParameterAnnotations.h		\
         SgAsmJvmRuntimeInvisibleAnnotations.h			\
 	SgAsmJvmSignature.h					\
 	SgAsmJvmSourceFile.h					\
@@ -1412,7 +1416,9 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmRuntimeAnnotation.h			\
    SgAsmJvmRuntimeAnnotationPair.h		\
    SgAsmJvmRuntimeAnnotationValue.h		\
+   SgAsmJvmRuntimeParameterAnnotation.h 	\
    SgAsmJvmRuntimeVisibleAnnotations.h		\
+   SgAsmJvmRuntimeVisibleParameterAnnotations.h \
    SgAsmJvmRuntimeInvisibleAnnotations.h	\
    SgAsmJvmSignature.h				\
    SgAsmJvmSourceFile.h				\

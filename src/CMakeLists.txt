@@ -464,7 +464,9 @@ set(ROSETTA_GENERATED_DEFINITIONS_30
   ${ROSETTA_OUTPUT_DIRECTORY}/SgAsmJvmRuntimeAnnotation.h
   ${ROSETTA_OUTPUT_DIRECTORY}/SgAsmJvmRuntimeAnnotationPair.h
   ${ROSETTA_OUTPUT_DIRECTORY}/SgAsmJvmRuntimeAnnotationValue.h
+  ${ROSETTA_OUTPUT_DIRECTORY}/SgAsmJvmRuntimeParameterAnnotation.h
   ${ROSETTA_OUTPUT_DIRECTORY}/SgAsmJvmRuntimeVisibleAnnotations.h
+  ${ROSETTA_OUTPUT_DIRECTORY}/SgAsmJvmRuntimeVisibleParameterAnnotations.h
   ${ROSETTA_OUTPUT_DIRECTORY}/SgAsmJvmRuntimeInvisibleAnnotations.h
 )
 set(ROSETTA_GENERATED_DEFINITIONS
