@@ -26,6 +26,7 @@ public:
     std::string instructionMnemonic(const SgAsmInstruction*) const override;
     bool terminatesBasicBlock(SgAsmInstruction*) const override;
     bool isUnknown(const SgAsmInstruction*) const override;
+    bool isControlTransfer(const SgAsmInstruction*) const override;
     bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, Address *target, Address *ret) const override;
     bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, Address *target, Address *ret) const override;
     bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) const override;
