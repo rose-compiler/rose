@@ -71,7 +71,6 @@ SgClassDefinition* VxUtilFuncs::getClassDefinitionFromDeclaration(const SgClassD
 SgClassDefinition* VxUtilFuncs::getClassDefinitionFromType(const SgClassType* classType) {
   SgDeclarationStatement * classDeclStmt= classType->getAssociatedDeclaration();
   SgClassDeclaration* classDecl = isSgClassDeclaration(classDeclStmt);
-  SgClassDeclaration* classDeclDefining = isSgClassDeclaration(classDecl->get_definingDeclaration());
   SgClassDefinition* classDef = getClassDefinitionFromDeclaration(classDecl);
   return classDef;
 };

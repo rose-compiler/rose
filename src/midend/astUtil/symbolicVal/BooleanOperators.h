@@ -20,12 +20,12 @@ class SymbolicAnd : public SymbolicExpr
   AstNodePtr CodeGenOP( AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const;
 };  
   
-class AndApplicator : public OPApplicator  
-{  
- public:  
+class AndApplicator : public OPApplicator
+{
+ public:
   virtual SymOpType GetOpType() { return SYMOP_AND; }
 
-  bool MergeConstInt(int vu1, int vd1, int vu2, int vd2, int& r1, int& r2)   
+  bool MergeConstInt(int vu1, int /*vd1*/, int vu2, int /*vd2*/, int& r1, int& r2)
   {   
     // If either operand is 0 (false), result is 0 (false)  
     if (vu1 == 0 || vu2 == 0) {   

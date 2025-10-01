@@ -7,7 +7,7 @@ class UnaryOperator : public SymbolicExpr
 {
   protected:
     UnaryOperator() {}
-    UnaryOperator( const UnaryOperator& that) : SymbolicExpr() {}
+    UnaryOperator( const UnaryOperator& /*that*/) : SymbolicExpr() {}
   public:
     AstNodePtr CodeGen(AstInterface &fa) const override
     {
@@ -28,12 +28,12 @@ class UnaryOperator : public SymbolicExpr
     
     virtual AstNodePtr CodeGenUnaryOP(AstInterface &fa, const AstNodePtr& operand) const = 0;
     
-    AstNodePtr CodeGenOP(AstInterface &fa, const AstNodePtr& a1, const AstNodePtr& a2) const override
+    AstNodePtr CodeGenOP(AstInterface &/*fa*/, const AstNodePtr& /*a1*/, const AstNodePtr& /*a2*/) const override
     {
       ROSE_ABORT();
     }
     
-    SymbolicExpr* DistributeExpr(SymOpType op, const SymbolicVal& that) const override
+    SymbolicExpr* DistributeExpr(SymOpType /*op*/, const SymbolicVal& /*that*/) const override
     {
       return CloneExpr();
     }
@@ -41,38 +41,38 @@ class UnaryOperator : public SymbolicExpr
 
 class SymbolicNot : public UnaryOperator  
 {  
-  std::string GetOPName() const override { return "!"; }  
+  std::string GetOPName() const override { return "!"; }
   SymOpType GetTermOP() const override { return SYMOP_NOT; }
- public:  
-  SymbolicNot() {}  
-  SymbolicNot(const SymbolicNot& that) : UnaryOperator(that) {}  
-  
-  SymbolicExpr* CloneExpr() const override { return new SymbolicNot(*this); }  
-  SymOpType GetOpType() const { return SYMOP_NOT; }  
-  void ApplyOpd(const SymbolicVal & v) override;  
-  SymbolicExpr* DistributeExpr(SymOpType, const SymbolicVal&) const {  
-    return new SymbolicNot();  
+ public:
+  SymbolicNot() {}
+  SymbolicNot(const SymbolicNot& that) : UnaryOperator(that) {}
+
+  SymbolicExpr* CloneExpr() const override { return new SymbolicNot(*this); }
+  SymOpType GetOpType() const override { return SYMOP_NOT; }
+  void ApplyOpd(const SymbolicVal & v) override;
+  SymbolicExpr* DistributeExpr(SymOpType, const SymbolicVal&) const override {
+    return new SymbolicNot();
   }
   AstNodePtr CodeGenUnaryOP(AstInterface& fa, const AstNodePtr& operand) const override {
     return fa.CreateUnaryOP(AstInterface::UOP_NOT, operand);
   }
-};  
+};
 
 class UnaryOPApplicator : public OPApplicator
 {
   public:
-    bool MergeConstInt(int vu1, int vd1, int vu2, int vd2, int& r1, int& r2) override final
+    bool MergeConstInt(int vu1, int vd1, int /*vu2*/, int /*vd2*/, int& r1, int& r2) override final
     {
       return MergeConstIntUnary(vu1, vd1, r1, r2);
     }
 
-    bool MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2, SymbolicTerm& result) override final
+    bool MergeElem(const SymbolicTerm& t1, const SymbolicTerm& /*t2*/, SymbolicTerm& result) override final
     {
       return MergeElemUnary(t1, result);
     }
 
-    virtual bool MergeConstIntUnary(int vu, int vd, int& r1, int& r2) = 0;
-    virtual bool MergeElemUnary(const SymbolicTerm& t1, SymbolicTerm& result) = 0;
+    virtual bool MergeConstIntUnary(int /*vu*/, int /*vd*/, int& /*r1*/, int& /*r2*/) = 0;
+    virtual bool MergeElemUnary(const SymbolicTerm& /*t1*/, SymbolicTerm& /*result*/) = 0;
 };
 
 class NotApplicator : public UnaryOPApplicator  
@@ -80,7 +80,7 @@ class NotApplicator : public UnaryOPApplicator
  public:  
   SymOpType GetOpType() override { return SYMOP_NOT; }
 
-  bool MergeConstIntUnary(int vu, int vd, int& r1, int& r2) override
+  bool MergeConstIntUnary(int vu, int /*vd*/, int& r1, int& r2) override
   {
       // If operand is 0 (false), result is 1 (true)  
       if (vu == 0) {
