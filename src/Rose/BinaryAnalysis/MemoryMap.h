@@ -471,6 +471,10 @@ public:
 
         ProcessMapRecord()
             : accessibility(0), fileOffset(0), inode(0) {}
+
+        void print(std::ostream&) const;
+
+        friend std::ostream& operator<<(std::ostream&, const ProcessMapRecord&);
     };
 
     /** Obtain the memory map information for a process.

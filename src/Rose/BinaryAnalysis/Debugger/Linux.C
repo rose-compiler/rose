@@ -1297,12 +1297,12 @@ Linux::remoteSystemCall(ThreadId tid, int syscallNumber, std::vector<uint64_t> a
             }
         } else if (arch->bitsPerWord() == 64) {
             switch (args.size()) {
-                case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 9,          0, 32)); // falls through
-                case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 8,          0, 32)); // falls through
-                case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 10,         0, 32)); // falls through
-                case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32)); // falls through
-                case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32)); // falls through
-                case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32));
+                case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 9,          0, 64)); // falls through
+                case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 8,          0, 64)); // falls through
+                case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 10,         0, 64)); // falls through
+                case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 64)); // falls through
+                case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 64)); // falls through
+                case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 64));
             }
         } else {
             ASSERT_not_reachable("invalid x86 word size: " + boost::lexical_cast<std::string>(arch->bitsPerWord()));
@@ -1345,46 +1345,65 @@ Linux::remoteSystemCall(ThreadId tid, int syscallNumber, std::vector<uint64_t> a
 
 int
 Linux::remoteOpenFile(ThreadId tid, const boost::filesystem::path &fileName, unsigned flags, mode_t mode) {
-    const unsigned openSyscall = [this]() {
-        if (const auto arch = guessSpecimenArchitecture()) {
-            if (as<const Architecture::X86>(arch)) {
-                if (arch->bitsPerWord() == 32) {
-                    return 5;
-                } else if (arch->bitsPerWord() == 64) {
-                    return 2;
-                } else {
-                    ASSERT_not_reachable("invalid word size");
-                }
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"remoteOpenFile(tid=" <<tid
+                       <<", fileName=\"" <<StringUtility::cEscape(fileName.string()) <<"\""
+                       <<", flags=" <<flags
+                       <<", mode=" <<mode
+                       <<")\n";
+    const Architecture::Base::ConstPtr arch = guessSpecimenArchitecture();
+    ASSERT_not_null2(arch, "cannot guess specimen architecture");
+
+    const unsigned openSyscall = [&arch]() {
+        if (as<const Architecture::X86>(arch)) {
+            if (arch->bitsPerWord() == 32) {
+                return 5;
+            } else if (arch->bitsPerWord() == 64) {
+                return 2;
             } else {
-                mlog[ERROR] <<"SYS_open not known for " <<arch->name() <<"\n";
-                return -1;
+                ASSERT_not_reachable("invalid word size");
             }
         } else {
-            ASSERT_not_reachable("no architecture");
+            mlog[ERROR] <<"SYS_open not known for " <<arch->name() <<"\n";
+            return -1;
         }
     }();
+    SAWYER_MESG(debug) <<"  open syscall number is " <<openSyscall <<"\n";
 
-    // Find some writable memory in which to write the file name
-    Sawyer::Optional<Address> nameVa;
-    std::vector<MemoryMap::ProcessMapRecord> mapRecords = MemoryMap::readProcessMap(child_);
-    for (const MemoryMap::ProcessMapRecord &record: mapRecords) {
-        if ((record.accessibility & MemoryMap::READ_WRITE) == MemoryMap::READ_WRITE &&
-            record.interval.size() > fileName.string().size()) {
-            nameVa = record.interval.least();
-            break;
-        }
-    }
-    if (!nameVa)
-        return -1;
+    // Allocate space for the file name on the subordinate's stack. This is safer than using arbitrary writable memory because the
+    // stack is thread-local (other threads won't interfere) and we're controlling this thread via ptrace so it won't be running
+    // concurrently.
+    const RegisterDescriptor SP = arch->registerDictionary()->stackPointerRegister();
 
-    // Write the file name to the subordinate's memory, saving what was there previously.
-    std::vector<uint8_t> savedName(fileName.string().size() + 1);
-    readMemory(*nameVa, fileName.string().size() + 1, savedName.data());
-    writeMemory(*nameVa, fileName.string().size()+1, (const uint8_t*)fileName.c_str());
-    int retval = remoteSystemCall(tid, openSyscall, std::vector<uint64_t>{*nameVa, flags, mode});
+    // Read current stack pointer
+    Sawyer::Container::BitVector savedSp = readRegister(tid, SP);
+    Address currentSp = savedSp.toInteger();
+    SAWYER_MESG(debug) <<"  current stack pointer: " <<StringUtility::addrToString(currentSp) <<"\n";
 
-    // Restore saved memory
-    writeMemory(*nameVa, savedName.size(), savedName.data());
+    // Calculate space needed for filename (including null terminator) with proper alignment.  x86-64 requires 16-byte alignment,
+    // x86-32 typically requires 4-byte alignment.
+    const size_t fileNameSize = fileName.string().size() + 1;
+    const size_t alignment = arch->bitsPerWord() == 64 ? 16 : 4;
+    const size_t allocSize = (fileNameSize + alignment - 1) & ~(alignment - 1);
+
+    // Allocate stack space by moving stack pointer down (stack grows downward on x86)
+    Address nameVa = currentSp - allocSize;
+    SAWYER_MESG(debug) <<"  allocating " <<allocSize <<" bytes on stack at " <<StringUtility::addrToString(nameVa) <<"\n";
+    writeRegister(tid, SP, nameVa);
+
+    // We want this operation to have no lasting effect, so read the existing memory values and restore them later.
+    std::vector<uint8_t> savedName(fileNameSize);
+    readMemory(nameVa, fileNameSize, savedName.data());
+    writeMemory(nameVa, fileNameSize, (const uint8_t*)fileName.c_str());
+
+    // Execute the system call
+    int retval = remoteSystemCall(tid, openSyscall, std::vector<uint64_t>{nameVa, flags, mode});
+    SAWYER_MESG(debug) <<"  remote syscall returned " <<retval <<"\n";
+
+    // Restore the original memory contents and the stack pointer (deallocates our stack space)
+    writeMemory(nameVa, savedName.size(), savedName.data());
+    writeRegister(tid, SP, savedSp);
+
     return retval;
 }
 

@@ -143,6 +143,24 @@ MemoryMap::segmentTitle(const Segment &segment) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      ProcessMapRecord
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+MemoryMap::ProcessMapRecord::print(std::ostream &out) const {
+    out <<StringUtility::addrToString(interval)
+        <<" "
+        <<((accessibility & READABLE) != 0 ? 'r' : '-')
+        <<((accessibility & WRITABLE) != 0 ? 'w' : '-')
+        <<((accessibility & EXECUTABLE) != 0 ? 'x' : '-')
+        <<((accessibility & PRIVATE) != 0 ? 'p' : '-')
+        <<" " <<StringUtility::addrToString(fileOffset)
+        <<" \"" <<StringUtility::cEscape(deviceName) <<"\""
+        <<" " <<inode
+        <<" \"" <<StringUtility::cEscape(comment);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                       MemoryMap methods
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1482,5 +1500,13 @@ MemoryMap::parseNameValuePairs(const std::string &input) {
 
 } // namespace
 } // namespace
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::ostream&
+operator<<(std::ostream &out, const Rose::BinaryAnalysis::MemoryMap::ProcessMapRecord &pmr) {
+    pmr.print(out);
+    return out;
+}
 
 #endif
