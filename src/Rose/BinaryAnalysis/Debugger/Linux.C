@@ -1381,13 +1381,14 @@ Linux::remoteOpenFile(ThreadId tid, const boost::filesystem::path &fileName, uns
     SAWYER_MESG(debug) <<"  current stack pointer: " <<StringUtility::addrToString(currentSp) <<"\n";
 
     // Calculate space needed for filename (including null terminator) with proper alignment.  x86-64 requires 16-byte alignment,
-    // x86-32 typically requires 4-byte alignment.
+    // x86-32 typically requires 4-byte alignment. On x86-64 we account for the 128-byte red zone defined by the System V ABI, which
+    // is a region below the stack pointer that leaf functions may use without adjusting the stack pointer. Although this thread is
+    // paused and we're only going to do a syscall before restoring the original memory contents, we'll avoid the red zone anyway.
     const size_t fileNameSize = fileName.string().size() + 1;
     const size_t alignment = arch->bitsPerWord() == 64 ? 16 : 4;
     const size_t allocSize = (fileNameSize + alignment - 1) & ~(alignment - 1);
-
-    // Allocate stack space by moving stack pointer down (stack grows downward on x86)
-    Address nameVa = currentSp - allocSize;
+    const size_t redZone = (arch->bitsPerWord() == 64) ? 128 : 0;
+    Address nameVa = currentSp - allocSize - redZone;
     SAWYER_MESG(debug) <<"  allocating " <<allocSize <<" bytes on stack at " <<StringUtility::addrToString(nameVa) <<"\n";
     writeRegister(tid, SP, nameVa);
 
