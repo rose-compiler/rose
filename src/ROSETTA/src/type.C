@@ -216,6 +216,29 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeChar16           , "TypeChar16",            "T_CHAR16" );
      NEW_TERMINAL_MACRO ( TypeChar32           , "TypeChar32",            "T_CHAR32" );
 
+  // PL (10/01/2025): Break out integral and floating-point types into nonterminals.
+  // This adds some more depth into the type hierarchy.
+     NEW_NONTERMINAL_MACRO (SignedIntegralType,
+         TypeInt                 | TypeLong        | TypeLongLong  | TypeShort      |
+         TypeSigned128bitInteger | TypeSignedChar  | TypeSignedInt | TypeSignedLong |
+         TypeSignedLongLong      | TypeSignedShort,
+       "SignedIntegralType","SignedIntegralTypeTag", false);
+
+     NEW_NONTERMINAL_MACRO (UnsignedIntegralType,
+         TypeUnsigned128bitInteger | TypeUnsignedChar | TypeUnsignedInt | TypeUnsignedLong |
+         TypeUnsignedLongLong      | TypeUnsignedShort,
+       "UnsignedIntegralType","UnsignedIntegralTypeTag", false);
+
+     NEW_NONTERMINAL_MACRO (IntegralType,
+         SignedIntegralType | UnsignedIntegralType | TypeChar       | TypeWchar |
+         TypeChar16         | TypeChar32           | AdaModularType,
+       "IntegralType","IntegralTypeTag", false);
+
+     NEW_NONTERMINAL_MACRO (FloatingType,
+         TypeFloat      | TypeFloat128 | TypeFloat80 | TypeDouble |
+         TypeLongDouble,
+       "FloatingType","FloatingTypeTag", false);
+
   // DQ (5/7/2004): Added TemplateType to be derived from SgType (this leaves room later to
   // build more specific types for template classes ? template function, etc. unless they
   // should be derived from there non-template associated types as is done for the template
@@ -223,22 +246,16 @@ Grammar::setUpTypes ()
   // to have a TemplateType and since all templates are the same (until they are instatiated,
   // likely there should only be a single TemplateType).
      NEW_NONTERMINAL_MACRO (Type,
-          TypeUnknown          | TypeChar                | TypeSignedChar            | TypeUnsignedChar     |
-          TypeShort            | TypeSignedShort         | TypeUnsignedShort         | TypeInt              |
-          TypeSignedInt        | TypeUnsignedInt         | TypeLong                  | TypeSignedLong       |
-          TypeUnsignedLong     | TypeVoid                | TypeGlobalVoid            | TypeWchar            |
-          TypeFloat            | TypeDouble              | TypeLongLong              | TypeSignedLongLong   |
-          TypeUnsignedLongLong | TypeSigned128bitInteger | TypeUnsigned128bitInteger | TypeFloat80          |
-          TypeLongDouble       | TypeString              | TypeBool                  | PointerType          |
-          ReferenceType        | NamedType               | ModifierType              | FunctionType         |
-          ArrayType            | TypeEllipse             | TemplateType              | QualifiedNameType    |
-          TypeComplex          | TypeImaginary           | TypeDefault               | TypeCAFTeam          |
-          TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  |
-          TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
-          TypeTuple            | TypeChar16              | TypeChar32                | TypeFloat128         |
-          TypeFixed            | AutoType                | AdaAccessType             | AdaSubtype           |
-          AdaDiscreteType      | AdaModularType          | AdaDerivedType            | AdaSubroutineType    |
-          JovialBitType | RangeType,
+          TypeUnknown     | TypeVoid       | TypeGlobalVoid    | TypeTuple           |
+          TypeString      | TypeBool       | PointerType       | JovialBitType       |
+          ReferenceType   | NamedType      | ModifierType      | FunctionType        |
+          ArrayType       | TypeEllipse    | TemplateType      | QualifiedNameType   |
+          TypeComplex     | TypeImaginary  | TypeDefault       | TypeCAFTeam         |
+          TypeCrayPointer | TypeLabel      | JavaUnionType     | RvalueReferenceType |
+          TypeNullptr     | DeclType       | TypeOfType        | TypeMatrix          |
+          TypeFixed       | AutoType       | AdaAccessType     | AdaSubtype          |
+          AdaDiscreteType | AdaDerivedType | AdaSubroutineType | RangeType           |
+          IntegralType    | FloatingType,
         "Type","TypeTag", false);
 
      //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
@@ -343,11 +360,23 @@ Grammar::setUpTypes ()
                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Use simple "static CLASSNAME builtin_type;" on most classed derived from Type
-     Type.setSubTreeFunctionPrototype ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
-     Type.excludeFunctionPrototype    ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     Type.setSubTreeFunctionPrototype              ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     Type.excludeFunctionPrototype                 ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
 
-     Type.setSubTreeFunctionSource    ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
-     Type.excludeFunctionSource       ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     Type.setSubTreeFunctionSource                 ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     Type.excludeFunctionSource                    ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+
+     FloatingType.setSubTreeFunctionSource         ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     FloatingType.excludeFunctionSource            ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+
+     IntegralType.setSubTreeFunctionSource         ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     IntegralType.excludeFunctionSource            ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+
+     SignedIntegralType.setSubTreeFunctionSource   ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     SignedIntegralType.excludeFunctionSource      ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+
+     UnsignedIntegralType.setSubTreeFunctionSource ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     UnsignedIntegralType.excludeFunctionSource    ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
 
 #if 1
   // The code was commented out

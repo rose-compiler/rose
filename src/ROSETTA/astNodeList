@@ -1077,3 +1077,7 @@ SgAsmJvmRuntimeInvisibleAnnotations
 SgAsmJvmAnnotationDefault
 SgAsmJvmRuntimeParameterAnnotation
 SgAsmJvmRuntimeVisibilityParamAnnotations
+SgIntegralType
+SgSignedIntegralType
+SgUnsignedIntegralType
+SgFloatingType
