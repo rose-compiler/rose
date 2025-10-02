@@ -977,6 +977,7 @@ CxxGrammarMetaProgram_GENDEFN =		     	  	      	    	\
  $(ROSE)/src/ROSETTA/src/SgAsmIntegerValueExpression.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmInterpretation.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmInterpretationList.h			\
+ $(ROSE)/src/ROSETTA/src/SgAsmJvmAnnotationDefault.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmAttribute.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmAttributeTable.h			\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmBootstrapMethod.h			\
@@ -1011,6 +1012,14 @@ CxxGrammarMetaProgram_GENDEFN =		     	  	      	    	\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmNestHost.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmNestMembers.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmNode.h					\
+ $(ROSE)/src/ROSETTA/src/SgAsmJvmRuntimeAnnotation.h			\
+ $(ROSE)/src/ROSETTA/src/SgAsmJvmRuntimeAnnotationPair.h		\
+ $(ROSE)/src/ROSETTA/src/SgAsmJvmRuntimeAnnotationValue.h		\
+ $(ROSE)/src/ROSETTA/src/SgAsmJvmRuntimeInvisibleAnnotations.h		\
+ $(ROSE)/src/ROSETTA/src/SgAsmJvmRuntimeParameterAnnotation.h		\
+ $(ROSE)/src/ROSETTA/src/SgAsmJvmRuntimeParameterAnnotations.h		\
+ $(ROSE)/src/ROSETTA/src/SgAsmJvmRuntimeVisibleAnnotations.h		\
+ $(ROSE)/src/ROSETTA/src/SgAsmJvmRuntimeVisibleParameterAnnotations.h	\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmSignature.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmSourceFile.h				\
  $(ROSE)/src/ROSETTA/src/SgAsmJvmStackMapFrame.h			\
