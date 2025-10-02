@@ -1390,6 +1390,28 @@ Linux::remoteOpenFile(ThreadId tid, const boost::filesystem::path &fileName, uns
     const size_t redZone = (arch->bitsPerWord() == 64) ? 128 : 0;
     Address nameVa = currentSp - allocSize - redZone;
     SAWYER_MESG(debug) <<"  allocating " <<allocSize <<" bytes on stack at " <<StringUtility::addrToString(nameVa) <<"\n";
+
+    // Verify that the stack allocation is within valid stack memory bounds. This protects against stack overflow or attempting to
+    // write beyond the stack region into unmapped or protected memory.
+    std::vector<MemoryMap::ProcessMapRecord> mapRecords = MemoryMap::readProcessMap(child_);
+    bool validStack = false;
+    for (const auto &record : mapRecords) {
+        if (record.interval.contains(nameVa) &&
+            record.interval.contains(nameVa + fileNameSize - 1) &&
+            (record.accessibility & MemoryMap::READ_WRITE) != 0) {
+            validStack = true;
+            SAWYER_MESG(debug) <<"  validated stack allocation within " <<record <<"\n";
+            break;
+        }
+    }
+    if (!validStack) {
+        SAWYER_MESG(mlog[ERROR]) <<"insufficient stack space for filename:"
+                                 <<" need " <<StringUtility::plural(fileNameSize, "bytes")
+                                 <<" at " <<StringUtility::addrToString(nameVa)
+                                 <<" but no valid writable memory region found\n";
+        return -1;
+    }
+
     writeRegister(tid, SP, nameVa);
 
     // We want this operation to have no lasting effect, so read the existing memory values and restore them later.

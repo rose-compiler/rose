@@ -157,7 +157,7 @@ MemoryMap::ProcessMapRecord::print(std::ostream &out) const {
         <<" " <<StringUtility::addrToString(fileOffset)
         <<" \"" <<StringUtility::cEscape(deviceName) <<"\""
         <<" " <<inode
-        <<" \"" <<StringUtility::cEscape(comment);
+        <<" \"" <<StringUtility::cEscape(comment) <<"\"";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1498,15 +1498,15 @@ MemoryMap::parseNameValuePairs(const std::string &input) {
     return retval;
 }
 
-} // namespace
-} // namespace
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 std::ostream&
 operator<<(std::ostream &out, const Rose::BinaryAnalysis::MemoryMap::ProcessMapRecord &pmr) {
     pmr.print(out);
     return out;
 }
+
+} // namespace
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #endif
