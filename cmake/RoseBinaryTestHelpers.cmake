@@ -170,7 +170,7 @@ function(rose_add_binary_test_with_answer)
 
     add_test(
         NAME ${TEST_NAME}
-        COMMAND ${ROSE_RUN_TEST} ${run_test_args} ${TEST_COMMAND}
+        COMMAND env ROSE_ARGS= ${ROSE_RUN_TEST} ${run_test_args} ${TEST_COMMAND}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 
@@ -258,7 +258,7 @@ function(rose_add_binary_test_exit_status)
 
     add_test(
         NAME ${TEST_NAME}
-        COMMAND ${ROSE_RUN_TEST} ${run_test_args} ${TEST_COMMAND}
+        COMMAND env ROSE_ARGS= ${ROSE_RUN_TEST} ${run_test_args} ${TEST_COMMAND}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 
