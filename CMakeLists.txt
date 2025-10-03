@@ -680,7 +680,7 @@ find_package(Perl)
 ########################################################################################################################
 # Miscellaneous user-selectable features
 ########################################################################################################################
-option(ENABLE-BINARY-ANALYSIS-TESTS "Enable tests of ROSE binary analysis code" OFF)
+
 option(ENABLE-EXAMPLE-TRANSLATORS-DIRECTORY "Enable compilation and testing of exampleTranslators directory" OFF)
 # 1/8/25 we will most likely remove this enable-tests-directory option 
 option(ENABLE-TESTS-DIRECTORY "Enable compilation and testing of the ROSE/tests directory" OFF)
