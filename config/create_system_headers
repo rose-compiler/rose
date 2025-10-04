@@ -225,22 +225,76 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
 
        [ -n "$VERBOSE" ] && echo "In create system headers: this is processing C or C++: language = $language"
 
+     # PL (10/2/2025): Instead of the old approach of gathering one set of compiler macros each time ROSE is configured,
+     # we want to generate an assortment of macros corresponding to each major C and C++ version.
+
+     # This bit of code is run twice, once with $langauge = "c" and once with $language = "c++". During each time this code
+     # is run, we iterate through all their respective versions (both the strict versions and the GNU versions) and aggregate
+     # the compiler macros into respective header files, which are conditionally included into code run under `rose-compiler`
+     # depending on the value of the -std flag.
+
+     # Of course, not all standards listed below are supported by all compilers. That's why we make sure we do not fail if
+     # a standard is not recognized by the backend compiler! If a standard is not recognized by a backend compiler (e.g.,
+     # c++20 will not be recognized by GNU 8.5), we just create an empty header file for the corresponding language version.
+     # While an empty set of macros is not necessarily the "correct" behavior, we have no way of knowing from the backend
+     # compiler what macros to include, and code will not pass the backend compiler anyway in this case.
        if [ "x$language" = xc ]; then
-           versions="c89 c99 c11 c17 c23 c2y"
+           versions="c89 gnu89 c99 gnu99 c11 gnu11 c17 gnu17 c23 gnu23 c26 gnu26"
+           c89_alt="c90"
+           gnu89_alt="gnu90"
+           c99_alt="c9x"
+           gnu99_alt="gnu9x"
+           c11_alt="c1x"
+           gnu11_alt="gnu1x"
+           c17_alt="c18"
+           gnu17_alt="gnu18"
+           c23_alt="c2x"
+           gnu23_alt="gnu2x"
+           c26_aly="c2y"
+           gnu26_alt="gnu2y"
        elif [ "x$language" = "xc++" ]; then
-           versions="c++98 c++03 c++11 c++14 c++17 c++20 c++23 c++26"
+           versions="c++98 gnu++98 c++11 gnu++11 c++14 gnu++14 c++17 gnu++17 c++20 gnu++20 c++23 gnu++23 c++26 gnu++26"
+           cpp98_alt="c++03"
+           gnupp98_alt="gnu++03"
+           cpp11_alt="c++0x"
+           gnupp11_alt="gnu++0x"
+           cpp14_alt="c++1y"
+           gnupp14_alt="gnu++1y"
+           cpp17_alt="c++1z"
+           gnupp17_alt="gnu++1z"
+           cpp20_alt="c++2a"
+           gnupp20_alt="gnu++2a"
+           cpp23_alt="c++2b"
+           gnupp23_alt="gnu++2b"
+           cpp26_alt="c++2c"
+           gnupp26_alt="gnu++2c"
        else
            echo "$0: error: expected language to be one of: c, c++, got $language" >&2
            exit 1
        fi
 
-     # PL (9/26/2025): Version-specific macros for different C++ versions
+     # PL (9/26/2025): Iterate over all the versions in the given language standard
        for version in $versions ; do
        
         # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
           tmpFile="`mktemp -t roseconfigtemp$version-XXXXXXXXXX`"
 
+        # PL (10/2/2025): Pipe error output (2>) to /dev/null because we expect most backend compilers will not support
+        # every language standard listed above. `config/macro_names_to_remove` includes macros we don't want to keep, such
+        # as `__GNUC__` and `__STRICT_ANSI__` (provided through the EDG CLI), and `__has_include` (GNU tries to #define this
+        # to `__has_include__`, which is not recognized by EDG).
           "$1" -E -dM -x $language -std=$version /dev/null 2> /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
+
+        # PL (10/3/2025): Some compilers use alternate names for WIP language versions. For example, GNU 13 calls C23 "c2x".
+        # We want to support these alternate names, so if our temp file has no text in it (i.e., if the earlier invokation
+        # of the compiler failed), then we want to try with a different name commonly associated with "WIP" language versions.
+        # This ideally gives us the widest coverage of backend compilers which may only partially support newer language
+        # versions.
+          if [ ! -s "$tmpFile" ]; then
+              secondaryVersionName=$(echo "${version}_alt" | sed --expression="s/\+/p/g") # Build the other version's variable name
+              secondaryVersion=${!secondaryVersionName} # Bash indirection to look up the variable by the name stored in $secondaryVersionName
+              "$1" -E -dM -x $language -std=$secondaryVersion /dev/null 2> /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
+          fi
 
           if [ $? -ne 0 ]; then
    
@@ -284,35 +338,6 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
             # echo "******************************************************"
             # echo "******************************************************"
        
-            # DQ (1/19/2017): Filer out GNU 4.9 specific macro that is a problem: #define __has_include(STR) __has_include__(STR)
-            # echo "compilerVendorName = $compilerVendorName"
-       
-              if [ "x$compilerVendorName" = "xgnu" ]; then
-                 # Build a new temp file to store the results of the editing.
-                   tmpFile2="`mktemp -t roseconfigtempXXXXXXXXXX`"
-       
-                 # echo "tmpFile2 name = $tmpFile2"
-       
-                 # sed '/match/s/.*/replacement/' file
-                   sed "/#define __has_include(STR) __has_include__(STR)/s/.*//" < "$tmpFile" > "$tmpFile2"
-       
-                 # Copy the edited file to replace the original version we use below.
-                   cp "$tmpFile2" "$tmpFile"
-       
-                 # echo "******************************************************"
-                 # echo "********** GNU 4.9 SPECIFIC TRANSFORMATION ***********"
-                 # echo "******************************************************"
-                 # cat "$tmpFile"
-                 # echo "******************************************************"
-                 # echo "******************************************************"
-              fi
-       
-            # echo "******************************************************"
-            # echo "******************************************************"
-            # cat "$tmpFile"
-            # echo "******************************************************"
-            # echo "******************************************************"
-       
             # echo "Modified rose_edg_required_macros_and_functions.h file"
             # cat "$mainTargetDir/rose_edg_required_macros_and_functions.h"
             # echo "******************************************************"
@@ -320,7 +345,8 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
 
           fi
 
-          cp "$tmpFile" "$mainTargetDir/rose_edg_required_compiler_macros_$version.h"
+          mkdir -p "$mainTargetDir/compiler_macro_hdrs"
+          cp "$tmpFile" "$mainTargetDir/compiler_macro_hdrs/rose_edg_required_compiler_macros_$version.h"
    
           rm "$tmpFile"
        done

@@ -49,43 +49,87 @@
 #undef __x86_64__
 #undef __WCHAR_TYPE__
 
-#if defined(__cplusplus)
-#  if __cplusplus == 199711L
-#    include "rose_edg_required_compiler_macros_c++03.h"
-#  elif __cplusplus == 201103L
-#    include "rose_edg_required_compiler_macros_c++11.h"
-#  elif __cplusplus == 201402L
-#    include "rose_edg_required_compiler_macros_c++14.h"
-#  elif __cplusplus == 201703L
-#    include "rose_edg_required_compiler_macros_c++17.h"
-#  elif __cplusplus == 202002L
-#    include "rose_edg_required_compiler_macros_c++20.h"
-#  elif __cplusplus == 202302L
-#    include "rose_edg_required_compiler_macros_c++23.h"
-#  elif __cplusplus > 202302L
-#    include "rose_edg_required_compiler_macros_c++26.h"
+#if defined(__STRICT_ANSI__) && __STRICT_ANSI__ == 1
+#  if defined(__cplusplus)
+#    if __cplusplus == 199711L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c++98.h"
+#    elif __cplusplus == 201103L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c++11.h"
+#    elif __cplusplus == 201402L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c++14.h"
+#    elif __cplusplus == 201703L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c++17.h"
+#    elif __cplusplus == 202002L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c++20.h"
+#    elif __cplusplus == 202302L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c++23.h"
+#    elif __cplusplus > 202302L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c++26.h"
+#    else
+#      error "Unknown value of __cplusplus"
+#    endif
+#  elif defined(__STDC_VERSION__)
+#    if __STDC_VERSION__ == 199409L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c89.h"
+#    elif __STDC_VERSION__ == 199901L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c99.h"
+#    elif __STDC_VERSION__ == 201112L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c11.h"
+#    elif __STDC_VERSION__ == 201710L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c17.h"
+#    elif __STDC_VERSION__ == 202311L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c23.h"
+#    elif __STDC_VERSION__ > 202311L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c26.h"
+#    else
+#      error "Unknown value of __STDC_VERSION__"
+#    endif
 #  else
-#    error "Unknown value of __cplusplus"
-#  endif
-#elif defined(__STDC_VERSION__)
-#  if __STDC_VERSION__ == 199409L
-#    include "rose_edg_required_compiler_macros_c89.h"
-#  elif __STDC_VERSION__ == 199901L
-#    include "rose_edg_required_compiler_macros_c99.h"
-#  elif __STDC_VERSION__ == 201112L
-#    include "rose_edg_required_compiler_macros_c11.h"
-#  elif __STDC_VERSION__ == 201710L
-#    include "rose_edg_required_compiler_macros_c17.h"
-#  elif __STDC_VERSION__ == 202311L
-#    include "rose_edg_required_compiler_macros_c23.h"
-#  elif __STDC_VERSION__ > 202311L
-#    include "rose_edg_required_compiler_macros_c2y.h"
-#  else
-#    error "Unknown value of __STDC_VERSION__"
-#  endif
-#else
 // C89/C90 do not define __STDC_VERSION__, so in this case, we can only assume that we are in C89/C90 mode
-#  include "rose_edg_required_compiler_macros_c89.h"
+#    include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c89.h"
+#  endif
+#else // __STRICT_ANSI__ is not defined to 1, so we are in GNU mode
+#  if defined(__STRICT_ANSI__) // __STRICT_ANSI__ may be defined to 0, so we should just undef it completely
+#    undef __STRICT_ANSI__
+#  endif
+#  if defined(__cplusplus)
+#    if __cplusplus == 199711L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu++98.h"
+#    elif __cplusplus == 201103L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu++11.h"
+#    elif __cplusplus == 201402L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu++14.h"
+#    elif __cplusplus == 201703L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu++17.h"
+#    elif __cplusplus == 202002L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu++20.h"
+#    elif __cplusplus == 202302L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu++23.h"
+#    elif __cplusplus > 202302L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu++26.h"
+#    else
+#      error "Unknown value of __cplusplus"
+#    endif
+#  elif defined(__STDC_VERSION__)
+#    if __STDC_VERSION__ == 199409L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu89.h"
+#    elif __STDC_VERSION__ == 199901L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu99.h"
+#    elif __STDC_VERSION__ == 201112L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu11.h"
+#    elif __STDC_VERSION__ == 201710L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu17.h"
+#    elif __STDC_VERSION__ == 202311L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu23.h"
+#    elif __STDC_VERSION__ > 202311L
+#      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu26.h"
+#    else
+#      error "Unknown value of __STDC_VERSION__"
+#    endif
+#  else
+// C89/C90 do not define __STDC_VERSION__, so in this case, we can only assume that we are in C89/C90 mode
+#    include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu89.h"
+#  endif
 #endif
 
 /* DQ (9/1/2014): Define this for the Intel compiler (to avoid Intel specific code not handled by EDG) */

@@ -3881,6 +3881,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      // Parsing GNU-style dialect specification
 
      for (unsigned int i = 1; i < argv.size(); i++) {
+
+         // PL (10/3/2025): When adding new versions of C and C++, please do not forget to add the new versions
+         // to the following two files, in addition to all the necessary changes in this file:
+         //
+         // - config/create_system_headers
+         // - config/rose_edg_required_macros_and_functions.h.in
+         //
+         // If these two files don't also have references to updated C and C++ versions, the new versions WILL NOT WORK.
+
           if ( argv[i] == "-std=c" ) {
             set_C_only(true);
             Rose::is_Cxx_language = false;
@@ -4145,9 +4154,11 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        //       INTEL: https://software.intel.com/en-us/cpp-compiler-developer-guide-and-reference-conformance-to-the-c-c-standards
        //       CLANG: https://clang.llvm.org/compatibility.html
 
+       // PL (10/02/2025): GNU's default standard changes depending on the compiler version. Going with gnu11 and gnu++11 for now.
+
        if (get_C_only()) {
 #if defined(BACKEND_CXX_IS_GNU_COMPILER)
-         // TODO ??
+         set_C11_gnu_only();
 #elif defined(BACKEND_CXX_IS_INTEL_COMPILER)
          set_C99_only();
 #elif defined(BACKEND_CXX_IS_CLANG_COMPILER)
@@ -4155,7 +4166,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #endif
        } else if (get_Cxx_only()) {
 #if defined(BACKEND_CXX_IS_GNU_COMPILER)
-         // TODO ??
+         set_Cxx11_gnu_only();
 #elif defined(BACKEND_CXX_IS_INTEL_COMPILER)
          set_Cxx11_only();
 #elif defined(BACKEND_CXX_IS_CLANG_COMPILER)
@@ -6228,6 +6239,16 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      if (get_Cxx_only() && is_gnu_standard()) {
        inputCommandLine.push_back("--g++");
+     }
+
+  // PL (10/02/2025): If we are not using the GNU standard, make sure __STRICT_ANSI__ is defined.
+  // This way we know not to include the gnu(++)XX versions of the compiler-specific macro header
+  // files.
+     if (!is_gnu_standard()) {
+       inputCommandLine.push_back("-D__STRICT_ANSI__=1");
+     }
+     else {
+       inputCommandLine.push_back("-D__STRICT_ANSI__=0");
      }
 
   //
