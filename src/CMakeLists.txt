@@ -1046,7 +1046,10 @@ if(Threads_FOUND OR "${Boost_LIBRARIES}" MATCHES "Boost::thread")
   set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -pthread")
 endif()
 
-# Include Z3
+# Include software dependencies
+if(GCRYPT_FOUND)
+  set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I${GCRYPT_HEADER_PATH}")
+endif()
 if(Z3_FOUND_LIB)
   set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I${Z3_HEADER_PATH}")
 endif()
