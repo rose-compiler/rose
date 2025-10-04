@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 arg0="${0##*/}"
+: "${INSTALL_STAGING_AREA=install-staging}"
 
 usage() {
     echo "NAME"
@@ -16,7 +17,7 @@ usage() {
     echo "  This script copies parts of the build tree to the installation prefix"
     echo "  directory. This script should be invoked with the current working directory"
     echo "  set to the top of the build tree. It  recursively copies files found under the"
-    echo "  install-staging directory to the same subdirectories (created if necessary)"
+    echo "  $INSTALL_STAGING_AREA directory to the same subdirectories (created if necessary)"
     echo "  under the install prefix. Any files named \"MANIFEST\" are not copied, but"
     echo "  instead contain a white-space separated list of files to copy from the build"
     echo "  directory to the installation prefix."
@@ -65,6 +66,10 @@ usage() {
     echo "  --exclude PATTERN"
     echo "      Do not adjust the rpaths for files matching the specified pattern. The "
     echo "      pattern is a shell glob."
+    echo
+    echo "  --no-manifest"
+    echo "      Do not use MANIFEST files. Instead, just copy everything we find."
+
 }
 
 die() {
@@ -152,6 +157,7 @@ force=
 auto_next=
 rpath_changer=
 exclude=()
+use_manifest=yes
 while [ "$#" -gt 0 ]; do
     case "$1" in
 	--)
@@ -215,6 +221,10 @@ while [ "$#" -gt 0 ]; do
 	    auto_next=yes
 	    shift
 	    ;;
+	--no-manifest)
+	    use_manifest=
+	    shift
+	    ;;
 	--remove|-d)
 	    [ "$#" -ge 2 ] || die "\"$1\" expects an argument"
 	    remove_paths=("${remove_paths[@]}" "$2")
@@ -276,7 +286,7 @@ if [ -n "$auto_next" ]; then
     prefix="${prefix}/${build_type}-$(next_serial_number "$prefix")"
 fi
 
-[ -d install-staging ] || die "no ./install-staging directory; was this a tup build?"
+[ -d "$INSTALL_STAGING_AREA" ] || die "no $INSTALL_STAGING_AREA directory"
 mkdir -p "$prefix"
 
 new_paths=("$prefix/lib")
@@ -386,6 +396,40 @@ exclude_rpath() {
     return 1
 }
 
+files_to_install() {
+    local destdir="$prefix"
+    
+    if [ -n "$use_manifest" ]; then
+	for manifest in $(find "$INSTALL_STAGING_AREA" -name MANIFEST); do
+
+	    # Directory containing the MANIFEST file
+	    manifest_dir="${manifest%/MANIFEST}"
+
+	    # Which subdir of $INSTALL_STAGING_AREA is the $manifest_dir?
+	    subdir="${manifest_dir#$INSTALL_STAGING_AREA/}"
+
+	    # Destination directory is where we're going to place the file, so make sure it exists.
+	    destdir="$prefix/$subdir"
+	    mkdir -p "$destdir"
+
+	    # Process all the file names in the MANIFEST.
+	    for file in $(cat "$manifest"); do
+		echo "${destdir}:${manifest_dir}/${file}"
+	    done
+	done
+    else
+	for file in $(find "$INSTALL_STAGING_AREA" -printf '%P\n'); do
+	    if [ -d "${INSTALL_STAGING_AREA}/${file}" ]; then
+		: do nothing
+	    else
+		d="${file%/*}"
+		mkdir -p "${prefix}/${d}"
+		echo "${prefix}/${d}:${INSTALL_STAGING_AREA}/${file}"
+	    fi
+	done
+    fi
+}
+
 if [ -n "$verbose" ]; then
     for dir in "${new_paths[@]}"; do
 	echo "new_path = $dir"
@@ -399,117 +443,103 @@ if [ -r tup.config ]; then
 fi
 
 build_dir=$(pwd)
-for manifest in $(find install-staging -name MANIFEST); do
 
-    # Directory containing the MANIFEST file
-    manifest_dir="${manifest%/MANIFEST}"
+while read -r dst_src; do
+    destdir="${dst_src%%:*}"
+    srcfile="${dst_src#*:}"
 
-    # Which subdir of install-staging is the $manifest_dir?
-    subdir="${manifest_dir#install-staging/}"
-
-    # Destination directory is where we're going to place the file, so make sure it exists.
-    destdir="$prefix/$subdir"
-    mkdir -p "$destdir"
-
-    # Process all the file names in the MANIFEST.
-    for file in $(cat "$manifest"); do
-
-	# srcfile is the path of the file to be copied.
-	srcfile="$manifest_dir/$file"
-
-	# filetgt is the base name of the destination file. We need to remove
-	# any ".preinstall" extensions that might be present.
-	filetgt="${srcfile##*/}"
-	filetgt="${filetgt%.preinstall*}"
-
-	# dstfile is the path of the destination file
-	dstfile="$destdir/$filetgt";
-
-	# copy the file, but only if the destination doesn't exist or is older than the source, or "--force" was specified
-	if [ -n "$force" -o ! -e "$dstfile" -o "$srcfile" -nt "$dstfile" ]; then
-	    echo "INSTALL $dstfile"
-
-	    case "$(basename $dstfile)" in
-		rose-installed-*.cfg)
-		    # If the prefix to which we're installing isn't the same as the prefix when ROSE was built, then
-		    # we need to change it to the correct one.
-		    if [ -n "$old_prefix" ]; then
-			sed "s%${old_prefix}%${prefix}%g" <"$srcfile" >"$dstfile"
-			chmod --reference="$srcfile" "$dstfile"
-		    else
-			cp --dereference -p "$srcfile" "$dstfile"
-		    fi
-		    ;;
-
-		*.h|*.hpp|*.H)
-		    # Copy file as-is
-		    cp --dereference -p "$srcfile" "$dstfile"
-		    ;;
-
-		*)
-		    # If the file is a dynamically linked ELF executable we may need to change
-		    # the rpath location for librose.so. We don't want to change the copy that's in our build
-		    # tree, so we copy it first.
-		    if exclude_rpath "$srcfile" "${exclude[@]}"; then
-			cp --dereference -p "$srcfile" "$dstfile"
-		    elif [ -n "$libtool" ]; then
-			$libtool --mode=install --quiet install "$srcfile" "$dstfile"
-		    else
-			cp --dereference -p "$srcfile" "$dstfile"
-			if is_dynamically_linked "$dstfile"; then
-			    old_rpath_string=$(current_rpath "$dstfile")
-			    old_rpath=($(echo "$old_rpath_string" |tr : ' '))
-
-			    new_rpath=("${add_paths[@]}")
-			    inserted=
-			    for old_dir in "${old_rpath[@]}"; do
-				new_dir="$old_dir"
-				if $(echo "$old_dir" | egrep '^(X{96}|Y{96}|Z{96})$' >/dev/null); then
-				    # Remove padding paths
-				    new_dir=
-				elif [ "${#remove_paths[*]}" -eq 0 ]; then
-				    # If the user didn't specify any paths to remove, remove those that have the build directory
-				    # as a prefix or which don't start with a slash.
-				    if [ "${old_dir#$build_dir}" != "$old_dir" ]; then
-					new_dir=
-				    elif [ "${old_dir#/}" = "$old_dir" ]; then
-					new_dir=
-				    fi
-				else
-				    # Remove the paths that the user wants to have removed
-				    for user in "${remove_paths[@]}"; do
-					if [ "$old_dir" = "$user" ]; then
-					    new_dir=
-					    break
-					fi
-				    done
-				fi
-
-				if [ "$new_dir" != "" ]; then
-				    if [ "$new_dir" = "$old_dir" ]; then
-					[ -n "$verbose" ] && echo "  $old_dir -> NO_CHANGE" >&2
-				    else
-					[ -n "$verbose" ] && echo "  $old_dir -> $new_dir" >&2
-				    fi
-				    new_rpath=("${new_rpath[@]}" "$new_dir")
-				elif [ "$inserted" = "" ]; then
-				    [ -n "$verbose" ] && echo "  $old_dir -> INSTALLATION_PREFIX" >&2
-				    new_rpath=("${new_rpath[@]}" "${new_paths[@]}")
-				    inserted=yes
-				else
-				    [ -n "$verbose" ] && echo "  $old_dir -> DELETED" >&2
-				fi
-			    done
-
-			    new_rpath_string="$(echo "${new_rpath[@]}" |tr ' ' :)"
-			    replace_rpath "$dstfile" "$new_rpath_string"
-			fi
-		    fi
-		    ;;
-	    esac
-	fi
-    done
-done
+    # filetgt is the base name of the destination file. We need to remove
+    # any ".preinstall" extensions that might be present.
+    filetgt="${srcfile##*/}"
+    filetgt="${filetgt%.preinstall*}"
+    
+    # dstfile is the path of the destination file
+    dstfile="$destdir/$filetgt";
+    
+    # copy the file, but only if the destination doesn't exist or is older than the source, or "--force" was specified
+    if [ -n "$force" -o ! -e "$dstfile" -o "$srcfile" -nt "$dstfile" ]; then
+    	echo "INSTALL $dstfile"
+    
+    	case "$(basename $dstfile)" in
+    	    rose-installed-*.cfg)
+    		# If the prefix to which we're installing isn't the same as the prefix when ROSE was built, then
+    		# we need to change it to the correct one.
+    		if [ -n "$old_prefix" ]; then
+    		    sed "s%${old_prefix}%${prefix}%g" <"$srcfile" >"$dstfile"
+    		    chmod --reference="$srcfile" "$dstfile"
+    		else
+    		    cp --dereference -p "$srcfile" "$dstfile"
+    		fi
+    		;;
+    
+    	    *.h|*.hpp|*.H)
+    		# Copy file as-is
+    		cp --dereference -p "$srcfile" "$dstfile"
+    		;;
+    
+    	    *)
+    		# If the file is a dynamically linked ELF executable we may need to change
+    		# the rpath location for librose.so. We don't want to change the copy that's in our build
+    		# tree, so we copy it first.
+    		if exclude_rpath "$srcfile" "${exclude[@]}"; then
+    		    cp --dereference -p "$srcfile" "$dstfile"
+    		elif [ -n "$libtool" ]; then
+    		    $libtool --mode=install --quiet install "$srcfile" "$dstfile"
+    		else
+    		    cp --dereference -p "$srcfile" "$dstfile"
+    		    if is_dynamically_linked "$dstfile"; then
+    			old_rpath_string=$(current_rpath "$dstfile")
+    			old_rpath=($(echo "$old_rpath_string" |tr : ' '))
+    
+    			new_rpath=("${add_paths[@]}")
+    			inserted=
+    			for old_dir in "${old_rpath[@]}"; do
+    			    new_dir="$old_dir"
+    			    if $(echo "$old_dir" | egrep '^(X{96}|Y{96}|Z{96})$' >/dev/null); then
+    				# Remove padding paths
+    				new_dir=
+    			    elif [ "${#remove_paths[*]}" -eq 0 ]; then
+    				# If the user didn't specify any paths to remove, remove those that have the build directory
+    				# as a prefix or which don't start with a slash.
+    				if [ "${old_dir#$build_dir}" != "$old_dir" ]; then
+    				    new_dir=
+    				elif [ "${old_dir#/}" = "$old_dir" ]; then
+    				    new_dir=
+    				fi
+    			    else
+    				# Remove the paths that the user wants to have removed
+    				for user in "${remove_paths[@]}"; do
+    				    if [ "$old_dir" = "$user" ]; then
+    					new_dir=
+    					break
+    				    fi
+    				done
+    			    fi
+    
+    			    if [ "$new_dir" != "" ]; then
+    				if [ "$new_dir" = "$old_dir" ]; then
+    				    [ -n "$verbose" ] && echo "  $old_dir -> NO_CHANGE" >&2
+    				else
+    				    [ -n "$verbose" ] && echo "  $old_dir -> $new_dir" >&2
+    				fi
+    				new_rpath=("${new_rpath[@]}" "$new_dir")
+    			    elif [ "$inserted" = "" ]; then
+    				[ -n "$verbose" ] && echo "  $old_dir -> INSTALLATION_PREFIX" >&2
+    				new_rpath=("${new_rpath[@]}" "${new_paths[@]}")
+    				inserted=yes
+    			    else
+    				[ -n "$verbose" ] && echo "  $old_dir -> DELETED" >&2
+    			    fi
+    			done
+    
+    			new_rpath_string="$(echo "${new_rpath[@]}" |tr ' ' :)"
+    			replace_rpath "$dstfile" "$new_rpath_string"
+    		    fi
+    		fi
+    		;;
+    	esac
+    fi
+done < <(files_to_install)
 
 for symlink in "${symlinks[@]}"; do
     rm -f "$symlink"
