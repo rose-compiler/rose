@@ -941,20 +941,26 @@ if(Z3_FOUND_LIB)
 endif()
 
 # YAML-cpp is for parsing YAML and JSON files.
+# NOTE: Marked PUBLIC because ROSE public headers include <yaml-cpp/yaml.h>
+# (ModelChecker/SemanticCallbacks.h)
 if(ENABLE-YAML AND YAMLCPP_FOUND)
-  target_link_libraries(ROSE_DLL PRIVATE ${YAMLCPP_LIBRARY})
-  add_library_dependency(${Z3_LIBRARY})
+  target_link_libraries(ROSE_DLL PUBLIC ${YAMLCPP_LIBRARY})
+  add_library_dependency(${YAMLCPP_LIBRARY})
 endif()
 
 # Dlib is a C++ support library. ROSE uses matrices and some graph algorithms currently.
+# NOTE: Marked PUBLIC because ROSE public headers include <dlib/matrix.h>
+# (Rose/BinaryAnalysis/Matrix.h and others)
 if(DLIB_FOUND)
-  target_link_libraries(ROSE_DLL PRIVATE ${DLIB_LIBRARY})
+  target_link_libraries(ROSE_DLL PUBLIC ${DLIB_LIBRARY})
   add_library_dependency(${DLIB_LIBRARY})
 endif()
 
 # Capstone is used to disassemble ARM.
+# NOTE: Marked PUBLIC because ROSE public headers include <capstone/*.h>
+# (InstructionEnumsAarch32.h, InstructionEnumsAarch64.h, Disassembler/Aarch32.h, Disassembler/Aarch64.h)
 if(CAPSTONE_FOUND)
-  target_link_libraries(ROSE_DLL PRIVATE ${CAPSTONE_LIBRARY})
+  target_link_libraries(ROSE_DLL PUBLIC ${CAPSTONE_LIBRARY})
   add_library_dependency(${CAPSTONE_LIBRARY})
 endif()
 
@@ -973,10 +979,12 @@ if(ENABLE-READLINE AND READLINE_FOUND)
 endif()
 
 # The GNU GCrypt library is used for computing a wide variety of hashes. It needs the GPG-Error library.
+# NOTE: Marked PUBLIC because ROSE public headers conditionally include <gcrypt.h>
+# (InstructionSemantics/PartialSymbolicSemantics.h when ROSE_HAVE_LIBGCRYPT is defined)
 if(GCRYPT_FOUND AND GPGERROR_FOUND)
-  target_link_libraries(ROSE_DLL PRIVATE ${GCRYPT_LIBRARY})
+  target_link_libraries(ROSE_DLL PUBLIC ${GCRYPT_LIBRARY})
   add_library_dependency(${GCRYPT_LIBRARY})
-  target_link_libraries(ROSE_DLL PRIVATE ${GPGERROR_LIBRARY})
+  target_link_libraries(ROSE_DLL PUBLIC ${GPGERROR_LIBRARY})
   add_library_dependency(${GPGERROR_LIBRARY})
 endif()
 

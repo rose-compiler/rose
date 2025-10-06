@@ -7,9 +7,9 @@ This checklist tracks the high-level modernization goals. See the detailed "Impl
 - [x] **CMake Package Configuration** - Create modern `RoseConfig.cmake` and `RoseConfigVersion.cmake` files
 - [x] **Namespaced Targets** - Export `Rose::rose` target instead of plain `rose`
 - [x] **Property Propagation** - Automatically propagate include directories, compile features, and definitions
-- [x] **Dependency Classification** - Properly mark dependencies as PUBLIC/PRIVATE/INTERFACE
+- [x] **Dependency Classification** - Properly mark dependencies as PUBLIC/PRIVATE/INTERFACE (includes header dependencies)
 - [x] **Version Checking** - Support version requirements in `find_package(Rose VERSION)`
-- [x] **Automated Dependency Discovery** - Automatically find all ROSE dependencies from config file (minimal - Boost and Gcrypt)
+- [x] **Automated Dependency Discovery** - Automatically find all ROSE dependencies from config file (Boost, Gcrypt, Capstone, Dlib, YAML-CPP)
 - [ ] **pkg-config Support** - Generate `rose.pc` for non-CMake build systems
 - [ ] **Feature Detection Variables** - Export `Rose_ENABLE_*` variables for capability detection
 - [ ] **Integration Tests** - Create test suite for external project integration
@@ -571,7 +571,7 @@ rmc cmake --build .
 **Dependencies:** Step 7
 **Time estimate:** 2 hours
 **Files modified:** `cmake/RoseConfig.cmake.in`, `CMakeLists.txt`
-**Gitlab Issue:** #792
+**Gitlab Issue:** #792+
 
 Expand the config file to include all optional dependencies (see complete template in Section 1.2).
 
@@ -612,13 +612,13 @@ spock-shell --with-file env cmake . -DCMAKE_PREFIX_PATH=/home/matzke/rose-instal
 ---
 
 ### Step 9: Fix Conditional Header Dependencies (PUBLIC vs PRIVATE)
-**Status:** ❌ Not Started
-**Implementation:** ⬜ Not Implemented
-**Testing:** ⬜ Not Tested
+**Status:** ✅ Complete
+**Implementation:** ✅ Implemented
+**Testing:** ✅ Tested
 **Dependencies:** Step 8
 **Time estimate:** 2-3 hours
 **Files modified:** `src/CMakeLists.txt`, `cmake/RoseConfig.cmake.in`
-**GitLab Issue:** TBD
+**GitLab Issue:** #793+
 
 **Problem:**
 ROSE's public headers conditionally include optional dependency headers based on preprocessor macros (ROSE_HAVE_LIBGCRYPT, ROSE_HAVE_Z3, ROSE_HAVE_CAPSTONE, etc.). These macros are defined in rosePublicConfig.h and featureTests.h. When an external project includes ROSE headers, the preprocessor evaluates these macros and may need to include headers from optional dependencies, even though those dependencies are marked PRIVATE in ROSE's link interface.
@@ -706,6 +706,35 @@ spock-shell --with-file env cmake --build .
 - ✅ Link-only dependencies remain PRIVATE (not propagated unnecessarily)
 
 **Note:** This is closely related to Step 4 (dependency classification) but focuses specifically on the header inclusion problem rather than just link-time dependencies.
+
+**Implementation notes:**
+Completed on 2025-10-06. Audited all ROSE public headers and identified 4 dependencies that are included in installed headers:
+
+1. **Capstone** - Marked PUBLIC in src/CMakeLists.txt (line 958)
+   - Headers: `InstructionEnumsAarch32.h`, `InstructionEnumsAarch64.h`, `Disassembler/Aarch32.h`, `Disassembler/Aarch64.h`
+   - Includes: `<capstone/arm.h>`, `<capstone/arm64.h>`, `<capstone/capstone.h>`
+
+2. **Gcrypt/GpgError** - Marked PUBLIC in src/CMakeLists.txt (lines 980, 982)
+   - Headers: `InstructionSemantics/PartialSymbolicSemantics.h`
+   - Includes: `<gcrypt.h>` (conditional via `#ifdef ROSE_HAVE_LIBGCRYPT`)
+
+3. **YAML-CPP** - Marked PUBLIC in src/CMakeLists.txt (line 946)
+   - Headers: `ModelChecker/SemanticCallbacks.h`
+   - Includes: `<yaml-cpp/yaml.h>`
+   - Note: Fixed bug where YAMLCPP dependency was incorrectly adding Z3_LIBRARY instead of YAMLCPP_LIBRARY
+
+4. **Dlib** - Marked PUBLIC in src/CMakeLists.txt (line 954)
+   - Headers: `Rose/BinaryAnalysis/Matrix.h` and others
+   - Includes: `<dlib/matrix.h>`
+
+Updated `cmake/RoseConfig.cmake.in` to require these dependencies when ROSE was built with them, providing clear error messages that explain the headers appear in ROSE's public API.
+
+**Testing performed:**
+Created external test project in `/tmp/rose_step9_test` that:
+- Uses `find_package(Rose REQUIRED)`
+- Includes `<Rose/BinaryAnalysis.h>` and other headers that transitively depend on optional libraries
+- Successfully compiles and links with all dependencies propagated automatically
+- Runs successfully, confirming AARCH32, AARCH64, and Gcrypt support
 
 ---
 

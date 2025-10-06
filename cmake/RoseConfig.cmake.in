@@ -35,7 +35,10 @@ find_dependency(Boost @Boost_VERSION@ REQUIRED COMPONENTS
 # Set up module path for ROSE's custom Find modules
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}" ${CMAKE_MODULE_PATH})
 
-# Find Gcrypt if it was enabled (optional - but appears in some ROSE public headers)
+# Find Gcrypt if it was enabled
+# NOTE: Gcrypt is marked PUBLIC in ROSE's link interface because ROSE public headers
+# conditionally include <gcrypt.h> (InstructionSemantics/PartialSymbolicSemantics.h).
+# When ROSE was built with Gcrypt, consumers MUST be able to find Gcrypt headers.
 set(Rose_GCRYPT_FOUND @GCRYPT_FOUND@)
 if(Rose_GCRYPT_FOUND)
   # Find GpgError first (required by Gcrypt)
@@ -46,7 +49,7 @@ if(Rose_GCRYPT_FOUND)
   find_gpgerror()
   if(NOT GPGERROR_FOUND)
     set(Rose_FOUND FALSE)
-    set(Rose_NOT_FOUND_MESSAGE "Rose could not be found because dependency GpgError could not be found.")
+    set(Rose_NOT_FOUND_MESSAGE "Rose requires GpgError headers (Rose was built with Gcrypt support and Gcrypt headers appear in ROSE public API)")
   endif()
 
   # Find Gcrypt
@@ -57,7 +60,7 @@ if(Rose_GCRYPT_FOUND)
   find_gcrypt()
   if(NOT GCRYPT_FOUND)
     set(Rose_FOUND FALSE)
-    set(Rose_NOT_FOUND_MESSAGE "Rose could not be found because dependency Gcrypt could not be found.")
+    set(Rose_NOT_FOUND_MESSAGE "Rose requires Gcrypt headers (Rose was built with Gcrypt support and Gcrypt headers appear in ROSE public API)")
   endif()
 endif()
 
@@ -87,34 +90,56 @@ if(Rose_DWARF_FOUND)
   # DWARF is PRIVATE, so we don't fail if it's not found
 endif()
 
-# Find Capstone disassembly library (optional - for ARM disassembly)
+# Find Capstone disassembly library
+# NOTE: Capstone is marked PUBLIC in ROSE's link interface because ROSE public headers
+# include <capstone/*.h> (InstructionEnumsAarch32.h, InstructionEnumsAarch64.h,
+# Disassembler/Aarch32.h, Disassembler/Aarch64.h).
+# When ROSE was built with Capstone, consumers MUST be able to find Capstone headers.
 set(Rose_CAPSTONE_FOUND @CAPSTONE_FOUND@)
 if(Rose_CAPSTONE_FOUND)
   if(NOT DEFINED CAPSTONE_ROOT)
     set(CAPSTONE_ROOT "@CAPSTONE_ROOT@")
   endif()
   include(FindCapstone)
-  # Capstone is PRIVATE, so we don't fail if it's not found
+  find_capstone()
+  if(NOT CAPSTONE_FOUND)
+    set(Rose_FOUND FALSE)
+    set(Rose_NOT_FOUND_MESSAGE "Rose requires Capstone headers (Rose was built with Capstone support and Capstone headers appear in ROSE public API)")
+  endif()
 endif()
 
-# Find Dlib C++ library (optional - for matrix/graph algorithms)
+# Find Dlib C++ library
+# NOTE: Dlib is marked PUBLIC in ROSE's link interface because ROSE public headers
+# include <dlib/matrix.h> (Rose/BinaryAnalysis/Matrix.h and others).
+# When ROSE was built with Dlib, consumers MUST be able to find Dlib headers.
 set(Rose_DLIB_FOUND @DLIB_FOUND@)
 if(Rose_DLIB_FOUND)
   if(NOT DEFINED DLIB_ROOT)
     set(DLIB_ROOT "@DLIB_ROOT@")
   endif()
   include(FindDlib)
-  # Dlib is PRIVATE, so we don't fail if it's not found
+  find_dlib()
+  if(NOT DLIB_FOUND)
+    set(Rose_FOUND FALSE)
+    set(Rose_NOT_FOUND_MESSAGE "Rose requires Dlib headers (Rose was built with Dlib support and Dlib headers appear in ROSE public API)")
+  endif()
 endif()
 
-# Find YAML-CPP library (optional - for YAML/JSON parsing)
+# Find YAML-CPP library
+# NOTE: YAML-CPP is marked PUBLIC in ROSE's link interface because ROSE public headers
+# include <yaml-cpp/yaml.h> (ModelChecker/SemanticCallbacks.h).
+# When ROSE was built with YAML-CPP, consumers MUST be able to find YAML-CPP headers.
 set(Rose_YAMLCPP_FOUND @YAMLCPP_FOUND@)
 if(Rose_YAMLCPP_FOUND)
   if(NOT DEFINED YAMLCPP_ROOT)
     set(YAMLCPP_ROOT "@YAMLCPP_ROOT@")
   endif()
   include(FindYamlcpp)
-  # YAML-CPP is PRIVATE, so we don't fail if it's not found
+  find_yamlcpp()
+  if(NOT YAMLCPP_FOUND)
+    set(Rose_FOUND FALSE)
+    set(Rose_NOT_FOUND_MESSAGE "Rose requires YAML-CPP headers (Rose was built with YAML-CPP support and YAML-CPP headers appear in ROSE public API)")
+  endif()
 endif()
 
 # Find Readline library (optional - for interactive tools)
