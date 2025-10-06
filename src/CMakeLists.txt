@@ -697,7 +697,15 @@ endif()
 if(ENABLE-CPP)
   if(NOT ENABLE-CLANG-FRONTEND)  # USE EDG
     message(STATUS "ROSE will be using EDG for the CXX Frontend")
-    list(APPEND rose_LIB_OBJS RoseSourceCxxFrontendEdg)
+    message(STATUS "  have_EDG_source=${have_EDG_source}, EDG_COMPILE=${EDG_COMPILE}")
+    # Only link RoseSourceCxxFrontendEdg if we're compiling EDG from source
+    # When using precompiled EDG binaries, the library is linked separately
+    if(have_EDG_source AND EDG_COMPILE)
+      message(STATUS "  Adding RoseSourceCxxFrontendEdg to rose_LIB_OBJS")
+      list(APPEND rose_LIB_OBJS RoseSourceCxxFrontendEdg)
+    else()
+      message(STATUS "  NOT adding RoseSourceCxxFrontendEdg (using precompiled or dummy EDG)")
+    endif()
   else()                         # USE CLANG
     message(STATUS "ROSE will be using Clang for the CXX Frontend")
     list(APPEND rose_LIB_OBJS roseClangFrontend)
@@ -888,7 +896,16 @@ set_target_properties(ROSE_DLL PROPERTIES
 # This is part of CMake modernization (Step 5 in docs/CMakeModernizationPlan.md).
 # The EXPORT clause creates a RoseTargets export set that will be used to generate
 # RoseTargets.cmake, allowing external projects to import Rose::rose as a target.
-install(TARGETS ROSE_DLL
+#
+# Note: If RoseSourceCxxFrontendEdg target exists, it must also be in the export set
+# because ROSE_DLL links to it. We handle this by conditionally adding it.
+set(_rose_export_targets ROSE_DLL)
+if(TARGET RoseSourceCxxFrontendEdg)
+  list(APPEND _rose_export_targets RoseSourceCxxFrontendEdg)
+  message(STATUS "Adding RoseSourceCxxFrontendEdg to export targets")
+endif()
+
+install(TARGETS ${_rose_export_targets}
   EXPORT RoseTargets
   LIBRARY DESTINATION ${LIB_INSTALL_DIR}
   ARCHIVE DESTINATION ${LIB_INSTALL_DIR}

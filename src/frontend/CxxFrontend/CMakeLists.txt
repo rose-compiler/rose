@@ -4,15 +4,17 @@
 #   Otherwise we can download a precompiled version from the ROSE team.
 
 #if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-if(ENABLE-C) 
+if(ENABLE-C)
   if(ROSE_USE_CLANG_FRONTEND)
     message(STATUS "Selecting Clang for C/C++ frontend")
     # Autoconf reference: libroseCxxlibraries = frontend/CxxFrontend/Clang/libroseClangFrontend.la
-    add_subdirectory(Clang) 
-    # have_EDG_source AND !ROSE_USE_CLANG_FRONTEND)
-  else()   
+    add_subdirectory(Clang)
+  else()
     message(STATUS "Selecting EDG for C/C++ frontend")
-    # 10/14/24 Removed have_EDG_source for this condition to be true 
-    add_subdirectory(EDG)
-  endif() 
+    # Only add EDG subdirectory if we have EDG source code
+    # When using precompiled EDG, the library is linked directly without a CMake subdirectory
+    if(have_EDG_source AND EDG_COMPILE)
+      add_subdirectory(EDG)
+    endif()
+  endif()
 endif() # ENABLE-C

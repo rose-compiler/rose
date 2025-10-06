@@ -738,11 +738,83 @@ Created external test project in `/tmp/rose_step9_test` that:
 
 ---
 
-### Step 10: Add Feature Detection Variables
+### Step 10: Fix EDG Target Export Conditionals
+**Status:** ✅ Complete
+**Implementation:** ✅ Implemented
+**Testing:** ✅ Tested
+**Dependencies:** Step 9
+**Time estimate:** 30 minutes
+**Files modified:** `src/CMakeLists.txt`
+**GitLab Issue:** #794
+
+**Problem:**
+When ROSE is configured with C/C++ analysis enabled using EDG (not Clang), the CMake build system unconditionally adds `RoseSourceCxxFrontendEdg` to the link dependencies of `ROSE_DLL`. However, this target may not exist depending on how EDG is provided:
+
+1. **No C/C++ analysis**: EDG not needed
+2. **Precompiled EDG binary**: EDG library is downloaded and linked separately, no source target exists
+3. **EDG source code**: EDG source is compiled (proprietary Git submodule), creating the `RoseSourceCxxFrontendEdg` target
+
+The unconditional reference causes CMake export errors: `install(EXPORT "RoseTargets" ...) includes target "ROSE_DLL" which requires target "RoseSourceCxxFrontendEdg" that is not in any export set.`
+
+**Root cause:**
+The EDG source code CMakeLists.txt is optional (part of a proprietary Git submodule at `src/frontend/CxxFrontend/EDG/`). The root CMakeLists.txt checks for its existence to set `have_EDG_source`, but `src/CMakeLists.txt` line 699 unconditionally added `RoseSourceCxxFrontendEdg` when EDG was enabled, regardless of whether the target actually exists.
+
+**Solution:**
+Make the addition of `RoseSourceCxxFrontendEdg` conditional on both `have_EDG_source` AND `EDG_COMPILE` being true:
+
+```cmake
+# In src/CMakeLists.txt around line 699
+# Cxx Frontend Conditional: either EDG or Clang or nothing
+if(ENABLE-CPP)
+  if(NOT ENABLE-CLANG-FRONTEND)  # USE EDG
+    message(STATUS "ROSE will be using EDG for the CXX Frontend")
+    # Only link RoseSourceCxxFrontendEdg if we're compiling EDG from source
+    # When using precompiled EDG binaries, the library is linked separately
+    if(have_EDG_source AND EDG_COMPILE)
+      list(APPEND rose_LIB_OBJS RoseSourceCxxFrontendEdg)
+    endif()
+  else()                         # USE CLANG
+    message(STATUS "ROSE will be using Clang for the CXX Frontend")
+    list(APPEND rose_LIB_OBJS roseClangFrontend)
+    set(BACKEND_CXX_IS_CLANG_COMPILER TRUE)
+  endif()
+endif()
+```
+
+**Implementation notes:**
+- The `have_EDG_source` variable is set in the root CMakeLists.txt (line 638-647) based on whether `src/frontend/CxxFrontend/EDG/CMakeLists.txt` exists
+- The `EDG_COMPILE` option (line 612) allows users to disable EDG source compilation even if source is available
+- When using precompiled EDG, the library is linked via other mechanisms and doesn't create a CMake target
+- This fix handles all three EDG scenarios correctly
+
+**Testing:**
+```bash
+# Test with system that has C/C++ analysis enabled and EDG present
+cd _build
+cmake ..
+# Should complete configuration without export errors
+cmake --build . --target install
+# Should install successfully
+
+# Verify external project can still find and use ROSE
+cd /tmp/rose_test
+cmake . -DCMAKE_PREFIX_PATH=${ROSE_INSTALL_PREFIX}
+cmake --build .
+```
+
+**Success criteria:**
+- ✅ CMake configuration succeeds without export errors
+- ✅ ROSE installs successfully with RoseTargets.cmake
+- ✅ External projects can find and link against Rose::rose
+- ✅ Works correctly for all three EDG scenarios (none, precompiled, source)
+
+---
+
+### Step 11: Add Feature Detection Variables
 **Status:** ❌ Not Started
 **Implementation:** ⬜ Not Implemented
 **Testing:** ⬜ Not Tested
-**Dependencies:** Step 9
+**Dependencies:** Step 10
 **Time estimate:** 30 minutes
 **Files modified:** `cmake/RoseConfig.cmake.in`
 
@@ -761,11 +833,11 @@ endif()
 
 ---
 
-### Step 11: Create pkg-config Support
+### Step 12: Create pkg-config Support
 **Status:** ❌ Not Started
 **Implementation:** ⬜ Not Implemented
 **Testing:** ⬜ Not Tested
-**Dependencies:** Step 7 (can be parallel with Steps 8-10)
+**Dependencies:** Step 7 (can be parallel with Steps 8-11)
 **Time estimate:** 1-2 hours
 **Files created:** `cmake/rose.pc.in`
 **Files modified:** `CMakeLists.txt`
@@ -828,11 +900,11 @@ make
 
 ---
 
-### Step 12: Create Integration Tests
+### Step 13: Create Integration Tests
 **Status:** ❌ Not Started
 **Implementation:** ⬜ Not Implemented
 **Testing:** ⬜ Not Tested
-**Dependencies:** Steps 7, 9, 11
+**Dependencies:** Steps 7, 9, 11, 12
 **Time estimate:** 2-3 hours
 **Files created:** `tests/cmake-integration/*`
 
@@ -851,11 +923,11 @@ tests/cmake-integration/
 
 ---
 
-### Step 13: Documentation and Examples
+### Step 14: Documentation and Examples
 **Status:** ❌ Not Started
 **Implementation:** ⬜ Not Implemented
 **Testing:** ⬜ Not Tested
-**Dependencies:** Steps 7, 9, 11
+**Dependencies:** Steps 7, 9, 11, 12
 **Time estimate:** 2-3 hours
 **Files created:**
 - `docs/cmake-integration.md`
@@ -867,11 +939,11 @@ tests/cmake-integration/
 
 ---
 
-### Step 14: Deprecate Old FindRose.cmake
+### Step 15: Deprecate Old FindRose.cmake
 **Status:** ❌ Not Started
 **Implementation:** ⬜ Not Implemented
 **Testing:** ⬜ Not Tested
-**Dependencies:** Step 12 (after testing confirms new system works)
+**Dependencies:** Step 13 (after testing confirms new system works)
 **Time estimate:** 30 minutes
 **Files modified:** `cmake/FindRose.cmake`
 
