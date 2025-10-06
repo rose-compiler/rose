@@ -371,7 +371,7 @@ endif()
 ```
 
 **Testing:**
-1. Build ROSE completely: `rmc -C _build cmake --build . --target rose`
+1. Build ROSE completely: `rmc -C _build cmake --build . --target ROSE_DLL`
 2. Check exported symbols don't expose unnecessary dependencies:
 ```bash
 nm -D lib/librose.so | grep -i "boost\|z3\|dwarf" | wc -l
@@ -386,12 +386,13 @@ nm -D lib/librose.so | grep -i "boost\|z3\|dwarf" | wc -l
 ---
 
 ### Step 5: Update Installation with EXPORT
-**Status:** ❌ Not Started
-**Implementation:** ⬜ Not Implemented
-**Testing:** ⬜ Not Tested
+**Status:** ✅ Complete
+**Implementation:** ✅ Implemented
+**Testing:** ✅ Tested
 **Dependencies:** Step 4
 **Time estimate:** 30 minutes
 **Files modified:** `src/CMakeLists.txt`
+**Gitlab Issue:** #789+
 
 Modify the `install(TARGETS ROSE_DLL ...)` command around line 730:
 

@@ -697,7 +697,7 @@ endif()
 if(ENABLE-CPP)
   if(NOT ENABLE-CLANG-FRONTEND)  # USE EDG
     message(STATUS "ROSE will be using EDG for the CXX Frontend")
-    list(APPEND link_with_libraries RoseSourceCxxFrontendEdg)
+    list(APPEND rose_LIB_OBJS RoseSourceCxxFrontendEdg)
   else()                         # USE CLANG
     message(STATUS "ROSE will be using Clang for the CXX Frontend")
     list(APPEND rose_LIB_OBJS roseClangFrontend)
@@ -845,20 +845,66 @@ target_compile_features(ROSE_DLL PUBLIC cxx_std_14)
 # - POET: Program transformation DSL
 # - Language frontends: Python, Java, Fortran, Ada (internal)
 #
+# Filter out Boost libraries from link_with_libraries to avoid duplication
+# We use modern Boost::component targets instead of ${Boost_LIBRARIES}
+set(_rose_system_libraries "")
+foreach(_lib ${link_with_libraries})
+  # Skip Boost libraries (they're added as modern targets below)
+  if(NOT "${_lib}" MATCHES "^Boost::" AND NOT "${_lib}" MATCHES "boost_")
+    list(APPEND _rose_system_libraries "${_lib}")
+  endif()
+endforeach()
+
 target_link_libraries(ROSE_DLL
   PUBLIC
     # Boost is in ROSE's public API - many headers expose Boost types
-    ${link_with_libraries}
-    # Internal ROSE object libraries that contain public APIs
+    # Using modern Boost::component targets for proper CMake export
+    Boost::chrono
+    Boost::date_time
+    Boost::filesystem
+    Boost::iostreams
+    Boost::program_options
+    Boost::random
+    Boost::regex
+    Boost::system
+    Boost::wave
+    Boost::thread
+    Boost::serialization
+  PRIVATE
+    # Internal ROSE object libraries - these are implementation details
+    # that get compiled into librose.so and don't need to be exposed
     ${rose_LIB_OBJS}
+    # System and platform libraries (rt, dl, m, c, threads, etc.)
+    ${_rose_system_libraries}
 )
 
 set_target_properties(ROSE_DLL PROPERTIES
   VERSION 1.0.0
   SOVERSION 1
-  DEFINE_SYMBOL ROSE_DLL_EXPORTS)
+  DEFINE_SYMBOL ROSE_DLL_EXPORTS
+  EXPORT_NAME rose)
 
-install(TARGETS ROSE_DLL DESTINATION ${ROSE_LIB_DIR_NAME})
+# Install the ROSE library with export information
+# This is part of CMake modernization (Step 5 in docs/CMakeModernizationPlan.md).
+# The EXPORT clause creates a RoseTargets export set that will be used to generate
+# RoseTargets.cmake, allowing external projects to import Rose::rose as a target.
+install(TARGETS ROSE_DLL
+  EXPORT RoseTargets
+  LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+  ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
+  RUNTIME DESTINATION ${BIN_INSTALL_DIR}
+  INCLUDES DESTINATION ${INCLUDE_INSTALL_DIR}
+)
+
+# Install the export set
+# This generates RoseTargets.cmake which contains the imported target definitions.
+# The NAMESPACE Rose:: ensures that the imported target is named Rose::rose,
+# matching the alias we created for the build tree.
+install(EXPORT RoseTargets
+  FILE RoseTargets.cmake
+  NAMESPACE Rose::
+  DESTINATION ${LIB_INSTALL_DIR}/cmake/Rose
+)
 install(
   FILES
     featureTests.h RoseFirst.h rose.h roseInternal.h rose_msvc.h msvc_stdint.h
