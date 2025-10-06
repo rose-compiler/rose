@@ -4158,7 +4158,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
        if (get_C_only()) {
 #if defined(BACKEND_CXX_IS_GNU_COMPILER)
-         set_C11_gnu_only();
+         set_gnu_standard();
 #elif defined(BACKEND_CXX_IS_INTEL_COMPILER)
          set_C99_only();
 #elif defined(BACKEND_CXX_IS_CLANG_COMPILER)
@@ -4166,7 +4166,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #endif
        } else if (get_Cxx_only()) {
 #if defined(BACKEND_CXX_IS_GNU_COMPILER)
-         set_Cxx11_gnu_only();
+         set_gnu_standard();
 #elif defined(BACKEND_CXX_IS_INTEL_COMPILER)
          set_Cxx11_only();
 #elif defined(BACKEND_CXX_IS_CLANG_COMPILER)
