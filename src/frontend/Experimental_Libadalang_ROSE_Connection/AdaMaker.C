@@ -2578,6 +2578,7 @@ namespace
                                      , { "model_mantissa",       &integralTypeAttr }
                                      , { "model_small",          &realTypeAttr }
                                      , { "modulus",              &integralTypeAttr }
+                                     , { "null_parameter",       &exprTypeAttr }
                                      , { "old",                  &exprTypeAttr }
                                      , { "object_size",          &integralTypeAttr }
                                      , { "overlaps_storage",     &boolTypeAttr }

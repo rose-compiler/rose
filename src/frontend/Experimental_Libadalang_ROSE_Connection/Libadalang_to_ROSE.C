@@ -74,6 +74,9 @@ namespace{
   /// stores a mapping from string to types in packages used with "pragma extend_system"
   map_t<AdaIdentifier, SgType*> extendedTypesByNameMap;
 
+  /// stores a mapping from string to variable names in packages used with "pragma extend_system"
+  map_t<AdaIdentifier, SgInitializedName*> extendedVarsByNameMap;
+
 } //end unnamed namespace
 
 map_t<int, SgInitializedName*>&                                libadalangVars() { return libadalangVarsMap;      }
@@ -90,6 +93,7 @@ std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols() 
 std::vector<SgExpression*>&                                     operatorExprs() { return operatorExprsVector;    }
 map_t<OperatorKey, std::vector<OperatorDesc> >&               operatorSupport() { return operatorSupportMap;     }
 map_t<AdaIdentifier, SgType*>&                            extendedTypesByName() { return extendedTypesByNameMap; }
+map_t<AdaIdentifier, SgInitializedName*>&                  extendedVarsByName() { return extendedVarsByNameMap;  }
 
 namespace
 {

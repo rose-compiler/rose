@@ -195,6 +195,9 @@ std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols();
 /// returns a mapping from string to types in packages used with "pragma extend_system"
 map_t<AdaIdentifier, SgType*>& extendedTypesByName();
 
+/// returns a mapping from string to variable names in packages used with "pragma extend_system"
+map_t<AdaIdentifier, SgInitializedName*>& extendedVarsByName();
+
 /// returns a map with all functions that a type supports
 /// \details
 ///   maps stores information about explicitly or implicitly defined operators on a principal type.

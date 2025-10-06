@@ -495,7 +495,7 @@ namespace {
     //Get the expected file name from the package name
     std::string package_specification_name = "s-" + krunch_package_name(lal_package_name_string, 6) + ".ads";
 
-    //Iterate through LibadalangTypes, find all types that come from this package, & add them to extendedTypesByName
+    //Iterate through libadalangTypes, find all types that come from this package, & add them to extendedTypesByName
     for(const std::pair<int, SgDeclarationStatement*>& type_pair : libadalangTypes()){
       SgDeclarationStatement* type_decl = type_pair.second;
       const std::string& type_decl_filename = type_decl->getFilenameString();
@@ -559,6 +559,37 @@ namespace {
         }
       }
     }
+
+    //Iterate through libadalangVars, find all variables that come from this package, & add them to extendedVarsByName
+    for(const std::pair<int, SgInitializedName*>& var_pair : libadalangVars()){
+      SgInitializedName* var_name = var_pair.second;
+      const std::string& var_filename = var_name->getFilenameString();
+
+      if(var_filename.size() >= package_specification_name.size()
+         && boost::algorithm::ends_with(var_filename, package_specification_name)){
+        const AdaIdentifier var_name_string = var_name->get_name().getString();
+        SgDeclarationStatement* var_decl = var_name->get_declaration();
+
+        //Get the decl class to determine if we should add this var
+        VariantT var_decl_class = var_decl->variantT();
+        if(var_decl_class == V_SgFunctionParameterList){
+          //Do not add this var
+          continue;
+        } else if(var_decl_class == V_SgVariableDeclaration){
+          //Check if this var is part of a record; we don't want to add records b/c their names can overlap
+          SgNode* parent = var_decl->get_parent();
+          if(parent->variantT() == V_SgClassDefinition){
+            continue;
+          }
+        }
+
+        //Add the var(do not check the result for now)
+        extendedVarsByName().insert({var_name_string, var_name});
+      }
+    }
+
+    //TODO Also libadalangDecls?
+
   }
 
   SgPragmaDeclaration&
@@ -5517,6 +5548,27 @@ SgExpression& createEnumValue(ada_base_entity* lal_element, AstContext ctx){
   return sgnode;
 }
 
+/// Searched libadalangVars for a var with the same name as \ref lal_element
+SgVarRefExp* searchVarsByName(ada_base_entity* lal_element, AstContext ctx){
+  const std::string& ref_name = getFullName(lal_element);
+  //Only check vars in the same file as the ref
+  const std::string& ref_filename = ctx.sourceFileName();
+  SgInitializedName* found_var = nullptr;
+  for(const std::pair<int, SgInitializedName*>& var_pair : libadalangVars()){
+      SgInitializedName* var_name = var_pair.second;
+      const std::string& var_filename = var_name->getFilenameString();
+      if(ref_filename == var_filename){
+        //Check if the names match
+        const std::string var_name_string = var_name->get_name().getString();
+        if(ref_name == var_name_string){
+          found_var = var_name;
+          break;
+        }
+      }
+  }
+  return sb::buildVarRefExp(found_var, &ctx.scope());
+}
+
 /// Handles an ada_component_clause node
 void createComponentClause(ada_base_entity* lal_element, AstContext ctx){
   ada_node_kind_enum kind = ada_node_kind(lal_element);
@@ -5542,11 +5594,21 @@ void createComponentClause(ada_base_entity* lal_element, AstContext ctx){
 
   // \todo use getQualName?
   SgExpression&         field  = getExpr(&lal_name, ctx);
-  SgVarRefExp&          fldref = SG_DEREF(isSgVarRefExp(&field));
+  SgVarRefExp*          fldref = nullptr;
+  if(field.variantT() == V_SgVarRefExp){
+    fldref = isSgVarRefExp(&field);
+  } else {
+    //LAL_REP_ISSUE Pragma Extend_System can sometimes cause field to link to a func decl
+    // of the same name. To fix, search libadalangVars for a matching name.
+    // This will be very slow, but I can't think of a better idea.
+    fldref = searchVarsByName(&lal_name, ctx);
+    //SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
+    //fldref = sb::buildOpaqueVarRefExp(field_name, &scope);
+  }
   SgExpression&         ofs    = getExpr(&lal_position, ctx);
   SgExpression&         rngexp = getDiscreteRange(&lal_range, ctx);
   SgRangeExp*           range  = isSgRangeExp(&rngexp);
-  SgAdaComponentClause& sgnode = mkAdaComponentClause(fldref, ofs, SG_DEREF(range));
+  SgAdaComponentClause& sgnode = mkAdaComponentClause(SG_DEREF(fldref), ofs, SG_DEREF(range));
 
   //~ recordNode(asisDecls(), el.ID, sgnode);
   attachSourceLocation(sgnode, lal_element, ctx);

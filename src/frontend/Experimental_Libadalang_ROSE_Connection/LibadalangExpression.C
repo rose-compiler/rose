@@ -114,6 +114,7 @@ getAttributeExpr(ada_base_entity* lal_element, AstContext ctx)
     "model_mantissa",               // A.5.3(64), G.2.2(3), K(159)
     "model_small",                  // A.5.3(67), K(161)
     "modulus",                      // 3.5.4(17), K(163)
+    "null_parameter",               // GNAT-specific attribute
     "object_size",                  // GNAT-specific attribute 4.44
     "old",                          // 6.1.1(26)
     "output",                       // 13.13.2(19), 13.13.2(29), K(165), K(169)
@@ -892,10 +893,10 @@ namespace
     if(kind != ada_string_literal){ //Strings won't work for this section, need to use a different method
       //Get the hash of the first corresponding declaration
       ada_base_entity corresponding_decl;
-      ada_expr_p_first_corresponding_decl(lal_expr, &corresponding_decl);
+      int cor_decl_return = ada_expr_p_first_corresponding_decl(lal_expr, &corresponding_decl);
       bool decl_exists = true;
       int decl_hash = 0;
-      if(ada_node_is_null(&corresponding_decl)){
+      if(cor_decl_return != 0 && ada_node_is_null(&corresponding_decl)){
         //If we don't have a p_first_corresponding_decl, set a flag
         decl_exists = false;
       } else {
@@ -1280,7 +1281,6 @@ getArg(ada_base_entity* lal_element, AstContext ctx)
   std::string element_name = canonical_text_as_string(&formal_parameter);
 
   SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression_nfi(element_name, &arg));
-
   attachSourceLocation(namedArg, lal_element, ctx);
   return namedArg;
 }
@@ -1310,6 +1310,40 @@ namespace{
 
     // return the declaration scope of the anchor
     return SG_DEREF(dcl->get_declarationScope());
+  }
+
+  /// Checks the maps of types/vars that have been added to the System package
+  /// using "Pragma Extend_System" for \ref name & retuns a reference to the
+  /// corresponding type/var if one is found. Returns nullptr if match not found.
+  SgExpression* checkForSystemExtension(const std::string& name){
+    const AdaIdentifier name_converted{name};
+    SgExpression* res = nullptr;
+
+    //First check extendedVarsByName
+    auto var_iterator = extendedVarsByName().find(name_converted);
+    if(var_iterator != extendedVarsByName().end()){
+      SgInitializedName* var_name = var_iterator->second;
+
+      //Check if this is an enum value
+      if(var_name->get_declaration()->variantT() == V_SgEnumDeclaration){
+        SgEnumType&        enumtype = SG_DEREF( isSgEnumType(var_name->get_type()) );
+        SgEnumDeclaration& enumdecl = SG_DEREF( isSgEnumDeclaration(enumtype.get_declaration()) );
+        res = &mkEnumeratorRef(enumdecl, *var_name);
+      } else {
+        SgScopeStatement* test_scope = var_name->get_scope();
+        res = sb::buildVarRefExp(var_name, test_scope);
+      }
+    }
+
+    //Second check extendedTypesByName
+    auto type_iterator = extendedTypesByName().find(name_converted);
+    if(type_iterator != extendedTypesByName().end()){
+      SgType* type_decl = type_iterator->second;
+
+      res = &mkTypeExpression(*type_decl);
+    }
+
+    return res;
   }
 
   /// creates expressions from elements, but does not decorate
@@ -1412,7 +1446,7 @@ namespace{
 
           //lal doesn't give definition directly, so go from the decl
           ada_base_entity corresponding_decl;
-          ada_expr_p_first_corresponding_decl(lal_element, &corresponding_decl);
+          int cor_decl_return = ada_expr_p_first_corresponding_decl(lal_element, &corresponding_decl);
 
           //Check if this is an enum value instead of a variable
           //Get the expression type & check for ada_enum_type_def
@@ -1447,7 +1481,7 @@ namespace{
           ada_expr_p_is_static_expr(lal_element, 1, &lal_is_static_expr);
 
           if( (!ada_node_is_null(&lal_expr_type) && lal_expr_type_kind == ada_enum_type_def && lal_is_static_expr)
-              || (!ada_node_is_null(&corresponding_decl) && ada_node_kind(&corresponding_decl) == ada_enum_literal_decl))
+              || ((cor_decl_return != 0 && !ada_node_is_null(&corresponding_decl)) && ada_node_kind(&corresponding_decl) == ada_enum_literal_decl))
           {
             logInfo() << "identifier " << name << " is being treated as an enum value.\n";
 
@@ -1520,16 +1554,21 @@ namespace{
           //If referenced_decl exists, use it instead of corresponding_decl
           ada_base_entity lal_referenced_decl;
           int return_value = ada_name_p_referenced_decl(lal_element, 1, &lal_referenced_decl);
-          if(!ada_node_is_null(&lal_referenced_decl) && return_value != 0){
-             ada_name_p_referenced_decl(lal_element, 1, &corresponding_decl);
+          if(return_value != 0 && !ada_node_is_null(&lal_referenced_decl)){
+             cor_decl_return = ada_name_p_referenced_decl(lal_element, 1, &corresponding_decl);
           }
 
-          //If both referenced_decl and corresponding_decl are null, just give up
-          if((ada_node_is_null(&lal_referenced_decl) || return_value == 0) && ada_node_is_null(&corresponding_decl)){
-            logWarn() << "ADDING unresolved name: " << name
-                      << " (decl is null)" << std::endl;
-            SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
-            res = &mkUnresolvedName(name, scope);
+          if((return_value == 0 || ada_node_is_null(&lal_referenced_decl)) && (cor_decl_return == 0 || ada_node_is_null(&corresponding_decl))){
+            //Check if this is referencing a type/variable from Pragma Extend_System
+            if(SgExpression* systemExtensionRef = checkForSystemExtension(name)){
+              res = systemExtensionRef;
+            } else {
+              //If it isn't, just give up
+              logWarn() << "ADDING unresolved name: " << name
+                        << " (decl is null)" << std::endl;
+              SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
+              res = &mkUnresolvedName(name, scope);
+            }
             break;
           }
 
@@ -1661,33 +1700,34 @@ namespace{
             ada_call_expr_f_name(lal_element, &lal_full_name);
 
             //Get p_is_array_slice
-            ada_bool lal_p_is_array_slice;
-            ada_call_expr_p_is_array_slice(lal_element, &lal_p_is_array_slice);
+            //~ ada_bool lal_p_is_array_slice;
+            //~ ada_call_expr_p_is_array_slice(lal_element, &lal_p_is_array_slice);
+            //LAL_REP_ISSUE: p_is_array_slice can be a false positive (a-strunb.ads 507:46-507:61),
+            // or a false negative (when using types from Pragma Extend_System)
+            // This makes it completely useless for determining if this call_expr is an array slice
+            // So, instead check if the suffix is a bin op with op_double_dot
 
-            if(lal_p_is_array_slice){ //TODO This is repeated code from below, b/c I couldn't get the if conditions to line up
-              //LAL_REP_ISSUE: Sometimes, p_is_array_slice is true even if it isn't an array slice???? (a-strunb.ads 507:46-507:61)
-              //  So, we need to check if the suffix is a bin op with op_double_dot
-              ada_base_entity lal_bin_op;
-              ada_call_expr_f_suffix(lal_element, &lal_bin_op);
-              if(!ada_node_is_null(&lal_bin_op) && ada_node_kind(&lal_bin_op) == ada_bin_op){
-                ada_base_entity lal_op;
-                ada_bin_op_f_op(&lal_bin_op, &lal_op);
-                if(!ada_node_is_null(&lal_op) && ada_node_kind(&lal_op) == ada_op_double_dot){
+            //TODO This is repeated code from below, b/c I couldn't get the if conditions to line up
+            ada_base_entity lal_bin_op;
+            ada_call_expr_f_suffix(lal_element, &lal_bin_op);
+            if(!ada_node_is_null(&lal_bin_op) && ada_node_kind(&lal_bin_op) == ada_bin_op){
+              ada_base_entity lal_op;
+              ada_bin_op_f_op(&lal_bin_op, &lal_op);
+              if(!ada_node_is_null(&lal_op) && ada_node_kind(&lal_op) == ada_op_double_dot){
 
-                  logInfo() << " ^Actually an_array_slice\n";
+                logInfo() << " ^Actually an_array_slice\n";
 
-                  //Get the prefix
-                  SgExpression& prefix = getExpr(&lal_full_name, ctx);
+                //Get the prefix
+                SgExpression& prefix = getExpr(&lal_full_name, ctx);
 
-                  //Get the slice
-                  std::vector<SgExpression*> idxexpr;
-                  idxexpr.push_back(&getDiscreteRange(&lal_bin_op, ctx));
+                //Get the slice
+                std::vector<SgExpression*> idxexpr;
+                idxexpr.push_back(&getDiscreteRange(&lal_bin_op, ctx));
 
-                  SgExprListExp&             indices = mkExprListExp(idxexpr);
-                  res = &mkPntrArrRefExp(prefix, indices);
+                SgExprListExp&             indices = mkExprListExp(idxexpr);
+                res = &mkPntrArrRefExp(prefix, indices);
 
-                  break;
-                }
+                break;
               }
             }
 
@@ -1796,7 +1836,7 @@ namespace{
               break;
             }
           }
-          logInfo() << "Finished all checks, corresponds to A_Function_Call.\n";
+          logInfo() << "Finished all checks, " << kind_name_string << " corresponds to A_Function_Call.\n";
 
           std::vector<ada_base_entity*>  params;
           ada_base_entity                prefix;
@@ -1825,21 +1865,34 @@ namespace{
             ada_call_expr_f_name(lal_element, &prefix);
             ada_base_entity param_list;
             ada_call_expr_f_suffix(lal_element, &param_list);
-            int count = ada_node_children_count(&param_list);
-            params.resize(count);
-            param_backend.resize(count);
-            for (int i = 0; i < count; ++i)
-            {
-              if(ada_node_child(&param_list, i, &param_backend.at(i)) == 0){
-                logError() << "Error while getting a child in getExpr_undecorated.\n";
-              }
 
-              if(!ada_node_is_null(&param_backend.at(i))){
-                int temp_hash = hash_node(&param_backend.at(i));
-                ada_node_kind_enum temp_kind = ada_node_kind(&param_backend.at(i));
-                logInfo() << "Adding " << &param_backend.at(i) << "(hash = " << temp_hash << "), (kind = " << temp_kind << ") to params.\n";
-                params.at(i) = &param_backend.at(i);
+            //The suffix can be a single ada_attribute_ref instead of a list node
+            if(ada_node_kind(&param_list) == ada_attribute_ref){
+              param_backend.push_back(param_list);
+              params.push_back(&param_backend.at(0));
+
+            } else {
+              //Put every valid child of the list into params
+              int count = ada_node_children_count(&param_list);
+              params.resize(count);
+              param_backend.resize(count);
+              int last_valid_child_index = 0;
+              for (int i = 0; i < count; ++i)
+              {
+                if(ada_node_child(&param_list, i, &param_backend.at(i)) == 0){
+                  logError() << "Error while getting a child in getExpr_undecorated.\n";
+                }
+
+                if(!ada_node_is_null(&param_backend.at(i))){
+                  int temp_hash = hash_node(&param_backend.at(i));
+                  ada_node_kind_enum temp_kind = ada_node_kind(&param_backend.at(i));
+                  logInfo() << "Adding " << &param_backend.at(i) << "(hash = " << temp_hash << "), (kind = " << temp_kind << ") to params.\n";
+                  params.at(i) = &param_backend.at(i);
+                  last_valid_child_index = i;
+                }
               }
+              params.resize(last_valid_child_index + 1);
+
             }
             operatorCallSyntax = true;
             objectCallSyntax = false;
