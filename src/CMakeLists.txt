@@ -808,7 +808,50 @@ target_include_directories(ROSE_DLL PUBLIC
 #
 target_compile_features(ROSE_DLL PUBLIC cxx_std_14)
 
-target_link_libraries(ROSE_DLL ${link_with_libraries} ${rose_LIB_OBJS})
+# Link dependencies with proper PUBLIC/PRIVATE classification
+# ============================================================
+# This is part of CMake modernization (Step 4 in docs/CMakeModernizationPlan.md).
+#
+# PURPOSE:
+# Properly classify dependencies as PUBLIC or PRIVATE to control transitive dependencies.
+# - PUBLIC: Types/symbols from this library appear in ROSE's public headers
+# - PRIVATE: Only used internally by ROSE implementation
+#
+# WHY THIS MATTERS:
+# - Reduces unnecessary dependencies for downstream projects
+# - Improves link times by not propagating unnecessary libraries
+# - Allows ROSE's internal dependencies to change without breaking downstream projects
+# - Makes it clear which dependencies are truly required vs. optional
+#
+# CLASSIFICATION RATIONALE:
+#
+# PUBLIC dependencies:
+# - Boost: Extensively used in ROSE public headers, especially in Rose::BinaryAnalysis
+#   (boost::filesystem, boost::graph, boost::serialization, boost::tribool, etc.)
+#   Many ROSE APIs expose Boost types directly.
+# - rose_LIB_OBJS: ROSE's internal object libraries that contain public APIs
+# - link_with_libraries: Contains system libraries (pthreads, dl, m, c, rt) and
+#   platform-specific libraries that are part of ROSE's public interface
+#
+# PRIVATE dependencies (added below):
+# - Z3: SMT solver used internally for symbolic execution
+# - DWARF/ELF: Binary analysis internal implementation
+# - Capstone: Disassembly backend
+# - YAML-CPP: Configuration file parsing
+# - Dlib: Internal matrix/graph algorithms
+# - Readline: Interactive tool support
+# - GCrypt: Cryptographic hashing internals
+# - Zlib: Compression (though Boost may expose this transitively)
+# - POET: Program transformation DSL
+# - Language frontends: Python, Java, Fortran, Ada (internal)
+#
+target_link_libraries(ROSE_DLL
+  PUBLIC
+    # Boost is in ROSE's public API - many headers expose Boost types
+    ${link_with_libraries}
+    # Internal ROSE object libraries that contain public APIs
+    ${rose_LIB_OBJS}
+)
 
 set_target_properties(ROSE_DLL PROPERTIES
   VERSION 1.0.0
@@ -838,57 +881,62 @@ macro(add_library_dependency lib)
   list(APPEND rose_library_dir_list ${lib_dir})
 endmacro()
 
+# Link optional dependencies as PRIVATE
+# ======================================
+# These dependencies are used internally by ROSE but are not exposed in public headers.
+# Marking them PRIVATE prevents them from being propagated to downstream projects.
+
 # Z3 has an executable component and a development (library and headers) component that can be installed independently
 # of each other. Therfore Z3_FOUND_EXE says whether the executable component was found, and Z3_FOUND_LIB says whether
 # the development component was found; Z3_FOUND is set if either component is found.
 if(Z3_FOUND_LIB)
-  target_link_libraries(ROSE_DLL ${Z3_LIBRARY})
+  target_link_libraries(ROSE_DLL PRIVATE ${Z3_LIBRARY})
   add_library_dependency(${Z3_LIBRARY})
 endif()
 
 # YAML-cpp is for parsing YAML and JSON files.
 if(ENABLE-YAML AND YAMLCPP_FOUND)
-  target_link_libraries(ROSE_DLL ${YAMLCPP_LIBRARY})
+  target_link_libraries(ROSE_DLL PRIVATE ${YAMLCPP_LIBRARY})
   add_library_dependency(${Z3_LIBRARY})
 endif()
 
 # Dlib is a C++ support library. ROSE uses matrices and some graph algorithms currently.
 if(DLIB_FOUND)
-  target_link_libraries(ROSE_DLL ${DLIB_LIBRARY})
+  target_link_libraries(ROSE_DLL PRIVATE ${DLIB_LIBRARY})
   add_library_dependency(${DLIB_LIBRARY})
 endif()
 
 # Capstone is used to disassemble ARM.
 if(CAPSTONE_FOUND)
-  target_link_libraries(ROSE_DLL ${CAPSTONE_LIBRARY})
+  target_link_libraries(ROSE_DLL PRIVATE ${CAPSTONE_LIBRARY})
   add_library_dependency(${CAPSTONE_LIBRARY})
 endif()
 
 # libdwarf and libelf are used to parse DWARF (debugging) information from ELF files. The libelf library is a dependency of
 # the libdwarf library, but is not used directly by ROSE (ROSE has its own ELF parser).
 if(DWARF_FOUND)
-  target_link_libraries(ROSE_DLL ${DWARF_LIBRARY} ${ELF_LIBRARY})
+  target_link_libraries(ROSE_DLL PRIVATE ${DWARF_LIBRARY} ${ELF_LIBRARY})
   add_library_dependency(${DWARF_LIBRARY})
   add_library_dependency(${ELF_LIBRARY})
 endif()
 
 # If readline was found.
 if(ENABLE-READLINE AND READLINE_FOUND)
-  target_link_libraries(ROSE_DLL ${READLINE_LIBRARY})
+  target_link_libraries(ROSE_DLL PRIVATE ${READLINE_LIBRARY})
   add_library_dependency(${READLINE_LIBRARY})
 endif()
 
 # The GNU GCrypt library is used for computing a wide variety of hashes. It needs the GPG-Error library.
 if(GCRYPT_FOUND AND GPGERROR_FOUND)
-  target_link_libraries(ROSE_DLL ${GCRYPT_LIBRARY})
+  target_link_libraries(ROSE_DLL PRIVATE ${GCRYPT_LIBRARY})
   add_library_dependency(${GCRYPT_LIBRARY})
-  target_link_libraries(ROSE_DLL ${GPGERROR_LIBRARY})
+  target_link_libraries(ROSE_DLL PRIVATE ${GPGERROR_LIBRARY})
   add_library_dependency(${GPGERROR_LIBRARY})
 endif()
 
 # Zlib is a compression library and is needed by Boost. Make sure you compiled Boost with this same zlib.
 if(ZLIB_FOUND)
-  target_link_libraries(ROSE_DLL ${ZLIB_LIBRARY})
+  target_link_libraries(ROSE_DLL PRIVATE ${ZLIB_LIBRARY})
   add_library_dependency(${ZLIB_LIBRARY})
 endif()
 
@@ -905,6 +953,10 @@ if(NOT BINARY_EDG)
   add_definitions(-DUSE_FAKE_EDG)
 endif()
 
+
+# Link language frontend dependencies as PRIVATE
+# ===============================================
+# Language frontends are implementation details and not exposed in ROSE's public API.
 
 # Depending on which language analysis (frontend) features are enabled in ROSE, we may need some additional libraries.
 if(ENABLE-FORTRAN)
@@ -924,7 +976,7 @@ if(ENABLE-ROSEHPCT)
 endif()
 
 if(ENABLE-ADA)
-  target_link_libraries(ROSE_DLL ${ASIS_ADAPTER_LIB})
+  target_link_libraries(ROSE_DLL PRIVATE ${ASIS_ADAPTER_LIB})
   list(APPEND LINK_FILES experimentalRoseAda)
 endif()
 
@@ -937,9 +989,9 @@ endif()
 
 set(ROSE_TARGET_LINK ${LINK_FILES})
 if(WIN32)
-  target_link_libraries(ROSE_DLL ${ROSE_TARGET_LINK} shlwapi.lib Ws2_32.lib)
+  target_link_libraries(ROSE_DLL PRIVATE ${ROSE_TARGET_LINK} shlwapi.lib Ws2_32.lib)
 else ()
-  target_link_libraries(ROSE_DLL ${ROSE_TARGET_LINK} )
+  target_link_libraries(ROSE_DLL PRIVATE ${ROSE_TARGET_LINK})
 endif()
 
 # If the C preprocessor is enabled, ROSE has some additional depenendencies
@@ -958,7 +1010,7 @@ if(SQLITE3_FOUND_LIB)
   #       commands for creating rose_paths.C and rose_paths.h, and is the only CMakeLists.txt file that mentions
   #       "rose_paths". The error goes away if I comment out the following line (but then of course there's linking
   #       problems later).
-  target_link_libraries(ROSE_DLL RoseSQLite3xDatabase)
+  target_link_libraries(ROSE_DLL PRIVATE RoseSQLite3xDatabase)
 endif()
 
 ########################################################################################################################

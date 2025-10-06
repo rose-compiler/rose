@@ -4,10 +4,10 @@
 
 This checklist tracks the high-level modernization goals. See the detailed "Implementation Plan by Dependencies" section below for granular step-by-step status.
 
-- [ ] **CMake Package Configuration** - Create modern `RoseConfig.cmake` and `RoseConfigVersion.cmake` files
-- [ ] **Namespaced Targets** - Export `Rose::rose` target instead of plain `rose`
-- [ ] **Property Propagation** - Automatically propagate include directories, compile features, and definitions
-- [ ] **Dependency Classification** - Properly mark dependencies as PUBLIC/PRIVATE/INTERFACE
+- [x] **CMake Package Configuration** - Create modern `RoseConfig.cmake` and `RoseConfigVersion.cmake` files
+- [x] **Namespaced Targets** - Export `Rose::rose` target instead of plain `rose`
+- [x] **Property Propagation** - Automatically propagate include directories, compile features, and definitions
+- [x] **Dependency Classification** - Properly mark dependencies as PUBLIC/PRIVATE/INTERFACE
 - [ ] **Version Checking** - Support version requirements in `find_package(Rose VERSION)`
 - [ ] **Automated Dependency Discovery** - Automatically find all ROSE dependencies from config file
 - [ ] **pkg-config Support** - Generate `rose.pc` for non-CMake build systems
@@ -270,7 +270,7 @@ int main() { return 0; }
 
 ```bash
 cd _build/test_alias
-cmake . && cmake --build .
+rmc cmake . && rmc cmake --build .
 ```
 
 **Success criteria:** Test project builds successfully using `Rose::rose` target.
@@ -320,12 +320,13 @@ target_link_libraries(myapp PRIVATE Rose::rose)
 ---
 
 ### Step 4: Classify and Fix Dependency Linkage (PUBLIC/PRIVATE)
-**Status:** ❌ Not Started
-**Implementation:** ⬜ Not Implemented
-**Testing:** ⬜ Not Tested
+**Status:** ✅ Complete
+**Implementation:** ✅ Implemented
+**Testing:** 🔶 Partial
 **Dependencies:** Step 3
 **Time estimate:** 2-3 hours
 **Files modified:** `src/CMakeLists.txt`
+**GitLab Issue:** #788+
 
 Review each `target_link_libraries(ROSE_DLL ...)` call and classify as PUBLIC or PRIVATE.
 
@@ -370,7 +371,7 @@ endif()
 ```
 
 **Testing:**
-1. Build ROSE completely: `cmake --build . --target rose`
+1. Build ROSE completely: `rmc -C _build cmake --build . --target rose`
 2. Check exported symbols don't expose unnecessary dependencies:
 ```bash
 nm -D lib/librose.so | grep -i "boost\|z3\|dwarf" | wc -l
@@ -414,7 +415,7 @@ install(EXPORT RoseTargets
 
 **Testing:**
 ```bash
-cmake --build . --target install
+rmc cmake --build . --target install
 ls ${CMAKE_INSTALL_PREFIX}/lib/cmake/Rose/
 # Should see RoseTargets.cmake and RoseTargets-*.cmake
 cat ${CMAKE_INSTALL_PREFIX}/lib/cmake/Rose/RoseTargets.cmake
@@ -455,7 +456,7 @@ install(FILES
 
 **Testing:**
 ```bash
-cmake --build . --target install
+rmc cmake --build . --target install
 cat ${CMAKE_INSTALL_PREFIX}/lib/cmake/Rose/RoseConfigVersion.cmake
 # Should contain version checking logic
 
@@ -467,7 +468,7 @@ project(VersionTest)
 find_package(Rose 0.11 REQUIRED)
 message(STATUS "Found Rose version: ${Rose_VERSION}")
 EOF
-cmake . -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
+rmc cmake . -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
 # Should succeed and print version
 ```
 
@@ -529,7 +530,7 @@ install(FILES
 
 **Testing:**
 ```bash
-cmake --build . --target install
+rmc cmake --build . --target install
 
 # Create test project
 cd /tmp/rose_test
@@ -548,8 +549,8 @@ int main() {
 }
 EOF
 
-cmake . -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
-cmake --build .
+rmc cmake . -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
+rmc cmake --build .
 ./test_rose
 ```
 
@@ -575,12 +576,12 @@ Add conditional `find_dependency()` calls for each optional library.
 **Testing:**
 ```bash
 # Test with various ROSE configurations
-cmake .. -DENABLE-BINARY-ANALYSIS=ON  # Should find Dwarf, Elf, etc.
-cmake --build . --target install
+rmc cmake .. -DENABLE-BINARY-ANALYSIS=ON  # Should find Dwarf, Elf, etc.
+rmc cmake --build . --target install
 
 # Test that dependencies are found correctly
 cd /tmp/rose_test
-cmake . -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
+rmc cmake . -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
 # Should not fail on missing optional dependencies
 ```
 
