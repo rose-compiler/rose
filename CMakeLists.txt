@@ -1618,9 +1618,20 @@ install(FILES
 )
 
 # Install Find modules needed by RoseConfig.cmake
+# These modules are used to locate ROSE's optional dependencies
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindGcrypt.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindGpgError.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindZ3.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindDwarf.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindElf.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindCapstone.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindDlib.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindYamlcpp.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindReadline.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindSqlite3.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindYices.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindMagic.cmake
   DESTINATION ${LIB_INSTALL_DIR}/cmake/Rose
 )
 

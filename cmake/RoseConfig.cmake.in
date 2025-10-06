@@ -26,11 +26,18 @@ find_dependency(Boost @Boost_VERSION@ REQUIRED COMPONENTS
   serialization
 )
 
+# Optional dependencies
+# ======================
+# These dependencies are only required if ROSE was built with specific features enabled.
+# They are marked as PRIVATE in ROSE's link interface, so they're not strictly required
+# for projects using ROSE, but the Find modules need to be available for completeness.
+
+# Set up module path for ROSE's custom Find modules
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}" ${CMAKE_MODULE_PATH})
+
 # Find Gcrypt if it was enabled (optional - but appears in some ROSE public headers)
 set(Rose_GCRYPT_FOUND @GCRYPT_FOUND@)
 if(Rose_GCRYPT_FOUND)
-  set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}" ${CMAKE_MODULE_PATH})
-
   # Find GpgError first (required by Gcrypt)
   if(NOT DEFINED GPGERROR_ROOT)
     set(GPGERROR_ROOT "@GPGERROR_ROOT@")
@@ -52,6 +59,108 @@ if(Rose_GCRYPT_FOUND)
     set(Rose_FOUND FALSE)
     set(Rose_NOT_FOUND_MESSAGE "Rose could not be found because dependency Gcrypt could not be found.")
   endif()
+endif()
+
+# Find Z3 SMT solver (optional - used for symbolic execution)
+set(Rose_Z3_FOUND @Z3_FOUND_LIB@)
+if(Rose_Z3_FOUND)
+  if(NOT DEFINED Z3_ROOT)
+    set(Z3_ROOT "@Z3_ROOT@")
+  endif()
+  include(FindZ3)
+  # Z3 is PRIVATE, so we don't fail if it's not found - consumer doesn't need it
+  # This just makes the variables available for reference
+endif()
+
+# Find DWARF debugging information library (optional - for binary analysis)
+set(Rose_DWARF_FOUND @DWARF_FOUND@)
+if(Rose_DWARF_FOUND)
+  if(NOT DEFINED DWARF_ROOT)
+    set(DWARF_ROOT "@DWARF_ROOT@")
+  endif()
+  # Find Elf first (required by Dwarf)
+  if(NOT DEFINED ELF_ROOT)
+    set(ELF_ROOT "@ELF_ROOT@")
+  endif()
+  include(FindElf)
+  include(FindDwarf)
+  # DWARF is PRIVATE, so we don't fail if it's not found
+endif()
+
+# Find Capstone disassembly library (optional - for ARM disassembly)
+set(Rose_CAPSTONE_FOUND @CAPSTONE_FOUND@)
+if(Rose_CAPSTONE_FOUND)
+  if(NOT DEFINED CAPSTONE_ROOT)
+    set(CAPSTONE_ROOT "@CAPSTONE_ROOT@")
+  endif()
+  include(FindCapstone)
+  # Capstone is PRIVATE, so we don't fail if it's not found
+endif()
+
+# Find Dlib C++ library (optional - for matrix/graph algorithms)
+set(Rose_DLIB_FOUND @DLIB_FOUND@)
+if(Rose_DLIB_FOUND)
+  if(NOT DEFINED DLIB_ROOT)
+    set(DLIB_ROOT "@DLIB_ROOT@")
+  endif()
+  include(FindDlib)
+  # Dlib is PRIVATE, so we don't fail if it's not found
+endif()
+
+# Find YAML-CPP library (optional - for YAML/JSON parsing)
+set(Rose_YAMLCPP_FOUND @YAMLCPP_FOUND@)
+if(Rose_YAMLCPP_FOUND)
+  if(NOT DEFINED YAMLCPP_ROOT)
+    set(YAMLCPP_ROOT "@YAMLCPP_ROOT@")
+  endif()
+  include(FindYamlcpp)
+  # YAML-CPP is PRIVATE, so we don't fail if it's not found
+endif()
+
+# Find Readline library (optional - for interactive tools)
+set(Rose_READLINE_FOUND @READLINE_FOUND@)
+if(Rose_READLINE_FOUND)
+  if(NOT DEFINED READLINE_ROOT)
+    set(READLINE_ROOT "@READLINE_ROOT@")
+  endif()
+  include(FindReadline)
+  # Readline is PRIVATE, so we don't fail if it's not found
+endif()
+
+# Find SQLite3 library (optional - for database functionality)
+set(Rose_SQLITE3_FOUND @SQLITE3_FOUND_LIB@)
+if(Rose_SQLITE3_FOUND)
+  if(NOT DEFINED SQLITE3_ROOT)
+    set(SQLITE3_ROOT "@SQLITE3_ROOT@")
+  endif()
+  include(FindSqlite3)
+  # SQLite3 is PRIVATE, so we don't fail if it's not found
+endif()
+
+# Find Yices SMT solver (optional - for symbolic execution)
+set(Rose_YICES_FOUND @YICES_FOUND@)
+if(Rose_YICES_FOUND)
+  if(NOT DEFINED YICES_ROOT)
+    set(YICES_ROOT "@YICES_ROOT@")
+  endif()
+  include(FindYices)
+  # Yices is PRIVATE, so we don't fail if it's not found
+endif()
+
+# Find Magic library (optional - for file type detection)
+set(Rose_MAGIC_FOUND @MAGIC_FOUND@)
+if(Rose_MAGIC_FOUND)
+  if(NOT DEFINED MAGIC_ROOT)
+    set(MAGIC_ROOT "@MAGIC_ROOT@")
+  endif()
+  include(FindMagic)
+  # Magic is PRIVATE, so we don't fail if it's not found
+endif()
+
+# Find Zlib (optional - used by Boost and compression)
+set(Rose_ZLIB_FOUND @ZLIB_FOUND@)
+if(Rose_ZLIB_FOUND)
+  find_dependency(ZLIB)
 endif()
 
 # Import the ROSE targets
