@@ -959,10 +959,14 @@ determineFileType(vector<string> argv, int & /*nextErrorCode*/, SgProject* proje
                                    file->set_UPC_only();
                                    Rose::is_UPC_language = true;
                                  }
-                                else
-                                 {
-                                   file->set_C99_gnu_only();
-                                 }
+                           // PL (10/06/2025): Disable setting gnu99 as default C standard. The C++ code above does not set a default standard, as this is handled
+                           // in cmdline.C. Additionally, setting gnu99 as the default C standard flips the gnu_standard flag to true, when it should be false by
+                           // default. Once the gnu_standard flag is set to true, it must be explicitly reset to false, which does not occur when a non-GNU C version
+                           // is specified on the command line.
+                           //   else
+                           //    {
+                           //      file->set_C99_gnu_only();
+                           //    }
 
                            // DQ (12/23/2008): This is the earliest point where the global scope can be set.
                               ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
