@@ -278,12 +278,13 @@ cmake . && cmake --build .
 ---
 
 ### Step 3: Add Proper Include Directory Propagation
-**Status:** ❌ Not Started
-**Implementation:** ⬜ Not Implemented
-**Testing:** ⬜ Not Tested
+**Status:** ✅ Complete
+**Implementation:** ✅ Implemented
+**Testing:** ✅ Tested
 **Dependencies:** Step 2
 **Time estimate:** 1 hour
 **Files modified:** `src/CMakeLists.txt`
+**Gitlab Issue:** #787+
 
 Replace or augment the existing `include_directories()` calls with proper target-based includes. Add after the `add_library(ROSE_DLL ...)` line:
 

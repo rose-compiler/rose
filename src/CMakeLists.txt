@@ -733,6 +733,81 @@ set_target_properties(ROSE_DLL PROPERTIES OUTPUT_NAME "rose")
 add_library(Rose::rose ALIAS ROSE_DLL)
 message(STATUS "Created alias target Rose::rose")
 
+# Propagate include directories to consumers
+# ============================================
+# This is part of CMake modernization (Step 3 in docs/CMakeModernizationPlan.md).
+#
+# PURPOSE:
+# When external projects link against Rose::rose, they should automatically get the correct
+# include paths without needing to manually call include_directories(). This is the modern
+# CMake way of handling includes - they are properties of the target that propagate automatically.
+#
+# WHAT THIS REPLACES:
+# Old approach: External projects had to manually find ROSE headers with find_path() and then
+# call include_directories(). This was error-prone and required users to know ROSE's internal
+# directory structure.
+#
+# New approach: Just link with target_link_libraries(mytarget PRIVATE Rose::rose) and includes
+# are automatically added to the compilation.
+#
+# GENERATOR EXPRESSIONS EXPLAINED:
+# The $<BUILD_INTERFACE:...> and $<INSTALL_INTERFACE:...> syntax are "generator expressions"
+# that let us specify different paths for different scenarios:
+#
+# - BUILD_INTERFACE: Used when building against ROSE in its build directory (e.g., during
+#   ROSE development or when a project adds ROSE as a subdirectory with add_subdirectory()).
+#   These paths point to the source tree and build tree locations.
+#
+# - INSTALL_INTERFACE: Used when building against an installed ROSE (the normal case for
+#   external projects). These paths are relative to the install prefix and point to where
+#   headers are installed (typically /usr/local/include/rose or similar).
+#
+# PUBLIC vs PRIVATE vs INTERFACE:
+# We use PUBLIC because:
+# - ROSE's public headers (rose.h, SageIII headers, etc.) need to be available to any code
+#   that includes ROSE headers
+# - If we used PRIVATE, only ROSE's own compilation would get these paths, not external projects
+# - If we used INTERFACE, ROSE itself wouldn't get these paths, only consumers would
+# - PUBLIC = both ROSE and its consumers get these paths
+#
+# WHICH DIRECTORIES ARE INCLUDED:
+# - ${ROSE_TOP_SRC_DIR}/src: Main source directory (for #include <rose.h>, etc.)
+# - ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII: SageIII AST headers (Sg*.h files)
+# - ${ROSE_TOP_SRC_DIR}/src/Rose: Modern Rose namespace headers
+# - ${ROSE_TOP_BINARY_DIR}: Build directory (for generated headers like rosePublicConfig.h)
+# - ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII: Generated SageIII headers
+# - ${INCLUDE_INSTALL_DIR}: Install location for headers (typically include/rose)
+# - ${INCLUDE_INSTALL_DIR}/Rose: Install location for Rose namespace headers
+#
+target_include_directories(ROSE_DLL PUBLIC
+  # Build tree includes - these are used when building against ROSE in its build directory
+  $<BUILD_INTERFACE:${ROSE_TOP_SRC_DIR}/src>
+  $<BUILD_INTERFACE:${ROSE_TOP_SRC_DIR}/src/frontend/SageIII>
+  $<BUILD_INTERFACE:${ROSE_TOP_SRC_DIR}/src/Rose>
+  $<BUILD_INTERFACE:${ROSE_TOP_BINARY_DIR}>
+  $<BUILD_INTERFACE:${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII>
+  # Install tree includes - these are used when building against an installed ROSE
+  $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
+  $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}/Rose>
+)
+
+# Set compile features - ROSE requires C++14
+# ===========================================
+# This tells CMake (and downstream projects) that ROSE requires C++14 as a minimum.
+#
+# EFFECTS:
+# - When compiling ROSE itself, CMake will add -std=c++14 (or equivalent for other compilers)
+# - When external projects link against Rose::rose, their code will also be compiled with
+#   C++14 or later (because PUBLIC propagates this requirement)
+# - If a project tries to use C++11 with ROSE, CMake will upgrade it to C++14 automatically
+#
+# WHY PUBLIC:
+# ROSE's public headers use C++14 features, so any code that includes ROSE headers must
+# also be compiled with C++14 or later. PUBLIC ensures this requirement propagates to
+# consumers of the library.
+#
+target_compile_features(ROSE_DLL PUBLIC cxx_std_14)
+
 target_link_libraries(ROSE_DLL ${link_with_libraries} ${rose_LIB_OBJS})
 
 set_target_properties(ROSE_DLL PROPERTIES
