@@ -186,6 +186,15 @@ string(STRIP "${ROSE_VERSION}" ROSE_VERSION)
 message(STATUS "The ROSE version integer is ${ROSE_VERSION}")
 message(STATUS "The ROSE version string is ${ROSE_PACKAGE_VERSION}")
 
+# Parse version into components for package configuration
+string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)" _version_match "${ROSE_PACKAGE_VERSION}")
+set(ROSE_VERSION_MAJOR "${CMAKE_MATCH_1}")
+set(ROSE_VERSION_MINOR "${CMAKE_MATCH_2}")
+set(ROSE_VERSION_PATCH "${CMAKE_MATCH_3}")
+set(ROSE_VERSION_BUILD "${CMAKE_MATCH_4}")
+
+message(STATUS "ROSE version components: ${ROSE_VERSION_MAJOR}.${ROSE_VERSION_MINOR}.${ROSE_VERSION_PATCH}.${ROSE_VERSION_BUILD}")
+
 ########################################################################################################################
 # Operating system information
 ########################################################################################################################

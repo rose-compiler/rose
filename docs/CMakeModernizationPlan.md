@@ -200,33 +200,37 @@ This section organizes the implementation into independent, testable steps. Each
 - **Testing:** Verification (⬜ Not Tested, 🔶 Partial, ✅ Tested)
 
 ### Step 1: Add Version Parsing (Foundation)
-**Status:** ❌ Not Started
-**Implementation:** ⬜ Not Implemented
-**Testing:** ⬜ Not Tested
+**Status:** ✅ Complete
+**Implementation:** ✅ Implemented
+**Testing:** ✅ Tested
 **Dependencies:** None
 **Time estimate:** 30 minutes
 **Files modified:** `CMakeLists.txt`
+**GitLab Issue:** #785+
 
-Add version component parsing to the top-level CMakeLists.txt after line 180:
+Add version component parsing to the top-level CMakeLists.txt after line 187:
 
 ```cmake
 # Parse version into components for package configuration
-string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)" _version_match "${ROSE_PACKAGE_VERSION}")
+string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)" _version_match "${ROSE_PACKAGE_VERSION}")
 set(ROSE_VERSION_MAJOR "${CMAKE_MATCH_1}")
 set(ROSE_VERSION_MINOR "${CMAKE_MATCH_2}")
 set(ROSE_VERSION_PATCH "${CMAKE_MATCH_3}")
+set(ROSE_VERSION_BUILD "${CMAKE_MATCH_4}")
 
-message(STATUS "ROSE version components: ${ROSE_VERSION_MAJOR}.${ROSE_VERSION_MINOR}.${ROSE_VERSION_PATCH}")
+message(STATUS "ROSE version components: ${ROSE_VERSION_MAJOR}.${ROSE_VERSION_MINOR}.${ROSE_VERSION_PATCH}.${ROSE_VERSION_BUILD}")
 ```
 
 **Testing:**
 ```bash
 cd _build
-cmake .. | grep "ROSE version components"
-# Should output: ROSE version components: 0.11.145
+rmc cmake .. | grep "ROSE version components"
+# Should output: ROSE version components: 0.11.145.338
 ```
 
 **Success criteria:** Version variables are set correctly and displayed during configuration.
+
+**Implementation notes:** ROSE uses a four-component version number (major.minor.patch.build). The fourth component is named "build" to represent incremental build numbers.
 
 ---
 
