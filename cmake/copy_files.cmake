@@ -396,7 +396,7 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmRuntimeAnnotationValue.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmRuntimeParameterAnnotation.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmRuntimeVisibleAnnotations.h
-    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmRuntimeVisibleParameterAnnotations.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmRuntimeVisibilityParamAnnotations.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmRuntimeInvisibleAnnotations.h
     )
 

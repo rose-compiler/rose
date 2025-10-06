@@ -10050,102 +10050,6 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmJvmRuntimeVisibleParameterAnnotations           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmJvmRuntimeVisibleParameterAnnotations);
-IS_SERIALIZABLE(AsmJvmRuntimeVisibleParameterAnnotations);
-
-#ifndef DOCUMENTATION
-AsmJvmRuntimeVisibleParameterAnnotations.useSmallHeader(true);
-#endif // !DOCUMENTATION
-
-DECLARE_HEADERS(AsmJvmRuntimeVisibleParameterAnnotations);
-#if defined(SgAsmJvmRuntimeVisibleParameterAnnotations_HEADERS) || defined(DOCUMENTATION)
-#include <sageContainer.h>
-#endif // SgAsmJvmRuntimeVisibleParameterAnnotations_HEADERS
-
-#ifdef DOCUMENTATION
-/** JVM RuntimeVisibleParameterAnnotations attribute.
- *
- *  The RuntimeVisibleParameterAnnotations attribute is a variable-length attribute in the
- *  attributes table of the method_info structure (section 4.6). The RuntimeVisibleParameterAnnotations
- *  attribute stores run-time visible annotations on the declarations of formal parameters
- *  of the corresponding method. See section 4.7.18 of the JVM specification. */
-class SgAsmJvmRuntimeVisibleParameterAnnotations: public SgAsmJvmAttribute {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmRuntimeVisibleParameterAnnotations.setDataPrototype(
-        "std::vector<SgAsmJvmRuntimeParameterAnnotation*>", "parameter_annotations", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmJvmRuntimeVisibleParameterAnnotations);
-#if defined(SgAsmJvmRuntimeVisibleParameterAnnotations_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmJvmRuntimeVisibleParameterAnnotations -----------------------
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmJvmRuntimeVisibleParameterAnnotations");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
-        s & BOOST_SERIALIZATION_NVP(p_parameter_annotations);
-        debugSerializationEnd("SgAsmJvmRuntimeVisibleParameterAnnotations");
-    }
-#endif // ROSE_ENABLE_BOOST_SERIALIZATION
-public:
-public:
-    /** Property: parameter_annotations
-     *
-     *  Each entry in the parameter_annotations table represents all of the run-time visible
-     *  annotations on the declaration of a single formal parameter.
-     *  The parameter_annotation structure is specified in section 4.7.18.
-     *
-     *  @{ */
-    std::vector<SgAsmJvmRuntimeParameterAnnotation*> const& get_parameter_annotations() const;
-    std::vector<SgAsmJvmRuntimeParameterAnnotation*>& get_parameter_annotations();
-    /** @} */
-public:
-    /** Initialize the RuntimeVisibleParameterAnnotations attribute before parsing.
-     *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    explicit SgAsmJvmRuntimeVisibleParameterAnnotations(SgAsmJvmAttributeTable* table);
-
-    /** Initialize the attribute by parsing the file. */
-    virtual SgAsmJvmRuntimeVisibleParameterAnnotations* parse(SgAsmJvmConstantPool* pool) override;
-
-    /** Write the local variable table to a binary file. */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging information. */
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmJvmRuntimeVisibleParameterAnnotations();
-
-public:
-    /** Default constructor. */
-    SgAsmJvmRuntimeVisibleParameterAnnotations();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmJvmRuntimeVisibleParameterAnnotations_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmRuntimeVisibleAnnotations           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -10197,8 +10101,8 @@ public:
 public:
     /** Property: annotations
      *
-     *  List of pointers to annotation entries. The annotation structure is specified in section 4.7.16.
-     *
+     *  List of pointers to annotation entries. The annotation structure is specified in section 4.7.16. 
+     *  
      *  @{ */
     std::vector<SgAsmJvmRuntimeAnnotation*> const& get_annotations() const;
     std::vector<SgAsmJvmRuntimeAnnotation*>& get_annotations();
@@ -10234,6 +10138,126 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmRuntimeVisibleAnnotations_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmRuntimeVisibilityParamAnnotations           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmRuntimeVisibilityParamAnnotations);
+IS_SERIALIZABLE(AsmJvmRuntimeVisibilityParamAnnotations);
+
+#ifndef DOCUMENTATION
+AsmJvmRuntimeVisibilityParamAnnotations.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmJvmRuntimeVisibilityParamAnnotations);
+#if defined(SgAsmJvmRuntimeVisibilityParamAnnotations_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmRuntimeVisibilityParamAnnotations_HEADERS
+
+#ifdef DOCUMENTATION
+/** JVM RuntimeVisibleParameterAnnotations and RuntimeInvisibleParameterAnnotations attribute.
+ *
+ *  The RuntimeVisibleParameterAnnotations attribute is a variable-length attribute in the
+ *  attributes table of the method_info structure (section 4.6). The RuntimeVisibleParameterAnnotations
+ *  attribute stores run-time visible annotations on the declarations of formal parameters
+ *  of the corresponding method. See section 4.7.18 of the JVM specification.
+ *
+ *  The RuntimeInvisibleParameterAnnotations attribute is a variable-length attribute in the
+ *  attributes table of a method_info structure (section 4.6). The RuntimeInvisibleParameterAnnotations
+ *  attribute stores run-time invisible annotations on the declarations of formal parameters
+ *  of the corresponding method. See section 4.7.19 of the JVM specification.
+ */
+class SgAsmJvmRuntimeVisibilityParamAnnotations: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmRuntimeVisibilityParamAnnotations.setDataPrototype(
+        "std::vector<SgAsmJvmRuntimeParameterAnnotation*>", "parameter_annotations", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmRuntimeVisibilityParamAnnotations.setDataPrototype(
+        "bool", "isVisible", "= true",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmRuntimeVisibilityParamAnnotations);
+#if defined(SgAsmJvmRuntimeVisibilityParamAnnotations_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmRuntimeVisibilityParamAnnotations -----------------------
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmRuntimeVisibilityParamAnnotations");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        s & BOOST_SERIALIZATION_NVP(p_parameter_annotations);
+        s & BOOST_SERIALIZATION_NVP(p_isVisible);
+        debugSerializationEnd("SgAsmJvmRuntimeVisibilityParamAnnotations");
+    }
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
+public:
+public:
+    /** Property: parameter_annotations
+     *
+     *  Each entry in the parameter_annotations table represents all of the run-time visible
+     *  (or invisible) annotations on the declaration of a single formal parameter.
+     *  The parameter_annotation structure is specified in section 4.7.18. 
+     *  
+     *  @{ */
+    std::vector<SgAsmJvmRuntimeParameterAnnotation*> const& get_parameter_annotations() const;
+    std::vector<SgAsmJvmRuntimeParameterAnnotation*>& get_parameter_annotations();
+    /** @} */
+
+public:
+    /** Property: isVisible
+     *
+     *  The isVisible property is true for a RuntimeVisibleParameterAnnotations attribute,
+     *  false for a RuntimeInvisibleParameterAnnotations attribute. 
+     *  
+     *  @{ */
+    bool const& get_isVisible() const;
+    void set_isVisible(bool const&);
+    /** @} */
+public:
+    /** Initialize an SgAsmJvmRuntimeVisibilityParamAnnotations object before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    SgAsmJvmRuntimeVisibilityParamAnnotations(SgAsmJvmAttributeTable* table, bool visibility);
+
+    /** Initialize the attribute by parsing the file. */
+    virtual SgAsmJvmRuntimeVisibilityParamAnnotations* parse(SgAsmJvmConstantPool* pool) override;
+
+    /** Write the local variable table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmRuntimeVisibilityParamAnnotations();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmRuntimeVisibilityParamAnnotations();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmRuntimeVisibilityParamAnnotations_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -10286,8 +10310,8 @@ public:
      *
      *  Each entry in the annotations table represents a single run-time visible annotation on the
      *  declaration of the formal parameter corresponding to the parameter_annotations entry.
-     *  The annotation structure is specified in section 4.7.16.
-     *
+     *  The annotation structure is specified in section 4.7.16. 
+     *  
      *  @{ */
     std::vector<SgAsmJvmRuntimeAnnotation*> const& get_annotations() const;
     std::vector<SgAsmJvmRuntimeAnnotation*>& get_annotations();
@@ -10296,7 +10320,7 @@ public:
     /** Initialize the object before parsing.
      *
      *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    explicit SgAsmJvmRuntimeParameterAnnotation(SgAsmJvmRuntimeVisibleParameterAnnotations*);
+    explicit SgAsmJvmRuntimeParameterAnnotation(SgAsmJvmRuntimeVisibilityParamAnnotations*);
 
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmRuntimeParameterAnnotation* parse(SgAsmJvmConstantPool*);
@@ -10380,8 +10404,8 @@ public:
 public:
     /** Property: annotations
      *
-     *  List of pointers to annotation entries. The annotation structure is specified in section 4.7.16.
-     *
+     *  List of pointers to annotation entries. The annotation structure is specified in section 4.7.16. 
+     *  
      *  @{ */
     std::vector<SgAsmJvmRuntimeAnnotation*> const& get_annotations() const;
     std::vector<SgAsmJvmRuntimeAnnotation*>& get_annotations();
@@ -10631,7 +10655,7 @@ public:
     /** Property: values
      *
      *  The values property is represented by a list of pointers to annotation array entries.
-     *  The annotation structure is specified in section 4.7.16.  This property is active for tags: '['
+     *  The annotation structure is specified in section 4.7.16.  This property is active for tags: '[' 
      *
      *  @{ */
     std::vector<SgAsmJvmRuntimeAnnotationValue*> const& get_values() const;
@@ -15001,8 +15025,8 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
         | AsmJvmNestHost
         | AsmJvmNestMembers
         | AsmJvmRuntimeInvisibleAnnotations
+        | AsmJvmRuntimeVisibilityParamAnnotations
         | AsmJvmRuntimeVisibleAnnotations
-        | AsmJvmRuntimeVisibleParameterAnnotations
         | AsmJvmSignature
         | AsmJvmSourceFile
         | AsmJvmStackMapTable

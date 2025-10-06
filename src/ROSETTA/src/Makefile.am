@@ -391,7 +391,7 @@ rosetta_generated_definitions =				\
 	  SgAsmJvmRuntimeAnnotationValue.h		\
 	  SgAsmJvmRuntimeParameterAnnotation.h		\
 	  SgAsmJvmRuntimeVisibleAnnotations.h		\
-	  SgAsmJvmRuntimeVisibleParameterAnnotations.h	\
+	  SgAsmJvmRuntimeVisibilityParamAnnotations.h	\
 	  SgAsmJvmRuntimeInvisibleAnnotations.h		\
 	  SgAsmJvmSignature.h				\
 	  SgAsmJvmSourceFile.h				\

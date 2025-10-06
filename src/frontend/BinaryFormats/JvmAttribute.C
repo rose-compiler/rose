@@ -68,7 +68,10 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmRuntimeInvisibleAnnotations(parent);
   }
   else if (name == "RuntimeVisibleParameterAnnotations") { // 4.7.18
-    return new SgAsmJvmRuntimeVisibleParameterAnnotations(parent);
+    return new SgAsmJvmRuntimeVisibilityParamAnnotations(parent, true);
+  }
+  else if (name == "RuntimeInvisibleParameterAnnotations") { // 4.7.19
+    return new SgAsmJvmRuntimeVisibilityParamAnnotations(parent, false);
   }
   else if (name == "AnnotationDefault") { // 4.7.22
     return new SgAsmJvmAnnotationDefault(parent);
@@ -80,12 +83,15 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmMethodParameters(parent);
   }
   else if (name == "Module") { // 4.7.25
+    ASSERT_require2(false, "Need attribute Module\n");
     //TODO
   }
   else if (name == "ModulePackages") { // 4.7.26
+    ASSERT_require2(false, "Need attribute ModulePackages\n");
     //TODO
   }
   else if (name == "ModuleMainClass") { // 4.7.27
+    ASSERT_require2(false, "Need attribute ModuleMainClass\n");
     //TODO
   }
   else if (name == "NestHost") { // 4.7.28
@@ -93,6 +99,10 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   }
   else if (name == "NestMembers") { // 4.7.29
     return new SgAsmJvmNestMembers(parent);
+  }
+  else if (name == "PermittedSubclasses") { // 4.7.31
+    ASSERT_require2(false, "Need attribute PermittedSubclasses\n");
+    //TODO
   }
 
   // skip attribute
@@ -1321,16 +1331,22 @@ void SgAsmJvmRuntimeInvisibleAnnotations::dump(FILE* f, const char* prefix, ssiz
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.18 The RuntimeVisibleParameterAnnotations Attribute. RuntimeVisibleParameterAnnotations_attribute represented by the
-// SgAsmJvmRuntimeVisibleAnnotations class.
+// 4.7.18 The RuntimeVisibleParameterAnnotations Attribute. RuntimeVisibleParameterAnnotations_attribute is represented
+// by the SgAsmJvmRuntimeVisibilityParamAnnotations class.
 //
-SgAsmJvmRuntimeVisibleParameterAnnotations::SgAsmJvmRuntimeVisibleParameterAnnotations(SgAsmJvmAttributeTable* parent)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.19 The RuntimeInvisibleParameterAnnotations Attribute. RuntimeInvisibleParameterAnnotations_attribute is represented
+// by the SgAsmJvmRuntimeVisibilityParamAnnotations class.
+//
+SgAsmJvmRuntimeVisibilityParamAnnotations::SgAsmJvmRuntimeVisibilityParamAnnotations(SgAsmJvmAttributeTable* p, bool v)
 {
   initializeProperties();
-  set_parent(parent);
+  set_parent(p);
+  set_isVisible(v);
 }
 
-SgAsmJvmRuntimeVisibleParameterAnnotations* SgAsmJvmRuntimeVisibleParameterAnnotations::parse(SgAsmJvmConstantPool* pool)
+SgAsmJvmRuntimeVisibilityParamAnnotations* SgAsmJvmRuntimeVisibilityParamAnnotations::parse(SgAsmJvmConstantPool* pool)
 {
   uint8_t numParams;
   ASSERT_not_null(get_parent());
@@ -1347,7 +1363,7 @@ SgAsmJvmRuntimeVisibleParameterAnnotations* SgAsmJvmRuntimeVisibleParameterAnnot
   return this;
 }
 
-void SgAsmJvmRuntimeVisibleParameterAnnotations::unparse(std::ostream& os) const
+void SgAsmJvmRuntimeVisibilityParamAnnotations::unparse(std::ostream& os) const
 {
   SgAsmJvmAttribute::unparse(os);
 
@@ -1359,9 +1375,10 @@ void SgAsmJvmRuntimeVisibleParameterAnnotations::unparse(std::ostream& os) const
   }
 }
 
-void SgAsmJvmRuntimeVisibleParameterAnnotations::dump(FILE* f, const char* prefix, ssize_t idx) const
+void SgAsmJvmRuntimeVisibilityParamAnnotations::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
-  fprintf(f, "%s:%ld: SgAsmJvmRuntimeVisibleAnnotations::dump()\n", prefix, idx);
+  fprintf(f, "%s:%ld:isVisible:%d: SgAsmJvmRuntimeVisibilityParamAnnotations::dump()\n", prefix, idx,
+          get_isVisible());
   for (auto paramAnnotation : get_parameter_annotations()) {
     paramAnnotation->dump(f, prefix, idx);
   }
@@ -1372,7 +1389,7 @@ void SgAsmJvmRuntimeVisibleParameterAnnotations::dump(FILE* f, const char* prefi
 // The RuntimeParameterAnnotation class is used by the RuntimeVisibleParametersAnnotations_attribute and the
 // RuntimeInvisibleParameterAnnotations_attribute.
 //
-SgAsmJvmRuntimeParameterAnnotation::SgAsmJvmRuntimeParameterAnnotation(SgAsmJvmRuntimeVisibleParameterAnnotations* parent)
+SgAsmJvmRuntimeParameterAnnotation::SgAsmJvmRuntimeParameterAnnotation(SgAsmJvmRuntimeVisibilityParamAnnotations* parent)
 {
   initializeProperties();
   set_parent(parent);
@@ -1408,11 +1425,6 @@ void SgAsmJvmRuntimeParameterAnnotation::dump(FILE* f, const char* prefix, ssize
     annotation->dump(f, prefix, idx);
   }
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// 4.7.19 The RuntimeInvisibleParameterAnnotations Attribute. RuntimeInvisibleParameterAnnotations_attribute represented by the TODO class.
-//
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

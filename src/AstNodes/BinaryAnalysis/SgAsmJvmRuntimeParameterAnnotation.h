@@ -16,7 +16,7 @@ public:
     /** Initialize the object before parsing.
      *
      *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    explicit SgAsmJvmRuntimeParameterAnnotation(SgAsmJvmRuntimeVisibleParameterAnnotations*);
+    explicit SgAsmJvmRuntimeParameterAnnotation(SgAsmJvmRuntimeVisibilityParamAnnotations*);
 
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmRuntimeParameterAnnotation* parse(SgAsmJvmConstantPool*);

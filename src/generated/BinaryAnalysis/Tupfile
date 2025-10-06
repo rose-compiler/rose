@@ -309,8 +309,8 @@ run $(librose_compile) \
     SgAsmJvmRuntimeAnnotationValue.C \
     SgAsmJvmRuntimeInvisibleAnnotations.C \
     SgAsmJvmRuntimeParameterAnnotation.C \
+    SgAsmJvmRuntimeVisibilityParamAnnotations.C \
     SgAsmJvmRuntimeVisibleAnnotations.C \
-    SgAsmJvmRuntimeVisibleParameterAnnotations.C \
     SgAsmJvmSignature.C \
     SgAsmJvmSourceFile.C \
     SgAsmJvmStackMapFrame.C \
