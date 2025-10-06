@@ -235,12 +235,13 @@ rmc cmake .. | grep "ROSE version components"
 ---
 
 ### Step 2: Create Namespaced Alias Target (Build Tree)
-**Status:** ❌ Not Started
-**Implementation:** ⬜ Not Implemented
-**Testing:** ⬜ Not Tested
+**Status:** ✅ Complete
+**Implementation:** ✅ Implemented
+**Testing:** ✅ Tested
 **Dependencies:** Step 1
 **Time estimate:** 15 minutes
 **Files modified:** `src/CMakeLists.txt`
+**Gitlab Issue:** #786+
 
 Add after line 721 (after `set_target_properties(ROSE_DLL PROPERTIES OUTPUT_NAME "rose")`):
 

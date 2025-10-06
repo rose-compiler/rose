@@ -721,6 +721,18 @@ add_dependencies(ROSE_DLL roseUtil)
 
 set_target_properties(ROSE_DLL PROPERTIES OUTPUT_NAME "rose")
 
+# Create namespaced alias for modern CMake usage
+# This allows projects using ROSE to reference it as Rose::rose instead of ROSE_DLL.
+# Benefits:
+#   1. Follows modern CMake best practices (Package::component naming convention)
+#   2. Prevents naming conflicts with other libraries
+#   3. Makes code more self-documenting (Rose::rose clearly indicates ROSE library)
+#   4. Enables CMake to detect typos at configuration time rather than link time
+#   5. Consistent with how other modern libraries work (e.g., Boost::filesystem, Qt5::Core)
+# The alias only works in the build tree; exported targets use the same namespace via EXPORT NAMESPACE.
+add_library(Rose::rose ALIAS ROSE_DLL)
+message(STATUS "Created alias target Rose::rose")
+
 target_link_libraries(ROSE_DLL ${link_with_libraries} ${rose_LIB_OBJS})
 
 set_target_properties(ROSE_DLL PROPERTIES
