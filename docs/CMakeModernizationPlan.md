@@ -428,13 +428,14 @@ cat ${CMAKE_INSTALL_PREFIX}/lib/cmake/Rose/RoseTargets.cmake
 ---
 
 ### Step 6: Create RoseConfigVersion.cmake
-**Status:** ❌ Not Started
-**Implementation:** ⬜ Not Implemented
-**Testing:** ⬜ Not Tested
+**Status:** ✅ Complete
+**Implementation:** ✅ Implemented
+**Testing:** ✅ Tested
 **Dependencies:** Step 1
 **Time estimate:** 45 minutes
-**Files created:** `cmake/RoseConfigVersion.cmake.in`
+**Files created:** None (using write_basic_package_version_file)
 **Files modified:** `CMakeLists.txt`
+**Gitlab Issue:** #790+
 
 Create the version file template (see detailed template in Section 1.3 above).
 

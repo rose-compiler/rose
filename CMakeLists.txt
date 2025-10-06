@@ -195,6 +195,19 @@ set(ROSE_VERSION_BUILD "${CMAKE_MATCH_4}")
 
 message(STATUS "ROSE version components: ${ROSE_VERSION_MAJOR}.${ROSE_VERSION_MINOR}.${ROSE_VERSION_PATCH}.${ROSE_VERSION_BUILD}")
 
+# Generate version file for package configuration
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/cmake/RoseConfigVersion.cmake
+  VERSION ${ROSE_PACKAGE_VERSION}
+  COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/cmake/RoseConfigVersion.cmake
+  DESTINATION ${LIB_INSTALL_DIR}/cmake/Rose
+)
+
 ########################################################################################################################
 # Operating system information
 ########################################################################################################################
