@@ -1,0 +1,64 @@
+# RoseConfig.cmake - CMake Package Configuration File for ROSE
+# This file is used by external CMake projects to find and use ROSE.
+# It is generated from RoseConfig.cmake.in during the build process.
+
+@PACKAGE_INIT@
+
+set(Rose_VERSION "@ROSE_PACKAGE_VERSION@")
+
+# Include CMake modules for finding dependencies
+include(CMakeFindDependencyMacro)
+
+# Find Boost (always required)
+# ROSE requires Boost for its public API
+set(Boost_USE_STATIC_LIBS @Boost_USE_STATIC_LIBS@)
+find_dependency(Boost @Boost_VERSION@ REQUIRED COMPONENTS
+  chrono
+  date_time
+  filesystem
+  iostreams
+  program_options
+  random
+  regex
+  system
+  thread
+  wave
+  serialization
+)
+
+# Find Gcrypt if it was enabled (optional - but appears in some ROSE public headers)
+set(Rose_GCRYPT_FOUND @GCRYPT_FOUND@)
+if(Rose_GCRYPT_FOUND)
+  set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}" ${CMAKE_MODULE_PATH})
+
+  # Find GpgError first (required by Gcrypt)
+  if(NOT DEFINED GPGERROR_ROOT)
+    set(GPGERROR_ROOT "@GPGERROR_ROOT@")
+  endif()
+  include(FindGpgError)
+  find_gpgerror()
+  if(NOT GPGERROR_FOUND)
+    set(Rose_FOUND FALSE)
+    set(Rose_NOT_FOUND_MESSAGE "Rose could not be found because dependency GpgError could not be found.")
+  endif()
+
+  # Find Gcrypt
+  if(NOT DEFINED GCRYPT_ROOT)
+    set(GCRYPT_ROOT "@GCRYPT_ROOT@")
+  endif()
+  include(FindGcrypt)
+  find_gcrypt()
+  if(NOT GCRYPT_FOUND)
+    set(Rose_FOUND FALSE)
+    set(Rose_NOT_FOUND_MESSAGE "Rose could not be found because dependency Gcrypt could not be found.")
+  endif()
+endif()
+
+# Import the ROSE targets
+# This brings in Rose::rose and all its properties
+if(NOT TARGET Rose::rose)
+  include("${CMAKE_CURRENT_LIST_DIR}/RoseTargets.cmake")
+endif()
+
+# Check that all required components are present
+check_required_components(Rose)

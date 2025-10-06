@@ -203,11 +203,6 @@ write_basic_package_version_file(
   COMPATIBILITY SameMajorVersion
 )
 
-install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/cmake/RoseConfigVersion.cmake
-  DESTINATION ${LIB_INSTALL_DIR}/cmake/Rose
-)
-
 ########################################################################################################################
 # Operating system information
 ########################################################################################################################
@@ -1602,6 +1597,32 @@ if(ENABLE-TESTS-DIRECTORY)
   add_subdirectory(tests)
   add_subdirectory(tutorial)
 endif()
+
+########################################################################################################################
+# Configure and install CMake package config files
+########################################################################################################################
+# This must come after all dependencies are found so that variables like GCRYPT_FOUND are set
+
+# Configure package config file
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/RoseConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/cmake/RoseConfig.cmake
+  INSTALL_DESTINATION ${LIB_INSTALL_DIR}/cmake/Rose
+  PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR
+)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/cmake/RoseConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/cmake/RoseConfigVersion.cmake
+  DESTINATION ${LIB_INSTALL_DIR}/cmake/Rose
+)
+
+# Install Find modules needed by RoseConfig.cmake
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindGcrypt.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindGpgError.cmake
+  DESTINATION ${LIB_INSTALL_DIR}/cmake/Rose
+)
 
 ########################################################################################################################
 # Miscellaneous final actions
