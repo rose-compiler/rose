@@ -24,8 +24,9 @@ if(ENABLE-JOVIAL)
   add_dependencies(roseJovial rosetta_generated)
 
   target_include_directories(roseJovial PUBLIC
-    ${ATERM_ROOT}/include
-    ${CMAKE_SOURCE_DIR}/src/frontend/Experimental_General_Language_Support
+    $<BUILD_INTERFACE:${ATERM_ROOT}/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/frontend/Experimental_General_Language_Support>
+    $<INSTALL_INTERFACE:include/rose>
   )
 
   # Install header and executable files

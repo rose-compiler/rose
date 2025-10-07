@@ -16,10 +16,11 @@ if(ENABLE-ADA)
   # Create the library experimentalRoseAda 
   add_library(experimentalRoseAda OBJECT ${experimental_rose_ada_LIB_SRC})
   
-  # Use headers located here 
+  # Use headers located here
   target_include_directories(experimentalRoseAda PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/parser/asis_adapter/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/parser/a_nodes/include
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/parser/asis_adapter/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/parser/a_nodes/include>
+    $<INSTALL_INTERFACE:include/rose>
   )
   
   # Wait until sage3 and asis_adapter are built 

@@ -900,9 +900,9 @@ set_target_properties(ROSE_DLL PROPERTIES
 # The EXPORT clause creates a RoseTargets export set that will be used to generate
 # RoseTargets.cmake, allowing external projects to import Rose::rose as a target.
 #
-# Note: If RoseSourceCxxFrontendEdg target exists, it must also be in the export set
-# because ROSE_DLL links to it. We handle this by conditionally adding it.
-set(_rose_export_targets ROSE_DLL)
+# Note: All OBJECT libraries linked as PUBLIC dependencies must be in the export set.
+# This includes rose_LIB_OBJS and any conditionally-added targets like RoseSourceCxxFrontendEdg.
+set(_rose_export_targets ROSE_DLL ${rose_LIB_OBJS})
 if(TARGET RoseSourceCxxFrontendEdg)
   list(APPEND _rose_export_targets RoseSourceCxxFrontendEdg)
   message(STATUS "Adding RoseSourceCxxFrontendEdg to export targets")
