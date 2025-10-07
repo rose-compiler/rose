@@ -406,11 +406,11 @@ public:
         return Ptr((new RiscOperators(partitioner, function, state, solver))->config());
     }
 
-    BS::RiscOperators::Ptr create(const BS::SValue::Ptr &protoval, const SmtSolver::Ptr &solver = SmtSolver::Ptr()) const override {
+    BS::RiscOperators::Ptr create(const BS::SValue::Ptr &/*protoval*/, const SmtSolver::Ptr &/*solver*/ = SmtSolver::Ptr()) const override {
         ASSERT_not_implemented("unsupported");
     }
 
-    BS::RiscOperators::Ptr create(const BS::State::Ptr &state, const SmtSolver::Ptr &solver = SmtSolver::Ptr()) const override {
+    BS::RiscOperators::Ptr create(const BS::State::Ptr &/*state*/, const SmtSolver::Ptr &/*solver*/ = SmtSolver::Ptr()) const override {
         ASSERT_not_implemented("unsupported");
     }
 
