@@ -879,15 +879,32 @@ target_link_libraries(ROSE_DLL
     Boost::thread
     Boost::serialization
   PUBLIC
+    # Threads is PUBLIC because:
+    # 1. Boost::thread requires pthread support
+    # 2. ROSE's public API uses threading primitives
+    # 3. External projects need -pthread flag for proper linking
+    # Note: Threads::Threads is found in top-level CMakeLists.txt when Boost::thread is found
+    Threads::Threads
+  PUBLIC
     # Internal ROSE object libraries - these object files are implementation details
     # that get compiled into librose.so, but their PUBLIC include directories need to
     # be propagated to ROSE consumers (e.g., tools like CodeThorn that include headers
     # from these components)
     ${rose_LIB_OBJS}
   PRIVATE
-    # System and platform libraries (rt, dl, m, c, threads, etc.)
+    # System and platform libraries (rt, dl, m, c, etc.)
+    # Note: Threads moved to PUBLIC above
     ${_rose_system_libraries}
 )
+
+# Explicitly add -pthread flag for both compilation and linking
+# This is necessary even when CMAKE_THREAD_LIBS_INIT is empty (threading in libc)
+# because -pthread affects preprocessor defines, atomics, and mutex behavior.
+# Must be PUBLIC so external projects also get -pthread.
+if(Threads_FOUND AND NOT WIN32)
+  target_compile_options(ROSE_DLL PUBLIC -pthread)
+  target_link_options(ROSE_DLL PUBLIC -pthread)
+endif()
 
 set_target_properties(ROSE_DLL PROPERTIES
   VERSION 1.0.0

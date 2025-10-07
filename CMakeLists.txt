@@ -305,18 +305,23 @@ endif()
 # If the boost is compiled with multi-thread support then we must add "-pthread" to all compile and link commands, or
 # whatever is appropriate for the system.  With GCC it is not sufficient to just add "-lpthread" to the link
 # commands--the "-pthread" switch MUST be added to the compile commands as well.
-# FIXME: Do we want to use our option(BOOST_USE_MULTITHREADED) or always do this? 
+# FIXME: Do we want to use our option(BOOST_USE_MULTITHREADED) or always do this?
 if(Boost_THREAD_FOUND)
   set(Threads_FIND_QUIETLY ${QUIET})
-  find_package(Threads)
+  find_package(Threads REQUIRED)
+  if(Threads_FOUND)
+    message(STATUS "Threads found: CMAKE_THREAD_LIBS_INIT=${CMAKE_THREAD_LIBS_INIT}")
+  endif()
   # FIXME: This breaks things
   # if(Threads_FOUND)
-  #   if(BOOST_USE_MULTITHREADED) # Something inside this conditional gets OpenCL   
-  #     message(WARNING "Setting _REENTRANT") 
-  #     set(_REENTRANT 1) 
-  #  endif() 
-  add_definitions(-pthread) # it seems we always want this  
-  set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} pthread")  
+  #   if(BOOST_USE_MULTITHREADED) # Something inside this conditional gets OpenCL
+  #     message(WARNING "Setting _REENTRANT")
+  #     set(_REENTRANT 1)
+  #  endif()
+  # NOTE: -pthread is now added via Threads::Threads target in src/CMakeLists.txt (PUBLIC dependency)
+  # This ensures proper propagation to external projects via RoseConfig.cmake
+  add_definitions(-pthread) # Keep for internal ROSE builds (non-target-based code)
+  set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} pthread")
 endif()
 
 # Boost misconfiguration is often the cause of many issues

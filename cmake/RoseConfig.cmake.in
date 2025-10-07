@@ -30,6 +30,9 @@ set(Rose_ENABLE_CLANG_FRONTEND @ENABLE-CLANG-FRONTEND@)
 # Include CMake modules for finding dependencies
 include(CMakeFindDependencyMacro)
 
+# Find Threads (required for Boost::thread and ROSE threading support)
+find_dependency(Threads)
+
 # Find Boost (always required)
 # ROSE requires Boost for its public API
 set(Boost_USE_STATIC_LIBS @Boost_USE_STATIC_LIBS@)
