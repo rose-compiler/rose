@@ -30,10 +30,10 @@ for my $dir (qw(/usr/include /usr/local/include)) {
 
 # Headers in ROSE
 for my $file (FileLister->new()->all_files()) {
-    next if unless $file =~ /\.(h|hh|hpp)$/;
+    next unless $file =~ /\.(h|hh|hpp)$/;
     next if $file =~ /\bsrc\/Rose\//;             # included with directory, as in <Rose/...>
-    my $header_key = lc((/([^\/]+)$/)[0]);
-    push @{index{$header_key} ||= []};
+    my $header_key = lc(($file =~ /([^\/]+)$/)[0]);
+    push @{$index{$header_key} ||= []}, $file;
 }
 
 # Report failures
