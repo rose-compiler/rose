@@ -902,11 +902,9 @@ set_target_properties(ROSE_DLL PROPERTIES
 #
 # Note: All OBJECT libraries linked as PUBLIC dependencies must be in the export set.
 # This includes rose_LIB_OBJS and any conditionally-added targets like RoseSourceCxxFrontendEdg.
+# RoseSourceCxxFrontendEdg is already in rose_LIB_OBJS when EDG is compiled from source,
+# so we don't need to add it again here.
 set(_rose_export_targets ROSE_DLL ${rose_LIB_OBJS})
-if(TARGET RoseSourceCxxFrontendEdg)
-  list(APPEND _rose_export_targets RoseSourceCxxFrontendEdg)
-  message(STATUS "Adding RoseSourceCxxFrontendEdg to export targets")
-endif()
 
 install(TARGETS ${_rose_export_targets}
   EXPORT RoseTargets

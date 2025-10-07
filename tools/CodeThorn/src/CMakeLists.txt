@@ -63,7 +63,7 @@ if(NOT WIN32 AND ENABLE-CODETHORN AND NOT ENABLE-CLANG-FRONTEND AND ENABLE-C)
   set_target_properties(codethorn1 PROPERTIES OUTPUT_NAME "codethorn")
   target_link_libraries(
     codethorn1 PRIVATE codethorn ltlthorn ROSE_DLL
-    $<$<BOOL:${ENABLE-C}>:OpenMP::OpenMP_C>)
+    $<$<AND:$<BOOL:${ENABLE-C}>,$<TARGET_EXISTS:OpenMP::OpenMP_C>>:OpenMP::OpenMP_C>)
 
   install(TARGETS codethorn1 RUNTIME DESTINATION bin)
 
