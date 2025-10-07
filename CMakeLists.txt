@@ -1636,6 +1636,103 @@ install(FILES
 )
 
 ########################################################################################################################
+# Configure and install pkg-config file
+########################################################################################################################
+# Build pkg-config dependency lists and flags
+set(ROSE_PC_REQUIRES "")
+set(ROSE_PC_LIBS "")
+set(ROSE_PC_CFLAGS "-std=c++14")
+
+# Add Boost libraries directly (Boost typically doesn't provide pkg-config files)
+# Include library directory and all required Boost components
+if(Boost_LIBRARY_DIRS)
+  set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -L${Boost_LIBRARY_DIRS}")
+endif()
+if(Boost_INCLUDE_DIRS)
+  set(ROSE_PC_CFLAGS "${ROSE_PC_CFLAGS} -I${Boost_INCLUDE_DIRS}")
+endif()
+
+# Add individual Boost libraries
+foreach(comp chrono date_time filesystem iostreams program_options random regex system thread wave serialization)
+  set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -lboost_${comp}")
+endforeach()
+
+# Add pthread flag if Boost threading is used
+if(Boost_THREAD_FOUND)
+  set(ROSE_PC_CFLAGS "${ROSE_PC_CFLAGS} -pthread")
+  set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -pthread")
+endif()
+
+# Add optional PUBLIC dependencies that consumers might need
+# These are dependencies whose headers appear in ROSE's public API
+# Include library paths to help linker find them
+if(GCRYPT_FOUND)
+  if(GCRYPT_LIBRARY_PATH)
+    set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -L${GCRYPT_LIBRARY_PATH}")
+  endif()
+  if(GPGERROR_LIBRARY_PATH)
+    set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -L${GPGERROR_LIBRARY_PATH}")
+  endif()
+  set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -lgcrypt -lgpg-error")
+  # Add include paths for gcrypt headers
+  if(GCRYPT_HEADER_PATH)
+    set(ROSE_PC_CFLAGS "${ROSE_PC_CFLAGS} -I${GCRYPT_HEADER_PATH}")
+  endif()
+  # Add include path for gpg-error headers (needed by gcrypt.h)
+  if(GPGERROR_HEADER_PATH)
+    set(ROSE_PC_CFLAGS "${ROSE_PC_CFLAGS} -I${GPGERROR_HEADER_PATH}")
+  endif()
+endif()
+
+if(CAPSTONE_FOUND)
+  if(CAPSTONE_LIBRARY)
+    get_filename_component(_capstone_lib_dir "${CAPSTONE_LIBRARY}" DIRECTORY)
+    set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -L${_capstone_lib_dir}")
+  endif()
+  set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -lcapstone")
+  # Add include path for capstone headers
+  if(CAPSTONE_ROOT)
+    set(ROSE_PC_CFLAGS "${ROSE_PC_CFLAGS} -I${CAPSTONE_ROOT}/include")
+  endif()
+endif()
+
+if(YAMLCPP_FOUND)
+  if(YAMLCPP_LIBRARY)
+    get_filename_component(_yamlcpp_lib_dir "${YAMLCPP_LIBRARY}" DIRECTORY)
+    set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -L${_yamlcpp_lib_dir}")
+  endif()
+  set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -lyaml-cpp")
+  # Add include path for yaml-cpp headers
+  if(YAMLCPP_ROOT)
+    set(ROSE_PC_CFLAGS "${ROSE_PC_CFLAGS} -I${YAMLCPP_ROOT}/include")
+  endif()
+endif()
+
+# Note: Dlib is header-only, so include path is needed but no libs
+if(DLIB_FOUND AND DLIB_ROOT)
+  set(ROSE_PC_CFLAGS "${ROSE_PC_CFLAGS} -I${DLIB_ROOT}/include")
+endif()
+
+# Add system libraries
+if(CMAKE_DL_LIBS)
+  set(ROSE_PC_LIBS "${ROSE_PC_LIBS} ${CMAKE_DL_LIBS}")
+endif()
+
+# Configure the pkg-config file using configure_package_config_file for proper path handling
+set(PACKAGE_LIB_INSTALL_DIR "\${exec_prefix}/${LIB_INSTALL_DIR}")
+set(PACKAGE_INCLUDE_INSTALL_DIR "\${prefix}/${INCLUDE_INSTALL_DIR}")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/rose.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/rose.pc
+  @ONLY
+)
+
+# Install the pkg-config file
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rose.pc
+  DESTINATION ${LIB_INSTALL_DIR}/pkgconfig
+)
+
+########################################################################################################################
 # Miscellaneous final actions
 ########################################################################################################################
 # These actions don't work on Linux Debian-based systems during "make install" and appear to not be necessary anyway.

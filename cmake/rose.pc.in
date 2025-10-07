@@ -1,0 +1,23 @@
+# pkg-config file for ROSE Compiler Infrastructure
+# This file enables non-CMake build systems (Autotools, Makefiles) to find and use ROSE
+# Usage:
+#   pkg-config --cflags rose       # Get compiler flags
+#   pkg-config --libs rose         # Get linker flags
+#   pkg-config --modversion rose   # Get version
+
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=@PACKAGE_LIB_INSTALL_DIR@
+includedir=@PACKAGE_INCLUDE_INSTALL_DIR@
+
+Name: ROSE
+Description: ROSE Compiler Infrastructure for Building Source-to-Source Translators
+Version: @ROSE_PACKAGE_VERSION@
+URL: http://www.rosecompiler.org
+
+# Main library - always needed
+Libs: -L${libdir} -lrose
+# Private dependencies - only needed for static linking or when dependencies aren't embedded
+# Note: Boost dependencies are included since Boost typically doesn't provide pkg-config files
+Libs.private: @ROSE_PC_LIBS@
+Cflags: -I${includedir} @ROSE_PC_CFLAGS@

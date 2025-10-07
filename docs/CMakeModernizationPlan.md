@@ -10,7 +10,7 @@ This checklist tracks the high-level modernization goals. See the detailed "Impl
 - [x] **Dependency Classification** - Properly mark dependencies as PUBLIC/PRIVATE/INTERFACE (includes header dependencies)
 - [x] **Version Checking** - Support version requirements in `find_package(Rose VERSION)`
 - [x] **Automated Dependency Discovery** - Automatically find all ROSE dependencies from config file (Boost, Gcrypt, Capstone, Dlib, YAML-CPP)
-- [ ] **pkg-config Support** - Generate `rose.pc` for non-CMake build systems
+- [x] **pkg-config Support** - Generate `rose.pc` for non-CMake build systems
 - [x] **Feature Detection Variables** - Export `Rose_ENABLE_*` variables for capability detection
 - [ ] **Integration Tests** - Create test suite for external project integration
 - [ ] **Documentation & Examples** - Provide clear examples for CMake, Autotools, and Makefiles
@@ -855,69 +855,116 @@ endif()
 ---
 
 ### Step 12: Create pkg-config Support
-**Status:** ❌ Not Started
-**Implementation:** ⬜ Not Implemented
-**Testing:** ⬜ Not Tested
+**Status:** ✅ Complete
+**Implementation:** ✅ Implemented
+**Testing:** ✅ Tested
 **Dependencies:** Step 7 (can be parallel with Steps 8-11)
 **Time estimate:** 1-2 hours
 **Files created:** `cmake/rose.pc.in`
 **Files modified:** `CMakeLists.txt`
+**Gitlab Issue:** 800
 
-Create complete pkg-config file:
+Create complete pkg-config file template with separated public and private dependencies:
 ```
 # cmake/rose.pc.in
 prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=${prefix}
-libdir=${prefix}/@LIB_INSTALL_DIR@
-includedir=${prefix}/@INCLUDE_INSTALL_DIR@
+libdir=@PACKAGE_LIB_INSTALL_DIR@
+includedir=@PACKAGE_INCLUDE_INSTALL_DIR@
 
 Name: ROSE
 Description: ROSE Compiler Infrastructure for Building Source-to-Source Translators
 Version: @ROSE_PACKAGE_VERSION@
 URL: http://www.rosecompiler.org
 
-Requires: @ROSE_PC_REQUIRES@
-Libs: -L${libdir} -lrose @ROSE_PC_LIBS@
+# Main library - always needed
+Libs: -L${libdir} -lrose
+# Private dependencies - only needed for static linking or when dependencies aren't embedded
+Libs.private: @ROSE_PC_LIBS@
 Cflags: -I${includedir} @ROSE_PC_CFLAGS@
 ```
 
-Generate dependency lists in `CMakeLists.txt`:
+Generate dependency lists in `CMakeLists.txt` (lines 1638-1719):
 ```cmake
-# Build pkg-config Requires and Libs
+# Build pkg-config dependency lists and flags
 set(ROSE_PC_REQUIRES "")
 set(ROSE_PC_LIBS "")
 set(ROSE_PC_CFLAGS "-std=c++14")
 
-# Add Boost components
+# Add Boost libraries directly (Boost typically doesn't provide pkg-config files)
+if(Boost_LIBRARY_DIRS)
+  set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -L${Boost_LIBRARY_DIRS}")
+endif()
+if(Boost_INCLUDE_DIRS)
+  set(ROSE_PC_CFLAGS "${ROSE_PC_CFLAGS} -I${Boost_INCLUDE_DIRS}")
+endif()
+
+# Add individual Boost libraries
 foreach(comp chrono date_time filesystem iostreams program_options random regex system thread wave serialization)
-  list(APPEND ROSE_PC_REQUIRES "boost_${comp}")
+  set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -lboost_${comp}")
 endforeach()
-string(REPLACE ";" " " ROSE_PC_REQUIRES "${ROSE_PC_REQUIRES}")
+
+# Add pthread flag if Boost threading is used
+if(Boost_THREAD_FOUND)
+  set(ROSE_PC_CFLAGS "${ROSE_PC_CFLAGS} -pthread")
+  set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -pthread")
+endif()
+
+# Add optional PUBLIC dependencies with library and include paths
+# (gcrypt, capstone, yaml-cpp, dlib)
+# ... see CMakeLists.txt lines 1669-1710 for full implementation
 
 # Configure and install
 configure_file(cmake/rose.pc.in ${CMAKE_BINARY_DIR}/rose.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/rose.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
 ```
 
-**Testing:**
+**Implementation notes:**
+- Used `Libs.private` for dependencies that are embedded in the shared library via RPATH
+- Public `Libs` only contains `-lrose` for shared library linking
+- `Cflags` includes all header paths for PUBLIC dependencies (Boost, gcrypt, gpg-error, capstone, dlib, yaml-cpp)
+- Added library search paths (`-L`) for all optional dependencies to ensure they can be found
+- Boost dependencies are embedded directly since Boost typically doesn't provide pkg-config files
+
+**Testing performed:**
 ```bash
-export PKG_CONFIG_PATH=${CMAKE_INSTALL_PREFIX}/lib/pkgconfig
-pkg-config --modversion rose
-pkg-config --cflags rose
-pkg-config --libs rose
+# Test version query
+PKG_CONFIG_PATH=/path/to/rose/lib/pkgconfig pkg-config --modversion rose
+# Output: 0.11.145.339
+
+# Test compiler flags
+PKG_CONFIG_PATH=/path/to/rose/lib/pkgconfig pkg-config --cflags rose
+# Output: -I.../include/rose -std=c++14 -I.../boost/include -pthread -I.../gcrypt/include
+#         -I.../gpg-error/include -I.../capstone/include -I.../dlib/include
+
+# Test linker flags (public - for shared library)
+PKG_CONFIG_PATH=/path/to/rose/lib/pkgconfig pkg-config --libs rose
+# Output: -L.../lib -lrose
+
+# Test linker flags (private - for static library)
+PKG_CONFIG_PATH=/path/to/rose/lib/pkgconfig pkg-config --libs --static rose
+# Output: -L.../lib -lrose [plus all Boost and optional dependency libraries]
 
 # Test in Makefile project
-cd /tmp/makefile_test
+cd /tmp/rose_pkgconfig_test
 cat > Makefile << 'EOF'
-CXXFLAGS := $(shell pkg-config --cflags rose)
-LDFLAGS := $(shell pkg-config --libs rose)
-test: test.cpp
-	$(CXX) $(CXXFLAGS) $< $(LDFLAGS) -o $@
+PKG_CONFIG ?= pkg-config
+ROSE_CFLAGS := $(shell $(PKG_CONFIG) --cflags rose)
+ROSE_LIBS := $(shell $(PKG_CONFIG) --libs rose)
+
+test_rose: test.cpp
+	$(CXX) $(CXXFLAGS) $(ROSE_CFLAGS) $< $(ROSE_LIBS) -o $@
 EOF
 make
 ```
 
-**Success criteria:** pkg-config integration works for non-CMake build systems.
+**Success criteria:**
+- ✅ pkg-config file is generated and installed to `${LIB_INSTALL_DIR}/pkgconfig/`
+- ✅ `pkg-config --modversion rose` returns correct version
+- ✅ `pkg-config --cflags rose` returns all necessary include paths
+- ✅ `pkg-config --libs rose` returns main library for shared linking
+- ✅ Non-CMake build systems can successfully compile and link against ROSE
+- ✅ All PUBLIC dependency headers are accessible (gcrypt, capstone, dlib, yaml-cpp)
 
 ---
 

@@ -471,7 +471,10 @@ while read -r dst_src; do
     		    cp --dereference -p "$srcfile" "$dstfile"
     		fi
     		;;
-    
+	    rose.pc)
+		sed 's%^prefix=.*%'"prefix=${prefix}%g" <"$srcfile" >"$dstfile"
+		;;
+
     	    *.h|*.hpp|*.H)
     		# Copy file as-is
     		cp --dereference -p "$srcfile" "$dstfile"
