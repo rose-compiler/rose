@@ -878,10 +878,13 @@ target_link_libraries(ROSE_DLL
     Boost::wave
     Boost::thread
     Boost::serialization
-  PRIVATE
-    # Internal ROSE object libraries - these are implementation details
-    # that get compiled into librose.so and don't need to be exposed
+  PUBLIC
+    # Internal ROSE object libraries - these object files are implementation details
+    # that get compiled into librose.so, but their PUBLIC include directories need to
+    # be propagated to ROSE consumers (e.g., tools like CodeThorn that include headers
+    # from these components)
     ${rose_LIB_OBJS}
+  PRIVATE
     # System and platform libraries (rt, dl, m, c, threads, etc.)
     ${_rose_system_libraries}
 )

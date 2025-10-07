@@ -161,7 +161,7 @@ This section describes high-level improvements needed to modernize ROSE's CMake 
 - Helps existing users migrate from old patterns to new ones
 - Serves as a reference for ROSE maintainers
 
-### 9. Update Documentation
+### 11. Update Documentation
 
 Create examples showing:
 - CMake `find_package(Rose)` usage
