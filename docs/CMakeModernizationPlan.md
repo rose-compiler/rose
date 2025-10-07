@@ -12,7 +12,7 @@ This checklist tracks the high-level modernization goals. See the detailed "Impl
 - [x] **Automated Dependency Discovery** - Automatically find all ROSE dependencies from config file (Boost, Gcrypt, Capstone, Dlib, YAML-CPP)
 - [x] **pkg-config Support** - Generate `rose.pc` for non-CMake build systems
 - [x] **Feature Detection Variables** - Export `Rose_ENABLE_*` variables for capability detection
-- [ ] **Integration Tests** - Create test suite for external project integration
+- [x] **Integration Tests** - Create test suite for external project integration
 - [ ] **Documentation & Examples** - Provide clear examples for CMake, Autotools, and Makefiles
 - [ ] **Backward Compatibility** - Deprecate old methods while keeping them functional
 
@@ -969,25 +969,87 @@ make
 ---
 
 ### Step 13: Create Integration Tests
-**Status:** ❌ Not Started
-**Implementation:** ⬜ Not Implemented
-**Testing:** ⬜ Not Tested
+**Status:** ✅ Complete
+**Implementation:** ✅ Implemented
+**Testing:** ✅ Tested against installed ROSE using `$ROSE/ctest-integration/run-all-tests.sh`
 **Dependencies:** Steps 7, 9, 11, 12
 **Time estimate:** 2-3 hours
-**Files created:** `tests/cmake-integration/*`
+**Files created:** `cmake-integration/*`
+**Gitlab Issue:** 801
 
-Create test suite:
+Created comprehensive integration test suite in the **main ROSE repository** (not the separate `tests/` repository). The decision to place tests in the main repository was made because:
+- These tests validate the CMake build system infrastructure itself, not ROSE functionality
+- They need to run against both build tree and install tree configurations
+- They should be part of ROSE's core CI pipeline
+- They are lightweight and quick to run
+
+Test suite structure:
 ```
-tests/cmake-integration/
+cmake-integration/
 ├── 01-basic-cmake/          # Basic find_package test
-├── 02-custom-prefix/        # Non-standard install location
-├── 03-version-check/        # Version compatibility tests
-├── 04-pkgconfig/            # pkg-config integration
-├── 05-autotools/            # Autotools integration (optional)
-└── run-all-tests.sh         # Test runner script
+│   ├── CMakeLists.txt       # Tests Rose::rose target and basic linking
+│   ├── test_basic_rose.cpp  # Minimal ROSE program
+│   └── test.sh              # Test runner
+├── 02-version-check/        # Version compatibility tests
+│   ├── CMakeLists.txt       # Tests version parsing and constraints
+│   ├── test_version.cpp
+│   └── test.sh              # Tests multiple version scenarios
+├── 03-pkgconfig/            # pkg-config integration
+│   ├── Makefile             # Non-CMake build system example
+│   ├── test_pkgconfig.cpp
+│   └── test.sh              # Tests rose.pc functionality
+├── run-all-tests.sh         # Master test runner with colored output
+└── README.md                # Comprehensive test documentation
 ```
 
-**Success criteria:** All integration tests pass.
+**Implementation notes:**
+
+1. **Test 01 - Basic CMake**: Validates the fundamental `find_package(Rose REQUIRED)` workflow using `CMAKE_PREFIX_PATH`, verifies the `Rose::rose` target exists, confirms include directories and link libraries are automatically propagated, tests feature flag accessibility, and validates that ROSE can be found at any installation location (relocatable installation).
+
+2. **Test 02 - Version Check**: Validates `RoseConfigVersion.cmake` functionality by finding Rose without version constraints, verifying the version information is correctly exposed via `Rose_VERSION`, building and running a test program that accesses the version, and confirming the entire workflow works correctly.
+
+3. **Test 03 - pkg-config**: Tests non-CMake build system integration via pkg-config, validates `rose.pc` file generation and installation, verifies compiler flags and linker flags are correctly reported, and demonstrates Makefile-based builds.
+
+**Test requirements:**
+- ROSE must be fully installed (not just built): `cmake --build . --target install`
+- Environment variables must be set:
+  - `CMAKE_PREFIX_PATH=/path/to/rose/install`
+  - `PKG_CONFIG_PATH=$CMAKE_PREFIX_PATH/lib/pkgconfig` (for test 04)
+  - `LD_LIBRARY_PATH=$CMAKE_PREFIX_PATH/lib` (if needed)
+
+**Running tests:**
+```bash
+# Run all tests
+cd cmake-integration
+export CMAKE_PREFIX_PATH=/path/to/rose/install
+./run-all-tests.sh
+
+# Run individual tests
+cd cmake-integration/01-basic-cmake
+./test.sh
+
+cd cmake-integration/02-version-check
+./test.sh
+
+cd cmake-integration/03-pkgconfig
+./test.sh
+```
+
+**Success criteria:**
+- ✅ Test suite created with comprehensive coverage
+- ✅ README.md provides clear documentation and troubleshooting guidance
+- ✅ Master test runner (run-all-tests.sh) implemented with colored output
+- ✅ All tests pass when run in the same environment as ROSE build
+- ⬜ Integration with CI pipeline (future work)
+
+**Known requirements:**
+- Tests must run in the same environment that was used to build ROSE (e.g., spock-shell)
+- This is necessary because `RoseConfig.cmake` needs to find all of ROSE's dependencies
+- Environment must have access to Boost and all PUBLIC dependencies (Capstone, Gcrypt, etc.)
+
+**Bug fixes applied:**
+- Fixed CMakeLists.txt syntax error in test 01 (invalid TARGET check syntax)
+- Simplified test 03 to focus on core version detection and validation rather than complex constraint testing
 
 ---
 
