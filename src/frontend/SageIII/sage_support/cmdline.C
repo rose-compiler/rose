@@ -4154,11 +4154,13 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        //       INTEL: https://software.intel.com/en-us/cpp-compiler-developer-guide-and-reference-conformance-to-the-c-c-standards
        //       CLANG: https://clang.llvm.org/compatibility.html
 
-       // PL (10/02/2025): GNU's default standard changes depending on the compiler version. Going with gnu11 and gnu++11 for now.
+       // PL (10/02/2025): GNU's default standard changes depending on the compiler version. Going with gnu99 for C and unspecified
+       // gnu++ for now. The default behavior for C has been gnu99 (see sage_support.C for evidence of this), but for C++, no
+       // default standard for a GNU backend compiler has been established. We just need to make sure GNU extensions are enabled.
 
        if (get_C_only()) {
 #if defined(BACKEND_CXX_IS_GNU_COMPILER)
-         set_gnu_standard();
+         set_C99_gnu_only();
 #elif defined(BACKEND_CXX_IS_INTEL_COMPILER)
          set_C99_only();
 #elif defined(BACKEND_CXX_IS_CLANG_COMPILER)
@@ -4166,6 +4168,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #endif
        } else if (get_Cxx_only()) {
 #if defined(BACKEND_CXX_IS_GNU_COMPILER)
+      // PL (10/06/2025) :
          set_gnu_standard();
 #elif defined(BACKEND_CXX_IS_INTEL_COMPILER)
          set_Cxx11_only();
