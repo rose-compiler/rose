@@ -18,8 +18,8 @@ using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace Symbolic = Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace Symbolic = Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
 
 static Sawyer::Message::Facility mlog;
 

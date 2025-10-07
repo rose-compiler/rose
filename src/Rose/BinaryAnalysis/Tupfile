@@ -99,7 +99,6 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     InstructionMap.h						\
     InstructionProvider.h					\
     InstructionSemantics.h					\
-    InstructionSemantics2.h					\
     LibraryIdentification.h					\
     MagicNumber.h						\
     Matrix.h							\

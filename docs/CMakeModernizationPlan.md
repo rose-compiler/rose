@@ -14,7 +14,7 @@ This checklist tracks the high-level modernization goals. See the detailed "Impl
 - [x] **Feature Detection Variables** - Export `Rose_ENABLE_*` variables for capability detection
 - [x] **Integration Tests** - Create test suite for external project integration
 - [x] **Documentation & Examples** - Provide clear examples for CMake, Autotools, and Makefiles
-- [ ] **Backward Compatibility** - Deprecate old methods while keeping them functional
+- [x] **Backward Compatibility** - Deprecate old methods while keeping them functional
 
 ## Current State Analysis
 

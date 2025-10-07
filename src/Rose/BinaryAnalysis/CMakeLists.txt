@@ -6,7 +6,6 @@ add_subdirectory(Debugger)
 add_subdirectory(Disassembler)
 add_subdirectory(Dwarf)
 add_subdirectory(InstructionSemantics)
-add_subdirectory(InstructionSemantics2)
 add_subdirectory(ModelChecker)
 add_subdirectory(Partitioner2)
 add_subdirectory(Unparser)
@@ -113,7 +112,6 @@ install(FILES
   InstructionMap.h
   InstructionProvider.h
   InstructionSemantics.h
-  InstructionSemantics2.h
   LibraryIdentification.h
   MagicNumber.h
   Matrix.h

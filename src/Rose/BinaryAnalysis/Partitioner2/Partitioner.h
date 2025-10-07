@@ -40,11 +40,6 @@
 #include <string>
 #include <vector>
 
-// [Robb Matzke 2022-06-22]: deprecated. Needed because some user code doesn't include the old InstructionSemantics2 header
-// files where this same thing is defined, yet they use InstructionSemantics2 because such things were once declared by this
-// header file due to it originally including InstructionSemantics2 headers (which it no longer does).
-namespace Rose { namespace BinaryAnalysis { namespace InstructionSemantics2 = InstructionSemantics; }}
-
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
