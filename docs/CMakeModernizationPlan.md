@@ -11,7 +11,7 @@ This checklist tracks the high-level modernization goals. See the detailed "Impl
 - [x] **Version Checking** - Support version requirements in `find_package(Rose VERSION)`
 - [x] **Automated Dependency Discovery** - Automatically find all ROSE dependencies from config file (Boost, Gcrypt, Capstone, Dlib, YAML-CPP)
 - [ ] **pkg-config Support** - Generate `rose.pc` for non-CMake build systems
-- [ ] **Feature Detection Variables** - Export `Rose_ENABLE_*` variables for capability detection
+- [x] **Feature Detection Variables** - Export `Rose_ENABLE_*` variables for capability detection
 - [ ] **Integration Tests** - Create test suite for external project integration
 - [ ] **Documentation & Examples** - Provide clear examples for CMake, Autotools, and Makefiles
 - [ ] **Backward Compatibility** - Deprecate old methods while keeping them functional
@@ -745,7 +745,7 @@ Created external test project in `/tmp/rose_step9_test` that:
 **Dependencies:** Step 9
 **Time estimate:** 30 minutes
 **Files modified:** `src/CMakeLists.txt`
-**GitLab Issue:** #794
+**GitLab Issue:** #794+
 
 **Problem:**
 When ROSE is configured with C/C++ analysis enabled using EDG (not Clang), the CMake build system unconditionally adds `RoseSourceCxxFrontendEdg` to the link dependencies of `ROSE_DLL`. However, this target may not exist depending on how EDG is provided:
@@ -811,14 +811,31 @@ cmake --build .
 ---
 
 ### Step 11: Add Feature Detection Variables
-**Status:** ❌ Not Started
-**Implementation:** ⬜ Not Implemented
-**Testing:** ⬜ Not Tested
+**Status:** ✅ Complete
+**Implementation:** ✅ Implemented
+**Testing:** ✅ Tested
 **Dependencies:** Step 10
 **Time estimate:** 30 minutes
 **Files modified:** `cmake/RoseConfig.cmake.in`
+**GitLab Issue:** #797+
 
-Add the feature flag exports (lines 64-72 in the template).
+Add the feature flag exports to allow external projects to detect ROSE's capabilities.
+
+**Implementation notes:**
+Added feature detection variables to `cmake/RoseConfig.cmake.in` including:
+- Language frontend flags: `Rose_ENABLE_BINARY_ANALYSIS`, `Rose_ENABLE_C`, `Rose_ENABLE_CUDA`, `Rose_ENABLE_JAVA`, `Rose_ENABLE_OPENCL`, `Rose_ENABLE_FORTRAN`, `Rose_ENABLE_PHP`, `Rose_ENABLE_PYTHON`, `Rose_ENABLE_ADA`, `Rose_ENABLE_JOVIAL`
+- Build option flags: `Rose_ENABLE_ASSEMBLY_SEMANTICS`, `Rose_ENABLE_CLANG_FRONTEND`
+
+These variables are set from CMake options during configuration and exported in RoseConfig.cmake for external projects to query.
+
+**Testing performed:**
+Created test project in `/tmp/rose_feature_test` that:
+- Uses `find_package(Rose REQUIRED)` to locate ROSE
+- Queries all feature detection variables via CMake message() commands
+- Uses conditional compilation based on feature flags
+- Successfully displays: "Rose version: 0.11.145.339" and all 12 feature flags
+- Verifies binary analysis is ENABLED and C/C++ frontend is DISABLED (matching build configuration)
+- Compiles and runs successfully with feature-dependent preprocessor definitions
 
 **Testing:**
 ```cmake
@@ -826,10 +843,14 @@ Add the feature flag exports (lines 64-72 in the template).
 find_package(Rose REQUIRED)
 if(Rose_ENABLE_BINARY_ANALYSIS)
   message(STATUS "Can use binary analysis features")
+  target_compile_definitions(my_target PRIVATE HAVE_BINARY_ANALYSIS)
 endif()
 ```
 
-**Success criteria:** Feature flags accurately reflect build configuration.
+**Success criteria:**
+- ✅ Feature flags accurately reflect build configuration
+- ✅ External projects can query feature flags
+- ✅ Conditional compilation based on features works correctly
 
 ---
 

@@ -6,6 +6,27 @@
 
 set(Rose_VERSION "@ROSE_PACKAGE_VERSION@")
 
+# Feature detection variables
+# ============================
+# These variables indicate which features ROSE was built with.
+# External projects can query these to conditionally enable functionality.
+
+# Language frontends
+set(Rose_ENABLE_BINARY_ANALYSIS @ENABLE-BINARY-ANALYSIS@)
+set(Rose_ENABLE_C @ENABLE-C@)
+set(Rose_ENABLE_CUDA @ENABLE-CUDA@)
+set(Rose_ENABLE_JAVA @ENABLE-JAVA@)
+set(Rose_ENABLE_OPENCL @ENABLE-OPENCL@)
+set(Rose_ENABLE_FORTRAN @ENABLE-FORTRAN@)
+set(Rose_ENABLE_PHP @ENABLE-PHP@)
+set(Rose_ENABLE_PYTHON @ENABLE-PYTHON@)
+set(Rose_ENABLE_ADA @ENABLE-ADA@)
+set(Rose_ENABLE_JOVIAL @ENABLE-JOVIAL@)
+
+# Build options
+set(Rose_ENABLE_ASSEMBLY_SEMANTICS @ENABLE-ASSEMBLY-SEMANTICS@)
+set(Rose_ENABLE_CLANG_FRONTEND @ENABLE-CLANG-FRONTEND@)
+
 # Include CMake modules for finding dependencies
 include(CMakeFindDependencyMacro)
 
