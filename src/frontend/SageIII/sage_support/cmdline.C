@@ -4168,8 +4168,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #endif
        } else if (get_Cxx_only()) {
 #if defined(BACKEND_CXX_IS_GNU_COMPILER)
-      // PL (10/06/2025) :
+      // PL (10/06/2025): Set the GNU standard only when Microsoft extensions are disabled.
+#if !defined(ROSE_USE_MICROSOFT_EXTENSIONS)
          set_gnu_standard();
+#endif
 #elif defined(BACKEND_CXX_IS_INTEL_COMPILER)
          set_Cxx11_only();
 #elif defined(BACKEND_CXX_IS_CLANG_COMPILER)
@@ -6240,9 +6242,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        }
      }
 
+  // PL (10/07/2025): Guard against -g++ being passed to EDG when Microsoft extensions are enabled.
+#ifndef ROSE_USE_MICROSOFT_EXTENSIONS
      if (get_Cxx_only() && is_gnu_standard()) {
        inputCommandLine.push_back("--g++");
      }
+#endif
 
   // PL (10/02/2025): If we are not using the GNU standard, make sure __STRICT_ANSI__ is defined.
   // This way we know not to include the gnu(++)XX versions of the compiler-specific macro header

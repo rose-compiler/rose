@@ -975,7 +975,9 @@ struct __rose_is_same_as<T,T> {
 
 /* DQ (7/26/2020): Adding GNU 10 C++20 specific builtin functions (part of what 
 is needed to compile C++20 specific headers, the rest are some modified headers). */
-#if __GNUC__ >= 10 && __cplusplus
+#if __GNUC__ >= 10
+// PL (10/07/2025): C language needs __builtin_malloc and __builtin_free
+#if __cplusplus
 bool __builtin_coro_done(void* _M_fr_ptr);
 void __builtin_coro_resume(void* _M_fr_ptr);
 void __builtin_coro_destroy(void* _M_fr_ptr);
@@ -983,8 +985,13 @@ void __builtin_coro_destroy(void* _M_fr_ptr);
 void* __builtin_coro_promise(void* _M_fr_ptr, unsigned long, bool);
 ROSE_CONSTEXPR bool __atomic_always_lock_free(unsigned long, unsigned long);
 // extern unsigned long ATOMIC_CHAR8_T_LOCK_FREE;
+
+// PL (10/07/2025): Some C++ versions define this as a macro already, so we don't
+// always need to define it ourselves.
 #ifndef __GCC_ATOMIC_CHAR8_T_LOCK_FREE
 const unsigned long __GCC_ATOMIC_CHAR8_T_LOCK_FREE = 2;
+#endif
+
 #endif
 
 void  __builtin_free(void*)    ROSE_GNUATTR((nothrow));
