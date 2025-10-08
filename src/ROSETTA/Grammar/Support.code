@@ -2203,7 +2203,7 @@ SOURCE_ATTRIBUTE_SUPPORT_END
 
 SOURCE_MODIFIER_START
 
-SgModifier::SgModifier ( const SgModifier & X )
+SgModifier::SgModifier(const SgModifier & /*X*/)
    {
   // DQ (4/13/2004): Nothing to do here, but this function prevents the SgSupport copy
   // constructor from being called and we would like to keep that copy constructor
@@ -2211,7 +2211,7 @@ SgModifier::SgModifier ( const SgModifier & X )
    }
 
 SgModifier &
-SgModifier::operator= ( const SgModifier & X )
+SgModifier::operator= (const SgModifier & /*X*/)
    {
      return *this;
    }
@@ -8020,10 +8020,6 @@ SgSymbolTable::find( const SgFunctionType* functionType)
      ROSE_ASSERT(p_table != NULL);
      ROSE_ASSERT(functionType != NULL);
 
-#if 0
-     mprintf ("Inside of SgSymbolTable::find( const SgFunctionType* ): functionType = %p = %s \n",functionType,SageInterface::get_name(functionType).c_str());
-#endif
-
      SgSymbol* returnSymbol = NULL;
 
      SgName name = functionType->get_mangled();
@@ -8205,12 +8201,7 @@ SgSymbolTable::find_aliased_symbol(const SgName & nm, SgSymbol *sp)
    {
   // DQ (5/19/2013): This function finds the symbol for which the alias is sp, not the symbol to be returned being sp.
      ROSE_ASSERT(p_table != NULL);
-
      ROSE_ASSERT(sp != NULL);
-
-#if 0
-     mprintf ("In SgSymbolTable::find_aliased_symbol(): We are only using the name = %s sp = %p = %s (not any template arguments or template parameters) \n",nm.str(),sp,sp->class_name().c_str());
-#endif
 
      p_iterator = p_table->find(nm);
 
@@ -8220,9 +8211,6 @@ SgSymbolTable::find_aliased_symbol(const SgName & nm, SgSymbol *sp)
           p_no_name = false;
 
           ROSE_ASSERT(p_iterator->second != NULL);
-#if 0
-          mprintf ("In SgSymbolTable::find_aliased_symbol(): in loop: nm = %s p_iterator->second = %p = %s \n",nm.str(),p_iterator->second,p_iterator->second->class_name().c_str());
-#endif
 
           SgAliasSymbol* aliasSymbol = isSgAliasSymbol(p_iterator->second);
           if ( (aliasSymbol != NULL) && (aliasSymbol->get_alias() == sp) )
@@ -8297,44 +8285,29 @@ SgSymbolTable::exists ( const SgName & nm, SgSymbol *sp ) const
 
 SgSymbol*
 SgSymbolTable::find_any(const SgName & nm, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
-   {
-  // DQ (8/21/2013): Modified to use single supporting templated lower level function.
-  // DQ (6/24/2013): This special case requires some special support in find_symbol_support.
-  // return find_symbol_support<SgSymbol>(nm,templateParameterList,templateArgumentList);
-     bool filterTemplateSymbols = false;
-
-  // DQ (7/14/2025): Adding timers to support Matt's tool.
-  // TimingPerformance timer1 ("SgSymbolTable::find_any: whole function:");
-
-     return find_symbol_with_type_support<SgSymbol>(nm,NULL,templateParameterList,templateArgumentList,filterTemplateSymbols);
-   }
+{
+    bool filterTemplateSymbols = false;
+    return find_symbol_with_type_support<SgSymbol>(nm,NULL,templateParameterList,templateArgumentList,filterTemplateSymbols);
+}
 
 // DQ (1/30/2007): Added these back into ROSE.
 SgTypedefSymbol*
 SgSymbolTable::find_typedef(const SgName & nm)
    {
-  // DQ (8/21/2013): Modified to use single supporting templated lower level function.
-  // return find_symbol_support<SgTypedefSymbol>(nm,NULL,NULL);
      bool filterTemplateSymbols = false;
      return find_symbol_with_type_support<SgTypedefSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
 
-// DQ (1/30/2007): Added these back into ROSE.
 SgEnumSymbol*
 SgSymbolTable::find_enum(const SgName & nm)
    {
-  // DQ (8/21/2013): Modified to use single supporting templated lower level function.
-  // return find_symbol_support<SgEnumSymbol>(nm,NULL,NULL);
      bool filterTemplateSymbols = false;
      return find_symbol_with_type_support<SgEnumSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
 
-// DQ (1/30/2007): Added these back into ROSE.
 SgEnumFieldSymbol*
 SgSymbolTable::find_enum_field(const SgName & nm)
    {
-  // DQ (8/21/2013): Modified to use single supporting templated lower level function.
-  // return find_symbol_support<SgEnumFieldSymbol>(nm,NULL,NULL);
      bool filterTemplateSymbols = false;
      return find_symbol_with_type_support<SgEnumFieldSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
@@ -8350,8 +8323,6 @@ SgSymbolTable::find_variable(const SgName & nm)
 SgClassSymbol*
 SgSymbolTable::find_class(const SgName & nm)
    {
-  // DQ (8/21/2013): Modified to use single supporting templated lower level function.
-  // SgClassSymbol* s = find_symbol_support<SgClassSymbol>(nm,NULL,NULL);
      bool filterTemplateSymbols = false;
      SgClassSymbol* s = find_symbol_with_type_support<SgClassSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
 
@@ -8404,14 +8375,6 @@ SgSymbolTable::hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArgum
                if (isSgTemplateClassSymbol(symbol) != NULL)
                   {
                     returnValue = hasMatchingTemplateArgumentsOrNoTemplateArguments(templateArgumentsList,symbol);
-                  }
-                 else
-                  {
-                 // DQ (5/22/2016): Isn't this an error to not also test the template arguments for non-class templates.
-#if 0
-                    mprintf ("WARNING: Isn't this an error to not also test the template arguments for non-class templates. \n");
-#endif
-                 // return "returnValue == true" for all other cases.
                   }
              }
         }
@@ -8470,18 +8433,13 @@ template <class T> std::vector<T*> getTemplateParametersOrArgumentsList(SgSymbol
 template <>
 std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplateArgument>(SgSymbol* symbol)
    {
-  // DQ (7/14/2025): Adding timers to support Matt's tool.
-  // TimingPerformance timer1 ("getTemplateParametersOrArgumentsList<SgTemplateArgument>: whole function:");
-
   // Template specialization for handling template arguments.
 
   // DQ (8/11/2013): This function uses the STL copy operation and might have a more efficient implementation.
      std::vector<SgTemplateArgument*> returnList;
 
      ROSE_ASSERT(symbol != NULL);
-#if 0
-     mprintf ("In getTemplateParametersOrArgumentsList<SgTemplateArgument>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
-#endif
+
      switch(symbol->variantT())
         {
           case V_SgClassSymbol:
@@ -8562,13 +8520,8 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
                break;
              }
 
-       // DQ (9/12/2016): Providing better implementation for template typedef symbol support.
-       // DQ (11/10/2014): Providing an initial implementation for template typedef symbol support.
           case V_SgTemplateTypedefSymbol:
              {
-#if 0
-               mprintf ("WARNING: returning NULL in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateArgument>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
-#endif
                SgTemplateTypedefSymbol* templateTypedefSymbol = isSgTemplateTypedefSymbol(symbol);
                ROSE_ASSERT(templateTypedefSymbol != NULL);
 
@@ -8578,7 +8531,6 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
 
                if (templateTypedefDeclaration != NULL)
                   {
-                 // returnList = templateTypedefDeclaration->get_templateArguments();
                     returnList = templateTypedefDeclaration->get_templateSpecializationArguments();
                   }
                break;
@@ -8603,9 +8555,6 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
 
           case V_SgNonrealSymbol:
              {
-#if 0
-               mprintf ("In SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateArgument>(): Case of SgNonrealSymbol\n");
-#endif
                SgNonrealSymbol * nrsym = isSgNonrealSymbol(symbol);
                ROSE_ASSERT(nrsym != NULL);
                SgNonrealDecl * nrdecl = isSgNonrealDecl(nrsym->get_declaration());
@@ -8634,19 +8583,12 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
 template <>
 std::vector<SgTemplateParameter*> getTemplateParametersOrArgumentsList<SgTemplateParameter>(SgSymbol* symbol)
    {
-  // DQ (7/14/2025): Adding timers to support Matt's tool.
-  // TimingPerformance timer1 ("getTemplateParametersOrArgumentsList<SgTemplateParameter>: whole function:");
-
   // Template specialization for handling template parameters.
 
   // DQ (8/11/2013): This function uses the STL copy operation and might have a more efficient implementation.
      std::vector<SgTemplateParameter*> returnList;
 
      ROSE_ASSERT(symbol != NULL);
-
-#if 0
-     mprintf ("In getTemplateParametersOrArgumentsList<SgTemplateParameter>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
-#endif
 
      switch(symbol->variantT())
         {
@@ -8675,10 +8617,6 @@ std::vector<SgTemplateParameter*> getTemplateParametersOrArgumentsList<SgTemplat
                SgTemplateFunctionDeclaration* templateFunctionDeclaration = isSgTemplateFunctionDeclaration(functionDeclaration);
                if (templateFunctionDeclaration != NULL)
                   {
-#if 0
-                    mprintf ("In getTemplateParametersOrArgumentsList<SgTemplateParameter>(): Get the template parameter lise from templateFunctionDeclaration = %p = %s name = %s \n",
-                         templateFunctionDeclaration,templateFunctionDeclaration->class_name().c_str(),templateFunctionDeclaration->get_name().str());
-#endif
                     returnList = templateFunctionDeclaration->get_templateParameters();
                   }
                  else
@@ -8700,10 +8638,6 @@ std::vector<SgTemplateParameter*> getTemplateParametersOrArgumentsList<SgTemplat
                SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(memberFunctionDeclaration);
                if (templateMemberFunctionDeclaration != NULL)
                   {
-#if 0
-                    mprintf ("In getTemplateParametersOrArgumentsList<SgTemplateParameter>(): Get the template parameter lise from templateFunctionDeclaration = %p = %s name = %s \n",
-                         templateMemberFunctionDeclaration,templateMemberFunctionDeclaration->class_name().c_str(),templateMemberFunctionDeclaration->get_name().str());
-#endif
                     returnList = templateMemberFunctionDeclaration->get_templateParameters();
                   }
                  else
@@ -11016,14 +10950,7 @@ SgInitializedName::get_qualified_name_prefix() const
      if (i != SgNode::get_globalQualifiedNameMapForNames().end())
         {
           nameQualifier = i->second;
-#if 0
-          mprintf ("In SgInitializedName::get_qualified_name_prefix(): Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
-#endif
         }
-
-#if 0
-     mprintf ("In SgInitializedName::get_qualified_name_prefix(): nameQualifier for SgInitializedName = %s = %s \n",class_name().c_str(),nameQualifier.str());
-#endif
 
      return nameQualifier;
    }
@@ -11032,28 +10959,16 @@ SgInitializedName::get_qualified_name_prefix() const
 SgName
 SgInitializedName::get_qualified_name_prefix_for_type() const
    {
-  // DQ (5/29/2011): Added to support for new qualified name generation.
-
   // DQ (5/28/2011): We have to handle the name qualification directly since types can be qualified
   // different and so it depends upon where the type is referenced.  Thus the qualified name is
   // stored in a map to the IR node that references the type.
      SgName nameQualifier;
-  // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgInitializedName*>(this));
      SgUnorderedMapNodeToString::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgInitializedName*>(this));
-  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
 
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {
           nameQualifier = i->second;
-#if 0
-          mprintf ("SgInitializedName::get_qualified_name_prefix_for_type(): Found a valid name qualification: nameQualifier %s \n",nameQualifier.str());
-#endif
         }
-
-#if 0
-     mprintf ("SgInitializedName::get_qualified_name_prefix_for_type(): nameQualifier for SgInitializedName = %s = %s \n",class_name().c_str(),nameQualifier.str());
-#endif
 
      return nameQualifier;
    }
@@ -11062,9 +10977,6 @@ SgInitializedName::get_qualified_name_prefix_for_type() const
 void
 SgInitializedName::post_construction_initialization()
    {
-  // Liao 11/5/2010, for debugging purpose
-  // if (p_name.getString() == string("a0"))
-  //      abort();
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
@@ -11072,18 +10984,10 @@ SgInitializedName::post_construction_initialization()
      assert (p_storageModifier != NULL);
      p_storageModifier->setDefault();
 
-  // DQ (6/20/2006): Set the parent of the SgStorageModifier
      p_storageModifier->set_parent(this);
-
-  // DQ (4/10/2006): Removed in favor of implementation at SgNode using
-  // a pointer and the interface represented directly at the SgNode
-  // DQ (1/17/2006): Added initialization to prevent valgrind warning.
      p_attributeMechanism = NULL;
-
-  // DQ (11/19/2004): Added to support explicit scopes for variables within variable declarations.
      p_scope = NULL;
 
-  // DQ (12/17/2006): Added semantics that constructors (which are structural) should set the parents of their inputs.
      if (p_initptr != NULL)
         {
           p_initptr->set_parent(this);
@@ -11092,8 +10996,6 @@ SgInitializedName::post_construction_initialization()
   // DQ (1/3/2009): Added support for GNU variable attributes (std::strings will default to null, so they are not setup).
      p_gnu_attribute_modifierVector          = SgBitVector(e_last_gnu_variable_attribute,false);
      p_gnu_attribute_initialization_priority = 0;
-
-  // DQ (3/1/2013): Changed default value to -1 and type to signed short so that we could reserve negative values to be a marked for not explicitly specified.
      p_gnu_attribute_alignment               = -1;
 
   // Borrow the enum definition (and default value from SgDeclarationModifier).
@@ -12269,12 +12171,7 @@ Sg_File_Info* Sg_File_Info::generateFileInfoForTransformationNode( int file_id )
   // IR nodes using this function's return value will be marked as transformations
      Sg_File_Info* returnValue = generateDefaultFileInfoForTransformationNode();
 
-     returnValue->set_file_id( file_id );
-
-#if 0
-     mprintf ("In Sg_File_Info::generateFileInfoForTransformationNode(file_id = %d) return = %p \n",file_id,returnValue);
-#endif
-
+     returnValue->set_file_id(file_id);
      return returnValue;
    }
 
@@ -12286,12 +12183,7 @@ Sg_File_Info* Sg_File_Info::generateFileInfoForTransformationNode( string filena
   // IR nodes using this function's return value will be marked as transformations
      Sg_File_Info* returnValue = generateDefaultFileInfoForTransformationNode();
 
-     returnValue->set_filenameString( filename );
-
-#if 0
-     mprintf ("In Sg_File_Info::generateFileInfoForTransformationNode(filename = %s) return = %p \n",filename.c_str(),returnValue);
-#endif
-
+     returnValue->set_filenameString(filename);
      return returnValue;
    }
 
@@ -12304,26 +12196,15 @@ Sg_File_Info* Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode()
      Sg_File_Info* returnValue = generateDefaultFileInfo();
      returnValue->setCompilerGenerated();
 
-     returnValue->set_file_id( COMPILER_GENERATED_FILE_ID );
-
-#if 0
-     mprintf ("In Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode() return = %p \n",returnValue);
-#endif
-
+     returnValue->set_file_id(COMPILER_GENERATED_FILE_ID);
      return returnValue;
    }
-
 
 // DQ (11/2/2006): Added operator= member function to simple assignment (used in fixupSourcePositionInformation.C
 // to modify Sg_File_Info objects so that they better reflect the original source code).
 Sg_File_Info &
 Sg_File_Info::operator= ( const Sg_File_Info & X )
    {
-#if 0
-     mprintf ("In Sg_File_Info::operator=(): get_parent() = %p = %s \n",get_parent(),(get_parent() != NULL) ? get_parent()->class_name().c_str() : "null");
-     mprintf ("In Sg_File_Info::operator=(): this = %p &X = %p \n",this,&X);
-#endif
-
      p_file_id                  = X.p_file_id;
      p_line                     = X.p_line;
      p_col                      = X.p_col;
@@ -12331,11 +12212,8 @@ Sg_File_Info::operator= ( const Sg_File_Info & X )
      p_fileIDsToUnparse         = X.p_fileIDsToUnparse;
      p_fileLineNumbersToUnparse = X.p_fileLineNumbersToUnparse;
 
-  // DQ (12/20/2012): Added support for physical source position (existing file_id and line data represents logical position data).
      p_physical_file_id = X.p_physical_file_id;
      p_physical_line    = X.p_physical_line;
-
-  // DQ (1/23/2013): Added support for source sequence numbering information.
      p_source_sequence_number = X.p_source_sequence_number;
 
   // Record that this source position information was updated.
@@ -12344,8 +12222,6 @@ Sg_File_Info::operator= ( const Sg_File_Info & X )
      return *this;
    }
 
-
-// DQ (9/26/2004): Added operator== friend function to permit testing of reused definitions of defining declarations!
 bool
 operator== ( const Sg_File_Info & X, const Sg_File_Info & Y )
    {
@@ -12355,19 +12231,8 @@ operator== ( const Sg_File_Info & X, const Sg_File_Info & Y )
   // (col, line, file) and the most expensive test (file) last.
      if (X.get_col() == Y.get_col())
         {
-       // DQ (9/17/2013): We always want to use the physical source position.
-       // if (X.get_line() == Y.get_line())
           if (X.get_physical_line() == Y.get_physical_line())
              {
-         // MK (7/22/05) : Replaced string comparisons with file_id comparisons
-         /*
-               if ( string(X.get_filename()) == string(Y.get_filename()))
-                  {
-                    returnValue = true;
-                  }
-         */
-            // DQ (9/17/2013): We always want to use the physical source position.
-            // if (X.p_file_id == Y.p_file_id)
                if (X.p_physical_file_id == Y.p_physical_file_id)
                   {
                     returnValue = true;
@@ -12378,50 +12243,34 @@ operator== ( const Sg_File_Info & X, const Sg_File_Info & Y )
      return returnValue;
    }
 
-
-// DQ (10/6/2004): Added operator!= friend function to permit testing of reused definitions of defining declarations!
 bool
 operator!= ( const Sg_File_Info & X, const Sg_File_Info & Y )
    {
      return operator==(X,Y) ? false : true;
    }
 
-
 // DQ (10/25/2004): Added relational operators to permit testing of strting vs. ending file info object (assert starting < ending)
 bool
 operator>  ( const Sg_File_Info & X, const Sg_File_Info & Y )
    {
      bool result = false;
-  // mprintf ("In operator > (Sg_File_Info,Sg_File_Info): X.isSameFile(Y) = %s \n",X.isSameFile(Y) ? "true" : "false");
      if (X.isSameFile(Y) == true)
         {
-       // DQ (9/17/2013): We always want to use the physical source position.
-       // mprintf ("X.p_line = %d Y.p_line = %d \n",X.p_line,Y.p_line);
-       // mprintf ("X.p_col  = %d Y.p_col  = %d \n",X.p_col,Y.p_col);
-       // if (X.p_line > Y.p_line)
           if (X.p_physical_line > Y.p_physical_line)
              {
-            // mprintf ("TRUE: X.p_line = %d > X.p_line = %d \n",X.p_line,X.p_line);
                result = true;
              }
             else
              {
-            // DQ (9/17/2013): We always want to use the physical source position.
-            // if (X.p_line == Y.p_line)
                if (X.p_physical_line == Y.p_physical_line)
                   {
                     if (X.p_col > Y.p_col)
                        {
-                      // mprintf ("TRUE: X.p_col = %d > Y.p_col = %d \n",X.p_col,Y.p_col);
                          result = true;
                        }
                   }
              }
         }
-
-  // mprintf ("Sorry operator> (const Sg_File_Info & X, const Sg_File_Info & Y) not implemented! \n");
-  // assert(false);
-  // return true;
 
      return result;
    }
@@ -12431,36 +12280,23 @@ bool
 operator<  ( const Sg_File_Info & X, const Sg_File_Info & Y )
    {
      bool result = false;
-  // mprintf ("In operator < (Sg_File_Info,Sg_File_Info): X.isSameFile(Y) = %s \n",X.isSameFile(Y) ? "true" : "false");
      if (X.isSameFile(Y) == true)
         {
-       // DQ (9/17/2013): We always want to use the physical source position.
-       // mprintf ("X.p_line = %d Y.p_line = %d \n",X.p_line,Y.p_line);
-       // mprintf ("X.p_col  = %d Y.p_col  = %d \n",X.p_col,Y.p_col);
-       // if (X.p_line < Y.p_line)
           if (X.p_physical_line < Y.p_physical_line)
              {
-            // mprintf ("TRUE: X.p_line = %d < Y.p_line = %d \n",X.p_line,Y.p_line);
                result = true;
              }
             else
              {
-            // DQ (9/17/2013): We always want to use the physical source position.
-            // if (X.p_line == Y.p_line)
                if (X.p_physical_line == Y.p_physical_line)
                   {
                     if (X.p_col < Y.p_col)
                        {
-                      // mprintf ("TRUE: X.p_col = %d < Y.p_col = %d \n",X.p_col,Y.p_col);
                          result = true;
                        }
                   }
              }
         }
-
-  // mprintf ("Sorry operator< (const Sg_File_Info & X, const Sg_File_Info & Y) not implemented! \n");
-  // assert(false);
-  // return true;
 
      return result;
    }
@@ -12472,16 +12308,12 @@ operator>= ( const Sg_File_Info & X, const Sg_File_Info & Y )
      bool result = false;
      if (X.isSameFile(Y) == true)
         {
-       // DQ (9/17/2013): We always want to use the physical source position.
-       // if (X.p_line > Y.p_line)
           if (X.p_physical_line > Y.p_physical_line)
              {
                result = true;
              }
             else
              {
-            // DQ (9/17/2013): We always want to use the physical source position.
-            // if (X.p_line == Y.p_line)
                if (X.p_physical_line == Y.p_physical_line)
                   {
                     if (X.p_col >= Y.p_col)
@@ -12489,10 +12321,6 @@ operator>= ( const Sg_File_Info & X, const Sg_File_Info & Y )
                   }
              }
         }
-
-  // mprintf ("Sorry operator>= (const Sg_File_Info & X, const Sg_File_Info & Y) not implemented! \n");
-  // assert(false);
-  // return true;
 
      return result;
    }
@@ -12504,16 +12332,12 @@ operator<= ( const Sg_File_Info & X, const Sg_File_Info & Y )
      bool result = false;
      if (X.isSameFile(Y) == true)
         {
-       // DQ (9/17/2013): We always want to use the physical source position.
-       // if (X.p_line < Y.p_line)
           if (X.p_physical_line < Y.p_physical_line)
              {
                result = true;
              }
             else
              {
-            // DQ (9/17/2013): We always want to use the physical source position.
-            // if (X.p_line == Y.p_line)
                if (X.p_physical_line == Y.p_physical_line)
                   {
                     if (X.p_col <= Y.p_col)
@@ -12521,10 +12345,6 @@ operator<= ( const Sg_File_Info & X, const Sg_File_Info & Y )
                   }
              }
         }
-
-  // mprintf ("Sorry operator<= (const Sg_File_Info & X, const Sg_File_Info & Y) not implemented! \n");
-  // assert(false);
-  // return true;
 
      return result;
    }
@@ -12831,15 +12651,6 @@ Sg_File_Info::get_physical_file_id() const
      bool physicalFileOK = (p_physical_file_id >= 0);
      int file_id = get_file_id();
 
-#if 0
-     printf ("In Sg_File_Info::get_physical_file_id(): \n");
-     printf (" --- (before being set) return_physical_file_id = %d \n",return_physical_file_id);
-     printf (" --- p_physical_file_id                         = %d \n",p_physical_file_id);
-     printf (" --- physicalFileOK                             = %s \n",physicalFileOK ? "true" : "false");
-     printf (" --- file_id                                    = %d \n",file_id);
-     printf (" --- isCompilerGenerated()                      = %s \n",isCompilerGenerated() ? "true" : "false");
-#endif
-
   // DQ (8/20/2018): Not clear why this language specific rule is a good idea.
   // PHL (01/06/2014) use get_line for Fortran frontend
      if (SageInterface::is_Fortran_language() )
@@ -12858,22 +12669,7 @@ Sg_File_Info::get_physical_file_id() const
        // DQ (8/22/2018): Use the file_id for compiler generated nodes, because they don't have a valid source position.
           if (isCompilerGenerated() == true)
              {
-#if 1
                return_physical_file_id = file_id;
-#else
-            // DQ (5/20/2021): If the physical_file_id has been set (as we now do to support the header file unparsing)
-            // then where it is a physical file (id >= 0) then we want to return this value, even of this is marked as
-            // compiler generated.
-            // if (physicalFileOK == false && file_id < 0)
-               if (physicalFileOK == true)
-                  {
-                    return_physical_file_id = p_physical_file_id;
-                  }
-                 else
-                  {
-                    return_physical_file_id = file_id;
-                  }
-#endif
              }
             else
              {
@@ -12884,8 +12680,6 @@ Sg_File_Info::get_physical_file_id() const
      return return_physical_file_id;
    }
 
-
-// DQ (5/20/2021): Added to support debugging.
 int*
 Sg_File_Info::get_physical_file_id_reference()
    {
@@ -12893,7 +12687,6 @@ Sg_File_Info::get_physical_file_id_reference()
 
      return &p_physical_file_id;
    }
-
 
 int
 Sg_File_Info::get_physical_file_id(int input_file_id) const
@@ -12915,11 +12708,6 @@ Sg_File_Info::get_physical_file_id(int input_file_id) const
           return local_file_id;
         }
 
-#if 0
-     mprintf ("In Sg_File_Info::get_physical_file_id(int): physicalFileOK = %s \n",physicalFileOK ? "true" : "false");
-     mprintf (" --- local_file_id = %d \n",local_file_id);
-#endif
-
   // DQ (8/20/2018): Fix this to not report generic "transformed" for any statement marked as a transformation when querying the physical file id.
   // This is (I think) required support for the unparsing of header files.
      if (physicalFileOK == false && local_file_id < 0)
@@ -12929,17 +12717,12 @@ Sg_File_Info::get_physical_file_id(int input_file_id) const
        else
         {
        // DQ (8/22/2018): Use the file_id for compiler generated nodes, because they don't have a valid source position.
-#if 0
-          mprintf ("In Sg_File_Info::get_physical_file_id(int): isCompilerGenerated() = %s local_file_id = %d p_physical_file_id = %d \n",isCompilerGenerated() ? "true" : "false",local_file_id,p_physical_file_id);
-#endif
           if (isCompilerGenerated() == true)
              {
                return_physical_file_id = local_file_id;
              }
             else
              {
-            // return_physical_file_id = p_physical_file_id;
-
                if (input_file_id == this->get_physical_file_id())
                   {
                     return_physical_file_id = p_physical_file_id;
@@ -12981,18 +12764,11 @@ Sg_File_Info::get_physical_file_id(int input_file_id) const
      return return_physical_file_id;
    }
 
-
 void
 Sg_File_Info::set_physical_file_id( int physical_file_id )
    {
-     assert (this != NULL);
-
+     assert(this != NULL);
      set_isModified(true);
-
-#if 0
-     printf ("In Sg_File_Info::set_physical_file_id(physical_file_id = %d) this = %p \n",physical_file_id,this);
-#endif
-
      p_physical_file_id = physical_file_id;
 
   // Make sure this is a previously handled file.
@@ -13002,12 +12778,10 @@ Sg_File_Info::set_physical_file_id( int physical_file_id )
         }
    }
 
-
 void
 Sg_File_Info::set_physical_source_position_to_match_logical_source_position()
    {
-     assert (this != NULL);
-
+     assert(this != NULL);
      set_isModified(true);
 
      p_physical_file_id = p_file_id;
@@ -13020,13 +12794,11 @@ Sg_File_Info::set_physical_source_position_to_match_logical_source_position()
         }
    }
 
-
 int
 Sg_File_Info::numberOfSourceFiles()
    {
      return p_nametofileid_map.size();
    }
-
 
 int
 Sg_File_Info::addFilenameToMap ( const std::string & filename )
@@ -13059,17 +12831,9 @@ void
 // Sg_File_Info::set_filename(const char* filename)
 Sg_File_Info::set_filenameString ( const std::string & filename )
    {
-     assert (this != NULL);
-
+     assert(this != NULL);
      check_file_id("Sg_File_Info::set_filenameString");
 
-#if 0
-     mprintf ("In Sg_File_Info::set_filenameString(filename = %s) this = %p \n",filename.c_str(),this);
-#endif
-
-  // DQ (6/6/2019): I think this is a more efficent implementation.
-  // p_nametofileid_map has type: std::map<std::string, int>
-  // if (p_nametofileid_map.count(filename) == 0)
      if (p_nametofileid_map.find(filename) == p_nametofileid_map.end())
         {
           p_file_id = p_nametofileid_map.size();
@@ -13088,37 +12852,15 @@ Sg_File_Info::set_filenameString ( const std::string & filename )
   // start with (isSourcePositionUnavailableInFrontend() == true) and are fixed up afterward.
      if ( isSourcePositionUnavailableInFrontend() == true )
         {
-#if 0
-          mprintf ("In Sg_File_Info::set_filenameString(): reset isSourcePositionUnavailableInFrontend() to false: filename = %s \n",filename.c_str());
-#endif
           unsetSourcePositionUnavailableInFrontend();
         }
-
-  // DQ (8/31/2006): We can't enforce that this is an absolute path (test2001_04.C and test2004_60.C demonstrate why).
-  // DQ (8/31/2006): Verify that this is a absolute path
-  // string targetSubstring = "/";
-  // string filenameString  = filename;
-  // if (filenameString.substr(0,targetSubstring.size()) != targetSubstring)
-  //      mprintf ("@@@@@@@@@@@@@@@@@@@@ In Sg_File_Info::Sg_File_Info(string,int,int): filename = %s @@@@@@@@@@@@@@@@@@@@\n",filenameString.c_str());
-  // assert(filenameString.substr(0,targetSubstring.size()) == targetSubstring);
-
-  // Detect use of AST Rewrite intermediate files (need to make sure they get absolute paths)
-  // string targetSubstring2 = "rose_";
-  // assert(filenameString.substr(0,targetSubstring2.size()) != targetSubstring2);
    }
 
 void
 Sg_File_Info::set_physical_filename ( const std::string & filename )
    {
-     assert (this != NULL);
+     assert(this != NULL);
 
-#if 0
-     mprintf ("In Sg_File_Info::set_physical_filename(filename = %s) this = %p p_nametofileid_map.count(filename) = %" PRIuPTR " \n",filename.c_str(),this,p_nametofileid_map.count(filename));
-#endif
-
-  // DQ (6/6/2019): I think this is a more efficent implementation.
-  // p_nametofileid_map has type: std::map<std::string, int>
-  // if (p_nametofileid_map.count(filename) == 0)
      if (p_nametofileid_map.find(filename) == p_nametofileid_map.end())
         {
        // If the filename is not in the p_nametofileid_map then we need to add it.
@@ -13137,14 +12879,9 @@ Sg_File_Info::set_physical_filename ( const std::string & filename )
    }
 
 void
-// DQ (9/5/2006): renamed functions to swap the implementations
-// Sg_File_Info::set_filenameString ( const std::string & filename )
 Sg_File_Info::set_filename(const char* filename)
    {
      check_file_id("Sg_File_Info::set_filename");
-
-  // DQ (9/5/2006): Modified implementation
-  // set_filename(filename.c_str());
      assert(filename != NULL);
      set_filenameString(filename);
    }
@@ -13272,9 +13009,6 @@ Sg_File_Info::set_line(int line)
        // start with (isSourcePositionUnavailableInFrontend() == true) and are fixed up afterward.
           if ( isSourcePositionUnavailableInFrontend() == true )
              {
-#if 0
-               mprintf ("In Sg_File_Info::set_line(): reset isSourcePositionUnavailableInFrontend() to false: line = %d \n",line);
-#endif
                unsetSourcePositionUnavailableInFrontend();
              }
         }
@@ -13365,21 +13099,12 @@ Sg_File_Info::get_line(int file_id) const
                          SgFileIdList::const_iterator pos = find(p_fileIDsToUnparse.begin(),p_fileIDsToUnparse.end(),file_id);
                          if (pos != p_fileIDsToUnparse.end())
                             {
-#if 0
-                              mprintf ("Sg_File_Info::get_line(int): input file is sharing this IR node: input file_id = %d physical_file_id = %d \n",file_id,this->get_physical_file_id());
-#endif
                               ptrdiff_t index = pos - p_fileIDsToUnparse.begin();
                               ROSE_ASSERT(index >= 0);
                               ROSE_ASSERT(index < (ptrdiff_t)p_fileIDsToUnparse.size());
                               ROSE_ASSERT(p_fileLineNumbersToUnparse.size() == p_fileIDsToUnparse.size());
-#if 0
-                              mprintf (" --- index = %d shared file id = %d \n",(int)index,p_fileIDsToUnparse[index]);
-#endif
                               ROSE_ASSERT(file_id == p_fileIDsToUnparse[index]);
                               returnValue = p_fileLineNumbersToUnparse[index];
-#if 0
-                              mprintf (" --- returning returnValue = %d \n",returnValue);
-#endif
                             }
                            else
                             {
@@ -13396,7 +13121,6 @@ Sg_File_Info::get_line(int file_id) const
      assert (returnValue >= 0);
      return returnValue;
    }
-
 
 int
 Sg_File_Info::get_raw_line() const
@@ -13426,7 +13150,6 @@ Sg_File_Info::get_physical_line(int file_id) const
         }
        else
         {
-       // returnValue = p_physical_line;
           if (file_id == this->get_physical_file_id())
              {
                returnValue = p_physical_line;
@@ -13436,27 +13159,17 @@ Sg_File_Info::get_physical_line(int file_id) const
                SgFileIdList::const_iterator pos = find(p_fileIDsToUnparse.begin(),p_fileIDsToUnparse.end(),file_id);
                if (pos != p_fileIDsToUnparse.end())
                   {
-#if 0
-                    mprintf ("Sg_File_Info::get_physical_line(int): input file is sharing this IR node: input file_id = %d physical_file_id = %d \n",file_id,this->get_physical_file_id());
-#endif
                     ptrdiff_t index = pos - p_fileIDsToUnparse.begin();
                     ROSE_ASSERT(index >= 0);
                     ROSE_ASSERT(index < (ptrdiff_t)p_fileIDsToUnparse.size());
                     ROSE_ASSERT(p_fileLineNumbersToUnparse.size() == p_fileIDsToUnparse.size());
-#if 0
-                    mprintf (" --- index = %d shared file id = %d \n",(int)index,p_fileIDsToUnparse[index]);
-#endif
                     ROSE_ASSERT(file_id == p_fileIDsToUnparse[index]);
                     returnValue = p_fileLineNumbersToUnparse[index];
-#if 0
-                    mprintf (" --- returning returnValue = %d \n",returnValue);
-#endif
                   }
                  else
                   {
                  // This case means that the file_id provided was incorrect, the IR node is not shared with that file.
                  // This is a reasonable default, if we don't want to make this an error.
-
                     returnValue = p_physical_line;
                   }
              }
@@ -13622,27 +13335,13 @@ Sg_File_Info::isSameFile(SgFile* file) const
        // Check is this could be a shared file info.
           if (p_fileIDsToUnparse.empty() == false)
              {
-#if 0
-               mprintf ("Sg_File_Info::isSameFile(SgFile*): p_fileIDsToUnparse.size() = %zu \n",p_fileIDsToUnparse.size());
-#endif
-            // if (find(p_fileIDsToUnparse.begin(),p_fileIDsToUnparse.end(),fileInfo->get_physical_file_id()) != p_fileIDsToUnparse.end())
                SgFileIdList::const_iterator pos = find(p_fileIDsToUnparse.begin(),p_fileIDsToUnparse.end(),fileInfo->get_physical_file_id());
                if (pos != p_fileIDsToUnparse.end())
                   {
-#if 0
-                    mprintf ("Sg_File_Info::isSameFile(SgFile*): input file is sharing this IR node: input file_id = %d \n",fileInfo->get_physical_file_id());
-#endif
                     ptrdiff_t index = pos - p_fileIDsToUnparse.begin();
                     ROSE_ASSERT(index >= 0);
                     ROSE_ASSERT(index < (ptrdiff_t)p_fileIDsToUnparse.size());
-#if 0
-                    mprintf (" --- index = %d shared file id = %d \n",(int)index,p_fileIDsToUnparse[index]);
-#endif
-                 // result = true;
                     result = (fileInfo->get_physical_file_id() == p_fileIDsToUnparse[index]);
-#if 0
-                    mprintf (" --- returning result = %s \n",result ? "true" : "false");
-#endif
                   }
              }
         }
@@ -13650,33 +13349,18 @@ Sg_File_Info::isSameFile(SgFile* file) const
      return result;
    }
 
-// DQ (1/18/2006): Added new function with more useful interface.
 bool
 Sg_File_Info::isSameFile(Sg_File_Info* fileInfo) const
-   {
-     assert(fileInfo != NULL);
+{
+    ASSERT_not_null(fileInfo);
+    return (this->get_physical_file_id() == fileInfo->get_physical_file_id());
+}
 
-  // DQ (9/17/2013): This function should always refer to physical file data.
-  // DQ (10/27/2007): Make this consistant with new semantics of get_file_id()
-  // bool result = (p_file_id == fileInfo->get_file_id());
-  // bool result = (this->get_file_id() == fileInfo->get_file_id());
-     bool result = (this->get_physical_file_id() == fileInfo->get_physical_file_id());
-
-     return result;
-   }
-
-// DQ (1/18/2006): Added new function with more useful interface.
 bool
-Sg_File_Info::isSameFile(const Sg_File_Info & fileInfo) const
-   {
-  // DQ (9/17/2013): This function should always refer to physical file data.
-  // DQ (10/27/2007): Make this consistant with new semantics of get_file_id()
-  // bool result = (p_file_id == fileInfo.get_file_id());
-  // bool result = (this->get_file_id() == fileInfo.get_file_id());
-     bool result = (this->get_physical_file_id() == fileInfo.get_physical_file_id());
-
-     return result;
-   }
+Sg_File_Info::isSameFile(const Sg_File_Info &fileInfo) const
+{
+    return (this->get_physical_file_id() == fileInfo.get_physical_file_id());
+}
 
 //! Access functions for classification of File_Info objects
 bool
@@ -13691,33 +13375,6 @@ Sg_File_Info::setTransformation()
    {
      assert(this != NULL);
      p_classificationBitField |= e_transformation;
-
-#if 0
-  // DQ (7/13/2021): Added debugging code.
-     static int counter = 0;
-
-     SgNode* parent = this->get_parent();
-     if (parent != NULL)
-        {
-          SgCastExp* castExpression = isSgCastExp(parent);
-          if (castExpression != NULL)
-             {
-               printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
-               printf ("In Sg_File_Info::setTransformation(): Found SgCastExp %p counter = %d \n",castExpression,counter);
-               printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
-             }
-            else
-             {
-               printf ("In Sg_File_Info::setTransformation(): !SgCastExp: parent = %p = %s counter = %d \n",parent,parent->class_name().c_str(),counter);
-             }
-        }
-       else
-        {
-          printf ("In Sg_File_Info::setTransformation(): parent == NULL: counter = %d \n",counter);
-        }
-
-     counter++;
-#endif
    }
 
 void
@@ -13731,11 +13388,6 @@ bool
 Sg_File_Info::isCompilerGenerated() const
    {
      assert(this != NULL);
-
-#if 0
-     mprintf ("In Sg_File_Info::isCompilerGenerated(): this = %p \n",this);
-#endif
-
      return (p_classificationBitField & e_compiler_generated);
    }
 
@@ -13743,11 +13395,6 @@ void
 Sg_File_Info::setCompilerGenerated()
    {
      assert(this != NULL);
-
-#if 0
-     mprintf ("In Sg_File_Info::setCompilerGenerated(): this = %p \n",this);
-#endif
-
      p_classificationBitField |= e_compiler_generated;
    }
 
@@ -13758,7 +13405,6 @@ Sg_File_Info::unsetCompilerGenerated()
      p_classificationBitField &= ~e_compiler_generated;
    }
 
-// bool isCompilerGeneratedNodeToBeUnparsed() const;
 bool
 Sg_File_Info::isCompilerGeneratedNodeToBeUnparsed() const
    {
@@ -13771,13 +13417,7 @@ void
 Sg_File_Info::setCompilerGeneratedNodeToBeUnparsed()
    {
   // Make sure that both bits are set!
-  // setCompilerGenerated();
      assert(this != NULL);
-
-#if 0
-     mprintf ("In Sg_File_Info::setCompilerGeneratedNodeToBeUnparsed(): this = %p \n",this);
-#endif
-
      p_classificationBitField |= e_output_in_code_generation;
    }
 
@@ -13800,16 +13440,7 @@ void
 Sg_File_Info::setOutputInCodeGeneration()
    {
   // Make sure that both bits are set!
-  // setCompilerGenerated();
      assert(this != NULL);
-
-#if 0
-     mprintf ("In setOutputInCodeGeneration(): this = %p parent = %p \n",this,this->get_parent());
-#endif
-
-  // DQ (5/19/2013): Testing...debugging test2013_171.C.
-  // ROSE_ASSERT(isSgNamespaceDefinitionStatement(this->get_parent()) == NULL);
-
      p_classificationBitField |= e_output_in_code_generation;
    }
 
@@ -13883,11 +13514,6 @@ Sg_File_Info::setSourcePositionUnavailableInFrontend()
    {
      assert(this != NULL);
      p_classificationBitField |= e_source_position_unavailable_in_frontend;
-
-#if 0
-  // DQ (8/3/2012): We don't want to use this unless absolutely required; so output a message to support debugging.
-     mprintf ("In Sg_File_Info::setSourcePositionUnavailableInFrontend() \n");
-#endif
    }
 
 void
@@ -13895,11 +13521,6 @@ Sg_File_Info::unsetSourcePositionUnavailableInFrontend()
    {
      assert(this != NULL);
      p_classificationBitField &= ~e_source_position_unavailable_in_frontend;
-
-#if 0
-  // DQ (8/3/2012): We don't want to use this unless absolutely required; so output a message to support debugging.
-     mprintf ("In Sg_File_Info::unsetSourcePositionUnavailableInFrontend() \n");
-#endif
    }
 
 bool
@@ -14575,40 +14196,22 @@ SgFile::generateOutputFileName() const
      std::string specified_objectFileName = get_objectFileNameWithoutPath();
      if (specified_objectFileName.length() == 0)
         {
-#if 0
-          printf (" --- get_objectFileNameWithoutPath() returned empty string, using generateOutputFileName(): objectFileName = %s \n",objectFileName.c_str());
-#endif
         }
        else
         {
-#if 0
-          printf (" --- using value from get_objectFileNameWithoutPath(): objectFileName = %s \n",objectFileName.c_str());
-#endif
           objectFileName = specified_objectFileName;
         }
-
-  // mprintf ("At base of SgFile::generateOutputFileName(): objectFileName = %s \n",objectFileName.c_str());
-  // display("In SgFile::generateOutputFileName()");
 
      return objectFileName;
    }
 
-// DQ (3/18/2006): Modified interface to allow specification of pointer to user
-// defined UnparseFormatHelp object (to control code generation).
-// DQ (8/20/2005): Removed default parameter from extern function declaration
-// Liao (2/8/2008): Removed default parameters due to conflicts with src/backend/unparser/unparser.h
-
 void
 SgFile::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate )
    {
-  // DQ (1/24/2010): This call to the timer has been moved to the unparseFile() function.
-  // DQ (7/12/2005): Introduce tracking of performance of ROSE.
-  // TimingPerformance timer ("AST Code Generation (unparsing):");
-
   // Call the unparser mechanism
   // DQ (1/24/2010): Moved the extern declaration for unparseFile() to be local to this function (better code design).
-     extern void unparseFile( SgFile* file, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */, SgScopeStatement* unparseScope /* = NULL */);
-     unparseFile ( this, unparseFormatHelp, unparseDelegate, NULL );
+     extern void unparseFile(SgFile* file, UnparseFormatHelp* unparseFormatHelp/*=NULL*/, UnparseDelegate* unparseDelegate/*=NULL*/, SgScopeStatement* unparseScope/*=NULL*/);
+     unparseFile(this, unparseFormatHelp, unparseDelegate, nullptr);
    }
 
 // DQ (5/8/2010): Added support to reset the Sg_File_Info (source code position information)
@@ -14925,12 +14528,8 @@ SgSourceFile::set_token_unparse_frontier(std::map<SgStatement*,FrontierNode*> & 
   // multiple files (or header files in addition to the source file).
 
      std::map<SgStatement*,FrontierNode*> & frontierMap = this->get_token_unparse_frontier();
-
-#if 0
-     mprintf ("In SgSourceFile::set_token_unparse_frontier(): (before): frontierMap.size() = %zu \n",frontierMap.size());
-#endif
-
      std::map<SgStatement*,FrontierNode*>::iterator i = tokenStreamSequenceMap.begin();
+
      while (i != tokenStreamSequenceMap.end())
         {
           ROSE_ASSERT(i->first  != NULL);
@@ -14942,15 +14541,9 @@ SgSourceFile::set_token_unparse_frontier(std::map<SgStatement*,FrontierNode*> & 
                mprintf ("SgSourceFile::set_token_unparse_frontier(): This is a redundant entry in the Map \n");
                ROSE_ASSERT(false);
              }
-
           frontierMap.insert(*i);
-
           i++;
         }
-
-#if 0
-     mprintf ("In SgSourceFile::set_token_unparse_frontier(): (after): frontierMap.size() = %zu \n",frontierMap.size());
-#endif
    }
 
 std::map<SgStatement*,FrontierNode*> &
@@ -14965,12 +14558,6 @@ SgSourceFile::get_token_unparse_frontier()
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
-
-#if 0
-     mprintf ("In SgSourceFile::get_token_unparse_frontier(): index = %d filename = %s \n",index,this->getFileName().c_str());
-     mprintf ("In SgSourceFile::get_token_unparse_frontier(): Rose::frontierNodesMapOfMaps.size() = %zu \n",Rose::frontierNodesMapOfMaps.size());
-#endif
-
      if (index < 0)
         {
           mprintf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
@@ -14979,16 +14566,9 @@ SgSourceFile::get_token_unparse_frontier()
 
      if (Rose::frontierNodesMapOfMaps.find(index) == Rose::frontierNodesMapOfMaps.end())
         {
-#if 0
-          mprintf ("Adding a new std::map<SgStatement*,FrontierNode*> object to the Rose::frontierNodesMapOfMaps: (before) size = %zu \n",Rose::frontierNodesMapOfMaps.size());
-#endif
           std::map<SgStatement*,FrontierNode*>* frontierNodesMap = new std::map<SgStatement*,FrontierNode*>();
           ROSE_ASSERT(frontierNodesMap != NULL);
-
           Rose::frontierNodesMapOfMaps.insert(std::pair<int,std::map<SgStatement*,FrontierNode*>* >(index,frontierNodesMap));
-#if 0
-          mprintf ("Adding a new std::map<SgStatement*,FrontierNode*> object to the Rose::frontierNodesMapOfMaps: (after) size = %zu \n",Rose::frontierNodesMapOfMaps.size());
-#endif
         }
 
      ROSE_ASSERT(Rose::frontierNodesMapOfMaps.find(index) != Rose::frontierNodesMapOfMaps.end());
@@ -15011,12 +14591,8 @@ SgSourceFile::set_token_unparse_frontier_adjacency(std::map<SgNode*,PreviousAndN
   // multiple files (or header files in addition to the source file).
 
      std::map<SgNode*,PreviousAndNextNodeData*> & frontierMap = this->get_token_unparse_frontier_adjacency();
-
-#if 0
-     mprintf ("In SgSourceFile::set_token_unparse_frontier_adjacency(): (before): frontierMap.size() = %zu \n",frontierMap.size());
-#endif
-
      std::map<SgNode*,PreviousAndNextNodeData*>::iterator i = tokenStreamSequenceMap.begin();
+
      while (i != tokenStreamSequenceMap.end())
         {
           ROSE_ASSERT(i->first  != NULL);
@@ -15033,10 +14609,6 @@ SgSourceFile::set_token_unparse_frontier_adjacency(std::map<SgNode*,PreviousAndN
 
           i++;
         }
-
-#if 0
-     mprintf ("In SgSourceFile::set_token_unparse_frontier_adjacency(): (after): frontierMap.size() = %zu \n",frontierMap.size());
-#endif
    }
 
 std::map<SgNode*,PreviousAndNextNodeData*> &
@@ -15046,11 +14618,6 @@ SgSourceFile::get_token_unparse_frontier_adjacency()
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
-
-#if 0
-     mprintf ("In SgSourceFile::get_token_unparse_frontier_adjacency(): index = %d filename = %s \n",index,this->getFileName().c_str());
-#endif
-
      if (index < 0)
         {
           mprintf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
@@ -15059,16 +14626,9 @@ SgSourceFile::get_token_unparse_frontier_adjacency()
 
      if (Rose::previousAndNextNodeMapOfMaps.find(index) == Rose::previousAndNextNodeMapOfMaps.end())
         {
-#if 0
-          mprintf ("Adding a new std::map<SgNode*,PreviousAndNextNodeData*> object to the Rose::previousAndNextNodeMapOfMaps: (before) size = %zu \n",Rose::previousAndNextNodeMapOfMaps.size());
-#endif
           std::map<SgNode*,PreviousAndNextNodeData*>* frontierNodesMap = new std::map<SgNode*,PreviousAndNextNodeData*>();
           ROSE_ASSERT(frontierNodesMap != NULL);
-
           Rose::previousAndNextNodeMapOfMaps.insert(std::pair<int,std::map<SgNode*,PreviousAndNextNodeData*>* >(index,frontierNodesMap));
-#if 0
-          mprintf ("Adding a new std::map<SgNode*,PreviousAndNextNodeData*> object to the Rose::previousAndNextNodeMapOfMaps: (after) size = %zu \n",Rose::previousAndNextNodeMapOfMaps.size());
-#endif
         }
 
      ROSE_ASSERT(Rose::previousAndNextNodeMapOfMaps.find(index) != Rose::previousAndNextNodeMapOfMaps.end());
@@ -15088,42 +14648,20 @@ SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(std::multimap<int,S
   // multiple files (or header files in addition to the source file).
 
      std::multimap<int,SgStatement*> & frontierMap = this->get_redundantlyMappedTokensToStatementMultimap();
-
-#if 0
-     mprintf ("In SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(): (before): frontierMap.size() = %zu \n",frontierMap.size());
-#endif
-
      std::multimap<int,SgStatement*>::iterator i = X.begin();
+
      while (i != X.end())
         {
-       // ROSE_ASSERT(i->first  != NULL);
           ROSE_ASSERT(i->second != NULL);
 
        // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
           if (frontierMap.find(i->first) != frontierMap.end())
              {
                ROSE_ASSERT(i->second != NULL);
-#if 0
-               mprintf ("SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(): This is a redundant entry in the Map: i->first = %d i->second = %p = %s \n",i->first,i->second,i->second->class_name().c_str());
-#endif
-            // DQ (11/1/2018): Since this is a multimap, this might be OK (debugging move tool tests).
-            // ROSE_ASSERT(false);
              }
-            else
-             {
-#if 0
-               mprintf ("SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(): new entry in the map: i->first = %d i->second = %p = %s \n",i->first,i->second,i->second->class_name().c_str());
-#endif
-             }
-
           frontierMap.insert(*i);
-
           i++;
         }
-
-#if 0
-     mprintf ("In SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(): (after): frontierMap.size() = %zu \n",frontierMap.size());
-#endif
    }
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
@@ -15134,11 +14672,6 @@ SgSourceFile::get_redundantlyMappedTokensToStatementMultimap()
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
-
-#if 0
-     mprintf ("In SgSourceFile::get_redundantlyMappedTokensToStatementMultimap(): index = %d filename = %s \n",index,this->getFileName().c_str());
-#endif
-
      if (index < 0)
         {
           mprintf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
@@ -15147,16 +14680,9 @@ SgSourceFile::get_redundantlyMappedTokensToStatementMultimap()
 
      if (Rose::redundantlyMappedTokensToStatementMapOfMultimaps.find(index) == Rose::redundantlyMappedTokensToStatementMapOfMultimaps.end())
         {
-#if 0
-          mprintf ("Adding a new std::map<SgStatement*,FrontierNode*> object to the Rose::redundantlyMappedTokensToStatementMapOfMultimaps: (before) size = %zu \n",Rose::redundantlyMappedTokensToStatementMapOfMultimaps.size());
-#endif
           std::multimap<int,SgStatement*>* frontierNodesMap = new std::multimap<int,SgStatement*>();
           ROSE_ASSERT(frontierNodesMap != NULL);
-
           Rose::redundantlyMappedTokensToStatementMapOfMultimaps.insert(std::pair<int,std::multimap<int,SgStatement*>* >(index,frontierNodesMap));
-#if 0
-          mprintf ("Adding a new std::map<SgStatement*,FrontierNode*> object to the Rose::redundantlyMappedTokensToStatementMapOfMultimaps: (after) size = %zu \n",Rose::redundantlyMappedTokensToStatementMapOfMultimaps.size());
-#endif
         }
 
      ROSE_ASSERT(Rose::redundantlyMappedTokensToStatementMapOfMultimaps.find(index) != Rose::redundantlyMappedTokensToStatementMapOfMultimaps.end());
@@ -15177,12 +14703,8 @@ SgSourceFile::set_redundantTokenEndingsSet(std::set<int> & X)
   // multiple files (or header files in addition to the source file).
 
      std::set<int> & frontierMap = this->get_redundantTokenEndingsSet();
-
-#if 0
-     mprintf ("In SgSourceFile::set_redundantTokenEndingsSet(): (before): frontierMap.size() = %zu \n",frontierMap.size());
-#endif
-
      std::set<int>::iterator i = X.begin();
+
      while (i != X.end())
         {
        // DQ (9/26/2018): Make sure this is not an entry that already exists in the map.
@@ -15196,10 +14718,6 @@ SgSourceFile::set_redundantTokenEndingsSet(std::set<int> & X)
 
           i++;
         }
-
-#if 0
-     mprintf ("In SgSourceFile::set_redundantTokenEndingsSet(): (after): frontierMap.size() = %zu \n",frontierMap.size());
-#endif
    }
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
@@ -15210,11 +14728,6 @@ SgSourceFile::get_redundantTokenEndingsSet()
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
-
-#if 0
-     mprintf ("In SgSourceFile::get_token_unparse_frontier(): index = %d filename = %s \n",index,this->getFileName().c_str());
-#endif
-
      if (index < 0)
         {
           mprintf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
@@ -15223,16 +14736,9 @@ SgSourceFile::get_redundantTokenEndingsSet()
 
      if (Rose::redundantTokenEndingsMapOfSets.find(index) == Rose::redundantTokenEndingsMapOfSets.end())
         {
-#if 0
-          mprintf ("Adding a new std::set<int> object to the Rose::redundantTokenEndingsMapOfSets: (before) size = %zu \n",Rose::redundantTokenEndingsMapOfSets.size());
-#endif
           std::set<int>* frontierNodesMap = new std::set<int>();
           ROSE_ASSERT(frontierNodesMap != NULL);
-
           Rose::redundantTokenEndingsMapOfSets.insert(std::pair<int,std::set<int>* >(index,frontierNodesMap));
-#if 0
-          mprintf ("Adding a new std::set<int> object to the Rose::redundantTokenEndingsMapOfSets: (after) size = %zu \n",Rose::redundantTokenEndingsMapOfSets.size());
-#endif
         }
 
      ROSE_ASSERT(Rose::redundantTokenEndingsMapOfSets.find(index) != Rose::redundantTokenEndingsMapOfSets.end());
@@ -15252,12 +14758,8 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
   // multiple files (or header files in addition to the source file).
 
      std::map<SgScopeStatement*,SgStatement*> & frontierMap = this->get_representativeWhitespaceStatementMap();
-
-#if 0
-     mprintf ("In SgSourceFile::set_representativeWhitespaceStatementMap(): (before): frontierMap.size() = %zu \n",frontierMap.size());
-#endif
-
      std::map<SgScopeStatement*,SgStatement*>::iterator i = representativeWhitespaceStatementMap.begin();
+
      while (i != representativeWhitespaceStatementMap.end())
         {
           ROSE_ASSERT(i->first  != NULL);
@@ -15279,10 +14781,6 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
              }
           i++;
         }
-
-#if 0
-     mprintf ("In SgSourceFile::set_representativeWhitespaceStatementMap(): (after): frontierMap.size() = %zu \n",frontierMap.size());
-#endif
    }
 
 
@@ -15296,11 +14794,6 @@ SgSourceFile::get_representativeWhitespaceStatementMap()
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
-
-#if 0
-     mprintf ("In SgSourceFile::get_representativeWhitespaceStatementMap(): index = %d filename = %s \n",index,this->getFileName().c_str());
-#endif
-
      if (index < 0)
         {
           mprintf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
@@ -15309,16 +14802,9 @@ SgSourceFile::get_representativeWhitespaceStatementMap()
 
      if (Rose::representativeWhitespaceStatementMapOfMaps.find(index) == Rose::representativeWhitespaceStatementMapOfMaps.end())
         {
-#if 0
-          mprintf ("Adding a new std::map<SgScopeStatement*,SgStatement*> object to the Rose::representativeWhitespaceStatementMapOfMaps: (before) size = %zu \n",Rose::representativeWhitespaceStatementMapOfMaps.size());
-#endif
           std::map<SgScopeStatement*,SgStatement*>* frontierNodesMap = new std::map<SgScopeStatement*,SgStatement*>();
           ROSE_ASSERT(frontierNodesMap != NULL);
-
           Rose::representativeWhitespaceStatementMapOfMaps.insert(std::pair<int,std::map<SgScopeStatement*,SgStatement*>* >(index,frontierNodesMap));
-#if 0
-          mprintf ("Adding a new std::map<SgScopeStatement*,SgStatement*> object to the Rose::representativeWhitespaceStatementMapOfMaps: (after) size = %zu \n",Rose::representativeWhitespaceStatementMapOfMaps.size());
-#endif
         }
 
      ROSE_ASSERT(Rose::representativeWhitespaceStatementMapOfMaps.find(index) != Rose::representativeWhitespaceStatementMapOfMaps.end());
@@ -15338,12 +14824,8 @@ SgSourceFile::set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & mac
   // multiple files (or header files in addition to the source file).
 
      std::map<SgStatement*,MacroExpansion*> & frontierMap = this->get_macroExpansionMap();
-
-#if 0
-     mprintf ("In SgSourceFile::set_macroExpansionMap(): (before): frontierMap.size() = %zu \n",frontierMap.size());
-#endif
-
      std::map<SgStatement*,MacroExpansion*>::iterator i = macroExpansionMap.begin();
+
      while (i != macroExpansionMap.end())
         {
           ROSE_ASSERT(i->first  != NULL);
@@ -15355,15 +14837,9 @@ SgSourceFile::set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & mac
                mprintf ("SgSourceFile::set_macroExpansionMap(): This is a redundant entry in the Map \n");
                ROSE_ASSERT(false);
              }
-
           frontierMap.insert(*i);
-
           i++;
         }
-
-#if 0
-     mprintf ("In SgSourceFile::set_macroExpansionMap(): (after): frontierMap.size() = %zu \n",frontierMap.size());
-#endif
    }
 
 
@@ -15376,11 +14852,6 @@ SgSourceFile::get_macroExpansionMap()
      ROSE_ASSERT(this->get_startOfConstruct() != NULL);
 
      int index = this->get_startOfConstruct()->get_file_id();
-
-#if 0
-     mprintf ("In SgSourceFile::get_macroExpansionMapOfMaps(): index = %d filename = %s \n",index,this->getFileName().c_str());
-#endif
-
      if (index < 0)
         {
           mprintf ("ERROR: we only have token stream subsequences for valid files: fileid < 0: index = %d \n",index);
@@ -15389,16 +14860,9 @@ SgSourceFile::get_macroExpansionMap()
 
      if (Rose::macroExpansionMapOfMaps.find(index) == Rose::macroExpansionMapOfMaps.end())
         {
-#if 0
-          mprintf ("Adding a new std::map<SgStatement*,MacroExpansion*> object to the Rose::macroExpansionMapOfMaps: (before) size = %zu \n",Rose::macroExpansionMapOfMaps.size());
-#endif
           std::map<SgStatement*,MacroExpansion*>* frontierNodesMap = new std::map<SgStatement*,MacroExpansion*>();
           ROSE_ASSERT(frontierNodesMap != NULL);
-
           Rose::macroExpansionMapOfMaps.insert(std::pair<int,std::map<SgStatement*,MacroExpansion*>* >(index,frontierNodesMap));
-#if 0
-          mprintf ("Adding a new std::map<SgStatement*,MacroExpansion*> object to the Rose::macroExpansionMapOfMaps: (after) size = %zu \n",Rose::macroExpansionMapOfMaps.size());
-#endif
         }
 
      ROSE_ASSERT(Rose::macroExpansionMapOfMaps.find(index) != Rose::macroExpansionMapOfMaps.end());
@@ -18524,14 +17988,8 @@ SgName
 SgTemplateParameter::get_mangled_name (void) const
    {
      ASSERT_this();
-
-#if 0
-  // mprintf ("In SgTemplateParameter::get_mangled_name(): this = %p get_argumentType() = %d unparseToString() = %s \n",this,get_argumentType(),unparseToString().c_str());
-     mprintf ("In SgTemplateParameter::get_mangled_name(): this = %p get_argumentType() = %d \n",this,get_argumentType());
-     mprintf ("In SgTemplateParameter::get_mangled_name(): unparseToString() = %s \n",unparseToString().c_str());
-#endif
-
      ostringstream mangled_name;
+
      switch (get_parameterType())
         {
           case SgTemplateParameter::type_parameter:
@@ -18574,10 +18032,6 @@ SgTemplateParameter::get_mangled_name (void) const
                break;
              }
         }
-
-#if 0
-     mprintf ("In SgTemplateParameter::get_mangled_name(): mangled_name = %s \n",mangled_name.str());
-#endif
 
      string str_mangled_name (mangled_name.str());
 
@@ -19004,48 +18458,12 @@ SgTemplateArgument::get_qualified_name_prefix() const
   // different and so it depends upon where the type is referenced.  Thus the qualified name is
   // stored in a map to the IR node that references the type.
      SgName nameQualifier;
-  // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTemplateArgument*>(this));
      SgUnorderedMapNodeToString::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTemplateArgument*>(this));
-
-#if 0
-  // DQ (5/3/2024): Debugging non-terminating name qualification for unit testing.
-     printf ("In SgTemplateArgument::get_qualified_name_prefix(): this = %p SgNode::get_globalQualifiedNameMapForTypes().size() = %zu \n",this,SgNode::get_globalQualifiedNameMapForTypes().size());
-#endif
 
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
         {
           nameQualifier = i->second;
-#if 0
-       // DQ (5/3/2024): Debugging non-terminating name qualification for unit testing.
-          printf ("Setting nameQualifier: length: %zu \n",nameQualifier.get_length());
-#endif
-#if 0
-       // DQ (5/3/2024): Debugging non-terminating name qualification for unit testing.
-          printf ("In SgTemplateArgument::get_qualified_name_prefix(): this = %p length: %zu SgNode::get_globalQualifiedNameMapForTypes().size() = %zu \n",
-               this,nameQualifier.get_length(),SgNode::get_globalQualifiedNameMapForTypes().size());
-#endif
         }
-       else
-        {
-#if 0
-       // DQ (5/3/2024): Debugging non-terminating name qualification for unit testing.
-          printf ("In SgTemplateArgument::get_qualified_name_prefix(): this = %p not found in globalQualifiedNameMapForTypes \n",this);
-#endif
-        }
-
-#if 0
-  // DQ (5/23/2024): This tracks the size of the qualified names.
-     static long int max_size = 4000;
-     if (nameQualifier.get_length() > max_size)
-        {
-       // printf ("nameQualifier.get_length() = %zu \n",nameQualifier.get_length());
-          max_size = nameQualifier.get_length();
-        }
-#endif
-#if 1
-  // DQ (5/3/2024): Debugging non-terminating name qualification for unit testing.
-  // printf ("Leaving SgTemplateArgument::get_qualified_name_prefix(): nameQualifier = %s \n",nameQualifier.str());
 
      if (nameQualifier.get_length() > 10000)
         {
@@ -19054,7 +18472,6 @@ SgTemplateArgument::get_qualified_name_prefix() const
           flush(cout);
           ROSE_ASSERT(false);
         }
-#endif
 
      return nameQualifier;
    }
@@ -19068,8 +18485,6 @@ SgTemplateArgument::get_qualified_name_prefix_for_type() const
   // different and so it depends upon where the type is referenced.  Thus the qualified name is
   // stored in a map to the IR node that references the type.
      SgName nameQualifier;
-  // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-  // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTemplateArgument*>(this));
      SgUnorderedMapNodeToString::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTemplateArgument*>(this));
 
      if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
