@@ -11,6 +11,23 @@ if(READLINE_FOUND)
   target_link_libraries(roseSupport ${READLINE_LIBRARY})
 endif()
 
+# Add include directories for optional dependencies used in utility_functions.C
+# Note: roseSupport is an OBJECT library, so it doesn't automatically inherit
+# transitive dependencies from ROSE_DLL. We use rose_object_library_dependencies
+# for common dependencies, and add specific ones here.
+target_link_libraries(roseSupport PRIVATE rose_object_library_dependencies)
+
+# Additional dependencies specific to utility_functions.C
+if(DWARF_FOUND)
+  target_include_directories(roseSupport PRIVATE ${DWARF_INCLUDE_DIRS})
+endif()
+if(PQXX_FOUND)
+  target_include_directories(roseSupport PRIVATE ${PQXX_INCLUDE_DIR})
+endif()
+if(SQLITE3_FOUND)
+  target_include_directories(roseSupport PRIVATE ${SQLITE3_INCLUDE_DIR})
+endif()
+
 ########### install files ###############
 
 install(FILES  transformationSupport.h

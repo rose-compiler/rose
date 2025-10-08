@@ -584,6 +584,24 @@ add_subdirectory(AstNodes)
 # The ROSE library
 ########################################################################################################################
 
+# Create an INTERFACE library that OBJECT libraries can link against to get
+# include directories from optional dependencies. OBJECT libraries don't inherit
+# transitive dependencies from ROSE_DLL, so they need explicit access to headers
+# from dependencies that appear in ROSE public headers (like dlib in Matrix.h).
+add_library(rose_object_library_dependencies INTERFACE)
+if(DLIB_FOUND)
+  target_link_libraries(rose_object_library_dependencies INTERFACE dlib::dlib)
+endif()
+if(CAPSTONE_FOUND)
+  target_include_directories(rose_object_library_dependencies INTERFACE ${CAPSTONE_INCLUDE_DIR})
+endif()
+if(GCRYPT_FOUND)
+  target_include_directories(rose_object_library_dependencies INTERFACE ${GCRYPT_INCLUDE_DIR})
+endif()
+if(YAMLCPP_FOUND)
+  target_include_directories(rose_object_library_dependencies INTERFACE ${YAMLCPP_INCLUDE_DIR})
+endif()
+
 set(rose_LIB_OBJS   
   util_main
   util_commandlineProcessing
@@ -715,9 +733,18 @@ endif()
 
 # Make sure both CxxFrontend options are not enabled
 if(EDG_COMPILE AND ENABLE-CLANG-FRONTEND)
-  message(FATAL_ERROR "EDG_COMPILE and ENABLE-CLANG-FRONTEND are mutually exclusive." 
-                      "\nPlease disable one of these options at config time") 
+  message(FATAL_ERROR "EDG_COMPILE and ENABLE-CLANG-FRONTEND are mutually exclusive."
+                      "\nPlease disable one of these options at config time")
 endif()
+
+# Apply rose_object_library_dependencies to all OBJECT libraries in rose_LIB_OBJS
+# This ensures they all get include directories for optional dependencies (dlib, capstone, etc.)
+# that appear in ROSE public headers
+foreach(_obj_lib ${rose_LIB_OBJS})
+  if(TARGET ${_obj_lib})
+    target_link_libraries(${_obj_lib} PRIVATE rose_object_library_dependencies)
+  endif()
+endforeach()
 
 set(rose_LIB_SRC_FILES dummyCppFileForLibrose.C)
 
@@ -921,7 +948,8 @@ set_target_properties(ROSE_DLL PROPERTIES
 # This includes rose_LIB_OBJS and any conditionally-added targets like RoseSourceCxxFrontendEdg.
 # RoseSourceCxxFrontendEdg is already in rose_LIB_OBJS when EDG is compiled from source,
 # so we don't need to add it again here.
-set(_rose_export_targets ROSE_DLL ${rose_LIB_OBJS})
+# Also include rose_object_library_dependencies which OBJECT libraries link against.
+set(_rose_export_targets ROSE_DLL rose_object_library_dependencies ${rose_LIB_OBJS})
 
 install(TARGETS ${_rose_export_targets}
   EXPORT RoseTargets
@@ -987,8 +1015,7 @@ endif()
 # NOTE: Marked PUBLIC because ROSE public headers include <dlib/matrix.h>
 # (Rose/BinaryAnalysis/Matrix.h and others)
 if(DLIB_FOUND)
-  target_link_libraries(ROSE_DLL PUBLIC ${DLIB_LIBRARY})
-  add_library_dependency(${DLIB_LIBRARY})
+  target_link_libraries(ROSE_DLL PUBLIC dlib::dlib)
 endif()
 
 # Capstone is used to disassemble ARM.
