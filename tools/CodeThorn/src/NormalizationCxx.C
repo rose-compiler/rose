@@ -1271,7 +1271,10 @@ namespace
 
   CopyAssign operator|(CopyAssign lhs, CopyAssign rhs)
   {
-    return static_cast<CopyAssign>(lhs | rhs);
+    int const ll = static_cast<int>(lhs);
+    int const rr = static_cast<int>(rhs);
+
+    return static_cast<CopyAssign>(ll | rr);
   }
 
   std::tuple<const SgType*, CopyAssign>

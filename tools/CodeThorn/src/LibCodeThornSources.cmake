@@ -37,6 +37,7 @@ set(CODETHORN_HEADER_FILES
     CallString.h
     CFAnalysis.h
     ClassHierarchyAnalysis.h
+    ClassHierarchyExport.h
     ClassHierarchyWriter.h
     CodeThornLib.h
     CodeThornPasses.h
@@ -66,6 +67,7 @@ set(CODETHORN_HEADER_FILES
     EStateTransferFunctions.h
     EStateWorkList.h
     EStatePriorityWorkList.h
+    ExternalMangling.h
     FIConstAnalysis.h
     Flow.h
     FunctionCallMapping.h
@@ -160,6 +162,7 @@ set(CODETHORN_SOURCE_FILES
     CallString.C
     CFAnalysis.C
     ClassHierarchyAnalysis.C
+    ClassHierarchyExport.C
     ClassHierarchyWriter.C
     CodeThornLib.C
     CodeThornPasses.C
@@ -187,6 +190,7 @@ set(CODETHORN_SOURCE_FILES
     EStateTransferFunctions.C
     EStateWorkList.C
     EStatePriorityWorkList.C
+    ExternalMangling.C
     FIConstAnalysis.C
     Flow.C
     FunctionCallMapping.C

@@ -1,4 +1,5 @@
 #include <sage3basic.h>
+
 #include "RoseCompatibility.h"
 
 #include <sageInterface.h>
@@ -11,13 +12,14 @@
 #include <unordered_set>
 
 #include "CodeThornLib.h"
-
 #include "ClassHierarchyAnalysis.h"
+#include "ExternalMangling.h"
 
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm.hpp>
 #include <boost/range/algorithm_ext/for_each.hpp>
 // #include <boost/range/join.hpp>
+
 
 namespace si = SageInterface;
 namespace ct = CodeThorn;
@@ -1206,25 +1208,20 @@ _uniqueName(AnyKeyType id)
   {
     sg::NotNull<const SgClassDeclaration> dcl = isSgClassDeclaration(cls->get_parent());
 
-    return dcl->get_mangled_name();
+    return mangle(*dcl);
   }
 
   // FunctionKeyType
   if (FunctionKeyType fun = isSgFunctionDeclaration(id))
-  {
-    //~ if (fun->get_name().getString().find("mutex_lock") != std::string::npos)
-      //~ fun->get_mangled_name(); // dbg
-
-    return fun->get_mangled_name();
-  }
+    return mangle(*fun);
 
   // TypeKeyType, FunctionTypeKeyType
   if (TypeKeyType ty = isSgType(id))
-    return ty->get_mangled();
+    return mangle(ty);
 
   // VariableKeyType
   if (VariableKeyType var = isSgInitializedName(id))
-    return var->get_mangled_name();
+    return mangle(*var); // \todo
 
   // invalid (null) ID
   if (id == AnyKeyType{})
@@ -2447,7 +2444,6 @@ namespace
         if (sym == nullptr)
           return none(nullptr);
 
-        ct::CompatibilityBridge            compat;
         const SgMemberFunctionDeclaration& fn = SG_DEREF(sym->get_declaration());
 
         if (fn.get_specialFunctionModifier().isDestructor())

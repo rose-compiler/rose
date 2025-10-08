@@ -67,6 +67,7 @@ CODETHORN_HEADER_FILES=\
   CallGraphExport.h \
   CFAnalysis.h \
   ClassHierarchyAnalysis.h \
+  ClassHierarchyExport.h \
   ClassHierarchyWriter.h \
   CodeThornLib.h \
   CodeThornPasses.h \
@@ -96,6 +97,7 @@ CODETHORN_HEADER_FILES=\
   EStateTransferFunctions.h \
   EStateWorkList.h \
   EStatePriorityWorkList.h \
+  ExternalMangling.h \
   FIConstAnalysis.h \
   Flow.h \
   FunctionCallMapping.h \
@@ -189,6 +191,7 @@ CODETHORN_SOURCE_FILES=\
   CallString.C \
   CFAnalysis.C \
   ClassHierarchyAnalysis.C \
+  ClassHierarchyExport.C \
   ClassHierarchyWriter.C \
   CodeThornLib.C \
   CodeThornPasses.C \
@@ -216,6 +219,7 @@ CODETHORN_SOURCE_FILES=\
   EStateTransferFunctions.C \
   EStateWorkList.C \
   EStatePriorityWorkList.C \
+  ExternalMangling.C \
   FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \

@@ -281,19 +281,19 @@ namespace
 
       virtual void operator()(const ct::Subobject& subobj)
       {
-        out() << "subobj " << escapeName(className(subobj.ref))
-              << (subobj.isVirtual ? " (virtual)" : "");
+        out() << "subobj " << escapeName(className(subobj.baseClass()))
+              << (subobj.isVirtualBase() ? " (virtual)" : "");
       }
 
       virtual void operator()(const ct::Field& fld)
       {
-        out() << "field  " << escapeName(varName(fld.id));
+        out() << "field  " << escapeName(varName(fld.id()));
       }
 
       virtual void operator()(const ct::VTable& vtbl)
       {
-        out() << "vtable " << escapeName(className(vtbl.ref))
-              << (vtbl.isPrimary ? " (primary)" : "");
+        out() << "vtable " << escapeName(className(vtbl.associatedClass()))
+              << (vtbl.primaryVTable() ? " (primary)" : "");
       }
 
       virtual void printEntry(const ct::ObjectLayoutEntry& el)
@@ -316,9 +316,10 @@ namespace
       ct::VarNameFn&   varName;
   };
 
-  struct InheritanceEdgeDot : std::tuple<const void*, const void*, bool, bool>
+  using InheritanceEdgeDotBase = std::tuple<const void*, const void*, bool, bool>;
+  struct InheritanceEdgeDot : InheritanceEdgeDotBase
   {
-    using base = std::tuple<const void*, const void*, bool, bool>;
+    using base = InheritanceEdgeDotBase;
     using base::base;
 
     const void* subobj() const { return std::get<0>(*this); }
@@ -360,8 +361,8 @@ namespace
       {
         elem(el);
 
-        if (include(el.ref))
-          edges.emplace_back(&el, el.ref, el.isVirtual, el.isDirect);
+        if (include(el.baseClass()))
+          edges.emplace_back(&el, el.baseClass(), el.isVirtualBase(), el.isDirectBase());
       }
 
       void printClassHeader(const ct::ObjectLayoutAnalysis::value_type& el) override
@@ -697,6 +698,7 @@ void vtableLayoutTxt( std::ostream& os,
 {
   prnVTableLayout(VTableLayoutElementPrinterTxt{os, className, funcName}, include, vtableLayout);
 }
+
 
 
 }

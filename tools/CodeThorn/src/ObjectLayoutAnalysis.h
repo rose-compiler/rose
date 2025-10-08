@@ -12,22 +12,45 @@
 namespace CodeThorn
 {
 
-struct Subobject
+/// describes a subobject in a class hierarchy
+using SubobjectBase = std::tuple<ClassKeyType, bool, bool>;
+struct Subobject : SubobjectBase
 {
-  ClassKeyType ref;
-  bool         isVirtual;
-  bool         isDirect;
+  using base = SubobjectBase;
+  using base::base;
+
+  std::tuple_element<0, base>::type
+  baseClass() const { return std::get<0>(*this); }
+
+  std::tuple_element<1, base>::type
+  isVirtualBase() const { return std::get<1>(*this); }
+
+  std::tuple_element<2, base>::type
+  isDirectBase() const { return std::get<2>(*this); }
 };
 
-struct Field
+/// describes a field in a class
+using FieldBase = std::tuple<VariableKeyType>;
+struct Field : FieldBase
 {
-  CodeThorn::VariableKeyType id;
+  using base = FieldBase;
+  using base::base;
+
+  std::tuple_element<0, base>::type
+  id() const { return std::get<0>(*this); }
 };
 
-struct VTable
+using VTableBase = std::tuple<ClassKeyType, bool>;
+struct VTable : VTableBase
 {
-  ClassKeyType ref;
-  bool         isPrimary;
+  using base = VTableBase;
+  using base::base;
+
+  std::tuple_element<0, base>::type
+  associatedClass() const { return std::get<0>(*this); }
+
+  std::tuple_element<1, base>::type
+  primaryVTable() const { return std::get<1>(*this); }
 };
 
 
@@ -112,8 +135,8 @@ computeObjectLayouts(const ClassAnalysis& all, bool onlyClassesWithVTable = true
 // \note using declaration for backward compatibility
 using ObjectLayoutContainer = ObjectLayoutAnalysis;
 
-
 using VirtualCallOffsetBase = std::tuple<std::ptrdiff_t, ClassKeyType>;
+
 /// \note part of the IA64 object model, currently not computed
 struct VirtualCallOffset : VirtualCallOffsetBase
 {
@@ -222,6 +245,8 @@ struct VTableSection : VTableSectionBase
   using base = VTableSectionBase;
   using base::base;
 
+  /// returns the associated base class; if no primary base is present associatedClass resolves
+  ///   to the current class.
   std::tuple_element<0, base>::type associatedClass() const { return std::get<0>(*this); }
   std::tuple_element<1, base>::type numInherited()    const { return std::get<1>(*this); }
   std::tuple_element<2, base>::type numTotal()        const { return std::get<2>(*this); }
