@@ -19,6 +19,7 @@
 #include <Sawyer/Optional.h>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace Sawyer {
 
