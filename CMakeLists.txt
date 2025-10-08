@@ -1283,6 +1283,7 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_BINARY_DIR}
   ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/
   ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII/astFileIO
+  ${ROSE_TOP_BINARY_DIR}/src/util
   ${ROSE_TOP_SRC_DIR}
   ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII
   ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/sage_support

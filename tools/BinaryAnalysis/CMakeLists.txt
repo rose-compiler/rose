@@ -1,6 +1,9 @@
 add_library(bat SHARED batSupport.C)
 set_target_properties(bat PROPERTIES OUTPUT_NAME "batSupport")
-target_include_directories(bat PRIVATE . ${ROSE_INCLUDES})
+target_include_directories(bat PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
+)
 target_link_libraries(bat PUBLIC Rose::rose)
 
 # Export bat library for external consumption

@@ -809,18 +809,17 @@ message(STATUS "Created alias target Rose::rose")
 # - ${ROSE_TOP_SRC_DIR}/src: Main source directory (for #include <rose.h>, etc.)
 # - ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII: SageIII AST headers (Sg*.h files)
 # - ${ROSE_TOP_SRC_DIR}/src/Rose: Modern Rose namespace headers
+# - ${ROSE_TOP_SRC_DIR}/src/util: Utility headers (ROSE_DEPRECATED.h, etc.)
 # - ${ROSE_TOP_BINARY_DIR}: Build directory (for generated headers like rosePublicConfig.h)
 # - ${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII: Generated SageIII headers
+# - ${ROSE_TOP_BINARY_DIR}/src/util: Generated utility headers (rose_paths.h)
 # - ${INCLUDE_INSTALL_DIR}: Install location for headers (typically include/rose)
 # - ${INCLUDE_INSTALL_DIR}/Rose: Install location for Rose namespace headers
 #
 target_include_directories(ROSE_DLL PUBLIC
   # Build tree includes - these are used when building against ROSE in its build directory
-  $<BUILD_INTERFACE:${ROSE_TOP_SRC_DIR}/src>
-  $<BUILD_INTERFACE:${ROSE_TOP_SRC_DIR}/src/frontend/SageIII>
-  $<BUILD_INTERFACE:${ROSE_TOP_SRC_DIR}/src/Rose>
-  $<BUILD_INTERFACE:${ROSE_TOP_BINARY_DIR}>
-  $<BUILD_INTERFACE:${ROSE_TOP_BINARY_DIR}/src/frontend/SageIII>
+  # Using ROSE_INCLUDES variable which contains the comprehensive list of all ROSE include directories
+  "$<BUILD_INTERFACE:${ROSE_INCLUDES}>"
   # Install tree includes - these are used when building against an installed ROSE
   $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
   $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}/Rose>
