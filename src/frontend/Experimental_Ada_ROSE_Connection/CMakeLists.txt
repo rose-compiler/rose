@@ -29,6 +29,6 @@ if(ENABLE-ADA)
   # Link this library to asis_adapter 
   target_link_libraries(experimentalRoseAda PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/parser/asis_adapter/lib/libasis_adapter.so) 
   
-  # Install these FILES to DESTINATION  when the user runs "make install" 
-  install(FILES AdaMaker.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include/rose) 
+  # Install these FILES to DESTINATION  when the user runs "make install"
+  install(FILES AdaMaker.h DESTINATION include/rose) 
 endif()

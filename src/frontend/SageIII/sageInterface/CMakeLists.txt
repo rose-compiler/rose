@@ -18,7 +18,7 @@ add_dependencies(sageInterface rosetta_generated)
 
 # Install these FILES to DESTINATION when user runs "make install" 
 install(FILES sageInterface.h sageBuilder.h SageBuilderAsm.h sageInterfaceAda.h
-              integerOps.h abiStuff.h sageRti.h sageCopy.h sageFunctors.h 
-              sageGeneric.h sageInterfaceAsm.h sageContainer.h sageHash.h 
+              integerOps.h abiStuff.h sageRti.h sageCopy.h sageFunctors.h
+              sageGeneric.h sageInterfaceAsm.h sageContainer.h sageHash.h
               sageTraversal.h sageMemory.h
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/rose)
+        DESTINATION include/rose)
