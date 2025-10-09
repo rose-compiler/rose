@@ -6,6 +6,11 @@
 
 set(Rose_VERSION "@ROSE_PACKAGE_VERSION@")
 
+# Installation directory
+# ======================
+# The directory where ROSE was installed
+set(Rose_INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@")
+
 # Feature detection variables
 # ============================
 # These variables indicate which features ROSE was built with.
