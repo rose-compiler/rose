@@ -1742,12 +1742,14 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rose.pc
 # Install RMC configuration file if present
 ########################################################################################################################
 # When ROSE dependencies are managed with "rmc", a file named ".spock" is created at the top of the build tree.
-# Install this file as "lib/rmc/config" if it exists.
-if(EXISTS "${CMAKE_BINARY_DIR}/.spock")
-  install(FILES ${CMAKE_BINARY_DIR}/.spock
-    DESTINATION ${LIB_INSTALL_DIR}/rmc
-    RENAME rose
-  )
+# Install this file as "lib/rmc/rose" if RMC is active (indicated by SPOCK_EMPLOYED environment variable).
+if(DEFINED ENV{SPOCK_EMPLOYED})
+  if(EXISTS "${CMAKE_BINARY_DIR}/.spock")
+    install(FILES ${CMAKE_BINARY_DIR}/.spock
+      DESTINATION ${LIB_INSTALL_DIR}/rmc
+      RENAME rose
+    )
+  endif()
 endif()
 
 ########################################################################################################################
