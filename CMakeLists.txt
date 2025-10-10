@@ -1454,15 +1454,27 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # libraries using relative paths.
 if(APPLE)
   set(origin "@executable_path")
-  set(CMAKE_INSTALL_RPATH "${origin}/../lib;${origin}/") # May rm this 
+  set(CMAKE_INSTALL_RPATH "${origin}/../lib;${origin}/") # May rm this
 endif()
 
 if(NOT DEFINED CMAKE_INSTALL_RPATH)
-  message(STATUS "Setting CMAKE_INSTALL_RPATH") 
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/bin;${Boost_LIBRARY_DIRS}")
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug") 
+  message(STATUS "Setting CMAKE_INSTALL_RPATH")
+  if(APPLE)
+    # macOS uses @executable_path (already set above)
+    set(CMAKE_INSTALL_RPATH "${origin}/../lib;${origin}/")
+  else()
+    # Linux/Unix: use $ORIGIN for relative RPATH (relocatable binaries)
+    set(origin "$ORIGIN")
+    set(CMAKE_INSTALL_RPATH "${origin}/../lib:${origin}")
+    # Also add absolute paths as fallback
+    list(APPEND CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" "${CMAKE_INSTALL_PREFIX}/bin")
+    if(Boost_LIBRARY_DIRS)
+      list(APPEND CMAKE_INSTALL_RPATH "${Boost_LIBRARY_DIRS}")
+    endif()
+  endif()
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_RPATH}")
-  endif() 
+  endif()
 endif()
 
 if(NOT DEFINED CMAKE_INSTALL_RPATH_USE_LINK_PATH) 
