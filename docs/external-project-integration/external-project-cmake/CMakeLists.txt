@@ -17,7 +17,7 @@ cmake_minimum_required(VERSION 3.15)
 # literal.
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" PROJECT_VERSION)
 string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
-string(REPLACE "\"" "" PROJECT_VERSION "${PATHFINDER_VERSION}")
+string(REPLACE "\"" "" PROJECT_VERSION "${PROJECT_VERSION}")
 
 # Give your project a name and version number.
 project(${PROJECT_NAME} VERSION ${PROJECT_VERSION} LANGUAGES CXX)
@@ -67,6 +67,34 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
         message(STATUS "No install prefix specified, defaulting to ROSE location: ${CMAKE_INSTALL_PREFIX}")
     endif()
 endif()
+
+# Cause installed programs to use an internal rpath when searching for dynamic libraries.
+#
+# Embedding rpath in executables is generally superior to relying on LD_LIBRARY_PATH for several
+# important reasons.
+#
+#   1. The embedded rpath is self-contained within the binary itself, meaning the executable will
+#      work correctly regardless of the user's environment or shell configuration—there's no need
+#      for users to set environment variables or source setup scripts before running the program.
+#
+#   2. The embedded rpath provides better security because LD_LIBRARY_PATH affects all executables
+#      run from that shell and can be hijacked to load malicious libraries, whereas rpath only
+#      affects the specific binary and cannot be overridden by regular users.
+#
+#   3. The embedded rpath enables easier deployment and distribution since binaries can be relocated
+#      (especially with $ORIGIN-relative paths) without requiring installation instructions about
+#      environment setup. Finally, rpath avoids version conflicts that commonly occur with
+#      LD_LIBRARY_PATH. When multiple applications require different versions of the same library,
+#      setting a global LD_LIBRARY_PATH will cause conflicts, but each binary with its own rpath can
+#      find exactly the library version it was built against.
+#
+#   4. The embedded rpath works better for ROSE-based tools that invoke a backend compiler. Using
+#      LD_LIBRARY_PATH to accomplish this would pollute the environment for the backend compiler,
+#      possibly causing it to link against incorrect libraries resulting in potentially subtle bugs.
+#
+# The only downside is that rpath is slightly less flexible for quick development testing, but for
+# production deployments and user-facing tools, embedded rpath is decisively the better choice.
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 #---------------------------------------------------------------------------------------------------
 # This part is where you describe what needs to be built and installed for your project. It probably

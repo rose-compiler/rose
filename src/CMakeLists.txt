@@ -998,7 +998,7 @@ endmacro()
 # of each other. Therfore Z3_FOUND_EXE says whether the executable component was found, and Z3_FOUND_LIB says whether
 # the development component was found; Z3_FOUND is set if either component is found.
 if(Z3_FOUND_LIB)
-  target_link_libraries(ROSE_DLL PRIVATE ${Z3_LIBRARY})
+  target_link_libraries(ROSE_DLL PUBLIC ${Z3_LIBRARY})
   add_library_dependency(${Z3_LIBRARY})
 endif()
 
@@ -1136,7 +1136,7 @@ add_executable(testSharedRoseLib testRoseLib.C)
 target_link_libraries(testSharedRoseLib ROSE_DLL ${link_with_libraries})
 
 ########################################################################################################################
-# The rose-config tool (Deprecated; use the rose-config.cfg file directly instead)
+# The rose-config tool. DEPRECATED 2025-10-10: Use pkg-config or RoseConfig.cfg
 ########################################################################################################################
 add_definitions(-DLIBDIR="${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}") #LIB_INSTALL_DIR ?
 add_executable(rose-config rose-config.C)
@@ -1283,6 +1283,7 @@ endif()
 
 ########################################################################################################################
 # rose-config.cfg -- text file that contains various settings for user-level makefiles.
+# DEPRECATED 2025-10-10. Use `pkg-config` or "RoseConfig.cmake" instead.
 ########################################################################################################################
 
 ########## Build cppflags for ROSE tools ###############################################################################
@@ -1422,7 +1423,8 @@ endif()
 
 set(ROSE_CONFIG_FILE "${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg") 
 file(REMOVE ${ROSE_CONFIG_FILE})
-file(WRITE  ${ROSE_CONFIG_FILE} "# Things that the 'rose-config' tool can report\n")
+file(WRITE  ${ROSE_CONFIG_FILE} "# DEPRECATED 2025-10-10. Use pkg-config or RoseConfig.cmake instead\n\n\n")
+file(APPEND ${ROSE_CONFIG_FILE} "# Things that the 'rose-config' tool can report\n")
 file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CC           = ${ACTUAL_CC}\n")
 file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CCPATH       = ${CMAKE_C_COMPILER}\n")
 file(APPEND ${ROSE_CONFIG_FILE} "ROSE_CXX          = ${ACTUAL_CXX}\n")

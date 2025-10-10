@@ -1,43 +1,51 @@
-# ROSE External Project Examples
+# External Project Integration Guide
 
-This directory contains complete working examples demonstrating how to integrate ROSE into external projects using different build systems.
+This document describes how to integrate ROSE into your external
+project using various build systems. Details depend on which build
+system your project uses:
 
-## Available Examples
+* [CMake](integration-guide-cmake.md)
+* [GNU Autotools](integration-guide-autotools.md)
+* [GNU Make](integration-guide-make.md)
 
-### 1. CMake (`external-project-cmake/`)
+# Examples
+
+Full examples are in subdirectories, which also serve as tests. Each
+directory contains a README.md that describes how to run the test.
+
+## 1. CMake (`external-project-cmake/`)
+
 Modern CMake example with:
 - `find_package(Rose)` integration
 - Feature detection (binary analysis, Fortran, etc.)
 - Multiple conditional programs
 - Based on ROSE's bat-lsv.C for binary analysis
 
-### 2. Autotools (`external-project-autotools/`)
+## 2. Autotools (`external-project-autotools/`)
+
 GNU Autotools example with:
 - `PKG_CHECK_MODULES` for ROSE detection
 - Standard Autoconf/Automake setup
 - pkg-config integration
 
-### 3. Makefile (`external-project-makefile/`)
+## 3. Makefile (`external-project-makefile/`)
+
 Plain Makefile example with:
 - pkg-config for compiler/linker flags
 - Simple and straightforward
 - No configuration step needed
 
-## Quick Start
-
-Each example includes its own README with detailed instructions.
-
-## Testing All Examples
+# Testing All Examples
 
 A comprehensive test script is provided to validate all examples:
 
-### Usage
+## Usage
 
 ```bash
 ./test-all-examples.sh /path/to/rose/install
 ```
 
-### What It Tests
+## What It Tests
 
 The test script:
 - ✅ Verifies ROSE installation is complete
@@ -49,7 +57,7 @@ The test script:
 - ✅ Provides colored output and detailed logging
 - ✅ Creates test output directory with logs
 
-### Example Output
+## Example Output
 
 ```
 [INFO] Found ROSE installation at: /usr/local/rose
@@ -94,7 +102,7 @@ Tests Failed: 0
 [SUCCESS] All tests passed!
 ```
 
-### CI/CD Integration
+## CI/CD Integration
 
 For continuous integration pipelines:
 
@@ -113,7 +121,7 @@ cd docs/examples
 # Exit code indicates success (0) or failure (non-zero)
 ```
 
-### Requirements
+## Requirements
 
 For the test script to work:
 
@@ -136,7 +144,7 @@ For the test script to work:
 
 4. **Compiler**: C++ compiler with C++14 support
 
-### Test Output
+## Test Output
 
 The script creates `test-output/` directory with:
 ```
@@ -158,85 +166,10 @@ test-output/
 
 Review these logs if tests fail to diagnose issues.
 
-### Exit Codes
+## Exit Codes
 
 - `0` - All tests passed
 - `1` - Usage error or missing ROSE installation
 - `2` - CMake example failed
 - `3` - Autotools example failed
 - `4` - Makefile example failed
-
-## Troubleshooting
-
-### "Could not find a package configuration file provided by Rose"
-
-Set `CMAKE_PREFIX_PATH`:
-```bash
-export CMAKE_PREFIX_PATH=/path/to/rose/install
-```
-
-### "Package 'rose' not found"
-
-Set `PKG_CONFIG_PATH`:
-```bash
-export PKG_CONFIG_PATH=/path/to/rose/install/lib/pkgconfig:$PKG_CONFIG_PATH
-```
-
-### "error while loading shared libraries: librose.so"
-
-Set `LD_LIBRARY_PATH`:
-```bash
-export LD_LIBRARY_PATH=/path/to/rose/install/lib:$LD_LIBRARY_PATH
-```
-
-### "Cannot find Boost" or other dependencies
-
-Build in the same environment as ROSE:
-```bash
-# If ROSE was built with spock-shell
-spock-shell --with-file env bash
-export CMAKE_PREFIX_PATH=/path/to/rose/install
-cd external-project-cmake
-cmake -B build
-```
-
-### Autotools test skipped
-
-Install autotools:
-```bash
-# Debian/Ubuntu
-sudo apt-get install autoconf automake libtool autoconf-archive
-
-# RHEL/CentOS/Fedora
-sudo yum install autoconf automake libtool autoconf-archive
-```
-
-## Documentation
-
-- **Comprehensive Guide**: See `../cmake-integration.md` for detailed documentation
-- **Each Example**: Contains its own README with specific instructions
-- **Integration Tests**: See `../../cmake-integration/` for additional test cases
-
-## For ROSE Developers
-
-When making changes to ROSE's CMake configuration:
-
-1. **Test locally**:
-   ```bash
-   cmake --build _build --target install
-   ./docs/examples/test-all-examples.sh $ROSE_INSTALL_PREFIX
-   ```
-
-2. **Add to CI/CD pipeline**:
-   - Run after ROSE installation
-   - Verify all examples build and run
-   - Check exit code
-
-3. **Update examples** when ROSE's API changes:
-   - Keep examples in sync with ROSE development
-   - Test examples regularly
-   - Update documentation as needed
-
-## License
-
-These examples are provided as part of the ROSE project for educational purposes.

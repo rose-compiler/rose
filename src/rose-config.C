@@ -2,6 +2,8 @@
 
 static const char *purpose = "show ROSE configuration arguments";
 static const char *description =
+  "This tool is deprecated since ROSE now installs \"rose.pc\" (for @c{pkg-config}) and \"RoseConfig.cmake\".\n\n"
+
   "This command displays various configuration settings that are useful in user makefiles when compiling or linking a "
   "program that uses ROSE.  It does this by reading a configuration file named " CONFIG_NAME " from the directory that "
   "holdes the ROSE libraries, or from the file specified with the @s{config} switch.  This file contains blank lines, "
@@ -318,6 +320,7 @@ main(int argc, char *argv[]) {
 
   Settings settings;
   std::string key = parseCommandLine(argc, argv, settings);
+  mlog[WARN] <<"this tool is deprecated; use `pkg-config` or `RoseConfig.cmake` instead\n"; // DEPRECATED 2025-10-10
   Configuration config = readConfigFile(settings);
 
   // Print the value

@@ -1,8 +1,54 @@
 # Plan to Modernize ROSE CMake Build System for External Package Consumption
 
-## Implementation Status Checklist
+## Goals
 
-This checklist tracks the high-level modernization goals. See the detailed "Implementation Plan by Dependencies" section below for granular step-by-step status.
+The main goal of this work is to make it easier for external packages to use ROSE.
+
+The current CMake build system in ROSE (before making any changes prescribed by this document) has some strengths and weaknesses.
+
+### Strengths
+1. The CMake build system exists and is relatively new
+2. Library installation works and installs to `/lib`
+3. Headers install to `include/rose/`
+
+### Weaknesses
+1. No `RoseConfig.cmake` or `rose-config.cmake` for modern CMake package discovery
+2. No exported targets `install(TARGETS ROSE_DLL ...)` doesn't use `EXPORT` to create importable targets
+3. External projects must manually track ROSE's dependencies (Boost, Z3, Dwarf, etc.)
+4. The library is named `rose` instead of using a modern namespaced target like `Rose::rose`
+5. No `RoseConfigVersion.cmake` for version compatibility checking
+7. The `rose-config` tool provides flags but isn't integrated with CMake's package system
+8. No `pkg-config` support for external projects that use non-CMake build systems
+9. Complex include structure not properly propagated
+
+### Benefits for External Projects
+
+**For CMake projects**
+
+```cmake
+find_package(Rose REQUIRED)
+add_executable(my_tool main.cpp)
+target_link_libraries(my_tool PRIVATE Rose::rose)
+# Dependencies automatically propagated!
+```
+
+**For Autotools projects**
+
+```bash
+PKG_CHECK_MODULES([ROSE], [rose >= 0.11])
+```
+
+**For manual Makefiles**
+
+```make
+ROSE_CFLAGS := $(shell pkg-config --cflags rose)
+ROSE_LIBS := $(shell pkg-config --libs rose)
+```
+
+## Implementation Checklist
+
+This checklist tracks the high-level modernization goals. See the detailed "Implementation Plan by Dependencies" section below for
+granular step-by-step status.
 
 - [x] **CMake Package Configuration** - Create modern `RoseConfig.cmake` and `RoseConfigVersion.cmake` files
 - [x] **Namespaced Targets** - Export `Rose::rose` target instead of plain `rose`
@@ -16,57 +62,51 @@ This checklist tracks the high-level modernization goals. See the detailed "Impl
 - [x] **Documentation & Examples** - Provide clear examples for CMake, Autotools, and Makefiles
 - [x] **Backward Compatibility** - Deprecate old methods while keeping them functional
 
-## Current State Analysis
+## Proposed Improvements
 
-### Strengths
-- CMake build system exists and is relatively new
-- Library installation works (installs to `lib/` or `lib64/`)
-- Headers install to `include/rose/`
-- Basic `FindRose.cmake` exists for external projects
-
-### Weaknesses
-1. **No CMake Package Config**: No `RoseConfig.cmake` or `rose-config.cmake` for modern CMake package discovery
-2. **No Exported Targets**: `install(TARGETS ROSE_DLL ...)` doesn't use `EXPORT` to create importable targets
-3. **Manual Dependency Tracking**: External projects must manually track ROSE's dependencies (Boost, Z3, Dwarf, etc.)
-4. **No Namespace**: Library named `rose` instead of modern namespaced target like `Rose::rose`
-5. **No Config Version File**: No `RoseConfigVersion.cmake` for version compatibility checking
-6. **Legacy FindModule Approach**: Current `FindRose.cmake` uses old-style find_library instead of imported targets
-7. **rose-config Script**: The `rose-config` tool provides flags but isn't integrated with CMake's package system
-8. **Include Paths**: Complex include structure (`include/rose/`, `include/edg/`) not properly propagated
-
-## Proposed Modernization Plan
-
-This section describes high-level improvements needed to modernize ROSE's CMake infrastructure. The goal is to make ROSE behave like a modern CMake package that external projects can consume with minimal effort, while maintaining compatibility with non-CMake build systems.
+This section describes high-level improvements to modernize ROSE's CMake infrastructure. The goal is to make ROSE behave like a
+modern CMake package that external projects can consume with minimal effort, while maintaining compatibility with non-CMake build
+systems.
 
 ### 1. Adopt CMake Package Configuration Files
 
-**Current state:** ROSE provides a legacy `FindRose.cmake` module that requires external projects to manually find the library and set up include paths. This approach is outdated and error-prone.
+**Current state:** ROSE provides a custom `rose-config` tool with configuration files. These bespoke config files are poorly
+documented, generated manually by all three of ROSE's build systems, and the variables change meanings from time to time, breaking
+the external tools that use them in their build systems. This approach is outdated and error-prone.
 
-**Proposed change:** Implement modern CMake "Config-file packages" where ROSE exports its own configuration. When a downstream project calls `find_package(Rose)`, CMake would automatically find and load ROSE's configuration, including all its dependencies, include paths, and compile requirements.
+**Proposed change:** Implement modern CMake "Config-file packages" where ROSE exports its own configuration. When a downstream
+project calls `find_package(Rose)`, CMake would automatically find and load ROSE's configuration, including all its dependencies,
+include paths, and compile requirements.
 
 **Benefits:**
-- External projects no longer need to manually track ROSE's dependencies
+- External projects no longer need to manually track ROSE's dependencies (although they will have to have those same dependencies
+  installed)
 - Installation can be relocated without breaking dependent projects
 - Follows modern CMake best practices used by major libraries
 - Enables automatic discovery of ROSE's capabilities (binary analysis, language support, etc.)
 
 ### 2. Create Namespaced Imported Targets
 
-**Current state:** ROSE installs a library named `rose` (the `ROSE_DLL` target), which can conflict with other projects or libraries named "rose" and doesn't clearly indicate it belongs to ROSE.
+**Current state:** ROSE installs libraries like `rose` (the `ROSE_DLL` target) and `bat`/`batSupport`, which can conflict with
+other projects or libraries and doesn't clearly indicate they belong to ROSE.
 
-**Proposed change:** Export ROSE as a namespaced target `Rose::rose`. This naming convention (Package::component) is the modern CMake standard and immediately communicates the library's origin.
+**Proposed change:** Export ROSE as namespaced targets like `Rose::rose` and `Rose::bat`. This naming convention
+(Package::component) is the modern CMake standard and immediately communicates the library's origin.
 
 **Benefits:**
 - Prevents naming conflicts with other libraries
-- Makes code more self-documenting (`Rose::rose` is clearly the ROSE library)
+- Makes code more self-documenting, especially when appearing in external packages.
 - Enables CMake to detect typos at configuration time rather than link time
 - Consistent with how other modern libraries present themselves (e.g., `Boost::filesystem`, `Qt5::Core`)
 
 ### 3. Export Target Properties with Installation
 
-**Current state:** When ROSE is installed, the CMake system doesn't export information about the library's compile requirements, include directories, or dependencies. External projects must discover these manually.
+**Current state:** When ROSE is installed, the CMake system doesn't export information about the library's compile requirements,
+include directories, or dependencies (other than through the custom rose-config tool and its config files). External projects must
+discover these manually (or at least in a way that's different than every other library in the world).
 
-**Proposed change:** Use CMake's `install(EXPORT)` mechanism to generate target configuration files that capture all the properties needed to use ROSE correctly. This includes compiler features (C++14), preprocessor definitions, and include directory locations.
+**Proposed change:** Use CMake's `install(EXPORT)` mechanism to generate target configuration files that capture all the properties
+needed to use ROSE correctly. This includes compiler features (C++14), preprocessor definitions, and include directory locations.
 
 **Benefits:**
 - Downstream projects automatically get correct compiler flags
@@ -76,7 +116,8 @@ This section describes high-level improvements needed to modernize ROSE's CMake 
 
 ### 4. Properly Classify Dependency Visibility
 
-**Current state:** All of ROSE's dependencies are linked without specifying whether they're part of ROSE's public API or just internal implementation details. This over-exposes implementation details and can cause unnecessary transitive dependencies.
+**Current state:** All of ROSE's dependencies are linked without specifying whether they're part of ROSE's public API or just
+internal implementation details. This over-exposes implementation details and can cause unnecessary transitive dependencies.
 
 **Proposed change:** Audit each dependency and classify it as:
 - **PUBLIC** - Required by ROSE's public headers (e.g., Boost types that appear in ROSE APIs)
@@ -87,25 +128,33 @@ This section describes high-level improvements needed to modernize ROSE's CMake 
 - Reduces the number of dependencies downstream projects must find
 - Improves link times by not propagating unnecessary libraries
 - Makes it clearer which dependencies are truly required vs. optional
-- Allows ROSE's internal dependencies to change without breaking downstream projects
+- Allows ROSE's internal dependencies to change without breaking downstream projectshe
 
 ### 5. Implement Version Compatibility Checking
 
-**Current state:** There's no formal mechanism for external projects to specify required ROSE versions or for CMake to verify compatibility between requested and found versions.
+**Current state:** There's no formal mechanism for external projects to specify required ROSE versions or for CMake to verify
+compatibility between requested and found versions.
 
-**Proposed change:** Create a `RoseConfigVersion.cmake` file that implements semantic versioning checks. This allows projects to request specific ROSE versions and have CMake automatically verify compatibility.
+**Proposed change:** Create a `RoseConfigVersion.cmake` file that implements semantic versioning checks. This allows projects to
+request specific ROSE versions and have CMake automatically verify compatibility. ROSE is different from most libraries in that it
+has a four-part version number instead of a three-part number. E.g., "0.11.145.342". We call these "major", "minor", "patch", and
+"build". "Build" is a more prevalent name for the fourth term than CMake's "tweak".
 
 **Benefits:**
-- Projects can specify minimum ROSE versions: `find_package(Rose 0.11 REQUIRED)`
+- Projects can specify minimum ROSE versions: `find_package(Rose 0.11.145 REQUIRED)`
 - Prevents accidental use of incompatible ROSE versions
 - Supports version ranges for flexible dependency specifications
 - Provides clear error messages when version requirements aren't met
 
 ### 6. Automate Dependency Discovery
 
-**Current state:** The existing `FindRose.cmake` doesn't find or verify ROSE's dependencies (Boost, Z3, DWARF, etc.). External projects must independently find all of ROSE's dependencies, which is tedious and error-prone.
+**Current state:** The existing `rose-config` finds ROSE dependencies when the external project is built in the same environment as
+ROSE, but it doesn't work well when projects are built elsewhere. For instance, it won't work if a ROSE binary release is made on
+one host and the project is built on another host that has the same dependencies but in different locations.  Each project must
+independently find all of ROSE's dependencies, which is tedious and error-prone.
 
-**Proposed change:** Create a `RoseConfig.cmake` template that automatically finds all of ROSE's required and optional dependencies using CMake's `find_dependency()` mechanism. The file would know which dependencies are needed based on how ROSE was compiled.
+**Proposed change:** Create a `RoseConfig.cmake` template that automatically finds all of ROSE's required and optional dependencies
+using CMake's `find_dependency()` mechanism. The file would know which dependencies are needed based on how ROSE was compiled.
 
 **Benefits:**
 - Downstream projects get all dependencies automatically with a single `find_package(Rose)`
@@ -115,9 +164,11 @@ This section describes high-level improvements needed to modernize ROSE's CMake 
 
 ### 7. Support Non-CMake Build Systems via pkg-config
 
-**Current state:** Projects using Autotools, plain Makefiles, or other build systems have no standard way to discover ROSE's compiler flags and linker options.
+**Current state:** Projects using Autotools, plain Makefiles, or other build systems have no standard way to discover ROSE's
+compiler flags and linker options.
 
-**Proposed change:** Generate and install a `rose.pc` pkg-config file that provides compilation and linking flags for non-CMake build systems. This is the standard mechanism used by most Unix/Linux libraries.
+**Proposed change:** Generate and install a `rose.pc` pkg-config file that provides compilation and linking flags for non-CMake
+build systems. This is the standard mechanism used by most Unix/Linux libraries.
 
 **Benefits:**
 - Autotools projects can use `PKG_CHECK_MODULES([ROSE], [rose >= 0.11])`
@@ -127,9 +178,10 @@ This section describes high-level improvements needed to modernize ROSE's CMake 
 
 ### 8. Maintain Backward Compatibility
 
-**Current state:** Some projects may depend on the existing `FindRose.cmake` module or the `rose-config` script.
+**Current state:** Some projects may depend on the existing `rose-config` script and/or its configuration files.
 
-**Proposed change:** Keep these existing mechanisms working but deprecate them with clear migration guidance. Gradually phase them out over multiple release cycles.
+**Proposed change:** Keep these existing mechanisms working but deprecate them with clear migration guidance. Gradually phase them
+out over multiple release cycles.
 
 **Benefits:**
 - Existing ROSE users aren't forced to immediately update their build systems
@@ -139,9 +191,11 @@ This section describes high-level improvements needed to modernize ROSE's CMake 
 
 ### 9. Expose Feature Detection Variables
 
-**Current state:** External projects have no standardized way to detect which features ROSE was compiled with (binary analysis, specific language frontends, etc.).
+**Current state:** External projects have no standardized way to detect which features ROSE was configured with (binary analysis,
+specific language frontends, etc.).
 
-**Proposed change:** Export CMake variables like `Rose_ENABLE_BINARY_ANALYSIS`, `Rose_ENABLE_C`, etc. that downstream projects can query to determine available functionality.
+**Proposed change:** Export CMake variables like `Rose_ENABLE_BINARY_ANALYSIS`, `Rose_ENABLE_C`, etc. that downstream projects can
+query to determine available functionality.
 
 **Benefits:**
 - Projects can conditionally enable features based on ROSE's capabilities
@@ -151,17 +205,8 @@ This section describes high-level improvements needed to modernize ROSE's CMake 
 
 ### 10. Document Standard Usage Patterns
 
-**Current state:** Documentation for integrating ROSE into external projects is scattered or outdated.
-
-**Proposed change:** Create comprehensive examples showing how to use ROSE from CMake, Autotools, and plain Makefiles, with clear migration guides for existing users.
-
-**Benefits:**
-- Reduces friction for new ROSE users
-- Provides canonical examples that can be copy-pasted
-- Helps existing users migrate from old patterns to new ones
-- Serves as a reference for ROSE maintainers
-
-### 11. Update Documentation
+**Current state:** Documentation for integrating ROSE into external projects is scattered or outdated. This documentation is part of
+the ROSE source code in the "docs" directory.
 
 Create examples showing:
 - CMake `find_package(Rose)` usage
@@ -169,42 +214,23 @@ Create examples showing:
 - Manual Makefile integration
 - Different build system scenarios
 
-## Benefits for External Projects
+**Proposed change:** Create comprehensive examples showing how to use ROSE from CMake, Autotools, and plain Makefiles, with clear
+migration guides for existing users.
 
-### For CMake projects:
-```cmake
-find_package(Rose REQUIRED)
-add_executable(my_tool main.cpp)
-target_link_libraries(my_tool PRIVATE Rose::rose)
-# Dependencies automatically propagated!
-```
+**Benefits:**
+- Reduces friction for new ROSE users
+- Provides canonical examples that can be copy-pasted
+- Helps existing users migrate from old patterns to new ones
+- Serves as a reference for ROSE maintainers
 
-### For Autotools projects:
-```bash
-PKG_CHECK_MODULES([ROSE], [rose >= 0.11])
-```
+## Record of Implementation
 
-### For manual Makefiles:
-```make
-ROSE_CFLAGS := $(shell pkg-config --cflags rose)
-ROSE_LIBS := $(shell pkg-config --libs rose)
-```
-
-## Implementation Plan by Dependencies
-
-This section organizes the implementation into independent, testable steps. Each step builds upon the previous ones but can be completed and verified separately.
-
-**Status Indicators:**
-- **Status:** Overall progress (❌ Not Started, 🔄 In Progress, ✅ Complete)
-- **Implementation:** Code changes (⬜ Not Implemented, 🔶 Partial, ✅ Implemented)
-- **Testing:** Verification (⬜ Not Tested, 🔶 Partial, ✅ Tested)
+This section was originally the implementation plan, but is now a historical record of what changes were made and why.  The plan is
+organized as independent, testable steps. Each step builds upon the previous ones but was completed and verified separately.
 
 ### Step 1: Add Version Parsing (Foundation)
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
 **Testing:** ✅ Tested
-**Dependencies:** None
-**Time estimate:** 30 minutes
 **Files modified:** `CMakeLists.txt`
 **GitLab Issue:** #785+
 
@@ -230,16 +256,14 @@ rmc cmake .. | grep "ROSE version components"
 
 **Success criteria:** Version variables are set correctly and displayed during configuration.
 
-**Implementation notes:** ROSE uses a four-component version number (major.minor.patch.build). The fourth component is named "build" to represent incremental build numbers.
+**Implementation notes:** ROSE uses a four-component version number (major.minor.patch.build). The fourth component is named "build"
+to represent incremental build numbers.
 
 ---
 
 ### Step 2: Create Namespaced Alias Target (Build Tree)
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
 **Testing:** ✅ Tested
-**Dependencies:** Step 1
-**Time estimate:** 15 minutes
 **Files modified:** `src/CMakeLists.txt`
 **Gitlab Issue:** #786+
 
@@ -279,14 +303,12 @@ rmc cmake . && rmc cmake --build .
 
 ### Step 3: Add Proper Include Directory Propagation
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
 **Testing:** ✅ Tested
-**Dependencies:** Step 2
-**Time estimate:** 1 hour
 **Files modified:** `src/CMakeLists.txt`
 **Gitlab Issue:** #787+
 
-Replace or augment the existing `include_directories()` calls with proper target-based includes. Add after the `add_library(ROSE_DLL ...)` line:
+Replace or augment the existing `include_directories()` calls with proper target-based includes. Add after the `add_library(ROSE_DLL
+...)` line:
 
 ```cmake
 # Propagate include directories to consumers
@@ -321,10 +343,7 @@ target_link_libraries(myapp PRIVATE Rose::rose)
 
 ### Step 4: Classify and Fix Dependency Linkage (PUBLIC/PRIVATE)
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
-**Testing:** 🔶 Partial
-**Dependencies:** Step 3
-**Time estimate:** 2-3 hours
+**Testing:** 🔶 Partial (completed in later steps)
 **Files modified:** `src/CMakeLists.txt`
 **GitLab Issue:** #788+
 
@@ -387,10 +406,7 @@ nm -D lib/librose.so | grep -i "boost\|z3\|dwarf" | wc -l
 
 ### Step 5: Update Installation with EXPORT
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
 **Testing:** ✅ Tested
-**Dependencies:** Step 4
-**Time estimate:** 30 minutes
 **Files modified:** `src/CMakeLists.txt`
 **Gitlab Issue:** #789+
 
@@ -429,11 +445,7 @@ cat ${CMAKE_INSTALL_PREFIX}/lib/cmake/Rose/RoseTargets.cmake
 
 ### Step 6: Create RoseConfigVersion.cmake
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
 **Testing:** ✅ Tested
-**Dependencies:** Step 1
-**Time estimate:** 45 minutes
-**Files created:** None (using write_basic_package_version_file)
 **Files modified:** `CMakeLists.txt`
 **Gitlab Issue:** #790+
 
@@ -483,10 +495,7 @@ rmc cmake . -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}
 
 ### Step 7: Create Minimal RoseConfig.cmake (Core Dependencies Only)
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
 **Testing:** ✅ Tested
-**Dependencies:** Steps 5, 6
-**Time estimate:** 1-2 hours
 **Files created:** `cmake/RoseConfig.cmake.in`
 **Files modified:** `CMakeLists.txt`
 **GitLab Issue:** #791+
@@ -566,10 +575,7 @@ rmc cmake --build .
 
 ### Step 8: Expand RoseConfig.cmake with Optional Dependencies
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
 **Testing:** ✅ Tested
-**Dependencies:** Step 7
-**Time estimate:** 2 hours
 **Files modified:** `cmake/RoseConfig.cmake.in`, `CMakeLists.txt`
 **Gitlab Issue:** #792+
 
@@ -607,21 +613,21 @@ spock-shell --with-file env cmake . -DCMAKE_PREFIX_PATH=/home/matzke/rose-instal
 - ✅ Find modules are installed and accessible
 - ✅ Rose::rose target is properly imported
 
-**Note:** Compilation test revealed that some dependencies (like Capstone) appear in ROSE's public headers and should be marked PUBLIC in src/CMakeLists.txt (Step 4 issue, not Step 8).
+**Note:** Compilation test revealed that some dependencies (like Capstone) appear in ROSE's public headers and should be marked
+PUBLIC in src/CMakeLists.txt (Step 4 issue, not Step 8).
 
 ---
 
 ### Step 9: Fix Conditional Header Dependencies (PUBLIC vs PRIVATE)
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
 **Testing:** ✅ Tested
-**Dependencies:** Step 8
-**Time estimate:** 2-3 hours
 **Files modified:** `src/CMakeLists.txt`, `cmake/RoseConfig.cmake.in`
 **GitLab Issue:** #793+
 
-**Problem:**
-ROSE's public headers conditionally include optional dependency headers based on preprocessor macros (ROSE_HAVE_LIBGCRYPT, ROSE_HAVE_Z3, ROSE_HAVE_CAPSTONE, etc.). These macros are defined in rosePublicConfig.h and featureTests.h. When an external project includes ROSE headers, the preprocessor evaluates these macros and may need to include headers from optional dependencies, even though those dependencies are marked PRIVATE in ROSE's link interface.
+**Problem:** ROSE's public headers conditionally include optional dependency headers based on preprocessor macros
+(ROSE_HAVE_LIBGCRYPT, ROSE_HAVE_Z3, ROSE_HAVE_CAPSTONE, etc.). These macros are defined in rosePublicConfig.h and
+featureTests.h. When an external project includes ROSE headers, the preprocessor evaluates these macros and may need to include
+headers from optional dependencies, even though those dependencies are marked PRIVATE in ROSE's link interface.
 
 Example:
 ```cpp
@@ -640,10 +646,11 @@ Dependencies are currently classified as:
 - PUBLIC: Types appear in ROSE public API
 
 But there's a third category:
-- **INTERFACE**: Headers are needed by ROSE's public headers (even if conditionally), but library is only needed by ROSE's implementation
+- **INTERFACE**: Headers are needed by ROSE's public headers (even if conditionally), but library is only needed by ROSE's
+  implementation
 
-**Solution:**
-Audit ROSE's public headers to identify which optional dependencies are referenced in header files (even conditionally). These need special handling:
+**Solution:** Audit ROSE's public headers to identify which optional dependencies are referenced in header files (even
+conditionally). These need special handling:
 
 1. **For dependencies with headers in ROSE public headers:**
    - If types appear in API: Mark as PUBLIC (both headers and libs propagate)
@@ -705,10 +712,11 @@ spock-shell --with-file env cmake --build .
 - ✅ Clear error messages when required dependency headers are missing
 - ✅ Link-only dependencies remain PRIVATE (not propagated unnecessarily)
 
-**Note:** This is closely related to Step 4 (dependency classification) but focuses specifically on the header inclusion problem rather than just link-time dependencies.
+**Note:** This is closely related to Step 4 (dependency classification) but focuses specifically on the header inclusion problem
+rather than just link-time dependencies.
 
-**Implementation notes:**
-Completed on 2025-10-06. Audited all ROSE public headers and identified 4 dependencies that are included in installed headers:
+**Implementation notes:** Completed on 2025-10-06. Audited all ROSE public headers and identified 4 dependencies that are included
+in installed headers:
 
 1. **Capstone** - Marked PUBLIC in src/CMakeLists.txt (line 958)
    - Headers: `InstructionEnumsAarch32.h`, `InstructionEnumsAarch64.h`, `Disassembler/Aarch32.h`, `Disassembler/Aarch64.h`
@@ -727,7 +735,8 @@ Completed on 2025-10-06. Audited all ROSE public headers and identified 4 depend
    - Headers: `Rose/BinaryAnalysis/Matrix.h` and others
    - Includes: `<dlib/matrix.h>`
 
-Updated `cmake/RoseConfig.cmake.in` to require these dependencies when ROSE was built with them, providing clear error messages that explain the headers appear in ROSE's public API.
+Updated `cmake/RoseConfig.cmake.in` to require these dependencies when ROSE was built with them, providing clear error messages that
+explain the headers appear in ROSE's public API.
 
 **Testing performed:**
 Created external test project in `/tmp/rose_step9_test` that:
@@ -740,24 +749,25 @@ Created external test project in `/tmp/rose_step9_test` that:
 
 ### Step 10: Fix EDG Target Export Conditionals
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
 **Testing:** ✅ Tested
-**Dependencies:** Step 9
-**Time estimate:** 30 minutes
 **Files modified:** `src/CMakeLists.txt`
 **GitLab Issue:** #794+
 
-**Problem:**
-When ROSE is configured with C/C++ analysis enabled using EDG (not Clang), the CMake build system unconditionally adds `RoseSourceCxxFrontendEdg` to the link dependencies of `ROSE_DLL`. However, this target may not exist depending on how EDG is provided:
+**Problem:** When ROSE is configured with C/C++ analysis enabled using EDG (not Clang), the CMake build system unconditionally adds
+`RoseSourceCxxFrontendEdg` to the link dependencies of `ROSE_DLL`. However, this target may not exist depending on how EDG is
+provided:
 
 1. **No C/C++ analysis**: EDG not needed
 2. **Precompiled EDG binary**: EDG library is downloaded and linked separately, no source target exists
 3. **EDG source code**: EDG source is compiled (proprietary Git submodule), creating the `RoseSourceCxxFrontendEdg` target
 
-The unconditional reference causes CMake export errors: `install(EXPORT "RoseTargets" ...) includes target "ROSE_DLL" which requires target "RoseSourceCxxFrontendEdg" that is not in any export set.`
+The unconditional reference causes CMake export errors: `install(EXPORT "RoseTargets" ...) includes target "ROSE_DLL" which requires
+target "RoseSourceCxxFrontendEdg" that is not in any export set.`
 
-**Root cause:**
-The EDG source code CMakeLists.txt is optional (part of a proprietary Git submodule at `src/frontend/CxxFrontend/EDG/`). The root CMakeLists.txt checks for its existence to set `have_EDG_source`, but `src/CMakeLists.txt` line 699 unconditionally added `RoseSourceCxxFrontendEdg` when EDG was enabled, regardless of whether the target actually exists.
+**Root cause:** The EDG source code CMakeLists.txt is optional (part of a proprietary Git submodule at
+`src/frontend/CxxFrontend/EDG/`). The root CMakeLists.txt checks for its existence to set `have_EDG_source`, but
+`src/CMakeLists.txt` line 699 unconditionally added `RoseSourceCxxFrontendEdg` when EDG was enabled, regardless of whether the
+target actually exists.
 
 **Solution:**
 Make the addition of `RoseSourceCxxFrontendEdg` conditional on both `have_EDG_source` AND `EDG_COMPILE` being true:
@@ -782,7 +792,8 @@ endif()
 ```
 
 **Implementation notes:**
-- The `have_EDG_source` variable is set in the root CMakeLists.txt (line 638-647) based on whether `src/frontend/CxxFrontend/EDG/CMakeLists.txt` exists
+- The `have_EDG_source` variable is set in the root CMakeLists.txt (line 638-647) based on whether
+  `src/frontend/CxxFrontend/EDG/CMakeLists.txt` exists
 - The `EDG_COMPILE` option (line 612) allows users to disable EDG source compilation even if source is available
 - When using precompiled EDG, the library is linked via other mechanisms and doesn't create a CMake target
 - This fix handles all three EDG scenarios correctly
@@ -812,10 +823,7 @@ cmake --build .
 
 ### Step 11: Add Feature Detection Variables
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
 **Testing:** ✅ Tested
-**Dependencies:** Step 10
-**Time estimate:** 30 minutes
 **Files modified:** `cmake/RoseConfig.cmake.in`
 **GitLab Issue:** #797+
 
@@ -856,10 +864,7 @@ endif()
 
 ### Step 12: Create pkg-config Support
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
 **Testing:** ✅ Tested
-**Dependencies:** Step 7 (can be parallel with Steps 8-11)
-**Time estimate:** 1-2 hours
 **Files created:** `cmake/rose.pc.in`
 **Files modified:** `CMakeLists.txt`
 **Gitlab Issue:** 800
@@ -977,7 +982,8 @@ make
 **Files created:** `cmake-integration/*`
 **Gitlab Issue:** 801+
 
-Created comprehensive integration test suite in the **main ROSE repository** (not the separate `tests/` repository). The decision to place tests in the main repository was made because:
+Created comprehensive integration test suite in the **main ROSE repository** (not the separate `tests/` repository). The decision to
+place tests in the main repository was made because:
 - These tests validate the CMake build system infrastructure itself, not ROSE functionality
 - They need to run against both build tree and install tree configurations
 - They should be part of ROSE's core CI pipeline
@@ -1004,11 +1010,16 @@ cmake-integration/
 
 **Implementation notes:**
 
-1. **Test 01 - Basic CMake**: Validates the fundamental `find_package(Rose REQUIRED)` workflow using `CMAKE_PREFIX_PATH`, verifies the `Rose::rose` target exists, confirms include directories and link libraries are automatically propagated, tests feature flag accessibility, and validates that ROSE can be found at any installation location (relocatable installation).
+1. **Test 01 - Basic CMake**: Validates the fundamental `find_package(Rose REQUIRED)` workflow using `CMAKE_PREFIX_PATH`, verifies
+   the `Rose::rose` target exists, confirms include directories and link libraries are automatically propagated, tests feature flag
+   accessibility, and validates that ROSE can be found at any installation location (relocatable installation).
 
-2. **Test 02 - Version Check**: Validates `RoseConfigVersion.cmake` functionality by finding Rose without version constraints, verifying the version information is correctly exposed via `Rose_VERSION`, building and running a test program that accesses the version, and confirming the entire workflow works correctly.
+2. **Test 02 - Version Check**: Validates `RoseConfigVersion.cmake` functionality by finding Rose without version constraints,
+   verifying the version information is correctly exposed via `Rose_VERSION`, building and running a test program that accesses the
+   version, and confirming the entire workflow works correctly.
 
-3. **Test 03 - pkg-config**: Tests non-CMake build system integration via pkg-config, validates `rose.pc` file generation and installation, verifies compiler flags and linker flags are correctly reported, and demonstrates Makefile-based builds.
+3. **Test 03 - pkg-config**: Tests non-CMake build system integration via pkg-config, validates `rose.pc` file generation and
+   installation, verifies compiler flags and linker flags are correctly reported, and demonstrates Makefile-based builds.
 
 **Test requirements:**
 - ROSE must be fully installed (not just built): `cmake --build . --target install`
@@ -1055,10 +1066,7 @@ cd cmake-integration/03-pkgconfig
 
 ### Step 14: Documentation and Examples
 **Status:** ✅ Complete
-**Implementation:** ✅ Implemented
 **Testing:** ✅ Tested
-**Dependencies:** Steps 7, 9, 11, 12
-**Time estimate:** 2-3 hours
 **Files created:**
 - `docs/cmake-integration.md` - Comprehensive integration guide
 - `docs/examples/external-project-cmake/` - CMake example with multiple programs
@@ -1068,7 +1076,8 @@ cd cmake-integration/03-pkgconfig
 
 **Implementation notes:**
 
-Created comprehensive documentation and three complete working examples demonstrating how to integrate ROSE into external projects using different build systems.
+Created comprehensive documentation and three complete working examples demonstrating how to integrate ROSE into external projects
+using different build systems.
 
 **1. Main Documentation (cmake-integration.md):**
 - Quick start guides for CMake, Autotools, and Makefiles
@@ -1110,8 +1119,8 @@ Created comprehensive documentation and three complete working examples demonstr
 - Test input files included
 - Troubleshooting sections for common issues
 
-**Testing performed:**
-All three examples were created with complete documentation. The examples follow ROSE's actual API and build system conventions. The binary analyzer is based on the proven bat-lsv.C tool from ROSE's repository.
+**Testing performed:** All three examples were created with complete documentation. The examples follow ROSE's actual API and build
+system conventions. The binary analyzer is based on the proven bat-lsv.C tool from ROSE's repository.
 
 **Test Automation:**
 Created comprehensive test script `docs/examples/test-all-examples.sh` for CI/CD integration:
@@ -1135,42 +1144,8 @@ Created comprehensive test script `docs/examples/test-all-examples.sh` for CI/CD
 
 ---
 
-### Step 15: Deprecate Old FindRose.cmake
-**Status:** ✅ Completed
-**Implementation:** ✅ Implemented
-**Testing:** ✅ Tested
-**Dependencies:** Step 13 (after testing confirms new system works)
-**Time estimate:** 30 minutes
-**Files modified:** `cmake/FindRose.cmake`
-
-Add deprecation warning:
-```cmake
-macro(find_rose)
-  message(DEPRECATION
-    "FindRose.cmake is deprecated. Please use find_package(Rose) with "
-    "Config mode instead. See docs/cmake-integration.md for migration guide.")
-  # ... rest of existing code
-endmacro()
-```
-
-**Implementation notes:**
-The `find_rose` macro in "FindRose.cmake" was an untracked file from prior work and has been deleted.
-
-## Testing Strategy
-
-Create test projects in `tests/cmake-integration/`:
-- Basic consumption test
-- With custom install prefix
-- From build directory vs install directory
-- Cross-compilation scenarios
-- Multiple ROSE versions side-by-side
-
-## Backward Compatibility
-
-- Maintain `rose-config` script
-- Document migration path for existing users
-- Support both old and new methods for 1-2 releases
-
 ## Conclusion
 
-This modernization will bring ROSE's CMake infrastructure up to current best practices while maintaining compatibility with non-CMake build systems. The changes will make ROSE significantly easier to integrate into external projects while preserving backward compatibility for existing users.
+This modernization brings ROSE's CMake infrastructure up to current best practices while maintaining compatibility with
+non-CMake build systems. The changes will make ROSE significantly easier to integrate into external projects while preserving
+backward compatibility for existing users.

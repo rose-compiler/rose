@@ -850,21 +850,24 @@ rose_config_cfg_DATA = rose-config.cfg
 # Rasmussen (3/23/2018): Added ROSE_RPATHS and ROSE_LINK_RPATHS to enable
 # linking on Mac OSX from a ROSE installations.
 rose-config.cfg:
-	$(AM_V_GEN) (								\
-		echo "# Things that the 'rose-config' tool can report";		\
-		echo "ROSE_CC       = $(CC)";					\
-		echo "ROSE_CXX      = $(CXX)";					\
-		echo "ROSE_CPPFLAGS = $(rose_config_installed_cppflags)";	\
-		echo "ROSE_CFLAGS   = $(CFLAGS)";				\
-		echo "ROSE_CXXFLAGS = $(CXXFLAGS)";				\
-		echo "ROSE_LDFLAGS  = $(rose_config_installed_ldflags)";	\
-		echo "ROSE_LIBDIRS  = $(filter-out -R, $(ROSE_RPATHS))";	\
-		echo "ROSE_PREFIX   = $(prefix)";				\
-		echo "# Additional items useful to include in Makefiles";	\
-		echo "ROSE_RPATHS       = $(ROSE_RPATHS)";			\
-		echo "ROSE_LINK_RPATHS  = $(ROSE_LINK_RPATHS)";			\
-		echo "ROSE_BACKEND_C_COMPILER = $(BACKEND_C_COMPILER)";		\
-		echo "ROSE_BACKEND_CXX_COMPILER = $(BACKEND_CXX_COMPILER)";		\
+	$(AM_V_GEN) (										\
+		echo "# DEPRECATED 2025-10-10. Use pkg-config or RoseConfig.cmake instead.";	\
+		echo;										\
+		echo;										\
+		echo "# Things that the 'rose-config' tool can report";				\
+		echo "ROSE_CC	    = $(CC)";							\
+		echo "ROSE_CXX	    = $(CXX)";							\
+		echo "ROSE_CPPFLAGS = $(rose_config_installed_cppflags)";			\
+		echo "ROSE_CFLAGS   = $(CFLAGS)";						\
+		echo "ROSE_CXXFLAGS = $(CXXFLAGS)";						\
+		echo "ROSE_LDFLAGS  = $(rose_config_installed_ldflags)";			\
+		echo "ROSE_LIBDIRS  = $(filter-out -R, $(ROSE_RPATHS))";			\
+		echo "ROSE_PREFIX   = $(prefix)";						\
+		echo "# Additional items useful to include in Makefiles";			\
+		echo "ROSE_RPATHS	= $(ROSE_RPATHS)";					\
+		echo "ROSE_LINK_RPATHS	= $(ROSE_LINK_RPATHS)";					\
+		echo "ROSE_BACKEND_C_COMPILER = $(BACKEND_C_COMPILER)";				\
+		echo "ROSE_BACKEND_CXX_COMPILER = $(BACKEND_CXX_COMPILER)";			\
 	) >$@
 	@echo "# Automake configuration variables used within ROSE Tests" >> $@
 	@echo "## Enabled languages" >> $@
