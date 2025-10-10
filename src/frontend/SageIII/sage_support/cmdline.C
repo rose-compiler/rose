@@ -4062,7 +4062,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                printf ("WARNING: Non Fortran source file name specified with explicit -rose:Fortran Fortran language option! \n");
                set_Fortran_only(false);
             }
-            if (get_C_only() && get_sourceFileUsesCppFileExtension() == false) {
+            if (get_C_only() && get_sourceFileUsesCppFileExtension() == true) {
                // AS (6/4/2025): It isn't impossible for a file to contain C code but have a C++ suffix.
                // If the user specifies a C standard for a C++ suffix file, warn them but try it anyways.
                printf ("WARNING: C++ source file name specified with explicit selection of a C dialect (-rose:C or -std=c)\n");
