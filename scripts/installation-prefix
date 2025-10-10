@@ -1,0 +1,140 @@
+#!/bin/bash
+set -e -o pipefail
+arg0="${0##*/}"
+dir0="${0%/*}"
+
+usage() {
+    echo "usage: $arg0 [--update-links] [<BASE> [<TYPE>]]" >&2
+}
+
+####################################################################################################################################
+# This script, when run from the to of a ROSE build tree, creates the next installation directory and emits its name to standard
+# output.  It's purpose is to make it easy to install ROSE in a different directory every time rather than installing new versions
+# or configurations of ROSE over the top of a previous installation, possibly resulting in polluted installations.
+#
+# The installation names are created following this pattern:
+#
+#    Pattern: <BASE>/<DATE>/<TYPE>-<SEQUENCE>
+#    Example: /usr/local/rose/2025-10-10/release-007
+#
+#    * <BASE> is a base name and defaults to (1) the first argument of this script, or (2) the non-empty value of the
+#      ROSE_INSTALLATION_BASE environment variable, or (3) "/usr/local/rose" if it exists, or (4) "$HOME/rose-installed".
+#
+#    * <DATE> is the current date in the ISO 8601 format "YYYY-MM-DD".
+#
+#    * <TYPE> is the type of build, which is obtained from (1) this script's second argument if present, or (2) specific information
+#      obtained from the ROSE build directory such as from CMakeCache.txt, or (3) the word "unknown".
+#
+#    * <SEQUENCE> is a three-digit number (nominally, but more if necessary) that is incremented for each installation within a
+#      specific <DATE> regardless of the <TYPE>.
+#
+# If the --update-links switch is specified, then two symbolic links will be created in <BASE>, replacing any previous links
+# that had the same name. The new links both point to the canonical installation directory described above. The links are named:
+#
+#    * <BASE>/latest
+#
+#    * <BASE>/latest-<TYPE>
+#
+####################################################################################################################################
+
+UPDATE_LINKS=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--)
+	    shift
+	    break
+	    ;;
+	--update-links)
+	    UPDATE_LINKS=yes
+	    shift
+	    ;;
+	--help|--usage)
+	    usage
+	    exit 0
+	    ;;
+	-*)
+	    usage
+	    exit 1
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+done
+
+if [ "$#" -gt 2 ]; then
+    usage
+    exit 1
+fi
+
+BASE="$1"
+TYPE="$2"
+
+
+# Emit the base name and set BASE.
+installation-base() {
+    if [ "$BASE" = "" ]; then
+	if [ -n "$ROSE_INSTALLATION_BASE" ]; then
+	    BASE="$ROSE_INSTALLATION_BASE"
+	elif [ -d /usr/local/rose ]; then
+	    BASE=/usr/local/rose
+	else
+	    BASE="$HOME/rose-installed"
+	fi
+    fi
+    echo -n "$BASE"
+}
+
+# Emit the buld type and set TYPE.
+build-type() {
+    if [ "$TYPE" = "" ]; then
+	if [ -f CMakeCache.txt ]; then
+	    TYPE="$(grep '^CMAKE_BUILD_TYPE[^_a-zA-Z0-9]' CMakeCache.txt |cut -d= -f2)"
+	    TYPE="${TYPE:-Release}"
+	    TYPE="$(echo "$TYPE" |tr A-Z a-z)"
+	    case "$TYPE" in
+		relwithdebinfo)
+		    TYPE="release-debug"
+		    ;;
+		minsizerel)
+		    TYPE="minsizerel"
+		    ;;
+		"")
+		    TYPE="unknown"
+		    ;;
+		*)
+		    : as-is
+		    ;;
+	    esac
+	fi
+    fi
+    echo -n "${TYPE:-unknown}"
+}
+
+# Obtain the next serial number from the specified directory.
+next-serial-number() {
+    local dir="$1"
+    if [ -d "$dir" ]; then
+	local last_seq="$(cd "$dir" && ls |sed 's/^[^0-9]*0*\([0-9][0-9]*\).*/\1/' |sort -rn |head -1)"
+	[ -n "$last_seq" ] || last_seq=1
+	printf "%03d" $[last_seq + 1]
+    else
+	echo "001"
+    fi
+}
+
+update-links() {
+    local base="$1" install="$2"; shift 2
+    for link in "$@"; do
+	(cd "$base" && rm -f "$link" && ln -s "$install" "$link")
+    done
+}
+
+base="$(installation-base)"
+base_date="$base/$(date '+%Y-%m-%d')"
+serial="$(next-serial-number "$base_date")"
+btype="$(build-type)"
+full="${base_date}/${btype}-${serial}"
+
+[ "$UPDATE_LINKS" = "" ] || update-links "$base" "$full" latest "latest-$btype"
+echo "$full"
