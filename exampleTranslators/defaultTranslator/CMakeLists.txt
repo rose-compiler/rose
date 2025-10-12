@@ -17,3 +17,8 @@ add_executable(qualifiedNameDumper qualifiedNameDumper.C)
 add_dependencies(qualifiedNameDumper ROSE_DLL)
 target_link_libraries(qualifiedNameDumper ROSE_DLL ${Boost_LIBRARIES})
 install(TARGETS qualifiedNameDumper DESTINATION bin)
+
+add_executable(textASTGenerator textASTGenerator.C)
+add_dependencies(textASTGenerator ROSE_DLL)
+target_link_libraries(textASTGenerator ROSE_DLL ${Boost_LIBRARIES})
+install(TARGETS textASTGenerator DESTINATION bin)
