@@ -1,4 +1,4 @@
-if(ENABLE-JOVIAL)
+if(ENABLE_JOVIAL)
 
   # Executable target for the Jovial preprocessor
   add_executable(jovial_preprocess

@@ -1,5 +1,5 @@
-if(NOT WIN32 AND ENABLE-C STREQUAL "ON")
-  if(NOT ENABLE-ADA)
+if(NOT WIN32 AND ENABLE_C STREQUAL "ON")
+  if(NOT ENABLE_ADA)
 
     include_directories(
       ${ROSE_INCLUDES}

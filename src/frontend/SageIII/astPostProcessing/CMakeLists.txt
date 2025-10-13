@@ -43,7 +43,7 @@ set(astPostProcessingSources
   markSharedDeclarationsForOutputInCodeGeneration.C
   fixupInitializers.C)
 
-if(NOT ENABLE-C OR ROSE_USE_CLANG_FRONTEND)
+if(NOT ENABLE_C OR ROSE_USE_CLANG_FRONTEND)
   set(astPostProcessingSources ${astPostProcessingSources} dummy.C)
 endif()
 

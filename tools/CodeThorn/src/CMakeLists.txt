@@ -3,8 +3,8 @@
 # on Windows Codethorn/src/ has some .h and .C files that require ifdef macros
 # If we want it to work on Windows in the future
 #
-option(ENABLE-CODETHORN "Enable CodeThorn program analysis and verification" TRUE)
-if(NOT WIN32 AND ENABLE-CODETHORN AND NOT ENABLE-CLANG-FRONTEND AND ENABLE-C)
+option(ENABLE_CODETHORN "Enable CodeThorn program analysis and verification" TRUE)
+if(NOT WIN32 AND ENABLE_CODETHORN AND NOT ENABLE_CLANG-FRONTEND AND ENABLE_C)
   if(NOT ENABLE_OPENMP)
     # Codethorn has openmp directives
     find_package(OpenMP QUIET)
@@ -63,7 +63,7 @@ if(NOT WIN32 AND ENABLE-CODETHORN AND NOT ENABLE-CLANG-FRONTEND AND ENABLE-C)
   set_target_properties(codethorn1 PROPERTIES OUTPUT_NAME "codethorn")
   target_link_libraries(
     codethorn1 PRIVATE codethorn ltlthorn ROSE_DLL
-    $<$<AND:$<BOOL:${ENABLE-C}>,$<TARGET_EXISTS:OpenMP::OpenMP_C>>:OpenMP::OpenMP_C>)
+    $<$<AND:$<BOOL:${ENABLE_C}>,$<TARGET_EXISTS:OpenMP::OpenMP_C>>:OpenMP::OpenMP_C>)
 
   install(TARGETS codethorn1 RUNTIME DESTINATION bin)
 

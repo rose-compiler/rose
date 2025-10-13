@@ -9,7 +9,7 @@ add_subdirectory(ompLowering)
 add_subdirectory(transformationTracking)
 add_subdirectory(extractFunctionArgumentsNormalization)
 add_subdirectory(singleStatementToBlockNormalization)
-if(NOT ENABLE-INTERNALFRONTENDDEVELOPMENT)
+if(NOT ENABLE_INTERNALFRONTENDDEVELOPMENT)
   add_subdirectory(loopProcessing)
 endif()
 

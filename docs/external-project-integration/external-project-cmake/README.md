@@ -69,7 +69,7 @@ A binary analysis tool that:
 
 Based on `tools/BinaryAnalysis/bat-lsv.C` from the ROSE repository.
 
-This example is only built if ROSE was configured with `ENABLE-BINARY-ANALYSIS=yes`.
+This example is only built if ROSE was configured with `ENABLE_BINARY_ANALYSIS=yes`.
 
 Usage:
 ```bash
@@ -83,7 +83,7 @@ A Fortran analysis tool that:
 - Parses Fortran source files
 - Lists program units (PROGRAM, MODULE, SUBROUTINE, FUNCTION)
 
-This example is only built if ROSE was configured with `ENABLE-FORTRAN=yes`.
+This example is only built if ROSE was configured with `ENABLE_FORTRAN=yes`.
 
 Usage:
 ```bash

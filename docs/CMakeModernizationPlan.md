@@ -775,8 +775,8 @@ Make the addition of `RoseSourceCxxFrontendEdg` conditional on both `have_EDG_so
 ```cmake
 # In src/CMakeLists.txt around line 699
 # Cxx Frontend Conditional: either EDG or Clang or nothing
-if(ENABLE-CPP)
-  if(NOT ENABLE-CLANG-FRONTEND)  # USE EDG
+if(ENABLE_CPP)
+  if(NOT ENABLE_CLANG_FRONTEND)  # USE EDG
     message(STATUS "ROSE will be using EDG for the CXX Frontend")
     # Only link RoseSourceCxxFrontendEdg if we're compiling EDG from source
     # When using precompiled EDG binaries, the library is linked separately

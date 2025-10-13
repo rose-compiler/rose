@@ -678,42 +678,42 @@ set(rose_LIB_SRCS
   dummyCppFileForLibrose.C
   ${ROSETTA_SRC})
 
-if(ENABLE-JAVA)
+if(ENABLE_JAVA)
   list(APPEND rose_LIB_OBJS roseJava)
 endif()
 
-if(ENABLE-JOVIAL)
+if(ENABLE_JOVIAL)
   list(APPEND rose_LIB_OBJS ${ATERM_LIBRARY})
   list(APPEND rose_LIB_OBJS roseATerm)
   list(APPEND rose_LIB_OBJS roseTreeBuilder)
   list(APPEND rose_LIB_OBJS roseJovial)
 endif()
 
-if(ENABLE-ADA)
+if(ENABLE_ADA)
   list(APPEND rose_LIB_OBJS experimentalRoseAda)
 endif() 
 
-if(ENABLE-LIBADALANG)
+if(ENABLE_LIBADALANG)
   list(APPEND rose_LIB_OBJS experimentalRoseLibadalang)
 endif()
 
-if(ENABLE-PHP)
+if(ENABLE_PHP)
   list(APPEND rose_LIB_OBJS phpFrontend)
 endif()
 
-if(NOT ENABLE-INTERNALFRONTENDDEVELOPMENT)
+if(NOT ENABLE_INTERNALFRONTENDDEVELOPMENT)
   list(APPEND rose_LIB_OBJS
     midend_pa
     midend_loopproc)
 endif()
 
-if(ENABLE-ROSEHPCT)
+if(ENABLE_ROSEHPCT)
   list(APPEND rose_LIB_OBJS roseExtensions)
 endif()
 
 # Cxx Frontend Conditional: either EDG or Clang or nothing
-if(ENABLE-CPP)
-  if(NOT ENABLE-CLANG-FRONTEND)  # USE EDG
+if(ENABLE_CPP)
+  if(NOT ENABLE_CLANG-FRONTEND)  # USE EDG
     message(STATUS "ROSE will be using EDG for the CXX Frontend")
     message(STATUS "  have_EDG_source=${have_EDG_source}, EDG_COMPILE=${EDG_COMPILE}")
     # Only link RoseSourceCxxFrontendEdg if we're compiling EDG from source
@@ -732,8 +732,8 @@ if(ENABLE-CPP)
 endif()
 
 # Make sure both CxxFrontend options are not enabled
-if(EDG_COMPILE AND ENABLE-CLANG-FRONTEND)
-  message(FATAL_ERROR "EDG_COMPILE and ENABLE-CLANG-FRONTEND are mutually exclusive."
+if(EDG_COMPILE AND ENABLE_CLANG-FRONTEND)
+  message(FATAL_ERROR "EDG_COMPILE and ENABLE_CLANG-FRONTEND are mutually exclusive."
                       "\nPlease disable one of these options at config time")
 endif()
 
@@ -974,7 +974,7 @@ install(
   DESTINATION ${INCLUDE_INSTALL_DIR})
 
 # Install the parse table for the Jovial front-end
-if(ENABLE-JOVIAL)
+if(ENABLE_JOVIAL)
   install(FILES ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/jovial-parser/share/rose/Jovial.tbl DESTINATION share/rose)
 endif()
 
@@ -1005,7 +1005,7 @@ endif()
 # YAML-cpp is for parsing YAML and JSON files.
 # NOTE: Marked PUBLIC because ROSE public headers include <yaml-cpp/yaml.h>
 # (ModelChecker/SemanticCallbacks.h)
-if(ENABLE-YAML AND YAMLCPP_FOUND)
+if(ENABLE_YAML AND YAMLCPP_FOUND)
   target_link_libraries(ROSE_DLL PUBLIC ${YAMLCPP_LIBRARY})
   add_library_dependency(${YAMLCPP_LIBRARY})
 endif()
@@ -1034,7 +1034,7 @@ if(DWARF_FOUND)
 endif()
 
 # If readline was found.
-if(ENABLE-READLINE AND READLINE_FOUND)
+if(ENABLE_READLINE AND READLINE_FOUND)
   target_link_libraries(ROSE_DLL PRIVATE ${READLINE_LIBRARY})
   add_library_dependency(${READLINE_LIBRARY})
 endif()
@@ -1056,7 +1056,7 @@ if(ZLIB_FOUND)
 endif()
 
 # If POET is enabled in ROSE, we need to link in some additional dependencies.
-if(ENABLE-POET)
+if(ENABLE_POET)
   set(LINK_FILES poet ${CMAKE_DL_LIBS})
   add_dependencies(ROSE_DLL poet)
 else()
@@ -1074,28 +1074,28 @@ endif()
 # Language frontends are implementation details and not exposed in ROSE's public API.
 
 # Depending on which language analysis (frontend) features are enabled in ROSE, we may need some additional libraries.
-if(ENABLE-FORTRAN)
+if(ENABLE_FORTRAN)
   list(APPEND LINK_FILES roseFortran)
 endif()
 
-if(ENABLE-JAVA)
+if(ENABLE_JAVA)
   list(APPEND LINK_FILES ${JAVA_JVM_LIBRARY})
 endif()
 
-if(ENABLE-PYTHON)
+if(ENABLE_PYTHON)
   list(APPEND LINK_FILES unparsePython rosePythonFrontend)
 endif()
 
-if(ENABLE-ROSEHPCT)
+if(ENABLE_ROSEHPCT)
   list(APPEND LINK_FILES ${LIBXML2_LIBRARIES})
 endif()
 
-if(ENABLE-ADA)
+if(ENABLE_ADA)
   target_link_libraries(ROSE_DLL PRIVATE ${ASIS_ADAPTER_LIB})
   list(APPEND LINK_FILES experimentalRoseAda)
 endif()
 
-if(ENABLE-LIBADALANG)
+if(ENABLE_LIBADALANG)
   list(APPEND rose_library_dir_list ${ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION_GNAT_HOME}/lib)
   list(APPEND rose_library_dir_list /opt/rosedev/GNAT/2021/lib/gcc/x86_64-pc-linux-gnu/10.3.1/adalib)
   #HACK
@@ -1110,7 +1110,7 @@ else ()
 endif()
 
 # If the C preprocessor is enabled, ROSE has some additional depenendencies
-if(ENABLE-CPP)
+if(ENABLE_CPP)
   add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR)
 endif()
 
@@ -1184,7 +1184,7 @@ add_custom_command(
   VERBATIM
   DEPENDS rose-config)
 
-if(ENABLE-C)
+if(ENABLE_C)
   add_custom_target(check-hello-cxx)
   add_dependencies(check-hello-cxx rose-compiler)
 
@@ -1225,7 +1225,7 @@ if(ENABLE-C)
     COMMENT "  TEST     ROSE C++ compiler")
 endif()
 
-if(ENABLE-FORTRAN)
+if(ENABLE_FORTRAN)
   #Check that we can compile and run a simple fortran program
   add_custom_command(
     TARGET check-core
@@ -1242,7 +1242,7 @@ if(ENABLE-FORTRAN)
     COMMENT "  TEST     ROSE Fortran compiler")
 endif()
 
-if(ENABLE-ADA)
+if(ENABLE_ADA)
   #Check that we can compile and run a simple ada program
   add_custom_command(
     TARGET check-core
@@ -1262,7 +1262,7 @@ if(ENABLE-ADA)
     COMMENT "  TEST     ROSE Ada compiler")
 endif()
 
-if(ENABLE-BINARY-ANALYSIS)
+if(ENABLE_BINARY_ANALYSIS)
   #Check that we can perform a simple binary analysis
   add_custom_command(
     TARGET check-core

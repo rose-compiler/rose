@@ -12,7 +12,7 @@ install(TARGETS bat
   DESTINATION ${ROSE_LIB_DIR_NAME})
 install(FILES batSupport.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
-if(ENABLE-BINARY-ANALYSIS)
+if(ENABLE_BINARY_ANALYSIS)
   add_executable(bat-ana bat-ana.C)
   target_link_libraries(bat-ana PRIVATE bat)
   install(TARGETS bat-ana DESTINATION bin)

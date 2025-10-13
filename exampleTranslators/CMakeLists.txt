@@ -1,4 +1,4 @@
-if(ENABLE-EXAMPLE-TRANSLATORS-DIRECTORY)
+if(ENABLE_EXAMPLE_TRANSLATORS_DIRECTORY)
   include_directories(${ROSE_INCLUDES})
   add_subdirectory(DOTGenerator)
   add_subdirectory(AstCopyReplTester)

@@ -1,10 +1,10 @@
-if(NOT ENABLE-INTERNALFRONTENDDEVELOPMENT)
+if(NOT ENABLE_INTERNALFRONTENDDEVELOPMENT)
   add_subdirectory(sqlite3x)
   add_subdirectory(dataStructureTraversal)
   add_subdirectory(highLevelGrammar)
   add_subdirectory(failSafe)
 
-  if(ENABLE-ROSEHPCT)
+  if(ENABLE_ROSEHPCT)
     find_package(LibXml2)
     if(NOT LIBXML2_FOUND)
       message(ERROR "ROSE_HPCT module requires libxml2")

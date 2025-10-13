@@ -9,7 +9,7 @@ add_subdirectory(astRewriteMechanism)
 add_subdirectory(astUtil)
 add_subdirectory(BinaryAnalysis)
 add_subdirectory(programTransformation)
-if(NOT ENABLE-INTERNALFRONTENDDEVELOPMENT)
+if(NOT ENABLE_INTERNALFRONTENDDEVELOPMENT)
   # Warning: Some .c and .h files in programAnalysis/ depend on linux due to #include <sys/time.h>
   add_subdirectory(programAnalysis)
 endif()

@@ -1,4 +1,4 @@
-if(ENABLE-POET)
+if(ENABLE_POET)
   include_directories(
     ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/driver
     ${CMAKE_SOURCE_DIR}/src/midend/programTransformation/loopProcessing/slicing

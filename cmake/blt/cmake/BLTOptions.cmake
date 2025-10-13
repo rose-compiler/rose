@@ -40,7 +40,7 @@ endif()
 
 # CXX Frontend options (EDG/Clang) 
 option(EDG_COMPILE "Compile EDG source code if available" ON)
-option(ENABLE-CLANG-FRONTEND "Use Clang for C/C++ frontend" OFF)
+option(ENABLE_CLANG-FRONTEND "Use Clang for C/C++ frontend" OFF)
 
 option(ENABLE_CPPCHECK     "Enables Cppcheck support" OFF)
 option(ENABLE_VALGRIND     "Enables Valgrind support" ON)

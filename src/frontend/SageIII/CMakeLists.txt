@@ -5,7 +5,7 @@ add_subdirectory(sageInterface)
 add_subdirectory(virtualCFG)
 add_subdirectory(astVisualization)
 
-if(NOT ENABLE-INTERNALFRONTENDDEVELOPMENT)
+if(NOT ENABLE_INTERNALFRONTENDDEVELOPMENT)
   ##AS Commented out for simpler build
   ###add_subdirectory(astFileIO)
   add_subdirectory(astFromString)
@@ -32,7 +32,7 @@ set(SAGE3_SOURCES
   Utf8.C)
 
 ########################################################################################################################
-if(ENABLE-CPP)
+if(ENABLE_CPP)
   # GENERATING THE ROSE PREPROCESSOR
 
   if(FLEX_FOUND)
@@ -94,7 +94,7 @@ add_library(sage3 OBJECT ${SAGE3_SOURCES})
 add_dependencies(sage3 rosetta_generated)
 
 # Add include directory to SageTreeBuilder files
-if(ENABLE-JOVIAL OR ENABLE-ADA) 
+if(ENABLE_JOVIAL OR ENABLE_ADA) 
   target_include_directories(sage3 PRIVATE ../Experimental_General_Language_Support)
 endif()
 

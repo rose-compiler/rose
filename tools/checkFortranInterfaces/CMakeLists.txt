@@ -1,4 +1,4 @@
-if(ENABLE-FORTRAN)
+if(ENABLE_FORTRAN)
   set(tools_checkFortranInterfaces_exe_HEADERS checkFortranInterfaces.h)
 
   set(tools_checkFortranInterfaces_exe_SOURCES checkFortranInterfaces.C main.C)

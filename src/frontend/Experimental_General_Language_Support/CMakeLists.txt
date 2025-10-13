@@ -1,4 +1,4 @@
-if(ENABLE-JOVIAL)
+if(ENABLE_JOVIAL)
   add_subdirectory(ATerm)
 
   # Library target for libroseTreeBuilder

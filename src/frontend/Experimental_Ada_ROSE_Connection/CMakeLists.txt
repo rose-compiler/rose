@@ -1,5 +1,5 @@
 # Build experimentalRoseAda library and link it to  libasis_adapter
-if(ENABLE-ADA)
+if(ENABLE_ADA)
   # Process an additional CMakeLists.txt in this directory 
   add_subdirectory(parser)
  

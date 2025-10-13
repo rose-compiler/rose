@@ -25,16 +25,16 @@ endfunction()
 # End of functions for returning MAJOR.MINOR.PATCH 
 
 # --------check Backend C compiler -----------------------
-if(ENABLE-C)
+if(ENABLE_C)
   include(CMakeDetermineCCompiler)
   # Support for Visual Studio is handled in a separate file
   if(WIN32)
     include(roseWindowsSupport)
     return()
   endif()
-  
-  # Ada Support  
-  if(ENABLE-ADA) 
+
+  # Ada Support
+  if(ENABLE_ADA) 
     # Ensure GNAT_HOME is defined
     if(NOT DEFINED ENV{GNAT_HOME} OR "$ENV{GNAT_HOME}" STREQUAL "")
       message(FATAL_ERROR "GNAT_HOME environment variable must be defined for Ada support")
@@ -107,12 +107,12 @@ if(ENABLE-C)
 endif()
 
 # --------check Backend CXX compiler -----------------------
-if(ENABLE-CPP)
-  if(CMAKE_CROSSCOMPILING) 
+if(ENABLE_CPP)
+  if(CMAKE_CROSSCOMPILING)
     include(roseCMakeDetermineCXXCompiler)
-  endif() 
-  # Ada Support  
-  if(ENABLE-ADA) 
+  endif()
+  # Ada Support
+  if(ENABLE_ADA) 
      # Ensure GNAT_HOME is defined
     if(NOT DEFINED ENV{GNAT_HOME} OR "$ENV{GNAT_HOME}" STREQUAL "")
       message(FATAL_ERROR "GNAT_HOME environment variable must be defined for Ada support")
@@ -181,11 +181,11 @@ if(ENABLE-CPP)
     message(STATUS "ROSE_BACKEND_CXX_COMPILER: ${ROSE_BACKEND_CXX_COMPILER}")
     message(STATUS "BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH: ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}")
     message(STATUS "BACKEND_CXX_COMPILER_NAME_WITH_PATH: ${BACKEND_CXX_COMPILER_NAME_WITH_PATH}")
-  endif() # end VERBOSE  
-endif() # end ENABLE-CPP 
+  endif() # end VERBOSE
+endif() # end ENABLE_CPP
 
-# TO DO: Remove redundancies where appropriate  
-if(ENABLE-FORTRAN)
+# TO DO: Remove redundancies where appropriate
+if(ENABLE_FORTRAN)
 # --------check Fortran compiler -----------------------
 # CMakeDetermineFortranCompiler does not recognize gfortran first
 # we use a slightly modified CMakeDetermineFortranCompiler.cmake to put gfortran to the highest priority

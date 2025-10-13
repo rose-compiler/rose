@@ -7,15 +7,15 @@ add_subdirectory(ECJ_ROSE_Connection)
 add_subdirectory(PHPFrontend)
 add_subdirectory(PythonFrontend)
 
-if(ENABLE-ADA)
+if(ENABLE_ADA)
   add_subdirectory(Experimental_Ada_ROSE_Connection)
 endif()
 
-if(ENABLE-LIBADALANG)
+if(ENABLE_LIBADALANG)
   add_subdirectory(Experimental_Libadalang_ROSE_Connection)
 endif()
 
-if(ENABLE-JOVIAL) 
+if(ENABLE_JOVIAL) 
   add_subdirectory(Experimental_General_Language_Support)
   add_subdirectory(Experimental_Jovial_ROSE_Connection)
 endif() 

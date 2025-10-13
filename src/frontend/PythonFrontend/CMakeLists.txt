@@ -1,4 +1,4 @@
-if(ENABLE-PYTHON)
+if(ENABLE_PYTHON)
   include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES}
 		      ${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
 

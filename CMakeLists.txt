@@ -47,13 +47,17 @@ if(CCACHE_EXECUTABLE)
   endforeach()
 endif()
 
-# Option for custom compilers 
-option(SKIP-ABI "Option to use custom CC/CXX" OFF) 
-if(SKIP-ABI) # turn off checks and abi 
+# Option for custom compilers
+option(SKIP_ABI "Option to use custom CC/CXX" OFF)
+if(DEFINED CACHE{SKIP-ABI})
+  message(DEPRECATION "SKIP-ABI is deprecated. Use SKIP_ABI instead. Example: cmake -DSKIP_ABI=${SKIP-ABI} ...")
+  set(SKIP_ABI ${SKIP-ABI} CACHE BOOL "Option to use custom CC/CXX" FORCE)
+endif()
+if(SKIP_ABI) # turn off checks and abi
   set(CMAKE_C_ABI_COMPILED FALSE)
   set(CMAKE_C_COMPILER_WORKS ON CACHE INTERNAL "")
   set(CMAKE_C_STANDARD_LIBRARIES_INIT "")
-  set(CMAKE_CXX_ABI_COMPILED FALSE) 
+  set(CMAKE_CXX_ABI_COMPILED FALSE)
   set(CMAKE_CXX_COMPILER_WORKS ON CACHE INTERNAL "")
   set(CMAKE_CXX_STANDARD_LIBRARIES_INIT "")
 endif() 
@@ -422,36 +426,56 @@ endif()
 ########################################################################################################################
 # Analyzable languages supported by ROSE
 ########################################################################################################################
+# NOTE: We are migrating from hyphenated option names (ENABLE-C) to underscore names (ENABLE_C)
+#       to follow CMake best practices. Both forms work during the transition period, but hyphenated
+#       names will trigger deprecation warnings and will be removed in a future release.
+
 # Binary analysis
-option(ENABLE-BINARY-ANALYSIS "Enable binary analysis" OFF)
-if(ENABLE-BINARY-ANALYSIS)
+option(ENABLE_BINARY_ANALYSIS "Enable binary analysis" OFF)
+if(DEFINED CACHE{ENABLE-BINARY-ANALYSIS})
+  message(DEPRECATION "ENABLE-BINARY-ANALYSIS is deprecated. Use ENABLE_BINARY_ANALYSIS instead. Example: cmake -DENABLE_BINARY_ANALYSIS=${ENABLE-BINARY-ANALYSIS} ...")
+  set(ENABLE_BINARY_ANALYSIS ${ENABLE-BINARY-ANALYSIS} CACHE BOOL "Enable binary analysis" FORCE)
+endif()
+if(ENABLE_BINARY_ANALYSIS)
   set(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT 1)
 endif()
 
 # C/C++ (default)
-option(ENABLE-C "Enable C/C++ analysis" ON)
-if(ENABLE-C)
+option(ENABLE_C "Enable C/C++ analysis" ON)
+if(DEFINED CACHE{ENABLE-C})
+  message(DEPRECATION "ENABLE-C is deprecated. Use ENABLE_C instead. Example: cmake -DENABLE_C=${ENABLE-C} ...")
+  set(ENABLE_C ${ENABLE-C} CACHE BOOL "Enable C/C++ analysis" FORCE)
+endif()
+if(ENABLE_C)
   set(ROSE_BUILD_CXX_LANGUAGE_SUPPORT 1)
   set(ROSE_BUILD_C_LANGUAGE_SUPPORT 1)
 endif()
 
 # CUDA
-option(ENABLE-CUDA "Enable CUDA analysis" OFF) # OFF because lack of CUDA is not handled properly
-if(ENABLE-CUDA)
+option(ENABLE_CUDA "Enable CUDA analysis" OFF) # OFF because lack of CUDA is not handled properly
+if(DEFINED CACHE{ENABLE-CUDA})
+  message(DEPRECATION "ENABLE-CUDA is deprecated. Use ENABLE_CUDA instead. Example: cmake -DENABLE_CUDA=${ENABLE-CUDA} ...")
+  set(ENABLE_CUDA ${ENABLE-CUDA} CACHE BOOL "Enable CUDA analysis" FORCE)
+endif()
+if(ENABLE_CUDA)
   if(APPLE)
-    message(FATAL_ERROR "CUDA analysis (ENABLE-CUDA) is not supported on macOS")
+    message(FATAL_ERROR "CUDA analysis (ENABLE_CUDA) is not supported on macOS")
   endif()
   find_package(CUDA REQUIRED)
   set(ROSE_BUILD_CUDA_LANGUAGE_SUPPORT 1)
 endif()
 
 # Java
-option(ENABLE-JAVA "Enable Java analysis" OFF)
-if(ENABLE-JAVA)
+option(ENABLE_JAVA "Enable Java analysis" OFF)
+if(DEFINED CACHE{ENABLE-JAVA})
+  message(DEPRECATION "ENABLE-JAVA is deprecated. Use ENABLE_JAVA instead. Example: cmake -DENABLE_JAVA=${ENABLE-JAVA} ...")
+  set(ENABLE_JAVA ${ENABLE-JAVA} CACHE BOOL "Enable Java analysis" FORCE)
+endif()
+if(ENABLE_JAVA)
   message(STATUS "Looking for JAVA ...")
   if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR VERBOSE)
-    message(STATUS "JAVA_ROOT is: ${JAVA_ROOT}") 
-  endif() 
+    message(STATUS "JAVA_ROOT is: ${JAVA_ROOT}")
+  endif()
   include(FindJava)
   find_program(GCJ gcj)
   find_program(GCJH gcjh)
@@ -462,8 +486,12 @@ if(ENABLE-JAVA)
 endif()
 
 # OpenCL
-option(ENABLE-OPENCL "Enable OpenCL analysis" OFF)
-if(ENABLE-OPENCL)
+option(ENABLE_OPENCL "Enable OpenCL analysis" OFF)
+if(DEFINED CACHE{ENABLE-OPENCL})
+  message(DEPRECATION "ENABLE-OPENCL is deprecated. Use ENABLE_OPENCL instead. Example: cmake -DENABLE_OPENCL=${ENABLE-OPENCL} ...")
+  set(ENABLE_OPENCL ${ENABLE-OPENCL} CACHE BOOL "Enable OpenCL analysis" FORCE)
+endif()
+if(ENABLE_OPENCL)
   find_package(OpenCL)
   set(ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT 1)
   find_path(with-opencl-inc NAMES cl.h DOC "For OpenCL runtime library")
@@ -471,11 +499,15 @@ if(ENABLE-OPENCL)
 endif()
 
 # Fortran
-option(ENABLE-FORTRAN "Enable Fortran analysis." OFF) # OFF because lack of OFP is not handled properly
-if(ENABLE-FORTRAN)
-  if(NOT ENABLE-JAVA)
+option(ENABLE_FORTRAN "Enable Fortran analysis." OFF) # OFF because lack of OFP is not handled properly
+if(DEFINED CACHE{ENABLE-FORTRAN})
+  message(DEPRECATION "ENABLE-FORTRAN is deprecated. Use ENABLE_FORTRAN instead. Example: cmake -DENABLE_FORTRAN=${ENABLE-FORTRAN} ...")
+  set(ENABLE_FORTRAN ${ENABLE-FORTRAN} CACHE BOOL "Enable Fortran analysis." FORCE)
+endif()
+if(ENABLE_FORTRAN)
+  if(NOT ENABLE_JAVA)
     message(FATAL_ERROR "Fortran analysis also requires Java analysis.  Either
-    turn on ENABLE-JAVA, or turn off ENABLE-FORTRAN")
+    turn on ENABLE_JAVA, or turn off ENABLE_FORTRAN")
   endif()
   set(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT 1)
   enable_language(Fortran)
@@ -509,15 +541,23 @@ if(ENABLE-FORTRAN)
 endif()
 
 # PHP
-option(ENABLE-PHP "Enable PHP analysis" OFF)
-if(ENABLE-PHP)
+option(ENABLE_PHP "Enable PHP analysis" OFF)
+if(DEFINED CACHE{ENABLE-PHP})
+  message(DEPRECATION "ENABLE-PHP is deprecated. Use ENABLE_PHP instead. Example: cmake -DENABLE_PHP=${ENABLE-PHP} ...")
+  set(ENABLE_PHP ${ENABLE-PHP} CACHE BOOL "Enable PHP analysis" FORCE)
+endif()
+if(ENABLE_PHP)
   set(ROSE_BUILD_PHP_LANGUAGE_SUPPORT 1)
   find_path(with-php php DOC "Specify the prefix where PHP (and phc) is installed")
 endif()
 
 # Python
-option(ENABLE-PYTHON "Enable Python analysis" OFF)
-if(ENABLE-PYTHON)
+option(ENABLE_PYTHON "Enable Python analysis" OFF)
+if(DEFINED CACHE{ENABLE-PYTHON})
+  message(DEPRECATION "ENABLE-PYTHON is deprecated. Use ENABLE_PYTHON instead. Example: cmake -DENABLE_PYTHON=${ENABLE-PYTHON} ...")
+  set(ENABLE_PYTHON ${ENABLE-PYTHON} CACHE BOOL "Enable Python analysis" FORCE)
+endif()
+if(ENABLE_PYTHON)
   set(ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT 1)
   find_package(PythonLibs REQUIRED)
   option(WITH-PYTHON "Build code that requires a Python interpreter" ON)
@@ -527,21 +567,29 @@ if(ENABLE-PYTHON)
 endif()
 
 # Ada
-option(ENABLE-ADA "Enable Ada analysis" OFF)
-if(ENABLE-ADA)
+option(ENABLE_ADA "Enable Ada analysis" OFF)
+if(DEFINED CACHE{ENABLE-ADA})
+  message(DEPRECATION "ENABLE-ADA is deprecated. Use ENABLE_ADA instead. Example: cmake -DENABLE_ADA=${ENABLE-ADA} ...")
+  set(ENABLE_ADA ${ENABLE-ADA} CACHE BOOL "Enable Ada analysis" FORCE)
+endif()
+if(ENABLE_ADA)
   set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME "$ENV{GNAT_HOME}")
   set(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION ON)
 endif()
 
 # Libadalang
 # I think this name is terrible, considering the autotools equivalent is --enable-experimental_libadalang_frontend, but it follows the established pattern
-option(ENABLE-LIBADALANG "Enable experimental libadalang frontend" OFF)
-if(ENABLE-LIBADALANG)
+option(ENABLE_LIBADALANG "Enable experimental libadalang frontend" OFF)
+if(DEFINED CACHE{ENABLE-LIBADALANG})
+  message(DEPRECATION "ENABLE-LIBADALANG is deprecated. Use ENABLE_LIBADALANG instead. Example: cmake -DENABLE_LIBADALANG=${ENABLE-LIBADALANG} ...")
+  set(ENABLE_LIBADALANG ${ENABLE-LIBADALANG} CACHE BOOL "Enable experimental libadalang frontend" FORCE)
+endif()
+if(ENABLE_LIBADALANG)
   set(ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION_GNAT_HOME "$ENV{GNAT_HOME}")
   set(ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION ON)
 endif()
 
-if(ENABLE-ADA OR ENABLE-LIBADALANG)
+if(ENABLE_ADA OR ENABLE_LIBADALANG)
   message(STATUS "Checking the environment variables GNAT_HOME and BOOST_HOME have been set.") 
   
   # Force user to define GNAT_HOME 
@@ -600,14 +648,18 @@ if(ENABLE-ADA OR ENABLE-LIBADALANG)
 endif()
 
 # Jovial
-option(ENABLE-JOVIAL "Enable Jovial analysis" OFF)
-if(ENABLE-JOVIAL)
+option(ENABLE_JOVIAL "Enable Jovial analysis" OFF)
+if(DEFINED CACHE{ENABLE-JOVIAL})
+  message(DEPRECATION "ENABLE-JOVIAL is deprecated. Use ENABLE_JOVIAL instead. Example: cmake -DENABLE_JOVIAL=${ENABLE-JOVIAL} ...")
+  set(ENABLE_JOVIAL ${ENABLE-JOVIAL} CACHE BOOL "Enable Jovial analysis" FORCE)
+endif()
+if(ENABLE_JOVIAL)
   set(ROSE_BUILD_JOVIAL_LANGUAGE_SUPPORT 1)
 endif()
 
 # The C preprocessor is enabled automatically if C, C++, or Fortran is enabled
-if(ENABLE-C OR ENABLE-FORTRAN)
-  set(ENABLE-CPP ON)
+if(ENABLE_C OR ENABLE_FORTRAN)
+  set(ENABLE_CPP ON)
   set(ROSE_BUILD_CPP_LANGUAGE_SUPPORT 1)
 endif()
 
@@ -617,7 +669,12 @@ endif()
 option(EDG_COMPILE "Compile EDG source code if available" ON)
 
 # Clang or EDG is required for frontend
-if(ENABLE-CLANG-FRONTEND)
+option(ENABLE_CLANG_FRONTEND "Enable Clang frontend" OFF)
+if(DEFINED CACHE{ENABLE-CLANG-FRONTEND})
+  message(DEPRECATION "ENABLE-CLANG-FRONTEND is deprecated. Use ENABLE_CLANG_FRONTEND instead. Example: cmake -DENABLE_CLANG_FRONTEND=${ENABLE-CLANG-FRONTEND} ...")
+  set(ENABLE_CLANG_FRONTEND ${ENABLE-CLANG-FRONTEND} CACHE BOOL "Enable Clang frontend" FORCE)
+endif()
+if(ENABLE_CLANG_FRONTEND)
   # Define macro which is used by source code
   set(ROSE_USE_CLANG_FRONTEND 1)
   set(EDG_COMPILE OFF)
@@ -653,9 +710,9 @@ endif()
 
 # Check if we should download the EDG binary tarball. We only need to download it if we're not compiling the
 # EDG source code and ROSE is configured to analyze C (and C++).
-if(NOT have_EDG_source AND NOT ENABLE-CLANG-FRONTEND)
+if(NOT have_EDG_source AND NOT ENABLE_CLANG_FRONTEND)
   set(BINARY_EDG 0)
-  if(ENABLE-C)
+  if(ENABLE_C)
     set(BINARY_EDG 1)
     if(NOT WIN32)
       message(STATUS "EDG - downloading EDG-${EDG_VERSION} binary tar file")
@@ -703,67 +760,133 @@ find_package(Perl)
 # Miscellaneous user-selectable features
 ########################################################################################################################
 
-option(ENABLE-EXAMPLE-TRANSLATORS-DIRECTORY "Enable compilation and testing of exampleTranslators directory" OFF)
-# 1/8/25 we will most likely remove this enable-tests-directory option 
-option(ENABLE-TESTS-DIRECTORY "Enable compilation and testing of the ROSE/tests directory" OFF)
-# 1/15/24 Turn on ctests until new CMake-Build-RHEL7.sh is merged  
-if(NOT ENABLE-TESTS-DIRECTORY AND EXISTS "${PROJECT_SOURCE_DIR}/tests/README.md")
-  set(ENABLE-TESTS-DIRECTORY ON CACHE BOOL "Enable compilation and testing of the ROSE/tests directory" FORCE)
+option(ENABLE_EXAMPLE_TRANSLATORS_DIRECTORY "Enable compilation and testing of exampleTranslators directory" OFF)
+if(DEFINED CACHE{ENABLE-EXAMPLE-TRANSLATORS-DIRECTORY})
+  message(DEPRECATION "ENABLE-EXAMPLE-TRANSLATORS-DIRECTORY is deprecated. Use ENABLE_EXAMPLE_TRANSLATORS_DIRECTORY instead. Example: cmake -DENABLE_EXAMPLE_TRANSLATORS_DIRECTORY=${ENABLE-EXAMPLE-TRANSLATORS-DIRECTORY} ...")
+  set(ENABLE_EXAMPLE_TRANSLATORS_DIRECTORY ${ENABLE-EXAMPLE-TRANSLATORS-DIRECTORY} CACHE BOOL "Enable compilation and testing of exampleTranslators directory" FORCE)
 endif()
-option(ENABLE-TUTORIAL-DIRECTORY "Enable compilation and testing of the ROSE/tutorial directory" OFF)
-option(ENABLE-ADVANCED-WARNINGS "Support for an advanced uniform warning level for ROSE development" OFF)
 
-if(ENABLE-ADVANCED-WARNINGS)
+# 1/8/25 we will most likely remove this enable-tests-directory option
+option(ENABLE_TESTS_DIRECTORY "Enable compilation and testing of the ROSE/tests directory" OFF)
+if(DEFINED CACHE{ENABLE-TESTS-DIRECTORY})
+  message(DEPRECATION "ENABLE-TESTS-DIRECTORY is deprecated. Use ENABLE_TESTS_DIRECTORY instead. Example: cmake -DENABLE_TESTS_DIRECTORY=${ENABLE-TESTS-DIRECTORY} ...")
+  set(ENABLE_TESTS_DIRECTORY ${ENABLE-TESTS-DIRECTORY} CACHE BOOL "Enable compilation and testing of the ROSE/tests directory" FORCE)
+endif()
+
+# 1/15/24 Turn on ctests until new CMake-Build-RHEL7.sh is merged
+if(NOT ENABLE_TESTS_DIRECTORY AND EXISTS "${PROJECT_SOURCE_DIR}/tests/README.md")
+  set(ENABLE_TESTS_DIRECTORY ON CACHE BOOL "Enable compilation and testing of the ROSE/tests directory" FORCE)
+endif()
+
+option(ENABLE_TUTORIAL_DIRECTORY "Enable compilation and testing of the ROSE/tutorial directory" OFF)
+if(DEFINED CACHE{ENABLE-TUTORIAL-DIRECTORY})
+  message(DEPRECATION "ENABLE-TUTORIAL-DIRECTORY is deprecated. Use ENABLE_TUTORIAL_DIRECTORY instead. Example: cmake -DENABLE_TUTORIAL_DIRECTORY=${ENABLE-TUTORIAL-DIRECTORY} ...")
+  set(ENABLE_TUTORIAL_DIRECTORY ${ENABLE-TUTORIAL-DIRECTORY} CACHE BOOL "Enable compilation and testing of the ROSE/tutorial directory" FORCE)
+endif()
+
+option(ENABLE_ADVANCED_WARNINGS "Support for an advanced uniform warning level for ROSE development" OFF)
+if(DEFINED CACHE{ENABLE-ADVANCED-WARNINGS})
+  message(DEPRECATION "ENABLE-ADVANCED-WARNINGS is deprecated. Use ENABLE_ADVANCED_WARNINGS instead. Example: cmake -DENABLE_ADVANCED_WARNINGS=${ENABLE-ADVANCED-WARNINGS} ...")
+  set(ENABLE_ADVANCED_WARNINGS ${ENABLE-ADVANCED-WARNINGS} CACHE BOOL "Support for an advanced uniform warning level for ROSE development" FORCE)
+endif()
+
+if(ENABLE_ADVANCED_WARNINGS)
   message(WARNING "Using an advanced uniform warning level for ROSE development")
   set(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT 1)
 endif()
 
-option(ENABLE-ASSEMBLY-SEMANTICS "Enable semantics-based analysis of assembly code" OFF)
-option(ENABLE-CANDL "Support for ScopLib" OFF)
+option(ENABLE_ASSEMBLY_SEMANTICS "Enable semantics-based analysis of assembly code" OFF)
+if(DEFINED CACHE{ENABLE-ASSEMBLY-SEMANTICS})
+  message(DEPRECATION "ENABLE-ASSEMBLY-SEMANTICS is deprecated. Use ENABLE_ASSEMBLY_SEMANTICS instead. Example: cmake -DENABLE_ASSEMBLY_SEMANTICS=${ENABLE-ASSEMBLY-SEMANTICS} ...")
+  set(ENABLE_ASSEMBLY_SEMANTICS ${ENABLE-ASSEMBLY-SEMANTICS} CACHE BOOL "Enable semantics-based analysis of assembly code" FORCE)
+endif()
 
-if(ENABLE-CANDL)
+option(ENABLE_CANDL "Support for ScopLib" OFF)
+if(DEFINED CACHE{ENABLE-CANDL})
+  message(DEPRECATION "ENABLE-CANDL is deprecated. Use ENABLE_CANDL instead. Example: cmake -DENABLE_CANDL=${ENABLE-CANDL} ...")
+  set(ENABLE_CANDL ${ENABLE-CANDL} CACHE BOOL "Support for ScopLib" FORCE)
+endif()
+if(ENABLE_CANDL)
   find_path(with-candl "include/candl.h"
     DOC "Path to a valid Candl installation")
 endif()
 
-option(ENABLE-CLOOG "Support for Cloog" OFF)
-if(ENABLE-CLOOG)
+option(ENABLE_CLOOG "Support for Cloog" OFF)
+if(DEFINED CACHE{ENABLE-CLOOG})
+  message(DEPRECATION "ENABLE-CLOOG is deprecated. Use ENABLE_CLOOG instead. Example: cmake -DENABLE_CLOOG=${ENABLE-CLOOG} ...")
+  set(ENABLE_CLOOG ${ENABLE-CLOOG} CACHE BOOL "Support for Cloog" FORCE)
+endif()
+if(ENABLE_CLOOG)
   find_path(with-cloog "include/cloog.h"
     DOC "Path to a valid Cloog installation")
 endif()
 
-option(ENABLE-COMPASS2 "build the Compass2 static analysis tool" OFF)
-option(ENABLE-EDG-CUDA "Build EDG 4.0 with CUDA support" OFF)
-option(ENABLE-EDG-OPENCL "Build EDG 4.0 with OpenCL support" OFF)
+option(ENABLE_COMPASS2 "build the Compass2 static analysis tool" OFF)
+if(DEFINED CACHE{ENABLE-COMPASS2})
+  message(DEPRECATION "ENABLE-COMPASS2 is deprecated. Use ENABLE_COMPASS2 instead. Example: cmake -DENABLE_COMPASS2=${ENABLE-COMPASS2} ...")
+  set(ENABLE_COMPASS2 ${ENABLE-COMPASS2} CACHE BOOL "build the Compass2 static analysis tool" FORCE)
+endif()
 
-option(ENABLE-EDG_UNION_STRUCT_DEBUGGING "Should EDG Union/Struct debugging support be used?" OFF)
-if(ENABLE-EDG_UNION_STRUCT_DEBUGGING)
+option(ENABLE_EDG_CUDA "Build EDG 4.0 with CUDA support" OFF)
+if(DEFINED CACHE{ENABLE-EDG-CUDA})
+  message(DEPRECATION "ENABLE-EDG-CUDA is deprecated. Use ENABLE_EDG_CUDA instead. Example: cmake -DENABLE_EDG_CUDA=${ENABLE-EDG-CUDA} ...")
+  set(ENABLE_EDG_CUDA ${ENABLE-EDG-CUDA} CACHE BOOL "Build EDG 4.0 with CUDA support" FORCE)
+endif()
+
+option(ENABLE_EDG_OPENCL "Build EDG 4.0 with OpenCL support" OFF)
+if(DEFINED CACHE{ENABLE-EDG-OPENCL})
+  message(DEPRECATION "ENABLE-EDG-OPENCL is deprecated. Use ENABLE_EDG_OPENCL instead. Example: cmake -DENABLE_EDG_OPENCL=${ENABLE-EDG-OPENCL} ...")
+  set(ENABLE_EDG_OPENCL ${ENABLE-EDG-OPENCL} CACHE BOOL "Build EDG 4.0 with OpenCL support" FORCE)
+endif()
+
+option(ENABLE_EDG_UNION_STRUCT_DEBUGGING "Should EDG Union/Struct debugging support be used?" OFF)
+if(DEFINED CACHE{ENABLE-EDG_UNION_STRUCT_DEBUGGING})
+  message(DEPRECATION "ENABLE-EDG_UNION_STRUCT_DEBUGGING is deprecated. Use ENABLE_EDG_UNION_STRUCT_DEBUGGING instead. Example: cmake -DENABLE_EDG_UNION_STRUCT_DEBUGGING=${ENABLE-EDG_UNION_STRUCT_DEBUGGING} ...")
+  set(ENABLE_EDG_UNION_STRUCT_DEBUGGING ${ENABLE-EDG_UNION_STRUCT_DEBUGGING} CACHE BOOL "Should EDG Union/Struct debugging support be used?" FORCE)
+endif()
+if(ENABLE_EDG_UNION_STRUCT_DEBUGGING)
   set(USE_ROSE_EDG_DEBUGGING_SUPPORT 1)
 endif()
 
-option(ENABLE-FLTK "Enable FLTK")
-if(ENABLE-FLTK)
+option(ENABLE_FLTK "Enable FLTK")
+if(DEFINED CACHE{ENABLE-FLTK})
+  message(DEPRECATION "ENABLE-FLTK is deprecated. Use ENABLE_FLTK instead. Example: cmake -DENABLE_FLTK=${ENABLE-FLTK} ...")
+  set(ENABLE_FLTK ${ENABLE-FLTK} CACHE BOOL "Enable FLTK" FORCE)
+endif()
+if(ENABLE_FLTK)
   find_package(FLTK REQUIRED)
 endif()
 
-option(ENABLE-GNU-EXTENSIONS "Enable internal support in ROSE for GNU language extensions" OFF)
-if(ENABLE-GNU-EXTENSIONS)
+option(ENABLE_GNU_EXTENSIONS "Enable internal support in ROSE for GNU language extensions" OFF)
+if(DEFINED CACHE{ENABLE-GNU-EXTENSIONS})
+  message(DEPRECATION "ENABLE-GNU-EXTENSIONS is deprecated. Use ENABLE_GNU_EXTENSIONS instead. Example: cmake -DENABLE_GNU_EXTENSIONS=${ENABLE-GNU-EXTENSIONS} ...")
+  set(ENABLE_GNU_EXTENSIONS ${ENABLE-GNU-EXTENSIONS} CACHE BOOL "Enable internal support in ROSE for GNU language extensions" FORCE)
+endif()
+if(ENABLE_GNU_EXTENSIONS)
   set(ROSE_SUPPORT_GNU_EXTENSIONS TRUE)
 endif()
 
-option(ENABLE-INTERNALFRONTENDDEVELOPMENT "Enable development mode to reduce files required to support work on
+option(ENABLE_INTERNALFRONTENDDEVELOPMENT "Enable development mode to reduce files required to support work on
   language frontends" OFF)
-if(ENABLE-INTERNALFRONTENDDEVELOPMENT)
+if(DEFINED CACHE{ENABLE-INTERNALFRONTENDDEVELOPMENT})
+  message(DEPRECATION "ENABLE-INTERNALFRONTENDDEVELOPMENT is deprecated. Use ENABLE_INTERNALFRONTENDDEVELOPMENT instead. Example: cmake -DENABLE_INTERNALFRONTENDDEVELOPMENT=${ENABLE-INTERNALFRONTENDDEVELOPMENT} ...")
+  set(ENABLE_INTERNALFRONTENDDEVELOPMENT ${ENABLE-INTERNALFRONTENDDEVELOPMENT} CACHE BOOL "Enable development mode to reduce files required to support work on language frontends" FORCE)
+endif()
+if(ENABLE_INTERNALFRONTENDDEVELOPMENT)
   set(ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT 1)
 endif()
 
-option(ENABLE-MICROSOFT-EXTENSIONS "Enable internal support in ROSE for GNU language extensions" OFF)
-if(ENABLE-MICROSOFT-EXTENSIONS)
+option(ENABLE_MICROSOFT_EXTENSIONS "Enable internal support in ROSE for GNU language extensions" OFF)
+if(DEFINED CACHE{ENABLE-MICROSOFT-EXTENSIONS})
+  message(DEPRECATION "ENABLE-MICROSOFT-EXTENSIONS is deprecated. Use ENABLE_MICROSOFT_EXTENSIONS instead. Example: cmake -DENABLE_MICROSOFT_EXTENSIONS=${ENABLE-MICROSOFT-EXTENSIONS} ...")
+  set(ENABLE_MICROSOFT_EXTENSIONS ${ENABLE-MICROSOFT-EXTENSIONS} CACHE BOOL "Enable internal support in ROSE for GNU language extensions" FORCE)
+endif()
+if(ENABLE_MICROSOFT_EXTENSIONS)
   set(ROSE_SUPPORT_MICROSOFT_EXTENSIONS TRUE)
   set(ROSE_USE_MICROSOFT_EXTENSIONS TRUE)
 endif()
 
-if(ENABLE-JOVIAL) # Find dependencies Aterm and Stratego 
+if(ENABLE_JOVIAL) # Find dependencies Aterm and Stratego 
   if(NOT DEFINED ATERM_ROOT) # Require location of aterm to be specified by the user at config time  
     message(FATAL_ERROR "Jovial Support Requires Aterm. Please define -DATERM_ROOT with the path of an Aterm installation on your system")
   endif() 
@@ -786,40 +909,68 @@ if(ENABLE-JOVIAL) # Find dependencies Aterm and Stratego
   find_sglri()
 endif()
 
-option(ENABLE-PPL "Support for Parma Polyhedral Library" OFF)
-if(ENABLE-PPL)
+option(ENABLE_PPL "Support for Parma Polyhedral Library" OFF)
+if(DEFINED CACHE{ENABLE-PPL})
+  message(DEPRECATION "ENABLE-PPL is deprecated. Use ENABLE_PPL instead. Example: cmake -DENABLE_PPL=${ENABLE-PPL} ...")
+  set(ENABLE_PPL ${ENABLE-PPL} CACHE BOOL "Support for Parma Polyhedral Library" FORCE)
+endif()
+if(ENABLE_PPL)
   find_path(with-ppl "include/ppl.h" DOC "Path to Parma Polyhedral Library installation")
   find_library(libppl ppl)
 endif()
 
-option(ENABLE-PURIFY-API "Enable purify API in code" OFF)
-if(ENABLE-PURIFY-API)
+option(ENABLE_PURIFY_API "Enable purify API in code" OFF)
+if(DEFINED CACHE{ENABLE-PURIFY-API})
+  message(DEPRECATION "ENABLE-PURIFY-API is deprecated. Use ENABLE_PURIFY_API instead. Example: cmake -DENABLE_PURIFY_API=${ENABLE-PURIFY-API} ...")
+  set(ENABLE_PURIFY_API ${ENABLE-PURIFY-API} CACHE BOOL "Enable purify API in code" FORCE)
+endif()
+if(ENABLE_PURIFY_API)
   set(USE_PURIFY_API 1)
 endif()
 
-option(ENABLE-PURIFY-LINKER "Augment the linker with purify" OFF)
-if(ENABLE-PURIFY-LINKER)
+option(ENABLE_PURIFY_LINKER "Augment the linker with purify" OFF)
+if(DEFINED CACHE{ENABLE-PURIFY-LINKER})
+  message(DEPRECATION "ENABLE-PURIFY-LINKER is deprecated. Use ENABLE_PURIFY_LINKER instead. Example: cmake -DENABLE_PURIFY_LINKER=${ENABLE-PURIFY-LINKER} ...")
+  set(ENABLE_PURIFY_LINKER ${ENABLE-PURIFY-LINKER} CACHE BOOL "Augment the linker with purify" FORCE)
+endif()
+if(ENABLE_PURIFY_LINKER)
   set(USE_PURIFY 1)
   set(USE_PURIFY_LINKER 1)
 endif()
 
-option(ENABLE-ROSEHPCT "enable build of the ROSE-HPCT module" OFF)
-if(ENABLE-ROSEHPCT)
+option(ENABLE_ROSEHPCT "enable build of the ROSE-HPCT module" OFF)
+if(DEFINED CACHE{ENABLE-ROSEHPCT})
+  message(DEPRECATION "ENABLE-ROSEHPCT is deprecated. Use ENABLE_ROSEHPCT instead. Example: cmake -DENABLE_ROSEHPCT=${ENABLE-ROSEHPCT} ...")
+  set(ENABLE_ROSEHPCT ${ENABLE-ROSEHPCT} CACHE BOOL "enable build of the ROSE-HPCT module" FORCE)
+endif()
+if(ENABLE_ROSEHPCT)
   set(ROSE_BUILD_ROSEHPCT 1)
 endif()
 
-option(ENABLE-ROSE-OPENGL "enable openGL" OFF)
-if(ENABLE-ROSE-OPENGL)
+option(ENABLE_ROSE_OPENGL "enable openGL" OFF)
+if(DEFINED CACHE{ENABLE-ROSE-OPENGL})
+  message(DEPRECATION "ENABLE-ROSE-OPENGL is deprecated. Use ENABLE_ROSE_OPENGL instead. Example: cmake -DENABLE_ROSE_OPENGL=${ENABLE-ROSE-OPENGL} ...")
+  set(ENABLE_ROSE_OPENGL ${ENABLE-ROSE-OPENGL} CACHE BOOL "enable openGL" FORCE)
+endif()
+if(ENABLE_ROSE_OPENGL)
   find_package(OpenGL)
   find_package(GLUT)
 endif()
 
-option(ENABLE-SCOPLIB "Support for ScopLib" OFF)
-if(ENABLE-SCOPLIB)
+option(ENABLE_SCOPLIB "Support for ScopLib" OFF)
+if(DEFINED CACHE{ENABLE-SCOPLIB})
+  message(DEPRECATION "ENABLE-SCOPLIB is deprecated. Use ENABLE_SCOPLIB instead. Example: cmake -DENABLE_SCOPLIB=${ENABLE-SCOPLIB} ...")
+  set(ENABLE_SCOPLIB ${ENABLE-SCOPLIB} CACHE BOOL "Support for ScopLib" FORCE)
+endif()
+if(ENABLE_SCOPLIB)
   find_path(with-scoplib "include/scolib.h" DOC "Path to a valid ScopLib installation")
 endif()
 
-option(ENABLE-POET "Enable POET support" OFF)
+option(ENABLE_POET "Enable POET support" OFF)
+if(DEFINED CACHE{ENABLE-POET})
+  message(DEPRECATION "ENABLE-POET is deprecated. Use ENABLE_POET instead. Example: cmake -DENABLE_POET=${ENABLE-POET} ...")
+  set(ENABLE_POET ${ENABLE-POET} CACHE BOOL "Enable POET support" FORCE)
+endif()
 
 # We are removing BISON 
 include(FindBison)
@@ -840,8 +991,12 @@ endif()
 
 # FIXME: Deprecated. Remove this and the FindYamlcpp file once YAML-CPP has been eliminated from the ROSE source code.
 # To use YAML-CPP, set YAMLCPP_ROOT to the YAML-CPP installation prefix. To avoid YAML-CPP set YAMLCPP_ROOT=no
-option(ENABLE-YAML-DEPRECATED "Option to Enable Yaml, which is now deprecated" OFF)
-if(ENABLE_YAML) 
+option(ENABLE_YAML_DEPRECATED "Option to Enable Yaml, which is now deprecated" OFF)
+if(DEFINED CACHE{ENABLE-YAML-DEPRECATED})
+  message(DEPRECATION "ENABLE-YAML-DEPRECATED is deprecated. Use ENABLE_YAML_DEPRECATED instead. Example: cmake -DENABLE_YAML_DEPRECATED=${ENABLE-YAML-DEPRECATED} ...")
+  set(ENABLE_YAML_DEPRECATED ${ENABLE-YAML-DEPRECATED} CACHE BOOL "Option to Enable Yaml, which is now deprecated" FORCE)
+endif()
+if(ENABLE_YAML)
   include(FindYamlcpp)
   find_yamlcpp()
 endif() 
@@ -882,14 +1037,18 @@ if(WITH-ROSEQT)
 endif()
 
 # To use libreadline, set READLINE_ROOT to the readline installation prefix. To avoid readline set READLINE_ROOT=no
-option(ENABLE-READLINE "Option to enable Readline" OFF)
-if(ENABLE-READLINE)
+option(ENABLE_READLINE "Option to enable Readline" OFF)
+if(DEFINED CACHE{ENABLE-READLINE})
+  message(DEPRECATION "ENABLE-READLINE is deprecated. Use ENABLE_READLINE instead. Example: cmake -DENABLE_READLINE=${ENABLE-READLINE} ...")
+  set(ENABLE_READLINE ${ENABLE-READLINE} CACHE BOOL "Option to enable Readline" FORCE)
+endif()
+if(ENABLE_READLINE)
   include(FindReadline)
   find_readline()
-endif() 
+endif()
 
 # To use libspot, set SPOT_ROOT to the spot installation prefix. To avoid spot set SPOT_ROOT=no
-if(ENABLE-C)
+if(ENABLE_C)
   include(FindSpot)
   find_spot()
 endif()
@@ -957,7 +1116,7 @@ if(with-wine)
   set(ROSE_USE_WINDOWS_ANALYSIS_SUPPORT ON)
 endif()
 
-if((NOT WIN32) AND (ENABLE-BINARY-ANALYSIS))
+if((NOT WIN32) AND (ENABLE_BINARY_ANALYSIS))
   include(FindOpenSSL)
   include(FindSqlite3)
   find_sqlite3()
@@ -967,20 +1126,20 @@ find_package(FLEX)
 
 # Find libm.so, libquadmath.so for C Support on Linux and find librt.so for Linux systems
 if(NOT WIN32 AND NOT APPLE)
-  if(ENABLE-C) 
-    # libc.so 
-    find_library(C_LIB c REQUIRED) 
-    # libm.so 
+  if(ENABLE_C)
+    # libc.so
+    find_library(C_LIB c REQUIRED)
+    # libm.so
     find_library(M_LIB m REQUIRED)
   endif()
-  # libdl.so 
-  find_library(DL_LIB dl REQUIRED) 
+  # libdl.so
+  find_library(DL_LIB dl REQUIRED)
   # librt.so, Linux/POSIX Timers and clocks
   find_library(RT_LIB rt QUIET)
 endif()
 
 # Only use quadmath if C/C++ is enable and it is available (also exclude windows)
-if(ENABLE-C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
+if(ENABLE_C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
   set(COMPILE_TEST_SOURCE "
   #include <quadmath.h>
   int main() { return 0; }")
@@ -1104,18 +1263,18 @@ if(WIN32)
   list(APPEND link_with_libraries shlwapi.lib psapi.lib)
 endif()
 
-# Special Case for rose tool 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND ENABLE-CPP)
-  if(NOT ENABLE-C) 
+# Special Case for rose tool
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND ENABLE_CPP)
+  if(NOT ENABLE_C)
     list(APPEND link_with_libraries stdc++)
-  endif() 
+  endif()
 endif() 
 if(HAVE_LIBDL)
   list(APPEND link_with_libraries dl)
 endif()
 
 # Check compilers and version numbers. The module is located in src/cmake/modules.
-if(ENABLE-C)
+if(ENABLE_C)
   include(roseChooseBackendCompiler)
   include(roseGenerateBackendCompilerSpecificHeaders)
   install(DIRECTORY ${CMAKE_BINARY_DIR}/include-staging/ DESTINATION include/edg)
@@ -1389,7 +1548,7 @@ if(SQLITE3_FOUND_LIB)
   list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/src/roseExtensions/sqlite3x)
 endif()
 
-if(ENABLE-POET)
+if(ENABLE_POET)
   list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET)
 endif()
 
@@ -1501,7 +1660,7 @@ add_subdirectory(scripts)
 configure_file(cmake/CTestCustom.cmake.in ${CMAKE_BINARY_DIR}/CTestCustom.cmake @ONLY)
 
 #TODO: better support for other compilers & operating systems
-if(ENABLE-C)
+if(ENABLE_C)
   set(C_INCLUDE_STRING "{\"${BACKEND_C_COMPILER_NAME_WITHOUT_PATH}_HEADERS\"")
   set(CXX_INCLUDE_STRING "{\"${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}_HEADERS\"")
   find_program(shell sh)
@@ -1609,8 +1768,8 @@ else()
   )
 endif()
 
-# 1/15/24 Turn on ctests until new CMake-Build-RHEL7.sh is merged  
-if(ENABLE-TESTS-DIRECTORY)
+# 1/15/24 Turn on ctests until new CMake-Build-RHEL7.sh is merged
+if(ENABLE_TESTS_DIRECTORY)
   enable_testing()
   add_subdirectory(tests)
   add_subdirectory(tutorial)

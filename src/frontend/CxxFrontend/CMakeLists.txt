@@ -4,7 +4,7 @@
 #   Otherwise we can download a precompiled version from the ROSE team.
 
 #if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-if(ENABLE-C)
+if(ENABLE_C)
   if(ROSE_USE_CLANG_FRONTEND)
     message(STATUS "Selecting Clang for C/C++ frontend")
     # Autoconf reference: libroseCxxlibraries = frontend/CxxFrontend/Clang/libroseClangFrontend.la
@@ -17,4 +17,4 @@ if(ENABLE-C)
       add_subdirectory(EDG)
     endif()
   endif()
-endif() # ENABLE-C
+endif() # ENABLE_C

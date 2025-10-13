@@ -1,4 +1,4 @@
-if(ENABLE-FORTRAN)
+if(ENABLE_FORTRAN)
   
   ########### install files ###############
   set(jar_file
