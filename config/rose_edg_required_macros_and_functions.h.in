@@ -61,7 +61,7 @@
 #      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c++17.h"
 #    elif __cplusplus == 202002L
 #      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c++20.h"
-#    elif __cplusplus == 202302L
+#    elif __cplusplus == 202300L || __cplusplus == 202302L
 #      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c++23.h"
 #    elif __cplusplus > 202302L
 #      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_c++26.h"
@@ -103,7 +103,7 @@
 #      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu++17.h"
 #    elif __cplusplus == 202002L
 #      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu++20.h"
-#    elif __cplusplus == 202302L
+#    elif __cplusplus == 202300L || __cplusplus == 202302L
 #      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu++23.h"
 #    elif __cplusplus > 202302L
 #      include "compiler_macro_hdrs/rose_edg_required_compiler_macros_gnu++26.h"
@@ -193,8 +193,28 @@
 #  ifdef __cpp_concepts
 #    undef __cpp_concepts
 #  endif
+#endif
+
+// PL (10/13/2025): Make sure we don't enable __cpp_if_consteval for >=C++23 because these are not
+// supported by the frontend yet. We also disable float128 and bfloat16 because these types are
+// unrecognized by EDG as of EDG 6.5.
+#if __cplusplus >= 202300L
 #  ifdef __cpp_if_consteval
 #    undef __cpp_if_consteval
+#  endif
+#  ifdef __STDCPP_FLOAT128_T__
+#    undef __STDCPP_FLOAT128_T__
+#  endif
+// PL (10/13/2025): While this type is represented in the EDG IL as of EDG 6.5, it appears to have
+// incomplete support at this time. The resulting type of decltype(0.0bf16) (i.e., what GCC uses to
+// define the std::bfloat16_t type) is actually a 32-bit floating-point type, meaning that
+// std::is_same_v<std::bfloat16_t, std::float32_t> returns true on EDG 6.5 + GCC 13 in C++23 mode.
+// Similarly, std::is_same_v<std::bfloat16_t, __bf16> returns false in the same configuration.
+// Until EDG is able to properly support bfloat16, we need to disable it for now, because this
+// causes a plethora of issues when attempting to parse C++23 headers due to bfloat16 and float32
+// being the same type to EDG.
+#  ifdef __STDCPP_BFLOAT16_T__
+#    undef __STDCPP_BFLOAT16_T__
 #  endif
 #endif
 
