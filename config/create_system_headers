@@ -228,8 +228,7 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
      # PL (10/2/2025): Instead of the old approach of gathering one set of compiler macros each time ROSE is configured,
      # we want to generate an assortment of macros corresponding to each major C and C++ version.
 
-     # This bit of code is run twice, once with $langauge = "c" and once with $language = "c++". During each time this code
-     # is run, we iterate through all their respective versions (both the strict versions and the GNU versions) and aggregate
+     # We iterate through all the C and C++ versions (both the strict versions and the GNU versions) and aggregate
      # the compiler macros into respective header files, which are conditionally included into code run under `rose-compiler`
      # depending on the value of the -std flag.
 
@@ -238,40 +237,39 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
      # c++20 will not be recognized by GNU 8.5), we just create an empty header file for the corresponding language version.
      # While an empty set of macros is not necessarily the "correct" behavior, we have no way of knowing from the backend
      # compiler what macros to include, and code will not pass the backend compiler anyway in this case.
-       if [ "x$language" = xc ]; then
-           versions="c89 gnu89 c99 gnu99 c11 gnu11 c17 gnu17 c23 gnu23 c26 gnu26"
-           c89_alt="c90"
-           gnu89_alt="gnu90"
-           c99_alt="c9x"
-           gnu99_alt="gnu9x"
-           c11_alt="c1x"
-           gnu11_alt="gnu1x"
-           c17_alt="c18"
-           gnu17_alt="gnu18"
-           c23_alt="c2x"
-           gnu23_alt="gnu2x"
-           c26_aly="c2y"
-           gnu26_alt="gnu2y"
-       elif [ "x$language" = "xc++" ]; then
-           versions="c++98 gnu++98 c++11 gnu++11 c++14 gnu++14 c++17 gnu++17 c++20 gnu++20 c++23 gnu++23 c++26 gnu++26"
-           cpp98_alt="c++03"
-           gnupp98_alt="gnu++03"
-           cpp11_alt="c++0x"
-           gnupp11_alt="gnu++0x"
-           cpp14_alt="c++1y"
-           gnupp14_alt="gnu++1y"
-           cpp17_alt="c++1z"
-           gnupp17_alt="gnu++1z"
-           cpp20_alt="c++2a"
-           gnupp20_alt="gnu++2a"
-           cpp23_alt="c++2b"
-           gnupp23_alt="gnu++2b"
-           cpp26_alt="c++2c"
-           gnupp26_alt="gnu++2c"
-       else
-           echo "$0: error: expected language to be one of: c, c++, got $language" >&2
-           exit 1
-       fi
+
+     # C versions
+     versions="c89 gnu89 c99 gnu99 c11 gnu11 c17 gnu17 c23 gnu23 c26 gnu26"
+     # C++ versions
+     versions="$versions c++98 gnu++98 c++11 gnu++11 c++14 gnu++14 c++17 gnu++17 c++20 gnu++20 c++23 gnu++23 c++26 gnu++26"
+
+     # Alternate names
+     c89_alt="c90"
+     gnu89_alt="gnu90"
+     c99_alt="c9x"
+     gnu99_alt="gnu9x"
+     c11_alt="c1x"
+     gnu11_alt="gnu1x"
+     c17_alt="c18"
+     gnu17_alt="gnu18"
+     c23_alt="c2x"
+     gnu23_alt="gnu2x"
+     c26_aly="c2y"
+     gnu26_alt="gnu2y"
+     cpp98_alt="c++03"
+     gnupp98_alt="gnu++03"
+     cpp11_alt="c++0x"
+     gnupp11_alt="gnu++0x"
+     cpp14_alt="c++1y"
+     gnupp14_alt="gnu++1y"
+     cpp17_alt="c++1z"
+     gnupp17_alt="gnu++1z"
+     cpp20_alt="c++2a"
+     gnupp20_alt="gnu++2a"
+     cpp23_alt="c++2b"
+     gnupp23_alt="gnu++2b"
+     cpp26_alt="c++2c"
+     gnupp26_alt="gnu++2c"
 
      # PL (9/26/2025): Iterate over all the versions in the given language standard
        for version in $versions ; do
@@ -279,11 +277,20 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
         # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
           tmpFile="`mktemp -t roseconfigtemp$version-XXXXXXXXXX`"
 
+        # Because we have to generate both the C and C++ headers no matter what $language is (due to the fact that we want
+        # to be able to specify -std=c++ with a C source and -std=c with a C++ source), we need to temporarily create a new
+        # language flag to pass to the backend compiler which switches depending on $version.
+          if [[ $version == *"++"* ]] ; then
+              tmpLanguage="c++"
+          else
+              tmpLanguage="c"
+          fi
+
         # PL (10/2/2025): Pipe error output (2>) to /dev/null because we expect most backend compilers will not support
         # every language standard listed above. `config/macro_names_to_remove` includes macros we don't want to keep, such
         # as `__GNUC__` and `__STRICT_ANSI__` (provided through the EDG CLI), and `__has_include` (GNU tries to #define this
         # to `__has_include__`, which is not recognized by EDG).
-          "$1" -E -dM -x $language -std=$version /dev/null 2> /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
+          "$1" -E -dM -x $tmpLanguage -std=$version /dev/null 2> /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
 
         # PL (10/3/2025): Some compilers use alternate names for WIP language versions. For example, GNU 13 calls C23 "c2x".
         # We want to support these alternate names, so if our temp file has no text in it (i.e., if the earlier invokation
@@ -293,7 +300,7 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
           if [ ! -s "$tmpFile" ]; then
               secondaryVersionName=$(echo "${version}_alt" | sed --expression="s/\+/p/g") # Build the other version's variable name
               secondaryVersion=${!secondaryVersionName} # Bash indirection to look up the variable by the name stored in $secondaryVersionName
-              "$1" -E -dM -x $language -std=$secondaryVersion /dev/null 2> /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
+              "$1" -E -dM -x $tmpLanguage -std=$secondaryVersion /dev/null 2> /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
           fi
 
           if [ $? -ne 0 ]; then
