@@ -325,7 +325,7 @@ void dbgStream::init(string title, string dbgFileName, string workDir, string im
         try {                                                                                           
         indexFile.open(dbgFileName.c_str());
         }                                                                                               
-        catch (ofstream::failure e)                                                                     
+        catch (const ofstream::failure& e)                                                                     
         { cout << "dbgStream::init() ERROR opening file \""<<dbgFileName<<"\" for writing!"; exit(-1); }
 
         indexFile << "<frameset cols=\"20%,80%\">\n";
@@ -338,7 +338,7 @@ void dbgStream::init(string title, string dbgFileName, string workDir, string im
         try {
                 dbgFile.open((workDir+"/detail.html").c_str());
         }
-        catch (ofstream::failure e)
+        catch (const ofstream::failure& e)
         { cout << "dbgStream::init() ERROR opening file \""<<workDir+"/summary.html\" for writing!"; exit(-1); }
 
         
@@ -350,7 +350,7 @@ void dbgStream::init(string title, string dbgFileName, string workDir, string im
         try {
                 summaryF.open((workDir+"/summary.html").c_str());
         }
-        catch (ofstream::failure e)
+        catch (const ofstream::failure& e)
         { cout << "dbgStream::init() ERROR opening file \""<<workDir+"/summary.html\" for writing!"; exit(-1); }
         summaryF << "<html>\n";
         summaryF << "\t<head>\n";

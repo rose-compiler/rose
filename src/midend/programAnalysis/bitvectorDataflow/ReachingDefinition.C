@@ -238,7 +238,7 @@ operator()( AstInterface& fa, const AstNodePtr& h,  FunctionSideEffectInterface*
 
   AstNodePtr body = h;
   if (!fa.IsFunctionDefinition( h, 0, &pars, 0, &body))
-     ;//assert(false);
+  { /* assert(false); */ }
 
   ReachingDefinitionBase base;
   base.collect_refs( fa, body, anal, &pars);

@@ -387,7 +387,7 @@ class FiniteVariablesProductLattice : public virtual VariablesProductLattice, pu
         }
         
         FiniteVariablesProductLattice(const FiniteVariablesProductLattice& that) : 
-                VariablesProductLattice(that), FiniteProductLattice()
+                ProductLattice(), VariablesProductLattice(that), FiniteProductLattice()
         {
                 verifyFinite();
         }

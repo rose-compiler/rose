@@ -127,8 +127,12 @@ top:
                     // but it is being parsed as
                     //    ((isSgIfStmt(..) && cn.getIndex()==1) || cn.getIndex==2)
                     // [Robb Matzke 2019-07-10]
+
+                    // PL (10/14/2025): Seconding Robb's impressions. This is issuing a warning. I am putting in parenthesis.
+                    // This will change the logic but I anticipate this should fix a bug. If it breaks something, the pipeline
+                    // should hopefully catch it.
                        (isSgIfStmt(cn.getNode()) &&
-                        cn.getIndex()==1 || cn.getIndex()==2);
+                        (cn.getIndex()==1 || cn.getIndex()==2));
         }
         
 }

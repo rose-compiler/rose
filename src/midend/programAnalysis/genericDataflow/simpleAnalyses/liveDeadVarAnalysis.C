@@ -677,7 +677,7 @@ VarsExprsProductLattice::VarsExprsProductLattice
 
 // Create a copy of that. It is assumed that the types of all the lattices in  VarsExprsProductLattice that are
 // the same as in this.
-VarsExprsProductLattice::VarsExprsProductLattice(const VarsExprsProductLattice& that) : n(that.n), state(that.state)
+VarsExprsProductLattice::VarsExprsProductLattice(const VarsExprsProductLattice& that) : ProductLattice(), n(that.n), state(that.state)
 {
         //Dbg::dbg << "    VarsExprsProductLattice::VarsExprsProductLattice(const VarsExprsProductLattice& that)"<<endl;
         allVarLattice=NULL;
@@ -1220,7 +1220,7 @@ FiniteVarsExprsProductLattice::FiniteVarsExprsProductLattice(
 }
 
 FiniteVarsExprsProductLattice::FiniteVarsExprsProductLattice(const FiniteVarsExprsProductLattice& that) : 
-        VarsExprsProductLattice(that), FiniteProductLattice()
+        ProductLattice(), VarsExprsProductLattice(that), FiniteProductLattice()
 {
         //Dbg::dbg << "FiniteVarsExprsProductLattice::copy n="<<n.getNode()<<" = <"<<Dbg::escape(n.getNode()->unparseToString())<<" | "<<n.getNode()->class_name()<<" | "<<n.getIndex()<<">"<<endl;
         verifyFinite();
