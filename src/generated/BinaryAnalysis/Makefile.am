@@ -290,6 +290,7 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmField.C \
         SgAsmJvmFieldTable.C \
         SgAsmJvmFileHeader.C \
+        SgAsmJvmIndexedAttribute.C \
         SgAsmJvmInnerClasses.C \
         SgAsmJvmInnerClassesEntry.C \
         SgAsmJvmInstruction.C \

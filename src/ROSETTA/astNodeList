@@ -1081,3 +1081,4 @@ SgIntegralType
 SgSignedIntegralType
 SgUnsignedIntegralType
 SgFloatingType
+SgAsmJvmIndexedAttribute

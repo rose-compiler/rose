@@ -101,8 +101,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmNestMembers(parent);
   }
   else if (name == "PermittedSubclasses") { // 4.7.31
-    ASSERT_require2(false, "Need attribute PermittedSubclasses\n");
-    //TODO
+    return new SgAsmJvmIndexedAttribute(parent, SgAsmJvmIndexedAttribute::ATTR_PermittedSubclasses);
   }
 
   // skip attribute
@@ -1730,7 +1729,55 @@ void SgAsmJvmNestMembers::dump(FILE*, const char*, ssize_t) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.31 The PermittedSubclasses Attribute. PermittedSubclasses_attribute represented by the TODO class.
+// 4.7.31 The PermittedSubclasses Attribute. PermittedSubclasses_attribute represented by the SgAsmJvmIndexedAttribute class.
 //
+SgAsmJvmIndexedAttribute::SgAsmJvmIndexedAttribute(SgAsmJvmAttributeTable* table, unsigned type)
+{
+  initializeProperties();
+  set_parent(table);
+  set_attribute_type(type);
+}
+
+SgAsmJvmIndexedAttribute* SgAsmJvmIndexedAttribute::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+
+  // Ensure that we have a specialized type by this point
+  ASSERT_require2(get_attribute_type() != SgAsmJvmIndexedAttribute::ATTR_NONE, "SgAsmJvmIndexedAttribute::attribute_type is not set\n");
+
+  uint16_t numIndices;
+  Jvm::read_value(pool, numIndices);
+
+  // Must use local list because get_indices() returns const&
+  SgUnsigned16List u16List;
+  for (int ii = 0; ii < numIndices; ii++) {
+    uint16_t index;
+    Jvm::read_value(pool, index);
+    u16List.push_back(index);
+  }
+  set_indices(u16List);
+
+  return this;
+}
+
+void SgAsmJvmIndexedAttribute::unparse(std::ostream &os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+
+  // Ensure that we have a specialized type by this point
+  ASSERT_require2(get_attribute_type() != SgAsmJvmIndexedAttribute::ATTR_NONE, "SgAsmJvmIndexedAttribute::attribute_type is not set\n");
+
+  uint16_t numIndices = get_indices().size();
+  Jvm::writeValue(os, numIndices);
+
+  for (uint16_t index : get_indices()) {
+    Jvm::writeValue(os, index);
+  }
+}
+
+void SgAsmJvmIndexedAttribute::dump(FILE*, const char*, ssize_t) const
+{
+  mlog[WARN] << "SgAsmJvmIndexedAttribute::dump() not implemented yet\n";
+}
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

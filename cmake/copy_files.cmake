@@ -391,6 +391,7 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmVectorType.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmVoidType.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmX86Instruction.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmIndexedAttribute.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmRuntimeAnnotation.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmRuntimeAnnotationPair.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmRuntimeAnnotationValue.h

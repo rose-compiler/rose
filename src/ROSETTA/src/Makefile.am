@@ -369,6 +369,7 @@ rosetta_generated_definitions =				\
 	  SgAsmJvmField.h				\
 	  SgAsmJvmFieldTable.h				\
 	  SgAsmJvmFileHeader.h				\
+	  SgAsmJvmIndexedAttribute.h			\
 	  SgAsmJvmInnerClassesEntry.h			\
 	  SgAsmJvmInnerClasses.h			\
 	  SgAsmJvmInstruction.h				\

@@ -10221,7 +10221,7 @@ public:
     /** Property: isVisible
      *
      *  The isVisible property is true for a RuntimeVisibleParameterAnnotations attribute,
-     *  false for a RuntimeInvisibleParameterAnnotations attribute. 
+     *  false for a RuntimeInvisibleParameterAnnotations attribute.
      *  
      *  @{ */
     bool const& get_isVisible() const;
@@ -12692,6 +12692,136 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmIndexedAttribute           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmIndexedAttribute);
+IS_SERIALIZABLE(AsmJvmIndexedAttribute);
+
+#ifndef DOCUMENTATION
+AsmJvmIndexedAttribute.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmJvmIndexedAttribute);
+#if defined(SgAsmJvmIndexedAttribute_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmIndexedAttribute_HEADERS
+
+#ifdef DOCUMENTATION
+/** JVM IndexedAttribute.
+ *
+ *  The IndexedAttribute class can represent one of a collection of attributes that contain a
+ *  list of uint16_t indices.
+ *
+ *  The PermittedSubclasses attribute is a variable-length attribute in the attributes table of a ClassFile
+ *  structure (section 4.1). The PermittedSubclasses attribute records the classes and interfaces that are
+ *  authorized to directly extend or implement the current class or interface (section 5.3.5). See section
+ *  4.7.31 of the JVM specification.
+ */
+class SgAsmJvmIndexedAttribute: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmIndexedAttribute.setDataPrototype(
+        "unsigned", "attribute_type", "= SgAsmJvmIndexedAttribute::ATTR_NONE",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmIndexedAttribute.setDataPrototype(
+        "SgUnsigned16List", "indices", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmIndexedAttribute);
+#if defined(SgAsmJvmIndexedAttribute_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmIndexedAttribute -----------------------
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmIndexedAttribute");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        s & BOOST_SERIALIZATION_NVP(p_attribute_type);
+        s & BOOST_SERIALIZATION_NVP(p_indices);
+        debugSerializationEnd("SgAsmJvmIndexedAttribute");
+    }
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Local types
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Type of JVM attribute.
+     *
+     * Attribute will have list of indices. */
+    enum AttributeType {
+        ATTR_NONE,
+        ATTR_PermittedSubclasses,
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+public:
+    /** Property: attribute_type
+     *
+     *  Indicates which JVM attribute is represented by this class instance.
+     *
+     *  @{ */
+    unsigned const& get_attribute_type() const;
+    void set_attribute_type(unsigned const&);
+    /** @} */
+
+public:
+    /** Property: indices.
+     *
+     *  Each value in the indices array must be a valid index into the constant_pool table.
+     *
+     *  @{ */
+    SgUnsigned16List const& get_indices() const;
+    void set_indices(SgUnsigned16List const&);
+    /** @} */
+ public:
+    /** Initialize the IndexedAttribute attribute before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    SgAsmJvmIndexedAttribute(SgAsmJvmAttributeTable* table, unsigned type);
+
+    /** Initialize the attribute by parsing the file. */
+    virtual SgAsmJvmIndexedAttribute* parse(SgAsmJvmConstantPool* pool) override;
+
+    /** Write the local variable table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmIndexedAttribute();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmIndexedAttribute();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmIndexedAttribute_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmFileHeader           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -14486,7 +14616,7 @@ public:
 public:
     /** Property: Exception table.
      *
-     *  Points to the AST node that represents the exception table for this code attribute. 
+     *  Points to the AST node that represents the exception table for this code attribute.
      *  
      *  @{ */
     SgAsmJvmExceptionTable* const& get_exception_table() const;
@@ -14496,7 +14626,7 @@ public:
 public:
     /** Property: Attribute table.
      *
-     *  Points to the AST node that represents the attribute table for this code attribute. 
+     *  Points to the AST node that represents the attribute table for this code attribute.
      *  
      *  @{ */
     SgAsmJvmAttributeTable* const& get_attribute_table() const;
@@ -15016,6 +15146,7 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
         | AsmJvmDeprecated
         | AsmJvmEnclosingMethod
         | AsmJvmExceptions
+        | AsmJvmIndexedAttribute
         | AsmJvmInnerClasses
         | AsmJvmLineNumberTable
         | AsmJvmLocalVariableTable
@@ -39188,7 +39319,7 @@ private:
 public:
     /** Property: EventFlags.
      *
-     *  A 4-byte bitmask of type TypeAttribute. 
+     *  A 4-byte bitmask of type TypeAttribute.
      *  
      *  @{ */
     uint32_t const& get_EventFlags() const;
@@ -39692,7 +39823,7 @@ private:
 public:
     /** Property: EventFlags.
      *
-     *  A 2-byte bitmask of type EventAttribute. 
+     *  A 2-byte bitmask of type EventAttribute.
      *  
      *  @{ */
     uint16_t const& get_EventFlags() const;

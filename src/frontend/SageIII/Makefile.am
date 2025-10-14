@@ -411,6 +411,7 @@ GENERATED_SOURCE =						\
         SgAsmJvmField.h						\
         SgAsmJvmFieldTable.h					\
         SgAsmJvmFileHeader.h					\
+        SgAsmJvmIndexedAttribute.h				\
         SgAsmJvmInnerClassesEntry.h				\
         SgAsmJvmInnerClasses.h					\
         SgAsmJvmInstruction.h					\
@@ -830,6 +831,7 @@ GENERATED_SOURCE =						\
 	SgAsmJvmField.h						\
 	SgAsmJvmFieldTable.h					\
 	SgAsmJvmFileHeader.h					\
+	SgAsmJvmIndexedAttribute.h				\
 	SgAsmJvmInnerClassesEntry.h				\
 	SgAsmJvmInnerClasses.h					\
 	SgAsmJvmInstruction.h					\
@@ -1396,6 +1398,7 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmField.h				\
    SgAsmJvmFieldTable.h				\
    SgAsmJvmFileHeader.h				\
+   SgAsmJvmIndexedAttribute.h			\
    SgAsmJvmInnerClassesEntry.h			\
    SgAsmJvmInnerClasses.h			\
    SgAsmJvmInstruction.h			\

@@ -286,6 +286,7 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmField.C
   SgAsmJvmFieldTable.C
   SgAsmJvmFileHeader.C
+  SgAsmJvmIndexedAttribute.C
   SgAsmJvmInnerClasses.C
   SgAsmJvmInnerClassesEntry.C
   SgAsmJvmInstruction.C
