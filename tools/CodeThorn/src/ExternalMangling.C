@@ -278,20 +278,23 @@ namespace
 
   struct ExternalMangler : sg::DispatchHandler<std::string>
   {
-      enum
+      enum Arguments : bool
       {
-        WITH_RETURN_TYPE    = true,
-        NO_RETURN_TYPE      = !WITH_RETURN_TYPE
-      };
+        WITH_UNIQUE_MAIN    = true,
+        NO_UNQIUE_MAIN      = !WITH_UNIQUE_MAIN,
 
-      enum
-      {
+        WITH_RETURN_TYPE    = true,
+        NO_RETURN_TYPE      = !WITH_RETURN_TYPE,
+
         ARRAY_TO_POINTER    = true,
         NO_ARRAY_TO_POINTER = !WITH_RETURN_TYPE
       };
 
       explicit
-      ExternalMangler(bool uniqueMain = false, bool useReturnType = WITH_RETURN_TYPE, bool arrayToPointer = NO_ARRAY_TO_POINTER)
+      ExternalMangler( bool uniqueMain = NO_UNQIUE_MAIN,
+                       bool useReturnType = WITH_RETURN_TYPE,
+                       bool arrayToPointer = NO_ARRAY_TO_POINTER
+                     )
       : Base(),
         makeMainUnique(uniqueMain),
         withReturnType(useReturnType),
