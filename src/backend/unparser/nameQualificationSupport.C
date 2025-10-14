@@ -830,10 +830,12 @@ namespace
   {
     while ((lhsPos != lhsLim) && (rhsPos != rhsLim) && (*lhsPos == *rhsPos))
     {
-      if ((lhsPos != lhsLim) && areSpecAndBody(*lhsPos, *(lhsPos+1)))
+      ScopePathIterator lhsNxt = std::next(lhsPos);
+      if ((lhsNxt != lhsLim) && areSpecAndBody(*lhsPos, *lhsNxt))
         ++lhsPos;
 
-      if ((rhsPos != rhsLim) && areSpecAndBody(*rhsPos, *(rhsPos+1)))
+      ScopePathIterator rhsNxt = std::next(rhsPos);
+      if ((rhsNxt != rhsLim) && areSpecAndBody(*rhsPos, *rhsNxt))
         ++rhsPos;
 
       ++lhsPos; ++rhsPos;
