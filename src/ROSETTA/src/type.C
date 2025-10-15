@@ -238,14 +238,14 @@ Grammar::setUpTypes ()
 
      NEW_NONTERMINAL_MACRO (IntegralType,
          SignedIntegralType | UnsignedIntegralType | TypeChar       | TypeWchar |
-         TypeChar16         | TypeChar32           | AdaModularType,
+         TypeChar16         | TypeChar32           | AdaModularType | TypeBool,
        "IntegralType","IntegralTypeTag", false);
 
-     NEW_NONTERMINAL_MACRO (FloatingType,
+     NEW_NONTERMINAL_MACRO (FloatingPointType,
          TypeFloat      | TypeFloat128 | TypeFloat80  | TypeDouble |
          TypeLongDouble | TypeFloat16  | TypeBFloat16 | TypeFp16   |
          TypeFloat32x   | TypeFloat64x | TypeFloat32  | TypeFloat64,
-       "FloatingType","FloatingTypeTag", false);
+       "FloatingPointType","FloatingPointTypeTag", false);
 
   // DQ (5/7/2004): Added TemplateType to be derived from SgType (this leaves room later to
   // build more specific types for template classes ? template function, etc. unless they
@@ -255,15 +255,15 @@ Grammar::setUpTypes ()
   // likely there should only be a single TemplateType).
      NEW_NONTERMINAL_MACRO (Type,
           TypeUnknown     | TypeVoid       | TypeGlobalVoid    | TypeTuple           |
-          TypeString      | TypeBool       | PointerType       | JovialBitType       |
+          TypeString      | RangeType      | PointerType       | JovialBitType       |
           ReferenceType   | NamedType      | ModifierType      | FunctionType        |
           ArrayType       | TypeEllipse    | TemplateType      | QualifiedNameType   |
           TypeComplex     | TypeImaginary  | TypeDefault       | TypeCAFTeam         |
           TypeCrayPointer | TypeLabel      | JavaUnionType     | RvalueReferenceType |
           TypeNullptr     | DeclType       | TypeOfType        | TypeMatrix          |
           TypeFixed       | AutoType       | AdaAccessType     | AdaSubtype          |
-          AdaDiscreteType | AdaDerivedType | AdaSubroutineType | RangeType           |
-          IntegralType    | FloatingType,
+          AdaDiscreteType | AdaDerivedType | AdaSubroutineType |
+          IntegralType    | FloatingPointType,
         "Type","TypeTag", false);
 
      //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
@@ -374,8 +374,8 @@ Grammar::setUpTypes ()
      Type.setSubTreeFunctionSource                 ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
      Type.excludeFunctionSource                    ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
 
-     FloatingType.setSubTreeFunctionSource         ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
-     FloatingType.excludeFunctionSource            ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     FloatingPointType.setSubTreeFunctionSource    ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     FloatingPointType.excludeFunctionSource       ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
 
      IntegralType.setSubTreeFunctionSource         ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
      IntegralType.excludeFunctionSource            ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );

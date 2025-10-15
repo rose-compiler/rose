@@ -2802,135 +2802,12 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
                break;
              }
 
-       // DQ (11/20/2011): Adding support for template declarations in the AST.
-          case V_SgTemplateType:
-             {
-               SgTemplateType* templateType = isSgTemplateType(strippedType);
-               ASSERT_not_null(templateType);
-#if 0
-               SgTemplateDeclaration* declaration = isSgTemplateDeclaration(templateType->get_declaration());
-               ASSERT_not_null(declaration);
-
-               return_declaration = declaration;
-#else
-               return_declaration = NULL;
-#endif
-               break;
-             }
-
-          case V_SgFunctionType:
-          case V_SgMemberFunctionType:
-             {
-            // Not clear if I have to resolve declarations associated with function types.
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 0)
-               mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::associatedDeclaration(): Case of SgFunctionType not implemented strippedType = %s \n",strippedType->class_name().c_str());
-#endif
-               return_declaration = NULL;
-               break;
-             }
-
-       // DQ (6/25/2011): Demonstrated by calling unparseToString on all possible type.
-          case V_SgTypeDefault:
-
-       // Some scopes don't have an associated declaration (return NULL in these cases).
-       // Also missing some of the Fortran specific scopes.
-          case V_SgTypeInt:
-          case V_SgTypeUnsignedLong:
-          case V_SgTypeUnsignedLongLong:
-          case V_SgTypeUnsignedChar:
-          case V_SgTypeUnsignedShort:
-          case V_SgTypeUnsignedInt:
-          case V_SgTypeSignedChar:
-          case V_SgTypeSignedShort:
-          case V_SgTypeSignedInt:
-          case V_SgTypeSignedLong:
-          case V_SgTypeSignedLongLong:
-
-       // DQ (11/6/2014): Added support for C++11 rvalue references.
-          case V_SgRvalueReferenceType:
-
-       // DQ (3/24/2014): Added support for 128-bit integers.
-          case V_SgTypeSigned128bitInteger:
-          case V_SgTypeUnsigned128bitInteger:
-
-       // DQ (7/30/2014): Adding C++11 support.
-          case V_SgTypeNullptr:
-
-       // DQ (8/12/2014): Adding C++11 support.
-          case V_SgDeclType:
-
-       // DQ (3/28/2015): Adding GNU C language extension.
-          case V_SgTypeOfType:
-
-       // DQ (4/29/2016): Added support for complex types.
-          case V_SgTypeComplex:
-          //  pp (7/16/2016) Matrix and tuple  (Matlab)
-          case V_SgTypeMatrix:
-          case V_SgTypeTuple:
-          case V_SgTypeShort:
-          case V_SgTypeLong:
-          case V_SgTypeLongLong:
-          case V_SgTypeVoid:
-          case V_SgTypeChar:
-
-       // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
-          case V_SgTypeChar16:
-          case V_SgTypeChar32:
-
-          case V_SgTypeFloat:
-          case V_SgTypeDouble:
-          case V_SgTypeLongDouble:
-          case V_SgTypeBool:
-          case V_SgTypeWchar:
-
-          case V_SgTypeFloat80:
-          case V_SgTypeFloat128:
-
-          case V_SgTypeFloat16:
-          case V_SgTypeFp16:
-          case V_SgTypeBFloat16:
-          case V_SgTypeFloat32x:
-          case V_SgTypeFloat64x:
-          case V_SgTypeFloat32:
-          case V_SgTypeFloat64:
-
-          case V_SgTypeFixed:
-          case V_SgJovialTableType:
-       // TV (09/06/2018): Type of an unresolved auto keyword
-          case V_SgAutoType:
-             {
-               return_declaration = NULL;
-               break;
-             }
-
           case V_SgNonrealType:
              {
                SgNonrealType * nrtype = isSgNonrealType(strippedType);
                ASSERT_not_null(nrtype);
                return_declaration = nrtype->get_declaration();
                ASSERT_not_null(return_declaration);
-               break;
-             }
-
-       // DQ (4/10/2019): Needing to support this case after recompiling ROSE (debugging SgPointerMemberType
-       // and cleaning up handling of SgInitializedName name qualification support).
-          case V_SgTypeEllipse:
-             {
-               return_declaration = NULL;
-               break;
-             }
-
-       // DQ (4/11/2019): This case appears in the testRoseHeaders_03.C test code (ROSE compiling ROSE).
-          case V_SgTypeUnknown:
-             {
-               return_declaration = NULL;
-               break;
-             }
-
-       // DQ (4/12/2019): This case appears in the roseTests/astInterfaceTests/inputbuildIfStmt.C code.
-          case V_SgTypeString:
-             {
-               return_declaration = NULL;
                break;
              }
 
@@ -2942,22 +2819,22 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
                ASSERT_not_null(return_declaration);
                break;
              }
-          // Liao, Oct 4, 2021. We skip translation of Ada AST from some system packages. We also ignore them in the unparser.
-          case V_SgAdaSubtype:
-          case V_SgAdaModularType:
-          case V_SgAdaDerivedType:
-          case V_SgAdaDiscreteType:
-          case V_SgAdaAccessType:
-             {
-               return_declaration = NULL;
-               break;
-             }
 
-       // Catch anything that migh have been missed (and exit so it can be identified and fixed).
+       // Catch anything that might have been missed (and exit so it can be identified and fixed).
           default:
              {
-               mfprintf(mlog [ WARN ] ) ("Default reached in NameQualificationTraversal::associatedDeclaration() type = %s strippedType = %s \n",type->class_name().c_str(),strippedType->class_name().c_str());
-               ROSE_ABORT();
+            // PL (10/15/2025): Replacing long list of cases with a simple check for isSgNamedType.
+            // Recommended change by DQ.
+               if (isSgNamedType(strippedType))
+                  {
+                    mfprintf(mlog [ WARN ] ) ("Default reached in NameQualificationTraversal::associatedDeclaration() type = %s strippedType = %s \n",type->class_name().c_str(),strippedType->class_name().c_str());
+                    ROSE_ABORT();
+                  }
+                 else
+                  {
+                  // All types that are not an SgNamedType have a nullptr declaration.
+                    return_declaration = nullptr;
+                  }
              }
         }
 

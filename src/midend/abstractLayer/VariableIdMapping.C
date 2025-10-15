@@ -123,12 +123,12 @@ bool VariableIdMapping::isOfEnumType(VariableId varId) {
 
 bool VariableIdMapping::isOfFloatingPointType(VariableId varId) {
   SgType* type=getType(varId);
-  // PL (10/13/2025): Now that the SgType hierarchy is deepened and all floating-point types are under SgFloatingType, we can replace
-  // long and complicated expression with a simple isSgFloatingType check.
+  // PL (10/13/2025): Now that the SgType hierarchy is deepened and all floating-point types are under SgFloatingPointType, we can replace
+  // long and complicated expression with a simple isSgFloatingPointType check.
 
   // return isSgTypeFloat(type)||isSgTypeDouble(type)||isSgTypeLongDouble(type)||isSgTypeFloat80(type)||isSgTypeFloat128(type)||isSgTypeFloat16(type)||
   //   isSgTypeFp16(type)||isSgTypeBFloat16(type)||isSgTypeFloat32x(type)||isSgTypeFloat64x(type)||isSgTypeFloat32(type)||isSgTypeFloat64(type);
-  return isSgFloatingType(type);
+  return isSgFloatingPointType(type);
 }
 
 bool VariableIdMapping::isOfPointerType(VariableId varId) {

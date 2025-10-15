@@ -63,7 +63,7 @@ namespace SageInterface
     // We want to strip off typedef chain, and const modifiers etc.
     t = t->stripTypedefsAndModifiers();
 
-    if (isSgFloatingType(t) || isSgIntegralType(t)) {
+    if (isSgFloatingPointType(t) || isSgIntegralType(t)) {
       return true;
     }
     else {
@@ -72,7 +72,6 @@ namespace SageInterface
 //           return isScalarType(isSgTypedefType(t)->get_base_type());
         case V_SgTypeVoid :
         case V_SgTypeString:
-        case V_SgTypeBool:
           // DQ (8/27/2006): change name of SgComplex to SgTypeComplex (for consistency) and added SgTypeImaginary (C99 type).
         case V_SgTypeComplex:
         case V_SgTypeImaginary:

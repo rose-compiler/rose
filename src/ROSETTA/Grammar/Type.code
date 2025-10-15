@@ -1080,11 +1080,11 @@ SgType::isIntegerType() const
 
      while (t->variant() == T_TYPEDEF)
         {
-          t = ((SgTypedefType *) t)->get_base_type();
+          t = isSgTypedefType(t)->get_base_type();
           ROSE_ASSERT(t != NULL);
         }
 
-      return isSgIntegralType(t) || isSgTypeBool(t);
+      return isSgIntegralType(t);
    }
 
 bool
@@ -1095,11 +1095,11 @@ SgType::isFloatType() const
 
      while (t->variant() == T_TYPEDEF)
         {
-          t = ((SgTypedefType *) t)->get_base_type();
+          t = isSgTypedefType(t)->get_base_type();
           ROSE_ASSERT(t != NULL);
         }
 
-     return isSgFloatingType(t);
+     return isSgFloatingPointType(t);
    }
 
 bool
@@ -1110,7 +1110,7 @@ SgType::isUnsignedType() const
 
      while (t->variant() == T_TYPEDEF)
         {
-          t = ((SgTypedefType *) t)->get_base_type();
+          t = isSgTypedefType(t)->get_base_type();
           ROSE_ASSERT(t != NULL);
         }
 
@@ -1125,7 +1125,7 @@ SgType::isPrimativeType() const
   // Note that a typedef type is not a primative type, even if it resolves to such a type (because it can be name qualified).
   // A typedef type may be otherwise type equvalent to a primative type.
 
-     if (isSgFloatingType(this) || isSgIntegralType(this)
+     if (isSgFloatingPointType(this) || isSgIntegralType(this))
         {
           return true; // 1
         }
@@ -1133,8 +1133,6 @@ SgType::isPrimativeType() const
         {
           switch (variant())
              {
-               case T_BOOL:
-
             // Other kinds of float types.
                case T_COMPLEX:
                case T_IMAGINARY:

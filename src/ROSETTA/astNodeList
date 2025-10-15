@@ -1080,7 +1080,7 @@ SgAsmJvmRuntimeVisibilityParamAnnotations
 SgIntegralType
 SgSignedIntegralType
 SgUnsignedIntegralType
-SgFloatingType
+SgFloatingPointType
 SgAsmJvmIndexedAttribute
 SgTypeFloat16
 SgTypeFp16
