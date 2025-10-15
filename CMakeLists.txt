@@ -697,7 +697,7 @@ endif()
 # Check that at least one analysis is enabled
 if(NOT ENABLE_BINARY_ANALYSIS AND NOT ENABLE_C AND NOT ENABLE_CUDA AND NOT ENABLE_JAVA AND
    NOT ENABLE_OPENCL AND NOT ENABLE_FORTRAN AND NOT ENABLE_PHP AND NOT ENABLE_PYTHON AND
-   NOT ENABLE_ADA AND NOT ENABLE_JOVIAL AND NOT ENABLE_NULL)
+   NOT ENABLE_ADA AND NOT ENABLE_JOVIAL AND NOT ENABLE_LIBADALANG AND NOT ENABLE_NULL)
   message(FATAL_ERROR
     "ROSE must be configured with at least one analysis feature enabled. The following "
     "are the most common features, but see the ROSE documentation for the extensive, complete "

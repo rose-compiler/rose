@@ -18,6 +18,6 @@ target_link_directories(experimentalRoseLibadalang PUBLIC
   /opt/rosedev/GNAT/2021/lib/gcc/x86_64-pc-linux-gnu/10.3.1/adalib
 )
 
-target_link_libraries(experimentalRoseLibadalang adalang)
+target_link_libraries(experimentalRoseLibadalang PRIVATE adalang)
 
 install(FILES AdaMaker.h DESTINATION include/rose)

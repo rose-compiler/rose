@@ -1771,8 +1771,8 @@ mkParameter( const SgInitializedNamePtrList& parms,
   si::fixVariableDeclaration(&parmDecl, &scope);
   parmDecl.set_parent(&scope);
 
-  //ADA_ASSERT(parmDecl.get_definingDeclaration() == nullptr);
-  //ADA_ASSERT(parmDecl.get_firstNondefiningDeclaration() == nullptr);
+  ASSERT_require(parmDecl.get_definingDeclaration() == nullptr);
+  ASSERT_require(parmDecl.get_firstNondefiningDeclaration() == nullptr);
 
   parmDecl.set_firstNondefiningDeclaration(&parmDecl);
   return parmDecl;

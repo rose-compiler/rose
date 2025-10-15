@@ -178,6 +178,12 @@ void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_c
     units_to_check.push_back(ada_get_analysis_unit_from_provider(ctx, &parent_name_text, ADA_ANALYSIS_UNIT_KIND_UNIT_SPECIFICATION, nullptr, 0));
   }
 
+  ada_text_type file_name;
+  //Get the file name this node is from
+  ada_ada_node_full_sloc_image(lal_root, &file_name);
+  std::string current_unit_name = Libadalang_ROSE_Translation::dot_ada_text_type_to_string(file_name);
+  mlog[Sawyer::Message::INFO] << "From unit " << current_unit_name << ":\n";
+
   //Look over the units_to_check, & add any valid ones to comp_units
   int new_units_start = comp_units_storage.size();
 
@@ -207,12 +213,6 @@ void find_additional_compilation_units(ada_base_entity* lal_root, ada_analysis_c
       }
       continue;
     }
-
-    ada_text_type file_name;
-    //Get the file name this node is from
-    ada_ada_node_full_sloc_image(lal_root, &file_name);
-    std::string current_unit_name = Libadalang_ROSE_Translation::dot_ada_text_type_to_string(file_name);
-    mlog[Sawyer::Message::INFO] << "From unit " << current_unit_name << ":\n";
 
     ada_base_entity lal_new_root;
     ada_unit_root(unit_to_check, &lal_new_root);

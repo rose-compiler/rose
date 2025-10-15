@@ -588,7 +588,80 @@ namespace {
       }
     }
 
-    //TODO Also libadalangDecls?
+    //Iterate through libadalangDecls, find all decls that come from this package, & add them to extendedDeclsByName
+    //TODO handle overloaded subps
+    for(const std::pair<int, SgDeclarationStatement*>& decl_pair : libadalangDecls()){
+      SgDeclarationStatement* decl_stmt = decl_pair.second;
+      const std::string& decl_stmt_filename = decl_stmt->getFilenameString();
+
+      if(decl_stmt_filename.size() >= package_specification_name.size()
+         && boost::algorithm::ends_with(decl_stmt_filename, package_specification_name)){
+
+        //Check the type of this decl & add it to extendedSubpsByName
+        VariantT decl_stmt_class = decl_stmt->variantT();
+        std::string name_to_add = "NameError";
+        switch(decl_stmt_class){
+          case V_SgAdaGenericDecl:
+            {
+              //Generic decls
+              SgAdaGenericDecl* gen_decl = isSgAdaGenericDecl(decl_stmt);
+              //Get the non-generic & see if it is a subp decl
+              SgFunctionDeclaration* base_decl = isSgFunctionDeclaration(gen_decl->get_declaration());
+              if(base_decl != nullptr){
+                name_to_add = base_decl->get_name().getString();
+              }
+              break;
+            }
+          case V_SgAdaFunctionRenamingDecl:
+            {
+              //Renaming decls
+              SgAdaFunctionRenamingDecl* func_renaming_decl = isSgAdaFunctionRenamingDecl(decl_stmt);
+              name_to_add = func_renaming_decl->get_name().getString();
+              break;
+            }
+          case V_SgFunctionDeclaration:
+            {
+              //Standard subp decls
+              SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(decl_stmt);
+              name_to_add = func_decl->get_name().getString();
+              break;
+            }
+          case V_SgAdaGenericInstanceDecl:
+            {
+              //TODO In s-auxdec.ads, these are always private, so we don't need to add them.
+              //  Not sure if that will always be the case
+              SgAdaGenericInstanceDecl* gen_inst_decl = isSgAdaGenericInstanceDecl(decl_stmt);
+              break;
+            }
+          case V_SgAdaPackageSpecDecl:
+            {
+              //The package itself; don't add
+              SgAdaPackageSpecDecl* package_spec_decl = isSgAdaPackageSpecDecl(decl_stmt);
+              break;
+            }
+          case V_SgPragmaDeclaration:
+            {
+              //Don't add pragmas; they shouldn't be referenced by anything
+              SgPragmaDeclaration* pragma_decl = isSgPragmaDeclaration(decl_stmt);
+              break;
+            }
+          case V_SgImportStatement:
+            {
+              //With clause; Don't add
+              SgImportStatement* import_decl = isSgImportStatement(decl_stmt);
+              break;
+            }
+          default:
+            logError() << "Unhandled SgDeclarationStatement subtype " << decl_stmt_class << " in handleExtendSystem!\n";
+            break;
+        }
+
+        if(name_to_add != "NameError"){
+          const AdaIdentifier subp_name_string(name_to_add);
+          extendedSubpsByName().insert({subp_name_string, decl_stmt});
+        }
+      }
+    }
 
   }
 
@@ -3945,6 +4018,7 @@ void handleDeclaration(ada_base_entity* lal_element, AstContext ctx, bool isPriv
         SgScopeStatement&      logicalScope = SG_DEREF(parent_scope);
         const bool             renamingAsBody = false; //definedByRenamingID(decl.Corresponding_Body, ctx); //TODO Can lal do this?
         ParameterCompletion    complete{&subp_params, ctx};
+
         SgFunctionDeclaration& sgnode  = renamingAsBody
                                             ? mkAdaFunctionRenamingDecl(ident, logicalScope, rettype, std::move(complete))
                                             : mkProcedureDecl_nondef(ident, logicalScope, rettype, std::move(complete))
@@ -5901,7 +5975,13 @@ processInheritedSubroutines( SgNamedType& derivedType,
          ada_base_entity lal_tydef = lal_tydef_deref;
          ada_base_entity lal_super_type;
          ada_derived_type_def_f_subtype_indication(&lal_tydef, &lal_super_type);
-         ada_type_expr_p_designated_type_decl(&lal_super_type, &lal_super_type);
+         int designated_decl_return = ada_type_expr_p_designated_type_decl(&lal_super_type, &lal_super_type);
+         if(designated_decl_return == 0 || ada_node_is_null(&lal_super_type)){
+           //The normal link to the super type isn't working, this may be
+           //  an extended type, or just completely broken
+           //TODO handle extended types here
+           return;
+         }
 
          //Make sure that lal_super_type isn't a subtype
          ada_node_kind_enum lal_super_type_kind = ada_node_kind(&lal_super_type);

@@ -77,6 +77,9 @@ namespace{
   /// stores a mapping from string to variable names in packages used with "pragma extend_system"
   map_t<AdaIdentifier, SgInitializedName*> extendedVarsByNameMap;
 
+  /// stores a mapping from string to subps in packages used with "pragma extend_system"
+  map_t<AdaIdentifier, SgDeclarationStatement*> extendedSubpsByNameMap;
+
 } //end unnamed namespace
 
 map_t<int, SgInitializedName*>&                                libadalangVars() { return libadalangVarsMap;      }
@@ -94,6 +97,7 @@ std::vector<SgExpression*>&                                     operatorExprs() 
 map_t<OperatorKey, std::vector<OperatorDesc> >&               operatorSupport() { return operatorSupportMap;     }
 map_t<AdaIdentifier, SgType*>&                            extendedTypesByName() { return extendedTypesByNameMap; }
 map_t<AdaIdentifier, SgInitializedName*>&                  extendedVarsByName() { return extendedVarsByNameMap;  }
+map_t<AdaIdentifier, SgDeclarationStatement*>&            extendedSubpsByName() { return extendedSubpsByNameMap; }
 
 namespace
 {
@@ -593,8 +597,7 @@ namespace{
   {
 
     //First, make sure this is a unit node
-    ada_node_kind_enum kind;
-    kind = ada_node_kind(lal_unit);
+    ada_node_kind_enum kind = ada_node_kind(lal_unit);
 
     if(kind != ada_compilation_unit){
         logError() << "handleUnit provided incorrect node kind: " << kind << "!\n";

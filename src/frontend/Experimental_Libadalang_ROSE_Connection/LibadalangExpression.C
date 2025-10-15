@@ -889,67 +889,68 @@ namespace
 
     ada_node_kind_enum kind = ada_node_kind(lal_expr);
 
-    std::string expr_name;
-    if(kind != ada_string_literal){ //Strings won't work for this section, need to use a different method
-      //Get the hash of the first corresponding declaration
-      ada_base_entity corresponding_decl;
-      int cor_decl_return = ada_expr_p_first_corresponding_decl(lal_expr, &corresponding_decl);
-      bool decl_exists = true;
-      int decl_hash = 0;
-      if(cor_decl_return != 0 && ada_node_is_null(&corresponding_decl)){
-        //If we don't have a p_first_corresponding_decl, set a flag
-        decl_exists = false;
-      } else {
-        decl_hash = hash_node(&corresponding_decl);
-      }
-
-      //Get the name of this expr
-      expr_name = canonical_text_as_string(lal_expr);
-      logInfo() << "In getOperator, expr_name is " << expr_name << std::endl;
-
-      // PP 11/18/22
-      // UNCLEAR_LINK_1
-      // under some unclear circumstances a provided = operator and a generated /= may have the
-      //   same Corresponding_Name_Declaration, but different Corresponding_Name_Definition.
-      //   => just use the Corresponding_Name_Definition
-      // ROSE regression tests: dbase.ads, dbase.adb, dbase_test.adb
-      // was: if (SgDeclarationStatement* dcl = findFirst(asisDecls(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
-      /*if (SgDeclarationStatement* dcl = findFirst(libadalangDecls(), expr.Corresponding_Name_Definition))
-      {
-        SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
-
-        return SG_DEREF(res);
-      }*/ //TODO Does Libadalang do def pointers?
-
-      //LAL_REP_ISSUE: Libadalang can be wrong about what the first corresponding definition is.
-      // Libadalang does not link correctly to instantiated operators from generic packages with parameters.
-      // This is most obvious with instantiations of the Ada.Numerics.Generic_Elementary_Functions, Ada.Numerics.Generic_Complex_Types,
-      // & Ada.Numerics.Generic_Complex_Elementary_Functions packages. All of these packages define the "**" operator for new types,
-      // & any subsequent calls to these new operators may not have the correct first_corresponding_decl/referenced_decl properties.
-      // This issue only happens with operators when they are used with prefix call syntax (e.g. "**"(1, 1)), since they cannot be 
-      // scoped otherwise.
-      // First seen in cxg1005.adb
-      if(decl_exists){
-        if (SgDeclarationStatement* dcl = findFirst(libadalangDecls(), decl_hash)) {
-          const std::string dclname = si::Ada::convertRoseOperatorNameToAdaName(si::get_name(dcl));
-          const bool        sameOperatorName = boost::iequals(dclname, expr_name);
-          logInfo() << "dclname is " << dclname <<", lal_expr name is " << expr_name << std::endl;
-
-          if (sameOperatorName) {
-            SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
-
-            return SG_DEREF(res);
-          }
-        }
-      }
+    //Get the hash of the first corresponding declaration
+    ada_base_entity corresponding_decl;
+    int cor_decl_return = ada_expr_p_first_corresponding_decl(lal_expr, &corresponding_decl);
+    bool decl_exists = true;
+    int decl_hash = 0;
+    if(cor_decl_return != 0 && ada_node_is_null(&corresponding_decl)){
+      //If we don't have a p_first_corresponding_decl, set a flag
+      decl_exists = false;
     } else {
-      ada_text_type denoted_value;
-      ada_string_literal_p_denoted_value(lal_expr, &denoted_value);
-      expr_name = dot_ada_text_type_to_string(denoted_value);
-      logInfo() << "In getOperator (for ada_string_literal), expr_name is " << expr_name << std::endl;
+      decl_hash = hash_node(&corresponding_decl);
     }
 
-    const std::size_t                   len = expr_name.size();
+    //Get the name of this expr
+    std::string expr_name;
+    if(kind == ada_string_literal){
+      ada_text_type denoted_value;
+      ada_string_literal_p_denoted_value(lal_expr, &denoted_value);
+      //Add in the quotes, since p_denoted_value will strip them
+      expr_name = '"' + dot_ada_text_type_to_string(denoted_value) + '"';
+    } else {
+      expr_name = canonical_text_as_string(lal_expr);
+    }
+    logInfo() << "In getOperator, expr_name is " << expr_name << std::endl;
+
+    // PP 11/18/22
+    // UNCLEAR_LINK_1
+    // under some unclear circumstances a provided = operator and a generated /= may have the
+    //   same Corresponding_Name_Declaration, but different Corresponding_Name_Definition.
+    //   => just use the Corresponding_Name_Definition
+    // ROSE regression tests: dbase.ads, dbase.adb, dbase_test.adb
+    // was: if (SgDeclarationStatement* dcl = findFirst(asisDecls(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+    /*if (SgDeclarationStatement* dcl = findFirst(libadalangDecls(), expr.Corresponding_Name_Definition))
+    {
+      SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
+
+      return SG_DEREF(res);
+    }*/ //TODO Does Libadalang do def pointers?
+
+    //LAL_REP_ISSUE: Libadalang can be wrong about what the first corresponding definition is.
+    // Libadalang does not link correctly to instantiated operators from generic packages with parameters.
+    // This is most obvious with instantiations of the Ada.Numerics.Generic_Elementary_Functions, Ada.Numerics.Generic_Complex_Types,
+    // & Ada.Numerics.Generic_Complex_Elementary_Functions packages. All of these packages define the "**" operator for new types,
+    // & any subsequent calls to these new operators may not have the correct first_corresponding_decl/referenced_decl properties.
+    // This issue only happens with operators when they are used with prefix call syntax (e.g. "**"(1, 1)), since they cannot be 
+    // scoped otherwise.
+    // First seen in cxg1005.adb
+    if(decl_exists){
+      if (SgDeclarationStatement* dcl = findFirst(libadalangDecls(), decl_hash)) {
+        const std::string dclname = si::Ada::convertRoseOperatorNameToAdaName(si::get_name(dcl));
+        const bool        sameOperatorName = boost::iequals(dclname, expr_name);
+        logInfo() << "dclname is " << dclname <<", lal_expr name is " << expr_name << std::endl;
+
+        if (sameOperatorName) {
+          SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
+
+          return SG_DEREF(res);
+        }
+      }
+    }
+
+    //If we didn't have a decl, try some fallback methods
+    const std::size_t len = expr_name.size();
     if((len > 2) && (expr_name[0] == '"') && (expr_name[len-1] == '"')){
       // do not use leading and trailing '"'
       AdaIdentifier fnname{expr_name.c_str()+1, int(len)-2};
@@ -1312,10 +1313,27 @@ namespace{
     return SG_DEREF(dcl->get_declarationScope());
   }
 
+  /// Creates a unique string for a subp (function or procedure)
+  /// Since Ada has subp overloading, we have to add the params to the name to be truly unique
+  AdaIdentifier getFullSubpName(const std::string& call_name, const OperatorCallSupplement& suppl)
+  {
+    //Get all the info into a string
+    std::string full_info = call_name;
+    std::vector<::Libadalang_ROSE_Translation::ArgDesc> args = suppl.args();
+
+    //TODO Just using SgType->get_mangled() doesn't work, because of derived/deduced types
+    //  For now, just using the name works, but this will probably break for overloaded subps
+    //for(::Libadalang_ROSE_Translation::ArgDesc arg : args){
+    //  full_info += arg.type()->get_mangled().getString();
+    //}
+
+    return AdaIdentifier(full_info);
+  }
+
   /// Checks the maps of types/vars that have been added to the System package
-  /// using "Pragma Extend_System" for \ref name & retuns a reference to the
+  /// using "Pragma Extend_System" for \ref name & returns a reference to the
   /// corresponding type/var if one is found. Returns nullptr if match not found.
-  SgExpression* checkForSystemExtension(const std::string& name){
+  SgExpression* checkForSystemExtension(const std::string& name, const OperatorCallSupplement& suppl, AstContext ctx){
     const AdaIdentifier name_converted{name};
     SgExpression* res = nullptr;
 
@@ -1330,6 +1348,7 @@ namespace{
         SgEnumDeclaration& enumdecl = SG_DEREF( isSgEnumDeclaration(enumtype.get_declaration()) );
         res = &mkEnumeratorRef(enumdecl, *var_name);
       } else {
+        //TODO All other uses of buildVarRefExp use ctx.scope(), but that doesn't seem to work here. What am I doing wrong?
         SgScopeStatement* test_scope = var_name->get_scope();
         res = sb::buildVarRefExp(var_name, test_scope);
       }
@@ -1341,6 +1360,16 @@ namespace{
       SgType* type_decl = type_iterator->second;
 
       res = &mkTypeExpression(*type_decl);
+    }
+
+    //Third check extendedSubpsByName
+    const AdaIdentifier full_subp_name = getFullSubpName(name, suppl);
+    logInfo() << "  Searching for " << full_subp_name << std::endl;
+    auto subp_iterator = extendedSubpsByName().find(full_subp_name);
+    if(subp_iterator != extendedSubpsByName().end()){
+      SgDeclarationStatement* subp_decl = subp_iterator->second;
+
+      res = sg::dispatch(ExprRefMaker{ctx}, subp_decl);
     }
 
     return res;
@@ -1448,29 +1477,59 @@ namespace{
           ada_base_entity corresponding_decl;
           int cor_decl_return = ada_expr_p_first_corresponding_decl(lal_element, &corresponding_decl);
 
+          //If referenced_decl exists, use it instead of corresponding_decl
+          ada_base_entity lal_referenced_decl;
+          int ref_decl_return = ada_name_p_referenced_decl(lal_element, 1, &lal_referenced_decl);
+          if(ref_decl_return != 0 && !ada_node_is_null(&lal_referenced_decl)){
+             cor_decl_return = ada_name_p_referenced_decl(lal_element, 1, &corresponding_decl);
+          }
+
           //Check if this is an enum value instead of a variable
           //Get the expression type & check for ada_enum_type_def
           ada_base_entity lal_first_expr_type, lal_expr_type;
           ada_node_kind_enum lal_expr_type_kind;
-          ada_expr_p_expression_type(lal_element, &lal_first_expr_type);
-          if(!ada_node_is_null(&lal_first_expr_type)){
+          int expr_type_return = ada_expr_p_expression_type(lal_element, &lal_first_expr_type);
+          if(expr_type_return != 0 && !ada_node_is_null(&lal_first_expr_type)){
             //First check if this type's name matches the identifier's name
             ada_base_entity lal_type_name;
-            ada_name_p_relative_name(&lal_first_expr_type, &lal_type_name);
-            std::string type_name = canonical_text_as_string(&lal_type_name);
+            int type_name_return = ada_name_p_relative_name(&lal_first_expr_type, &lal_type_name);
+            const bool have_type_name = type_name_return != 0 && !ada_node_is_null(&lal_type_name);
+            std::string type_name = have_type_name ? canonical_text_as_string(&lal_type_name) : "";
+
+            if(!have_type_name && ada_node_kind(&lal_first_expr_type) == ada_subtype_decl){
+              //Fallback: sometimes ada_name_p_relative_name doesn't work for ada_subtype_decl, so get the name through the tree
+              ada_base_entity lal_subtype_name;
+              ada_base_type_decl_f_name(&lal_first_expr_type, &lal_subtype_name);
+              ada_defining_name_f_name(&lal_subtype_name, &lal_subtype_name);
+              type_name = getFullName(&lal_subtype_name);
+            }
+
             if(name == type_name){
               //This is an enum type, not an enum value
               //Set lal_expr_type to the type decl
-              ada_expr_p_expression_type(lal_element, &lal_expr_type);
+              expr_type_return = ada_expr_p_expression_type(lal_element, &lal_expr_type);
               lal_expr_type_kind = ada_node_kind(&lal_expr_type);
             } else {
               ada_type_decl_f_type_def(&lal_first_expr_type, &lal_expr_type);
+              if(ada_node_kind(&lal_first_expr_type) == ada_subtype_decl){
+                //If lal_first_expr_type is a subtype, then use a different method to assign lal_expr_type
+                ada_base_entity lal_base_type_decl;
+                ada_subtype_decl_f_subtype(&lal_first_expr_type, &lal_base_type_decl);
+                ada_type_expr_p_designated_type_decl(&lal_base_type_decl, &lal_base_type_decl);
+                ada_node_kind_enum lal_base_type_decl_kind = ada_node_kind(&lal_base_type_decl);
+                while(lal_base_type_decl_kind == ada_subtype_decl){
+                  ada_subtype_decl_f_subtype(&lal_base_type_decl, &lal_base_type_decl);
+                  ada_type_expr_p_designated_type_decl(&lal_base_type_decl, &lal_base_type_decl);
+                  lal_base_type_decl_kind = ada_node_kind(&lal_base_type_decl);
+                }
+                ada_type_decl_f_type_def(&lal_base_type_decl, &lal_expr_type);
+              }
               lal_expr_type_kind = ada_node_kind(&lal_expr_type);
               //Find the original type if this is a derived type
               while(lal_expr_type_kind == ada_derived_type_def){
                 ada_derived_type_def_f_subtype_indication(&lal_expr_type, &lal_expr_type);
                 ada_type_expr_p_designated_type_decl(&lal_expr_type, &lal_expr_type);
-                ada_type_decl_f_type_def(&lal_expr_type, &lal_expr_type);
+                expr_type_return = ada_type_decl_f_type_def(&lal_expr_type, &lal_expr_type);
                 lal_expr_type_kind = ada_node_kind(&lal_expr_type);
               }
             }
@@ -1480,8 +1539,8 @@ namespace{
           ada_bool lal_is_static_expr;
           ada_expr_p_is_static_expr(lal_element, 1, &lal_is_static_expr);
 
-          if( (!ada_node_is_null(&lal_expr_type) && lal_expr_type_kind == ada_enum_type_def && lal_is_static_expr)
-              || ((cor_decl_return != 0 && !ada_node_is_null(&corresponding_decl)) && ada_node_kind(&corresponding_decl) == ada_enum_literal_decl))
+          //First check for enum value
+          if(expr_type_return != 0 && !ada_node_is_null(&lal_expr_type) && lal_expr_type_kind == ada_enum_type_def && lal_is_static_expr)
           {
             logInfo() << "identifier " << name << " is being treated as an enum value.\n";
 
@@ -1490,19 +1549,18 @@ namespace{
             //  example:
             //  type new_bool is new boolean;
             //  bool_var : new_bool := TRUE;
-            //                         ^This TRUE will have p_corresponding decl as Standard TRUE, since new_bool TRUE isn't a Libadalang node
+            //                         ^This TRUE will have p_first_corresponding_decl as Standard TRUE, since new_bool TRUE isn't a Libadalang node
             //  To find the correct enum literal, get the expression type, find the ROSE node that matches said type, then search that node's
             //  enumerators for a matching name
-            if(!ada_node_is_null(&lal_first_expr_type)){
+            if(expr_type_return != 0 && !ada_node_is_null(&lal_first_expr_type)){
               ada_base_entity lal_expr_name;
               ada_base_type_decl_f_name(&lal_first_expr_type, &lal_expr_name);
               int name_hash = hash_node(&lal_expr_name);
               int type_hash = hash_node(&lal_first_expr_type);
-              SgEnumDeclaration* enum_type = isSgEnumDeclaration(findFirst(libadalangTypes(), type_hash, name_hash));
-              if(enum_type == nullptr){
-                logFlaw() << "unable to find enum type for enum val " << name
-                          << std::endl;
-              } else {
+
+              SgDeclarationStatement* found_type = findFirst(libadalangTypes(), type_hash, name_hash);
+
+              if(SgEnumDeclaration* enum_type = isSgEnumDeclaration(found_type)) {
                 SgInitializedNamePtrList enumerators = enum_type->get_enumerators();
                 for(SgInitializedName* enumitem : enumerators){
                   std::string enumerator_name = enumitem->get_qualified_name().getString();
@@ -1517,10 +1575,17 @@ namespace{
                 if(res != nullptr){
                   break;
                 }
+              } else {
+                //In some cases, reaching here isn't an actual problem, because lal_element wasn't actually an enum value
+                logFlaw() << "unable to find enum type for enum val " << name
+                          << std::endl;
               }
             }
+          }
 
-            //If the above didn't work, fall back to the old method of searching for the enum_literal_decl itself (will not be accurate for derived types)
+          //Second check for enum value
+          if((cor_decl_return != 0 && !ada_node_is_null(&corresponding_decl)) && ada_node_kind(&corresponding_decl) == ada_enum_literal_decl){
+            //If the above check didn't work, fall back to the old method of searching for the enum_literal_decl itself (will not be accurate for derived types)
             //Get the hash for the decl
             int decl_hash = hash_node(&corresponding_decl);
 
@@ -1551,16 +1616,10 @@ namespace{
           //Bool for if we found the corresponding decl
           bool found_decl = true;
 
-          //If referenced_decl exists, use it instead of corresponding_decl
-          ada_base_entity lal_referenced_decl;
-          int return_value = ada_name_p_referenced_decl(lal_element, 1, &lal_referenced_decl);
-          if(return_value != 0 && !ada_node_is_null(&lal_referenced_decl)){
-             cor_decl_return = ada_name_p_referenced_decl(lal_element, 1, &corresponding_decl);
-          }
-
-          if((return_value == 0 || ada_node_is_null(&lal_referenced_decl)) && (cor_decl_return == 0 || ada_node_is_null(&corresponding_decl))){
+          if((ref_decl_return == 0 || ada_node_is_null(&lal_referenced_decl)) && (cor_decl_return == 0 || ada_node_is_null(&corresponding_decl))){
             //Check if this is referencing a type/variable from Pragma Extend_System
-            if(SgExpression* systemExtensionRef = checkForSystemExtension(name)){
+            if(SgExpression* systemExtensionRef = checkForSystemExtension(name, suppl, ctx)){
+              logInfo() << "Found ada_identifier " << name << " in a package that extends System.\n";
               res = systemExtensionRef;
             } else {
               //If it isn't, just give up
@@ -1944,16 +2003,16 @@ namespace{
 
           ASSERT_require(!ada_node_is_null(&lal_prefix));
           ada_base_entity lal_refd_decl;
-          ada_name_p_referenced_decl(&lal_prefix, 1, &lal_refd_decl);
+          int refd_decl_return = ada_name_p_referenced_decl(&lal_prefix, 1, &lal_refd_decl);
 
           //If p_referenced_decl is null, fall back to p_first_corresponding_decl
-          if(ada_node_is_null(&lal_refd_decl)){
-            ada_expr_p_first_corresponding_decl(&lal_prefix, &lal_refd_decl);
+          if(refd_decl_return == 0 || ada_node_is_null(&lal_refd_decl)){
+            refd_decl_return = ada_expr_p_first_corresponding_decl(&lal_prefix, &lal_refd_decl);
           }
 
           int prefix_hash = 0;
 
-          if(!ada_node_is_null(&lal_refd_decl)){
+          if(refd_decl_return != 0 && !ada_node_is_null(&lal_refd_decl)){
             prefix_hash = hash_node(&lal_refd_decl);
           } else {
             logFlaw() << "ada_dotted_name with hash " << hash_node(lal_element)
@@ -2539,6 +2598,7 @@ SgExpression& createCall(ada_base_entity* lal_prefix, std::vector<ada_base_entit
   }
 
   bool unary = (lal_params.size() == 1);
+
 
   SgExpression& tgt = getExpr(lal_prefix, ctx, OperatorCallSupplement(createArgDescList(arglist), nullptr /* unknown return type */), unary);
   SgExpression* res = sg::dispatch(AdaCallBuilder{lal_prefix, std::move(arglist), operatorCallSyntax, objectCallSyntax, ctx}, &tgt);
