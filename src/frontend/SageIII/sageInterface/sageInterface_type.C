@@ -62,47 +62,23 @@ namespace SageInterface
     ROSE_ASSERT(t);
     // We want to strip off typedef chain, and const modifiers etc.
     t = t->stripTypedefsAndModifiers();
-    switch(t->variantT()) {
-//      case V_SgTypedefType:
-//         return isScalarType(isSgTypedefType(t)->get_base_type());
-      case V_SgTypeChar :
-      case V_SgTypeSignedChar :
-      case V_SgTypeUnsignedChar :
 
-      case V_SgTypeShort :
-      case V_SgTypeSignedShort :
-      case V_SgTypeUnsignedShort :
-
-      case V_SgTypeInt :
-      case V_SgTypeSignedInt :
-      case V_SgTypeUnsignedInt :
-
-      case V_SgTypeLong :
-      case V_SgTypeSignedLong :
-      case V_SgTypeUnsignedLong :
-
-      case V_SgTypeVoid :
-
-      case V_SgTypeWchar:
-
-   // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
-      case V_SgTypeChar16:
-      case V_SgTypeChar32:
-
-      case V_SgTypeFloat:
-      case V_SgTypeDouble:
-
-      case V_SgTypeLongLong:
-      case V_SgTypeUnsignedLongLong:
-      case V_SgTypeLongDouble:
-
-      case V_SgTypeString:
-      case V_SgTypeBool:
-        // DQ (8/27/2006): change name of SgComplex to SgTypeComplex (for consistency) and added SgTypeImaginary (C99 type).
-      case V_SgTypeComplex:
-      case V_SgTypeImaginary:
-        return true;
-      default: {}
+    if (isSgFloatingType(t) || isSgIntegralType(t)) {
+      return true;
+    }
+    else {
+      switch(t->variantT()) {
+//        case V_SgTypedefType:
+//           return isScalarType(isSgTypedefType(t)->get_base_type());
+        case V_SgTypeVoid :
+        case V_SgTypeString:
+        case V_SgTypeBool:
+          // DQ (8/27/2006): change name of SgComplex to SgTypeComplex (for consistency) and added SgTypeImaginary (C99 type).
+        case V_SgTypeComplex:
+        case V_SgTypeImaginary:
+          return true;
+        default: {}
+      }
     }
     return false;
   }

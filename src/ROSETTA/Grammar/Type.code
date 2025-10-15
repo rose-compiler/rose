@@ -1084,39 +1084,7 @@ SgType::isIntegerType() const
           ROSE_ASSERT(t != NULL);
         }
 
-     switch (variant())
-        {
-          case T_CHAR:
-          case T_SIGNED_CHAR:
-          case T_UNSIGNED_CHAR:
-          case T_SHORT:
-          case T_SIGNED_SHORT:
-          case T_UNSIGNED_SHORT:
-          case T_INT:
-          case T_SIGNED_INT:
-          case T_UNSIGNED_INT:
-          case T_LONG:
-          case T_SIGNED_LONG:
-          case T_UNSIGNED_LONG:
-          case T_WCHAR:
-
-       // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
-          case T_CHAR16:
-          case T_CHAR32:
-
-          case T_LONG_LONG:
-          case T_SIGNED_LONG_LONG:
-          case T_UNSIGNED_LONG_LONG:
-       // DQ (3/24/2014): Added support for 128 bit integers.
-          case T_SIGNED_128BIT_INTEGER:
-          case T_UNSIGNED_128BIT_INTEGER:
-          case T_BOOL:
-               return true; // 1
-               break;
-
-          default:
-               return false; // 0
-        }
+      return isSgIntegralType(t) || isSgTypeBool(t);
    }
 
 bool
@@ -1126,53 +1094,27 @@ SgType::isFloatType() const
      ROSE_ASSERT(t != NULL);
 
      while (t->variant() == T_TYPEDEF)
-          t = ((SgTypedefType *) t)->get_base_type();
-
-     switch (t->variant())
         {
-          case T_FLOAT :
-
-       // DQ (4/20/2019): Added additional floating point types to be classified as (isFloatType() == true) by this function.
-          case T_FLOAT80 :
-          case T_FLOAT128 :
-
-       // PL (9/9/2025): Added additional floating point types to be classified by this function
-          case T_FP16:
-          case T_FLOAT16:
-          case T_BFLOAT16:
-          case T_FLOAT32:
-          case T_FLOAT64:
-          case T_FLOAT32X:
-          case T_FLOAT64X:
-
-          case T_DOUBLE:
-          case T_LONG_DOUBLE:
-               return 1;
-               break;
-
-          default:
-               return 0;
+          t = ((SgTypedefType *) t)->get_base_type();
+          ROSE_ASSERT(t != NULL);
         }
+
+     return isSgFloatingType(t);
    }
 
 bool
 SgType::isUnsignedType() const
    {
-     switch (variant())
-        {
-          case T_UNSIGNED_CHAR:
-          case T_UNSIGNED_SHORT:
-          case T_UNSIGNED_INT:
-          case T_UNSIGNED_LONG:
-       // DQ (3/24/2014): Added support for 128 bit integers.
-          case T_UNSIGNED_LONG_LONG:
-          case T_UNSIGNED_128BIT_INTEGER:
-               return 1;
-               break;
+     const SgType* t = this;
+     ROSE_ASSERT(t != NULL);
 
-          default:
-               return 0;
+     while (t->variant() == T_TYPEDEF)
+        {
+          t = ((SgTypedefType *) t)->get_base_type();
+          ROSE_ASSERT(t != NULL);
         }
+
+     return isSgUnsignedIntegralType(t);
    }
 
 
@@ -1183,67 +1125,33 @@ SgType::isPrimativeType() const
   // Note that a typedef type is not a primative type, even if it resolves to such a type (because it can be name qualified).
   // A typedef type may be otherwise type equvalent to a primative type.
 
-     switch (variant())
+     if (isSgFloatingType(this) || isSgIntegralType(this)
         {
-       // The list of types from isIntegerType() function
-          case T_CHAR:
-          case T_SIGNED_CHAR:
-          case T_UNSIGNED_CHAR:
-          case T_SHORT:
-          case T_SIGNED_SHORT:
-          case T_UNSIGNED_SHORT:
-          case T_INT:
-          case T_SIGNED_INT:
-          case T_UNSIGNED_INT:
-          case T_LONG:
-          case T_SIGNED_LONG:
-          case T_UNSIGNED_LONG:
-          case T_WCHAR:
+          return true; // 1
+        }
+      else
+        {
+          switch (variant())
+             {
+               case T_BOOL:
 
-       // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
-          case T_CHAR16:
-          case T_CHAR32:
+            // Other kinds of float types.
+               case T_COMPLEX:
+               case T_IMAGINARY:
 
-          case T_LONG_LONG:
-          case T_SIGNED_LONG_LONG:
-          case T_UNSIGNED_LONG_LONG:
-       // DQ (3/24/2014): Added support for 128 bit integers.
-          case T_SIGNED_128BIT_INTEGER:
-          case T_UNSIGNED_128BIT_INTEGER:
-          case T_BOOL:
+            // Other types
+               case T_VOID:
+               case T_LABEL:
+               case T_NULLPTR:
+               case T_DECLTYPE:
+               case T_STRING:
 
-       // float types
-          case T_FLOAT :
-          case T_FLOAT80 :
-          case T_FLOAT128 :
-          case T_DOUBLE:
-          case T_LONG_DOUBLE:
+                    return true; // 1
+                    break;
 
-       // PL (9/9/2025): Added additional floating point types to be classified by this function
-          case T_FP16:
-          case T_FLOAT16:
-          case T_BFLOAT16:
-          case T_FLOAT32:
-          case T_FLOAT64:
-          case T_FLOAT32X:
-          case T_FLOAT64X:
-
-       // Other kinds of float types.
-          case T_COMPLEX:
-          case T_IMAGINARY:
-
-       // Other types
-          case T_VOID:
-          case T_LABEL:
-          case T_NULLPTR:
-          case T_DECLTYPE:
-          case T_STRING:
-
-               return true; // 1
-               break;
-
-          default:
-               return false; // 0
+               default:
+                    return false; // 0
+             }
         }
    }
 
