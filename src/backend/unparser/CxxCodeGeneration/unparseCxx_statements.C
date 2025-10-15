@@ -1675,7 +1675,11 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
        // case V_SgInterfaceStatement:     unparseInterfaceStmt(stmt, info); break;
        // case V_SgCommonBlock:            unparseCommonBlock  (stmt, info); break;
           case V_SgVariableDeclaration:    unparseVarDeclStmt  (stmt, info); break;
-          case V_SgTemplateVariableInstantiation: unparseVarDeclStmt(stmt, info); break;
+          case V_SgTemplateVariableInstantiation: {
+              curprint("template <> ");
+              unparseVarDeclStmt(stmt, info);
+              break;
+          }
           case V_SgVariableDefinition:     unparseVarDefnStmt  (stmt, info); break;
        // case V_SgParameterStatement:     unparseParamDeclStmt(stmt, info); break;
        // case V_SgUseStatement:           unparseUseStmt      (stmt, info); break;

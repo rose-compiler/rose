@@ -1651,7 +1651,9 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
 #if DEBUG__Unparse_ExprStmt__unparseVarRef
        printf ("  tpl_args.size() = %d\n", tpl_args.size());
 #endif
-       unparseTemplateArgumentList(tpl_args, info);
+       if (!tpl_args.empty()) {
+         unparseTemplateArgumentList(tpl_args, info);
+       }
      }
    }
 
