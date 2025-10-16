@@ -333,13 +333,6 @@ message(STATUS "Boost_VERSION: ${Boost_VERSION}" )           # Report Boost vers
 message(STATUS "Boost_INCLUDE_DIRS:  ${Boost_INCLUDE_DIRS}") # Report Boost -I in all modes  
 message(STATUS "Boost_LIBRARY_DIRS:  ${Boost_LIBRARY_DIRS}") # Report Boost -L in all modes  
 
-# Paths to install header, executable, and libraries
-# TODO: Prioritize using built-in CMake Variables instead if possible 
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT) # built-in variable in version 3.7.1
-  message(WARNING "Using default installation path: ${CMAKE_INSTALL_PREFIX} \
-                   \nRun the command: cmake .. -DCMAKE_INSTALL_PREFIX=</custom/path> to control where ROSE is installed")
-endif() 
-
 # Directories where Rose executable, rose library, and rose headers will be installed 
 set(INCLUDE_INSTALL_DIR "include/rose")
 set(BIN_INSTALL_DIR     "bin")
