@@ -56,12 +56,23 @@ typedef std::map<std::string, std::string> Configuration;
 Sawyer::Message::Facility mlog;
 
 struct Settings {
-  std::string searchDirs;
-  boost::filesystem::path configFile;
+    std::string searchDirs;
+    boost::filesystem::path configFile;
 
-  // When compiling this program, LIBDIR C preprocessor symbol should be the name of the installation path for libraries.
-  Settings()
-    : searchDirs(LIBDIR) {}
+    // When compiling this program, LIBDIR C preprocessor symbol should be the name of the installation path for libraries.
+    Settings() {
+        // This was the original search location, but we shouldn't depend on LIBDIR being valid. It probably points to some
+        // directory on the machine where ROSE was originally built, and even on that machine it might have been a temporary
+        // location since ROSE might be installed with "cmake --install . --prefix $SOME_OTHER_DIRECTORY", in which case LIBDIR
+        // is probably not $SOME_OTHER_DIRECTORY since it was compiled into this executable before this executable was installed.
+        if (LIBDIR && *LIBDIR)
+            searchDirs = LIBDIR;
+
+        const boost::filesystem::path exeName = Sawyer::thisExecutablePath(); // $PREFIX/bin/rose-config
+        const auto prefix = exeName.parent_path().parent_path();             // $PREFIX
+        if (!prefix.empty())
+            searchDirs += std::string(searchDirs.empty() ? "" : ":") + (prefix/"lib").string();
+    }
 };
 
 static const std::vector<std::string>&

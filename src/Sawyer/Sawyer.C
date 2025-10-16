@@ -153,4 +153,23 @@ thisExecutableName() {
     return retval;
 }
 
+SAWYER_EXPORT std::string
+thisExecutablePath() {
+#ifdef BOOST_WINDOWS
+    return "";
+#elif defined(__APPLE__) && defined(__MACH__)
+    // probably not the full path
+    char **argv = *_NSGetArgv();
+    return argv[0];
+#else
+    char buf[8192];
+    const ssize_t nread = readlink("/proc/self/exe", buf, sizeof buf);
+    if (nread == -1 || (size_t)nread == sizeof buf) {
+        return thisExecutableName();
+    } else {
+        return buf;
+    }
+#endif
+}
+
 } // namespace

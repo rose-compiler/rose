@@ -399,6 +399,9 @@ SAWYER_EXPORT void checkBoost();
 /** Return the name of this program obtained from the operating system. */
 SAWYER_EXPORT std::string thisExecutableName();
 
+/** Return the full path of this program obtained from the operating system. */
+SAWYER_EXPORT std::string thisExecutablePath();
+
 } // namespace
 
 // Define only when we have the Boost Chrono library, which was first available in boost-1.47.
