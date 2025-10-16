@@ -39,14 +39,18 @@ configuration installed at once, you need to tell `find_package` which
 installation of ROSE it should use.  You have a few options:
 
 ```bash
-# Option 1: Set CMAKE_PREFIX_PATH when configuring
+# Option 1: Put ROSE in your PATH environment variable
+export PATH="$ROSE_ROOT/bin:$PATH"
+cmake ...
+
+# Option 2: Set CMAKE_PREFIX_PATH when configuring
 cmake -DCMAKE_PREFIX_PATH=/path/to/rose/install ..
 
-# Option 2: Set CMAKE_PREFIX_PATH environment variable
+# Option 3: Set CMAKE_PREFIX_PATH environment variable
 export CMAKE_PREFIX_PATH=/path/to/rose/install
 cmake ..
 
-# Option 3: Set Rose_DIR to the cmake directory
+# Option 4: Set Rose_DIR to the cmake directory
 cmake -DRose_DIR=/path/to/rose/install/lib/cmake/Rose ..
 ```
 
