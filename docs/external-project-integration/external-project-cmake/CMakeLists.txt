@@ -33,9 +33,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #   3. Cache variable: cmake -DRose_DIR=/path/to/rose/install/lib/cmake/Rose ..
 find_package(Rose 0.11 REQUIRED)
 
+# Where is ROSE installed?
+get_target_property(Rose_LOCATION Rose::rose LOCATION)
+if(Rose_LOCATION)
+    get_filename_component(Rose_LIB_DIR "${Rose_LOCATION}" DIRECTORY)
+    get_filename_component(Rose_ROOT "${Rose_LIB_DIR}" DIRECTORY)
+endif()
+
 # Show what we found
 message(STATUS "==================================================")
-message(STATUS "Found ROSE ${Rose_VERSION} at ${Rose_INSTALL_PREFIX}")
+message(STATUS "Found ROSE ${Rose_VERSION} at ${Rose_ROOT}")
 message(STATUS "  Ada:        ${Rose_ENABLE_ADA}")
 message(STATUS "  Binaries:   ${Rose_ENABLE_BINARY_ANALYSIS}")
 message(STATUS "  C/C++:      ${Rose_ENABLE_C}")
@@ -59,10 +66,7 @@ message(STATUS "  Python:     ${Rose_ENABLE_PYTHON}")
 # configuration of the ROSE library and all tools installed at once. Note that we use this over
 # ${Rose_INSTALL_PREFIX} for technical reasons related to how ROSE sometimes gets installed.
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    get_target_property(ROSE_LOCATION Rose::rose LOCATION)
-    if(ROSE_LOCATION)
-        get_filename_component(ROSE_LIB_DIR "${ROSE_LOCATION}" DIRECTORY)
-        get_filename_component(ROSE_ROOT "${ROSE_LIB_DIR}" DIRECTORY)
+    if(ROSE_ROOT)
         set(CMAKE_INSTALL_PREFIX "${ROSE_ROOT}" CACHE PATH "Install path prefix, defaults to ROSE installation" FORCE)
         message(STATUS "No install prefix specified, defaulting to ROSE location: ${CMAKE_INSTALL_PREFIX}")
     endif()

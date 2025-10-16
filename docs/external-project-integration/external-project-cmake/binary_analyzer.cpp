@@ -65,9 +65,10 @@ int main(int argc, char *argv[]) {
     Diagnostics::initAndRegister(&mlog, "tool");
     mlog.comment("listing info about variables");
 
-    std::cout << "ROSE Binary Variable Analyzer" << std::endl;
-    std::cout << "ROSE Version: " << ROSE_PACKAGE_VERSION << std::endl;
-    std::cout << "==============================" << std::endl;
+    // Version number for the standard "--version", "-V" and "--version-long" switches.
+    Rose::CommandLine::versionString = "bat-example "
+                                       #include "VERSION"
+                                       " using " + Rose::CommandLine::versionString;
 
     // Parse command line
     Sawyer::CommandLine::Parser switchParser = createSwitchParser();
