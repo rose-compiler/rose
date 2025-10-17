@@ -62,7 +62,8 @@ find_dependency(Boost @Boost_VERSION@ REQUIRED COMPONENTS
 # for projects using ROSE, but the Find modules need to be available for completeness.
 
 # Set up module path for ROSE's custom Find modules
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}" ${CMAKE_MODULE_PATH})
+# Append rather than prepend to respect consumer's Find module preferences
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
 
 # Find Gcrypt if it was enabled
 # NOTE: Gcrypt is marked PUBLIC in ROSE's link interface because ROSE public headers

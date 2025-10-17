@@ -1312,22 +1312,33 @@ But this is purely cosmetic and not worth the effort unless touching this code f
 
 ---
 
-### Step 17: Avoid installing OBJECT libraries
-
-CMake does not install OBJECT libraries. Exporting them can cause install/usage issues. We already mitigate header propagation using `rose_object_library_dependencies` for includ dirs.
-
-Suggested:
-* Do not install/export OBJECT libraries. Only install/export ROSE_DLL (and true SHARED/STATIC/INTERFACE/IMPORTED targets).
-
----
-
 ### Step 18: Fix module path precedence in RoseConfig.cmake.in
+**Status:** ✅ Complete
+**Testing:** ✅ Tested (integration tests pass)
+**Files modified:** `cmake/RoseConfig.cmake.in`
 
 We should append rather than prepend to avoid overriding consumer's modules unless necessary.
 
+**Implementation:**
+
+Changed from prepending (which overrides consumer's Find modules):
+```cmake
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}" ${CMAKE_MODULE_PATH})
+```
+
+To appending (which respects consumer's preferences):
 ```cmake
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
 ```
+
+**Rationale:**
+- Follows CMake best practices for package configuration files
+- Allows consumer projects to override ROSE's Find modules with their own versions
+- Makes ROSE a better CMake citizen that doesn't forcefully override consumer's build configuration
+- Low risk change with no impact on consumers who don't customize Find modules
+
+**Testing:**
+Integration tests verify that ROSE's dependencies are still found correctly with the new APPEND behavior.
 
 ---
 
