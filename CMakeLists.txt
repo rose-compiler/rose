@@ -65,7 +65,25 @@ endif()
 project(ROSE C CXX)
 
 #-----------------------------------------------------------------------------------------------------------------------
-# BLT 
+# Adjust CMake's default optimization, debug, and assertion flags for different build types.
+#
+# "RelWithDebInfo" is intended to be optimized with debug info, but CMake adds -DNDEBUG by default which disables
+# assertions. We want assertions enabled by default for this build type. If you don't want assertions then use
+# "-DCMAKE_C_FLAGS=-DNDEBUG" and "-DCMAKE_CXX_FLAGS=-DNDEBUG". The optimization level defaults to "-O2", which
+# is a compromise between full optimization and the ability to use most features of interactive debuggers.
+#
+# "Debug" is intended for developers to debug their libraries and tools, but CMake doesn't turn off optimizations. We
+# add "-Og" so that all features of interactive debugging work properly, although this has a major negative effect on
+# performance.
+# -----------------------------------------------------------------------------------------------------------------------
+string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Og")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
+
+#-----------------------------------------------------------------------------------------------------------------------
+# BLT
 #-----------------------------------------------------------------------------------------------------------------------
  # Use internal BLT if no BLT_SOURCE_DIR is given
 if(NOT DEFINED BLT_SOURCE_DIR)
