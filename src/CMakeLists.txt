@@ -756,8 +756,8 @@ add_dependencies(ROSE_DLL roseUtil)
 
 set_target_properties(ROSE_DLL PROPERTIES
   OUTPUT_NAME "rose"
-  VERSION "${ROSE_PACKAGE_VERSION}"   # e.g., 0.11.145.342
-  SOVERSION "${ROSE_VERSION_MAJOR}.${ROSE_VERSION_MINOR}"  # backward compatibility between 0.11.a.b and 0.11.c.d
+  VERSION "${PROJECT_VERSION}"   # e.g., 0.11.145.348
+  SOVERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"  # e.g., 0.11 for backward compatibility between 0.11.a.b and 0.11.c.d
 )
 
 # Create namespaced alias for modern CMake usage
@@ -937,8 +937,6 @@ if(Threads_FOUND AND NOT WIN32)
 endif()
 
 set_target_properties(ROSE_DLL PROPERTIES
-  VERSION 1.0.0
-  SOVERSION 1
   DEFINE_SYMBOL ROSE_DLL_EXPORTS
   EXPORT_NAME rose)
 

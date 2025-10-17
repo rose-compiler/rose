@@ -60,9 +60,22 @@ if(SKIP_ABI) # turn off checks and abi
   set(CMAKE_CXX_ABI_COMPILED FALSE)
   set(CMAKE_CXX_COMPILER_WORKS ON CACHE INTERNAL "")
   set(CMAKE_CXX_STANDARD_LIBRARIES_INIT "")
-endif() 
+endif()
 
-project(ROSE C CXX)
+#-----------------------------------------------------------------------------------------------------------------------
+# Read ROSE version from ROSE_VERSION file before calling project()
+# This is needed so that the project version can be set correctly, which affects library versioning
+#-----------------------------------------------------------------------------------------------------------------------
+set(ROSE_SCM_VERSION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ROSE_VERSION")
+if(NOT EXISTS "${ROSE_SCM_VERSION_FILE}")
+  message(FATAL_ERROR "ROSE version file not found: ${ROSE_SCM_VERSION_FILE}")
+endif()
+file(STRINGS ${ROSE_SCM_VERSION_FILE} ROSE_PACKAGE_VERSION LIMIT_COUNT 1)
+
+project(ROSE
+  VERSION ${ROSE_PACKAGE_VERSION}
+  LANGUAGES C CXX
+)
 
 #-----------------------------------------------------------------------------------------------------------------------
 # Adjust CMake's default optimization, debug, and assertion flags for different build types.
@@ -185,11 +198,8 @@ set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 ########################################################################################################################
 # ROSE version information
 ########################################################################################################################
-# All distributions of ROSE also have a ROSE_VERSION file with a dotted version that's updated during the ROSE release process.
-set(ROSE_SCM_VERSION_FILE "${PROJECT_SOURCE_DIR}/ROSE_VERSION")
-if(NOT EXISTS "${ROSE_SCM_VERSION_FILE}")
-  message(FATAL_ERROR "ROSE version file not found: ${ROSE_SCM_VERSION_FILE}")
-endif()
+# The ROSE version string was already read from ROSE_VERSION file before the project() command.
+# Now read the numerical version from SCM_DATE file.
 
 # All distributions of ROSE also have a config/SCM_DATE file with a numerical version that's updated during the ROSE release process.
 set(ROSE_SCM_DATE_FILE "${PROJECT_SOURCE_DIR}/config/SCM_DATE")
@@ -197,18 +207,18 @@ if(NOT EXISTS "${ROSE_SCM_DATE_FILE}")
   message(FATAL_ERROR "ROSE SCM Date file not found: ${ROSE_SCM_DATE_FILE}")
 endif()
 
-file(STRINGS ${ROSE_SCM_VERSION_FILE} ROSE_PACKAGE_VERSION LIMIT_COUNT 1)
 file(STRINGS ${ROSE_SCM_VERSION_FILE} ROSE_SCM_VERSION_ID LIMIT_COUNT 1)
 file(READ ${ROSE_SCM_DATE_FILE} ROSE_VERSION)
 
-# Fix trailing whitespace 
-string(STRIP "${ROSE_VERSION}" ROSE_VERSION) 
+# Fix trailing whitespace
+string(STRIP "${ROSE_VERSION}" ROSE_VERSION)
 
 # Print Results
 message(STATUS "The ROSE version integer is ${ROSE_VERSION}")
 message(STATUS "The ROSE version string is ${ROSE_PACKAGE_VERSION}")
 
 # Parse version into components for package configuration
+# Note: PROJECT_VERSION_MAJOR, PROJECT_VERSION_MINOR, etc. are also set by project() command
 string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)\\.([0-9]+)" _version_match "${ROSE_PACKAGE_VERSION}")
 set(ROSE_VERSION_MAJOR "${CMAKE_MATCH_1}")
 set(ROSE_VERSION_MINOR "${CMAKE_MATCH_2}")
