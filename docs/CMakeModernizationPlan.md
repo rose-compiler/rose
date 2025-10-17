@@ -1144,6 +1144,209 @@ Created comprehensive test script `docs/examples/test-all-examples.sh` for CI/CD
 
 ---
 
+### Step 15: Remove packages that CMake finds that aren't actually used by ROSE
+**Status:** 🔍 Analysis Complete - Ready for Implementation
+**Files to modify:** `CMakeLists.txt`, potentially `RoseConfig.cmake.in`
+**GitLab Issue:** TBD
+
+**Analysis Summary:**
+
+After auditing all `find_package()` calls in CMakeLists.txt and cross-referencing with actual usage in `src/CMakeLists.txt` (where ROSE_DLL is linked), the following packages were identified:
+
+**Packages NOT Linked to ROSE_DLL (Candidates for Removal or Clarification):**
+
+1. **OpenSSL** (line 764)
+   - Found unconditionally but NEVER linked to ROSE_DLL
+   - Used by some tools but not part of the library
+   - **Action:** Remove from top-level find_package(); tools that need it should find it themselves
+
+2. **Perl** (line 766)
+   - Found unconditionally but NEVER linked to ROSE_DLL
+   - Build/test tool only, not a library dependency
+   - **Action:** Keep (needed for build system), but document that it's not a ROSE library dependency
+
+3. **FLTK** (line 866, conditional on ENABLE_FLTK)
+   - Found but NOT linked to ROSE_DLL
+   - Used only by separate visualization tools in `src/roseIndependentSupport/visualization/`
+   - **Action:** Move find_package(FLTK) to the visualization tool's CMakeLists.txt
+
+4. **OpenGL** (line 965, conditional on ENABLE_ROSE_OPENGL)
+   - Found but NOT linked to ROSE_DLL
+   - Used only by visualization tools in `src/roseIndependentSupport/visualization/`
+   - **Action:** Move find_package(OpenGL) to the visualization tool's CMakeLists.txt
+
+5. **GLUT** (line 966, conditional on ENABLE_ROSE_OPENGL)
+   - Found but NOT linked to ROSE_DLL
+   - Used only by visualization tools in `src/roseIndependentSupport/visualization/`
+   - **Action:** Move find_package(GLUT) to the visualization tool's CMakeLists.txt
+
+6. **Qt4** (line 1115, conditional on WITH-ROSEQT)
+   - Found but NOT linked to ROSE_DLL
+   - Used only by QRose GUI tools in `src/3rdPartyLibraries/qrose/` and `src/roseExtensions/qtWidgets/`
+   - **Action:** Move find_package(Qt4) to the qrose/qtWidgets CMakeLists.txt files
+
+7. **FLEX** (line 1134)
+   - Build tool for lexer generation, not a library dependency
+   - Not linked to ROSE_DLL
+   - **Action:** Keep (needed for build), but document that it's not a ROSE library dependency
+
+**Custom Find Module Packages to Verify:**
+
+These are found via custom Find modules but usage is unclear:
+- **MySQL** (FindMySQL.cmake, line 763) - Database functionality, likely for tools only
+- **Pqxx** (FindPqxx.cmake, line 1039) - PostgreSQL C++ library, likely for tools only
+- **Spot** (FindSpot.cmake, lines 1061-1063) - LTL model checking, conditional on ENABLE_C
+- **Cereal** (FindCereal.cmake, lines 1021-1023) - Serialization library
+- **Qt** (FindQt.cmake, line 1044) - Separate from Qt4, conditional on WITH-ROSEQT
+
+**Action Items:**
+
+1. **Remove unconditional finds that aren't used by ROSE_DLL:**
+   - Remove `find_package(OpenSSL)` from top-level
+   - Document that Perl and FLEX are build tools only
+
+2. **Move conditional GUI/visualization package finds to local CMakeLists.txt:**
+   - Move FLTK find to `src/roseIndependentSupport/visualization/CMakeLists.txt`
+   - Move OpenGL/GLUT find to `src/roseIndependentSupport/visualization/CMakeLists.txt`
+   - Move Qt4 find to `src/3rdPartyLibraries/qrose/CMakeLists.txt` and `src/roseExtensions/qtWidgets/CMakeLists.txt`
+
+3. **Audit custom Find module packages:**
+   - Check if MySQL, Pqxx, Spot, Cereal, Qt are actually linked anywhere
+   - Remove finds if they're not used
+   - Move finds to local CMakeLists.txt if only used by specific tools
+
+4. **Update RoseConfig.cmake.in:**
+   - Ensure it doesn't reference any removed packages
+   - Currently it only references packages actually used by ROSE_DLL (good!)
+
+**Benefits:**
+- Faster CMake configuration (fewer unnecessary package searches)
+- Clearer dependency management (tools manage their own dependencies)
+- Reduced confusion about what ROSE actually requires
+- Better adherence to CMake best practices (find packages where they're used)
+- Smaller surface area for dependency resolution issues
+
+**Testing:**
+```bash
+# Test that ROSE builds without the removed packages
+cd _build
+rmc cmake ..
+rmc cmake --build . --target ROSE_DLL
+
+# Test that visualization tools still build (if enabled)
+rmc cmake --build . --target visualization_tool
+
+# Test that external projects can still find ROSE
+cd /tmp/external_test
+cmake . -DCMAKE_PREFIX_PATH=${ROSE_INSTALL_PREFIX}
+cmake --build .
+```
+
+**Success criteria:**
+- ROSE_DLL builds successfully
+- Tools that need GUI/visualization packages still build when enabled
+- External projects using ROSE are unaffected
+- CMake configuration time is reduced
+
+---
+
+### Step 16: Fix quoting for generator expressions
+**Status:** ✅ NOT NEEDED - Current Implementation Works Correctly
+**Files to modify:** None
+**GitLab Issue:** N/A
+
+**Original Concern:**
+
+The plan originally suggested removing quotes from:
+```cmake
+target_include_directories(ROSE_DLL PUBLIC
+  "$<BUILD_INTERFACE:${ROSE_INCLUDES}>"  # <-- QUOTED
+  ...
+)
+```
+
+The concern was that quoting a generator expression containing a list variable might cause CMake to treat the semicolon-separated list as a single path instead of multiple directories.
+
+**Investigation Results:**
+
+Testing with `ninja -v` shows that **119 unique `-I` include directories** are correctly generated in compile commands, confirming that all entries from `ROSE_INCLUDES` are properly expanded despite the quotes.
+
+Example output:
+```bash
+$ ninja -v 2>&1 | grep -o '\-I[^ ]*' | sort -u | wc -l
+119
+```
+
+**Why the quotes don't cause problems:**
+
+CMake handles quoted generator expressions with list variables intelligently:
+- The generator expression is evaluated first: `$<BUILD_INTERFACE:${ROSE_INCLUDES}>`
+- CMake expands `${ROSE_INCLUDES}` into the full semicolon-separated list
+- The generator expression wrapper is applied to the entire list
+- CMake's `target_include_directories()` internally splits semicolon-separated values
+- Result: All 119 directories are correctly registered
+
+**Conclusion:**
+
+While the CMake documentation and style guides often recommend avoiding quotes around generator expressions containing lists, in this specific case the quotes are **harmless** because:
+1. CMake's `target_include_directories()` is designed to handle semicolon-separated strings
+2. The current build produces correct results (verified empirically)
+3. Removing the quotes would have no observable effect
+
+**Recommendation:**
+
+**Skip this step** - the current implementation works correctly. If modernizing this code in the future, removing the quotes would align with CMake best practices, but it's not a bug fix and provides no functional benefit.
+
+**Alternative (Optional Style Improvement):**
+
+If you want to follow strict CMake style guidelines, you could remove the quotes for consistency:
+```cmake
+target_include_directories(ROSE_DLL PUBLIC
+  $<BUILD_INTERFACE:${ROSE_INCLUDES}>  # Style: unquoted (no functional difference)
+  $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
+  $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}/Rose>
+)
+```
+
+But this is purely cosmetic and not worth the effort unless touching this code for other reasons.
+
+---
+
+### Step 17: Avoid installing OBJECT libraries
+
+CMake does not install OBJECT libraries. Exporting them can cause install/usage issues. We already mitigate header propagation using `rose_object_library_dependencies` for includ dirs.
+
+Suggested:
+* Do not install/export OBJECT libraries. Only install/export ROSE_DLL (and true SHARED/STATIC/INTERFACE/IMPORTED targets).
+
+---
+
+### Step 18: Fix module path precedence in RoseConfig.cmake.in
+
+We should append rather than prepend to avoid overriding consumer's modules unless necessary.
+
+```cmake
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+```
+
+---
+
+### Step 19: Prefer imported/config packages for third-party dependencies when available
+
+Current custom Find modules work but are verbose. Where upstream provides CMake config packages (Zlib, Capstone, LLVM, Clang, SQLite3) prefer `find_package` with imported targets and fall back to Find modules when CONFIG packages aren't available.
+
+---
+
+### Step 20: Try to eliminate absolute rpaths from installed libraries and executables
+
+---
+
+### Step 21: Reduce global state by by using target-scoped propagation for ROSE dependencies.
+
+Example, instead of adding the boost include directories explicitly,
+just inherit them by depending on "Boost::filesystem" etc.
+
+
 ## Conclusion
 
 This modernization brings ROSE's CMake infrastructure up to current best practices while maintaining compatibility with
