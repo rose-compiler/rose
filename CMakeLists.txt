@@ -215,8 +215,6 @@ set(ROSE_VERSION_MINOR "${CMAKE_MATCH_2}")
 set(ROSE_VERSION_PATCH "${CMAKE_MATCH_3}")
 set(ROSE_VERSION_BUILD "${CMAKE_MATCH_4}")
 
-message(STATUS "ROSE version components: ${ROSE_VERSION_MAJOR}.${ROSE_VERSION_MINOR}.${ROSE_VERSION_PATCH}.${ROSE_VERSION_BUILD}")
-
 # Generate version file for package configuration
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(

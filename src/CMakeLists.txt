@@ -754,7 +754,11 @@ set(rose_LIB_SRC_FILES dummyCppFileForLibrose.C)
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS})
 add_dependencies(ROSE_DLL roseUtil)
 
-set_target_properties(ROSE_DLL PROPERTIES OUTPUT_NAME "rose")
+set_target_properties(ROSE_DLL PROPERTIES
+  OUTPUT_NAME "rose"
+  VERSION "${ROSE_PACKAGE_VERSION}"   # e.g., 0.11.145.342
+  SOVERSION "${ROSE_VERSION_MAJOR}.${ROSE_VERSION_MINOR}"  # backward compatibility between 0.11.a.b and 0.11.c.d
+)
 
 # Create namespaced alias for modern CMake usage
 # This allows projects using ROSE to reference it as Rose::rose instead of ROSE_DLL.
