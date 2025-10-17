@@ -713,7 +713,7 @@ endif()
 
 # Cxx Frontend Conditional: either EDG or Clang or nothing
 if(ENABLE_CPP)
-  if(NOT ENABLE_CLANG-FRONTEND)  # USE EDG
+  if(NOT ENABLE_CLANG_FRONTEND)  # USE EDG
     message(STATUS "ROSE will be using EDG for the CXX Frontend")
     message(STATUS "  have_EDG_source=${have_EDG_source}, EDG_COMPILE=${EDG_COMPILE}")
     # Only link RoseSourceCxxFrontendEdg if we're compiling EDG from source
@@ -732,8 +732,8 @@ if(ENABLE_CPP)
 endif()
 
 # Make sure both CxxFrontend options are not enabled
-if(EDG_COMPILE AND ENABLE_CLANG-FRONTEND)
-  message(FATAL_ERROR "EDG_COMPILE and ENABLE_CLANG-FRONTEND are mutually exclusive."
+if(EDG_COMPILE AND ENABLE_CLANG_FRONTEND)
+  message(FATAL_ERROR "EDG_COMPILE and ENABLE_CLANG_FRONTEND are mutually exclusive."
                       "\nPlease disable one of these options at config time")
 endif()
 
