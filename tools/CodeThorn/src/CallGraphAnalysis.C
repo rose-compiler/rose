@@ -36,15 +36,16 @@ namespace
           {
             ct::FunctionKeyType tgtkey = *call.callee();
             const bool          isCall = call.call();
+            const bool          virtualCall = call.virtualCall();
 
             if (!isCall) // address taken
               addressTknElems.push_back(call);
             else
-              insert(srcpos, tgtkey, ct::CallEdge::normalCall);
+              insert(srcpos, tgtkey, virtualCall ? ct::CallEdge::virtualCall : ct::CallEdge::normalCall);
 
             // if the address was taken from a virtual function,
             //   we also store it in the virtual call sequence.
-            if (call.virtualCall())
+            if (virtualCall)
               virtualElems.push_back(call);
           }
           else // pointer based and other non-resolvable calls
@@ -101,12 +102,16 @@ namespace
       ct::CallGraph::ConstVertexIterator srcpos = g->findVertexKey(srckey);
       ASSERT_require(g->isValidVertex(srcpos));
 
-      for (ct::CallData cd : fcd.calls())
+      for (ct::CallData call : fcd.calls())
       {
-        ASSERT_require(cd.callee());
-        ct::FunctionKeyType                tgtkey = *cd.callee();
+        ASSERT_require(call.callee());
+        ct::FunctionKeyType    tgtkey = *call.callee();
+        ct::CallEdge::Property kind = ct::CallEdge::Property::addressTaken;
 
-        insert(srcpos, tgtkey, ct::CallEdge::addressTaken);
+        if (call.virtualCall())
+          kind = kind | ct::CallEdge::Property::virtualCall;
+
+        insert(srcpos, tgtkey, kind);
       }
     }
   }

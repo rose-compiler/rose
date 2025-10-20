@@ -206,26 +206,28 @@ struct VirtualFunctionEntry : VirtualFunctionEntryBase
   /// returns the function representation
   std::tuple_element<0, base>::type function() const { return std::get<0>(*this); }
 
-  /// returns the class where this function is (will be) defined
-  /// \details if needsCompilerGeneration is set, the class indicates a compiler
+  /// property indicating the class where this function was (or will be [x1]) defined.
+  /// \details x1: if needsCompilerGeneration is set, the class indicates a compiler
   ///          generated function that has not been generated in the AST.
   ///          In this case function() returns an overriden function in a base class.
+  /// \{
   std::tuple_element<1, base>::type getClass() const { return std::get<1>(*this); }
   void setClass(std::tuple_element<1, base>::type val) { std::get<1>(*this) = val; }
+  /// \}
 
   /// returns if the returned object requires a this pointer adjustment compared
   ///   to the original entry in the vtable.
-  /// \todo seem comment in OverriderDesc
+  /// \todo see comment in OverriderDesc
   std::tuple_element<2, base>::type adjustReturnObj() const { return std::get<2>(*this); }
 
-  /// returns true if this is a pure virtual function, making the
-  /// the class pure virtual.
+  /// returns true if this is a pure virtual function, making the the class pure virtual.
   std::tuple_element<3, base>::type isPureVirtual() const { return std::get<3>(*this); }
 
-  /// returns true if this is a pure virtual function, making the
-  /// the class pure virtual.
+  /// property indicating if the function will be compiler generated
+  /// \{
   std::tuple_element<4, base>::type needsCompilerGeneration() const { return std::get<4>(*this); }
   void needsCompilerGeneration(std::tuple_element<4, base>::type val) { std::get<4>(*this) = val; }
+  /// \}
 };
 
 

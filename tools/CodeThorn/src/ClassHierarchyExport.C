@@ -22,7 +22,6 @@ namespace json  = nlohmann;
 namespace adapt = boost::adaptors;
 namespace ct    = CodeThorn;
 
-
 namespace
 {
   inline
@@ -286,6 +285,7 @@ namespace
   };
 
   // general field names
+  const char* const FLD_CLASSES_ROOT     = "classes";
   const char* const FLD_KIND             = "kind";       // tag describing one of multiple object choices
   const char* const FLD_KEY              = "id";         // typically mangled name of type or function
   const char* const FLD_NAME             = "name";       // printable name
@@ -452,7 +452,7 @@ namespace
                  ct::ClassPredicate pred
                )
   {
-    output.arrayBegin("classes");
+    output.arrayBegin(FLD_CLASSES_ROOT);
 
     //~ for (const ct::VTableLayoutContainer::value_type& el : vtl)
     for (const ct::ObjectLayoutContainer::value_type& layout : classLayout)
@@ -477,7 +477,7 @@ namespace
       output.elem(obj);
     }
 
-    output.arrayEnd("classes");
+    output.arrayEnd(FLD_CLASSES_ROOT);
   }
 }
 
@@ -524,6 +524,135 @@ namespace CodeThorn
     os << '{';
     convertToJson(writer, classLayout, vtableLayout, pred);
     os << '}';
+  }
+
+  json::json classHierarchySchema()
+  {
+    return  R"(
+            { "type": "object",
+              "required": ["classes"],
+              "properties": {
+                "classes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["layout", "id", "abstract"],
+                    "properties": {
+                      "abstract": {
+                        "type": "boolean"
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "layout": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": ["kind"],
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "desc": "object kind, one of {sub,fld,vtable}"
+                            },
+                            "base": {
+                              "type": "string",
+                              "desc": "base type. set if kind==sub"
+                            },
+                            "class": {
+                              "type": "string",
+                              "desc": "type associated with vtable. set if kind==vtable"
+                            },
+                            "name": {
+                              "type": "string",
+                              "desc": "source name. set if kind==fld"
+                            },
+                            "direct": {
+                              "type": "boolean",
+                              "desc": "true iff this is a direct base. set if kind==sub"
+                            },
+                            "primary": {
+                              "type": "boolean",
+                              "desc": "true iff this is the primary vtable. set if kind==vtable"
+                            },
+                            "virtual": {
+                              "type": "boolean",
+                              "desc": "true iff this is a virtual base class. set if kind==sub"
+                            }
+                          }
+                        }
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "sections": {
+                        "desc": "meta data describing elements in vtable array"
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": ["at", "class", "inherited", "size", "virtual"],
+                          "properties": {
+                            "at": {
+                              "type": "number",
+                              "desc": "start index of section in vtable"
+                            },
+                            "class": {
+                              "type": "string",
+                              "desc": "type associated with section"
+                            },
+                            "inherited": {
+                              "type": "number",
+                              "desc": "number of inherited virtual functions"
+                            },
+                            "size": {
+                              "type": "number",
+                              "desc": "total size of section in vtable"
+                            },
+                            "virtual": {
+                              "type": "boolean",
+                              "desc": "true iff this is a virtually inherited section"
+                            }
+                          }
+                        }
+                      },
+                      "vtable": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": ["kind"],
+                          "properties": {
+                            "abstract": {
+                              "type": "boolean",
+                              "desc": "true iff function is pure virtual. set if kind==fun"
+                            },
+                            "class": {
+                              "type": "string",
+                              "desc": "class id where function was defined. set if kind==fun"
+                            },
+                            "compgen": {
+                              "type": "string",
+                              "desc": "true iff function needs to be compiler generated. set if kind==fun"
+                            },
+                            "covariant": {
+                              "type": "boolean",
+                              "desc": "true iff function is covariant to function in base. set if kind==fun"
+                            },
+                            "id": {
+                              "type": "string",
+                              "desc": "function ID. set if kind==fun"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "desc": "object kind, one of {fun}"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          )"_json;
   }
 
 } // end of namespace CodeThorn

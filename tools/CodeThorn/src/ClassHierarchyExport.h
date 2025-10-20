@@ -12,6 +12,7 @@
  */
 
 
+
 namespace CodeThorn
 {
   using ClassPredicate       = std::function<bool(ClassKeyType)>;
@@ -33,6 +34,9 @@ namespace CodeThorn
              const VTableLayoutContainer& vtableLayout,
              ClassPredicate               pred = anyClass()
            );
+
+  /// returns a schema description for the exported class hierarchy object
+  nlohmann::json classHierarchySchema();
 } // end of namespace CodeThorn
 
 #endif /* CALL_GRAPH_WRITER_H */

@@ -932,6 +932,18 @@ namespace sg
 
     GEN_VISIT(SgRangeType)
 
+    GEN_VISIT(SgTemplateVariableInstantiation)
+    GEN_VISIT(SgReferenceExp)
+    GEN_VISIT(SgTypeRefExp)
+    GEN_VISIT(SgScopedRefExp)
+    GEN_VISIT(SgScopedType)
+    GEN_VISIT(SgTypeSymbol)
+    GEN_VISIT(SgIntegralType)
+    GEN_VISIT(SgSignedIntegralType)
+    GEN_VISIT(SgUnsignedIntegralType)
+    GEN_VISIT(SgFloatingPointType)
+
+
 #if WITH_BINARY_NODES
     GEN_VISIT(SgAsmAarch64AtOperand)
     GEN_VISIT(SgAsmAarch64BarrierOperand)
@@ -1236,6 +1248,18 @@ namespace sg
     GEN_VISIT(SgAsmVoidType)
     GEN_VISIT(SgAsmPointerType)
 
+    GEN_VISIT(SgAsmJvmSynthetic)
+    GEN_VISIT(SgAsmJvmDeprecated)
+    GEN_VISIT(SgAsmCilErrorHeap)
+    GEN_VISIT(SgAsmJvmRuntimeVisibleAnnotations)
+    GEN_VISIT(SgAsmJvmRuntimeAnnotation)
+    GEN_VISIT(SgAsmJvmRuntimeAnnotationValue)
+    GEN_VISIT(SgAsmJvmRuntimeAnnotationPair)
+    GEN_VISIT(SgAsmJvmRuntimeInvisibleAnnotations)
+    GEN_VISIT(SgAsmJvmAnnotationDefault)
+    GEN_VISIT(SgAsmJvmRuntimeParameterAnnotation)
+    GEN_VISIT(SgAsmJvmRuntimeVisibilityParamAnnotations)
+    GEN_VISIT(SgAsmJvmIndexedAttribute)
     // incomplete
 #endif /* WITH_BINARY_NODES */
 

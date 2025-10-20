@@ -65,6 +65,8 @@ namespace
   constexpr const char* const mglFloat                    = "f";
   constexpr const char* const mglDouble                   = "d";
   constexpr const char* const mglLongDouble               = "L";
+  constexpr const char* const mglFloat16                  = "x";
+  constexpr const char* const mglFloat32                  = "y";
   constexpr const char* const mglFloat80                  = "w";
   constexpr const char* const mglFloat128                 = "q";
 
@@ -446,6 +448,8 @@ namespace
       void handle(const SgTypeFloat&)                 { res = mglFloat; }
       void handle(const SgTypeDouble&)                { res = mglDouble; }
       void handle(const SgTypeLongDouble&)            { res = mglLongDouble; }
+      void handle(const SgTypeFloat16&)               { res = mglFloat16; }
+      void handle(const SgTypeFloat32&)               { res = mglFloat32; }
       void handle(const SgTypeFloat80&)               { res = mglFloat80; }
       void handle(const SgTypeFloat128&)              { res = mglFloat128; }
 

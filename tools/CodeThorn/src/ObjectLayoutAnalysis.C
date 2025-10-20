@@ -99,9 +99,10 @@ namespace
   using OverriderInfo = std::unordered_map<ct::FunctionKeyType, ct::VirtualFunctionEntry >;
   using FreshVirtualFunctions = std::unordered_map<ct::FunctionKeyType, bool>;
 
-  struct VirtualMemberFnSummary : std::tuple<OverriderInfo, FreshVirtualFunctions>
+  using VirtualMemberFnSummaryBase = std::tuple<OverriderInfo, FreshVirtualFunctions>;
+  struct VirtualMemberFnSummary : VirtualMemberFnSummaryBase
   {
-    using base = std::tuple<OverriderInfo, FreshVirtualFunctions>;
+    using base = VirtualMemberFnSummaryBase;
     using base::base;
 
     const std::tuple_element<0, base>::type&
@@ -242,7 +243,7 @@ namespace
   {
     using VTableSections = ct::VTableLayout::VTableSections;
 
-    // 1) find the non-virtual part in the inherited vtable
+    // 1) find the virtual part in the inherited vtable
     const VTableSections&          baseSects = base.vtableSections();
     VTableSections::const_iterator beg = baseSects.begin();
     VTableSections::const_iterator lim = std::find_if( beg, baseSects.end(),
@@ -255,32 +256,35 @@ namespace
     const size_t numFn = std::accumulate(beg, lim, size_t{0}, sumFn);
 
     // 2) compute overrider candidates based on base classes
-    std::vector<CheckedIter>             candBaseSects = collectVirtualBaseSections(vt, base, numFn, all, layouts);
+    std::vector<CheckedIter>       candBaseSects = collectVirtualBaseSections(vt, base, numFn, all, layouts);
+    ASSERT_require(!candBaseSects.empty());
+
+    // candidates contain an entry for each slot in the vtable
     std::vector<std::vector<ct::VTableLayoutElement> > candidates;
 
     candidates.reserve(numFn);
 
-    ROSE_ASSERT(candBaseSects.size());
+    // 2.a) fill each slot in candidates with virtual function candidates
     for (size_t slot = 0; slot < numFn; ++slot)
     {
+      // entries stores all candidates for a vtable slot
       std::vector<ct::VTableLayoutElement> entries;
 
       entries.reserve(candBaseSects.size());
 
+      // 2.a.i) collect all overriders from the virtual base classes
       for (CheckedIter candBaseBeg : candBaseSects)
       {
-        ROSE_ASSERT(slot < candBaseBeg.size());
+        ASSERT_require(slot < candBaseBeg.size());
         const ct::VirtualFunctionEntry& ccc = boost::get<ct::VirtualFunctionEntry>(*(candBaseBeg.iter()+slot));
 
-        ROSE_ASSERT(ccc.getClass());
+        ASSERT_not_null(ccc.getClass());
         entries.push_back(ccc);
-
-        const ct::VirtualFunctionEntry& chk = boost::get<ct::VirtualFunctionEntry>(entries.back());
-        ROSE_ASSERT(chk.getClass());
       }
 
-      ROSE_ASSERT(entries.size());
+      ASSERT_require(entries.size() == candBaseSects.size());
 
+      // 2.a.ii) Sort entries so that duplicates (by function) are adjacent.
       const std::vector<ct::VTableLayoutElement>::iterator aaa = entries.begin();
       const std::vector<ct::VTableLayoutElement>::iterator zzz = entries.end();
       auto entryLessThan = [](const ct::VTableLayoutElement& lhs, const ct::VTableLayoutElement& rhs) -> bool
@@ -293,6 +297,7 @@ namespace
 
       std::sort(aaa, zzz, entryLessThan);
 
+      // 2.a.iii) Get a range of unique elements.
       auto entryEquals = [](const ct::VTableLayoutElement& lhs, const ct::VTableLayoutElement& rhs) -> bool
                          {
                            const ct::VirtualFunctionEntry& lhsFn = boost::get<ct::VirtualFunctionEntry>(lhs);
@@ -302,8 +307,12 @@ namespace
                          };
       const std::vector<ct::VTableLayoutElement>::iterator unq = std::unique(aaa, zzz, entryEquals);
       const size_t unqLen = std::distance(aaa, unq);
-      ROSE_ASSERT(unqLen > 0);
+      ASSERT_require(unqLen > 0);
 
+      // 2.a.iii) Remove overriden entries: if one function comes from a virtual base of another,
+      //          keep only the most derived.
+
+      // entries_revised collects those functions that are not overriden
       std::vector<ct::VTableLayoutElement> entries_revised;
 
       for (size_t i = 0; i < unqLen; ++i)
@@ -329,9 +338,8 @@ namespace
           entries_revised.push_back(ci);
       }
 
-      ROSE_ASSERT(entries_revised.size());
+      ASSERT_require(!entries_revised.empty());
       candidates.emplace_back(std::move(entries_revised));
-      ROSE_ASSERT(candidates.back().size());
     }
 
     // 3) compute final overrider
@@ -360,12 +368,17 @@ namespace
                         }
                         else if (res.function() != vtElem.function())
                         {
+                          // \note res.needsCompilerGeneration(true) will be set later.
                           if (!compat.isAutoGeneratable(all, vt.getClass(), res.function()))
                             msgError() << "No unique overrider for virtual inheritance!"
                                        << std::endl;
+
+                          // \todo abort on error
+                          // ASSERT_require(compat.isAutoGeneratable(all, vt.getClass(), res.function()));
                         }
                       }
 
+                      // sanity check
                       if (!res.getClass())
                       {
                         msgError() << "n=" << numFn << std::endl;
@@ -412,9 +425,6 @@ namespace
   {
     using Vec = std::vector<ct::InheritanceDesc>;
 
-    //~ static constexpr bool virtually = true;
-    //~ static constexpr bool directly  = true;
-
     ct::VTableLayout          res{clazz.first};
     PrimarySubobjectFinder    aPrimarySubobj{&all};
     const Vec&                parents = clazz.second.ancestors();
@@ -437,16 +447,7 @@ namespace
       primarySect.associatedClass(clazz.first);
     }
 
-    //~ auto nullCheck = [](const ct::VTableLayoutElement& el)->void
-                     //~ {
-                       //~ const ct::VirtualFunctionEntry& vfn = boost::get<ct::VirtualFunctionEntry>(el);
-                       //~ ASSERT_not_null(vfn.getClass());
-                     //~ };
-
-    //~ std::for_each(res.begin(), res.end(), nullCheck);
-
     // 3) add virtual functions not yet in the primary table
-    //    no longer: (and covariant functions that require this pointer adjustment.)
     std::for_each( res.begin(), res.end(),
                    [&summary](const ct::VTableLayoutElement& el)->void
                    {
@@ -458,9 +459,6 @@ namespace
                  );
 
     processNonInherited(res, clazz, summary.freshVirtualFunctions(), primarySect);
-
-    //~ std::for_each(res.begin(), res.end(), nullCheck);
-
 
     // 4) Add all non-primary, non-virtual vtables from parents
     //    \note if primary exists, the loop starts with the element after primary
@@ -474,8 +472,6 @@ namespace
       nonprimarySect.associatedClass(it->getClass());
       processInherited(res, layouts.at(it->getClass()), summary.overriderInfo(), nonprimarySect);
     }
-
-    //~ std::for_each(res.begin(), res.end(), nullCheck);
 
     // 5) Add all vtables from virtual ancestors
     for (Vec::const_iterator it = aa; it != zz; ++it)
@@ -497,7 +493,9 @@ namespace
                                   );
     }
 
-    //~ std::for_each(res.begin(), res.end(), nullCheck);
+    // 6) - check if there are any abstract functions that cannot be auto generated.
+    //    - mark all functions that require generation by the compiler.
+
     bool isAbstract = false;
 
     std::for_each( res.begin(), res.end(),

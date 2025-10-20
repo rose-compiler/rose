@@ -16,7 +16,7 @@ namespace CodeThorn
 {
   struct CallEdge
   {
-    enum Property
+    enum Property : std::int8_t
     {
       unknown        = 0,
       normalCall     = (1 << 0),
@@ -29,6 +29,21 @@ namespace CodeThorn
 
     Property kind;
   };
+
+  inline
+  CallEdge::Property
+  operator|(CallEdge::Property lhs, CallEdge::Property rhs)
+  {
+    return static_cast<CallEdge::Property>(lhs | std::int8_t(rhs));
+  }
+
+  inline
+  CallEdge::Property
+  operator&(CallEdge::Property lhs, CallEdge::Property rhs)
+  {
+    return static_cast<CallEdge::Property>(lhs & std::int8_t(rhs));
+  }
+
 
   using CGVertex  = FunctionKeyType;
   using CGEdge    = CallEdge::Property;
