@@ -222,7 +222,7 @@
 /* Therefore we should do our best to detect if we expect _Float16 to be defined, and if not, define it ourselves */
 /* _Float16 is not defined in GNU C++ until GNU 13, but is defined in GNU C at least as far back as GNU 8.5 */
 #if __cplusplus
-#  if defined(__GNUC__) && __GNUC__ < 13
+#  if defined(__GNUC__) && !defined(__FLT16_MAX__)
 #    define ROSE_DECLARE_FLOAT16
 #  endif
 #endif
