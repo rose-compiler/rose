@@ -28,8 +28,9 @@
 
 /* Define if Z3 library is available */
 #cmakedefine ROSE_HAVE_Z3 @ROSE_HAVE_Z3@
-#define ROSE_Z3_LIBRARY "@Z3_LIBRARY@"
-#define ROSE_Z3_EXECUTABLE "@Z3_EXECUTABLE@"
+
+/* Path to Z3 executable */
+#define ROSE_Z3_EXECUTABLE "@ROSE_Z3_EXECUTABLE@"
 
 /* Deprecated [Robb Matzke 2025-06-18]: remove after autotools is no longer supported */
 #define ROSE_Z3 ROSE_Z3_EXECUTABLE

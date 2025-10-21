@@ -95,12 +95,13 @@ if(Rose_GCRYPT_FOUND)
 endif()
 
 # Find Z3 SMT solver (optional - used for symbolic execution)
-set(Rose_Z3_FOUND @Z3_FOUND_LIB@)
+set(Rose_Z3_FOUND @ROSE_HAVE_Z3@)
 if(Rose_Z3_FOUND)
   if(NOT DEFINED Z3_ROOT)
     set(Z3_ROOT "@Z3_ROOT@")
   endif()
   include(FindZ3)
+  find_z3()
   # Z3 is PRIVATE, so we don't fail if it's not found - consumer doesn't need it
   # This just makes the variables available for reference
 endif()

@@ -560,9 +560,6 @@ std::string version_message() {
 #else
     ss << "unknown version";
 #endif
-#ifdef ROSE_Z3_LIBRARY
-    ss <<" (" <<ROSE_Z3_LIBRARY <<")";
-#endif
     ss <<"\n";
 #else
     ss <<"  ---   z3 library:               unused\n";

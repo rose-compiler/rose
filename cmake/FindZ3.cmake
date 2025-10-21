@@ -1,125 +1,128 @@
-# Z3 detection for ROSE.
-# Needs to support Z3 versions 4.5.0 and later.
-# Needs to handle Z3 installed in user directories.
-# Needs to distinguish between "z3" executable and the library.
+# Modern Z3 detection for ROSE using Z3's CMake package config files.
 #
-#  INPUTS:
-#    Z3_ROOT       -- Z3 installation directory or "no" or empty
-#                     * If "no" then do not use Z3 and do not search for it.
-#                     * If empty use Z3 if found, no error if not found
-#                     * Else require Z3 to exist at specified location and use it
+# This module uses Z3's built-in CMake support (Z3Config.cmake) which is installed
+# with modern Z3 versions (4.5.0 and later). This approach is simpler, more reliable,
+# and follows modern CMake best practices by using imported targets.
 #
-#  OUTPUTS:
-#    Z3_FOUND       -- Boolean: whether the z3 executable or the Z3 library was found.
-#    Z3_FOUND_EXE   -- Boolean: whether the z3 executable was found
-#    Z3_FOUND_LIB   -- Boolean: whether the Z3 library was found
-#    Z3_EXECUTABLE  -- String:  the z3 executable name
-#    Z3_VERSION     -- String:  Z3 version string, such as "4.8.1"
-#    Z3_VERSION_H   -- Boolean: whether the z3_version.h file exists
-#    Z3_LIBRARIES   -- String:  names of libraries necessary to use Z3
-#    Z3_HEADER_PATH -- String:  location of z3 headers, suitable for including via -I
-include(CheckIncludeFiles) 
+# INPUTS:
+#   Z3_ROOT       -- Z3 installation directory or "no" or empty
+#                    * If "no" then do not use Z3 and do not search for it.
+#                    * If empty use Z3 if found, no error if not found
+#                    * Else require Z3 to exist at specified location and use it
+#
+# OUTPUTS:
+#   Z3_FOUND       -- Boolean: whether Z3 was found (library and/or executable)
+#   Z3_VERSION     -- String: Z3 version string, such as "4.8.1"
+#   Z3::libz3      -- Imported target: link against this target to use Z3 library
+#   Z3_EXECUTABLE  -- String: path to the z3 executable
+#
+# ROSE-specific variables (for backward compatibility):
+#   ROSE_HAVE_Z3          -- Boolean: whether Z3 library is available
+#   ROSE_HAVE_Z3_VERSION_H -- Boolean: whether z3_version.h header exists
+#   ROSE_Z3_EXECUTABLE    -- String: path to the z3 executable
+
 macro(find_z3)
+  # Ensure CheckIncludeFileCXX module is available (ROSE requires C++)
+  include(CheckIncludeFileCXX)
+
+  # Handle Z3_ROOT="no" case: explicitly disable Z3
   if("${Z3_ROOT}" STREQUAL "no")
-    # Do not use Z3, and therefore do not even search for it. Make sure all outputs are cleared to avoid problems with
-    # users maybe setting them.
     set(Z3_FOUND FALSE)
-    set(Z3_FOUND_EXE FALSE)
-    set(Z3_FOUND_LIB FALSE)
-    set(Z3_EXECUTABLE "")
-    set(Z3_LIBRARY "")
     set(Z3_VERSION "")
-    set(Z3_VERSION_H FALSE)
-    set(Z3_LIBRARIES "")
+    set(Z3_EXECUTABLE "")
+    set(ROSE_HAVE_Z3 FALSE)
+    set(ROSE_HAVE_Z3_VERSION_H FALSE)
+    set(ROSE_Z3_EXECUTABLE "")
+    message(STATUS "Z3 support explicitly disabled (Z3_ROOT=no)")
 
   else()
-    # Z3 executable
-    if("${Z3_ROOT}" STREQUAL "")
-      find_program(Z3_EXECUTABLE NAMES z3)
+    # If Z3_ROOT is specified, guide find_package to the right location
+    # Z3Config.cmake is typically installed in lib/cmake/z3/
+    if(NOT "${Z3_ROOT}" STREQUAL "")
+      set(_Z3_DIR_HINT "${Z3_ROOT}/lib/cmake/z3")
+      if(NOT EXISTS "${_Z3_DIR_HINT}/Z3Config.cmake")
+        message(FATAL_ERROR "Z3 requested at '${Z3_ROOT}' but Z3Config.cmake not found at ${_Z3_DIR_HINT}")
+      endif()
+      # Set Z3_DIR to guide find_package, but make it a cache variable so users can override
+      set(Z3_DIR "${_Z3_DIR_HINT}" CACHE PATH "Path to Z3 CMake config files")
+    endif()
+
+    # Find Z3 using its CMake package config (modern approach)
+    # Use CONFIG mode to ensure we use Z3Config.cmake, not another FindZ3.cmake
+    if(NOT "${Z3_ROOT}" STREQUAL "")
+      # If Z3_ROOT specified, require Z3 to be found
+      find_package(Z3 CONFIG REQUIRED)
     else()
+      # If Z3_ROOT not specified, Z3 is optional
+      find_package(Z3 CONFIG QUIET)
+    endif()
+
+    # Find Z3 executable (typically not provided by Z3Config.cmake)
+    if(NOT "${Z3_ROOT}" STREQUAL "")
       find_program(Z3_EXECUTABLE NAMES z3 PATHS "${Z3_ROOT}/bin" NO_DEFAULT_PATH)
-    endif()
-    if(Z3_EXECUTABLE)
-      set(Z3_FOUND TRUE)
-      set(Z3_FOUND_EXE TRUE)
-      if(NOT Z3_VERSION)
-	execute_process(COMMAND ${Z3_EXECUTABLE} --version OUTPUT_VARIABLE Z3_VERSION_OUTPUT)
-	string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" Z3_VERSION "${Z3_VERSION_OUTPUT}")
-      endif()
-    endif()
-
-    # Z3 library.
-    if("${Z3_ROOT}" STREQUAL "")
-      find_library(Z3_LIBRARY NAMES z3)
     else()
-      find_library(Z3_LIBRARY NAMES z3 PATHS "${Z3_ROOT}/lib" NO_DEFAULT_PATH)
-    endif()
-    if(Z3_LIBRARY)
-      set(Z3_FOUND TRUE)
-      set(Z3_FOUND_LIB TRUE)
-      set(Z3_LIBRARIES z3)
-      # Newer versions of z3 add an extra directory of indirection, placing headers at include/z3/*.h,
-      # so we check if include/z3 is a path and include it if so.
-      get_filename_component(Z3_HEADER_PATH ${Z3_LIBRARY} DIRECTORY)
-      set(Z3_HEADER_PATH "${Z3_HEADER_PATH}/../include")
-      get_filename_component(Z3_HEADER_PATH ${Z3_LIBRARY} DIRECTORY)
-      set(Z3_HEADER_PATH "${Z3_HEADER_PATH}/../include")
-      if (EXISTS "${Z3_HEADER_PATH}/z3" AND IS_DIRECTORY "${Z3_HEADER_PATH}/z3")
-        set(Z3_HEADER_PATH "${Z3_HEADER_PATH}/z3")
-      endif()
-
-      include_directories(${Z3_HEADER_PATH})
-      
-      if(NOT Z3_VERSION)
-	message(FATAL_ERROR "Z3 version cannot be obtained from the library")
-      endif()
+      find_program(Z3_EXECUTABLE NAMES z3)
     endif()
 
-    # Error if not found? [Note: extra(?) parens are due to lack of precedence documentation in cmake]
-    if((NOT ("${Z3_ROOT}" STREQUAL "")) AND NOT Z3_FOUND)
-      message(FATAL_ERROR "Z3 requested by user at '${Z3_ROOT}' but not found")
-    endif()
-
-    # Header files. z3_version.h is absent from older versions of Z3, and newer versions don't include it automatically
-    # in z3.h, therefore we have to detect it ourselves and conditionally include it in the ROSE source code.
-    if("${Z3_ROOT}" STREQUAL "")
-      if (Z3_HEADER_PATH)
-        set(CMAKE_REQUIRED_INCLUDES ${Z3_HEADER_PATH})
-      endif()
-      check_include_file("z3_version.h" Z3_VERSION_H)
-    else()
-      include_directories("${Z3_ROOT}/include")
-      check_include_file("${Z3_ROOT}/include/z3_version.h" Z3_VERSION_H)
-    endif()
-    if(Z3_VERSION_H AND NOT Z3_VERSION)
-      message(FATAL_ERROR "Z3 version from z3_version.h not implemented in cmake yet")
-    endif()
-  endif()
-
-    
-  
-  # Summarize
-  if(VERBOSE)
-    message(STATUS "Z3_ROOT       = '${Z3_ROOT}'")
-    message(STATUS "Z3_FOUND      = '${Z3_FOUND}'")
+    # Process results
     if(Z3_FOUND)
-      message(STATUS "Z3_VERSION    = '${Z3_VERSION}'")
-      message(STATUS "Z3_FOUND_EXE  = '${Z3_FOUND_EXE}'")
-      message(STATUS "Z3_FOUND_LIB  = '${Z3_FOUND_LIB}'")
-      if(Z3_FOUND_EXE)
-	message(STATUS "Z3_EXECUTABLE = '${Z3_EXECUTABLE}'")
+      # Z3Config.cmake provides:
+      # - Z3_VERSION_STRING (or individual Z3_VERSION_MAJOR, MINOR, PATCH, TWEAK)
+      # - z3::libz3 imported target
+      # - Z3_C_INCLUDE_DIRS
+
+      # Normalize version variable
+      if(DEFINED Z3_VERSION_STRING AND NOT DEFINED Z3_VERSION)
+        set(Z3_VERSION "${Z3_VERSION_STRING}")
       endif()
-      if(Z3_FOUND_LIB)
-	message(STATUS "Z3_VERSION_H    = '${Z3_VERSION_H}'")
-	message(STATUS "Z3_LIBRARY      = '${Z3_LIBRARY}'")
-	message(STATUS "Z3_LIBRARIES    = '${Z3_LIBRARIES}'")
-  message(STATUS "Z3_HEADER_PATH  = '${Z3_HEADER_PATH}'")
+
+      # Get include directory for header checks
+      if(DEFINED Z3_C_INCLUDE_DIRS)
+        list(GET Z3_C_INCLUDE_DIRS 0 _Z3_INCLUDE_DIR)
+      elseif(TARGET z3::libz3)
+        # Fallback: extract from imported target properties
+        get_target_property(_Z3_INCLUDE_DIR z3::libz3 INTERFACE_INCLUDE_DIRECTORIES)
+      endif()
+
+      # Check for z3_version.h header file
+      # z3_version.h is absent from older Z3 versions, and newer versions don't
+      # include it automatically in z3.h, so we detect it for conditional compilation
+      if(_Z3_INCLUDE_DIR)
+        set(CMAKE_REQUIRED_INCLUDES "${_Z3_INCLUDE_DIR}")
+        set(CMAKE_REQUIRED_QUIET TRUE)
+        check_include_file_cxx("z3_version.h" ROSE_HAVE_Z3_VERSION_H)
+      else()
+        set(ROSE_HAVE_Z3_VERSION_H FALSE)
+      endif()
+
+      # Set ROSE-specific variables
+      set(ROSE_HAVE_Z3 TRUE)
+      set(ROSE_Z3_EXECUTABLE "${Z3_EXECUTABLE}")
+
+      # Report status
+      if(VERBOSE)
+        message(STATUS "Z3 library found:")
+        message(STATUS "  Z3_VERSION      = ${Z3_VERSION}")
+        message(STATUS "  Z3_EXECUTABLE   = ${Z3_EXECUTABLE}")
+        message(STATUS "  Z3_INCLUDE_DIRS = ${_Z3_INCLUDE_DIR}")
+        message(STATUS "  Z3_VERSION_H    = ${ROSE_HAVE_Z3_VERSION_H}")
+        message(STATUS "  Link target     = z3::libz3")
+      endif()
+
+    else()
+      # Z3 not found
+      set(ROSE_HAVE_Z3 FALSE)
+      set(ROSE_HAVE_Z3_VERSION_H FALSE)
+      set(ROSE_Z3_EXECUTABLE "")
+
+      if(NOT "${Z3_ROOT}" STREQUAL "")
+        message(FATAL_ERROR "Z3 requested at '${Z3_ROOT}' but not found")
+      endif()
+
+      if(VERBOSE)
+        message(STATUS "Z3 not found")
       endif()
     endif()
   endif()
 
-  # ROSE variables
-  set(ROSE_HAVE_Z3 ${Z3_FOUND_LIB})
-  set(ROSE_HAVE_Z3_VERSION_H ${Z3_VERSION_H})
-  set(ROSE_Z3 ${Z3_EXECUTABLE})
 endmacro()

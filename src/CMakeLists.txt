@@ -991,17 +991,17 @@ macro(add_library_dependency lib)
   list(APPEND rose_library_dir_list ${lib_dir})
 endmacro()
 
-# Link optional dependencies as PRIVATE
-# ======================================
-# These dependencies are used internally by ROSE but are not exposed in public headers.
-# Marking them PRIVATE prevents them from being propagated to downstream projects.
+# Link optional dependencies
+# ==========================
+# Dependencies that are used internally by ROSE and are not exposed in public headers should be marked PRIVATE, otherwise
+# mark them as PUBLIC.
 
-# Z3 has an executable component and a development (library and headers) component that can be installed independently
-# of each other. Therfore Z3_FOUND_EXE says whether the executable component was found, and Z3_FOUND_LIB says whether
-# the development component was found; Z3_FOUND is set if either component is found.
-if(Z3_FOUND_LIB)
-  target_link_libraries(ROSE_DLL PUBLIC ${Z3_LIBRARY})
-  add_library_dependency(${Z3_LIBRARY})
+# Z3 SMT solver library (optional dependency)
+# Modern CMake: use the imported target z3::libz3 provided by Z3Config.cmake
+# Z3_FOUND is set by find_package(Z3 CONFIG) in FindZ3.cmake
+if(Z3_FOUND AND TARGET z3::libz3)
+  target_link_libraries(ROSE_DLL PUBLIC z3::libz3)
+  # Note: No need for add_library_dependency with imported targets
 endif()
 
 # YAML-cpp is for parsing YAML and JSON files.
