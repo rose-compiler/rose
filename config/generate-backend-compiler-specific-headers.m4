@@ -35,7 +35,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 
  # DQ (2/2/2016): Adding additional parameters to this function call.
  # "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
-   VERBOSE="$verbose" "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "$BACKEND_CXX_COMPILER_VENDOR"
+   VERBOSE="$verbose" "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "$BACKEND_CXX_COMPILER_VENDOR" "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
 
    error_code=$?
    AC_MSG_NOTICE([error_code = "$error_code"])
@@ -240,7 +240,7 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
  # Use the full path name to generate the header from the correctly specified version of the backend compiler
    mkdir -p "./include-staging/${compilerName}_HEADERS"
  # "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
-   "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "$BACKEND_CXX_COMPILER_VENDOR"
+   "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "$BACKEND_CXX_COMPILER_VENDOR" "$BACKEND_C_COMPILER_MAJOR_VERSION_NUMBER"
 
    error_code=$?
    AC_MSG_NOTICE([error_code = "$error_code"])

@@ -51,7 +51,7 @@ process_headers()
 # echo "target_base_dir = $target_base_dir"
 # echo "target_parent_dir = $target_parent_dir"
 # echo "target_dir = $target_dir"
-# echo "Top of process headers: GCC_VERSION       = $GCC_VERSION"
+# echo "Top of process headers: compilerMajorVersion       = $compilerMajorVersion"
 # echo "Top of process headers: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
 # echo "*****************************************"
 
@@ -125,11 +125,11 @@ process_headers()
 # check for correct number of arguments and 
 # whether a source directory has been specified
 # if [ $# -eq 3 ]; then
-if [ $# -eq 5 ]; then
+if [ $# -eq 6 ]; then
   :
 else
 #  echo "ERROR: Usage is $0 <compiler> <target_dir> <source_dir>"
-   echo "usage: $0 <compiler> <target_dir> <source_dir> <language> <compilerVendorName>" >&2
+   echo "usage: $0 <compiler> <target_dir> <source_dir> <language> <compilerVendorName> <compilerMajorVersion>" >&2
    exit 1
 fi
 
@@ -143,14 +143,16 @@ compilerBinDir="`dirname $1`"
 roseHome="$3"
 language="$4"
 compilerVendorName="$5"
+compilerMajorVersion="$6"
 
 # echo "In script file: create system headers: Using back-end compiler = \"$1\" compiler vendor name = $compilerVendorName for processing of unparsed source files from ROSE preprocessors."
 if [ -n "$VERBOSE" ]; then
-    echo "compilerName       = $compilerName"
-    echo "compilerBinDir     = $compilerBinDir"
-    echo "roseHome           = $roseHome"
-    echo "language           = $language"
-    echo "compilerVendorName = $compilerVendorName"
+    echo "compilerName         = $compilerName"
+    echo "compilerBinDir       = $compilerBinDir"
+    echo "roseHome             = $roseHome"
+    echo "language             = $language"
+    echo "compilerVendorName   = $compilerVendorName"
+    echo "compilerMajorVersion = $compilerMajorVersion"
 fi
 
 # DQ (2/2/2016): We don't compiler ROSE using ROSE as the backend (this was from when we had 
@@ -511,9 +513,9 @@ then
       # echo "system_headers_directory = $system_headers_directory"
 
       # DQ (7/27/2020): debugging info
-      # echo "Valid GNU compiler: GCC_VERSION       = $GCC_VERSION"
+      # echo "Valid GNU compiler: compilerMajorVersion       = $compilerMajorVersion"
       # echo "Valid GNU compiler: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
-        if [ "x$GCC_VERSION" = "x10" ]; then
+        if [ "x$compilerMajorVersion" = "x10" ]; then
 
           # echo "Passed test for GNU version 10.x: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
 
@@ -534,10 +536,10 @@ then
          fi
 
       # PL (9/9/2025): Need to make this specific fix for GNU 13.3, as a concept in a header file is not properly wrapped by a feature macro guard
-        if [ "x$GCC_VERSION" = "x13" ]; then
+        if [ "x$compilerMajorVersion" = "x13" ]; then
             [ ! -e $system_headers_directory/../hdrs2 ] && mkdir -p $system_headers_directory/../hdrs2
             [ -n "$VERBOSE" ] && echo "We are handling a case where a concept is not wrapped by a feature macro guard, so copy the ROSE specific fix to $system_headers_directory" >&2
-            [ -e "$system_headers_directory/../hdrs2/type_traits" ] mv "$system_headers_directory/../hdrs2/type_traits" "$system_headers_directory/../hdrs2/type_traits_original"
+            [ -e "$system_headers_directory/../hdrs2/type_traits" ] && mv "$system_headers_directory/../hdrs2/type_traits" "$system_headers_directory/../hdrs2/type_traits_original"
             cp "$roseHome/config/rose_specific_type_traits" "$system_headers_directory/../hdrs2/type_traits"
          fi
     fi
