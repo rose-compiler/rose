@@ -59,6 +59,24 @@ macro(find_dlib)
       endif()
       # For legacy DLIB_LIBRARIES, use the target name (preferred) or library path
       set(DLIB_LIBRARIES dlib::dlib)
+
+      # ROSE builds shared libraries, which cannot link against static libraries
+      # unless they were compiled with -fPIC. Reject static dlib libraries.
+      if(DLIB_LIBRARY AND EXISTS "${DLIB_LIBRARY}")
+        get_filename_component(DLIB_EXT "${DLIB_LIBRARY}" EXT)
+        if(DLIB_EXT STREQUAL ".a")
+          message(FATAL_ERROR
+            "Dlib is a static library (${DLIB_LIBRARY}), but ROSE requires a shared library.\n"
+            "Static libraries cause linking errors unless built with -fPIC, and ROSE is built as a shared library.\n"
+            "Please install or build dlib as a shared library:\n"
+            "  cmake -DBUILD_SHARED_LIBS=ON ...\n"
+            "Or point to a different dlib installation using:\n"
+            "  -DDLIB_ROOT=/path/to/shared/dlib\n"
+            "  -DCMAKE_PREFIX_PATH=/path/to/shared/dlib\n"
+            "Or disable dlib support with:\n"
+            "  -DDLIB_ROOT=no")
+        endif()
+      endif()
     endif()
 
     # Error if explicitly requested but not found
