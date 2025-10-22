@@ -459,8 +459,8 @@ if(ENABLE_BINARY_ANALYSIS)
   set(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT 1)
 endif()
 
-# C/C++ (default)
-option(ENABLE_C "Enable C/C++ analysis" ON)
+# C/C++
+option(ENABLE_C "Enable C/C++ analysis" OFF)
 if(DEFINED CACHE{ENABLE-C})
   message(DEPRECATION "ENABLE-C is deprecated. Use ENABLE_C instead. Example: cmake -DENABLE_C=${ENABLE-C} ...")
   set(ENABLE_C ${ENABLE-C} CACHE BOOL "Enable C/C++ analysis" FORCE)
@@ -674,6 +674,44 @@ if(DEFINED CACHE{ENABLE-JOVIAL})
 endif()
 if(ENABLE_JOVIAL)
   set(ROSE_BUILD_JOVIAL_LANGUAGE_SUPPORT 1)
+endif()
+
+# Null analysis (in order to configure ROSE with no actual analysis since at least one is required)
+option(ENABLE_NULL "Enable null analysis (empty analysis that does nothing)" OFF)
+if(ENABLE_NULL)
+  set(ROSE_BUILD_NULL_ANALYSIS 1)
+endif()
+
+# Check that at least one analysis is enabled
+if(NOT ENABLE_BINARY_ANALYSIS AND NOT ENABLE_C AND NOT ENABLE_CUDA AND NOT ENABLE_JAVA AND
+   NOT ENABLE_OPENCL AND NOT ENABLE_FORTRAN AND NOT ENABLE_PHP AND NOT ENABLE_PYTHON AND
+   NOT ENABLE_ADA AND NOT ENABLE_JOVIAL AND NOT ENABLE_NULL)
+  message(FATAL_ERROR
+    "ROSE must be configured with at least one analysis feature enabled. The following "
+    "are the most common features, but see the ROSE documentation for the extensive, complete "
+    "list."
+    "\n"
+    "  C/C++ Analysis:\n"
+    "    cmake -DENABLE_C=ON ...\n"
+    "    Enables analysis of C and C++ code using the EDG frontend. Requires EDG and Boost.\n"
+    "    Best supported on RHEL with GCC. Not portable to all platforms.\n"
+    "  Binary Analysis:\n"
+    "    cmake -DENABLE_BINARY_ANALYSIS=ON ...\n"
+    "    Enables analysis of binary executables and object files. Requires only Boost.\n"
+    "    Portable and well-supported on RHEL and Debian-based systems.\n"
+    "  Fortran Analysis:\n"
+    "    cmake -DENABLE_FORTRAN=ON -DENABLE_JAVA=ON ...\n"
+    "    Enables analysis of Fortran code. Requires Java analysis to be enabled.\n"
+    "  Ada Analysis:\n"
+    "    cmake -DENABLE_ADA=ON ...\n"
+    "    Enables analysis of Ada code. Experimental feature.\n"
+    "  Java Analysis:\n"
+    "    cmake -DENABLE_JAVA=ON ...\n"
+    "    Enables analysis of Java code.\n"
+    "  Null Analysis (no actual analysis):\n"
+    "    cmake -DENABLE_NULL=ON ...\n"
+    "    Empty analysis in order to configure ROSE without any true analysis capabilities."
+  )
 endif()
 
 # The C preprocessor is enabled automatically if C, C++, or Fortran is enabled
