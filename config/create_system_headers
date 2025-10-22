@@ -537,10 +537,10 @@ then
 
       # PL (9/9/2025): Need to make this specific fix for GNU 13.3, as a concept in a header file is not properly wrapped by a feature macro guard
         if [ "x$compilerMajorVersion" = "x13" ]; then
-            [ ! -e $system_headers_directory/../hdrs2 ] && mkdir -p $system_headers_directory/../hdrs2
+            [ ! -e $system_headers_directory/../hdrs1 ] && mkdir -p $system_headers_directory/../hdrs1
             [ -n "$VERBOSE" ] && echo "We are handling a case where a concept is not wrapped by a feature macro guard, so copy the ROSE specific fix to $system_headers_directory" >&2
-            [ -e "$system_headers_directory/../hdrs2/type_traits" ] && mv "$system_headers_directory/../hdrs2/type_traits" "$system_headers_directory/../hdrs2/type_traits_original"
-            cp "$roseHome/config/rose_specific_type_traits" "$system_headers_directory/../hdrs2/type_traits"
+            [ -e "$system_headers_directory/../hdrs1/type_traits" ] && mv "$system_headers_directory/../hdrs1/type_traits" "$system_headers_directory/../hdrs1/type_traits_original"
+            cp "$roseHome/config/rose_specific_type_traits" "$system_headers_directory/../hdrs1/type_traits"
          fi
     fi
 fi
