@@ -1087,12 +1087,6 @@ find_magic()
 include(FindPqxx)
 find_pqxx()
 
-# To use Qt, set QT_ROOT to the Qt installation prefix. To avoid Qt set QT_ROOT=no
-if(WITH-ROSEQT)
-  include(FindQt)
-  find_qt()
-endif()
-
 # To use libreadline, set READLINE_ROOT to the readline installation prefix. To avoid readline set READLINE_ROOT=no
 option(ENABLE_READLINE "Option to enable Readline" OFF)
 if(DEFINED CACHE{ENABLE-READLINE})
