@@ -164,6 +164,18 @@ if(POLICY_CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
 
+# In CMake 3.27 and above the find_package(<PackageName>) command also searches for upper-case <PACKAGENAME>_ROOT
+# variables in addition to the properly-cased <PackageName>_ROOT variables. This allows find_package(Boost) to honor
+# the BOOST_ROOT variable (which ROSE sets from the BOOST_HOME environment variable) and find_package(LLVM) to honor
+# the LLVM_ROOT variable. The OLD behavior ignores the upper-case variants for compatibility with projects that used
+# them for other purposes. The NEW behavior searches both the upper-case and properly-cased variants.
+#
+# Behavior is set to "NEW" because ROSE explicitly sets BOOST_ROOT and LLVM_ROOT with the intention that
+# find_package() should use them to locate these dependencies.
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
+
 # This controls whether the "cmake" command is verbose. It has nothing to do with the verbosity the resulting Makefiles.
 option(VERBOSE "CMake should be verbose" FALSE)
 if(VERBOSE)
