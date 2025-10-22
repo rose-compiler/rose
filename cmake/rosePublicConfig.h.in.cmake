@@ -48,7 +48,6 @@
 
 /* Define if Dlib is available. */
 #cmakedefine ROSE_HAVE_DLIB @ROSE_HAVE_DLIB@
-#define ROSE_DLIB_LIBRARY "@DLIB_LIBRARY@"
 
 /* Define if Capstone is available. */
 #cmakedefine ROSE_HAVE_CAPSTONE @ROSE_HAVE_CAPSTONE@

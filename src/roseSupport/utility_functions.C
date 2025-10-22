@@ -495,9 +495,6 @@ std::string version_message() {
 #else
     ss <<"unknown version";
 #endif
-#ifdef ROSE_DLIB_LIBRARY
-    ss <<" (" <<ROSE_DLIB_LIBRARY <<")";
-#endif
     ss <<"\n";
 #endif
 

@@ -21,18 +21,11 @@
 #    DLIB_FOUND      -- Boolean: whether the Dlib library was found
 #    dlib::dlib      -- Imported target with all properties (includes, features, dependencies)
 #    dlib_VERSION    -- Dlib version string (provided by dlibConfig.cmake)
-#
-#  LEGACY OUTPUTS (for backward compatibility):
-#    DLIB_LIBRARY    -- Path to dlib library (deprecated, use dlib::dlib target instead)
-#    DLIB_LIBRARIES  -- Library to link (deprecated, use dlib::dlib target instead)
 
 macro(find_dlib)
   if("${DLIB_ROOT}" STREQUAL "no")
-    # Do not use Dlib, and therefore do not even search for it. Make sure all outputs are cleared to avoid problems with
-    # users maybe setting them.
+    # Do not use Dlib, and therefore do not even search for it.
     set(DLIB_FOUND FALSE)
-    set(DLIB_LIBRARY "")
-    set(DLIB_LIBRARIES "")
 
   else()
     # Translate DLIB_ROOT to dlib_DIR if provided (for backward compatibility)
@@ -47,27 +40,24 @@ macro(find_dlib)
     # This automatically handles both static and shared libraries, include directories,
     # compile features, and transitive dependencies (like X11 libraries)
     find_package(dlib QUIET CONFIG)
-
     set(DLIB_FOUND ${dlib_FOUND})
 
-    # Set legacy variables for backward compatibility
+    # ROSE builds shared libraries, which cannot link against static libraries
+    # unless they were compiled with -fPIC. Reject static dlib libraries because
+    # dlib (at least version 19.19) doesn't use -fPIC to build its static libraries.
     if(DLIB_FOUND AND TARGET dlib::dlib)
-      # Get the actual library location for legacy DLIB_LIBRARY variable
-      get_target_property(DLIB_LIBRARY dlib::dlib IMPORTED_LOCATION_RELEASE)
-      if(NOT DLIB_LIBRARY)
-        get_target_property(DLIB_LIBRARY dlib::dlib IMPORTED_LOCATION)
+      # Query the target directly to check if it's a static library
+      get_target_property(DLIB_LOCATION dlib::dlib IMPORTED_LOCATION_RELEASE)
+      if(NOT DLIB_LOCATION)
+        get_target_property(DLIB_LOCATION dlib::dlib IMPORTED_LOCATION)
       endif()
-      # For legacy DLIB_LIBRARIES, use the target name (preferred) or library path
-      set(DLIB_LIBRARIES dlib::dlib)
 
-      # ROSE builds shared libraries, which cannot link against static libraries
-      # unless they were compiled with -fPIC. Reject static dlib libraries.
-      if(DLIB_LIBRARY AND EXISTS "${DLIB_LIBRARY}")
-        get_filename_component(DLIB_EXT "${DLIB_LIBRARY}" EXT)
+      if(DLIB_LOCATION AND EXISTS "${DLIB_LOCATION}")
+        get_filename_component(DLIB_EXT "${DLIB_LOCATION}" EXT)
         if(DLIB_EXT STREQUAL ".a")
           message(FATAL_ERROR
-            "Dlib is a static library (${DLIB_LIBRARY}), but ROSE requires a shared library.\n"
-            "Static libraries cause linking errors unless built with -fPIC, and ROSE is built as a shared library.\n"
+            "Dlib is a static library (${DLIB_LOCATION}), but ROSE requires a shared library.\n"
+            "Static libraries cause linking errors unless built with -fPIC, and dlib doesn't do this.\n"
             "Please install or build dlib as a shared library:\n"
             "  cmake -DBUILD_SHARED_LIBS=ON ...\n"
             "Or point to a different dlib installation using:\n"
@@ -96,8 +86,6 @@ macro(find_dlib)
     if(DLIB_FOUND)
       message(STATUS "dlib_VERSION    = '${dlib_VERSION}'")
       message(STATUS "dlib target     = dlib::dlib")
-      message(STATUS "DLIB_LIBRARY    = '${DLIB_LIBRARY}' (legacy)")
-      message(STATUS "DLIB_LIBRARIES  = '${DLIB_LIBRARIES}' (legacy)")
     endif()
   endif()
 
