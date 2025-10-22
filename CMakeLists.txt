@@ -1153,11 +1153,6 @@ endif()
 
 find_path(with-QRose QRose DOC "prefix of QRose installation")
 
-if(WITH-ROSEQT)
-  find_package(Qt4 REQUIRED)
-  include(${QT_USE_FILE})
-endif()
-
 find_path(with-rted rted DOC "Configure option to have RTED enabled.")
 find_path(with-smt-solver smt-solver DOC "Specify the path to an SMT-LIB compatible SMT solver. Used only for testing")
 
@@ -1607,42 +1602,12 @@ if(WIN32)
   list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/winspecific)
 endif()
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES})
-
-if(WITH-ROSEQT)
-  list(APPEND ROSE_INCLUDES
-    ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/Common
-    ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/QueryBox
-    ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/SourceBox
-    ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Components/TreeBox)
-  set(qtWidgets_INCLUDE_DIRS
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AsmInstructionBar
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AsmView
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AstBrowserWidget
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AstGraphWidget
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/AstProcessing
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/BeautifiedAst
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/FlopCounter
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/InstructionCountAnnotator
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/KiviatView
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/MetricsConfig
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/MetricFilter
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/MetricsKiviat
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/NodeInfoWidget
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/ProjectManager
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/PropertyTreeWidget
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/QCodeEditWidget
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/QtGradientEditor
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/RoseCodeEdit
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/RoseFileSelector
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/SrcBinView
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/TaskSystem
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/TreeModel
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/util
-    ${ROSE_SOURCE_DIR}/src/roseExtensions/qtWidgets/WidgetCreator)
+# Qt/KDE includes are now handled by qtWidgets and qrose subdirectories if Qt is found
+if(KDE4_INCLUDES OR KDE4_INCLUDE_DIR OR QT_INCLUDES)
+  include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES})
 endif()
+
+# qtWidgets include directories are now set within the qtWidgets subdirectory
 set(QT_INCLUDES ${ROSE_INCLUDES} ${Boost_INCLUDE_DIRS})
 
 ########################################################################################################################
