@@ -67,6 +67,18 @@ add_library(roseBinaryAnalysis OBJECT
 
 add_dependencies(roseBinaryAnalysis rosetta_generated)
 
+# SerialIo.C takes a long time to compile with full debug info and
+# -Og, so reduce debug info and use -O0 for faster compilation in
+# Debug builds. These append the compile options to the command lines,
+# thereby overriding any previous "-g" and "-O" switches.
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set_source_files_properties(SerialIo.C PROPERTIES
+    COMPILE_OPTIONS "-g1;-O0")
+elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+  set_source_files_properties(SerialIo.C PROPERTIES
+    COMPILE_OPTIONS "-g1")
+endif()
+
 install(FILES
   AbstractLocation.h
   Address.h
