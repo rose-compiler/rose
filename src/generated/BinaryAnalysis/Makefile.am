@@ -304,6 +304,7 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmMethodParameters.C \
         SgAsmJvmMethodParametersEntry.C \
         SgAsmJvmMethodTable.C \
+        SgAsmJvmModule.C \
         SgAsmJvmModuleMainClass.C \
         SgAsmJvmNestHost.C \
         SgAsmJvmNestMembers.C \
@@ -321,6 +322,7 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmStackMapTable.C \
         SgAsmJvmStackMapVerificationType.C \
         SgAsmJvmSynthetic.C \
+        SgAsmJvmTableAttribute.C \
         SgAsmLEEntryPoint.C \
         SgAsmLEEntryTable.C \
         SgAsmLEFileHeader.C \

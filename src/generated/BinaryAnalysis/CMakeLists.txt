@@ -300,6 +300,7 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmMethodParameters.C
   SgAsmJvmMethodParametersEntry.C
   SgAsmJvmMethodTable.C
+  SgAsmJvmModule.C
   SgAsmJvmModuleMainClass.C
   SgAsmJvmNestHost.C
   SgAsmJvmNestMembers.C
@@ -317,6 +318,7 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmStackMapTable.C
   SgAsmJvmStackMapVerificationType.C
   SgAsmJvmSynthetic.C
+  SgAsmJvmTableAttribute.C
   SgAsmLEEntryPoint.C
   SgAsmLEEntryTable.C
   SgAsmLEFileHeader.C

@@ -1093,3 +1093,5 @@ SgBFloat16Val
 SgFloat16Val
 SgFloat32Val
 SgFloat64Val
+SgAsmJvmTableAttribute
+SgAsmJvmModule

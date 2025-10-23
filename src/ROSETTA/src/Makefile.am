@@ -383,6 +383,7 @@ rosetta_generated_definitions =				\
 	  SgAsmJvmMethodParametersEntry.h		\
 	  SgAsmJvmMethodParameters.h			\
 	  SgAsmJvmMethodTable.h				\
+	  SgAsmJvmModule.h				\
 	  SgAsmJvmModuleMainClass.h			\
 	  SgAsmJvmNestHost.h				\
 	  SgAsmJvmNestMembers.h				\
@@ -400,6 +401,7 @@ rosetta_generated_definitions =				\
 	  SgAsmJvmStackMapTable.h			\
 	  SgAsmJvmStackMapVerificationType.h		\
 	  SgAsmJvmSynthetic.h				\
+	  SgAsmJvmTableAttribute.h			\
 	  SgAsmLEEntryPoint.h				\
 	  SgAsmLEEntryTable.h				\
 	  SgAsmLEFileHeader.h				\

@@ -425,6 +425,7 @@ GENERATED_SOURCE =						\
         SgAsmJvmMethodParametersEntry.h				\
         SgAsmJvmMethodParameters.h				\
         SgAsmJvmMethodTable.h					\
+        SgAsmJvmModule.h					\
         SgAsmJvmModuleMainClass.h				\
         SgAsmJvmNestHost.h					\
         SgAsmJvmNestMembers.h					\
@@ -441,6 +442,7 @@ GENERATED_SOURCE =						\
         SgAsmJvmStackMapFrame.h					\
         SgAsmJvmStackMapTable.h					\
         SgAsmJvmStackMapVerificationType.h			\
+        SgAsmJvmTableAttribute.h				\
         SgAsmJvmSynthetic.h					\
         SgAsmLEEntryPoint.h					\
         SgAsmLEEntryTable.h					\
@@ -845,6 +847,7 @@ GENERATED_SOURCE =						\
 	SgAsmJvmMethodParametersEntry.h				\
 	SgAsmJvmMethodParameters.h				\
 	SgAsmJvmMethodTable.h					\
+	SgAsmJvmModule.h					\
 	SgAsmJvmModuleMainClass.h				\
 	SgAsmJvmNestHost.h					\
 	SgAsmJvmNestMembers.h					\
@@ -861,6 +864,7 @@ GENERATED_SOURCE =						\
 	SgAsmJvmStackMapFrame.h					\
 	SgAsmJvmStackMapTable.h					\
 	SgAsmJvmStackMapVerificationType.h			\
+	SgAsmJvmTableAttribute.h				\
 	SgAsmJvmSynthetic.h					\
 	SgAsmLEEntryPoint.h					\
 	SgAsmLEEntryTable.h					\
@@ -1412,6 +1416,7 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmMethodParametersEntry.h		\
    SgAsmJvmMethodParameters.h			\
    SgAsmJvmMethodTable.h			\
+   SgAsmJvmModule.h				\
    SgAsmJvmModuleMainClass.h			\
    SgAsmJvmNestHost.h				\
    SgAsmJvmNestMembers.h			\
@@ -1428,6 +1433,7 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmStackMapFrame.h			\
    SgAsmJvmStackMapTable.h			\
    SgAsmJvmStackMapVerificationType.h		\
+   SgAsmJvmTableAttribute.h			\
    SgAsmJvmSynthetic.h				\
    SgAsmLEEntryPoint.h				\
    SgAsmLEEntryTable.h				\

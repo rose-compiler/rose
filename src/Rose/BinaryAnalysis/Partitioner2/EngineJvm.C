@@ -614,6 +614,9 @@ EngineJvm::loadSuperClasses(const std::string &className, SgAsmGenericFileList* 
         baseVa = loadClassFile(interfacePath, fileList, baseVa);
     }
 
+    // There may not be a super class (e.g., module-info.class)
+    if (jfh->get_super_class() < 1) return baseVa;
+
     std::string superName = ByteCode::JvmClass::name(jfh->get_super_class(), pool);
     if (ByteCode::JvmContainer::isJvmSystemReserved(superName)) return baseVa; // ignore Java system files
 

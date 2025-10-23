@@ -9323,6 +9323,161 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmTableAttribute           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmTableAttribute);
+IS_SERIALIZABLE(AsmJvmTableAttribute);
+
+#ifndef DOCUMENTATION
+AsmJvmTableAttribute.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmJvmTableAttribute);
+#if defined(SgAsmJvmTableAttribute_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmTableAttribute_HEADERS
+
+#ifdef DOCUMENTATION
+/** JVM TableAttribute.
+ *
+ *  The TableAttribute class can represent one of a collection of attributes that contain a
+ *  list of uint16_t indices.
+ *
+ *  The Exceptions attribute is a variable-length attribute in the attributes table of a method_info
+ *  struction (see section 4.6 of the JVM specification). The Exceptions attribute indicates which
+ *  checked exceptions a method may throw.  Each constant_pool entry in the table must be a
+ *  CONSTANT_Class_info structure (section 4.4.1) representing a class type that this method is
+ *  declared to throw.  See section 4.7.5 of the JVM specification.
+ *
+ *  The ModulePackages attribute is a variable-length attribute in the attributes table of a ClassFile
+ *  structure (section 4.1). The ModulePackages attribute indicates all the packages of a module that are
+ *  exported or opened by the Module attribute, as well as all the packages of the service implementations
+ *  recorded in the Module attribute. The ModulePackages attribute may also indicate packages in the module
+ *  that are neither exported nor opened nor contain service implementations. Each constant_pool entry in the
+ *  table must be a CONSTANT_Package_info structure (section 4.4.12) representing a package in the current
+ *  module. See section 4.7.26 of the JVM specification.
+ *
+ *  The NestMembers attribute records the classes and interfaces that are authorized to claim
+ *  membership in the nest hosted by the current class or interface.  Each constant_pool entry in the
+ *  table must be a CONSTANT_Class_info structure (section 4.4.1) representing a class or interface which
+ *  is a member of the nest hosted by the current class or interface.  See section 4.7.29 of the
+ *  JVM specification.
+ *
+ *  The PermittedSubclasses attribute is a variable-length attribute in the attributes table of a ClassFile
+ *  structure (section 4.1). The PermittedSubclasses attribute records the classes and interfaces that are
+ *  authorized to directly extend or implement the current class or interface (section 5.3.5). Each
+ *  constant_pool entry in the table must be a CONSTANT_Class_info structure (section 4.4.1) representing
+ *  a class or interface which is authorized to directly extend or implement the current class or interface.
+ *  See section 4.7.31 of the JVM specification.
+ */
+class SgAsmJvmTableAttribute: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmTableAttribute.setDataPrototype(
+        "unsigned", "attribute_type", "= SgAsmJvmTableAttribute::ATTR_NONE",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmTableAttribute.setDataPrototype(
+        "SgUnsigned16List", "table", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmTableAttribute);
+#if defined(SgAsmJvmTableAttribute_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmTableAttribute -----------------------
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmTableAttribute");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        s & BOOST_SERIALIZATION_NVP(p_attribute_type);
+        s & BOOST_SERIALIZATION_NVP(p_table);
+        debugSerializationEnd("SgAsmJvmTableAttribute");
+    }
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Local types
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Type of JVM attribute.
+     *
+     * Attribute will have list of indices. */
+    enum AttributeType {
+        ATTR_NONE,
+        ATTR_Exceptions,         // 4.7.5
+        ATTR_ModulePackages,     // 4.7.26
+        ATTR_NestMembers   ,     // 4.7.29
+        ATTR_PermittedSubclasses // 4.7.31
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+public:
+    /** Property: attribute_type
+     *
+     *  Indicates which JVM attribute is represented by this class instance. 
+     *  
+     *  @{ */
+    unsigned const& get_attribute_type() const;
+    void set_attribute_type(unsigned const&);
+    /** @} */
+
+public:
+    /** Property: table.
+     *
+     *  Each value in the table must be a valid index into the constant_pool table. 
+     *  
+     *  @{ */
+    SgUnsigned16List const& get_table() const;
+    void set_table(SgUnsigned16List const&);
+    /** @} */
+ public:
+    /** Initialize the TableAttribute attribute before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    SgAsmJvmTableAttribute(SgAsmJvmAttributeTable* table, unsigned type);
+
+    /** Initialize the attribute by parsing the file. */
+    virtual SgAsmJvmTableAttribute* parse(SgAsmJvmConstantPool* pool) override;
+
+    /** Write the local variable table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmTableAttribute();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmTableAttribute();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmTableAttribute_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmSynthetic           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -10221,7 +10376,7 @@ public:
     /** Property: isVisible
      *
      *  The isVisible property is true for a RuntimeVisibleParameterAnnotations attribute,
-     *  false for a RuntimeInvisibleParameterAnnotations attribute.
+     *  false for a RuntimeInvisibleParameterAnnotations attribute. 
      *  
      *  @{ */
     bool const& get_isVisible() const;
@@ -10656,7 +10811,7 @@ public:
      *
      *  The values property is represented by a list of pointers to annotation array entries.
      *  The annotation structure is specified in section 4.7.16.  This property is active for tags: '[' 
-     *
+     *  
      *  @{ */
     std::vector<SgAsmJvmRuntimeAnnotationValue*> const& get_values() const;
     std::vector<SgAsmJvmRuntimeAnnotationValue*>& get_values();
@@ -11203,6 +11358,314 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmModuleMainClass_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmModule           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmModule);
+IS_SERIALIZABLE(AsmJvmModule);
+
+#ifndef DOCUMENTATION
+AsmJvmModule.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmJvmModule);
+#if defined(SgAsmJvmModule_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmModule_HEADERS
+
+#ifdef DOCUMENTATION
+/** JVM Module attribute.
+ *
+ *  The Module attribute is a variable-length attribute in the attributes table of a ClassFile structure
+ *  (section 4.1). The Module attribute indicates the modules required by a module; the packages exported
+ *  and opened by a module; and the services used and provided by a module. See section 4.7.25 of the
+ *  JVM specification. */
+class SgAsmJvmModule: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmModule.setDataPrototype(
+        "uint16_t", "module_name_index", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmModule.setDataPrototype(
+        "uint16_t", "module_flags", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmModule.setDataPrototype(
+        "uint16_t", "module_version_index", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmModule.setDataPrototype(
+        "std::vector<SgAsmJvmModule::Requires*>", "requires", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmModule.setDataPrototype(
+        "std::vector<SgAsmJvmModule::Exports*>", "exports", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmModule.setDataPrototype(
+        "std::vector<SgAsmJvmModule::Opens*>", "opens", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmModule.setDataPrototype(
+        "std::vector<uint16_t>", "uses_index", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmModule.setDataPrototype(
+        "std::vector<SgAsmJvmModule::Provides*>", "provides", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmModule);
+#if defined(SgAsmJvmModule_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmModule -----------------------
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmModule");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        s & BOOST_SERIALIZATION_NVP(p_module_name_index);
+        s & BOOST_SERIALIZATION_NVP(p_module_flags);
+        s & BOOST_SERIALIZATION_NVP(p_module_version_index);
+        s & BOOST_SERIALIZATION_NVP(p_requires);
+        s & BOOST_SERIALIZATION_NVP(p_exports);
+        s & BOOST_SERIALIZATION_NVP(p_opens);
+        s & BOOST_SERIALIZATION_NVP(p_uses_index);
+        s & BOOST_SERIALIZATION_NVP(p_provides);
+        debugSerializationEnd("SgAsmJvmModule");
+    }
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Local types
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Module requires.
+     *
+     *  */
+    struct Requires {
+      uint16_t requires_index;
+      uint16_t requires_flags;
+      uint16_t requires_version_index;
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_NVP(requires_index);
+            s & BOOST_SERIALIZATION_NVP(requires_flags);
+            s & BOOST_SERIALIZATION_NVP(requires_version_index);
+        }
+#endif
+    };
+
+    /** Module exports.
+     *
+     *  */
+    struct Exports {
+      uint16_t exports_index;
+      uint16_t exports_flags;
+      std::vector<uint16_t> exports_to_index;
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_NVP(exports_index);
+            s & BOOST_SERIALIZATION_NVP(exports_flags);
+            s & BOOST_SERIALIZATION_NVP(exports_to_index);
+        }
+#endif
+    };
+
+    /** Module opens.
+     *
+     *  */
+    struct Opens {
+      uint16_t opens_index;
+      uint16_t opens_flags;
+      std::vector<uint16_t> opens_to_index;
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_NVP(opens_index);
+            s & BOOST_SERIALIZATION_NVP(opens_flags);
+            s & BOOST_SERIALIZATION_NVP(opens_to_index);
+        }
+#endif
+    };
+
+    /** Module provides.
+     *
+     *  */
+    struct Provides {
+      uint16_t provides_index;
+      std::vector<uint16_t> provides_with_index;
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_NVP(provides_index);
+            s & BOOST_SERIALIZATION_NVP(provides_with_index);
+        }
+#endif
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+public:
+    /** Property: module_name_index
+     *
+     *  The value of the module_name_index item must be a valid index into the constant_pool table. The
+     *  constant_pool entry at that index must be a CONSTANT_Module_info structure (section 4.4.11).
+     *  denoting the current module. 
+     *  
+     *  @{ */
+    uint16_t const& get_module_name_index() const;
+    void set_module_name_index(uint16_t const&);
+    /** @} */
+
+public:
+    /** Property: module_flags
+     *
+     *  The value of the module_flags item is as follows:
+     *    0x0020 (ACC_OPEN) Indicates that this module is open;
+     *    0x1000 (ACC_SYNTHETIC) Indicates that this module was not explicitly or implicitly declared;
+     *    0x8000 (ACC_MANDATED) Indicates that this module was implicitly declared. 
+     *    
+     *    @{ */
+    uint16_t const& get_module_flags() const;
+    void set_module_flags(uint16_t const&);
+    /** @} */
+
+public:
+    /** Property: module_version_index
+     *
+     *  The value of each entry in the uses_index table must be a valid index into the constant_pool table.
+     *  The constant_pool entry at that index must be a CONSTANT_Class_info structure (section 4.4.1)
+     *  representing a service interface which the current module may discover via java.util.ServiceLoader. 
+     *  
+     *  @{ */
+    uint16_t const& get_module_version_index() const;
+    void set_module_version_index(uint16_t const&);
+    /** @} */
+
+public:
+    /** Property: requires
+     *
+     *  Each entry in the requires table specifies a dependence of the current module. 
+     *  
+     *  @{ */
+    std::vector<SgAsmJvmModule::Requires*> const& get_requires() const;
+    std::vector<SgAsmJvmModule::Requires*>& get_requires();
+    void set_requires(std::vector<SgAsmJvmModule::Requires*> const&);
+    /** @} */
+
+public:
+    /** Property: exports
+     *
+     *  Each entry in the exports table specifies a package exported by the current module, such that public
+     *  and protected types in the package, and their public and protected members, may be accessed from
+     *  outside the current module, possibly from a limited set of "friend" modules. 
+     *  
+     *  @{ */
+    std::vector<SgAsmJvmModule::Exports*> const& get_exports() const;
+    std::vector<SgAsmJvmModule::Exports*>& get_exports();
+    void set_exports(std::vector<SgAsmJvmModule::Exports*> const&);
+    /** @} */
+
+public:
+    /** Property: opens
+     *
+     *  Each entry in the opens table specifies a package opened by the current module, such that all types
+     *  in the package, and all their members, may be accessed from outside the current module via the
+     *  reflection libraries of the Java SE Platform, possibly from a limited set of "friend" modules. 
+     *  
+     *  @{ */
+    std::vector<SgAsmJvmModule::Opens*> const& get_opens() const;
+    std::vector<SgAsmJvmModule::Opens*>& get_opens();
+    void set_opens(std::vector<SgAsmJvmModule::Opens*> const&);
+    /** @} */
+
+public:
+    /** Property: uses_index
+     *
+     *  The value of each entry in the uses_index table must be a valid index into the constant_pool table.
+     *  The constant_pool entry at that index must be a CONSTANT_Class_info structure (section 4.4.1)
+     *  representing a service interface which the current module may discover via java.util.ServiceLoader. 
+     *  
+     *  @{ */
+    std::vector<uint16_t> const& get_uses_index() const;
+    std::vector<uint16_t>& get_uses_index();
+    void set_uses_index(std::vector<uint16_t> const&);
+    /** @} */
+
+public:
+    /** Property: provides
+     *
+     * Each entry in the provides table represents a service implementation for a given service interface. 
+     * 
+     * @{ */
+    std::vector<SgAsmJvmModule::Provides*> const& get_provides() const;
+    std::vector<SgAsmJvmModule::Provides*>& get_provides();
+    void set_provides(std::vector<SgAsmJvmModule::Provides*> const&);
+    /** @} */
+public:
+    /** Initialize the Module attribute before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmModule(SgAsmJvmAttributeTable* table);
+
+    /** Initialize the attribute by parsing the file. */
+    virtual SgAsmJvmModule* parse(SgAsmJvmConstantPool* pool) override;
+
+    /** Write the local variable table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmModule();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmModule();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmModule_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -12769,8 +13232,8 @@ public:
 public:
     /** Property: attribute_type
      *
-     *  Indicates which JVM attribute is represented by this class instance.
-     *
+     *  Indicates which JVM attribute is represented by this class instance. 
+     *  
      *  @{ */
     unsigned const& get_attribute_type() const;
     void set_attribute_type(unsigned const&);
@@ -12779,8 +13242,8 @@ public:
 public:
     /** Property: indices.
      *
-     *  Each value in the indices array must be a valid index into the constant_pool table.
-     *
+     *  Each value in the indices array must be a valid index into the constant_pool table. 
+     *  
      *  @{ */
     SgUnsigned16List const& get_indices() const;
     void set_indices(SgUnsigned16List const&);
@@ -14616,7 +15079,7 @@ public:
 public:
     /** Property: Exception table.
      *
-     *  Points to the AST node that represents the exception table for this code attribute.
+     *  Points to the AST node that represents the exception table for this code attribute. 
      *  
      *  @{ */
     SgAsmJvmExceptionTable* const& get_exception_table() const;
@@ -14626,7 +15089,7 @@ public:
 public:
     /** Property: Attribute table.
      *
-     *  Points to the AST node that represents the attribute table for this code attribute.
+     *  Points to the AST node that represents the attribute table for this code attribute. 
      *  
      *  @{ */
     SgAsmJvmAttributeTable* const& get_attribute_table() const;
@@ -15086,8 +15549,8 @@ public:
      *
      *  The default_value item (section 4.7.16.1) represents the default value of the annotation
      *  interface element represented by the method_info structure enclosing this AnnotationDefault
-     *  attribute.
-     *
+     *  attribute. 
+     *  
      *  @{ */
     SgAsmJvmRuntimeAnnotationValue* const& get_default_value() const;
     void set_default_value(SgAsmJvmRuntimeAnnotationValue* const&);
@@ -15152,6 +15615,7 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
         | AsmJvmLocalVariableTable
         | AsmJvmLocalVariableTypeTable
         | AsmJvmMethodParameters
+        | AsmJvmModule
         | AsmJvmModuleMainClass
         | AsmJvmNestHost
         | AsmJvmNestMembers
@@ -15162,6 +15626,7 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
         | AsmJvmSourceFile
         | AsmJvmStackMapTable
         | AsmJvmSynthetic
+        | AsmJvmTableAttribute
     , false);
 assert(AsmJvmAttribute.associatedGrammar != nullptr);
 AsmJvmAttribute.setCppCondition("!defined(DOCUMENTATION)");
@@ -39319,7 +39784,7 @@ private:
 public:
     /** Property: EventFlags.
      *
-     *  A 4-byte bitmask of type TypeAttribute.
+     *  A 4-byte bitmask of type TypeAttribute. 
      *  
      *  @{ */
     uint32_t const& get_EventFlags() const;
@@ -39823,7 +40288,7 @@ private:
 public:
     /** Property: EventFlags.
      *
-     *  A 2-byte bitmask of type EventAttribute.
+     *  A 2-byte bitmask of type EventAttribute. 
      *  
      *  @{ */
     uint16_t const& get_EventFlags() const;

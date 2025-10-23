@@ -83,12 +83,10 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmMethodParameters(parent);
   }
   else if (name == "Module") { // 4.7.25
-    ASSERT_require2(false, "Need attribute Module\n");
-    //TODO
+    return new SgAsmJvmModule(parent);
   }
   else if (name == "ModulePackages") { // 4.7.26
-    ASSERT_require2(false, "Need attribute ModulePackages\n");
-    //TODO
+    return new SgAsmJvmTableAttribute(parent, SgAsmJvmTableAttribute::ATTR_ModulePackages);
   }
   else if (name == "ModuleMainClass") { // 4.7.27
     ASSERT_require2(false, "Need attribute ModuleMainClass\n");
@@ -1621,13 +1619,218 @@ void SgAsmJvmMethodParametersEntry::dump(FILE* f, const char* prefix, ssize_t id
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.25 The Module Attribute. Module_attribute represented by the TODO class.
+// 4.7.25 The Module Attribute. The Module_attribute is represented by the SgAsmJvmModule class.
 //
+SgAsmJvmModule::SgAsmJvmModule(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmModule* SgAsmJvmModule::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+
+  Jvm::read_value(pool, p_module_name_index);
+  Jvm::read_value(pool, p_module_flags);
+  Jvm::read_value(pool, p_module_version_index);
+
+  // requires[]
+  uint16_t requiresCount;
+  Jvm::read_value(pool, requiresCount);
+  for (int ii = 0; ii < requiresCount; ii++) {
+    SgAsmJvmModule::Requires* requires{new SgAsmJvmModule::Requires{}};
+    Jvm::read_value(pool, requires->requires_index);
+    Jvm::read_value(pool, requires->requires_flags);
+    Jvm::read_value(pool, requires->requires_version_index);
+    get_requires().push_back(requires);
+  }
+
+  // exports[]
+  uint16_t exportsCount, exportsToCount;
+  Jvm::read_value(pool, exportsCount);
+  for (int ii = 0; ii < exportsCount; ii++) {
+    SgAsmJvmModule::Exports* exports{new SgAsmJvmModule::Exports{}};
+    Jvm::read_value(pool, exports->exports_index);
+    Jvm::read_value(pool, exports->exports_flags);
+    Jvm::read_value(pool, exportsToCount);
+
+    for (int jj = 0; jj < exportsToCount; jj++) {
+      uint16_t exportToIndex;
+      Jvm::read_value(pool, exportToIndex);
+      exports->exports_to_index.push_back(exportToIndex);
+    }
+    get_exports().push_back(exports);
+  }
+
+  // opens[]
+  uint16_t opensCount, opensToCount;
+  Jvm::read_value(pool, opensCount);
+  for (int ii = 0; ii < opensCount; ii++) {
+    SgAsmJvmModule::Opens* opens{new SgAsmJvmModule::Opens{}};
+    Jvm::read_value(pool, opens->opens_index);
+    Jvm::read_value(pool, opens->opens_flags);
+    Jvm::read_value(pool, opensToCount);
+
+    for (int jj = 0; jj < opensToCount; jj++) {
+      uint16_t openToIndex;
+      Jvm::read_value(pool, openToIndex);
+      opens->opens_to_index.push_back(openToIndex);
+    }
+    get_opens().push_back(opens);
+  }
+
+  // uses_index[]
+  uint16_t usesCount;
+  Jvm::read_value(pool, usesCount);
+  for (int ii = 0; ii < usesCount; ii++) {
+    uint16_t useIndex;
+    Jvm::read_value(pool, useIndex);
+    get_uses_index().push_back(useIndex);
+  }
+
+  // provides[]
+  uint16_t providesCount, providesWithCount;
+  Jvm::read_value(pool, providesCount);
+  for (int ii = 0; ii < providesCount; ii++) {
+    SgAsmJvmModule::Provides* provides{new SgAsmJvmModule::Provides{}};
+    Jvm::read_value(pool, provides->provides_index);
+    Jvm::read_value(pool, providesWithCount);
+
+    for (int jj = 0; jj < providesWithCount; jj++) {
+      uint16_t openWithIndex;
+      Jvm::read_value(pool, openWithIndex);
+      provides->provides_with_index.push_back(openWithIndex);
+    }
+    get_provides().push_back(provides);
+  }
+
+  return this;
+}
+
+void SgAsmJvmModule::unparse(std::ostream& os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+
+  Jvm::writeValue(os, p_module_name_index);
+  Jvm::writeValue(os, p_module_flags);
+  Jvm::writeValue(os, p_module_version_index);
+
+  // requires[]
+  uint16_t requiresCount = get_requires().size();
+  Jvm::writeValue(os, requiresCount);
+  for (auto requires : get_requires()) {
+    Jvm::writeValue(os, requires->requires_index);
+    Jvm::writeValue(os, requires->requires_flags);
+    Jvm::writeValue(os, requires->requires_version_index);
+  }
+
+  // exports[]
+  uint16_t exportsCount = get_exports().size();
+  Jvm::writeValue(os, exportsCount);
+  for (auto exports : get_exports()) {
+    uint16_t exportsToCount = exports->exports_to_index.size();
+    Jvm::writeValue(os, exports->exports_index);
+    Jvm::writeValue(os, exports->exports_flags);
+    Jvm::writeValue(os, exportsToCount);
+
+    for (uint16_t exportToIndex : exports->exports_to_index) {
+      Jvm::writeValue(os, exportToIndex);
+    }
+  }
+
+  // opens[]
+  uint16_t opensCount = get_opens().size();
+  Jvm::writeValue(os, opensCount);
+  for (auto opens : get_opens()) {
+    uint16_t opensToCount = opens->opens_to_index.size();
+    Jvm::writeValue(os, opens->opens_index);
+    Jvm::writeValue(os, opens->opens_flags);
+    Jvm::writeValue(os, opensToCount);
+
+    for (uint16_t openToIndex : opens->opens_to_index) {
+      Jvm::writeValue(os, openToIndex);
+    }
+  }
+
+  // uses_index[]
+  uint16_t usesCount = get_uses_index().size();
+  Jvm::writeValue(os, usesCount);
+  for (uint16_t useIndex : get_uses_index()) {
+    Jvm::writeValue(os, useIndex);
+  }
+
+  // provides[]
+  uint16_t providesCount = get_provides().size();
+  Jvm::writeValue(os, providesCount);
+  for (auto provides : get_provides()) {
+    uint16_t providesWithCount = provides->provides_with_index.size();
+    Jvm::writeValue(os, provides->provides_index);
+    Jvm::writeValue(os, providesWithCount);
+
+    for (uint16_t providesWithIndex : provides->provides_with_index) {
+      Jvm::writeValue(os, providesWithIndex);
+    }
+  }
+}
+
+void SgAsmJvmModule::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: SgAsmJvmModule::dump()\n", prefix, idx);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.26 The ModulePackages Attribute. ModulePackages_attribute represented by the TODO class.
+// 4.7.26 The ModulePackages Attribute. The ModulePackages_attribute is represented by the SgAsmJvmIndexTableAttribute class.
 //
+SgAsmJvmTableAttribute::SgAsmJvmTableAttribute(SgAsmJvmAttributeTable* table, unsigned type)
+{
+  initializeProperties();
+  set_parent(table);
+  set_attribute_type(type);
+}
+
+SgAsmJvmTableAttribute* SgAsmJvmTableAttribute::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+
+  // Ensure that we have a specialized type by this point
+  ASSERT_require2(get_attribute_type() != SgAsmJvmTableAttribute::ATTR_NONE, "SgAsmJvmTableAttribute::attribute_type is not set\n");
+
+  uint16_t numIndices;
+  Jvm::read_value(pool, numIndices);
+
+  // Must use local list because get_indices() returns const&
+  SgUnsigned16List u16List;
+  for (int ii = 0; ii < numIndices; ii++) {
+    uint16_t index;
+    Jvm::read_value(pool, index);
+    u16List.push_back(index);
+  }
+  set_table(u16List);
+
+  return this;
+}
+
+void SgAsmJvmTableAttribute::unparse(std::ostream &os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+
+  // Ensure that we have a specialized type by this point
+  ASSERT_require2(get_attribute_type() != SgAsmJvmTableAttribute::ATTR_NONE, "SgAsmJvmTableAttribute::attribute_type is not set\n");
+
+  uint16_t numIndices = get_table().size();
+  Jvm::writeValue(os, numIndices);
+
+  for (uint16_t index : get_table()) {
+    Jvm::writeValue(os, index);
+  }
+}
+
+void SgAsmJvmTableAttribute::dump(FILE*, const char*, ssize_t) const
+{
+  mlog[WARN] << "SgAsmJvmTableAttribute::dump() not implemented yet\n";
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
