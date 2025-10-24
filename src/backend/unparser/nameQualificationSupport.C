@@ -6563,7 +6563,11 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
 #endif
 
        // DQ (6/21/2011): Refactored this code for use in traverseTemplatedFunction()
-          addToNameMap(nodeReferenceToType,typeNameString);
+       // PL (10/24/2025): Added guard to protect a type name string from being added to the name map if we're in a template instantiation definition
+          if (isContainedInTemplateInstantiationDefn == false)
+             {
+               addToNameMap(nodeReferenceToType,typeNameString);
+             }
 
        // DQ (2/18/2013): Fixing generation of too many SgUnparse_Info object.
           delete unparseInfoPointer;
