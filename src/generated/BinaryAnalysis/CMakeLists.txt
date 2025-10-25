@@ -282,10 +282,10 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmEnclosingMethod.C
   SgAsmJvmExceptionHandler.C
   SgAsmJvmExceptionTable.C
-  SgAsmJvmExceptions.C
   SgAsmJvmField.C
   SgAsmJvmFieldTable.C
   SgAsmJvmFileHeader.C
+  SgAsmJvmIndexTableAttr.C
   SgAsmJvmIndexedAttribute.C
   SgAsmJvmInnerClasses.C
   SgAsmJvmInnerClassesEntry.C
@@ -303,7 +303,6 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmModule.C
   SgAsmJvmModuleMainClass.C
   SgAsmJvmNestHost.C
-  SgAsmJvmNestMembers.C
   SgAsmJvmNode.C
   SgAsmJvmRuntimeAnnotation.C
   SgAsmJvmRuntimeAnnotationPair.C
@@ -318,7 +317,6 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmStackMapTable.C
   SgAsmJvmStackMapVerificationType.C
   SgAsmJvmSynthetic.C
-  SgAsmJvmTableAttribute.C
   SgAsmLEEntryPoint.C
   SgAsmLEEntryTable.C
   SgAsmLEFileHeader.C

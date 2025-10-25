@@ -286,10 +286,10 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmEnclosingMethod.C \
         SgAsmJvmExceptionHandler.C \
         SgAsmJvmExceptionTable.C \
-        SgAsmJvmExceptions.C \
         SgAsmJvmField.C \
         SgAsmJvmFieldTable.C \
         SgAsmJvmFileHeader.C \
+        SgAsmJvmIndexTableAttr.C \
         SgAsmJvmIndexedAttribute.C \
         SgAsmJvmInnerClasses.C \
         SgAsmJvmInnerClassesEntry.C \
@@ -307,7 +307,6 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmModule.C \
         SgAsmJvmModuleMainClass.C \
         SgAsmJvmNestHost.C \
-        SgAsmJvmNestMembers.C \
         SgAsmJvmNode.C \
         SgAsmJvmRuntimeAnnotation.C \
         SgAsmJvmRuntimeAnnotationPair.C \
@@ -322,7 +321,6 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmStackMapTable.C \
         SgAsmJvmStackMapVerificationType.C \
         SgAsmJvmSynthetic.C \
-        SgAsmJvmTableAttribute.C \
         SgAsmLEEntryPoint.C \
         SgAsmLEEntryTable.C \
         SgAsmLEFileHeader.C \

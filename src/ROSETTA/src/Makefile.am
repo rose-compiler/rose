@@ -364,11 +364,11 @@ rosetta_generated_definitions =				\
 	  SgAsmJvmDeprecated.h				\
 	  SgAsmJvmEnclosingMethod.h			\
 	  SgAsmJvmExceptionHandler.h			\
-	  SgAsmJvmExceptions.h				\
 	  SgAsmJvmExceptionTable.h			\
 	  SgAsmJvmField.h				\
 	  SgAsmJvmFieldTable.h				\
 	  SgAsmJvmFileHeader.h				\
+	  SgAsmJvmIndexTableAttr.h			\
 	  SgAsmJvmIndexedAttribute.h			\
 	  SgAsmJvmInnerClassesEntry.h			\
 	  SgAsmJvmInnerClasses.h			\
@@ -386,7 +386,6 @@ rosetta_generated_definitions =				\
 	  SgAsmJvmModule.h				\
 	  SgAsmJvmModuleMainClass.h			\
 	  SgAsmJvmNestHost.h				\
-	  SgAsmJvmNestMembers.h				\
 	  SgAsmJvmNode.h				\
 	  SgAsmJvmRuntimeAnnotation.h			\
 	  SgAsmJvmRuntimeAnnotationPair.h		\
@@ -401,7 +400,6 @@ rosetta_generated_definitions =				\
 	  SgAsmJvmStackMapTable.h			\
 	  SgAsmJvmStackMapVerificationType.h		\
 	  SgAsmJvmSynthetic.h				\
-	  SgAsmJvmTableAttribute.h			\
 	  SgAsmLEEntryPoint.h				\
 	  SgAsmLEEntryTable.h				\
 	  SgAsmLEFileHeader.h				\

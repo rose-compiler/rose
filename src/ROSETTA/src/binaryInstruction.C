@@ -9323,161 +9323,6 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmJvmTableAttribute           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmJvmTableAttribute);
-IS_SERIALIZABLE(AsmJvmTableAttribute);
-
-#ifndef DOCUMENTATION
-AsmJvmTableAttribute.useSmallHeader(true);
-#endif // !DOCUMENTATION
-
-DECLARE_HEADERS(AsmJvmTableAttribute);
-#if defined(SgAsmJvmTableAttribute_HEADERS) || defined(DOCUMENTATION)
-#include <sageContainer.h>
-#endif // SgAsmJvmTableAttribute_HEADERS
-
-#ifdef DOCUMENTATION
-/** JVM TableAttribute.
- *
- *  The TableAttribute class can represent one of a collection of attributes that contain a
- *  list of uint16_t indices.
- *
- *  The Exceptions attribute is a variable-length attribute in the attributes table of a method_info
- *  struction (see section 4.6 of the JVM specification). The Exceptions attribute indicates which
- *  checked exceptions a method may throw.  Each constant_pool entry in the table must be a
- *  CONSTANT_Class_info structure (section 4.4.1) representing a class type that this method is
- *  declared to throw.  See section 4.7.5 of the JVM specification.
- *
- *  The ModulePackages attribute is a variable-length attribute in the attributes table of a ClassFile
- *  structure (section 4.1). The ModulePackages attribute indicates all the packages of a module that are
- *  exported or opened by the Module attribute, as well as all the packages of the service implementations
- *  recorded in the Module attribute. The ModulePackages attribute may also indicate packages in the module
- *  that are neither exported nor opened nor contain service implementations. Each constant_pool entry in the
- *  table must be a CONSTANT_Package_info structure (section 4.4.12) representing a package in the current
- *  module. See section 4.7.26 of the JVM specification.
- *
- *  The NestMembers attribute records the classes and interfaces that are authorized to claim
- *  membership in the nest hosted by the current class or interface.  Each constant_pool entry in the
- *  table must be a CONSTANT_Class_info structure (section 4.4.1) representing a class or interface which
- *  is a member of the nest hosted by the current class or interface.  See section 4.7.29 of the
- *  JVM specification.
- *
- *  The PermittedSubclasses attribute is a variable-length attribute in the attributes table of a ClassFile
- *  structure (section 4.1). The PermittedSubclasses attribute records the classes and interfaces that are
- *  authorized to directly extend or implement the current class or interface (section 5.3.5). Each
- *  constant_pool entry in the table must be a CONSTANT_Class_info structure (section 4.4.1) representing
- *  a class or interface which is authorized to directly extend or implement the current class or interface.
- *  See section 4.7.31 of the JVM specification.
- */
-class SgAsmJvmTableAttribute: public SgAsmJvmAttribute {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmTableAttribute.setDataPrototype(
-        "unsigned", "attribute_type", "= SgAsmJvmTableAttribute::ATTR_NONE",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmTableAttribute.setDataPrototype(
-        "SgUnsigned16List", "table", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmJvmTableAttribute);
-#if defined(SgAsmJvmTableAttribute_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmJvmTableAttribute -----------------------
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmJvmTableAttribute");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
-        s & BOOST_SERIALIZATION_NVP(p_attribute_type);
-        s & BOOST_SERIALIZATION_NVP(p_table);
-        debugSerializationEnd("SgAsmJvmTableAttribute");
-    }
-#endif // ROSE_ENABLE_BOOST_SERIALIZATION
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Local types
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Type of JVM attribute.
-     *
-     * Attribute will have list of indices. */
-    enum AttributeType {
-        ATTR_NONE,
-        ATTR_Exceptions,         // 4.7.5
-        ATTR_ModulePackages,     // 4.7.26
-        ATTR_NestMembers   ,     // 4.7.29
-        ATTR_PermittedSubclasses // 4.7.31
-    };
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Properties
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-public:
-    /** Property: attribute_type
-     *
-     *  Indicates which JVM attribute is represented by this class instance. 
-     *  
-     *  @{ */
-    unsigned const& get_attribute_type() const;
-    void set_attribute_type(unsigned const&);
-    /** @} */
-
-public:
-    /** Property: table.
-     *
-     *  Each value in the table must be a valid index into the constant_pool table. 
-     *  
-     *  @{ */
-    SgUnsigned16List const& get_table() const;
-    void set_table(SgUnsigned16List const&);
-    /** @} */
- public:
-    /** Initialize the TableAttribute attribute before parsing.
-     *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    SgAsmJvmTableAttribute(SgAsmJvmAttributeTable* table, unsigned type);
-
-    /** Initialize the attribute by parsing the file. */
-    virtual SgAsmJvmTableAttribute* parse(SgAsmJvmConstantPool* pool) override;
-
-    /** Write the local variable table to a binary file. */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging information. */
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmJvmTableAttribute();
-
-public:
-    /** Default constructor. */
-    SgAsmJvmTableAttribute();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmJvmTableAttribute_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmSynthetic           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -11085,102 +10930,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmRuntimeAnnotation_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmJvmNestMembers           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmJvmNestMembers);
-IS_SERIALIZABLE(AsmJvmNestMembers);
-
-#ifndef DOCUMENTATION
-AsmJvmNestMembers.useSmallHeader(true);
-#endif // !DOCUMENTATION
-
-DECLARE_HEADERS(AsmJvmNestMembers);
-#if defined(SgAsmJvmNestMembers_HEADERS) || defined(DOCUMENTATION)
-#include <sageContainer.h>
-#endif // SgAsmJvmNestMembers_HEADERS
-
-#ifdef DOCUMENTATION
-/** JVM NestMembers attribute.
- *
- *  The NestMembers attribute records the classes and interfaces that are authorized to claim
- *  membership in the nest hosted by the current class or interface, see section 4.7.29 of the
- *  JVM specification. */
-class SgAsmJvmNestMembers: public SgAsmJvmAttribute {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmNestMembers.setDataPrototype(
-        "SgUnsigned16List", "classes", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmJvmNestMembers);
-#if defined(SgAsmJvmNestMembers_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmJvmNestMembers -----------------------
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmJvmNestMembers");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
-        s & BOOST_SERIALIZATION_NVP(p_classes);
-        debugSerializationEnd("SgAsmJvmNestMembers");
-    }
-#endif // ROSE_ENABLE_BOOST_SERIALIZATION
-public:
-public:
-    /** Property: classes
-     *
-     *  Each value in the classes array must be a valid index into the constant_pool table.
-     *  The constant_pool entry at that index must be a CONSTANT_Class_info structure
-     *  representing a class or interface which is a member of the nest hosted by the current
-     *  class or interface (see section 4.4.1 of the JVM specification). 
-     *  
-     *  @{ */
-    SgUnsigned16List const& get_classes() const;
-    void set_classes(SgUnsigned16List const&);
-    /** @} */
-public:
-    /** Initialize the attribute before parsing.
-     *
-     *  This is the preferred constructor to use before parsing as it sets its parent. */
-    explicit SgAsmJvmNestMembers(SgAsmJvmAttributeTable* table);
-
-    /** Initialize the attribute by parsing the file. */
-    virtual SgAsmJvmNestMembers* parse(SgAsmJvmConstantPool* pool) override;
-
-    /** Write object to a binary file. */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging information. */
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmJvmNestMembers();
-
-public:
-    /** Default constructor. */
-    SgAsmJvmNestMembers();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmJvmNestMembers_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -13155,6 +12904,160 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmIndexTableAttr           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmIndexTableAttr);
+IS_SERIALIZABLE(AsmJvmIndexTableAttr);
+
+#ifndef DOCUMENTATION
+AsmJvmIndexTableAttr.useSmallHeader(true);
+#endif // !DOCUMENTATION
+
+DECLARE_HEADERS(AsmJvmIndexTableAttr);
+#if defined(SgAsmJvmIndexTableAttr_HEADERS) || defined(DOCUMENTATION)
+#include <sageContainer.h>
+#endif // SgAsmJvmIndexTableAttr_HEADERS
+
+#ifdef DOCUMENTATION
+/** JVM IndexTableAttr.
+ *
+ *  The IndexTableAttr class can represent one of a collection of attributes that contain a
+ *  list of uint16_t indices.
+ *
+ *  The Exceptions attribute is a variable-length attribute in the attributes table of a method_info
+ *  struction (see section 4.6 of the JVM specification). The Exceptions attribute indicates which
+ *  checked exceptions a method may throw.  Each constant_pool entry in the table must be a
+ *  CONSTANT_Class_info structure (section 4.4.1) representing a class type that this method is
+ *  declared to throw.  See section 4.7.5 of the JVM specification.
+ *
+ *  The ModulePackages attribute is a variable-length attribute in the attributes table of a ClassFile
+ *  structure (section 4.1). The ModulePackages attribute indicates all the packages of a module that are
+ *  exported or opened by the Module attribute, as well as all the packages of the service implementations
+ *  recorded in the Module attribute. The ModulePackages attribute may also indicate packages in the module
+ *  that are neither exported nor opened nor contain service implementations. Each constant_pool entry in the
+ *  table must be a CONSTANT_Package_info structure (section 4.4.12) representing a package in the current
+ *  module. See section 4.7.26 of the JVM specification.
+ *
+ *  The NestMembers attribute records the classes and interfaces that are authorized to claim
+ *  membership in the nest hosted by the current class or interface.  Each constant_pool entry in the
+ *  table must be a CONSTANT_Class_info structure (section 4.4.1) representing a class or interface which
+ *  is a member of the nest hosted by the current class or interface.  See section 4.7.29 of the
+ *  JVM specification.
+ *
+ *  The PermittedSubclasses attribute is a variable-length attribute in the attributes table of a ClassFile
+ *  structure (section 4.1). The PermittedSubclasses attribute records the classes and interfaces that are
+ *  authorized to directly extend or implement the current class or interface (section 5.3.5). Each
+ *  constant_pool entry in the table must be a CONSTANT_Class_info structure (section 4.4.1) representing
+ *  a class or interface which is authorized to directly extend or implement the current class or interface.
+ *  See section 4.7.31 of the JVM specification.
+ */
+class SgAsmJvmIndexTableAttr: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmIndexTableAttr.setDataPrototype(
+        "unsigned", "attribute_type", "= SgAsmJvmIndexTableAttr::ATTR_NONE",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmIndexTableAttr.setDataPrototype(
+        "std::vector<uint16_t>", "table", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmIndexTableAttr);
+#if defined(SgAsmJvmIndexTableAttr_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmIndexTableAttr -----------------------
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmIndexTableAttr");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        s & BOOST_SERIALIZATION_NVP(p_attribute_type);
+        s & BOOST_SERIALIZATION_NVP(p_table);
+        debugSerializationEnd("SgAsmJvmIndexTableAttr");
+    }
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Local types
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Type of JVM attribute.
+     *
+     * Attribute will have list of indices. */
+    enum AttributeType {
+        ATTR_NONE,
+        ATTR_Exceptions,         // 4.7.5
+        ATTR_ModulePackages,     // 4.7.26
+        ATTR_NestMembers   ,     // 4.7.29
+        ATTR_PermittedSubclasses // 4.7.31
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Property: attribute_type
+     *
+     *  Indicates which JVM attribute is represented by this class instance.
+     *
+     *  @{ */
+    unsigned const& get_attribute_type() const;
+    void set_attribute_type(unsigned const&);
+    /** @} */
+
+public:
+    /** Property: table.
+     *
+     *  Each value in the table must be a valid index into the constant_pool table.
+     *
+     *  @{ */
+    std::vector<uint16_t> const& get_table() const;
+    std::vector<uint16_t>& get_table();
+    /** @} */
+ public:
+    /** Initialize the IndexTableAttr attribute before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    SgAsmJvmIndexTableAttr(SgAsmJvmAttributeTable* table, unsigned type);
+
+    /** Initialize the attribute by parsing the file. */
+    virtual SgAsmJvmIndexTableAttr* parse(SgAsmJvmConstantPool* pool) override;
+
+    /** Write the local variable table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmIndexTableAttr();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmIndexTableAttr();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmIndexTableAttr_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmIndexedAttribute           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -13232,8 +13135,8 @@ public:
 public:
     /** Property: attribute_type
      *
-     *  Indicates which JVM attribute is represented by this class instance. 
-     *  
+     *  Indicates which JVM attribute is represented by this class instance.
+     *
      *  @{ */
     unsigned const& get_attribute_type() const;
     void set_attribute_type(unsigned const&);
@@ -13868,101 +13771,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmExceptionTable_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmJvmExceptions           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmJvmExceptions);
-IS_SERIALIZABLE(AsmJvmExceptions);
-
-#ifndef DOCUMENTATION
-AsmJvmExceptions.useSmallHeader(true);
-#endif // !DOCUMENTATION
-
-DECLARE_HEADERS(AsmJvmExceptions);
-#if defined(SgAsmJvmExceptions_HEADERS) || defined(DOCUMENTATION)
-#include <sageContainer.h>
-#endif // SgAsmJvmExceptions_HEADERS
-
-#ifdef DOCUMENTATION
-/** JVM Exceptions attribute.
- *
- *  The Exceptions attribute is a variable-length attribute in the attributes table of a method_info
- *  struction (see section 4.6 of the JVM specification). The Exceptions attribute indicates which
- *  checked exceptions a method may throw. */
-class SgAsmJvmExceptions: public SgAsmJvmAttribute {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmExceptions.setDataPrototype(
-        "SgUnsigned16List", "exception_index_table", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmJvmExceptions);
-#if defined(SgAsmJvmExceptions_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmJvmExceptions -----------------------
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmJvmExceptions");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
-        s & BOOST_SERIALIZATION_NVP(p_exception_index_table);
-        debugSerializationEnd("SgAsmJvmExceptions");
-    }
-#endif // ROSE_ENABLE_BOOST_SERIALIZATION
-public:
-public:
-    /** Property: exception_index_table
-     *
-     *  Each value in the exception_index_table array must be a valid index into the constant_pool
-     *  table. The constant_pool entry at that index must be the CONSTANT_Utf8_info structure
-     *  representing the string "Exceptions" (see section 4.4.7 of the JVM specification). 
-     *  
-     *  @{ */
-    SgUnsigned16List const& get_exception_index_table() const;
-    void set_exception_index_table(SgUnsigned16List const&);
-    /** @} */
- public:
-    /** Initialize the object before parsing.
-     *
-     *  This is the preferred constructor to use before parsing as it sets its parent. */
-    explicit SgAsmJvmExceptions(SgAsmJvmAttributeTable* table);
-
-    /** Initialize the object by parsing content from the class file. */
-    SgAsmJvmExceptions* parse(SgAsmJvmConstantPool*) override;
-
-    /** Write the Exceptions attribute to a binary file. */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging information. */
-    void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmJvmExceptions();
-
-public:
-    /** Default constructor. */
-    SgAsmJvmExceptions();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmJvmExceptions_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -15608,8 +15416,8 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
         | AsmJvmConstantValue
         | AsmJvmDeprecated
         | AsmJvmEnclosingMethod
-        | AsmJvmExceptions
         | AsmJvmIndexedAttribute
+        | AsmJvmIndexTableAttr
         | AsmJvmInnerClasses
         | AsmJvmLineNumberTable
         | AsmJvmLocalVariableTable
@@ -15618,7 +15426,6 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
         | AsmJvmModule
         | AsmJvmModuleMainClass
         | AsmJvmNestHost
-        | AsmJvmNestMembers
         | AsmJvmRuntimeInvisibleAnnotations
         | AsmJvmRuntimeVisibilityParamAnnotations
         | AsmJvmRuntimeVisibleAnnotations
@@ -15626,7 +15433,6 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
         | AsmJvmSourceFile
         | AsmJvmStackMapTable
         | AsmJvmSynthetic
-        | AsmJvmTableAttribute
     , false);
 assert(AsmJvmAttribute.associatedGrammar != nullptr);
 AsmJvmAttribute.setCppCondition("!defined(DOCUMENTATION)");

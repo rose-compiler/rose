@@ -406,11 +406,11 @@ GENERATED_SOURCE =						\
         SgAsmJvmDeprecated.h					\
         SgAsmJvmEnclosingMethod.h				\
         SgAsmJvmExceptionHandler.h				\
-        SgAsmJvmExceptions.h					\
         SgAsmJvmExceptionTable.h				\
         SgAsmJvmField.h						\
         SgAsmJvmFieldTable.h					\
         SgAsmJvmFileHeader.h					\
+        SgAsmJvmIndexTableAttr.h				\
         SgAsmJvmIndexedAttribute.h				\
         SgAsmJvmInnerClassesEntry.h				\
         SgAsmJvmInnerClasses.h					\
@@ -428,7 +428,6 @@ GENERATED_SOURCE =						\
         SgAsmJvmModule.h					\
         SgAsmJvmModuleMainClass.h				\
         SgAsmJvmNestHost.h					\
-        SgAsmJvmNestMembers.h					\
         SgAsmJvmNode.h						\
         SgAsmJvmRuntimeAnnotation.h				\
         SgAsmJvmRuntimeAnnotationPair.h 			\
@@ -442,7 +441,6 @@ GENERATED_SOURCE =						\
         SgAsmJvmStackMapFrame.h					\
         SgAsmJvmStackMapTable.h					\
         SgAsmJvmStackMapVerificationType.h			\
-        SgAsmJvmTableAttribute.h				\
         SgAsmJvmSynthetic.h					\
         SgAsmLEEntryPoint.h					\
         SgAsmLEEntryTable.h					\
@@ -828,11 +826,11 @@ GENERATED_SOURCE =						\
 	SgAsmJvmDeprecated.h					\
 	SgAsmJvmEnclosingMethod.h				\
 	SgAsmJvmExceptionHandler.h				\
-	SgAsmJvmExceptions.h					\
 	SgAsmJvmExceptionTable.h				\
 	SgAsmJvmField.h						\
 	SgAsmJvmFieldTable.h					\
 	SgAsmJvmFileHeader.h					\
+	SgAsmJvmIndexTableAttr.h				\
 	SgAsmJvmIndexedAttribute.h				\
 	SgAsmJvmInnerClassesEntry.h				\
 	SgAsmJvmInnerClasses.h					\
@@ -850,7 +848,6 @@ GENERATED_SOURCE =						\
 	SgAsmJvmModule.h					\
 	SgAsmJvmModuleMainClass.h				\
 	SgAsmJvmNestHost.h					\
-	SgAsmJvmNestMembers.h					\
 	SgAsmJvmNode.h						\
         SgAsmJvmRuntimeAnnotation.h				\
         SgAsmJvmRuntimeAnnotationPair.h 			\
@@ -864,7 +861,6 @@ GENERATED_SOURCE =						\
 	SgAsmJvmStackMapFrame.h					\
 	SgAsmJvmStackMapTable.h					\
 	SgAsmJvmStackMapVerificationType.h			\
-	SgAsmJvmTableAttribute.h				\
 	SgAsmJvmSynthetic.h					\
 	SgAsmLEEntryPoint.h					\
 	SgAsmLEEntryTable.h					\
@@ -1397,11 +1393,11 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmDeprecated.h				\
    SgAsmJvmEnclosingMethod.h			\
    SgAsmJvmExceptionHandler.h			\
-   SgAsmJvmExceptions.h				\
    SgAsmJvmExceptionTable.h			\
    SgAsmJvmField.h				\
    SgAsmJvmFieldTable.h				\
    SgAsmJvmFileHeader.h				\
+   SgAsmJvmIndexTableAttr.h			\
    SgAsmJvmIndexedAttribute.h			\
    SgAsmJvmInnerClassesEntry.h			\
    SgAsmJvmInnerClasses.h			\
@@ -1419,7 +1415,6 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmModule.h				\
    SgAsmJvmModuleMainClass.h			\
    SgAsmJvmNestHost.h				\
-   SgAsmJvmNestMembers.h			\
    SgAsmJvmNode.h				\
    SgAsmJvmRuntimeAnnotation.h			\
    SgAsmJvmRuntimeAnnotationPair.h		\
@@ -1433,7 +1428,6 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmStackMapFrame.h			\
    SgAsmJvmStackMapTable.h			\
    SgAsmJvmStackMapVerificationType.h		\
-   SgAsmJvmTableAttribute.h			\
    SgAsmJvmSynthetic.h				\
    SgAsmLEEntryPoint.h				\
    SgAsmLEEntryTable.h				\

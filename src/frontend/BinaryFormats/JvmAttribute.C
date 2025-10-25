@@ -32,7 +32,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmStackMapTable(parent);
   }
   else if (name == "Exceptions") { // 4.7.5
-    return new SgAsmJvmExceptions(parent);
+    return new SgAsmJvmIndexTableAttr(parent, SgAsmJvmIndexTableAttr::ATTR_Exceptions);
   }
   else if (name == "InnerClasses") { // 4.7.6
     return new SgAsmJvmInnerClasses(parent);
@@ -86,7 +86,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmModule(parent);
   }
   else if (name == "ModulePackages") { // 4.7.26
-    return new SgAsmJvmTableAttribute(parent, SgAsmJvmTableAttribute::ATTR_ModulePackages);
+    return new SgAsmJvmIndexTableAttr(parent, SgAsmJvmIndexTableAttr::ATTR_ModulePackages);
   }
   else if (name == "ModuleMainClass") { // 4.7.27
     ASSERT_require2(false, "Need attribute ModuleMainClass\n");
@@ -96,10 +96,10 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmNestHost(parent);
   }
   else if (name == "NestMembers") { // 4.7.29
-    return new SgAsmJvmNestMembers(parent);
+    return new SgAsmJvmIndexTableAttr(parent, SgAsmJvmIndexTableAttr::ATTR_NestMembers);
   }
   else if (name == "PermittedSubclasses") { // 4.7.31
-    return new SgAsmJvmIndexedAttribute(parent, SgAsmJvmIndexedAttribute::ATTR_PermittedSubclasses);
+    return new SgAsmJvmIndexTableAttr(parent, SgAsmJvmIndexTableAttr::ATTR_PermittedSubclasses);
   }
 
   // skip attribute
@@ -183,6 +183,56 @@ void SgAsmJvmAttributeTable::dump(FILE* f, const char* prefix, ssize_t idx) cons
 //
 // 4.7.2 The ConstantValue Attribute. ConstantValue_attribute is represented by the SgAsmJvmConstantValue class.
 //
+SgAsmJvmIndexedAttribute::SgAsmJvmIndexedAttribute(SgAsmJvmAttributeTable* table, unsigned type)
+{
+  initializeProperties();
+  set_parent(table);
+  set_attribute_type(type);
+}
+
+SgAsmJvmIndexedAttribute* SgAsmJvmIndexedAttribute::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+
+  // Ensure that we have a specialized type by this point
+  ASSERT_require2(get_attribute_type() != SgAsmJvmIndexedAttribute::ATTR_NONE, "SgAsmJvmIndexedAttribute::attribute_type is not set\n");
+
+  uint16_t numIndices;
+  Jvm::read_value(pool, numIndices);
+
+  // Must use local list because get_indices() returns const&
+  SgUnsigned16List u16List;
+  for (int ii = 0; ii < numIndices; ii++) {
+    uint16_t index;
+    Jvm::read_value(pool, index);
+    u16List.push_back(index);
+  }
+  set_indices(u16List);
+
+  return this;
+}
+
+void SgAsmJvmIndexedAttribute::unparse(std::ostream &os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+
+  // Ensure that we have a specialized type by this point
+  ASSERT_require2(get_attribute_type() != SgAsmJvmIndexedAttribute::ATTR_NONE, "SgAsmJvmIndexedAttribute::attribute_type is not set\n");
+
+  uint16_t numIndices = get_indices().size();
+  Jvm::writeValue(os, numIndices);
+
+  for (uint16_t index : get_indices()) {
+    Jvm::writeValue(os, index);
+  }
+}
+
+void SgAsmJvmIndexedAttribute::dump(FILE*, const char*, ssize_t) const
+{
+  mlog[WARN] << "SgAsmJvmIndexedAttribute::dump() not implemented yet\n";
+}
+
+//NOTE: This class (and more) will be replaced by SgAsmJvmIndexedAttribute
 SgAsmJvmConstantValue::SgAsmJvmConstantValue(SgAsmJvmAttributeTable* parent)
 {
   initializeProperties();
@@ -545,47 +595,51 @@ void SgAsmJvmStackMapVerificationType::dump(FILE*, const char*, ssize_t) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.5 The Exceptions Attribute. Exceptions_attribute represented by the SgAsmJvmExceptions class.
+// 4.7.5 The Exceptions Attribute. The Exceptions_attribute is represented by the SgAsmJvmIndexTableAttr class.
 //
-SgAsmJvmExceptions::SgAsmJvmExceptions(SgAsmJvmAttributeTable* table)
+SgAsmJvmIndexTableAttr::SgAsmJvmIndexTableAttr(SgAsmJvmAttributeTable* table, unsigned type)
 {
   initializeProperties();
   set_parent(table);
+  set_attribute_type(type);
 }
 
-SgAsmJvmExceptions* SgAsmJvmExceptions::parse(SgAsmJvmConstantPool* pool)
+SgAsmJvmIndexTableAttr* SgAsmJvmIndexTableAttr::parse(SgAsmJvmConstantPool* pool)
 {
   SgAsmJvmAttribute::parse(pool);
 
-  uint16_t numExceptions;
-  Jvm::read_value(pool, numExceptions);
+  // Ensure that we have a specialized type by this point
+  ASSERT_require2(get_attribute_type() != SgAsmJvmIndexTableAttr::ATTR_NONE, "SgAsmJvmIndexTableAttr::attribute_type is not set\n");
 
-  SgUnsigned16List u16List;
-  for (int ii = 0; ii < numExceptions; ii++) {
+  uint16_t numIndices;
+  Jvm::read_value(pool, numIndices);
+
+  for (int ii = 0; ii < numIndices; ii++) {
     uint16_t index;
     Jvm::read_value(pool, index);
-    u16List.push_back(index);
+    get_table().push_back(index);
   }
-  set_exception_index_table(u16List);
-
   return this;
 }
 
-void SgAsmJvmExceptions::unparse(std::ostream &os) const
+void SgAsmJvmIndexTableAttr::unparse(std::ostream &os) const
 {
   SgAsmJvmAttribute::unparse(os);
 
-  uint16_t numExceptions = get_exception_index_table().size();
-  Jvm::writeValue(os, numExceptions);
+  // Ensure that we have a specialized type by this point
+  ASSERT_require2(get_attribute_type() != SgAsmJvmIndexTableAttr::ATTR_NONE, "SgAsmJvmIndexTableAttr::attribute_type is not set\n");
 
-  for (uint16_t index : get_exception_index_table()) {
+  uint16_t numIndices = get_table().size();
+  Jvm::writeValue(os, numIndices);
+
+  for (uint16_t index : get_table()) {
     Jvm::writeValue(os, index);
   }
 }
 
-void SgAsmJvmExceptions::dump(FILE*, const char*, ssize_t) const
+void SgAsmJvmIndexTableAttr::dump(FILE*, const char*, ssize_t) const
 {
-  mlog[WARN] << "SgAsmJvmExceptions::dump() not implemented yet\n";
+  mlog[WARN] << "SgAsmJvmIndexTableAttr::dump() not implemented yet\n";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1781,56 +1835,8 @@ void SgAsmJvmModule::dump(FILE* f, const char* prefix, ssize_t idx) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.26 The ModulePackages Attribute. The ModulePackages_attribute is represented by the SgAsmJvmIndexTableAttribute class.
+// 4.7.26 The ModulePackages Attribute. The ModulePackages_attribute is represented by the SgAsmJvmIndexTableAttr class.
 //
-SgAsmJvmTableAttribute::SgAsmJvmTableAttribute(SgAsmJvmAttributeTable* table, unsigned type)
-{
-  initializeProperties();
-  set_parent(table);
-  set_attribute_type(type);
-}
-
-SgAsmJvmTableAttribute* SgAsmJvmTableAttribute::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
-
-  // Ensure that we have a specialized type by this point
-  ASSERT_require2(get_attribute_type() != SgAsmJvmTableAttribute::ATTR_NONE, "SgAsmJvmTableAttribute::attribute_type is not set\n");
-
-  uint16_t numIndices;
-  Jvm::read_value(pool, numIndices);
-
-  // Must use local list because get_indices() returns const&
-  SgUnsigned16List u16List;
-  for (int ii = 0; ii < numIndices; ii++) {
-    uint16_t index;
-    Jvm::read_value(pool, index);
-    u16List.push_back(index);
-  }
-  set_table(u16List);
-
-  return this;
-}
-
-void SgAsmJvmTableAttribute::unparse(std::ostream &os) const
-{
-  SgAsmJvmAttribute::unparse(os);
-
-  // Ensure that we have a specialized type by this point
-  ASSERT_require2(get_attribute_type() != SgAsmJvmTableAttribute::ATTR_NONE, "SgAsmJvmTableAttribute::attribute_type is not set\n");
-
-  uint16_t numIndices = get_table().size();
-  Jvm::writeValue(os, numIndices);
-
-  for (uint16_t index : get_table()) {
-    Jvm::writeValue(os, index);
-  }
-}
-
-void SgAsmJvmTableAttribute::dump(FILE*, const char*, ssize_t) const
-{
-  mlog[WARN] << "SgAsmJvmTableAttribute::dump() not implemented yet\n";
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1882,48 +1888,8 @@ void SgAsmJvmNestHost::dump(FILE*, const char*, ssize_t) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.29 The NestMembers Attribute. NestMembers_attribute represented by the SgAsmJvmNestMembers class.
+// 4.7.29 The NestMembers Attribute. NestMembers_attribute represented by the SgAsmJvmIndexTableAttr class.
 //
-SgAsmJvmNestMembers::SgAsmJvmNestMembers(SgAsmJvmAttributeTable* table)
-{
-  initializeProperties();
-  set_parent(table);
-}
-
-SgAsmJvmNestMembers* SgAsmJvmNestMembers::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
-
-  uint16_t numClasses;
-  Jvm::read_value(pool, numClasses);
-
-  SgUnsigned16List u16List;
-  for (int ii = 0; ii < numClasses; ii++) {
-    uint16_t index;
-    Jvm::read_value(pool, index);
-    u16List.push_back(index);
-  }
-  set_classes(u16List);
-
-  return this;
-}
-
-void SgAsmJvmNestMembers::unparse(std::ostream &os) const
-{
-  SgAsmJvmAttribute::unparse(os);
-
-  uint16_t numClasses = get_classes().size();
-  Jvm::writeValue(os, numClasses);
-
-  for (uint16_t index : get_classes()) {
-    Jvm::writeValue(os, index);
-  }
-}
-
-void SgAsmJvmNestMembers::dump(FILE*, const char*, ssize_t) const
-{
-  mlog[WARN] << "SgAsmJvmNestMembers::dump() not implemented yet\n";
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1932,55 +1898,7 @@ void SgAsmJvmNestMembers::dump(FILE*, const char*, ssize_t) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.31 The PermittedSubclasses Attribute. PermittedSubclasses_attribute represented by the SgAsmJvmIndexedAttribute class.
+// 4.7.31 The PermittedSubclasses Attribute. PermittedSubclasses_attribute represented by the SgAsmJvmIndexTableAttr class.
 //
-SgAsmJvmIndexedAttribute::SgAsmJvmIndexedAttribute(SgAsmJvmAttributeTable* table, unsigned type)
-{
-  initializeProperties();
-  set_parent(table);
-  set_attribute_type(type);
-}
-
-SgAsmJvmIndexedAttribute* SgAsmJvmIndexedAttribute::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
-
-  // Ensure that we have a specialized type by this point
-  ASSERT_require2(get_attribute_type() != SgAsmJvmIndexedAttribute::ATTR_NONE, "SgAsmJvmIndexedAttribute::attribute_type is not set\n");
-
-  uint16_t numIndices;
-  Jvm::read_value(pool, numIndices);
-
-  // Must use local list because get_indices() returns const&
-  SgUnsigned16List u16List;
-  for (int ii = 0; ii < numIndices; ii++) {
-    uint16_t index;
-    Jvm::read_value(pool, index);
-    u16List.push_back(index);
-  }
-  set_indices(u16List);
-
-  return this;
-}
-
-void SgAsmJvmIndexedAttribute::unparse(std::ostream &os) const
-{
-  SgAsmJvmAttribute::unparse(os);
-
-  // Ensure that we have a specialized type by this point
-  ASSERT_require2(get_attribute_type() != SgAsmJvmIndexedAttribute::ATTR_NONE, "SgAsmJvmIndexedAttribute::attribute_type is not set\n");
-
-  uint16_t numIndices = get_indices().size();
-  Jvm::writeValue(os, numIndices);
-
-  for (uint16_t index : get_indices()) {
-    Jvm::writeValue(os, index);
-  }
-}
-
-void SgAsmJvmIndexedAttribute::dump(FILE*, const char*, ssize_t) const
-{
-  mlog[WARN] << "SgAsmJvmIndexedAttribute::dump() not implemented yet\n";
-}
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

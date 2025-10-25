@@ -1,8 +1,8 @@
 #include <sageContainer.h>
 
-/** JVM TableAttribute.
+/** JVM IndexTableAttr.
  *
- *  The TableAttribute class can represent one of a collection of attributes that contain a
+ *  The IndexTableAttr class can represent one of a collection of attributes that contain a
  *  list of uint16_t indices.
  *
  *  The Exceptions attribute is a variable-length attribute in the attributes table of a method_info
@@ -32,7 +32,7 @@
  *  a class or interface which is authorized to directly extend or implement the current class or interface.
  *  See section 4.7.31 of the JVM specification.
  */
-class SgAsmJvmTableAttribute: public SgAsmJvmAttribute {
+class SgAsmJvmIndexTableAttr: public SgAsmJvmAttribute {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,22 +56,22 @@ public:
      *
      *  Indicates which JVM attribute is represented by this class instance. */
     [[using Rosebud: rosetta]]
-    unsigned attribute_type = SgAsmJvmTableAttribute::ATTR_NONE;
+    unsigned attribute_type = SgAsmJvmIndexTableAttr::ATTR_NONE;
 
     /** Property: table.
      *
      *  Each value in the table must be a valid index into the constant_pool table. */
-    [[using Rosebud: rosetta]]
-    SgUnsigned16List table;
+    [[using Rosebud: rosetta, mutators(), large]]
+    std::vector<uint16_t> table;
 
  public:
-    /** Initialize the TableAttribute attribute before parsing.
+    /** Initialize the IndexTableAttr attribute before parsing.
      *
      *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    SgAsmJvmTableAttribute(SgAsmJvmAttributeTable* table, unsigned type);
+    SgAsmJvmIndexTableAttr(SgAsmJvmAttributeTable* table, unsigned type);
 
     /** Initialize the attribute by parsing the file. */
-    virtual SgAsmJvmTableAttribute* parse(SgAsmJvmConstantPool* pool) override;
+    virtual SgAsmJvmIndexTableAttr* parse(SgAsmJvmConstantPool* pool) override;
 
     /** Write the local variable table to a binary file. */
     virtual void unparse(std::ostream&) const override;
