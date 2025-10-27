@@ -720,9 +720,9 @@ findPltFunctions(const Partitioner::Ptr &partitioner, SgAsmElfFileHeader *elfHea
         Address pltEntryVa = plt.section->get_mappedActualVa() + pltOffset;
         if (!matcher.match(partitioner, pltEntryVa))
             continue;
-        Address gotVa = matcher.gotEntryVa();    // address that was read by indirect branch
-        if (gotVa <  elfHeader->get_baseVa() + got->get_mappedPreferredRva() ||
-            gotVa >= elfHeader->get_baseVa() + got->get_mappedPreferredRva() + got->get_mappedSize()) {
+        Address gotVa = matcher.gotEntryVa();           // address that was read by indirect branch
+        if (gotVa < elfHeader->get_baseVa() + got->get_mappedActualVa() ||
+            gotVa >= elfHeader->get_baseVa() + got->get_mappedActualVa() + got->get_mappedSize()) {
             continue;                                   // jump is not indirect through the .got.plt section
         }
         SAWYER_MESG(debug) <<"symbolizing PLT entry " <<StringUtility::addrToString(pltEntryVa)
@@ -734,7 +734,9 @@ findPltFunctions(const Partitioner::Ptr &partitioner, SgAsmElfFileHeader *elfHea
             SgAsmElfSymbolSection *symbolSection = isSgAsmElfSymbolSection(relocSection->get_linkedSection());
             if (SgAsmElfSymbolList *symbols = symbolSection ? symbolSection->get_symbols() : NULL) {
                 for (SgAsmElfRelocEntry *rel: relocSection->get_entries()->get_entries()) {
-                    if (rel->get_r_offset() == gotVa) {
+                    const Address r_offset = rel->get_r_offset() +
+                                             relocSection->get_mappedActualVa() - relocSection->get_mappedPreferredVa();
+                    if (r_offset == gotVa) {
                         unsigned long symbolIdx = rel->get_sym();
                         if (symbolIdx < symbols->get_symbols().size()) {
                             SgAsmElfSymbol *symbol = symbols->get_symbols()[symbolIdx];
