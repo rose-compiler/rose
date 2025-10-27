@@ -1017,7 +1017,10 @@ SgAsmInterpretation*
 EngineBinary::parseContainers(const std::vector<std::string> &fileNames) {
     try {
         interpretation(nullptr);
-        memoryMap(MemoryMap::Ptr());
+
+        // Don't clear the memory map because the user might have configured it already.
+        //memoryMap(MemoryMap::Ptr());
+
         checkSettings();
 
         // Prune away things we recognize as not being binary containers.
@@ -1095,7 +1098,6 @@ EngineBinary::parseContainers(const std::vector<std::string> &fileNames) {
             ASSERT_require(areContainersParsed());
         }
 
-        ASSERT_require(!areSpecimensLoaded());
         return interpretation();
     } catch (const std::runtime_error &e) {
         if (settings().engine.exitOnError) {
@@ -1224,6 +1226,7 @@ void
 EngineBinary::loadContainers(const std::vector<std::string> & /*fileNames*/) {
     // Load the interpretation if it hasn't been already
     if (interpretation() && (!interpretation()->get_map() || interpretation()->get_map()->isEmpty())) {
+        interpretation()->set_map(memoryMap());
         obtainLoader();
         binaryLoader_->load(interpretation());
     }
