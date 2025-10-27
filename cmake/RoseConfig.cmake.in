@@ -36,6 +36,7 @@ set(Rose_ENABLE_JOVIAL @ENABLE_JOVIAL@)
 # Build options
 set(Rose_ENABLE_ASSEMBLY_SEMANTICS @ENABLE_ASSEMBLY_SEMANTICS@)
 set(Rose_ENABLE_CLANG_FRONTEND @ENABLE_CLANG_FRONTEND@)
+set(Rose_BUILD_TYPE "@CMAKE_BUILD_TYPE@")
 
 # Include CMake modules for finding dependencies
 include(CMakeFindDependencyMacro)
