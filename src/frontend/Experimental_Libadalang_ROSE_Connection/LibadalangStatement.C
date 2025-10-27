@@ -500,8 +500,7 @@ namespace {
       SgDeclarationStatement* type_decl = type_pair.second;
       const std::string& type_decl_filename = type_decl->getFilenameString();
 
-      if(type_decl_filename.size() >= package_specification_name.size()
-         && boost::algorithm::ends_with(type_decl_filename, package_specification_name)){
+      if(boost::algorithm::ends_with(type_decl_filename, package_specification_name)){
 
         //Get the SgType* & add it to extendedTypesByName
         VariantT type_decl_class = type_decl->variantT();
@@ -565,8 +564,7 @@ namespace {
       SgInitializedName* var_name = var_pair.second;
       const std::string& var_filename = var_name->getFilenameString();
 
-      if(var_filename.size() >= package_specification_name.size()
-         && boost::algorithm::ends_with(var_filename, package_specification_name)){
+      if(boost::algorithm::ends_with(var_filename, package_specification_name)){
         const AdaIdentifier var_name_string = var_name->get_name().getString();
         SgDeclarationStatement* var_decl = var_name->get_declaration();
 
@@ -594,8 +592,7 @@ namespace {
       SgDeclarationStatement* decl_stmt = decl_pair.second;
       const std::string& decl_stmt_filename = decl_stmt->getFilenameString();
 
-      if(decl_stmt_filename.size() >= package_specification_name.size()
-         && boost::algorithm::ends_with(decl_stmt_filename, package_specification_name)){
+      if(boost::algorithm::ends_with(decl_stmt_filename, package_specification_name)){
 
         //Check the type of this decl & add it to extendedSubpsByName
         VariantT decl_stmt_class = decl_stmt->variantT();
@@ -613,15 +610,9 @@ namespace {
               break;
             }
           case V_SgAdaFunctionRenamingDecl:
-            {
-              //Renaming decls
-              SgAdaFunctionRenamingDecl* func_renaming_decl = isSgAdaFunctionRenamingDecl(decl_stmt);
-              name_to_add = func_renaming_decl->get_name().getString();
-              break;
-            }
           case V_SgFunctionDeclaration:
             {
-              //Standard subp decls
+              //Standard subp decls & renaming decls
               SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(decl_stmt);
               name_to_add = func_decl->get_name().getString();
               break;
