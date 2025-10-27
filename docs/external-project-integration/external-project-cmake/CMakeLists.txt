@@ -12,6 +12,13 @@ set(PROJECT_NAME RoseExternalExample)
 # Check ROSE's top-level CMakeLists.txt. You probably want to use that version or later.
 cmake_minimum_required(VERSION 3.15)
 
+# Adjust CMake's default optimization, debug, and assertion flags for different build types. These settings
+# are the same as the settings used by ROSE.
+string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
+
 # Read the version of this tool from a VERSION file. The file should be one line, and the version
 # may be surrounded by double quotes so it can be ineterpolated into a C/C++ program as a string
 # literal.
@@ -42,7 +49,7 @@ endif()
 
 # Show what we found
 message(STATUS "==================================================")
-message(STATUS "Found ROSE ${Rose_VERSION} at ${Rose_ROOT}")
+message(STATUS "Found ROSE ${Rose_VERSION} ${Rose_BUILD_TYPE} at ${Rose_ROOT}")
 message(STATUS "  Ada:        ${Rose_ENABLE_ADA}")
 message(STATUS "  Binaries:   ${Rose_ENABLE_BINARY_ANALYSIS}")
 message(STATUS "  C/C++:      ${Rose_ENABLE_C}")
@@ -60,6 +67,16 @@ message(STATUS "  Python:     ${Rose_ENABLE_PYTHON}")
 #    message(STATUS "${_varName} = ${${_varName}}")
 #  endif()
 #endforeach()
+
+# Choose a default build type for this project
+if(NOT CMAKE_BUILD_TYPE)
+    if(Rose_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE "${Rose_BUILD_TYPE}" CACHE STRING "Build type (inherited from ROSE)" FORCE)
+        message(STATUS "No build type specified, defaulting to ROSE's build type: ${CMAKE_BUILD_TYPE}")
+    else()
+        set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build type" FORCE)
+    endif()
+endif()
 
 # Decide where to install your project's files. If no installation prefix was specified, default to
 # the ROSE installation location. Doing so is an easy way to have multiple versions and
