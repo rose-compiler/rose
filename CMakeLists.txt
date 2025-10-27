@@ -86,14 +86,15 @@ project(ROSE
 # is a compromise between full optimization and the ability to use most features of interactive debuggers.
 #
 # "Debug" is intended for developers to debug their libraries and tools, but CMake doesn't turn off optimizations. We
-# add "-Og" so that all features of interactive debugging work properly, although this has a major negative effect on
-# performance.
+# add "-O0" so that all features of interactive debugging work properly, although this has a major negative effect on
+# performance. We don't use "-Og" because this doesn't give the best debugging experience (too many local variables
+# get optimized out and therefore one cannot inspect them in the debugger).
 # -----------------------------------------------------------------------------------------------------------------------
 string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
 string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Og")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
 #-----------------------------------------------------------------------------------------------------------------------
 # BLT
