@@ -291,13 +291,13 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmCodeAttribute.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmConstantPoolEntry.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmConstantPool.h
-    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmConstantValue.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmEnclosingMethod.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmExceptionHandler.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmExceptionTable.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmField.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmFieldTable.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmFileHeader.h
+    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmIndexedAttr.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmIndexTableAttr.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmInnerClassesEntry.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmInnerClasses.h
@@ -313,11 +313,7 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmMethodParameters.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmMethodTable.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmModule.h
-    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmModuleMainClass.h
-    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmNestHost.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmNode.h
-    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmSignature.h
-    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmSourceFile.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmStackMapFrame.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmStackMapTable.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmStackMapVerificationType.h
@@ -391,7 +387,6 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmVectorType.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmVoidType.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmX86Instruction.h
-    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmIndexedAttribute.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmRuntimeAnnotation.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmRuntimeAnnotationPair.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmRuntimeAnnotationValue.h

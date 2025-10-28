@@ -26,7 +26,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmCodeAttribute(parent);
   }
   else if (name == "ConstantValue") { // 4.7.2
-    return new SgAsmJvmConstantValue(parent);
+    return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_ConstantValue);
   }
   else if (name == "StackMapTable") { // 4.7.3
     return new SgAsmJvmStackMapTable(parent);
@@ -41,13 +41,15 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmEnclosingMethod(parent);
   }
   else if (name == "Synthetic") { // 4.7.8
-    return new SgAsmJvmSynthetic(parent);
+    //TODO
+    ASSERT_require2(false, "Need testing for attribute Synthetic\n");
+    return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_Synthetic);
   }
   else if (name == "Signature") { // 4.7.9
-    return new SgAsmJvmSignature(parent);
+    return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_Signature);
   }
   else if (name == "SourceFile") { // 4.7.10
-    return new SgAsmJvmSourceFile(parent);
+    return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_SourceFile);
   }
   else if (name == "LineNumberTable") { // 4.7.12
     return new SgAsmJvmLineNumberTable(parent);
@@ -59,7 +61,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmLocalVariableTable(parent);
   }
   else if (name == "Deprecated") { // 4.7.15
-    return new SgAsmJvmDeprecated(parent);
+    //TODO
+    ASSERT_require2(false, "Need testing for attribute Deprecated\n");
+    return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_Deprecated);
   }
   else if (name == "RuntimeVisibleAnnotations") { // 4.7.16
     return new SgAsmJvmRuntimeVisibleAnnotations(parent);
@@ -89,11 +93,12 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmIndexTableAttr(parent, SgAsmJvmIndexTableAttr::ATTR_ModulePackages);
   }
   else if (name == "ModuleMainClass") { // 4.7.27
-    ASSERT_require2(false, "Need attribute ModuleMainClass\n");
     //TODO
+    ASSERT_require2(false, "Need testing for attribute ModuleMainClass\n");
+    return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_ModuleMainClass);
   }
   else if (name == "NestHost") { // 4.7.28
-    return new SgAsmJvmNestHost(parent);
+    return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_NestHost);
   }
   else if (name == "NestMembers") { // 4.7.29
     return new SgAsmJvmIndexTableAttr(parent, SgAsmJvmIndexTableAttr::ATTR_NestMembers);
@@ -181,85 +186,50 @@ void SgAsmJvmAttributeTable::dump(FILE* f, const char* prefix, ssize_t idx) cons
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.2 The ConstantValue Attribute. ConstantValue_attribute is represented by the SgAsmJvmConstantValue class.
+// 4.7.2 The ConstantValue Attribute. ConstantValue_attribute is represented by the SgAsmJvmIndexedAttr class.
 //
-SgAsmJvmIndexedAttribute::SgAsmJvmIndexedAttribute(SgAsmJvmAttributeTable* table, unsigned type)
+SgAsmJvmIndexedAttr::SgAsmJvmIndexedAttr(SgAsmJvmAttributeTable* table, unsigned type)
 {
   initializeProperties();
   set_parent(table);
   set_attribute_type(type);
 }
 
-SgAsmJvmIndexedAttribute* SgAsmJvmIndexedAttribute::parse(SgAsmJvmConstantPool* pool)
+SgAsmJvmIndexedAttr* SgAsmJvmIndexedAttr::parse(SgAsmJvmConstantPool* pool)
 {
   SgAsmJvmAttribute::parse(pool);
 
   // Ensure that we have a specialized type by this point
-  ASSERT_require2(get_attribute_type() != SgAsmJvmIndexedAttribute::ATTR_NONE, "SgAsmJvmIndexedAttribute::attribute_type is not set\n");
-
-  uint16_t numIndices;
-  Jvm::read_value(pool, numIndices);
-
-  // Must use local list because get_indices() returns const&
-  SgUnsigned16List u16List;
-  for (int ii = 0; ii < numIndices; ii++) {
-    uint16_t index;
-    Jvm::read_value(pool, index);
-    u16List.push_back(index);
+  unsigned type = get_attribute_type();
+  ASSERT_require2(type != SgAsmJvmIndexedAttr::ATTR_NONE, "SgAsmJvmIndexedAttr::attribute_type is not set\n");
+  if (type == SgAsmJvmIndexedAttr::ATTR_Deprecated || type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
+    // There is no index for this attribute type
+    std::cerr << "--> WARNING: parsing untested attribute type " << get_attribute_type() << ":index:" << get_index() << "\n";
+    return this;
   }
-  set_indices(u16List);
+  Jvm::read_value(pool, p_index);
 
   return this;
 }
 
-void SgAsmJvmIndexedAttribute::unparse(std::ostream &os) const
+void SgAsmJvmIndexedAttr::unparse(std::ostream &os) const
 {
   SgAsmJvmAttribute::unparse(os);
 
-  // Ensure that we have a specialized type by this point
-  ASSERT_require2(get_attribute_type() != SgAsmJvmIndexedAttribute::ATTR_NONE, "SgAsmJvmIndexedAttribute::attribute_type is not set\n");
-
-  uint16_t numIndices = get_indices().size();
-  Jvm::writeValue(os, numIndices);
-
-  for (uint16_t index : get_indices()) {
-    Jvm::writeValue(os, index);
+  unsigned type = get_attribute_type();
+  ASSERT_require2(type != SgAsmJvmIndexedAttr::ATTR_NONE, "SgAsmJvmIndexedAttr::attribute_type is not set\n");
+  if (type == SgAsmJvmIndexedAttr::ATTR_Deprecated || type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
+    // There is no index for this attribute type
+    std::cerr << "--> WARNING: unparsing untested attribute type " << get_attribute_type() << ":index:" << get_index() << "\n";
+    return;
   }
+
+  Jvm::writeValue(os, get_index());
 }
 
-void SgAsmJvmIndexedAttribute::dump(FILE*, const char*, ssize_t) const
+void SgAsmJvmIndexedAttr::dump(FILE*, const char*, ssize_t) const
 {
-  mlog[WARN] << "SgAsmJvmIndexedAttribute::dump() not implemented yet\n";
-}
-
-//NOTE: This class (and more) will be replaced by SgAsmJvmIndexedAttribute
-SgAsmJvmConstantValue::SgAsmJvmConstantValue(SgAsmJvmAttributeTable* parent)
-{
-  initializeProperties();
-  set_parent(parent);
-}
-
-SgAsmJvmAttribute* SgAsmJvmConstantValue::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
-
-  // The value of the attribute_length item must be two (section 4.7.2)
-  ASSERT_require(p_attribute_length == 2);
-  Jvm::read_value(pool, p_constantvalue_index);
-
-  return this;
-}
-
-void SgAsmJvmConstantValue::unparse(std::ostream& os) const
-{
-  SgAsmJvmAttribute::unparse(os);
-  Jvm::writeValue(os, p_constantvalue_index);
-}
-
-void SgAsmJvmConstantValue::dump(FILE* f, const char* prefix, ssize_t idx) const
-{
-  SgAsmJvmAttribute::dump(f, prefix, idx);
-  fprintf(f, "SgAsmJvmConstantValue:%d\n", p_constantvalue_index);
+  mlog[WARN] << "SgAsmJvmIndexedAttr::dump() not implemented yet\n";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -746,80 +716,19 @@ void SgAsmJvmEnclosingMethod::dump(FILE* f, const char* prefix, ssize_t idx) con
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.8 The Synthetic Attribute. Synthetic_attribute represented by the SgAsmJvmSynthetic class.
+// 4.7.8 The Synthetic Attribute. Synthetic_attribute represented by the SgAsmJvmIndexedAttr class.
+//   It does not have an index.
 //
-SgAsmJvmSynthetic::SgAsmJvmSynthetic(SgAsmJvmAttributeTable* parent)
-{
-  initializeProperties();
-  set_parent(parent);
-}
-
-SgAsmJvmAttribute* SgAsmJvmSynthetic::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
-
-  // The value of the attribute_length item must be zero (section 4.7.8)
-  ASSERT_require(p_attribute_length == 0);
-  return this;
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.9 The Signature Attribute. Signature_attribute represented by the SgAsmJvmSignature class.
+// 4.7.9 The Signature Attribute. Signature_attribute represented by the SgAsmJvmIndexedAttr class.
 //
-SgAsmJvmSignature::SgAsmJvmSignature(SgAsmJvmAttributeTable* parent)
-{
-  initializeProperties();
-  set_parent(parent);
-}
-
-SgAsmJvmAttribute* SgAsmJvmSignature::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
-  Jvm::read_value(pool, p_signature_index);
-  return this;
-}
-
-void SgAsmJvmSignature::unparse(std::ostream& os) const
-{
-  SgAsmJvmAttribute::unparse(os);
-  Jvm::writeValue(os, p_signature_index);
-}
-
-void SgAsmJvmSignature::dump(FILE* f, const char* prefix, ssize_t idx) const
-{
-  SgAsmJvmAttribute::dump(f, prefix, idx);
-  fprintf(f, "%s    signature_index:%d\n", prefix, p_signature_index);
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.10 The SourceFile Attribute. SourceFile_attribute represented by the SgAsmJvmSourceFile class.
+// 4.7.10 The SourceFile Attribute. SourceFile_attribute represented by the SgAsmJvmIndexAttr class.
 //
-SgAsmJvmSourceFile::SgAsmJvmSourceFile(SgAsmJvmAttributeTable* parent)
-{
-  initializeProperties();
-  set_parent(parent);
-}
-
-SgAsmJvmAttribute* SgAsmJvmSourceFile::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
-  Jvm::read_value(pool, p_sourcefile_index);
-  return this;
-}
-
-void SgAsmJvmSourceFile::unparse(std::ostream& os) const
-{
-  SgAsmJvmAttribute::unparse(os);
-  Jvm::writeValue(os, p_sourcefile_index);
-}
-
-void SgAsmJvmSourceFile::dump(FILE* f, const char* prefix, ssize_t idx) const
-{
-  SgAsmJvmAttribute::dump(f, prefix, idx);
-  fprintf(f, "SgAsmJvmSourceFile::dump():%d\n", p_sourcefile_index);
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1043,23 +952,9 @@ void SgAsmJvmLocalVariableTypeEntry::dump(FILE* f, const char* prefix, ssize_t i
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.15 The Deprecated Attribute. Deprecated_attribute represented by the SgAsmJvmSynthetic class.
+// 4.7.15 The Deprecated Attribute. Deprecated_attribute represented by the SgAsmJvmIndexedAttr class.
+//   It does not have an index.
 //
-SgAsmJvmDeprecated::SgAsmJvmDeprecated(SgAsmJvmAttributeTable* parent)
-{
-  initializeProperties();
-  set_parent(parent);
-}
-
-SgAsmJvmAttribute* SgAsmJvmDeprecated::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
-
-  // The value of the attribute_length item must be zero (section 4.7.15)
-  ASSERT_require(p_attribute_length == 0);
-  return this;
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1840,51 +1735,13 @@ void SgAsmJvmModule::dump(FILE* f, const char* prefix, ssize_t idx) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.27 The ModuleMainClass Attribute. ModuleMainClass_attribute represented by the SgAsmJvmModuleMainClass class.
+// 4.7.27 The ModuleMainClass Attribute. ModuleMainClass_attribute represented by the SgAsmJvmIndexedAttr class.
 //
-SgAsmJvmAttribute* SgAsmJvmModuleMainClass::parse(SgAsmJvmConstantPool*)
-{
-  mlog[WARN] << "Parsing of SgAsmJvmModuleMainClass is not implemented yet\n";
-  return nullptr;
-}
-
-void SgAsmJvmModuleMainClass::unparse(std::ostream&) const
-{
-  mlog[WARN] << "Unparsing of SgAsmJvmModuleMainClass is not implemented yet\n";
-}
-
-void SgAsmJvmModuleMainClass::dump(FILE*, const char*, ssize_t) const
-{
-  mlog[WARN] << "dump (of SgAsmJvmModuleMainClass) is not implemented yet\n";
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.28 The NestHost Attribute. NestHost_attribute represented by the SgAsmJvmNestHost class.
+// 4.7.28 The NestHost Attribute. NestHost_attribute represented by the SgAsmJvmIndexedAttr class.
 //
-SgAsmJvmNestHost::SgAsmJvmNestHost(SgAsmJvmAttributeTable* table)
-{
-  initializeProperties();
-  set_parent(table);
-}
-
-SgAsmJvmNestHost* SgAsmJvmNestHost::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
-  Jvm::read_value(pool, p_host_class_index);
-  return this;
-}
-
-void SgAsmJvmNestHost::unparse(std::ostream &os) const
-{
-  SgAsmJvmAttribute::unparse(os);
-  Jvm::writeValue(os, p_host_class_index);
-}
-
-void SgAsmJvmNestHost::dump(FILE*, const char*, ssize_t) const
-{
-  mlog[WARN] << "SgAsmJvmNestHost::dump() not implemented yet\n";
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

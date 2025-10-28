@@ -215,12 +215,9 @@ SgAsmJvmCodeAttribute
 SgAsmJvmMethod
 SgAsmJvmConstantPool
 SgAsmJvmConstantPoolEntry
-SgAsmJvmConstantValue
 SgAsmJvmInstruction
 SgAsmJvmFileHeader
 SgAsmJvmNode
-SgAsmJvmSignature
-SgAsmJvmSourceFile
 SgAsmLEEntryPoint
 SgAsmLEEntryTable
 SgAsmLEFileHeader
@@ -946,7 +943,6 @@ SgAsmCilInstruction
 SgAsmStackExpression
 SgAsmJvmEnclosingMethod
 SgAdaNullConstraint
-SgAsmJvmModuleMainClass
 SgAsmInstructionList
 SgAsmCilNode
 SgAsmCilAssembly
@@ -1042,7 +1038,6 @@ SgAsmJvmStackMapFrame
 SgAsmJvmStackMapVerificationType
 SgAsmJvmBootstrapMethod
 SgAsmJvmBootstrapMethods
-SgAsmJvmNestHost
 SgJovialLabelDeclaration
 SgAsmJvmLocalVariableEntry
 SgAsmJvmLocalVariableTable
@@ -1063,8 +1058,6 @@ SgTypeRefExp
 SgScopedRefExp
 SgScopedType
 SgTypeSymbol
-SgAsmJvmSynthetic
-SgAsmJvmDeprecated
 SgSignedCharVal
 SgAsmCilErrorHeap
 SgAsmJvmRuntimeVisibleAnnotations
@@ -1079,8 +1072,8 @@ SgIntegralType
 SgSignedIntegralType
 SgUnsignedIntegralType
 SgFloatingPointType
+SgAsmJvmIndexedAttr
 SgAsmJvmIndexTableAttr
-SgAsmJvmIndexedAttribute
 SgTypeFloat16
 SgTypeFp16
 SgTypeBFloat16

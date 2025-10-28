@@ -278,8 +278,6 @@ run $(librose_compile) \
     SgAsmJvmCodeAttribute.C \
     SgAsmJvmConstantPool.C \
     SgAsmJvmConstantPoolEntry.C \
-    SgAsmJvmConstantValue.C \
-    SgAsmJvmDeprecated.C \
     SgAsmJvmEnclosingMethod.C \
     SgAsmJvmExceptionHandler.C \
     SgAsmJvmExceptionTable.C \
@@ -287,7 +285,7 @@ run $(librose_compile) \
     SgAsmJvmFieldTable.C \
     SgAsmJvmFileHeader.C \
     SgAsmJvmIndexTableAttr.C \
-    SgAsmJvmIndexedAttribute.C \
+    SgAsmJvmIndexedAttr.C \
     SgAsmJvmInnerClasses.C \
     SgAsmJvmInnerClassesEntry.C \
     SgAsmJvmInstruction.C \
@@ -302,8 +300,6 @@ run $(librose_compile) \
     SgAsmJvmMethodParametersEntry.C \
     SgAsmJvmMethodTable.C \
     SgAsmJvmModule.C \
-    SgAsmJvmModuleMainClass.C \
-    SgAsmJvmNestHost.C \
     SgAsmJvmNode.C \
     SgAsmJvmRuntimeAnnotation.C \
     SgAsmJvmRuntimeAnnotationPair.C \
@@ -312,12 +308,9 @@ run $(librose_compile) \
     SgAsmJvmRuntimeParameterAnnotation.C \
     SgAsmJvmRuntimeVisibilityParamAnnotations.C \
     SgAsmJvmRuntimeVisibleAnnotations.C \
-    SgAsmJvmSignature.C \
-    SgAsmJvmSourceFile.C \
     SgAsmJvmStackMapFrame.C \
     SgAsmJvmStackMapTable.C \
     SgAsmJvmStackMapVerificationType.C \
-    SgAsmJvmSynthetic.C \
     SgAsmLEEntryPoint.C \
     SgAsmLEEntryTable.C \
     SgAsmLEFileHeader.C \

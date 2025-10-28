@@ -281,8 +281,6 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmCodeAttribute.C \
         SgAsmJvmConstantPool.C \
         SgAsmJvmConstantPoolEntry.C \
-        SgAsmJvmConstantValue.C \
-        SgAsmJvmDeprecated.C \
         SgAsmJvmEnclosingMethod.C \
         SgAsmJvmExceptionHandler.C \
         SgAsmJvmExceptionTable.C \
@@ -290,7 +288,7 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmFieldTable.C \
         SgAsmJvmFileHeader.C \
         SgAsmJvmIndexTableAttr.C \
-        SgAsmJvmIndexedAttribute.C \
+        SgAsmJvmIndexedAttr.C \
         SgAsmJvmInnerClasses.C \
         SgAsmJvmInnerClassesEntry.C \
         SgAsmJvmInstruction.C \
@@ -305,8 +303,6 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmMethodParametersEntry.C \
         SgAsmJvmMethodTable.C \
         SgAsmJvmModule.C \
-        SgAsmJvmModuleMainClass.C \
-        SgAsmJvmNestHost.C \
         SgAsmJvmNode.C \
         SgAsmJvmRuntimeAnnotation.C \
         SgAsmJvmRuntimeAnnotationPair.C \
@@ -315,12 +311,9 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmRuntimeParameterAnnotation.C \
         SgAsmJvmRuntimeVisibilityParamAnnotations.C \
         SgAsmJvmRuntimeVisibleAnnotations.C \
-        SgAsmJvmSignature.C \
-        SgAsmJvmSourceFile.C \
         SgAsmJvmStackMapFrame.C \
         SgAsmJvmStackMapTable.C \
         SgAsmJvmStackMapVerificationType.C \
-        SgAsmJvmSynthetic.C \
         SgAsmLEEntryPoint.C \
         SgAsmLEEntryTable.C \
         SgAsmLEFileHeader.C \

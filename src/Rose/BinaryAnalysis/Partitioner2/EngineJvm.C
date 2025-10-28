@@ -466,7 +466,6 @@ NOTES:
 
     // Look for the class in a jar file
     if (!fs::exists(path)) {
-std::cerr << "..... LookingFor " << path << "\n";
         for (ModulesJvm::Zipper* zip : jars_) {
             classBytes = zip->decode(path.string(), nbytes);
             if (classBytes) {

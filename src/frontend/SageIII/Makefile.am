@@ -402,16 +402,14 @@ GENERATED_SOURCE =						\
         SgAsmJvmCodeAttribute.h					\
         SgAsmJvmConstantPoolEntry.h				\
         SgAsmJvmConstantPool.h					\
-        SgAsmJvmConstantValue.h					\
-        SgAsmJvmDeprecated.h					\
         SgAsmJvmEnclosingMethod.h				\
         SgAsmJvmExceptionHandler.h				\
         SgAsmJvmExceptionTable.h				\
         SgAsmJvmField.h						\
         SgAsmJvmFieldTable.h					\
         SgAsmJvmFileHeader.h					\
+        SgAsmJvmIndexedAttr.h					\
         SgAsmJvmIndexTableAttr.h				\
-        SgAsmJvmIndexedAttribute.h				\
         SgAsmJvmInnerClassesEntry.h				\
         SgAsmJvmInnerClasses.h					\
         SgAsmJvmInstruction.h					\
@@ -426,8 +424,6 @@ GENERATED_SOURCE =						\
         SgAsmJvmMethodParameters.h				\
         SgAsmJvmMethodTable.h					\
         SgAsmJvmModule.h					\
-        SgAsmJvmModuleMainClass.h				\
-        SgAsmJvmNestHost.h					\
         SgAsmJvmNode.h						\
         SgAsmJvmRuntimeAnnotation.h				\
         SgAsmJvmRuntimeAnnotationPair.h 			\
@@ -436,12 +432,9 @@ GENERATED_SOURCE =						\
         SgAsmJvmRuntimeVisibleAnnotations.h			\
         SgAsmJvmRuntimeVisibilityParamAnnotations.h		\
         SgAsmJvmRuntimeInvisibleAnnotations.h			\
-        SgAsmJvmSignature.h					\
-        SgAsmJvmSourceFile.h					\
         SgAsmJvmStackMapFrame.h					\
         SgAsmJvmStackMapTable.h					\
         SgAsmJvmStackMapVerificationType.h			\
-        SgAsmJvmSynthetic.h					\
         SgAsmLEEntryPoint.h					\
         SgAsmLEEntryTable.h					\
         SgAsmLEFileHeader.h					\
@@ -822,16 +815,14 @@ GENERATED_SOURCE =						\
 	SgAsmJvmCodeAttribute.h					\
 	SgAsmJvmConstantPoolEntry.h				\
 	SgAsmJvmConstantPool.h					\
-	SgAsmJvmConstantValue.h					\
-	SgAsmJvmDeprecated.h					\
 	SgAsmJvmEnclosingMethod.h				\
 	SgAsmJvmExceptionHandler.h				\
 	SgAsmJvmExceptionTable.h				\
 	SgAsmJvmField.h						\
 	SgAsmJvmFieldTable.h					\
 	SgAsmJvmFileHeader.h					\
+	SgAsmJvmIndexedAttr.h					\
 	SgAsmJvmIndexTableAttr.h				\
-	SgAsmJvmIndexedAttribute.h				\
 	SgAsmJvmInnerClassesEntry.h				\
 	SgAsmJvmInnerClasses.h					\
 	SgAsmJvmInstruction.h					\
@@ -846,8 +837,6 @@ GENERATED_SOURCE =						\
 	SgAsmJvmMethodParameters.h				\
 	SgAsmJvmMethodTable.h					\
 	SgAsmJvmModule.h					\
-	SgAsmJvmModuleMainClass.h				\
-	SgAsmJvmNestHost.h					\
 	SgAsmJvmNode.h						\
         SgAsmJvmRuntimeAnnotation.h				\
         SgAsmJvmRuntimeAnnotationPair.h 			\
@@ -856,12 +845,9 @@ GENERATED_SOURCE =						\
         SgAsmJvmRuntimeVisibleAnnotations.h			\
         SgAsmJvmRuntimeVisibilityParamAnnotations.h		\
         SgAsmJvmRuntimeInvisibleAnnotations.h			\
-	SgAsmJvmSignature.h					\
-	SgAsmJvmSourceFile.h					\
 	SgAsmJvmStackMapFrame.h					\
 	SgAsmJvmStackMapTable.h					\
 	SgAsmJvmStackMapVerificationType.h			\
-	SgAsmJvmSynthetic.h					\
 	SgAsmLEEntryPoint.h					\
 	SgAsmLEEntryTable.h					\
 	SgAsmLEFileHeader.h					\
@@ -1389,16 +1375,14 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmCodeAttribute.h			\
    SgAsmJvmConstantPoolEntry.h			\
    SgAsmJvmConstantPool.h			\
-   SgAsmJvmConstantValue.h			\
-   SgAsmJvmDeprecated.h				\
    SgAsmJvmEnclosingMethod.h			\
    SgAsmJvmExceptionHandler.h			\
    SgAsmJvmExceptionTable.h			\
    SgAsmJvmField.h				\
    SgAsmJvmFieldTable.h				\
    SgAsmJvmFileHeader.h				\
+   SgAsmJvmIndexedAttr.h			\
    SgAsmJvmIndexTableAttr.h			\
-   SgAsmJvmIndexedAttribute.h			\
    SgAsmJvmInnerClassesEntry.h			\
    SgAsmJvmInnerClasses.h			\
    SgAsmJvmInstruction.h			\
@@ -1413,8 +1397,6 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmMethodParameters.h			\
    SgAsmJvmMethodTable.h			\
    SgAsmJvmModule.h				\
-   SgAsmJvmModuleMainClass.h			\
-   SgAsmJvmNestHost.h				\
    SgAsmJvmNode.h				\
    SgAsmJvmRuntimeAnnotation.h			\
    SgAsmJvmRuntimeAnnotationPair.h		\
@@ -1423,12 +1405,9 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmRuntimeVisibleAnnotations.h		\
    SgAsmJvmRuntimeVisibilityParamAnnotations.h	\
    SgAsmJvmRuntimeInvisibleAnnotations.h	\
-   SgAsmJvmSignature.h				\
-   SgAsmJvmSourceFile.h				\
    SgAsmJvmStackMapFrame.h			\
    SgAsmJvmStackMapTable.h			\
    SgAsmJvmStackMapVerificationType.h		\
-   SgAsmJvmSynthetic.h				\
    SgAsmLEEntryPoint.h				\
    SgAsmLEEntryTable.h				\
    SgAsmLEFileHeader.h				\
