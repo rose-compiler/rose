@@ -681,6 +681,12 @@ public:
                                  const AddressInterval &referencedREgion, const AddressInterval &accessedRegion,
                                  SgAsmInstruction *insn, TestMode testMode, const FoundVariable &accessedVariable);
 
+    /** Given one function, find a different function.
+     *
+     *  This is normally used to link "foo@plt" to "foo". It returns the address of the target function if the source function
+     *  is a dynamic linking stub and the target function can be found. */
+    Sawyer::Optional<Address> findLinkedFunction(const Partitioner2::FunctionPtr&);
+
 public:
     virtual void reset() override;
 

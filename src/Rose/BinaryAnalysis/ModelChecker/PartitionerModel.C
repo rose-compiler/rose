@@ -35,7 +35,14 @@
 #include <Rose/StringUtility/Escape.h>
 #include <Combinatorics.h>                              // ROSE
 
+#include <SgAsmElfSymbol.h>
+#include <SgAsmElfSymbolList.h>
+#include <SgAsmElfSymbolSection.h>
+#include <SgAsmGenericHeader.h>
+#include <SgAsmGenericHeaderList.h>
+#include <SgAsmGenericString.h>
 #include <SgAsmInstruction.h>
+#include <SgAsmInterpretation.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <chrono>
@@ -1762,9 +1769,47 @@ SemanticCallbacks::seenState(const BS::RiscOperators::Ptr &ops) {
     }
 }
 
+Sawyer::Optional<Address>
+SemanticCallbacks::findLinkedFunction(const P2::Function::Ptr &func) {
+    if (func && boost::ends_with(func->name(), "@plt")) {
+        Sawyer::Message::Stream debug(mlog[DEBUG]);
+        const std::string baseName = boost::erase_tail_copy(func->name(), 4); // the "@plt"
+        SAWYER_MESG(debug) <<"    looking for function \"" <<StringUtility::cEscape(baseName) <<"\""
+                           <<" instead of \"" <<StringUtility::cEscape(func->name()) <<"\"\n";
+        const SgAsmInterpretation *interp = partitioner_->interpretation();
+        const SgAsmGenericHeaderList *headers = interp ? interp->get_headers() : nullptr;
+        const SgAsmGenericHeader *hdr = headers && !headers->get_headers().empty() ? headers->get_headers()[0] : nullptr;
+        const auto symtab = hdr ? as<SgAsmElfSymbolSection>(hdr->get_sectionByName(".dynsym")) : nullptr;
+        const SgAsmElfSymbolList *symbols = symtab ? symtab->get_symbols() : nullptr;
+        bool found = false;
+        if (symbols) {
+            for (const SgAsmElfSymbol *symbol: symbols->get_symbols()) {
+                if (symbol && symbol->get_name() && symbol->get_name()->get_string() == baseName &&
+                    symbol->get_type() == SgAsmGenericSymbol::SYM_FUNC &&
+                    symbol->get_definitionState() == SgAsmGenericSymbol::SYM_DEFINED &&
+                    symbol->get_binding() == SgAsmGenericSymbol::SYM_GLOBAL) {
+                    Address addr = symbol->get_value();
+                    if (const SgAsmGenericSection *boundSection = symbol->get_bound()) {
+                        if (boundSection->isMapped()) {
+                            addr += boundSection->get_mappedActualVa() - boundSection->get_mappedPreferredVa();
+                        }
+                    }
+                    if (partitioner_->basicBlockExists(addr)) {
+                        SAWYER_MESG(debug) <<"      found \"" <<StringUtility::cEscape(baseName) <<"\""
+                                           <<" at " <<StringUtility::addrToString(addr) <<"\n";
+                        return addr;
+                    }
+                }
+            }
+        }
+    }
+    return {};
+}
+
 ExecutionUnit::Ptr
 SemanticCallbacks::findUnit(Address va, const Progress::Ptr &progress) {
     ExecutionUnit::Ptr unit;
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     // If we're following one path, then the execution unit is always the next one on the path.
     {
@@ -1780,9 +1825,9 @@ SemanticCallbacks::findUnit(Address va, const Progress::Ptr &progress) {
     if (unit) {
         // We took it from the one path we're following (see above)
         if (*unit->address() != va) {
-            SAWYER_MESG(mlog[DEBUG]) <<"next follow-one-path execution unit address mismatch:"
-                                     <<" expected " <<StringUtility::addrToString(va)
-                                     <<" but has " <<StringUtility::addrToString(*unit->address()) <<"\n";
+            SAWYER_MESG(debug) <<"next follow-one-path execution unit address mismatch:"
+                               <<" expected " <<StringUtility::addrToString(va)
+                               <<" but has " <<StringUtility::addrToString(*unit->address()) <<"\n";
             return ExecutionUnit::Ptr();
         }
         return unit;
@@ -1798,23 +1843,18 @@ SemanticCallbacks::findUnit(Address va, const Progress::Ptr &progress) {
     }
 
     if (unit)
-        return unit;                                    // preexisting
+        return unit;                                    // preexisting unit
 
-    // Compute the next unit
-    P2::Function::Ptr func = partitioner_->functionExists(va);
-    if (func && boost::ends_with(func->name(), "@plt")) {
-        unit = ExternalFunctionUnit::instance(func, partitioner_->sourceLocations().get(va));
-    } else if (P2::BasicBlock::Ptr bb = partitioner_->basicBlockExists(va)) {
-        // Depending on partitioner settings, sometimes a basic block could have an internal loop. For instance, some x86
-        // instructions have an optional repeat prefix. Since execution units need to know how many steps they are (so we can
-        // inforce the K limit), and since the content of the execution unit needs to be immutable, and since we can't really
-        // re-compute path successors with new data (we would have already thrown away the outgoing state), we have to make a
-        // decision here and now.
-        //
-        // So we evaluate each instruction semantically on a clean state and check that the instruction pointer follows the
-        // instrucitons in the basic block.  If not, we switch to one-instruction-at-a-time mode for this basic block, which is
-        // about half as fast and takes more memory.  By caching our results, we only do this expensive calcultion once per
-        // basic block, not each time a path reaches this block.
+    // Depending on partitioner settings, sometimes a basic block could have an internal loop. For instance, some x86 instructions
+    // have an optional repeat prefix. Since execution units need to know how many steps they are (so we can inforce the K limit),
+    // and since the content of the execution unit needs to be immutable, and since we can't really re-compute path successors with
+    // new data (we would have already thrown away the outgoing state), we have to make a decision here and now.
+    //
+    // So we evaluate each instruction semantically on a clean state and check that the instruction pointer follows the instrucitons
+    // in the basic block.  If not, we switch to one-instruction-at-a-time mode for this basic block, which is about half as fast
+    // and takes more memory.  By caching our results, we only do this expensive calcultion once per basic block, not each time a
+    // path reaches this block.
+    if (P2::BasicBlock::Ptr bb = partitioner_->basicBlockExists(va)) {
         if (bb->nInstructions() > 0) {
             ProgressTask task(progress, "findNext");
 
@@ -1862,12 +1902,15 @@ SemanticCallbacks::findUnit(Address va, const Progress::Ptr &progress) {
 
 SemanticCallbacks::CodeAddresses
 SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
+    ASSERT_not_null(ops);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
     ExecutionUnit::Ptr nextUnit;
     {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         if (followingOnePath_) {
             if (onePath_.empty()) {
-                SAWYER_MESG(mlog[DEBUG]) <<"reached end of predetermined path\n";
+                SAWYER_MESG(debug) <<"reached end of predetermined path\n";
                 return CodeAddresses();
             }
             nextUnit = onePath_.front();
@@ -1881,10 +1924,26 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
         retval.addresses.insert(va);
         retval.isComplete = true;
         return retval;
-
-    } else {
-        return ModelChecker::SemanticCallbacks::nextCodeAddresses(ops); // delegate to parent class
     }
+
+    // Delegate to the parent class.
+    CodeAddresses retval = ModelChecker::SemanticCallbacks::nextCodeAddresses(ops);
+
+    // If we just executed a dynamic linking stub, then pretend that the function was linked if possible. This is sometimes possible
+    // when we're analyzing a shared library and one function in the library calls another function that this library also exports.
+    if (retval.addresses.empty() && !retval.isComplete) {
+        const auto state = as<State>(ops->currentState());
+        if (!state->callStack().isEmpty()) {
+            const P2::Function::Ptr func = state->callStack().top().function();
+            if (const auto linkedAddr = findLinkedFunction(state->callStack().top().function())) {
+                SAWYER_MESG(debug) <<"      ip = " <<*retval.ip <<" = " <<StringUtility::addrToString(*linkedAddr) <<"\n";
+                retval.addresses.insert(*linkedAddr);
+                retval.isComplete = true;
+            }
+        }
+    }
+
+    return retval;
 }
 
 std::vector<SemanticCallbacks::NextUnit>
