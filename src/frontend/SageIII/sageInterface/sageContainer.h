@@ -38,32 +38,20 @@ typedef Rose_STL_Container<SgDeclarationStatement*> SgDeclarationStatementPtrLis
 typedef SgDeclarationStatementPtrList*              SgDeclarationStatementPtrListPtr;
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-// tps (8/20/2007): Added support for binaries.
 /** \typedef SgAsmBlockPtrList
     This is socumentation for the following typedef
  */
 typedef Rose_STL_Container<SgAsmBlock*>     SgAsmBlockPtrList;
 
-/** This is socumentation for the following typedef */
 typedef SgAsmBlockPtrList*                  SgAsmBlockPtrListPtr;
 
-// JJW (8/28/2008): Added SgAsmInterpretation
 typedef Rose_STL_Container<SgAsmInterpretation*> SgAsmInterpretationPtrList;
 
-// DQ (6/14/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmGenericSection*> SgAsmGenericSectionPtrList;
 typedef SgAsmGenericSectionPtrList*              SgAsmGenericSectionPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmGenericFile*> SgAsmGenericFilePtrList;
 typedef SgAsmGenericSectionPtrList*           SgAsmGenericFilePtrListPtr;
-
-// DQ (6/14/2008): Added to support new exec format IR nodes
-// typedef Rose_STL_Container<SgAsmGenericSegment*> SgAsmGenericSegmentPtrList;
-// typedef SgAsmGenericSegmentPtrList*              SgAsmGenericSegmentPtrListPtr;
-
-// DQ (6/14/2008): Added to support new exec format IR nodes
-// typedef Rose_STL_Container<SgAsmElfSegmentEntry*> SgAsmElfSegmentEntryPtrList;
-// typedef SgAsmElfSegmentEntryPtrList*              SgAsmElfSegmentEntryPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmPEImportItem*> SgAsmPEImportItemPtrList;
 typedef SgAsmPEImportItemPtrList*              SgAsmPEImportItemPtrListPtr;
@@ -74,15 +62,12 @@ typedef SgAsmPEImportDirectoryPtrList*              SgAsmPEImportDirectoryPtrLis
 typedef Rose_STL_Container<SgAsmPEImportItem*> SgAsmPEImportItemPtrList;
 typedef SgAsmPEImportItemPtrList*              SgAsmPEImportItemPtrListPtr;
 
-// DQ (6/14/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmElfSymbol*> SgAsmElfSymbolPtrList;
 typedef SgAsmElfSymbolPtrList*              SgAsmElfSymbolPtrListPtr;
 
-// DQ (8/4/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmCoffSymbol*> SgAsmCoffSymbolPtrList;
 typedef SgAsmCoffSymbolPtrList*              SgAsmCoffSymbolPtrListPtr;
 
-// DQ (8/8/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmGenericSymbol*> SgAsmGenericSymbolPtrList;
 typedef SgAsmGenericSymbolPtrList*              SgAsmGenericSymbolPtrListPtr;
 #endif
@@ -92,7 +77,6 @@ typedef Rose_STL_Container<SgStatement*>    SgStatementPtrList;
 typedef SgStatementPtrList*                 SgStatementPtrListPtr;
 
 class SgBaseClass;
-// DQ (6/21/2005): Change from list of SgBaseClass to list of SgBaseClass*
 typedef Rose_STL_Container<SgBaseClass*>    SgBaseClassPtrList;
 typedef SgBaseClassPtrList*                 SgBaseClassPtrListPtr;
 
@@ -116,7 +100,6 @@ typedef Rose_STL_Container<SgComprehension*>  SgComprehensionPtrList;
 
 typedef Rose_STL_Container<VariantT>       VariantTList;
 
-// Liao 9/27/2010: new typedef for SgVarRefExp list
 class SgVarRefExp;
 typedef Rose_STL_Container<SgVarRefExp*>   SgVarRefExpPtrList;
 typedef SgVarRefExpPtrList*                SgVarRefExpPtrListPtr;
@@ -125,9 +108,6 @@ class SgAttribute;
 typedef Rose_STL_Container<SgAttribute*>    SgAttributePtrList;
 typedef SgAttributePtrList*                 SgAttributePtrListPtr;
 
-// DQ (6/14/2008): I think this should be unsigned char
-// typedef Rose_STL_Container<char*>           SgCharPtrList;
-// typedef SgCharPtrList*                      SgCharPtrListPtr;
 typedef Rose_STL_Container<unsigned char>   SgCharList;
 typedef SgCharList*                         SgCharListPtr;
 
@@ -135,20 +115,12 @@ typedef SgExpression*                       SgExpressionPtr;
 typedef SgStatement*                        SgStatementPtr;
 typedef SgInitializedName*                  SgInitializedNamePtr;
 
-// DQ (4/7/2001) Add SgFile list support for multi-file support within SgProject
 class SgFile;
 typedef std::vector<SgFile*>                SgFilePtrList;
 typedef SgFilePtrList*                      SgFilePtrListPtr;
 
-// DQ (2/27/2019): Modified to add the line number so that we could support adding comments
-// and CPP directives to shared IR nodes to support multi-file compilation.
-// DQ (5/22/2006): Added this support so that we could have general way of interpreting STL
-// containers so that we could simplify that code used to generated code for the destructors.
-// JJW (6/21/2008): Changed to a unordered vector for performance
 typedef int                                   SgFileId;
 typedef std::vector<SgFileId>                 SgFileIdList;
-// typedef struct { int file_id; int line_number; } SgFileIdLineNumber;
-// typedef std::vector<SgFileIdLineNumber>          SgFileIdList;
 typedef int                                   SgFileLineNumber;
 typedef std::vector<SgFileLineNumber>         SgFileLineNumberList;
 
@@ -180,42 +152,26 @@ typedef ROSEAttributesList*                 ROSEAttributesListPtr;
 class ROSEAttributesListContainer;
 typedef ROSEAttributesListContainer*        ROSEAttributesListContainerPtr;
 
-// I don't think these are needed
-// typedef vector<ROSEAttributesListContainer*>         ROSEAttributesListContainerList;
-// typedef ROSEAttributesListContainerList*             ROSEAttributesListContainerListPtr;
-
 // MK: The data member p_nodes of the SgModifierNodes class is now an
 // STL vector, therefore we define the following data types
 typedef std::vector<SgModifierType*>        SgModifierTypePtrVector;
-// DQ (12/19/2005): This is not used anywhere!
-// typedef SgModifierTypePtrVector          SgModifierTypePtrVectorPtr;
 
 // DQ (12/6/2003): added bit vector typedef to support addition of more flags
 // that can be held in a long integer for the Unparse_Info object.
 typedef std::vector<bool>                   SgBitVector;
 
-// DQ (3/12/2004): Added for template support
 class SgTemplateParameter;
 typedef Rose_STL_Container<SgTemplateParameter*> SgTemplateParameterPtrList;
 typedef SgTemplateParameterPtrList*              SgTemplateParameterPtrListPtr;
 
-// DQ (3/12/2004): Added for template support
 class SgTemplateArgument;
 typedef Rose_STL_Container<SgTemplateArgument*>  SgTemplateArgumentPtrList;
 typedef SgTemplateArgumentPtrList*               SgTemplateArgumentPtrListPtr;
 
-// DQ (9/6/2004): Added for qualified name support (e.g. A::B::C::dataMember)
-// This form of qualified name support was later removed!
-// class SgSymbol;
-// typedef list<SgSymbol*>      SgSymbolPtrList;
-// typedef SgSymbolPtrList*     SgSymbolPtrListPtr;
-
-// DQ (5/6/2005): Added support for SgDirectory IR node!
 class SgDirectory;
 typedef std::vector<SgDirectory*>           SgDirectoryPtrList;
 typedef SgDirectoryPtrList*                 SgDirectoryPtrListPtr;
 
-// DQ (12/21/2005): Added to support explicit name qualifiers (this provides only global qualifier info so far)
 class SgQualifiedName;
 typedef Rose_STL_Container<SgQualifiedName*> SgQualifiedNamePtrList;
 typedef SgQualifiedNamePtrList*              SgQualifiedNamePtrListPtr;
@@ -226,26 +182,22 @@ typedef SgQualifiedNamePtrList*              SgQualifiedNamePtrListPtr;
 // Name this as a list since the ROSETTA code generation will use this information.
 class SgBasicBlock;
 typedef SgBasicBlock*                       SgBasicBlockPtr;
-// typedef std::map<SgBasicBlock*,int>      SgBasicBlockPtrList;
 typedef std::vector<SgBasicBlockPtr>        SgBasicBlockPtrList;
 typedef SgBasicBlockPtrList*                SgBasicBlockPtrListPtr;
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-// DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmStatement*> SgAsmStatementPtrList;
 typedef SgAsmStatementPtrList*              SgAsmStatementPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmInstruction*> SgAsmInstructionPtrList;
 typedef SgAsmInstructionPtrList*              SgAsmInstructionPtrListPtr;
 
-// DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmExpression*> SgAsmExpressionPtrList;
 typedef SgAsmExpressionPtrList*              SgAsmExpressionPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmIntegerValueExpression*> SgAsmIntegerValuePtrList;
 typedef SgAsmIntegerValuePtrList*                SgAsmIntegerValuePtrListPtr;
 
-// DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmSynthesizedDeclaration*> SgAsmSynthesizedDeclarationPtrList;
 typedef SgAsmSynthesizedDeclarationPtrList*              SgAsmSynthesizedDeclarationPtrListPtr;
 
@@ -287,9 +239,6 @@ typedef SgLabelSymbolPtrList*                  SgLabelSymbolPtrListPtr;
 typedef Rose_STL_Container<SgFormatItem*>      SgFormatItemPtrList;
 typedef SgFormatItemPtrList*                   SgFormatItemPtrListPtr;
 
-// DQ (8/21/2008): Moved this from Node.code to make it local since
-// we can't reference the nested addr_t directly from glogal scope.
-// typedef uint64_t addr_t; // address and size (file and memory)
 typedef Rose_STL_Container<Rose::BinaryAnalysis::Address> SgAddressList;
 typedef SgAddressList* SgAddressListPtr;
 
@@ -307,7 +256,6 @@ typedef SgUnsigned16List*                      SgUnsigned16ListPtr;
 typedef Rose_STL_Container<unsigned>           SgUnsignedList;
 typedef SgUnsignedList*                        SgUnsignedListPtr;
 
-// DQ (8/7/2008): Added list of size_t types for binary format support.
 typedef Rose_STL_Container<size_t>             SgSizeTList;
 typedef SgSizeTList*                           SgSizeTListPtr;
 
@@ -363,7 +311,6 @@ typedef Rose_STL_Container<SgInterfaceBody*> SgInterfaceBodyPtrList;
 typedef SgInterfaceBodyPtrList*              SgInterfaceBodyPtrListPtr;
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-// DQ (11/5/2008): Addes as part of general Dwarf support in the AST for binary executables.
 typedef Rose_STL_Container<SgAsmDwarfLine*> SgAsmDwarfLinePtrList;
 typedef SgAsmDwarfLinePtrList*              SgAsmDwarfLinePtrListPtr;
 
@@ -377,8 +324,6 @@ typedef Rose_STL_Container<SgAsmDwarfCompilationUnit*> SgAsmDwarfCompilationUnit
 typedef SgAsmDwarfCompilationUnitPtrList*              SgAsmDwarfCompilationUnitPtrListPtr;
 #endif
 
-// DQ (11/28/2008): Added support for list of integers (used for flag list in SgLinemarkerDirectiveStatement).
-// typedef std::vector<int>                     SgIntegerList;
 // Liao, 5/30/2009 types for OpenMP support
 typedef Rose_STL_Container<SgOmpClause*>   SgOmpClausePtrList;
 typedef SgOmpClausePtrList*                SgOmpClausePtrListPtr;
@@ -389,8 +334,6 @@ typedef SgOmpSectionStatementPtrList*                SgOmpSectionStatementPtrLis
 // DQ (1/13/2014): Added support for Java annotations.
 typedef Rose_STL_Container<SgJavaMemberValuePair*> SgJavaMemberValuePairPtrList;
 typedef SgJavaMemberValuePairPtrList* SgJavaMemberValuePairPtrListPtr;
-
-// DQ (3/6/2014): Added support for Untyped IR nodes.
 
 // Rasmussen (08/25/2022): Removed all untyped Sage nodes. Ultimately it proved easier to
 // construct regular IR nodes from the Jovial parser. Using the untyped system just led to an
@@ -489,9 +432,6 @@ typedef SgAsmJvmFieldPtrList*              SgAsmJvmFieldPtrListPtr;
 typedef Rose_STL_Container<SgAsmJvmMethodParametersEntry*> SgAsmJvmMethodParametersEntryPtrList;
 typedef SgAsmJvmMethodParametersEntryPtrList*              SgAsmJvmMethodParametersEntryPtrListPtr;
 
-typedef Rose_STL_Container<SgAsmJvmLineNumberEntry*> SgAsmJvmLineNumberEntryPtrList;
-typedef SgAsmJvmLineNumberEntryPtrList*              SgAsmJvmLineNumberEntryPtrListPtr;
-
 typedef Rose_STL_Container<SgAsmJvmLocalVariableEntry*> SgAsmJvmLocalVariableEntryPtrList;
 typedef SgAsmJvmLocalVariableEntryPtrList*              SgAsmJvmLocalVariableEntryPtrListPtr;
 
@@ -516,19 +456,12 @@ typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
 typedef Rose_STL_Container<SgToken*> SgTokenPtrList;
 typedef SgTokenPtrList* SgTokenPtrListPtr;
 
-// DQ (11/6/2008): This is the support for mapping instructions to source code and back.
-// When it is further along it will be moved to the SgAsmDwarfCompilationUnit as a member
-// function which will built it if it has not previously been built.
-// This is how a triplet would be built (in the future), instead of a pair, but for now use a pair.
-// std::tr1::tuple<int, int, int> tp;
 typedef std::pair<int,int> LineColumnFilePosition;
 typedef std::pair<int,LineColumnFilePosition> FileIdLineColumnFilePosition;
 
 typedef std::pair<uint64_t,FileIdLineColumnFilePosition> AddressFileIdLineColumnFilePositionPair;
 typedef std::pair<FileIdLineColumnFilePosition,uint64_t> FileIdLineColumnFilePositionAddressPair;
 
-// typedef std::multimap<uint64_t,FileIdLineColumnFilePosition> SgInstructionAddressSourcePositionMapPtrList;
-// typedef std::multimap<FileIdLineColumnFilePosition,uint64_t> SgSourcePositionInstructionAddressMapPtrList;
 typedef std::multimap<uint64_t,FileIdLineColumnFilePosition> SgInstructionAddressSourcePositionMapPtrList;
 typedef std::multimap<FileIdLineColumnFilePosition,uint64_t> SgSourcePositionInstructionAddressMapPtrList;
 
@@ -561,12 +494,6 @@ std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgDimensionObje
 std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgLabelSymbol*>&);
 std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgFormatItem*>&);
 
-// DQ (4/19/2006): forward declaration of PreprocessingInfo so that
-// PreprocessingInfo can follow Sage III class declarations and contain
-// a Sg_File_Info object (to record the filename of the comments and
-// CPP directoves).
-// class PreprocessingInfo;
-
 // DQ (4/23/2006): The friend declaration the SgProject class is not enough this must be defined outside of the class (for g++ 4.1.0).
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<std::string> & l );
 
@@ -575,15 +502,11 @@ std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<std::str
 std::ostream& operator<<(std::ostream&, const std::multimap<Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address>&);
 std::ostream& operator<<(std::ostream&,
                          const std::vector<std::pair<Rose::BinaryAnalysis::Address, Rose::BinaryAnalysis::Address>>&);
-// struct SgAsmGenericFormat::fileDetails;
-// std::ostream & operator<< ( std::ostream & os, const SgAsmGenericFormat::fileDetails & sb );
 std::ostream & operator<< ( std::ostream & os, const struct stat & sb );
 
-// endif for ifndef ROSE_USE_SWIG_SUPPORT
 #endif
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-// DQ (3/15/2007): Added support for binaries
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<SgAsmStatement*> & l );
 #endif
 

@@ -754,8 +754,9 @@ SgAsmJvmLineNumberTable* SgAsmJvmLineNumberTable::parse(SgAsmJvmConstantPool* po
   Jvm::read_value(pool, tableLength);
 
   for (int ii = 0; ii < tableLength; ii++) {
-    auto entry = new SgAsmJvmLineNumberEntry(this);
-    entry->parse(pool);
+    auto entry = new SgAsmJvmLineNumberTable::Entry();
+    Jvm::read_value(pool, entry->start_pc);
+    Jvm::read_value(pool, entry->line_number);
     get_line_number_table().push_back(entry);
   }
   return this;
@@ -768,38 +769,15 @@ void SgAsmJvmLineNumberTable::unparse(std::ostream& os) const
   uint16_t tableLength = get_line_number_table().size();
   Jvm::writeValue(os, tableLength);
 
-  for (auto line_number : get_line_number_table()) {
-    line_number->unparse(os);
+  for (auto entry : get_line_number_table()) {
+    Jvm::writeValue(os, entry->start_pc);
+    Jvm::writeValue(os, entry->line_number);
   }
 }
 
 void SgAsmJvmLineNumberTable::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   fprintf(f, "%s:%ld: SgAsmJvmLineNumberTable::dump()\n", prefix, idx);
-}
-
-SgAsmJvmLineNumberEntry::SgAsmJvmLineNumberEntry(SgAsmJvmLineNumberTable* table)
-{
-  initializeProperties();
-  set_parent(table);
-}
-
-SgAsmJvmLineNumberEntry* SgAsmJvmLineNumberEntry::parse(SgAsmJvmConstantPool* pool)
-{
-  Jvm::read_value(pool, p_start_pc);
-  Jvm::read_value(pool, p_line_number);
-  return this;
-}
-
-void SgAsmJvmLineNumberEntry::unparse(std::ostream& os) const
-{
-  Jvm::writeValue(os, p_start_pc);
-  Jvm::writeValue(os, p_line_number);
-}
-
-void SgAsmJvmLineNumberEntry::dump(FILE* f, const char* prefix, ssize_t idx) const
-{
-  fprintf(f, "%s:%ld: start_pc:%d line_number:%d\n", prefix, idx, p_start_pc, p_line_number);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

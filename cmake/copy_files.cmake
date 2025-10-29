@@ -302,7 +302,6 @@ set(GENERATED_HEADERS
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmInnerClassesEntry.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmInnerClasses.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmInstruction.h
-    ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmLineNumberEntry.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmLineNumberTable.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmLocalVariableEntry.h
     ${ROSE_TOP_BINARY_DIR}/src/ROSETTA/src/SgAsmJvmLocalVariableTable.h

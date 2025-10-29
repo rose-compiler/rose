@@ -413,7 +413,6 @@ GENERATED_SOURCE =						\
         SgAsmJvmInnerClassesEntry.h				\
         SgAsmJvmInnerClasses.h					\
         SgAsmJvmInstruction.h					\
-        SgAsmJvmLineNumberEntry.h				\
         SgAsmJvmLineNumberTable.h				\
         SgAsmJvmLocalVariableEntry.h				\
         SgAsmJvmLocalVariableTable.h				\
@@ -826,7 +825,6 @@ GENERATED_SOURCE =						\
 	SgAsmJvmInnerClassesEntry.h				\
 	SgAsmJvmInnerClasses.h					\
 	SgAsmJvmInstruction.h					\
-	SgAsmJvmLineNumberEntry.h				\
 	SgAsmJvmLineNumberTable.h				\
 	SgAsmJvmLocalVariableEntry.h				\
 	SgAsmJvmLocalVariableTable.h				\
@@ -1386,7 +1384,6 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmInnerClassesEntry.h			\
    SgAsmJvmInnerClasses.h			\
    SgAsmJvmInstruction.h			\
-   SgAsmJvmLineNumberEntry.h			\
    SgAsmJvmLineNumberTable.h			\
    SgAsmJvmLocalVariableEntry.h			\
    SgAsmJvmLocalVariableTable.h			\

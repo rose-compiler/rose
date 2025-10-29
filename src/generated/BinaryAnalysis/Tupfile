@@ -289,7 +289,6 @@ run $(librose_compile) \
     SgAsmJvmInnerClasses.C \
     SgAsmJvmInnerClassesEntry.C \
     SgAsmJvmInstruction.C \
-    SgAsmJvmLineNumberEntry.C \
     SgAsmJvmLineNumberTable.C \
     SgAsmJvmLocalVariableEntry.C \
     SgAsmJvmLocalVariableTable.C \

@@ -371,7 +371,6 @@ rosetta_generated_definitions =				\
 	  SgAsmJvmInnerClassesEntry.h			\
 	  SgAsmJvmInnerClasses.h			\
 	  SgAsmJvmInstruction.h				\
-	  SgAsmJvmLineNumberEntry.h			\
 	  SgAsmJvmLineNumberTable.h			\
 	  SgAsmJvmLocalVariableEntry.h			\
 	  SgAsmJvmLocalVariableTable.h			\

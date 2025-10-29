@@ -288,7 +288,6 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmInnerClasses.C
   SgAsmJvmInnerClassesEntry.C
   SgAsmJvmInstruction.C
-  SgAsmJvmLineNumberEntry.C
   SgAsmJvmLineNumberTable.C
   SgAsmJvmLocalVariableEntry.C
   SgAsmJvmLocalVariableTable.C

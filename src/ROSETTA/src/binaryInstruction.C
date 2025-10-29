@@ -11996,7 +11996,7 @@ class SgAsmJvmLineNumberTable: public SgAsmJvmAttribute {
 
 #ifndef DOCUMENTATION
     AsmJvmLineNumberTable.setDataPrototype(
-        "SgAsmJvmLineNumberEntryPtrList", "line_number_table", "",
+        "std::vector<SgAsmJvmLineNumberTable::Entry*>", "line_number_table", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -12016,6 +12016,30 @@ private:
         debugSerializationEnd("SgAsmJvmLineNumberTable");
     }
 #endif // ROSE_ENABLE_BOOST_SERIALIZATION
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Local types
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** JVM LineNumberEntry.
+     *
+     *  Each entry in the line_number_table array indicates that the line number in the original source file changes
+     *  at a given point in the code array. */
+    struct Entry {
+        uint16_t start_pc = 0;
+        uint16_t line_number = 0;
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_NVP(start_pc);
+            s & BOOST_SERIALIZATION_NVP(line_number);
+        }
+#endif
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
 public:
     /** Property: line_number_table
@@ -12023,11 +12047,9 @@ public:
      *  List of pointers to line_number_table entries (see the JVM specification 4.7.12). 
      *  
      *  @{ */
-    SgAsmJvmLineNumberEntryPtrList const& get_line_number_table() const;
-    SgAsmJvmLineNumberEntryPtrList& get_line_number_table();
-    void set_line_number_table(SgAsmJvmLineNumberEntryPtrList const&);
+    std::vector<SgAsmJvmLineNumberTable::Entry*> const& get_line_number_table() const;
+    std::vector<SgAsmJvmLineNumberTable::Entry*>& get_line_number_table();
     /** @} */
-public:
     /** Initialize the LineNumberTable attribute before parsing.
      *
      *  This is the preferred constructor to use before parsing.  It shall set its parent. */
@@ -12058,109 +12080,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmLineNumberTable_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmJvmLineNumberEntry           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmJvmLineNumberEntry);
-IS_SERIALIZABLE(AsmJvmLineNumberEntry);
-
-#ifndef DOCUMENTATION
-AsmJvmLineNumberEntry.useSmallHeader(true);
-#endif // !DOCUMENTATION
-
-#ifdef DOCUMENTATION
-/** JVM LineNumberEntry.
- *
- *  Each line_number is described by a line_number_table anonymous structure.  See the JVM specification, section 4.7.12. */
-class SgAsmJvmLineNumberEntry: public SgAsmJvmNode {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmLineNumberEntry.setDataPrototype(
-        "uint16_t", "start_pc", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmLineNumberEntry.setDataPrototype(
-        "uint16_t", "line_number", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmJvmLineNumberEntry);
-#if defined(SgAsmJvmLineNumberEntry_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmJvmLineNumberEntry -----------------------
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmJvmLineNumberEntry");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
-        s & BOOST_SERIALIZATION_NVP(p_start_pc);
-        s & BOOST_SERIALIZATION_NVP(p_line_number);
-        debugSerializationEnd("SgAsmJvmLineNumberEntry");
-    }
-#endif // ROSE_ENABLE_BOOST_SERIALIZATION
-public:
-public:
-    /** Property: start_pc
-     *
-     *  The value of the start_pc item must be a valid index into the constant_pool table (see JVM specification). 
-     *  
-     *  @{ */
-    uint16_t const& get_start_pc() const;
-    void set_start_pc(uint16_t const&);
-    /** @} */
-
-public:
-    /** Property: line_number
-     *
-     *  The value of the line_number entry must be a valid index into the constant_pool table (see JVM specification). 
-     *  
-     *  @{ */
-    uint16_t const& get_line_number() const;
-    void set_line_number(uint16_t const&);
-    /** @} */
- public:
-    /** Initialize the object before parsing.
-     *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    explicit SgAsmJvmLineNumberEntry(SgAsmJvmLineNumberTable*);
-
-    /** Initialize the object by parsing content from the class file. */
-    SgAsmJvmLineNumberEntry* parse(SgAsmJvmConstantPool*);
-
-    /** Write line number entry to a binary file. */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging information. */
-    void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmJvmLineNumberEntry();
-
-public:
-    /** Default constructor. */
-    SgAsmJvmLineNumberEntry();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmJvmLineNumberEntry_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -15005,7 +14924,6 @@ AstNodeClass& AsmJvmNode = nonTerminalConstructor(
         | AsmJvmExceptionTable
         | AsmJvmField
         | AsmJvmInnerClassesEntry
-        | AsmJvmLineNumberEntry
         | AsmJvmLocalVariableEntry
         | AsmJvmLocalVariableTypeEntry
         | AsmJvmMethod

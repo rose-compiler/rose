@@ -7,20 +7,14 @@
 #define ROSE_SgAsmJvmLineNumberTable_IMPL
 #include <SgAsmJvmLineNumberTable.h>
 
-SgAsmJvmLineNumberEntryPtrList const&
+std::vector<SgAsmJvmLineNumberTable::Entry*> const&
 SgAsmJvmLineNumberTable::get_line_number_table() const {
     return p_line_number_table;
 }
 
-SgAsmJvmLineNumberEntryPtrList&
+std::vector<SgAsmJvmLineNumberTable::Entry*>&
 SgAsmJvmLineNumberTable::get_line_number_table() {
     return p_line_number_table;
-}
-
-void
-SgAsmJvmLineNumberTable::set_line_number_table(SgAsmJvmLineNumberEntryPtrList const& x) {
-    this->p_line_number_table = x;
-    set_isModified(true);
 }
 
 SgAsmJvmLineNumberTable::~SgAsmJvmLineNumberTable() {
