@@ -74,26 +74,6 @@ RT_LIBS = @RT_LIBS@
 
 VALGRIND_BINARY = @VALGRIND_BINARY@
 
-# Conditional support for Gabriel's QRose GUI Library
-if ROSE_USE_QT
-#  ROSE_GUI_INCLUDE =   -I${QROSE_PREFIX}/include
-  ROSE_GUI_INCLUDE =  -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Framework -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Widgets -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/Common -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/QueryBox -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/TreeBox -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/QueryBox -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/SourceBox
-
-# ROSE_GUI_LIBS = -lqrose
-#  ROSE_GUI_LIBS_WITH_PATH = -L${QROSE_PREFIX}/lib -lqrose
-#  ROSE_GUI_LIBS_WITH_PATH =  -L${top_builddir}/src/3rdPartyLibraries/qrose/QRoseLib/  -lqrose
-   ROSE_GUI_LIBS_WITH_PATH = ${top_builddir}/src/3rdPartyLibraries/qrose/QRoseLib/libqrose.la
-
-# ROSE_GUI_LIB_FILE = libqrose.a
-endif
-
-if ROSE_USE_QT
-  ROSE_QT_INCLUDE = $(QT_INCLUDES)
-# ROSE_QT_LIBS = -lqt
-  ROSE_QT_LIBS_WITH_PATH = ${QT_LDFLAGS}
-# ROSE_QT_LIB_FILE = libqt.a
-endif
-
 # ROSE-HPCToolkit module
 if ROSE_BUILD_ROSEHPCT
   ROSE_ROSEHPCT_INCLUDES = -I$(top_srcdir)/src/roseExtensions/roseHPCToolkit/include
@@ -469,8 +449,6 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/roseSupport \
      -I$(top_srcdir)/src/3rdPartyLibraries/MSTL \
      -I$(top_srcdir)/src/3rdPartyLibraries/json \
-     -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Framework \
-     -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Widgets  \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
      -I$(top_srcdir)/libltdl \

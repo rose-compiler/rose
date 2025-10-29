@@ -1,1 +1,0 @@
-add_library(AsmInstructionBar OBJECT AsmInstructionsBar.cpp)

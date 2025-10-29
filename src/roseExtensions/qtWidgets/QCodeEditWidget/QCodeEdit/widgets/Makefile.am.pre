@@ -1,1 +1,0 @@
-INCLUDES += -I$(srcdir)/..  -I$(srcdir)/../document -I$(srcdir)/../qnfa 

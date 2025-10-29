@@ -182,25 +182,14 @@ html-local: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-
 footer.html: footer.html.in
 leftmenu.html: leftmenu.html.in
 
-# Liao, 6/11/2008. Added a new directory (Projects) for various ROSE projects 
-# compass_build_tooldir=$(top_builddir)/projects/compass/tools
-#COMPASS_MANUAL = $(compass_build_tooldir)/compass/doc/compass.pdf
-#$(COMPASS_MANUAL):
-#	cd $(compass_build_tooldir)/compass/doc && $(MAKE) docs
-
-# Liao, 8/11/2009. QROSE Manual
-QROSE_MANUAL = $(top_srcdir)/src/3rdPartyLibraries/qrose/docs/QROSE.pdf
-
 HASKELLPORT_APIDOCS = $(top_builddir)/projects/haskellport/dist/doc/html/rose
 $(HASKELLPORT_APIDOCS):
 	$(MAKE) -C$(top_builddir)/projects/haskellport docs
 
 # DQ (9/15/2009): This appears to be a problem for Mac OSX
 RoseQtDoc:
-if !OS_MACOSX
-	@echo "Skipping doxygen processing of roseQtWidgets.doxygen (failing in OSX)"
-#	$(DOXYGEN) roseQtWidgets.doxygen
-endif
+	: no longer exists
+
 # Liao, 2014/1/10, comment out $(HASKELLPORT_APIDOCS) to migrate to EDG 4.7 based rose
 make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_Exam.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html RoseQtDoc
 	cd Tutorial; $(MAKE) make-web-pages
@@ -379,7 +368,7 @@ html-docs: html
 
 EXTRA_DIST = CMakeLists.txt \
    WEB_DOCS_README \
-   sage.cfg.in rose.cfg.in roseQtWidgets.doxygen.in \
+   sage.cfg.in rose.cfg.in \
    fixme.sty  acknowledgments.tex bothlevel.c \
    bibliography.tex  examples.tex fd-docs.tex overviewOfRose.tex pre-docs.tex loopTransformDoc.tex  \
    mm.tex preprocessorDesign.tex tridvpk.tex writingYourFirstTranslator.tex appendix.tex \

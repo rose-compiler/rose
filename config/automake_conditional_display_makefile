@@ -344,11 +344,6 @@ if ROSE_USE_QROSE
 else
 	@echo "Automake conditional ROSE_USE_QROSE: NOT defined"
 endif
-if ROSE_USE_QT
-	@echo "Automake conditional ROSE_USE_QT: DEFINED"
-else
-	@echo "Automake conditional ROSE_USE_QT: NOT defined"
-endif
 if ROSE_USE_SAT
 	@echo "Automake conditional ROSE_USE_SAT: DEFINED"
 else

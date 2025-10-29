@@ -20,7 +20,6 @@
 #include <rose.h>
 #include <config.h>
 
-#include <qrose.h>
 #include <sys/time.h>
 
 class BooleanAttribute: public AstAttribute {

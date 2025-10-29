@@ -1,3 +1,0 @@
-INCLUDES += -I$(srcdir)/QCodeEdit -I$(srcdir)/QCodeEdit/document
-SUBDIRS = QCodeEdit
-libQCodeEditWidget_la_LIBADD   =  QCodeEdit/libQCodeEdit.la

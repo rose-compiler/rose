@@ -132,8 +132,6 @@ dnl                     but I am not sure where to put it, so I have placed it b
         AC_MSG_ERROR([Qt headers not found; use --with-qt=DIR or --with-qt-includes=DIR])
      fi
   fi
-  QT_INCLUDES="-DQT3_SUPPORT -I$qt_incdir/QtCore -I$qt_incdir/QtGui -I$qt_incdir/Qt3Support -I$qt_incdir/QtXml -I$qt_incdir"
-  AC_SUBST(QT_INCLUDES)
 
 dnl ---------------------------[check Qt Libraries]------------
   qt_libdirs="$ac_qt_libraries $ac_qt_path/lib /usr/lib"
@@ -147,8 +145,6 @@ dnl if test "$with_QRose" != no && test "$qt_libdir" = NONE; then
 dnl  LIB_QT="-lQtCore -lQtGui -lQt3Support"
   QT_LDFLAGS="-L$qt_libdir -lQtCore -lQtGui -lQt3Support -lQtXml -lQtUiTools"
 dnl  AC_SUBST(LIB_QT)
-
-  AM_CONDITIONAL(ROSE_USE_QT,test "$with_qt" != no)
 
   AC_SUBST(QT_LDFLAGS)
   AC_MSG_RESULT([ headers $qt_incdir, libraries $qt_libdir ])

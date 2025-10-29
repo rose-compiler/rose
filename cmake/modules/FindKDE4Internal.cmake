@@ -1052,7 +1052,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
       set(_source "#include <QtCore/QtGlobal>\n int main()\n {\n #ifdef QT_VISIBILITY_AVAILABLE \n return 0;\n #else \n return 1; \n #endif \n }\n")
       set(_source_file ${CMAKE_BINARY_DIR}/CMakeTmp/check_qt_visibility.cpp)
       file(WRITE "${_source_file}" "${_source}")
-      set(_include_dirs "-DINCLUDE_DIRECTORIES:STRING=${QT_INCLUDES}")
+      set(_include_dirs "")
 
       try_run(_run_result _compile_result ${CMAKE_BINARY_DIR} ${_source_file} CMAKE_FLAGS "${_include_dirs}" COMPILE_OUTPUT_VARIABLE _compile_output_var)
 
@@ -1173,7 +1173,6 @@ set(KDE4_INCLUDES
    ${KDE4_INCLUDE_DIR}
    ${KDE4_INCLUDE_DIR}/KDE
    ${KDE4_PHONON_INCLUDES}
-   ${QT_INCLUDES}
    ${_KDE4_PLATFORM_INCLUDE_DIRS} 
 )
 

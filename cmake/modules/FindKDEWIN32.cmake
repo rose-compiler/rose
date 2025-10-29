@@ -45,12 +45,12 @@ if (WIN32)
   
       if (MINGW)
         #mingw compiler
-        set(KDEWIN32_INCLUDES ${KDEWIN32_INCLUDE_DIR} ${KDEWIN32_INCLUDE_DIR}/mingw ${QT_INCLUDES})
+        set(KDEWIN32_INCLUDES ${KDEWIN32_INCLUDE_DIR} ${KDEWIN32_INCLUDE_DIR}/mingw)
       else (MINGW)
         # msvc compiler
         # add the MS SDK include directory if available
         file(TO_CMAKE_PATH "$ENV{MSSDK}" MSSDK_DIR)
-        set(KDEWIN32_INCLUDES ${KDEWIN32_INCLUDE_DIR} ${KDEWIN32_INCLUDE_DIR}/msvc  ${QT_INCLUDES} ${MSSDK_DIR})
+        set(KDEWIN32_INCLUDES ${KDEWIN32_INCLUDE_DIR} ${KDEWIN32_INCLUDE_DIR}/msvc ${MSSDK_DIR})
       endif (MINGW)
   
     endif (KDEWIN32_LIBRARY AND KDEWIN32_INCLUDE_DIR)

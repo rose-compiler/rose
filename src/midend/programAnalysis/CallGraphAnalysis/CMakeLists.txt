@@ -1,4 +1,4 @@
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
 
 ########### header files to be installed ###############
 set(CALLGRAPHANALYSIS_HEADERS newCallGraph.h 

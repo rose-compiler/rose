@@ -166,13 +166,6 @@ else
    OPT_SQLITE3_LDFLAGS =
 endif
 
-if ROSE_WITH_ROSEQT
-   libroseQtExtension = $(top_builddir)/src/roseExtensions/qtWidgets/libRoseQtWidgets.la \
-                        $(top_builddir)/src/3rdPartyLibraries/qrose/QRoseLib/libqrose.la
-else
-   libroseQtExtension =
-endif
-
 # TOO (11/22/2011): flattening midend Makefiles => TODO: move conditional compilation to Makefile.
 # TODO: correct list!
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -225,8 +218,7 @@ libroseLibraries = \
    $(top_builddir)/src/Rose/librose_partial.la \
    $(top_builddir)/src/AstNodes/BinaryAnalysis/libroseAstNodesBinaryAnalysis.la \
    $(top_builddir)/src/AstNodes/Expression/libroseAstNodesExpression.la \
-   $(libroseSqlite3xConnection) \
-   $(libroseQtExtension)
+   $(libroseSqlite3xConnection)
 
 # DQ (12/18/2016): Moved below to make POET optional.
 #  $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la

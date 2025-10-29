@@ -1597,8 +1597,6 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/runtimeTransformation
   ${ROSE_TOP_SRC_DIR}/src/roseSupport
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/MSTL
-  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Framework
-  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Widgets
   ${ROSE_TOP_SRC_DIR}/src/util/graphs
   ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/json)
@@ -1615,13 +1613,9 @@ if(WIN32)
   list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/winspecific)
 endif()
 
-# Qt/KDE includes are now handled by qtWidgets and qrose subdirectories if Qt is found
-if(KDE4_INCLUDES OR KDE4_INCLUDE_DIR OR QT_INCLUDES)
-  include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES})
+if(KDE4_INCLUDES OR KDE4_INCLUDE_DIR)
+  include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
 endif()
-
-# qtWidgets include directories are now set within the qtWidgets subdirectory
-set(QT_INCLUDES ${ROSE_INCLUDES} ${Boost_INCLUDE_DIRS})
 
 ########################################################################################################################
 # Set output directories

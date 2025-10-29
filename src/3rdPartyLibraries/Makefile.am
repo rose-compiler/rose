@@ -1,9 +1,6 @@
 # This should not depend on ROSE in any way so I don't think we need this
 # include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# SUBDIRS = MSTL fortran-parser java-parser antlr-jars qrose
-# checkPointLibrary
-
 SUBDIRS =
 
 # MS (1/25/21): include json-related code
@@ -24,7 +21,7 @@ endif
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS += MSTL
 else
-SUBDIRS += MSTL antlr-jars qrose
+SUBDIRS += MSTL antlr-jars
 endif
 
 # DQ (1/14/2017): Remove POET uniformally until it can be added to provide greater portability (working on Ubuntu systems).

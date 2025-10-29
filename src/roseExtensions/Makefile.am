@@ -5,7 +5,6 @@ SUBDIRS = \
    sqlite3x \
    dataStructureTraversal \
    highLevelGrammar \
-   roseHPCToolkit \
-   qtWidgets
+   roseHPCToolkit
 
 EXTRA_DIST = CMakeLists.txt

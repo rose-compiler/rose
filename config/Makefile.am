@@ -59,7 +59,6 @@ FILES_NOT_REQUIRED_FOR_DISTRIBUTIONS = \
      EDG.m4 \
      enable-rosehpct.m4 \
      generate-backend-compiler-specific-headers.m4 \
-     qrose.m4 \
      ROSE.m4 \
      support-doxygen.m4 \
      support-i386.m4 \

@@ -20,8 +20,6 @@
 #include <rose.h>
 #include <config.h>
 
-#include <qrose.h>
-
 #include <qlistview.h>
 #include <qapplication.h>
 #include <qwidget.h>

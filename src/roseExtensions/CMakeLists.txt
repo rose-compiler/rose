@@ -11,6 +11,4 @@ if(NOT ENABLE_INTERNALFRONTENDDEVELOPMENT)
     endif()
     add_subdirectory(roseHPCToolkit)
   endif()
-
-  add_subdirectory(qtWidgets)
 endif()

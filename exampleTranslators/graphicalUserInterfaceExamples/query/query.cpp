@@ -1,8 +1,6 @@
 #include <rose.h>
 #include <config.h>
 
-#include <qrose.h>
-
 class QueryCollection {
 public:    
     bool findPublicVarMembers (SgNode *node, string &str) {

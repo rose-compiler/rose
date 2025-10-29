@@ -589,11 +589,6 @@ ROSE_HOME=.
 AC_SUBST(ROSE_HOME)
 # echo "In ROSE/configure: ROSE_HOME = $ROSE_HOME"
 
-# This does not appear to exist any more (not distributed in ROSE)
-# Support for Gabriel's QRose GUI Library
-# ROSE_SUPPORT_QROSE
-#AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
-
 AC_LANG(C++)
 
 # Python check must occur before boost check since -lboost_python depends on python
@@ -1792,11 +1787,6 @@ AM_CONDITIONAL(ROSE_USE_QROSE,test "x$with_QRose" != xno)
 
 AC_MSG_NOTICE([with_QRose = "$with_QRose"])
 
-#AM_CONDITIONAL(USE_QROSE, test "$with_QRose" != no)
-#QROSE_LDFLAGS="-L${QROSE_PREFIX}/lib -lqrose"
-#QROSE_CXXFLAGS="-I${QROSE_PREFIX}/include"
-#AC_SUBST(QROSE_LDFLAGS)
-#AC_SUBST(QROSE_CXXFLAGS)
 
 
 # DQ (4/11/2010): Organized the Qt configure support.
@@ -1815,7 +1805,6 @@ AC_PATH_QT_UIC
 AC_PATH_QT_VERSION
 
 AC_MSG_NOTICE([with_qt     = "$with_qt"])
-AM_CONDITIONAL(ROSE_USE_QT,test x"$with_qt" != x"no")
 if test "x$with_qt" = xyes; then
    AC_MSG_FAILURE([path to Qt not specified (usage: --with-qt=PATH)])
 fi
@@ -1958,7 +1947,6 @@ docs/Rose/leftmenu.html
 docs/Rose/manual.tex
 docs/Rose/rose-install-demo.cfg
 docs/Rose/rose.cfg
-docs/Rose/roseQtWidgets.doxygen
 docs/Rose/sage.cfg
 docs/testDoxygen/Makefile
 docs/testDoxygen/test.cfg
@@ -1987,16 +1975,6 @@ src/3rdPartyLibraries/antlr-jars/Makefile
 src/3rdPartyLibraries/flang-parser/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/java-parser/Makefile
-src/3rdPartyLibraries/qrose/Components/Common/Makefile
-src/3rdPartyLibraries/qrose/Components/Common/icons/Makefile
-src/3rdPartyLibraries/qrose/Components/Makefile
-src/3rdPartyLibraries/qrose/Components/QueryBox/Makefile
-src/3rdPartyLibraries/qrose/Components/SourceBox/Makefile
-src/3rdPartyLibraries/qrose/Components/TreeBox/Makefile
-src/3rdPartyLibraries/qrose/Framework/Makefile
-src/3rdPartyLibraries/qrose/Makefile
-src/3rdPartyLibraries/qrose/QRoseLib/Makefile
-src/3rdPartyLibraries/qrose/Widgets/Makefile
 src/AstNodes/Makefile
 src/AstNodes/BinaryAnalysis/Makefile
 src/AstNodes/Expression/Makefile
@@ -2056,35 +2034,6 @@ src/roseExtensions/Makefile
 src/roseExtensions/dataStructureTraversal/Makefile
 src/roseExtensions/failSafe/Makefile
 src/roseExtensions/highLevelGrammar/Makefile
-src/roseExtensions/qtWidgets/AsmInstructionBar/Makefile
-src/roseExtensions/qtWidgets/AsmView/Makefile
-src/roseExtensions/qtWidgets/AstBrowserWidget/Makefile
-src/roseExtensions/qtWidgets/AstGraphWidget/Makefile
-src/roseExtensions/qtWidgets/AstProcessing/Makefile
-src/roseExtensions/qtWidgets/BeautifiedAst/Makefile
-src/roseExtensions/qtWidgets/FlopCounter/Makefile
-src/roseExtensions/qtWidgets/InstructionCountAnnotator/Makefile
-src/roseExtensions/qtWidgets/KiviatView/Makefile
-src/roseExtensions/qtWidgets/Makefile
-src/roseExtensions/qtWidgets/MetricFilter/Makefile
-src/roseExtensions/qtWidgets/MetricsConfig/Makefile
-src/roseExtensions/qtWidgets/MetricsKiviat/Makefile
-src/roseExtensions/qtWidgets/NodeInfoWidget/Makefile
-src/roseExtensions/qtWidgets/ProjectManager/Makefile
-src/roseExtensions/qtWidgets/PropertyTreeWidget/Makefile
-src/roseExtensions/qtWidgets/QCodeEditWidget/Makefile
-src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/Makefile
-src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/document/Makefile
-src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/qnfa/Makefile
-src/roseExtensions/qtWidgets/QCodeEditWidget/QCodeEdit/widgets/Makefile
-src/roseExtensions/qtWidgets/QtGradientEditor/Makefile
-src/roseExtensions/qtWidgets/RoseCodeEdit/Makefile
-src/roseExtensions/qtWidgets/RoseFileSelector/Makefile
-src/roseExtensions/qtWidgets/SrcBinView/Makefile
-src/roseExtensions/qtWidgets/TaskSystem/Makefile
-src/roseExtensions/qtWidgets/TreeModel/Makefile
-src/roseExtensions/qtWidgets/WidgetCreator/Makefile
-src/roseExtensions/qtWidgets/util/Makefile
 src/roseExtensions/roseHPCToolkit/Makefile
 src/roseExtensions/roseHPCToolkit/docs/Makefile
 src/roseExtensions/roseHPCToolkit/include/Makefile
