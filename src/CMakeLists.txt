@@ -675,7 +675,6 @@ if(ENABLE_JAVA)
 endif()
 
 if(ENABLE_JOVIAL)
-  list(APPEND rose_LIB_OBJS ${ATERM_LIBRARY})
   list(APPEND rose_LIB_OBJS roseATerm)
   list(APPEND rose_LIB_OBJS roseTreeBuilder)
   list(APPEND rose_LIB_OBJS roseJovial)
