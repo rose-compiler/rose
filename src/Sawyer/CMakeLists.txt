@@ -30,6 +30,16 @@ if(SQLITE3_FOUND_LIB)
   target_link_libraries(util_sawyer INTERFACE ${SQLITE3_LIBRARY})
 endif()
 
+# Build stringify-enums tool (development tool, not installed)
+add_executable(stringify-enums stringifyEnums.C)
+target_link_libraries(stringify-enums PRIVATE util_sawyer ${Boost_LIBRARIES})
+# Link with dl library when available. This is needed because util_sawyer's Assert.C uses
+# boost::stacktrace (when Boost >= 1.65 and not macOS), which requires dladdr() from libdl.
+# Some systems (e.g., RHEL 8) require explicit linking with dl.
+if(HAVE_LIBDL)
+  target_link_libraries(stringify-enums PRIVATE dl)
+endif()
+
 install(FILES
   Access.h AddressMap.h AddressSegment.h AllocatingBuffer.h Assert.h Attribute.h BiMap.h BitFlags.h BitVector.h BitVectorSupport.h Buffer.h
   Cached.h Callbacks.h Clexer.h CommandLine.h CommandLineBoost.h Database.h DatabasePostgresql.h DatabaseSqlite.h
@@ -40,3 +50,4 @@ install(FILES
   Result.h SharedPointer.h SmallObject.h Stack.h StackAllocator.h StaticBuffer.h Stopwatch.h Synchronization.h ThreadWorkers.h Time.h
   PartialResult.h Trace.h Tracker.h Tree.h Type.h WarningsOff.h WarningsRestore.h WorkList.h Yaml.h
   DESTINATION include/rose/Sawyer)
+

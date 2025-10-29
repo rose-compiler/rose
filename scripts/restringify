@@ -11,9 +11,18 @@ dir0="${0%/*}"
 top_srcdir="$(readlink -f "$1")"
 top_blddir="$(readlink -f "$2")"
 
-if [ -e "$top_blddir/src/Sawyer/stringify-enums" ]; then
-    # The correct location
+if [ -e "$top_blddir/bin/stringify-enums" ]; then
+    # CMake location
+    stringifier="$top_blddir/bin/stringify-enums"
+elif [ -e "$top_blddir/bin/stringify-enums.exe" ]; then
+    # CMake location (Windows)
+    stringifier="$top_blddir/bin/stringify-enums.exe"
+elif [ -e "$top_blddir/src/Sawyer/stringify-enums" ]; then
+    # Autotools and Tup location (deprecated)
     stringifier="$top_blddir/src/Sawyer/stringify-enums"
+elif [ -e "$top_blddir/src/Sawyer/stringify-enums.exe" ]; then
+    # Autotools and Tup location (Windows, deprecated)
+    stringifier="$top_blddir/src/Sawyer/stringify-enums.exe"
 else
     (
 	cat <<EOF
@@ -25,7 +34,7 @@ $arg0: (2b) If you're building with GNU Autotools:
 $arg0:      (1) run "make -C \$ROSE_BUILD clean" since dependencies are incomplete
 $arg0:      (2) run "make -C \$ROSE_BUILD/src/Sawyer"
 $arg0: (2c) If you're building with CMake:
-$arg0:      This script is not supported in CMake
+$arg0:      (1) run "cmake --build \$ROSE_BUILD --target stringify-enums"
 $arg0: (3) Continue to build ROSE like normal
 EOF
     ) >&2
