@@ -50,6 +50,6 @@ add_library(roseClangFrontend OBJECT ${roseClangFrontend_SOURCE_FILES})
 #target_include_directories(roseClangFrontend PUBLIC ${CMAKE_BINARY_DIR}/src/frontend/SageIII) 
 add_dependencies(roseClangFrontend rosetta_generated)
 
-target_link_libraries(roseClangFrontend ${CLANG_LIBRARIES})
+target_link_libraries(roseClangFrontend PRIVATE ${CLANG_LIBRARIES})
 
 install(FILES clang-builtin-c.h clang-builtin-cpp.hpp clang-builtin-cuda.hpp clang-builtin-opencl.h DESTINATION ${INCLUDE_INSTALL_DIR}/../clang/)
