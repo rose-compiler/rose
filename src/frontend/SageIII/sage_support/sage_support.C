@@ -2053,7 +2053,7 @@ SgFile::callFrontEnd()
   // Build the commandline for EDG
      if (get_C_only() || get_Cxx_only() || get_Cuda_only() || get_OpenCL_only() )
         {
-#ifdef BACKEND_CXX_IS_CLANG_COMPILER
+#if defined(BACKEND_CXX_IS_CLANG_COMPILER) && !defined(ROSE_USE_CLANG_FRONTEND)
    #if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER >= 9) ) || (ROSE_EDG_MAJOR_VERSION_NUMBER > 4)
      // OK, we are supporting Clang using EDG 4.9 and greater.
    #else
