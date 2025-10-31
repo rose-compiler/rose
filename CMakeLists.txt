@@ -1613,10 +1613,6 @@ if(WIN32)
   list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/winspecific)
 endif()
 
-if(KDE4_INCLUDES OR KDE4_INCLUDE_DIR)
-  include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
-endif()
-
 ########################################################################################################################
 # Set output directories
 ########################################################################################################################
