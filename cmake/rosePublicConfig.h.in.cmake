@@ -118,7 +118,7 @@
 /* EDG minor version number */
 #define ROSE_EDG_MINOR_VERSION_NUMBER @EDG_MINOR_VERSION@
 
-#cmakedefine01 ROSE_USE_EDG_QUAD_FLOAT 
+#cmakedefine ROSE_USE_EDG_QUAD_FLOAT
 
 /* Use Clang for parsing C/C++-like languages */
 #cmakedefine ROSE_USE_CLANG_FRONTEND
