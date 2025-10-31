@@ -121,9 +121,11 @@ if(ENABLE_JAVA)
       ${CMAKE_CURRENT_BINARY_DIR}/JavaParser.class
       ${CMAKE_CURRENT_BINARY_DIR}/JavaParserSupport.class
       ${CMAKE_CURRENT_BINARY_DIR}/JavaParserSupport$LocalOrAnonymousType.class
+      ${CMAKE_CURRENT_BINARY_DIR}/JavaParserSupport$DuplicateTypeException.class
       ${CMAKE_CURRENT_BINARY_DIR}/JavaSourcePositionInformation.class
       ${CMAKE_CURRENT_BINARY_DIR}/JavaSourcePositionInformationFactory.class
       ${CMAKE_CURRENT_BINARY_DIR}/JavaToken.class
       ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.class
+      ${CMAKE_CURRENT_BINARY_DIR}/UnitInfo.class
     DESTINATION lib)
 endif()
