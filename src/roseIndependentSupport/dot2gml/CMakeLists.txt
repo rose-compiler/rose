@@ -1,5 +1,4 @@
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
 
 ########### next target ###############
 if( DOT_TO_GML_TRANSLATOR )
@@ -8,7 +7,6 @@ set(dot2gml_SRCS main.C parseDot.ll parseDotGrammar.yy)
 
 add_executable(dot2gml ${dot2gml_SRCS})
 
-target_link_libraries(dot2gml ${KDE4_KDECORE_LIBS})
 
 install(TARGETS dot2gml DESTINATION bin)
 endif()

@@ -1,5 +1,5 @@
 
-include_directories(${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OAWrap ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/OAWrap ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis)
 
 
 ########### next target ###############

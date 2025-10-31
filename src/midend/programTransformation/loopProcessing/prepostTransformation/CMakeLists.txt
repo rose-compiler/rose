@@ -1,5 +1,5 @@
 
-include_directories(${CMAKE_SOURCE_DIR}/src/util/support ${CMAKE_SOURCE_DIR}/src/midend/astUtil/astSupport ${CMAKE_SOURCE_DIR}/src/midend/astUtil/symbolicVal ${CMAKE_SOURCE_DIR}/src/midend/astUtil/astInterface ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CFG ${CMAKE_SOURCE_DIR}/src/util/graphs ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/src/util/support ${CMAKE_SOURCE_DIR}/src/midend/astUtil/astSupport ${CMAKE_SOURCE_DIR}/src/midend/astUtil/symbolicVal ${CMAKE_SOURCE_DIR}/src/midend/astUtil/astInterface ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/bitvectorDataflow ${CMAKE_SOURCE_DIR}/src/midend/programAnalysis/CFG ${CMAKE_SOURCE_DIR}/src/util/graphs)
 
 
 ########### next target ###############

@@ -1,14 +1,12 @@
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
 
 
 ########### next target ###############
 
 set(printLoopInfo_SRCS printLoopInfo.C LoopNestingInfoProcessing.C)
 
-kde4_add_executable(printLoopInfo ${printLoopInfo_SRCS})
+add_executable(printLoopInfo ${printLoopInfo_SRCS})
 
-target_link_libraries(printLoopInfo ${KDE4_KDECORE_LIBS})
 
 install(TARGETS printLoopInfo DESTINATION bin)
 

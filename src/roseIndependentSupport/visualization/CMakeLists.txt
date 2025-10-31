@@ -1,5 +1,4 @@
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
 
 
 ########### next target ###############
@@ -15,7 +14,6 @@ set(dotgl_SRCS
 
 add_executable(dotgl ${dotgl_SRCS})
 
-target_link_libraries(dotgl ${KDE4_KDECORE_LIBS})
 
 install(TARGETS dotgl DESTINATION bin)
 

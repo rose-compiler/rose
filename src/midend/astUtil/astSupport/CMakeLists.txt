@@ -1,4 +1,4 @@
-include_directories(${CMAKE_SOURCE_DIR}/src/util ${CMAKE_SOURCE_DIR}/src/util/support ${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/src/util ${CMAKE_SOURCE_DIR}/src/util/support)
 
 ########### header files to be installed ###############
 set(ASTSUPPORT_HEADERS AnalysisInterface.h ProcessAstTree.h ProcessAstTree.C StmtInfoCollect.h LoopInfoInterface.h) 

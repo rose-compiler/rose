@@ -1,5 +1,4 @@
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
 
 #TODO: ask ROSE team where LEVEL_PINCLIENT namespace can be found.
 
@@ -7,21 +6,18 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
 
 #set(dynamicStaticBinaryAnalysis_SRCS dynamicStaticBinaryAnalysis.C)
 #add_executable(dynamicStaticBinaryAnalysis ${dynamicStaticBinaryAnalysis_SRCS})
-#target_link_libraries(dynamicStaticBinaryAnalysis ${KDE4_KDECORE_LIBS})
 
 
 ########### next target ###############
 
 #set(staticDynamicBinaryAnalysis_SRCS staticDynamicBinaryAnalysis.C)
 #add_executable(staticDynamicBinaryAnalysis ${staticDynamicBinaryAnalysis_SRCS})
-#target_link_libraries(staticDynamicBinaryAnalysis ${KDE4_KDECORE_LIBS})
 
 
 ########### next target ###############
 
 #set(commandlineHandling_SRCS commandlineHandling.C)
 #add_executable(commandlineHandling ${commandlineHandling_SRCS})
-#target_link_libraries(commandlineHandling ${KDE4_KDECORE_LIBS})
 
 
 ########### install files ###############

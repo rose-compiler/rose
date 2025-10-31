@@ -1,7 +1,6 @@
 # Liao, 11/10/2009, This is not a project here
 #project(ROSETTA)
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
 
 add_subdirectory(src)
 

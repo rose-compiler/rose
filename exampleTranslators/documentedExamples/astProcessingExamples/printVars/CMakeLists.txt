@@ -1,14 +1,12 @@
 
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR})
 
 
 ########### next target ###############
 
 set(printVars_SRCS printVars.C MyTraversal.C)
 
-kde4_add_executable(printVars ${printVars_SRCS})
+add_executable(printVars ${printVars_SRCS})
 
-target_link_libraries(printVars ${KDE4_KDECORE_LIBS})
 
 install(TARGETS printVars DESTINATION bin)
 
