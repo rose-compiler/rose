@@ -24,7 +24,7 @@ namespace CodeThorn
       virtualCall    = (1 << 2),
       overrider      = (1 << 3),
       //~ resolvePointerCalls   = (1 << 3),
-      defaultValue = normalCall | addressTaken | virtualCall | overrider,
+      defaultValue   = normalCall | addressTaken | virtualCall | overrider,
     };
 
     Property kind;
@@ -43,7 +43,6 @@ namespace CodeThorn
   {
     return static_cast<CallEdge::Property>(lhs & std::int8_t(rhs));
   }
-
 
   using CGVertex  = FunctionKeyType;
   using CGEdge    = CallEdge::Property;
@@ -68,8 +67,18 @@ namespace CodeThorn
   ///   \param  vfa           a virtual function analysis, if overriders should be added to virtual calls
   ///   \param  withAddrTaken if set, taking an address of a function generates a callgraph entry
   ///   \return a call graph and detailed function call information.
+  /// \details
+  ///   calls to function that are not reachable from \p proj are ignored.
   std::tuple<CallGraph, FunctionCallDataSequence>
-  generateCallGraphFromAST(ASTRootType ast, const VirtualFunctionAnalysis* vfa = nullptr, bool withAddrTaken = true);
+  generateCallGraphFromAST(ASTRootType proj, const VirtualFunctionAnalysis* vfa = nullptr, bool withAddrTaken = true);
+
+  /// generates a CallGraph and call information for all functions in the memory pool
+  ///   \param  ast           the ROSE project
+  ///   \param  vfa           a virtual function analysis, if overriders should be added to virtual calls
+  ///   \param  withAddrTaken if set, taking an address of a function generates a callgraph entry
+  ///   \return a call graph and detailed function call information.
+  std::tuple<CallGraph, FunctionCallDataSequence>
+  generateCallGraphFromMemoryPool(const VirtualFunctionAnalysis* vfa = nullptr, bool withAddrTaken = true);
 
   // CallGraph generateCallGraphFromNormalizedAST(SgProject* proj);
 } // end of namespace CodeThorn

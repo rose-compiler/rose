@@ -30,7 +30,7 @@ namespace
         ct::CallDataSequence               addressTknElems;
         ct::CallDataSequence               virtualElems;
 
-        for (ct::CallData call : compat.functionRelations(src, *isVirtualFunction))
+        for (ct::CallData call : compat.functionRelations(src))
         {
           if (call.callee())
           {
@@ -41,10 +41,12 @@ namespace
             if (!isCall) // address taken
               addressTknElems.push_back(call);
             else
+            {
               insert(srcpos, tgtkey, virtualCall ? ct::CallEdge::virtualCall : ct::CallEdge::normalCall);
+            }
 
             // if the address was taken from a virtual function,
-            //   we also store it in the virtual call sequence.
+            //   we also store it in the virtual call container.
             if (virtualCall)
               virtualElems.push_back(call);
           }
@@ -68,7 +70,6 @@ namespace
 
       void expandVirtualCalls(const ct::VirtualFunctionAnalysis& vfa);
 
-      sg::NotNull<ct::FunctionPredicate> isVirtualFunction;
       sg::NotNull<ct::CallGraph>         g;
       ct::FunctionCallDataSequence       unresolved = {};
       ct::FunctionCallDataSequence       virtuals   = {};
@@ -219,30 +220,21 @@ namespace
     }
   }
 #endif /* DEBUG_CODE */
-}
 
-
-namespace CodeThorn
-{
-  std::tuple<CallGraph, FunctionCallDataSequence>
-  generateCallGraphFromAST(ASTRootType n, const VirtualFunctionAnalysis* vfa, bool withAddrTaken)
+  std::tuple<ct::CallGraph, ct::FunctionCallDataSequence>
+  generateCallGraph(std::vector<ct::FunctionKeyType> all, const ct::VirtualFunctionAnalysis* vfa, bool withAddrTaken)
   {
-    CallGraph                    g;
-    CompatibilityBridge          compat;
-    std::vector<FunctionKeyType> allFunctions   = compat.allFunctionKeys(n);
-    auto                         insertVertices = [&g](FunctionKeyType key) -> void { g.insertVertex(key); };
-    ct::FunctionPredicate        alwaysFalse    = [](FunctionKeyType key) -> bool { return false; };
-    ct::FunctionPredicate        isVirtualFunc  = vfa ? vfa->virtualFunctionTest() : alwaysFalse;
+    ct::CallGraph g;
+    auto          insertVertices =
+        [&g](ct::FunctionKeyType key) -> void { g.insertVertex(key); };
+
+    auto const    beg = all.begin();
+    auto const    lim = all.end();
 
     // checkUniqueMangledNames(allFunctions);
 
-    std::for_each( allFunctions.begin(), allFunctions.end(),
-                   insertVertices
-                 );
-
-    InsertEdges ie = std::for_each( allFunctions.begin(), allFunctions.end(),
-                                    InsertEdges{&isVirtualFunc, &g}
-                                  );
+    std::for_each(beg, lim, insertVertices);
+    InsertEdges ie = std::for_each(beg, lim, InsertEdges{&g});
 
     if (withAddrTaken)
       ie.integrateAddressTaken();
@@ -265,4 +257,21 @@ namespace CodeThorn
 
     return { std::move(g), std::move(ie.unresolved) };
   }
+}
+
+
+namespace CodeThorn
+{
+  std::tuple<CallGraph, FunctionCallDataSequence>
+  generateCallGraphFromAST(ASTRootType n, const VirtualFunctionAnalysis* vfa, bool withAddrTaken)
+  {
+    return generateCallGraph(CompatibilityBridge{}.allFunctionKeys(n), vfa, withAddrTaken);
+  }
+
+  std::tuple<CallGraph, FunctionCallDataSequence>
+  generateCallGraphFromMemoryPool(const VirtualFunctionAnalysis* vfa, bool withAddrTaken)
+  {
+    return generateCallGraph(CompatibilityBridge{}.allFunctionKeysFromMemoryPool(), vfa, withAddrTaken);
+  }
+
 } // namespace CodeThorn

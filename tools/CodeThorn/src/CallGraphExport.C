@@ -378,7 +378,7 @@ namespace CodeThorn
              res["defined"] = compat.hasDefinition(key);
 
              if (auto clazz = compat.classType(key))
-               res["class"]  = typeNameOf(*clazz);
+               res["class"] = compat.nameOf(*clazz);
 
              return res;
            };

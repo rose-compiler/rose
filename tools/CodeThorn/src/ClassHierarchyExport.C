@@ -55,7 +55,9 @@ namespace
   std::string
   nameClassType(ct::ClassKeyType key)
   {
-    return ct::typeNameOf(key);
+    ct::CompatibilityBridge compat;
+
+    return compat.nameOf(key);
   }
 
   inline

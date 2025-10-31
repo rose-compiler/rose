@@ -643,11 +643,23 @@ namespace
 
       void handle(const SgClassDeclaration& n)
       {
+        SgName className = n.get_name();
+
+        if (false /* wip - mangleAnonymousTypes */)
+        {
+          bool const isAnonymousName = className.getString().rfind("__anonymous_0x", 0) != std::string::npos;
+
+          if (isAnonymousName)
+          {
+            // ...
+          }
+        }
+
         // \todo how about class/unions in parameter lists? Handle like enums?
 
         res = join( mangleScope(n.get_scope())
                   , mglClass
-                  , simpleName(n.get_name(), "cls")
+                  , simpleName(className, "cls")
                   );
       }
 
@@ -754,8 +766,43 @@ namespace
     return (n.get_name() == "main") && isSgGlobal(n.get_scope());
   }
 
+  std::string fortranFunctionName(const SgFunctionDeclaration& n)
+  {
+    if (n.get_declarationModifier().isBind())
+    {
+      std::string binding = n.get_binding_label();
+
+      if (!binding.empty())
+        return binding;
+
+      // \todo
+      // shall we generate name according to linkage?
+    }
+
+    std::string name = n.get_name();
+
+    boost::to_lower(name);
+
+    // according to documentation, gfortran appends two underlines
+    //   if the name already contains one.
+    //   https://en.wikipedia.org/wiki/Name_mangling#Fortran
+    //   https://stackoverflow.com/questions/7175405/compiler-agnostic-fortran-name-mangling-function
+    //
+    // However tests with gcc 8 (and 12) and simple subroutines do not show that behavior
+    //   so the extra underline is turned off.
+    bool const withExtraUnderline = false;
+    bool const extraUnderline     = name.find("_") != std::string::npos;
+    if (extraUnderline & withExtraUnderline) name += '_';
+
+    name += '_';
+    return name;
+  }
+
   std::string ExternalMangler::functionName(const SgFunctionDeclaration& n)
   {
+    if (si::is_Fortran_language())
+      return fortranFunctionName(n);
+
     const SgSpecialFunctionModifier& special = n.get_specialFunctionModifier();
 
     // Special case: destructor names
@@ -1148,7 +1195,10 @@ namespace
   const SgScopeStatement*
   scopeForFunctionMangling(const SgFunctionDeclaration& n)
   {
-    if (si::is_C_language() || n.get_linkage() == "C" || isMainFunction(n))
+    bool const useCMangling = si::is_C_language() || n.get_linkage() == "C" || isMainFunction(n);
+    bool const useFortranMangling = !useCMangling && si::is_Fortran_language();
+
+    if (useCMangling || useFortranMangling)
       return nullptr;
 
     return n.get_scope();

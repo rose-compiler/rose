@@ -551,7 +551,9 @@ namespace
     if (pos != m.end())
       return *pos;
 
-    msgError() << "\nUnable to find representation for class " << ct::typeNameOf(key)
+    ct::RoseCompatibilityBridge compat;
+
+    msgError() << "\nUnable to find representation for class " << compat.nameOf(key)
                << "\n  * Number of known classes (in " << code << "): " << m.size()
                << std::endl;
 

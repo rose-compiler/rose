@@ -203,8 +203,11 @@ class RoseCompatibilityBridge
     /// returns a string representation for \p vid
     std::string nameOf(VariableKeyType vid) const;
 
-    /// returns a string representation for \p vid
+    /// returns a string representation for \p fid
     std::string nameOf(FunctionKeyType fid) const;
+
+    /// returns a string representation for \p cid
+    std::string nameOf(ClassKeyType cid) const;
 
     /// returns a unique numeric number for \p id
     /// \details
@@ -222,7 +225,7 @@ class RoseCompatibilityBridge
 
     /// returns the location of function implementation \p fid if available
     ///   otherwise returns the location of the first non-defining declaration.
-    SourceLocation location(FunctionKeyType fid) const;
+    SourceLocation location(AnyKeyType fid) const;
 
     /// compares the name of functions \p lhs and \p rhs
     /// \param lhs some function
@@ -327,26 +330,31 @@ class RoseCompatibilityBridge
 
     /// returns all callees (if known)
     /// \param fn the function for which the result shall be computed
-    /// \param isVirtualFunction a predicate that returns true if
-    ///                          a function is explciticely or implcitely
-    ///                          virtual.
     /// \return a set of functions called by \p fn
     /// \{
     std::vector<CallData>
-    functionRelations(FunctionKeyType fn, FunctionPredicate isVirtualFunction) const;
+    functionRelations(FunctionKeyType fn) const;
     ///}
 
     /// returns a predicate testing if a function has name \p name.
     FunctionPredicate
     functionNamePredicate(std::string name) const;
 
-    /// returns all functions reachable from n
+    /// returns all functions reachable from \p n
     std::vector<FunctionKeyType>
     allFunctionKeys(ASTRootType n) const;
 
-    /// returns all functions reachable from n where pred holds.
+    /// returns all functions reachable from \p n where \p pred holds.
     std::vector<FunctionKeyType>
     allFunctionKeys(ASTRootType n, FunctionPredicate pred) const;
+
+    /// returns all functions in the memory pool
+    std::vector<FunctionKeyType>
+    allFunctionKeysFromMemoryPool() const;
+
+    /// returns all functions in the memory pool where predicate \p pred holds.
+    std::vector<FunctionKeyType>
+    allFunctionKeysFromMemoryPool(FunctionPredicate pred) const;
 
     DataMemberType
     typeOf(VariableKeyType var) const;
@@ -354,6 +362,7 @@ class RoseCompatibilityBridge
     SpecialMemberFunctionContainer
     specialMemberFunctions(ClassKeyType clazz) const;
 
+    /// returns the assoicated class of \p fn, if fn is a member function, null otherwise
     Optional<ClassKeyType>
     classType(FunctionKeyType fn) const;
 };
@@ -367,7 +376,7 @@ struct CastWriterDbg
 std::ostream& operator<<(std::ostream& os, const CastWriterDbg&);
 
 /// returns a string representation of \p key
-std::string typeNameOf(ClassKeyType key);
+// std::string typeNameOf(ClassKeyType key);
 
 /// tests if \p key has a templated ancestor
 /// \param  key the class key (SgClassDefinition*)

@@ -67,23 +67,25 @@ ClassAnalysisInfo ClassAnalysis::classInfo(ClassKeyType classKey) const
 
 std::ostream& operator<<(std::ostream& os, ClassAnalysisInfo cai)
 {
-  const ClassAnalysis* analysis = cai.analysis();
-  ClassKeyType         classkey = cai.key();
+  const ClassAnalysis*    analysis = cai.analysis();
+  ClassKeyType            classkey = cai.key();
 
   if (analysis == nullptr)
     return os << "ClassAnalysisInfo::analysis returns nullptr. Use a valid object."
               << std::endl;
 
+  RoseCompatibilityBridge compat;
+
   auto pos = analysis->find(cai.key());
   if (pos != analysis->end())
-    return os << "class " << typeNameOf(classkey) << " exists in class hierarchy analysis. OK."
+    return os << "class " << compat.nameOf(classkey) << " exists in class hierarchy analysis. OK."
               << std::endl;
 
-  os << "class " << typeNameOf(classkey) << " was not found in the class hierarchy analysis.\n";
+  os << "class " << compat.nameOf(classkey) << " was not found in the class hierarchy analysis.\n";
 
   if (!analysis->containsAllClasses())
     os << "  - The class hierarchy analysis was built incrementally.\n"
-       << "    Possibly, " << typeNameOf(classkey) << " has not been seen."
+       << "    Possibly, " << compat.nameOf(classkey) << " has not been seen."
        << std::endl;
 
   if (auto opt = missingDiagnostics(classkey))
@@ -278,8 +280,10 @@ namespace
       }
       catch (...)
       {
-        msgError() << "  .. required from " << ct::typeNameOf(elem.first)
-                   << "\n     and dependency " << ct::typeNameOf(clazz) << " - " << typeid(*clazz).name()
+        ct::RoseCompatibilityBridge compat;
+
+        msgError() << "  .. required from " << compat.nameOf(elem.first)
+                   << "\n     and dependency " << compat.nameOf(clazz) << " - " << typeid(*clazz).name()
                    << "\n     CONSIDER: use CodeThorn::analyzeClassesFromMemoryPool to find all classes."
                    << std::endl;
 
