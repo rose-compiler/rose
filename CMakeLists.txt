@@ -822,7 +822,6 @@ include(MacroLibrary)
 
 # Database
 include(FindMySQL)
-find_package(OpenSSL)
 
 find_package(Perl)
 
@@ -1176,7 +1175,6 @@ if(with-wine)
 endif()
 
 if((NOT WIN32) AND (ENABLE_BINARY_ANALYSIS))
-  include(FindOpenSSL)
   include(FindSqlite3)
   find_sqlite3()
 endif()
