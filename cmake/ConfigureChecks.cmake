@@ -8,10 +8,10 @@
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)
-include(CheckLibraryExists) # TODO: Use find_package instead 
+include(CheckLibraryExists) # TODO: Use find_package instead
 include(CheckTypeExists)
 include(CheckTypeSize)
-include(MacroBoolTo01)
+include(CheckCXXSourceCompiles)
 include(TestBigEndian)
 
 test_big_endian(WORDS_BIGENDIAN)

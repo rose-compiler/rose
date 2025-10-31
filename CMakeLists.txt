@@ -817,12 +817,6 @@ set(CMAKE_REQUIRED_QUIET ${QUIET})
 include(ConfigureChecks)
 set(CMAKE_REQUIRED_QUIET FALSE)
 
-# A collection of macros which extend the built-in cmake commands
-include(MacroLibrary)
-
-# Database
-include(FindMySQL)
-
 find_package(Perl)
 
 ########################################################################################################################
