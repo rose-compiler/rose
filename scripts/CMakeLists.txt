@@ -1,4 +1,4 @@
-# List in "distributedScripts" only those scripts that are useful after ROSE is installed
+# Install only those scripts that are useful after ROSE is installed
 
-#set(distributedScripts)
-#install(FILES ${distributedScripts} DESTINATION bin)
+# Helps external projects configure, build, and install themselves.
+install(PROGRAMS rose-build-project DESTINATION bin)

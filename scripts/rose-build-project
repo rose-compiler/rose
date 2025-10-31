@@ -1,0 +1,566 @@
+#!/bin/bash
+#
+# This script helps install external ROSE-based tools.
+#
+set -e
+arg0="${0##*/}"
+dir0="${0%/*}"
+
+: "${ROSE_INSTALLATION_PARENT="$HOME/rose-installed"}"
+: "${ROSE_ROOT=}"
+: "${BUILD_SYSTEM=}"
+: "${BUILD_TARGET=}"
+: "${DRY_RUN=}"
+: "${TOOL_SOURCE=}"
+: "${VERBOSE=}"
+
+usage() {
+    echo "usage: $arg0 --help"
+    echo "       $arg0 [SWITCHES...] [--source=TOOL_SOURCE] [ROSE_ROOT] [TARGET]"
+}
+
+help() {
+    echo "$arg0" |tr a-z A-Z
+    echo
+    echo "NAME"
+    echo "    $arg0 - build and install ROSE-based tools"
+    echo
+    echo "SYNOPSIS"
+    echo "    $arg0 [SWITCHES] [ROSE_ROOT] [TARGET]"
+    echo "    $arg0 [SWITCHES] [ROSE_ROOT] TARGET [TARGET_OPTIONS]"
+    echo
+    echo "DESCRIPTION"
+    echo "    This tool configure, build, and/or install the tools in this repository"
+    echo "    based on the TARGET argument."
+    echo
+    echo "    The following SWITCHES are understood:"
+    echo "        --help"
+    echo "        -h"
+    echo "            Show the manpage documentation for this tool."
+    echo
+    echo "        --source=TOOL_SOURCE"
+    echo "            Specifies the root directory of the tool source tree. If this"
+    echo "            switch is not specified, then the script will consider the current"
+    echo "            directory and parent directories to try to find the top of the tool"
+    echo "            source tree."
+    echo
+    echo "        --ninja"
+    echo "        --cmake"
+    echo "        --make"
+    echo "        --tup"
+    echo "            Specifies which build system to use. The choices are:"
+    echo
+    echo "              * \"ninja\" means configure with CMake and build with Ninja."
+    echo "              * \"cmake\" means configure with CMake and build with \"make\"."
+    echo "              * \"make\" means configure with rose-config and build with \"make\"."
+    echo "              * \"tup\" means configure with rose-config and build with \"tup\"."
+    echo
+    echo "            The default is to choose an appropriate build system as follows:"
+    echo
+    echo "              1. If ROSE was configured with CMake and the \"cmake\" and \"ninja\""
+    echo "                 executables are found, then configure and build this package"
+    echo "                 with CMake and Ninja."
+    echo
+    echo "              2. If ROSE was configured with CMake and the and the \"cmake\""
+    echo "                 executable is found, then configure and build this package with"
+    echo "                 CMake and GNU Make."
+    echo
+    echo "              3. If ROSE was built with Tup or Autotools and the \"tup\" executable"
+    echo "                 is found, then build this package with Tup."
+    echo
+    echo "              4. If ROSE was installed with the deprecated GNU Autotools build"
+    echo "                 system, then build this package with Make. This build method"
+    echo "                 is deprecated as of October 2025 and will be removed sometime"
+    echo "                 after October 2026."
+    echo
+    echo "        --dry-run"
+    echo "        -n"
+    echo "            Don't actually do anything; just show what would be done."
+    echo
+    echo "        --verbose"
+    echo "        -v"
+    echo "            Show more details than usual, such as the command-lines for running"
+    echo "            the compiler."
+    echo
+    echo "        --version"
+    echo "        -V"
+    echo "            Show the version number for this source repository."
+    echo
+    echo "    Finding ROSE"
+    echo "        If a ROSE_ROOT argument is specified, then ROSE is obtained from that"
+    echo "        directory. Otherwise, we assume that this script itself is part of the"
+    echo "        desired ROSE installation."
+    echo
+    echo "        If ROSE_ROOT is specified, then it can be either the directory where"
+    echo "        ROSE is installed, or a subdirectory of the \$ROSE_INSTALLATION_PARENT"
+    echo "        which is currently \"$ROSE_INSTALLATION_PARENT\"."
+    echo
+    echo "    Build targets"
+    echo "        The BUILD_TARGET argument specifies what this build script should do."
+    echo "        It should be one of the following words:"
+    echo
+    echo "            * \"configure\" means configure (or reconfigure) the build tree,"
+    echo "              but do not build anything."
+    echo
+    echo "            * \"build\" means build the tools but do not install them."
+    echo
+    echo "            * \"install\" means build the tools and install them."
+    echo
+    echo "        The default build target is \"$BUILD_TARGET\"."
+}
+
+
+# Color output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+die() {
+    echo -e "${RED}${arg0}: error:" "$@" "$NC" >&2
+    exit 1
+}
+
+error() {
+    echo -e "${RED}${arg0}: error:" "$@" "$NC" >&2
+}
+
+warn() {
+    echo -e "${YELLOW}${arg0}: warning:" "$@" "$NC" >&2
+}
+
+info() {
+    echo -e "${GREEN}${arg0}:" "$@" "$NC" >&2
+}
+
+trace() {
+    echo -e "+${BLUE}" "$@" "$NC" >&2
+}
+
+find-command() {
+    local cmd="$1"
+    type -p "$cmd" 2>/dev/null || true
+}
+
+find-spock-command() {
+    local cmd="$1"
+    (PATH="$PATH:$HOME/.spock/bin" find-command "$1")
+}
+
+# Name of the root source directory for the external tool repository that we're trying to build.
+find-tool-source() {
+    if [ "$TOOL_SOURCE" = "" ]; then
+	local dir="$(pwd)"
+	local last_found=
+	while [ "$dir" != "/" ]; do
+	    # Check for version control files
+	    if [ -d "$dir/.git" ]; then
+		echo "$dir"
+		return 0
+	    fi
+
+	    # Check for build system file
+	    if [ -f "$dir/CMakeLists.txt" ] ||
+               [ -f "$dir/configure.ac" ] ||
+               [ -f "$dir/configure.in" ] ||
+               [ -f "$dir/Makefile.am" ] ||
+               [ -f "$dir/Makefile" ]; then
+		last_found="$dir"
+	    fi
+
+	    # Move up
+	    dir="$(dirname "$dir")"
+	done
+	TOOL_SOURCE="$last_found"
+    fi
+
+    [ -d "$TOOL_SOURCE/." ] || die "cannot find top of tool source code"
+}
+    
+# Name of the ROSE installation directory.
+find-rose() {
+    local rose_root="$1"
+
+    if [ -e "$rose_root/lib/librose.so" ] || [ -e "$rose_root/lib64/librose.so" ]; then
+	: as is
+    elif [ -e "$ROSE_INSTALLATION_PARENT/$rose_root/lib/librose.so" ] ||
+	 [ -e "$ROSE_INSTALLATION_PARENT/$rose_root/lib64/librose.so" ]; then
+	rose_root="$ROSE_INSTALLATION_PARENT/$rose_root"
+    elif [ "$rose_root" = "" ]; then
+	if [ -e "$dir0/../lib/librose.so" ] || [ -e "$dir0/../lib64/librose.so" ]; then
+	    rose_root="$dir0/.."
+	else
+	    die "cannot find ROSE installation root; see --help"
+	fi
+    else
+	die "ROSE seems to not be installed at \"$rose_root\""
+    fi
+
+    # Convert to an absolute directory if necessary
+    case "$rose_root" in
+	/*)
+	    : okay
+	    ;;
+	*)
+	    rose_root="$(pwd)/$rose_root"
+	    ;;
+    esac
+    echo "$rose_root"
+}
+
+# How was ROSE built?
+rose-build-system() {
+    if [ -r "$ROSE_ROOT/lib/cmake/Rose/RoseConfig.cmake" ]; then
+	echo "cmake"
+    elif [ -r "$ROSE_ROOT/include/rose-installed-make.cfg" ]; then
+	echo "tup"
+    elif [ -r "$ROSE_ROOT/lib/rose-config.cfg" ]; then
+	echo "make"
+    else
+	die "cannot determine how ROSE was built"
+    fi
+}
+
+# Choose the build system for this package.
+pkg-build-system() {
+    # Permitted build systems for this project
+    declare -a permitted_bsys
+    if [ -n "$*" ]; then
+	permitted_bsys=("$@")
+    fi
+
+    # If no arguments, then permit build systems based on project files. These are in order of preference.
+    if [ "${#permitted_bsys[*]}" -eq 0 ]; then
+	if [ -r "CMakeLists.txt" ]; then
+	    permitted_bsys+=(ninja cmake)
+	fi
+	if [ -r "Tupfile.ini" ]; then
+	    permitted_bsys+=(tup)
+	fi
+	if [ -r "Makefile" ]; then
+	    permitted_bsys+=(make)
+	fi
+    fi
+    
+    # How was ROSE built?
+    rose_bsys="$(rose-build-system)"
+    info "ROSE was built with $rose_bsys"
+
+    # What build systems are valid based on criteria.
+    declare -a valid_bsys=()
+    for bsys in "${permitted_bsys[@]}"; do
+	case "$bsys" in
+	    ninja)
+		# CMake + Ninja is supported for this project only if ROSE was built with CMake.
+		if [ "$rose_bsys" = cmake ] && [ -n "$(find-command cmake)" ] && [ -n "$(find-command ninja)" ]; then
+		    valid_bsys+=(ninja)
+		fi
+		;;
+	    cmake)
+		# CMake + GNU Make is supported for this project only if ROSE was built with CMake.
+		if [ "$rose_bsys" = cmake ] && [ -n "$(find-command cmake)" ]; then
+		    valid_bsys+=(cmake)
+		fi
+		;;
+
+	    tup)
+		# Tup is better than most build systems because it accurately tracks dependencies. However, it is less
+		# common than CMake.
+		if [ -n "$(find-command tup)" ]; then
+		    valid_bsys+=(tup)
+		fi
+		;;
+
+	    make)
+		# The build system of last resort. Assume it can handle ROSE built in any way.
+		valid_bsys+=(make)
+		;;
+	esac
+    done
+
+    [ "${#valid_bsys[@]}" -gt 0 ] ||
+	die "cannot find a suitable build system for this project"
+
+    # The best build system is the first one.
+    echo "${valid_bsys[0]}"
+}
+
+# Maybe run a command, depending on whether --dry-run (or -n) was specified.
+maybe-run() {
+    trace "$@"
+    if [ "$DRY_RUN" = "" ]; then
+	"$@"
+    fi
+}
+
+# Should we use RMC/spock when running commands?
+maybe-run-build-command() {
+    local spock_shell="$(find-spock-command spock-shell)"
+    local env="$ROSE_ROOT/lib/rmc/rose"
+    if [ -r "$env" ] && [ -n "$spock_shell" ]; then
+	maybe-run "$spock_shell" --with-file "$env" "$@"
+    else
+	maybe-run "$@"
+    fi
+}
+
+# Copy the rose configuration script into ./rose.cfg
+copy-rose-config() {
+    if [ -n "$ROSE_ROOT" ]; then
+        if [ -r "$ROSE_ROOT/include/rose-installed-make.cfg" ]; then
+	    # The version that ROSE's Tup build system installs
+            cp "$ROSE_ROOT/include/rose-installed-make.cfg" rose.cfg
+        elif [ -r "$ROSE_ROOT/lib/rose-config.cfg" ]; then
+	    # The version that ROSE's Autotools build system installs
+            sed '/^ROSE_RPATHS/ s/ *-R */:/g' \
+                <"$ROSE_ROOT/lib/rose-config.cfg" >rose.cfg
+
+	    # We might also need to update some paths because this file is created before ROSE's install command is run, and
+	    # the final installation prefix can be specified at install time. Therefore when this file is installed it's
+	    # already out of date.
+	    orig_prefix="$(cat rose.cfg |sed -n 's/^ROSE_PREFIX.*=[ \t]*\(.*\)/\1/p' |head -n1)"
+	    sed -i~ "s%$orig_prefix%$ROSE_ROOT%g" rose.cfg
+        else
+            die "cannot find ROSE configuration script under \"$ROSE_ROOT\""
+        fi
+    fi
+}
+
+# Build this project using CMake and Ninja
+build-with-ninja() {
+    (
+	# Create the build directory
+	maybe-run mkdir -p _build
+	trace cd _build
+	[ -n "$DRY_RUN" ] || cd _build
+	local verbose="${VERBOSE:+-v}"
+
+	# Always reconfigure since it's fast and won't affect Ninja incremental builds. This ensures that if we change some
+	# configuration setting, things will rebuild correctly.
+	rm -f CMakeCache.txt
+	cmake_prefix_path="${ROSE_ROOT}/lib/cmake/Rose${CMAKE_PREFIX_PATH:+:}${CMAKE_PREFIX_PATH}"
+	if [ "$BUILD_TARGET" = config ] || [ "$BUILD_TARGET" = configure ]; then
+	    maybe-run-build-command env "CMAKE_PREFIX_PATH=$cmake_prefix_path" "$(find-command cmake)" .. $verbose -GNinja "$@"
+	else
+	    maybe-run-build-command env "CMAKE_PREFIX_PATH=$cmake_prefix_path" "$(find-command cmake)" .. $verbose -GNinja
+	fi
+	
+	case "$BUILD_TARGET" in
+	    config|configure)
+		: handled above
+		;;
+	    build)
+		maybe-run-build-command cmake --build . -j$(nproc) $verbose "$@"
+		;;
+	    install)
+		maybe-run-build-command cmake --build . -j$(nproc) $verbose
+		maybe-run-build-command cmake --install . "$@"
+		;;
+	esac
+    )
+}
+
+
+# Build this project using CMake and GNU Make
+build-with-cmake() {
+    (
+	# Create the build directory
+	maybe-run mkdir -p _build
+	trace cd _build
+	[ -n "$DRY_RUN" ] || cd _build
+	local verbose="${VERBOSE:+-v}"
+
+	# Always reconfigure since it's fast and won't affect Ninja incremental builds. This ensures that if we change some
+	# configuration setting, things will rebuild correctly.
+	rm -f CMakeCache.txt
+	cmake_prefix_path="${ROSE_ROOT}/lib/cmake/Rose${CMAKE_PREFIX_PATH:+:}${CMAKE_PREFIX_PATH}"
+	if [ "$BUILD_TARGET" = config ] || [ "$BUILD_TARGET" = configure ]; then
+	    maybe-run-build-command env "CMAKE_PREFIX_PATH=$cmake_prefix_path" "$(find-command cmake)" .. $verbose "$@"
+	else
+	    maybe-run-build-command env "CMAKE_PREFIX_PATH=$cmake_prefix_path" "$(find-command cmake)" .. $verbose
+	fi
+	
+	case "$BUILD_TARGET" in
+	    config|configure)
+		: handled above
+		;;
+	    build)
+		maybe-run-build-command cmake --build . -j$(nproc) $verbose -- -Otarget "$@"
+		;;
+	    install)
+		maybe-run-build-command cmake --build . -j$(nproc) $verbose -- -Otarget "$@"
+		maybe-run-build-command cmake --install .
+		;;
+	esac
+    )
+}
+
+# Build this project with Tup
+build-with-tup() {
+    warn "building with \"tup\" is deprecated; upgrade your project to use CMake"
+    warn "\"tup\" support will be removed after October 2026"
+
+    tup="$(find-command tup)"
+    [ -n "$tup" ] || die "cannot find \"tup\""
+
+    # Adjust the tup.config file based on how ROSE was configured,
+    # and any other features that might be necessary for this
+    # project.
+    copy-rose-config
+    source tup-scripts/rose_tool
+    rose_tool/check_configuration
+    ./tup-scripts/merge-configs BUILD_SYSTEM="$BUILD_SYSTEM" <tup.config >tup.config.new
+    mv tup.config.new tup.config
+    rose_tool/print_tup_config
+
+    case "$BUILD_TARGET" in
+	config|configure)
+	    : handled above
+	    ;;
+	build)
+	    maybe-run-build-command "$tup" --no-envion-check
+	    ;;
+	install)
+	    maybe-run-build-command "$tup" --no-environ-check
+	    maybe-run-build-command ./tup-scripts/install-staged --remove "$(pwd)" --remove . "$ROSE_ROOT"
+	    ;;
+    esac
+}
+
+# Build with make
+build-with-make() {
+    warn "building with \"make\" is deprecated; upgrade your project to use CMake"
+    warn "\"make\" support will be removed after October 2026"
+    
+    copy-rose-config
+    local verbose=${VERBOSE:+V=1}
+
+    case "$BUILD_TARGET" in
+	config|configure)
+	    : handled above
+	    ;;
+	build)
+	    maybe-run-build-command make -Otarget -j$(nproc) $verbose
+	    ;;
+	install)
+	    maybe-run-build-command make -Otarget -j$(nproc) $verbose install
+	    ;;
+    esac
+}
+
+####################################################################################################
+
+# parse command-line
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--cmake)
+	    BUILD_SYSTEM=cmake
+	    shift
+	    ;;
+	--make)
+	    BUILD_SYSTEM=make
+	    shift
+	    ;;
+	--ninja)
+	    BUILD_SYSTEM=ninja
+	    shift
+	    ;;
+	--tup)
+	    BUILD_SYSTEM=tup
+	    shift
+	    ;;
+	-h|--help)
+	    help
+	    exit 0
+	    ;;
+	--dry-run|-n)
+	    DRY_RUN=yes
+	    shift
+	    ;;
+	--source)
+	    TOOL_SOURCE="$2"
+	    shift 2
+	    ;;
+	--source=*)
+	    TOOL_SOURCE="${1#--source=}"
+	    shift
+	    ;;
+	--verbose|-v)
+	    VERBOSE=yes
+	    shift
+	    ;;
+	--version|-V)
+	    cat "$dir0/VERSION"
+	    exit 0
+	    ;;
+	--)
+	    shift
+	    break
+	    ;;
+	-*)
+	    die "unknown switch: \"$1\""
+	    ;;
+	config|configure|build|install)
+	    BUILD_TARGET="$1"
+	    shift
+	    break
+	    ;;
+	*)
+	    if [ "$ROSE_ROOT" = "" ]; then
+		ROSE_ROOT="$1"
+		shift
+	    else
+		usage >&2
+		exit 1
+	    fi
+	    ;;
+    esac
+done
+
+# Check that the build system is valid.
+case "$BUILD_SYSTEM" in
+    ninja|cmake|tup|make|"")
+	: okay
+	;;
+    *)
+	die "unknown build system: \"$BUILD_SYSTEM\""
+	;;
+esac
+
+# If there are more positional arguments, then there must be a build target
+if [ "$#" -gt 0 ] && [ "$BUILD_TARGET" = "" ]; then
+   usage >&2
+   exit 1
+fi
+
+# Defaults
+[ -n "$ROSE_ROOT" ] || ROSE_ROOT=latest
+[ -n "$BUILD_TARGET" ] || BUILD_TARGET=build
+
+ROSE_ROOT="$(find-rose "$ROSE_ROOT")"
+info "using ROSE installed at \"$ROSE_ROOT\""
+
+find-tool-source
+cd "$TOOL_SOURCE"
+
+BUILD_SYSTEM="$(pkg-build-system "$BUILD_SYSTEM")"
+info "building this package with $BUILD_SYSTEM"
+
+case "$BUILD_SYSTEM" in
+    ninja)
+	build-with-ninja "$@"
+	;;
+    cmake)
+	build-with-cmake "$@"
+	;;
+    tup)
+	build-with-tup "$@"
+	;;
+    make)
+	build-with-make "$@"
+	;;
+    *)
+	die "unknown build system \"$BUILD_SYSTEM\""
+	;;
+esac
