@@ -14,6 +14,10 @@ if(ENABLE_FORTRAN)
   # This seems to install the same file twice? 
   install(FILES OpenFortranParser-20200819-JDK8.jar ${jar_file}
           DESTINATION ${ROSE_LIB_DIR_NAME})
+  install(FILES
+    iso_c_binding.rmod
+    openacc.rmod
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/rose/)
 
   # this file also needs to be in the binary directory for
   # related tests to pass
