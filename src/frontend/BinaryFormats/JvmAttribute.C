@@ -41,8 +41,6 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmEnclosingMethod(parent);
   }
   else if (name == "Synthetic") { // 4.7.8
-    //TODO
-    ASSERT_require2(false, "Need testing for attribute Synthetic\n");
     return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_Synthetic);
   }
   else if (name == "Signature") { // 4.7.9
@@ -61,8 +59,6 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmLocalVariableTable(parent);
   }
   else if (name == "Deprecated") { // 4.7.15
-    //TODO
-    ASSERT_require2(false, "Need testing for attribute Deprecated\n");
     return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_Deprecated);
   }
   else if (name == "RuntimeVisibleAnnotations") { // 4.7.16
