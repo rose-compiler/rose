@@ -78,6 +78,7 @@ if(NOT WIN32 AND ENABLE_CODETHORN AND NOT ENABLE_CLANG_FRONTEND AND ENABLE_C)
 
   add_executable(thorn2 CodeThornCommandLineOptions.C thorn2.C)
   target_link_libraries(thorn2 PRIVATE codethorn OpenMP::OpenMP_C)
+  install(TARGETS thorn2 RUNTIME DESTINATION bin)
 
   # ##########################################################################
   # TOOL: THORN4
@@ -85,5 +86,6 @@ if(NOT WIN32 AND ENABLE_CODETHORN AND NOT ENABLE_CLANG_FRONTEND AND ENABLE_C)
 
   add_executable(thorn4 Thorn4CommandLineParser.C thorn4.C)
   target_link_libraries(thorn4 PRIVATE codethorn OpenMP::OpenMP_C)
+  install(TARGETS thorn4 RUNTIME DESTINATION bin)
 
 endif()
