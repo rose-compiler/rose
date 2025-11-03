@@ -12171,149 +12171,6 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmJvmInnerClassesEntry           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmJvmInnerClassesEntry);
-IS_SERIALIZABLE(AsmJvmInnerClassesEntry);
-
-#ifndef DOCUMENTATION
-AsmJvmInnerClassesEntry.useSmallHeader(true);
-#endif // !DOCUMENTATION
-
-#ifdef DOCUMENTATION
-/** A JVM InnerClasses attribute array entry.
- *
- *  See the JVM specification (section 4.7.6) for more information.
- */
-class SgAsmJvmInnerClassesEntry: public SgAsmJvmNode {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmInnerClassesEntry.setDataPrototype(
-        "uint16_t", "inner_class_info_index", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmInnerClassesEntry.setDataPrototype(
-        "uint16_t", "outer_class_info_index", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmInnerClassesEntry.setDataPrototype(
-        "uint16_t", "inner_name_index", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmInnerClassesEntry.setDataPrototype(
-        "uint16_t", "inner_class_access_flags", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmJvmInnerClassesEntry);
-#if defined(SgAsmJvmInnerClassesEntry_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmJvmInnerClassesEntry -----------------------
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmJvmInnerClassesEntry");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
-        s & BOOST_SERIALIZATION_NVP(p_inner_class_info_index);
-        s & BOOST_SERIALIZATION_NVP(p_outer_class_info_index);
-        s & BOOST_SERIALIZATION_NVP(p_inner_name_index);
-        s & BOOST_SERIALIZATION_NVP(p_inner_class_access_flags);
-        debugSerializationEnd("SgAsmJvmInnerClassesEntry");
-    }
-#endif // ROSE_ENABLE_BOOST_SERIALIZATION
-public:
-public:
-    /** Property: inner_class_info_index.
-     *
-     *  The value of the inner_class_info_index must be a valid index into the constant_pool table (see the JVM specification
-     *  section 4.7.6). 
-     *  
-     *  @{ */
-    uint16_t const& get_inner_class_info_index() const;
-    void set_inner_class_info_index(uint16_t const&);
-    /** @} */
-
-public:
-    /** Property: outer_class_info_index
-     *
-     *  The value of the outer_class_info_index must be a valid index into the constant_pool table (see the JVM specification
-     *  section 4.7.6). 
-     *  
-     *  @{ */
-    uint16_t const& get_outer_class_info_index() const;
-    void set_outer_class_info_index(uint16_t const&);
-    /** @} */
-
-public:
-    /** Property: inner_name_index
-     *
-     *  The value of the inner_name_index must be a valid index into the constant_pool table (see the JVM specification section
-     *  4.7.6). 
-     *  
-     *  @{ */
-    uint16_t const& get_inner_name_index() const;
-    void set_inner_name_index(uint16_t const&);
-    /** @} */
-
-public:
-    /** Property: inner_class_access_flags
-     *
-     *  The value of the inner_class_access_flags item is a mask of flags used to denote access permissions to and properties of
-     *  class or interface C as declared in the source code from which this class file was compiled (see the JVM specification
-     *  section 4.7.6). 
-     *  
-     *  @{ */
-    uint16_t const& get_inner_class_access_flags() const;
-    void set_inner_class_access_flags(uint16_t const&);
-    /** @} */
-public:
-    /** Initialize the object before parsing.
-     *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    explicit SgAsmJvmInnerClassesEntry(SgAsmJvmInnerClasses*);
-
-    /** Initialize the object by parsing content from the class file. */
-    SgAsmJvmInnerClassesEntry* parse(SgAsmJvmConstantPool*);
-
-    /** Write inner classes entry to a binary file. */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging information. */
-    void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmJvmInnerClassesEntry();
-
-public:
-    /** Default constructor. */
-    SgAsmJvmInnerClassesEntry();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmJvmInnerClassesEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmInnerClasses           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -12340,7 +12197,7 @@ class SgAsmJvmInnerClasses: public SgAsmJvmAttribute {
 
 #ifndef DOCUMENTATION
     AsmJvmInnerClasses.setDataPrototype(
-        "SgAsmJvmInnerClassesEntryPtrList", "classes", "",
+        "std::vector<SgAsmJvmInnerClasses::Entry*>", "classes", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -12360,16 +12217,43 @@ private:
         debugSerializationEnd("SgAsmJvmInnerClasses");
     }
 #endif // ROSE_ENABLE_BOOST_SERIALIZATION
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Local types
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** JVM InnerClassesEntry.
+     *
+     *  Every CONSTANT_Class_info entry in the constant_pool table which represents a class or interface C that
+     *  is not a package member must have exactly one corresponding entry in the classes array.  See section 4.7.6 of
+     *  the JVM specification. */
+    struct Entry {
+        uint16_t inner_class_info_index = 0;
+        uint16_t outer_class_info_index = 0;
+        uint16_t inner_name_index = 0;
+        uint16_t inner_class_access_flags = 0;
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_NVP(inner_class_info_index);
+            s & BOOST_SERIALIZATION_NVP(outer_class_info_index);
+            s & BOOST_SERIALIZATION_NVP(inner_name_index);
+            s & BOOST_SERIALIZATION_NVP(inner_class_access_flags);
+        }
+#endif
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
 public:
     /** Property: List of pointers to InnerClasses attribute entry. 
      * 
      * @{ */
-    SgAsmJvmInnerClassesEntryPtrList const& get_classes() const;
-    SgAsmJvmInnerClassesEntryPtrList& get_classes();
-    void set_classes(SgAsmJvmInnerClassesEntryPtrList const&);
+    std::vector<SgAsmJvmInnerClasses::Entry*> const& get_classes() const;
+    std::vector<SgAsmJvmInnerClasses::Entry*>& get_classes();
     /** @} */
-public:
     /** Initialize the InnerClasses attribute before parsing.
      *
      *  This is the preferred constructor to use before parsing as it sets its parent. */
@@ -14923,7 +14807,6 @@ AstNodeClass& AsmJvmNode = nonTerminalConstructor(
         | AsmJvmExceptionHandler
         | AsmJvmExceptionTable
         | AsmJvmField
-        | AsmJvmInnerClassesEntry
         | AsmJvmLocalVariableEntry
         | AsmJvmLocalVariableTypeEntry
         | AsmJvmMethod

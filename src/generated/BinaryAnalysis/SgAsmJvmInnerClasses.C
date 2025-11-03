@@ -7,20 +7,14 @@
 #define ROSE_SgAsmJvmInnerClasses_IMPL
 #include <SgAsmJvmInnerClasses.h>
 
-SgAsmJvmInnerClassesEntryPtrList const&
+std::vector<SgAsmJvmInnerClasses::Entry*> const&
 SgAsmJvmInnerClasses::get_classes() const {
     return p_classes;
 }
 
-SgAsmJvmInnerClassesEntryPtrList&
+std::vector<SgAsmJvmInnerClasses::Entry*>&
 SgAsmJvmInnerClasses::get_classes() {
     return p_classes;
-}
-
-void
-SgAsmJvmInnerClasses::set_classes(SgAsmJvmInnerClassesEntryPtrList const& x) {
-    this->p_classes = x;
-    set_isModified(true);
 }
 
 SgAsmJvmInnerClasses::~SgAsmJvmInnerClasses() {

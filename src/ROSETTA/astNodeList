@@ -936,7 +936,6 @@ SgAsmJvmExceptionHandler
 SgAsmJvmExceptionTable
 SgAsmJvmClass
 SgAsmJvmLineNumberTable
-SgAsmJvmInnerClassesEntry
 SgAsmJvmInnerClasses
 SgAsmCilInstruction
 SgAsmStackExpression

@@ -290,7 +290,6 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmIndexTableAttr.C \
         SgAsmJvmIndexedAttr.C \
         SgAsmJvmInnerClasses.C \
-        SgAsmJvmInnerClassesEntry.C \
         SgAsmJvmInstruction.C \
         SgAsmJvmLineNumberTable.C \
         SgAsmJvmLocalVariableEntry.C \

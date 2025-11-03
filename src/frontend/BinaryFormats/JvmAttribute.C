@@ -198,13 +198,11 @@ SgAsmJvmIndexedAttr* SgAsmJvmIndexedAttr::parse(SgAsmJvmConstantPool* pool)
   // Ensure that we have a specialized type by this point
   unsigned type = get_attribute_type();
   ASSERT_require2(type != SgAsmJvmIndexedAttr::ATTR_NONE, "SgAsmJvmIndexedAttr::attribute_type is not set\n");
-  if (type == SgAsmJvmIndexedAttr::ATTR_Deprecated || type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
-    // There is no index for this attribute type
-    std::cerr << "--> WARNING: parsing untested attribute type " << get_attribute_type() << ":index:" << get_index() << "\n";
+  if (p_attribute_length == 0) {
+    // no index for this attribute
     return this;
   }
   Jvm::read_value(pool, p_index);
-
   return this;
 }
 
@@ -212,14 +210,13 @@ void SgAsmJvmIndexedAttr::unparse(std::ostream &os) const
 {
   SgAsmJvmAttribute::unparse(os);
 
+  // Ensure that we have a specialized type by this point
   unsigned type = get_attribute_type();
   ASSERT_require2(type != SgAsmJvmIndexedAttr::ATTR_NONE, "SgAsmJvmIndexedAttr::attribute_type is not set\n");
-  if (type == SgAsmJvmIndexedAttr::ATTR_Deprecated || type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
-    // There is no index for this attribute type
-    std::cerr << "--> WARNING: unparsing untested attribute type " << get_attribute_type() << ":index:" << get_index() << "\n";
+  if (p_attribute_length == 0) {
+    // no index for this attribute
     return;
   }
-
   Jvm::writeValue(os, get_index());
 }
 
@@ -626,8 +623,11 @@ SgAsmJvmInnerClasses* SgAsmJvmInnerClasses::parse(SgAsmJvmConstantPool* pool)
   Jvm::read_value(pool, numClasses);
 
   for (int ii = 0; ii < numClasses; ii++) {
-    auto entry = new SgAsmJvmInnerClassesEntry(this);
-    entry->parse(pool);
+    auto entry = new SgAsmJvmInnerClasses::Entry();
+    Jvm::read_value(pool, entry->inner_class_info_index);
+    Jvm::read_value(pool, entry->outer_class_info_index);
+    Jvm::read_value(pool, entry->inner_name_index);
+    Jvm::read_value(pool, entry->inner_class_access_flags);
     get_classes().push_back(entry);
   }
   return this;
@@ -641,41 +641,16 @@ void SgAsmJvmInnerClasses::unparse(std::ostream& os) const
   Jvm::writeValue(os, numClasses);
 
   for (auto entry : get_classes()) {
-    entry->unparse(os);
+    Jvm::writeValue(os, entry->inner_class_info_index);
+    Jvm::writeValue(os, entry->outer_class_info_index);
+    Jvm::writeValue(os, entry->inner_name_index);
+    Jvm::writeValue(os, entry->inner_class_access_flags);
   }
 }
 
 void SgAsmJvmInnerClasses::dump(FILE*, const char*, ssize_t) const
 {
   mlog[WARN] << "SgAsmJvmInnerClasses::dump() ...\n";
-}
-
-SgAsmJvmInnerClassesEntry::SgAsmJvmInnerClassesEntry(SgAsmJvmInnerClasses* table)
-{
-  initializeProperties();
-  set_parent(table);
-}
-
-SgAsmJvmInnerClassesEntry* SgAsmJvmInnerClassesEntry::parse(SgAsmJvmConstantPool* pool)
-{
-  Jvm::read_value(pool, p_inner_class_info_index);
-  Jvm::read_value(pool, p_outer_class_info_index);
-  Jvm::read_value(pool, p_inner_name_index);
-  Jvm::read_value(pool, p_inner_class_access_flags);
-  return this;
-}
-
-void SgAsmJvmInnerClassesEntry::unparse(std::ostream& os) const
-{
-  Jvm::writeValue(os, p_inner_class_info_index);
-  Jvm::writeValue(os, p_outer_class_info_index);
-  Jvm::writeValue(os, p_inner_name_index);
-  Jvm::writeValue(os, p_inner_class_access_flags);
-}
-
-void SgAsmJvmInnerClassesEntry::dump(FILE*, const char*, ssize_t) const
-{
-  mlog[INFO] << "SgAsmJvmInnerClassesEntry::dump() is not implemented yet\n";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

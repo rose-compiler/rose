@@ -410,7 +410,6 @@ GENERATED_SOURCE =						\
         SgAsmJvmFileHeader.h					\
         SgAsmJvmIndexedAttr.h					\
         SgAsmJvmIndexTableAttr.h				\
-        SgAsmJvmInnerClassesEntry.h				\
         SgAsmJvmInnerClasses.h					\
         SgAsmJvmInstruction.h					\
         SgAsmJvmLineNumberTable.h				\
@@ -822,7 +821,6 @@ GENERATED_SOURCE =						\
 	SgAsmJvmFileHeader.h					\
 	SgAsmJvmIndexedAttr.h					\
 	SgAsmJvmIndexTableAttr.h				\
-	SgAsmJvmInnerClassesEntry.h				\
 	SgAsmJvmInnerClasses.h					\
 	SgAsmJvmInstruction.h					\
 	SgAsmJvmLineNumberTable.h				\
@@ -1381,7 +1379,6 @@ nodist_pkginclude_HEADERS =			\
    SgAsmJvmFileHeader.h				\
    SgAsmJvmIndexedAttr.h			\
    SgAsmJvmIndexTableAttr.h			\
-   SgAsmJvmInnerClassesEntry.h			\
    SgAsmJvmInnerClasses.h			\
    SgAsmJvmInstruction.h			\
    SgAsmJvmLineNumberTable.h			\
