@@ -5,33 +5,14 @@
 set(PROJECT_NAME RoseExternalExample)
 
 #---------------------------------------------------------------------------------------------------
-# This section is mostly boilerplate and will likely be almost idential for every external project
-# that depends on ROSE.
+# Boilerplate for finding and using ROSE. Copy this part to your external project.
 #---------------------------------------------------------------------------------------------------
 
 # Check ROSE's top-level CMakeLists.txt. You probably want to use that version or later.
 cmake_minimum_required(VERSION 3.15)
 
-# Adjust CMake's default optimization, debug, and assertion flags for different build types. These settings
-# are the same as the settings used by ROSE.
-string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
-
-# Read the version of this tool from a VERSION file. The file should be one line, and the version
-# may be surrounded by double quotes so it can be ineterpolated into a C/C++ program as a string
-# literal.
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" PROJECT_VERSION)
-string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
-string(REPLACE "\"" "" PROJECT_VERSION "${PROJECT_VERSION}")
-
-# Give your project a name and version number.
-project(${PROJECT_NAME} VERSION ${PROJECT_VERSION} LANGUAGES CXX)
-
-# If your project requiers a compiler later than what was used to compile ROSE, do that here.
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Enable C++ language before finding ROSE (required for ROSE's dependency detection)
+enable_language(CXX)
 
 # Find ROSE - CMake will search CMAKE_PREFIX_PATH for RoseConfig.cmake
 # You can set CMAKE_PREFIX_PATH via:
@@ -40,82 +21,24 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #   3. Cache variable: cmake -DRose_DIR=/path/to/rose/install/lib/cmake/Rose ..
 find_package(Rose 0.11 REQUIRED)
 
-# Where is ROSE installed?
-get_target_property(Rose_LOCATION Rose::rose LOCATION)
-if(Rose_LOCATION)
-    get_filename_component(Rose_LIB_DIR "${Rose_LOCATION}" DIRECTORY)
-    get_filename_component(Rose_ROOT "${Rose_LIB_DIR}" DIRECTORY)
-endif()
+# Read the version of this tool from a VERSION file
+rose_read_version_file(PROJECT_VERSION)
 
-# Show what we found
-message(STATUS "==================================================")
-message(STATUS "Found ROSE ${Rose_VERSION} ${Rose_BUILD_TYPE} at ${Rose_ROOT}")
-message(STATUS "  Ada:        ${Rose_ENABLE_ADA}")
-message(STATUS "  Binaries:   ${Rose_ENABLE_BINARY_ANALYSIS}")
-message(STATUS "  C/C++:      ${Rose_ENABLE_C}")
-message(STATUS "  Fortran:    ${Rose_ENABLE_FORTRAN}")
-message(STATUS "  Java:       ${Rose_ENABLE_JAVA}")
-message(STATUS "  Jovial:     ${Rose_ENABLE_JOVIAL}")
-message(STATUS "  OpenCL:     ${Rose_ENABLE_OPENCL}")
-message(STATUS "  PHP:        ${Rose_ENABLE_PHP}")
-message(STATUS "  Python:     ${Rose_ENABLE_PYTHON}")
+# Give your project a name and version number
+project(${PROJECT_NAME} VERSION ${PROJECT_VERSION} LANGUAGES CXX)
 
-# If you want to see *all* the ROSE variables, uncomment this code.
-#get_cmake_property(_varNames VARIABLES)
-#foreach(_varName ${_varNames})
-#  if(_varName MATCHES "Rose|ROSE")
-#    message(STATUS "${_varName} = ${${_varName}}")
-#  endif()
-#endforeach()
+# If your project requires a C++ standard later than what was used to compile ROSE, set it here.
+# For example, to require C++17:
+#set(CMAKE_CXX_STANDARD 17)
+#set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Choose a default build type for this project
-if(NOT CMAKE_BUILD_TYPE)
-    if(Rose_BUILD_TYPE)
-        set(CMAKE_BUILD_TYPE "${Rose_BUILD_TYPE}" CACHE STRING "Build type (inherited from ROSE)" FORCE)
-        message(STATUS "No build type specified, defaulting to ROSE's build type: ${CMAKE_BUILD_TYPE}")
-    else()
-        set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build type" FORCE)
-    endif()
-endif()
-
-# Decide where to install your project's files. If no installation prefix was specified, default to
-# the ROSE installation location. Doing so is an easy way to have multiple versions and
-# configuration of the ROSE library and all tools installed at once. Note that we use this over
-# ${Rose_INSTALL_PREFIX} for technical reasons related to how ROSE sometimes gets installed.
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    if(ROSE_ROOT)
-        set(CMAKE_INSTALL_PREFIX "${ROSE_ROOT}" CACHE PATH "Install path prefix, defaults to ROSE installation" FORCE)
-        message(STATUS "No install prefix specified, defaulting to ROSE location: ${CMAKE_INSTALL_PREFIX}")
-    endif()
-endif()
-
-# Cause installed programs to use an internal rpath when searching for dynamic libraries.
-#
-# Embedding rpath in executables is generally superior to relying on LD_LIBRARY_PATH for several
-# important reasons.
-#
-#   1. The embedded rpath is self-contained within the binary itself, meaning the executable will
-#      work correctly regardless of the user's environment or shell configuration—there's no need
-#      for users to set environment variables or source setup scripts before running the program.
-#
-#   2. The embedded rpath provides better security because LD_LIBRARY_PATH affects all executables
-#      run from that shell and can be hijacked to load malicious libraries, whereas rpath only
-#      affects the specific binary and cannot be overridden by regular users.
-#
-#   3. The embedded rpath enables easier deployment and distribution since binaries can be relocated
-#      (especially with $ORIGIN-relative paths) without requiring installation instructions about
-#      environment setup. Finally, rpath avoids version conflicts that commonly occur with
-#      LD_LIBRARY_PATH. When multiple applications require different versions of the same library,
-#      setting a global LD_LIBRARY_PATH will cause conflicts, but each binary with its own rpath can
-#      find exactly the library version it was built against.
-#
-#   4. The embedded rpath works better for ROSE-based tools that invoke a backend compiler. Using
-#      LD_LIBRARY_PATH to accomplish this would pollute the environment for the backend compiler,
-#      possibly causing it to link against incorrect libraries resulting in potentially subtle bugs.
-#
-# The only downside is that rpath is slightly less flexible for quick development testing, but for
-# production deployments and user-facing tools, embedded rpath is decisively the better choice.
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+# Optional: Configure project defaults to match ROSE (applies all settings when called with no arguments)
+# Individual functions can be called for more control:
+#   rose_setup_build_flags()       - Remove -DNDEBUG from RelWithDebInfo, add -g -O0 to Debug
+#   rose_default_build_type()      - Use ROSE's build type if CMAKE_BUILD_TYPE not set
+#   rose_default_install_prefix()  - Install alongside ROSE by default
+#   rose_setup_rpath()             - Use RPATH instead of LD_LIBRARY_PATH
+rose_setup_project()
 
 #---------------------------------------------------------------------------------------------------
 # This part is where you describe what needs to be built and installed for your project. It probably

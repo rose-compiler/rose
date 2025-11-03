@@ -115,6 +115,27 @@ find_package(Rose 0.11 REQUIRED)
 message(STATUS "Found ROSE ${Rose_VERSION}")
 ```
 
+### Helper Functions
+
+After `find_package(Rose)`, several helper functions are automatically available to simplify your CMakeLists.txt:
+
+```cmake
+# Apply ROSE-compatible build flags (call before project())
+rose_setup_build_flags()
+
+# Read version from VERSION file
+rose_read_version_file(MY_VERSION)
+project(MyProject VERSION ${MY_VERSION})
+
+# Configure defaults to match ROSE (call after project())
+rose_default_build_type()        # Use ROSE's build type
+rose_default_install_prefix()    # Install alongside ROSE
+rose_setup_rpath()               # Use RPATH instead of LD_LIBRARY_PATH
+
+# Print ROSE configuration info
+rose_print_configuration()
+```
+
 ### Using ROSE
 
 ```cmake

@@ -231,5 +231,12 @@ if(NOT TARGET Rose::rose)
   include("${CMAKE_CURRENT_LIST_DIR}/RoseTargets.cmake")
 endif()
 
+# Include helper functions for external projects
+# This provides convenience functions like rose_setup_project()
+include("${CMAKE_CURRENT_LIST_DIR}/RoseUse.cmake")
+
+# Print configuration information about this ROSE installation
+rose_print_configuration()
+
 # Check that all required components are present
 check_required_components(Rose)

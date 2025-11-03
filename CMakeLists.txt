@@ -1804,6 +1804,7 @@ configure_package_config_file(
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/cmake/RoseConfig.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/cmake/RoseConfigVersion.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/RoseUse.cmake
   DESTINATION ${LIB_INSTALL_DIR}/cmake/Rose
 )
 
