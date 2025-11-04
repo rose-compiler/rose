@@ -5,7 +5,7 @@ add_subdirectory(CodeThorn)
 add_subdirectory(featureVector EXCLUDE_FROM_ALL)
 add_subdirectory(globalVariablesInLambdas EXCLUDE_FROM_ALL)
 add_subdirectory(PortabilityTesting EXCLUDE_FROM_ALL)
-add_subdirectory(ReadWriteSetGeneration EXCLUDE_FROM_ALL)
+add_subdirectory(ReadWriteSetGeneration)
 
 #
 # moveDeclarationToInnermostScope
