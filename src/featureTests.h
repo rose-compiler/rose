@@ -66,9 +66,9 @@
     #elif !defined(__clang__) && defined(__GNUC__) && \
         __GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNU_C_PATCHLEVEL__ <= 40204
         // GCC <= 4.2.4 gets segfaults compiling SerialIo.C
-    #elif defined(ROSE_HOST_OS_IS_RHEL) && ROSE_HOST_OS_IS_RHEL == 8 && \
-        defined(__GNUC__) && __GNUC__ == 8 && __GNUC_MINOR__ == 5
+    #elif defined(ROSE_HOST_OS_IS_RHEL) && ROSE_HOST_OS_IS_RHEL == 8
         // GCC 8.5.x on RHEL 8 takes very long to compile SerialIo.C (the assembly step is what takes long)
+        // Other compilers also take a long time on RHEL 8, possibly due to a bug in binutils.
     #else
         #define ROSE_ENABLE_BOOST_SERIALIZATION
     #endif
