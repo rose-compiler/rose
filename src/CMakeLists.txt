@@ -593,6 +593,9 @@ endif()
 if(YAMLCPP_FOUND)
   target_include_directories(rose_object_library_dependencies INTERFACE ${YAMLCPP_INCLUDE_DIR})
 endif()
+if(Z3_FOUND AND TARGET z3::libz3)
+  target_link_libraries(rose_object_library_dependencies INTERFACE z3::libz3)
+endif()
 
 set(rose_LIB_OBJS   
   util_main
