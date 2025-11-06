@@ -247,25 +247,6 @@ write_basic_package_version_file(
 )
 
 ########################################################################################################################
-# Operating system information
-########################################################################################################################
-
-# Test whether the host OS (the OS compiling ROSE) is Red Hat Enterprise Linux, and if so, set ROSE_HOST_OS_IS_RHEL to
-#the RHEL major version number.
-set(ROSE_HOST_OS_IS_RHEL "")
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-  execute_process(
-    COMMAND bash -c ". /etc/os-release && echo -n $ID"
-    OUTPUT_VARIABLE ROSE_HOST_OS_ID)
-  if ("${ROSE_HOST_OS_ID}" MATCHES "rhel")
-    execute_process(
-      COMMAND bash -c ". /etc/os-release && echo -n \${VERSION_ID%%.*}"
-      OUTPUT_VARIABLE ROSE_HOST_OS_VERSION_MAJOR)
-    set(ROSE_HOST_OS_IS_RHEL "${ROSE_HOST_OS_VERSION_MAJOR}")
-  endif()
-endif()
-
-########################################################################################################################
 # Initialize the leading part of the Rose::initialize token
 ########################################################################################################################
 # Configuration synopsis used by Rose::initialize.  The ROSE_CONFIG_TOKEN is #define'd as a string in rose_config.h and
@@ -397,6 +378,31 @@ set(HAVE_BOOST_SYSTEM ${Boost_SYSTEM_FOUND})
 set(HAVE_BOOST_THREAD ${Boost_THREAD_FOUND})
 set(HAVE_BOOST_WAVE ${Boost_WAVE_FOUND})
 set(USE_ROSE_BOOST_WAVE_SUPPORT ${Boost_WAVE_FOUND})
+
+########################################################################################################################
+# Operating system information
+########################################################################################################################
+
+# Test whether the host OS (the OS compiling ROSE) is Red Hat Enterprise Linux, and if so, set ROSE_HOST_OS_IS_RHEL to
+#the RHEL major version number.
+set(ROSE_HOST_OS_IS_RHEL "")
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  execute_process(
+    COMMAND bash -c ". /etc/os-release && echo -n $ID"
+    OUTPUT_VARIABLE ROSE_HOST_OS_ID)
+  if ("${ROSE_HOST_OS_ID}" MATCHES "rhel")
+    execute_process(
+      COMMAND bash -c ". /etc/os-release && echo -n \${VERSION_ID%%.*}"
+      OUTPUT_VARIABLE ROSE_HOST_OS_VERSION_MAJOR)
+    set(ROSE_HOST_OS_IS_RHEL "${ROSE_HOST_OS_VERSION_MAJOR}")
+  endif()
+endif()
+
+if (ROSE_HOST_OS_IS_RHEL EQUAL 8 AND NOT DEFINED ROSE_ENABLE_BOOST_SERIALIZATION)
+  message(WARNING "Boost serialization takes a long time to assemble on RHEL8, disable using -DROSE_ENABLE_BOOST_SERIALIZATION=OFF (mute using =ON)")
+endif()
+
+option(ROSE_ENABLE_BOOST_SERIALIZATION "Enable Boost serialization" ON)
 
 ########################################################################################################################
 # Compiler toolchain features

@@ -58,19 +58,17 @@
 // A more traditional name than ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #define ROSE_ENABLE_BINARY_ANALYSIS
 
-// Whether to enable Boost Serialization for saving and restoring ROSE internal analysis state. If you want to enable serialization
-// even if this CPP code doesn't enable it, simply add `-DROSE_ENABLE_BOOST_SERIALIZATION` to your C++ compiler flags.
-#if !defined(ROSE_ENABLE_BOOST_SERIALIZATION) && defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+// Whether to enable Boost Serialization for saving and restoring ROSE internal analysis state.
+#if defined(ROSE_ENABLE_BOOST_SERIALIZATION)
     #if defined(BOOST_WINDOWS)
         // Lacks POSIX file system, so we can't monitor the I/O progress
-    #elif !defined(__clang__) && defined(__GNUC__) && \
+        #undef ROSE_ENABLE_BOOST_SERIALIZATION
+        #error "Boost serialization not supported on windows in Rose"
+    #elif defined(__clang__) && defined(__GNUC__) && \
         __GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNU_C_PATCHLEVEL__ <= 40204
         // GCC <= 4.2.4 gets segfaults compiling SerialIo.C
-    #elif defined(ROSE_HOST_OS_IS_RHEL) && ROSE_HOST_OS_IS_RHEL == 8
-        // GCC 8.5.x on RHEL 8 takes very long to compile SerialIo.C (the assembly step is what takes long)
-        // Other compilers also take a long time on RHEL 8, possibly due to a bug in binutils.
-    #else
-        #define ROSE_ENABLE_BOOST_SERIALIZATION
+        #undef ROSE_ENABLE_BOOST_SERIALIZATION
+        #error "Boost serialization in rose requires GCC > 4.2.4"
     #endif
 #endif
 
