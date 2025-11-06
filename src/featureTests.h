@@ -64,11 +64,11 @@
         // Lacks POSIX file system, so we can't monitor the I/O progress
         #undef ROSE_ENABLE_BOOST_SERIALIZATION
         #error "Boost serialization not supported on windows in Rose"
-    #elif defined(__clang__) && defined(__GNUC__) && \
+    #elif !defined(__clang__) && defined(__GNUC__) && \
         __GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNU_C_PATCHLEVEL__ <= 40204
         // GCC <= 4.2.4 gets segfaults compiling SerialIo.C
         #undef ROSE_ENABLE_BOOST_SERIALIZATION
-        #error "Boost serialization in rose requires GCC > 4.2.4"
+        #error "Boost serialization with GCC in rose requires GCC > 4.2.4"
     #endif
 #endif
 
