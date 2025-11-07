@@ -72,7 +72,6 @@ scan-rmc-environment() {
     emit-pair tup         "$TUP_VERSION"             "$RMC_TUP"
     emit-pair warnings    "$RMC_WARNINGS"
     emit-pair wt          "$WT_VERSION"              "$RMC_WT"
-    emit-pair yaml        "$YAMLCPP_VERSION"         "$RMC_YAML"
     emit-pair yices       "$YICES_VERSION"           "$RMC_YICES"
     emit-pair z3          "$Z3_VERSION"              "$RMC_Z3"
 

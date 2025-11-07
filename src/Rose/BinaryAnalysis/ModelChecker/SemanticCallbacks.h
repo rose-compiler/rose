@@ -9,10 +9,6 @@
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/Yaml.h>
 
-#ifdef ROSE_HAVE_YAMLCPP
-#include <yaml-cpp/yaml.h>
-#endif
-
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
@@ -283,16 +279,8 @@ public:
      *  model checker -- it must make sense for the current specimen.
      *
      *  Parse errors are reported by throwing a @ref ParseError exception. The @p sourceName is typically the name of the file
-     *  from which the YAML was originally parsed, or an empty string to signify that the name of the source is unknown.
-     *
-     *  @{ */
-#ifdef ROSE_HAVE_YAMLCPP
-    virtual std::list<ExecutionUnitPtr>
-    parsePath(const YAML::Node&, const std::string &sourceName) = 0;
-#endif
-    virtual std::list<ExecutionUnitPtr>
-    parsePath(const Yaml::Node&, const std::string &sourceName) = 0;
-    /** @} */
+     *  from which the YAML was originally parsed, or an empty string to signify that the name of the source is unknown. */
+    virtual std::list<ExecutionUnitPtr> parsePath(const Yaml::Node&, const std::string &sourceName) = 0;
 };
 
 } // namespace

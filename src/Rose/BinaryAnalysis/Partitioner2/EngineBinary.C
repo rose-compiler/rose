@@ -54,10 +54,6 @@
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Stopwatch.h>
 
-#ifdef ROSE_HAVE_YAMLCPP
-#include <yaml-cpp/yaml.h>
-#endif
-
 using namespace Rose::Diagnostics;
 
 namespace Rose {

@@ -590,9 +590,6 @@ endif()
 if(GCRYPT_FOUND)
   target_include_directories(rose_object_library_dependencies INTERFACE ${GCRYPT_INCLUDE_DIR})
 endif()
-if(YAMLCPP_FOUND)
-  target_include_directories(rose_object_library_dependencies INTERFACE ${YAMLCPP_INCLUDE_DIR})
-endif()
 if(Z3_FOUND AND TARGET z3::libz3)
   target_link_libraries(rose_object_library_dependencies INTERFACE z3::libz3)
 endif()
@@ -869,7 +866,6 @@ target_compile_features(ROSE_DLL PUBLIC cxx_std_14)
 # - Z3: SMT solver used internally for symbolic execution
 # - DWARF/ELF: Binary analysis internal implementation
 # - Capstone: Disassembly backend
-# - YAML-CPP: Configuration file parsing
 # - Dlib: Internal matrix/graph algorithms
 # - Readline: Interactive tool support
 # - GCrypt: Cryptographic hashing internals
@@ -996,14 +992,6 @@ endmacro()
 if(Z3_FOUND AND TARGET z3::libz3)
   target_link_libraries(ROSE_DLL PUBLIC z3::libz3)
   # Note: No need for add_library_dependency with imported targets
-endif()
-
-# YAML-cpp is for parsing YAML and JSON files.
-# NOTE: Marked PUBLIC because ROSE public headers include <yaml-cpp/yaml.h>
-# (ModelChecker/SemanticCallbacks.h)
-if(ENABLE_YAML AND YAMLCPP_FOUND)
-  target_link_libraries(ROSE_DLL PUBLIC ${YAMLCPP_LIBRARY})
-  add_library_dependency(${YAMLCPP_LIBRARY})
 endif()
 
 # Dlib is a C++ support library. ROSE uses matrices and some graph algorithms currently.

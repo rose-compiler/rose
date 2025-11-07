@@ -1054,18 +1054,6 @@ if(ENABLE_DOXYGEN)
   find_doxygen()
 endif()
 
-# FIXME: Deprecated. Remove this and the FindYamlcpp file once YAML-CPP has been eliminated from the ROSE source code.
-# To use YAML-CPP, set YAMLCPP_ROOT to the YAML-CPP installation prefix. To avoid YAML-CPP set YAMLCPP_ROOT=no
-option(ENABLE_YAML_DEPRECATED "Option to Enable Yaml, which is now deprecated" OFF)
-if(DEFINED CACHE{ENABLE-YAML-DEPRECATED})
-  message(DEPRECATION "ENABLE-YAML-DEPRECATED is deprecated. Use ENABLE_YAML_DEPRECATED instead. Example: cmake -DENABLE_YAML_DEPRECATED=${ENABLE-YAML-DEPRECATED} ...")
-  set(ENABLE_YAML_DEPRECATED ${ENABLE-YAML-DEPRECATED} CACHE BOOL "Option to Enable Yaml, which is now deprecated" FORCE)
-endif()
-if(ENABLE_YAML)
-  include(FindYamlcpp)
-  find_yamlcpp()
-endif() 
-
 # To use Dlib, set DLIB_ROOT to the Dlib installation prefix. To avoid Dlib set DLIB_ROOT=no
 include(FindDlib)
 find_dlib()
@@ -1818,7 +1806,6 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindElf.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindCapstone.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindDlib.cmake
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindYamlcpp.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindReadline.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindSqlite3.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindYices.cmake
@@ -1884,18 +1871,6 @@ if(CAPSTONE_FOUND)
   # Add include path for capstone headers
   if(CAPSTONE_ROOT)
     set(ROSE_PC_CFLAGS "${ROSE_PC_CFLAGS} -I${CAPSTONE_ROOT}/include")
-  endif()
-endif()
-
-if(YAMLCPP_FOUND)
-  if(YAMLCPP_LIBRARY)
-    get_filename_component(_yamlcpp_lib_dir "${YAMLCPP_LIBRARY}" DIRECTORY)
-    set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -L${_yamlcpp_lib_dir}")
-  endif()
-  set(ROSE_PC_LIBS "${ROSE_PC_LIBS} -lyaml-cpp")
-  # Add include path for yaml-cpp headers
-  if(YAMLCPP_ROOT)
-    set(ROSE_PC_CFLAGS "${ROSE_PC_CFLAGS} -I${YAMLCPP_ROOT}/include")
   endif()
 endif()
 

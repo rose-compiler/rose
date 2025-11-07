@@ -540,16 +540,6 @@ std::string version_message() {
     ss <<"  ---   sqlite library:           unused\n";
 #endif
 
-#ifdef ROSE_HAVE_YAMLCPP
-    ss <<"  ---   yaml-cpp library:         unknown version"; // not provided by the library or headers
-#ifdef ROSE_YAMLCPP_LIBRARY
-    ss <<" (" <<ROSE_YAMLCPP_LIBRARY <<")";
-#endif
-    ss <<"\n";
-#else
-    ss <<"  ---   yaml-cpp library:         unused\n";
-#endif
-
 #ifdef ROSE_HAVE_Z3
     ss <<"  ---   z3 library:               ";
 #if defined(Z3_FULL_VERSION)

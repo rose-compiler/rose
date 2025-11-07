@@ -8,10 +8,6 @@
 #include <Rose/Diagnostics.h>
 #include <Rose/Yaml.h>
 
-#ifdef ROSE_HAVE_YAMLCPP
-#include <yaml-cpp/yaml.h>
-#endif
-
 std::ostream& operator<<(std::ostream &out, const Rose::BinaryAnalysis::Partitioner2::Configuration &c) {
     c.print(out);
     return out;
@@ -108,129 +104,6 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                 loadFromFile(name);
         }
     } else if (isFile(fileName)) {
-#if defined(ROSE_HAVE_YAMLCPP)
-        SAWYER_MESG(mlog[TRACE]) <<"loading configuration from " <<fileName <<"\n";
-        YAML::Node configFile = YAML::LoadFile(fileName.string());
-        if (configFile["config"] && configFile["config"]["exports"]) {
-            // This is a CMU/SEI configuration file.
-            const YAML::Node &exports = configFile["config"]["exports"];
-            for (YAML::const_iterator iter=exports.begin(); iter!=exports.end(); ++iter) {
-                std::string functionName = Modules::canonicalFunctionName(iter->first.as<std::string>());
-                YAML::Node functionInfo = iter->second;
-                if (functionInfo["function"] && functionInfo["function"]["delta"]) {
-                    FunctionConfiguration config(functionName);
-                    static const int wordSize = 4;      // these files don't include popping the return address
-                    int delta = functionInfo["function"]["delta"].as<int>() + wordSize;
-                    config.stackDelta(delta);
-                    if (!insertConfiguration(config)) {
-                        SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for function \""
-                                                <<StringUtility::cEscape(functionName) <<"\"\n";
-                    }
-                }
-            }
-        } else if (configFile["rose"]) {
-            // This is a ROSE configuration file.
-            if (YAML::Node functions = configFile["rose"]["functions"]) {
-                for (const YAML::Node &function: functions) {
-                    Sawyer::Optional<Address> addr;
-                    std::string name;
-                    if (function["address"])
-                        addr = function["address"].as<Address>();
-                    if (function["name"])
-                        name = Modules::canonicalFunctionName(function["name"].as<std::string>());
-                    FunctionConfiguration config(addr, name);
-                    if (function["default_name"])
-                        config.defaultName(Modules::canonicalFunctionName(function["default_name"].as<std::string>()));
-                    if (function["comment"])
-                        config.comment(function["comment"].as<std::string>());
-                    if (function["stack_delta"])
-                        config.stackDelta(function["stack_delta"].as<int64_t>());
-                    if (function["may_return"]) {
-                        std::string val = function["may_return"].as<std::string>();
-                        if (val == "true" || val == "yes" || val == "t" || val == "y" || val == "1") {
-                            config.stackDelta(true);
-                        } else {
-                            config.stackDelta(false);
-                        }
-                    }
-                    if (function["source_location"])
-                        config.sourceLocation(SourceLocation::parse(function["source_location"].as<std::string>()));
-                    if (!insertConfiguration(config)) {
-                        SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for function "
-                                                <<(addr?StringUtility::addrToString(*addr)+" ":std::string())
-                                                <<"\"" <<StringUtility::cEscape(name) <<"\"\n";
-                    }
-                }
-            }
-            if (YAML::Node bblocks = configFile["rose"]["bblocks"]) {
-                for (const YAML::Node &bblock: bblocks) {
-                    if (!bblock["address"]) {
-                        SAWYER_MESG(mlog[ERROR]) <<"missing address for basic block configuration record\n";
-                        continue;
-                    }
-                    Address addr = bblock["address"].as<Address>();
-                    BasicBlockConfiguration config(addr);
-                    if (bblock["comment"])
-                        config.comment(bblock["comment"].as<std::string>());
-                    if (bblock["final_instruction"])
-                        config.finalInstructionVa(bblock["final_instruction"].as<Address>());
-                    if (const YAML::Node &successors = bblock["successors"]) {
-                        for (const YAML::Node &successor: successors)
-                            config.successorVas().insert(successor.as<Address>());
-                    }
-                    if (bblock["source_location"])
-                        config.sourceLocation(SourceLocation::parse(bblock["source_location"].as<std::string>()));
-                    if (!insertConfiguration(config)) {
-                        SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for basic block "
-                                                <<StringUtility::addrToString(addr) <<"\n";
-                    }
-                }
-            }
-            if (YAML::Node dblocks = configFile["rose"]["dblocks"]) {
-                for (const YAML::Node &dblock: dblocks) {
-                    if (!dblock["address"]) {
-                        SAWYER_MESG(mlog[ERROR]) <<"missing address for data block configuration record\n";
-                        continue;
-                    }
-                    Address addr = dblock["address"].as<Address>();
-                    DataBlockConfiguration config(addr);
-                    if (dblock["name"])
-                        config.name(dblock["name"].as<std::string>());
-                    if (dblock["comment"])
-                        config.comment(dblock["comment"].as<std::string>());
-                    if (dblock["source_location"])
-                        config.sourceLocation(SourceLocation::parse(dblock["source_location"].as<std::string>()));
-                    if (!insertConfiguration(config)) {
-                        SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for data block "
-                                                <<StringUtility::addrToString(addr) <<"\n";
-                    }
-                }
-            }
-            if (YAML::Node addrs = configFile["rose"]["addresses"]) {
-                for (const YAML::Node &detail: addrs) {
-                    if (!detail["address"]) {
-                        SAWYER_MESG(mlog[ERROR]) <<"missing address for address configuration record\n";
-                        continue;
-                    }
-                    Address addr = detail["address"].as<Address>();
-                    AddressConfiguration config(addr);
-                    if (detail["name"])
-                        config.name(detail["name"].as<std::string>());
-                    if (detail["comment"])
-                        config.comment(detail["comment"].as<std::string>());
-                    if (detail["source_location"])
-                        config.sourceLocation(SourceLocation::parse(detail["source_location"].as<std::string>()));
-                    if (!insertConfiguration(config)) {
-                        SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for address "
-                                                <<StringUtility::addrToString(addr) <<"\n";
-                    }
-                }
-            }
-
-        } else {
-            SAWYER_MESG(mlog[ERROR]) <<"not a valid configuration file: \"" <<StringUtility::cEscape(fileName.string()) <<"\"\n";
-        }
-#else
         SAWYER_MESG(mlog[TRACE]) <<"loading configuration from " <<fileName <<"\n";
         Yaml::Node configFile = Yaml::parse(fileName);
 
@@ -367,7 +240,6 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
         } else {
             SAWYER_MESG(mlog[ERROR]) <<"not a valid configuration file: " <<fileName <<"\n";
         }
-#endif
     }
 }
 

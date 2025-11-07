@@ -729,11 +729,6 @@ public:
     virtual std::vector<NextUnit>
     nextUnits(const PathPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&) override;
 
-#ifdef ROSE_HAVE_YAMLCPP
-    virtual std::list<ExecutionUnitPtr>
-    parsePath(const YAML::Node&, const std::string &sourceName) override;
-#endif
-
     virtual std::list<ExecutionUnitPtr>
     parsePath(const Yaml::Node&, const std::string &sourceName) override;
 
