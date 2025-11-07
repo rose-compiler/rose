@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) CompilerOutputReader.C CompilerOutputParser.C IncludingPreprocessingInfosCollector.C
-
-run $(public_header) CompilerOutputReader.h CompilerOutputParser.h IncludingPreprocessingInfosCollector.h

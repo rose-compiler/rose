@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) commandline_processing.C sla++.C
-
-run $(public_header) sla.h commandline_processing.h

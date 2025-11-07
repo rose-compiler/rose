@@ -1,9 +1,0 @@
-include_rules
-
-run $(librose_compile) \
-    Dwarf.C
-
-run $(public_header) -o include/rose/Rose/BinaryAnalysis/Dwarf \
-    BasicTypes.h \
-    Constants.h \
-    Exception.h

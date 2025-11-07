@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) matcherparser.C RoseAst.C AstMatching.C MatchOperation.C AstTerm.C
-
-run $(public_header) RoseAst.h matcherparser_decls.h matcherparser.h AstMatching.h MatchOperation.h AstTerm.h

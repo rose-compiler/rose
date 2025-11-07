@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) EditDistance.C TreeEditDistance.C
-
-run $(public_header) DamerauLevenshtein.h EditDistance.h Levenshtein.h TreeEditDistance.h LinearEditDistance.h

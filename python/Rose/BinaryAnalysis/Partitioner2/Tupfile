@@ -1,8 +1,0 @@
-include_rules
-ifneq (@(LINKAGE),static)
-
-      run $(python_package) --output=python/Rose/BinaryAnalysis/Partitioner2 __init__.py
-
-      run $(python_module) --install=python/Rose/BinaryAnalysis/Partitioner2 _Partitioner2.C $(ROSE)/src/librose.so
-
-endif

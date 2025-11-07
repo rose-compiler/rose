@@ -1,4 +1,0 @@
-include_rules
-
-run $(librose_compile) libraryIdentification.C
-run $(public_header) FunctionInfo.h libraryIdentification.h LibraryInfo.h

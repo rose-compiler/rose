@@ -1,4 +1,0 @@
-include_rules
-
-run $(librose_compile) failSafePragma.C
-run $(public_header) failSafePragma.h

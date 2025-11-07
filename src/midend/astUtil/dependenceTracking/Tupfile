@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) dependence_analysis.C dependence_table.C
-
-run $(public_header) dependence_analysis.h dependence_table.h

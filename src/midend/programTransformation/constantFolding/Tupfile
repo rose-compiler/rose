@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) constantFolding.C
-
-run $(public_header) constantFolding.h

@@ -1,8 +1,0 @@
-include_rules
-
-run $(public_script) rose-matrix-run rose-matrix-monitor rose-matrix-show-latest \
-    rose-matrix-count-warnings rose-matrix-output rose-matrix-slave-run rose-matrix-slave-babysit \
-    rose-matrix-status rose-matrix-all-warning-types rose-matrix-slave-clean rose-matrix-prune-errors \
-    rose-matrix-docker-run
-
-run $(public_file) -o lib/matrix/container-scripts rose-matrix-count-warnings

@@ -1,5 +1,0 @@
-include_rules
-
-run $(public_header) -o include/rose/Rose/Traits Describe.h Traversal.h
-run $(public_header) -o include/rose/Rose/Traits/describe describe/declarations.h describe/predicates.h describe/fields.h describe/nodes.h
-run $(public_header) -o include/rose/Rose/Traits/grammar grammar/traversal.h grammar/lists.h grammar/predicates.h

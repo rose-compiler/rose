@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) finiteDifferencing.C patternRewrite.C
-
-run $(public_header) finiteDifferencing.h patternRewrite.h

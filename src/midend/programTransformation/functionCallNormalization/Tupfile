@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) FunctionNormalization.C
-
-run $(public_header) FunctionNormalization.h

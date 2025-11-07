@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) AstUtilInterface.C
-
-run $(public_header) AstUtilInterface.h

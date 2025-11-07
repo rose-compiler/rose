@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) ArrayRewrite.C
-
-run $(public_header) ArrayRewrite.h

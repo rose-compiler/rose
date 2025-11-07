@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) newCallGraph.C CallGraph.C CallGraphDB.C ClassHierarchyGraph.C
-
-run $(public_header) newCallGraph.h CallGraph.h ClassHierarchyGraph.h

@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) VariableRenaming.C
-
-run $(public_header) VariableRenaming.h

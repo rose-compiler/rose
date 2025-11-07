@@ -1,9 +1,0 @@
-include_rules
-
-run $(public_header) -o include/rose/Rose/Generation/factory \
-    classes.txx \
-    factory.txx \
-    functions.txx \
-    namespaces.txx \
-    typedefs.txx \
-    variables.txx

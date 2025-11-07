@@ -1,3 +1,0 @@
-include_rules
-
-: <staging> |> echo %<staging> >%o |> MANIFEST

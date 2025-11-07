@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) LocalRWSetGenerator.C Name2Node.C ReadWriteSetRecords.C SageUtils.C TestabilityGrader.C VxUtilFuncs.C
-
-run $(public_header) LocalRWSetGenerator.h Name2Node.h ReadWriteSetRecords.h sageUtility.h SageUtils.h TestabilityGrader.h VxUtilFuncs.h

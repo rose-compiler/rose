@@ -1,9 +1,0 @@
-include_rules
-
-run $(librose_compile) $(SOURCES) \
-    AsmUnparser.C \
-    AsmUnparser_compat.C
-
-
-# Headers for the older API
-run $(public_header) AsmUnparser.h AsmUnparser_compat.h

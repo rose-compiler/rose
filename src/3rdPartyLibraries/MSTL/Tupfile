@@ -1,7 +1,0 @@
-include_rules
-
-run $(librose_compile) JSONGeneration.C DOTGraphInterface.C
-
-run $(public_header) JSONGeneration.h DOTGeneration.h DOTRepresentation.h Translator.h \
-    DOTSubgraphRepresentation.h DOTGraphInterface.h TreeTraversal.h DOTRepresentationImpl.h DOTGenerationImpl.h \
-    DOTSubgraphRepresentationImpl.h

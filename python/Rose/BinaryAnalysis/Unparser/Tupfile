@@ -1,8 +1,0 @@
-include_rules
-ifneq (@(LINKAGE),static)
-
-      run $(python_package) --output=python/Rose/BinaryAnalysis/Unparser __init__.py
-
-      run $(python_module) --install=python/Rose/BinaryAnalysis/Unparser _Unparser.C $(ROSE)/src/librose.so
-
-endif

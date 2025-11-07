@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) SingleStatementToBlockNormalization.C
-
-run $(public_header) SingleStatementToBlockNormalization.h

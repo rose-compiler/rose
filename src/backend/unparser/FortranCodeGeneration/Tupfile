@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) unparseFortran_expressions.C unparseFortran_statements.C unparseFortran_types.C unparseFortran_modfile.C
-
-run $(public_header) UnparserFortran.h unparseFortran.h unparseFortran_types.h unparseFortran_modfile.h

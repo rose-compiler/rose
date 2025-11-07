@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) CFG_ROSE.C
-
-run $(public_header) CFG.h CFGImpl.h

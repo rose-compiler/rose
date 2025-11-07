@@ -1,5 +1,0 @@
-include_rules
-
-run $(librose_compile) Snippet.C
-
-run $(public_header) Snippet.h
