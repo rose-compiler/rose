@@ -907,7 +907,6 @@ case "$USE_ROSE" in
                   -DPQXX_ROOT=no \
                   -DQT_ROOT=no \
                   -DRAJA_ROOT=no \
-                  -DREADLINE_ROOT=no \
                   -DSPOT_ROOT=no \
                   -DSQLITE3_ROOT=no \
                   -DWT_ROOT=no \

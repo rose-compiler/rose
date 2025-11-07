@@ -442,7 +442,6 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
 	WITH_MAGIC="$(value_or_no "$(config_switch -DMAGIC_ROOT "$@")")" \
 	WITH_PQXX="$(value_or_no "$(config_switch -DPQXX_ROOT "$@")")" \
 	WITH_QT="$(value_or_no "$(config_switch -DQT_ROOT "$@")")" \
-	WITH_READLINE="$(value_or_no "$(config_switch -DREADLINE_ROOT "$@")")" \
 	WITH_SQLITE="$(value_or_no "$(config_switch -DSQLITE3_ROOT "$@")")" \
 	WITH_WT="$(value_or_no "$(config_switch -DWT_ROOT "$@")")" \
 	WITH_YAMLCPP="$(value_or_no "$(config_switch -DYAMLCPP_ROOT "$@")")" \

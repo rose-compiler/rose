@@ -179,16 +179,6 @@ if(Rose_YAMLCPP_FOUND)
   endif()
 endif()
 
-# Find Readline library (optional - for interactive tools)
-set(Rose_READLINE_FOUND @READLINE_FOUND@)
-if(Rose_READLINE_FOUND)
-  if(NOT DEFINED READLINE_ROOT)
-    set(READLINE_ROOT "@READLINE_ROOT@")
-  endif()
-  include(FindReadline)
-  # Readline is PRIVATE, so we don't fail if it's not found
-endif()
-
 # Find SQLite3 library (optional - for database functionality)
 set(Rose_SQLITE3_FOUND @SQLITE3_FOUND_LIB@)
 if(Rose_SQLITE3_FOUND)

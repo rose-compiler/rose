@@ -867,7 +867,6 @@ target_compile_features(ROSE_DLL PUBLIC cxx_std_14)
 # - DWARF/ELF: Binary analysis internal implementation
 # - Capstone: Disassembly backend
 # - Dlib: Internal matrix/graph algorithms
-# - Readline: Interactive tool support
 # - GCrypt: Cryptographic hashing internals
 # - Zlib: Compression (though Boost may expose this transitively)
 # - POET: Program transformation DSL
@@ -1015,12 +1014,6 @@ if(DWARF_FOUND)
   target_link_libraries(ROSE_DLL PRIVATE ${DWARF_LIBRARY} ${ELF_LIBRARY})
   add_library_dependency(${DWARF_LIBRARY})
   add_library_dependency(${ELF_LIBRARY})
-endif()
-
-# If readline was found.
-if(ENABLE_READLINE AND READLINE_FOUND)
-  target_link_libraries(ROSE_DLL PRIVATE ${READLINE_LIBRARY})
-  add_library_dependency(${READLINE_LIBRARY})
 endif()
 
 # The GNU GCrypt library is used for computing a wide variety of hashes. It needs the GPG-Error library.

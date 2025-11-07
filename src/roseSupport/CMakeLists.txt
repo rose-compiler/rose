@@ -6,10 +6,6 @@ add_library(roseSupport OBJECT
   utility_functions.C memoryUsage.C IncludeDirective.C
   stringify.C)
 add_dependencies(roseSupport rosetta_generated)
-if(READLINE_FOUND)
-  target_include_directories(roseSupport PRIVATE ${READLINE_INCLUDE_DIR})
-  target_link_libraries(roseSupport ${READLINE_LIBRARY})
-endif()
 
 # Add include directories for optional dependencies used in utility_functions.C
 # Note: roseSupport is an OBJECT library, so it doesn't automatically inherit

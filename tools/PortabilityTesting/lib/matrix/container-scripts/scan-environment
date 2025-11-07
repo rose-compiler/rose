@@ -67,7 +67,6 @@ scan-rmc-environment() {
     emit-pair optimize    "$RMC_OPTIMIZE"
     emit-pair python      "$PYTHON_VERSION"          "$RMC_PYTHON"
     emit-pair qt          "$QT_VERSION"              "$RMC_QT"
-    emit-pair readline    "$READLINE_VERSION"        "$RMC_READLINE"
     emit-pair sqlite      "$SQLITE_VERSION"          "$RMC_SQLITE"
     emit-pair tup         "$TUP_VERSION"             "$RMC_TUP"
     emit-pair warnings    "$RMC_WARNINGS"

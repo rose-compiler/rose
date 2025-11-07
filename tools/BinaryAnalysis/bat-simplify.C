@@ -13,12 +13,7 @@ static const char *description =
 
 #include <boost/algorithm/string/trim.hpp>
 
-#ifdef ROSE_HAVE_LIBREADLINE
-# include <readline/readline.h>
-# include <readline/history.h>
-#else
-# include <rose_getline.h>
-#endif
+#include <rose_getline.h>
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 # include <boost/archive/text_oarchive.hpp>
@@ -67,16 +62,6 @@ parseCommandLine(int argc, char *argv[]) {
 // Read a line of input and trim white space, or return nothing.
 static Sawyer::Optional<std::string>
 readInput() {
-#ifdef ROSE_HAVE_LIBREADLINE
-    char *tmpLine = readline("> ");
-    if (!tmpLine)
-        return Sawyer::Nothing();
-    add_history(tmpLine);
-    std::string line = tmpLine;
-    free(tmpLine);
-    boost::trim(line);
-    return line;
-#else
     if (isatty(0))
         std::cout <<"> ";
     std::string line = rose_getline(std::cin);
@@ -84,7 +69,6 @@ readInput() {
         return Sawyer::Nothing();
     boost::trim(line);
     return line;
-#endif
 }
 
 int

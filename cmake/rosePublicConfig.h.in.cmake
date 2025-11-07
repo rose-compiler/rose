@@ -55,9 +55,6 @@
 /* Define if Cereal is available. */
 #cmakedefine ROSE_HAVE_CEREAL @ROSE_HAVE_CEREAL@
 
-/* Define if libreadline is available. */
-#cmakedefine ROSE_HAVE_LIBREADLINE @ROSE_HAVE_LIBREADLINE@
-  
 /* Define to 1 if you have the <sys/personality.h> header file. */
 #cmakedefine ROSE_HAVE_SYS_PERSONALITY_H @ROSE_HAVE_SYS_PERSONALITY_H@
 

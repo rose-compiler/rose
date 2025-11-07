@@ -1089,17 +1089,6 @@ find_magic()
 include(FindPqxx)
 find_pqxx()
 
-# To use libreadline, set READLINE_ROOT to the readline installation prefix. To avoid readline set READLINE_ROOT=no
-option(ENABLE_READLINE "Option to enable Readline" OFF)
-if(DEFINED CACHE{ENABLE-READLINE})
-  message(DEPRECATION "ENABLE-READLINE is deprecated. Use ENABLE_READLINE instead. Example: cmake -DENABLE_READLINE=${ENABLE-READLINE} ...")
-  set(ENABLE_READLINE ${ENABLE-READLINE} CACHE BOOL "Option to enable Readline" FORCE)
-endif()
-if(ENABLE_READLINE)
-  include(FindReadline)
-  find_readline()
-endif()
-
 # To use libspot, set SPOT_ROOT to the spot installation prefix. To avoid spot set SPOT_ROOT=no
 if(ENABLE_C)
   include(FindSpot)
@@ -1812,7 +1801,6 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindElf.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindCapstone.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindDlib.cmake
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindReadline.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindSqlite3.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindYices.cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindMagic.cmake

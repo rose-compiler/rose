@@ -19,9 +19,6 @@
 
 // Headers required only to obtain version numbers
 #include <boost/version.hpp>
-#ifdef ROSE_HAVE_LIBREADLINE
-#   include <readline/readline.h>
-#endif
 #ifdef ROSE_HAVE_LIBMAGIC
 #   include <magic.h>
 #endif
@@ -246,19 +243,6 @@ std::string ofpVersionString()
      return ofp_version;
    }
 
-#ifdef ROSE_HAVE_LIBREADLINE
-static std::string
-readlineVersionString() {
-    #if !defined(RL_VERSION_MAJOR) || !defined(RL_VERSION_MINOR)
-        // It appears as though RL_READLINE_VERSION is a 16-bit number whose low 8 bits are the minor version and whose high 8
-        // bits are the major version.
-        #define RL_VERSION_MAJOR ((RL_READLINE_VERSION & 0xff00) >> 8)
-        #define RL_VERSION_MINOR (RL_READLINE_VERSION & 0xff)
-    #endif
-    return StringUtility::numberToString(RL_VERSION_MAJOR) + "." + StringUtility::numberToString(RL_VERSION_MINOR);
-}
-#endif
-
 // similar to rose_boost_version_id but intended for human consumption (i.e., "1.50.0" rather than 105000).
 static std::string
 boostVersionString() {
@@ -304,11 +288,6 @@ std::string version_message() {
 #endif
 
     ss <<"  --- boost library:              " <<boostVersionString() <<" (" <<rose_boost_version_path() <<")\n";
-#ifdef ROSE_HAVE_LIBREADLINE
-    ss <<"  --- readline library:           " <<readlineVersionString() <<"\n";
-#else
-    ss <<"  --- readline library:           unused\n";
-#endif
 
     //-----------------------------------------------------------------------
     // Information related to any source language analysis (not binary analysis).
