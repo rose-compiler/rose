@@ -162,23 +162,6 @@ if(Rose_DLIB_FOUND)
   endif()
 endif()
 
-# Find YAML-CPP library
-# NOTE: YAML-CPP is marked PUBLIC in ROSE's link interface because ROSE public headers
-# include <yaml-cpp/yaml.h> (ModelChecker/SemanticCallbacks.h).
-# When ROSE was built with YAML-CPP, consumers MUST be able to find YAML-CPP headers.
-set(Rose_YAMLCPP_FOUND @YAMLCPP_FOUND@)
-if(Rose_YAMLCPP_FOUND)
-  if(NOT DEFINED YAMLCPP_ROOT)
-    set(YAMLCPP_ROOT "@YAMLCPP_ROOT@")
-  endif()
-  include(FindYamlcpp)
-  find_yamlcpp()
-  if(NOT YAMLCPP_FOUND)
-    set(Rose_FOUND FALSE)
-    set(Rose_NOT_FOUND_MESSAGE "Rose requires YAML-CPP headers (Rose was built with YAML-CPP support and YAML-CPP headers appear in ROSE public API)")
-  endif()
-endif()
-
 # Find SQLite3 library (optional - for database functionality)
 set(Rose_SQLITE3_FOUND @SQLITE3_FOUND_LIB@)
 if(Rose_SQLITE3_FOUND)

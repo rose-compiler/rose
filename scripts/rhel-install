@@ -910,7 +910,6 @@ case "$USE_ROSE" in
                   -DSPOT_ROOT=no \
                   -DSQLITE3_ROOT=no \
                   -DWT_ROOT=no \
-                  -DYAMLCPP_ROOT=no \
                   -DYICES_ROOT=no \
                   -DZ3_ROOT="${Z3_ROOT-no}" \
                   /root/rose

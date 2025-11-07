@@ -154,7 +154,7 @@ cd cmake-integration
 
 The test environment needs access to:
 - Boost (same version ROSE was built with)
-- All PUBLIC dependencies: Capstone, Gcrypt, GpgError, YAML-CPP, Dlib (if ROSE was built with them)
+- All PUBLIC dependencies: Capstone, Gcrypt, GpgError, Dlib (if ROSE was built with them)
 
 ### "Rose_DIR not found"
 - Ensure ROSE is fully installed (not just built)

@@ -73,12 +73,6 @@ Instructions for installing ROSE on Debian 8 "Jessie"
   command. (Robb has an "install-boost" script to download, build, and
   install multiple versions).
 
-+ Install yaml-cpp-0.5.1. Instructions are at their web site. YAML
-  support is optional; the binary analysis parts of ROSE use it for
-  reading and writing configuration files. (Robb has an "install-yaml"
-  script that downloads, builds, and installs against multiple
-  versions of boost.)
-
 + Install dlib-18.10 by simply unpacking it (ROSE only uses its header
   files).  DLib is optional. Some binary analysis tools use it for
   some graph algorithms.
