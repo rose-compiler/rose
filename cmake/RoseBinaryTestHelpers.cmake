@@ -1,16 +1,16 @@
 # CMake helper functions for ROSE binary analysis tests
 #
-# These functions help migrate binary analysis tests from Tup to CMake
-# while preserving the existing test infrastructure (run-test script and filters).
+# These functions help with binary analysis tests by using the run-test script
+# infrastructure for test execution and answer validation.
 
 # Find the test infrastructure scripts
-set(ROSE_RUN_TEST "${CMAKE_SOURCE_DIR}/scripts/tup/run-test")
+set(ROSE_RUN_TEST "${CMAKE_SOURCE_DIR}/scripts/run-test")
 
 if(NOT EXISTS "${ROSE_RUN_TEST}")
     message(FATAL_ERROR "Cannot find run-test script at ${ROSE_RUN_TEST}")
 endif()
 
-# Default timeout for tests (same as Tup)
+# Default timeout for tests
 if(NOT DEFINED ROSE_TEST_TIMEOUT)
     set(ROSE_TEST_TIMEOUT "15m")
 endif()
@@ -79,7 +79,7 @@ rose_add_binary_test_with_answer
 ---------------------------------
 
 Add a binary analysis test that compares output with an answer file.
-Uses the Tup-style run-test script.
+Uses the run-test script.
 
 .. code-block:: cmake
 
@@ -137,7 +137,7 @@ function(rose_add_binary_test_with_answer)
         message(FATAL_ERROR "rose_add_binary_test_with_answer: ANSWER required")
     endif()
 
-    # Build the command line for run-test script (Tup style)
+    # Build the command line for run-test script
     # Usage: run-test [SWITCHES] COMMAND...
     set(run_test_args "")
 
@@ -188,7 +188,7 @@ rose_add_binary_test_exit_status
 ---------------------------------
 
 Add a binary analysis test that checks exit status only.
-Uses the Tup-style run-test script.
+Uses the run-test script.
 
 .. code-block:: cmake
 
@@ -233,7 +233,7 @@ function(rose_add_binary_test_exit_status)
         message(FATAL_ERROR "rose_add_binary_test_exit_status: COMMAND required")
     endif()
 
-    # Build the command line for run-test script (Tup style)
+    # Build the command line for run-test script
     # Usage: run-test [SWITCHES] COMMAND...
     set(run_test_args "")
 
