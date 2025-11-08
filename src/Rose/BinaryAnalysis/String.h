@@ -958,6 +958,12 @@ public:
      * @endcode */
     StringFinder& find(const MemoryMap::ConstConstraints&, Sawyer::Container::MatchFlags flags=0);
 
+    /** Finds strings from an interpretation.
+     *
+     *  Only works for Java class files because they can be parsed to create an SgProject with
+     *  an SgAsmGenericHeader list. */
+    StringFinder& find(SgAsmInterpretation* interp, std::vector<std::string>&);
+
     /** Obtain strings that were found.
      *
      * @{ */

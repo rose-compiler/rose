@@ -1,10 +1,17 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <sage3basic.h>
+
 #include <Rose/BinaryAnalysis/String.h>
 
 #include <Rose/StringUtility/Diagnostics.h>
 #include <Rose/StringUtility/Escape.h>
 #include <Rose/StringUtility/NumberToString.h>
+
+// For finding strings in JVM class files
+#include <SgAsmInterpretation.h>
+#include <SgAsmGenericHeader.h>
+#include <SgAsmGenericHeaderList.h>
 
 #include <Sawyer/ProgressBar.h>
 
@@ -928,6 +935,23 @@ StringFinder::find(const MemoryMap::ConstConstraints &constraints, Sawyer::Conta
         strings_.erase(std::remove_if(strings_.begin(), strings_.end(), isNullString), strings_.end());
     }
     
+    return *this;
+}
+
+StringFinder&
+StringFinder::find(SgAsmInterpretation* interp, std::vector<std::string>& strs) {
+    for (SgAsmGenericHeader* gh : interp->get_headers()->get_headers()) {
+        if (auto jgh = isSgAsmJvmFileHeader(gh)) {
+            SgAsmJvmConstantPool* pool = jgh->get_constant_pool();
+            for (SgAsmJvmConstantPoolEntry* entry : pool->get_entries()) {
+                if (entry->get_tag() == SgAsmJvmConstantPoolEntry::Kind::CONSTANT_Utf8) {
+                    auto bytes = entry->get_utf8_bytes();
+                    uint16_t len = entry->get_length();
+                    strs.emplace_back(bytes, len);
+                }
+            }
+        }
+    }
     return *this;
 }
 
