@@ -23,6 +23,11 @@ endif()
 if(SQLITE3_FOUND)
   target_include_directories(roseSupport PRIVATE ${SQLITE3_INCLUDE_DIR})
 endif()
+if(Z3_FOUND)
+  target_include_directories(roseSupport PRIVATE ${_Z3_INCLUDE_DIR})
+  target_link_libraries(roseSupport PRIVATE z3::libz3)
+endif()
+
 
 ########### install files ###############
 

@@ -67,6 +67,9 @@ add_library(roseBinaryAnalysis OBJECT
 
 add_dependencies(roseBinaryAnalysis rosetta_generated)
 
+target_include_directories(roseBinaryAnalysis PRIVATE ${_Z3_INCLUDE_DIR})
+target_link_libraries(roseBinaryAnalysis PRIVATE z3::libz3)
+
 # SerialIo.C takes a long time to compile with full debug info and
 # -Og, so reduce debug info and use -O0 for faster compilation in
 # Debug builds. These append the compile options to the command lines,

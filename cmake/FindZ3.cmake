@@ -25,6 +25,16 @@ macro(find_z3)
   # Ensure CheckIncludeFileCXX module is available (ROSE requires C++)
   include(CheckIncludeFileCXX)
 
+  # This is an attempt to auto-detect whether or not the Z3 lib prefix is lib or lib64. 
+  # On RHEL 8, Z3 Cmake is usually at lib/cmake/z3, while on RHEL9, it is lib64/cmake/z3.
+  # The key reason is that RHEL9 decides to put libraries at lib64 instead of lib, which can be queried via the CMAKE_INSTALL_LIBDIR variable.
+  if (DEFINED ROSE_HOST_OS_IS_RHEL)
+    include(GNUInstallDirs)
+    set(_Z3_LIB_PREFIX "${CMAKE_INSTALL_LIBDIR}")
+  else()
+    set(_Z3_LIB_PREFIX "lib")
+  endif()
+
   # Handle Z3_ROOT="no" case: explicitly disable Z3
   if("${Z3_ROOT}" STREQUAL "no")
     set(Z3_FOUND FALSE)
@@ -37,9 +47,9 @@ macro(find_z3)
 
   else()
     # If Z3_ROOT is specified, guide find_package to the right location
-    # Z3Config.cmake is typically installed in lib/cmake/z3/
+    # Z3Config.cmake is typically installed in lib/cmake/z3/ (or lib64/cmake/z3/ on RHEL9)
     if(NOT "${Z3_ROOT}" STREQUAL "")
-      set(_Z3_DIR_HINT "${Z3_ROOT}/lib/cmake/z3")
+      set(_Z3_DIR_HINT "${Z3_ROOT}/${_Z3_LIB_PREFIX}/cmake/z3")
       if(NOT EXISTS "${_Z3_DIR_HINT}/Z3Config.cmake")
         message(FATAL_ERROR "Z3 requested at '${Z3_ROOT}' but Z3Config.cmake not found at ${_Z3_DIR_HINT}")
       endif()
