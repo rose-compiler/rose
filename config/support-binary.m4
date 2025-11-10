@@ -51,6 +51,28 @@ fi
 # The headers must always be present.
 AX_BOOST_SERIALIZATION
 
+# Add --enable-boost-serialization option similar to CMake's ROSE_ENABLE_BOOST_SERIALIZATION
+AC_ARG_ENABLE([boost-serialization],
+    AS_HELP_STRING([--enable-boost-serialization],
+        [Enable Boost serialization (default: yes, but see RHEL8 warning)]),
+    [rose_enable_boost_serialization=$enableval],
+    [rose_enable_boost_serialization=unset])
+
+# Warn on RHEL8 if the option was not explicitly set
+if test "$ROSE_HOST_OS_IS_RHEL" = "8" -a "$rose_enable_boost_serialization" = "unset"; then
+    AC_MSG_WARN([Boost serialization takes a long time to assemble on RHEL8, disable using --enable-boost-serialization=no (mute using =yes)])
+fi
+
+# Default to yes if not explicitly set
+if test "$rose_enable_boost_serialization" = "unset"; then
+    rose_enable_boost_serialization=yes
+fi
+
+# Define ROSE_ENABLE_BOOST_SERIALIZATION if enabled
+if test "$rose_enable_boost_serialization" = "yes"; then
+    AC_DEFINE([ROSE_ENABLE_BOOST_SERIALIZATION], [1], [Enable Boost serialization])
+fi
+
 
 dnl  ==================================================================================
 dnl   Check for optional packages that binary analysis in librose can use if available
