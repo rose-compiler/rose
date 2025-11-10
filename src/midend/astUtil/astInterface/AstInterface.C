@@ -111,9 +111,17 @@ DebugLog DebugVariable("-debugvariable");
 DebugLog DebugScope("-debugscope");
 DebugLog DebugDiff("-debugdiff");
 
+static std::string (*function_name_mangling_)(const SgFunctionDeclaration*) = 0;
+
 //! Get a unique string name for a type, similar to qualified names in C++
-std::string GetFunctionSignature( const std::string& fname, const AstInterface::AstTypeList& plist)
+std::string GetFunctionSignature( const AstNodePtr& f, const std::string& fname, const AstInterface::AstTypeList& plist)
 {
+  if (function_name_mangling_ != 0) { 
+    SgFunctionDeclaration* d = isSgFunctionDeclaration(f.get_ptr());
+    if (d != 0) {
+         return function_name_mangling_(d);
+    }
+  }
   std::stringstream fname_stream;
   fname_stream << fname;
   for ( AstInterface::AstTypeList::const_iterator p = plist.begin();
@@ -2641,7 +2649,7 @@ IsBlock( const AstNodePtr& _n, std::string* blockname, AstNodeList* _stmts)
          _stmts->push_back(AstNodePtrImpl(body).get_ptr());
       } 
       if (blockname != 0) {
-        *blockname = GetFunctionSignature(*blockname, param_types);
+        *blockname = GetFunctionSignature(_n, *blockname, param_types);
       }
       return true;
     }
@@ -4570,3 +4578,8 @@ bool AstInterface::IsLocalRef(const AstNodePtr& ref, const AstNodePtr& scope, bo
 
 SgVariableSymbol* AstInterfaceImpl::
 LookupVar(const std:: string& name) { return LookupVar(name, scope); }
+
+void AstInterface::SetFunctionNameMangling(std::string (*f)(const SgFunctionDeclaration*)) {
+  function_name_mangling_ = f;
+}
+

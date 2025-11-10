@@ -11,6 +11,8 @@
 DebugLog DebugAstUtil("-debugastutil");
 
 namespace AstUtilInterface {
+
+
 class VariableSignatureDictionary {
 private:
   static DependenceTable* dict;
@@ -284,4 +286,9 @@ void AstUtilInterface::OutputSignatureDictionary(std::ostream& output) {
   if (dict_table != 0) {
        dict_table->OutputDependences(output); 
   }
+}
+
+
+void AstUtilInterface::SetFunctionNameMangling(std::string (*f)(const SgFunctionDeclaration*)) {
+  AstInterface::SetFunctionNameMangling(f);
 }

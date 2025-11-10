@@ -13,6 +13,7 @@
 
 class SgNode;
 class SgType;
+class SgFunctionDeclaration;
 class AstNodePtr {
  public:
   typedef SgNode BaseType;
@@ -179,6 +180,8 @@ public:
   AstNodePtr GetRoot() const;
   AstNodePtr getNULL() const { return AST_NULL; }
   void SetRoot( const AstNodePtr& root);
+  static void SetFunctionNameMangling(std::string (*)(const SgFunctionDeclaration*));
+
 
   typedef enum { PreOrder, PostOrder, ReversePreOrder, ReversePostOrder, 
                  PreAndPostOrder } TraversalOrderType;
