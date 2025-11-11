@@ -5,20 +5,32 @@
 #
 option(ENABLE_CODETHORN "Enable CodeThorn program analysis and verification" TRUE)
 if(NOT WIN32 AND ENABLE_CODETHORN AND NOT ENABLE_CLANG_FRONTEND AND ENABLE_C)
-  if(NOT ENABLE_OPENMP)
-    # Codethorn has openmp directives
+  # Codethorn tools require OpenMP
+  set(_CODETHORN_HAS_OPENMP FALSE)
+  if(ENABLE_OPENMP)
+    set(_CODETHORN_HAS_OPENMP TRUE)
+  else()
+    # Try to find OpenMP even if not globally enabled
     find_package(OpenMP QUIET)
-    if(NOT OpenMP_FOUND)
-      message(WARNING "Codethorn Requires OpenMP which was not found.")
+    if(OpenMP_FOUND)
+      set(_CODETHORN_HAS_OPENMP TRUE)
+    else()
+      message(WARNING "CodeThorn tools (codethorn, thorn2, thorn4) require OpenMP which was not found. Only building libraries.")
     endif()
   endif()
+
   # all targets include these directories
   include_directories(. ${ROSE_INCLUDES} ${CMAKE_PREFIX_INSTALL}/include/rose
     ${CMAKE_BINARY_DIR})
 
   # all targets apply these flags TODO: Make this target-only flags
-  add_compile_options(-fopenmp $<$<BOOL:${ENABLE_ALL_WARNINGS}>:-Wall>
-    $<$<NOT:$<BOOL:${ENABLE_ALL_WARNINGS}>>:-Wno-misleading-indentation> -O3)
+  if(_CODETHORN_HAS_OPENMP)
+    add_compile_options(-fopenmp $<$<BOOL:${ENABLE_ALL_WARNINGS}>:-Wall>
+      $<$<NOT:$<BOOL:${ENABLE_ALL_WARNINGS}>>:-Wno-misleading-indentation> -O3)
+  else()
+    add_compile_options($<$<BOOL:${ENABLE_ALL_WARNINGS}>:-Wall>
+      $<$<NOT:$<BOOL:${ENABLE_ALL_WARNINGS}>>:-Wno-misleading-indentation> -O3)
+  endif()
 
   # ##########################################################################
   # LIBRARY: CODETHORN (CORE)
@@ -57,35 +69,43 @@ if(NOT WIN32 AND ENABLE_CODETHORN AND NOT ENABLE_CLANG_FRONTEND AND ENABLE_C)
   install(TARGETS ltlthorn LIBRARY DESTINATION lib)
 
   # ##########################################################################
-  # TOOL: CODETHORN
+  # TOOLS: Build only if OpenMP is available
   # ##########################################################################
-  add_executable(codethorn1 CodeThornCommandLineOptions.C codethorn.C)
-  set_target_properties(codethorn1 PROPERTIES OUTPUT_NAME "codethorn")
-  target_link_libraries(
-    codethorn1 PRIVATE codethorn ltlthorn ROSE_DLL OpenMP::OpenMP_C)
+  if(_CODETHORN_HAS_OPENMP)
+    # ########################################################################
+    # TOOL: CODETHORN
+    # ########################################################################
+    add_executable(codethorn1 CodeThornCommandLineOptions.C codethorn.C)
+    set_target_properties(codethorn1 PROPERTIES OUTPUT_NAME "codethorn")
+    target_link_libraries(
+      codethorn1 PRIVATE codethorn ltlthorn ROSE_DLL OpenMP::OpenMP_C)
 
-  install(TARGETS codethorn1 RUNTIME DESTINATION bin)
+    install(TARGETS codethorn1 RUNTIME DESTINATION bin)
 
-  # ##########################################################################
-  # TOOL: LTLTHORN
-  # ##########################################################################
-  # Now add these targets to the tools build target.
-  add_dependencies(tools codethorn ltlthorn codethorn1)
+    # ########################################################################
+    # TOOL: THORN2
+    # ########################################################################
 
-  # ##########################################################################
-  # TOOL: THORN2
-  # ##########################################################################
+    add_executable(thorn2 CodeThornCommandLineOptions.C thorn2.C)
+    target_link_libraries(thorn2 PRIVATE codethorn OpenMP::OpenMP_C)
+    install(TARGETS thorn2 RUNTIME DESTINATION bin)
 
-  add_executable(thorn2 CodeThornCommandLineOptions.C thorn2.C)
-  target_link_libraries(thorn2 PRIVATE codethorn OpenMP::OpenMP_C)
-  install(TARGETS thorn2 RUNTIME DESTINATION bin)
+    # ########################################################################
+    # TOOL: THORN4
+    # ########################################################################
 
-  # ##########################################################################
-  # TOOL: THORN4
-  # ##########################################################################
+    add_executable(thorn4 Thorn4CommandLineParser.C thorn4.C)
+    target_link_libraries(thorn4 PRIVATE codethorn OpenMP::OpenMP_C)
+    install(TARGETS thorn4 RUNTIME DESTINATION bin)
 
-  add_executable(thorn4 Thorn4CommandLineParser.C thorn4.C)
-  target_link_libraries(thorn4 PRIVATE codethorn OpenMP::OpenMP_C)
-  install(TARGETS thorn4 RUNTIME DESTINATION bin)
+    # ########################################################################
+    # TOOL: LTLTHORN
+    # ########################################################################
+    # Now add these targets to the tools build target.
+    add_dependencies(tools codethorn ltlthorn codethorn1)
+  else()
+    # Only add library targets to tools if OpenMP is not available
+    add_dependencies(tools codethorn ltlthorn)
+  endif()
 
 endif()
