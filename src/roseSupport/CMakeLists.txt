@@ -7,28 +7,6 @@ add_library(roseSupport OBJECT
   stringify.C)
 add_dependencies(roseSupport rosetta_generated)
 
-# Add include directories for optional dependencies used in utility_functions.C
-# Note: roseSupport is an OBJECT library, so it doesn't automatically inherit
-# transitive dependencies from ROSE_DLL. We use rose_object_library_dependencies
-# for common dependencies, and add specific ones here.
-target_link_libraries(roseSupport PRIVATE rose_object_library_dependencies)
-
-# Additional dependencies specific to utility_functions.C
-if(DWARF_FOUND)
-  target_include_directories(roseSupport PRIVATE ${DWARF_INCLUDE_DIRS})
-endif()
-if(PQXX_FOUND)
-  target_include_directories(roseSupport PRIVATE ${PQXX_INCLUDE_DIR})
-endif()
-if(SQLITE3_FOUND)
-  target_include_directories(roseSupport PRIVATE ${SQLITE3_INCLUDE_DIR})
-endif()
-if(Z3_FOUND)
-  target_include_directories(roseSupport PRIVATE ${_Z3_INCLUDE_DIR})
-  target_link_libraries(roseSupport PRIVATE z3::libz3)
-endif()
-
-
 ########### install files ###############
 
 install(FILES  transformationSupport.h
