@@ -106,22 +106,59 @@ Sg_File_Info* GetFileInfo()
      return Sg_File_Info::generateDefaultFileInfoForTransformationNode();
    }
 
+
+
 namespace {
 DebugLog DebugVariable("-debugvariable");
 DebugLog DebugScope("-debugscope");
 DebugLog DebugDiff("-debugdiff");
+static std::function<std::string(const SgFunctionDeclaration*)> function_name_mangling_;
 
-static std::string (*function_name_mangling_)(const SgFunctionDeclaration*) = 0;
+
+AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
+{
+    SgNode* s = AstNodePtrImpl(_s).get_ptr();
+    int t = s->variantT();
+    switch (t) {
+    case V_SgFunctionDefinition: 
+         return AstNodePtrImpl(isSgFunctionDefinition(s)->get_declaration());
+    case V_SgTemplateFunctionRefExp:
+      return AstNodePtrImpl(isSgTemplateFunctionDefinition(s)->get_declaration());
+    case V_SgFunctionDeclaration:
+    case V_SgMemberFunctionDeclaration:
+    case V_SgProcedureHeaderStatement:
+    case V_SgTemplateInstantiationFunctionDecl:
+    case V_SgTemplateInstantiationMemberFunctionDecl:
+        return _s;
+    case V_SgMemberFunctionRefExp:
+         return AstNodePtrImpl(isSgMemberFunctionRefExp(s)->get_symbol()->get_declaration());
+    case V_SgNonrealRefExp:
+         return AstNodePtrImpl(isSgNonrealRefExp(s)->get_symbol()->get_declaration());
+    case V_SgFunctionSymbol:
+          return AstNodePtrImpl(isSgFunctionSymbol(s)->get_declaration());
+    case V_SgFunctionRefExp:
+          return AstNodePtrImpl(isSgFunctionRefExp(s)->get_symbol()->get_declaration());
+    case V_SgMemberFunctionSymbol:
+         return AstNodePtrImpl(isSgMemberFunctionSymbol(s)->get_declaration());
+    case V_SgConstructorInitializer:
+         return AstNodePtrImpl(isSgConstructorInitializer(s)->get_declaration());
+    case V_SgDotExp:
+         return GetFunctionDecl( AstNodePtrImpl(isSgDotExp(s)->get_rhs_operand()));
+    case V_SgVarRefExp:
+         return AstNodePtrImpl(isSgVarRefExp(s)->get_symbol()->get_declaration());
+    default: 
+        mlog[ERROR] << "Error: not recognizable function type : " << s->sage_class_name() << std::endl;
+        mlog[ERROR] << " at " << s->get_file_info()->get_filenameString() << ":" << s->get_file_info()->get_line() << std::endl;
+        mlog[ERROR] << s->unparseToString() << std::endl;
+        ROSE_ABORT();
+    }
+    return AST_NULL;
+}
+
 
 //! Get a unique string name for a type, similar to qualified names in C++
 std::string GetFunctionSignature( const AstNodePtr& f, const std::string& fname, const AstInterface::AstTypeList& plist)
 {
-  if (function_name_mangling_ != 0) { 
-    SgFunctionDeclaration* d = isSgFunctionDeclaration(f.get_ptr());
-    if (d != 0) {
-         return function_name_mangling_(d);
-    }
-  }
   std::stringstream fname_stream;
   fname_stream << fname;
   for ( AstInterface::AstTypeList::const_iterator p = plist.begin();
@@ -917,9 +954,16 @@ GetGlobalUniqueName(const AstNodePtr& _scope, std::string expname) {
   assert(scope != 0);
   std::string result = expname;
   std::string scopename = expname;
+  if (function_name_mangling_ && IsFunctionDefinition(_scope)) { 
+    SgFunctionDeclaration* d = isSgFunctionDeclaration(GetFunctionDecl(_scope).get_ptr());
+    assert(d != 0);
+    scopename = function_name_mangling_(d);
+    if (expname != "") return scopename + "::" + expname;
+    return scopename;
+  }
   while (scope != 0 && scope->variantT() != V_SgGlobal) {
-       DebugVariable([&scope](){ return "GetGlobalUniqueName:scope:" + AstToString(scope); });
-       if (IsBlock(scope, &scopename) && scopename != "" && result.find(scopename+"::") >= result.size()) {
+      DebugVariable([&scope](){ return "GetGlobalUniqueName:scope:" + AstToString(scope); });
+      if (IsBlock(scope, &scopename) && scopename != "" && result.find(scopename+"::") >= result.size()) {
             DebugVariable([&scopename](){ return "GetGlobalUniqueName:scope_name:" + scopename; });
             if (result == "") result = scopename;
             else {
@@ -934,8 +978,8 @@ GetGlobalUniqueName(const AstNodePtr& _scope, std::string expname) {
             if (b0_is_good && b1_is_good) result = scopename;
             else result = scopename + "::" + result;
             }
-       } 
-       scope = AstInterfaceImpl::GetScope(scope);
+      } 
+      scope = AstInterfaceImpl::GetScope(scope);
   }
   if (scopename == "main") {
     std::string filename = scope->get_file_info()->get_filenameString();
@@ -1347,43 +1391,6 @@ bool AstInterface::IsGotoAfter( const AstNodePtr& _s)
   }
 }
 
-AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
-{
-    SgNode* s = AstNodePtrImpl(_s).get_ptr();
-    int t = s->variantT();
-    switch (t) {
-    case V_SgFunctionDefinition: 
-         return AstNodePtrImpl(isSgFunctionDefinition(s)->get_declaration());
-    case V_SgTemplateFunctionRefExp:
-      return AstNodePtrImpl(isSgTemplateFunctionDefinition(s)->get_declaration());
-    case V_SgFunctionDeclaration:
-    case V_SgMemberFunctionDeclaration:
-        return _s;
-    case V_SgMemberFunctionRefExp:
-         return AstNodePtrImpl(isSgMemberFunctionRefExp(s)->get_symbol()->get_declaration());
-    case V_SgNonrealRefExp:
-         return AstNodePtrImpl(isSgNonrealRefExp(s)->get_symbol()->get_declaration());
-    case V_SgFunctionSymbol:
-          return AstNodePtrImpl(isSgFunctionSymbol(s)->get_declaration());
-    case V_SgFunctionRefExp:
-          return AstNodePtrImpl(isSgFunctionRefExp(s)->get_symbol()->get_declaration());
-    case V_SgMemberFunctionSymbol:
-         return AstNodePtrImpl(isSgMemberFunctionSymbol(s)->get_declaration());
-    case V_SgConstructorInitializer:
-         return AstNodePtrImpl(isSgConstructorInitializer(s)->get_declaration());
-    case V_SgDotExp:
-         return GetFunctionDecl( AstNodePtrImpl(isSgDotExp(s)->get_rhs_operand()));
-    case V_SgVarRefExp:
-         return AstNodePtrImpl(isSgVarRefExp(s)->get_symbol()->get_declaration());
-    default: 
-        mlog[ERROR] << "Error: not recognizable function type : " << s->sage_class_name() << std::endl;
-        mlog[ERROR] << " at " << s->get_file_info()->get_filenameString() << ":" << s->get_file_info()->get_line() << std::endl;
-        mlog[ERROR] << s->unparseToString() << std::endl;
-        ROSE_ABORT();
-    }
-    return AST_NULL;
-}
-
 //! Returns whether t is a function type and if yes, returns its parameter
 //! types and return type.
 bool AstInterface:: IsFunctionType( const AstNodeType& _t,
@@ -1562,7 +1569,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
     }
   }
   if (use_global_unique_name && name != 0) {
-    *name = GetGlobalUniqueName(s, *name);
+    *name = GetGlobalUniqueName(s, "");
   }
   return true;
 }
@@ -2043,7 +2050,11 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
     if (use_global_unique_name && varname != 0 && (*varname) != "") {
        DebugVariable([varname,scope](){ return "Variable-scope:" + *varname + ":" + AstInterface::AstToString(scope); });
        if (scope != 0) {
-          *varname = AstInterface::GetGlobalUniqueName(scope, *varname);
+          if (decl != scope) {
+             *varname = AstInterface::GetGlobalUniqueName(scope, *varname);
+          } else { // If decl == scope, the variable is a function declaration.
+             *varname = AstInterface::GetGlobalUniqueName(scope, "");
+          }
        }
        DebugVariable([varname](){ return "global Variable name:" + *varname; });
     }
@@ -2399,7 +2410,6 @@ IsMemoryFree( const AstNodePtr& s, AstNodeType* exptype, AstNodePtr* variable)
        assert(params.size() == 1);
        if (variable != 0) {
          *variable = SkipCasting(params.front().get_ptr()); 
-         std::cerr << "variable is :" << AstToString(*variable) << "\n";
        }
        if (exptype != 0) {
           *exptype = GetExpressionType(params.front()); 
@@ -2412,7 +2422,6 @@ IsMemoryFree( const AstNodePtr& s, AstNodeType* exptype, AstNodePtr* variable)
   if (is_delete != 0) {
     if (variable != 0) {
          * variable = is_delete->get_variable();
-         std::cerr << "variable is :" << AstToString(*variable) << "\n";
     }
     if (exptype != 0) {
       *exptype = AstNodeTypeImpl(is_delete->get_variable()->get_type()); 
@@ -4579,7 +4588,7 @@ bool AstInterface::IsLocalRef(const AstNodePtr& ref, const AstNodePtr& scope, bo
 SgVariableSymbol* AstInterfaceImpl::
 LookupVar(const std:: string& name) { return LookupVar(name, scope); }
 
-void AstInterface::SetFunctionNameMangling(std::string (*f)(const SgFunctionDeclaration*)) {
+void AstInterface::SetFunctionNameMangling(std::function<std::string(const SgFunctionDeclaration*)> f) {
   function_name_mangling_ = f;
 }
 

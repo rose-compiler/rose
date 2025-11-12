@@ -180,7 +180,7 @@ public:
   AstNodePtr GetRoot() const;
   AstNodePtr getNULL() const { return AST_NULL; }
   void SetRoot( const AstNodePtr& root);
-  static void SetFunctionNameMangling(std::string (*)(const SgFunctionDeclaration*));
+  static void SetFunctionNameMangling(std::function<std::string(const SgFunctionDeclaration*)> f);
 
 
   typedef enum { PreOrder, PostOrder, ReversePreOrder, ReversePostOrder, 
