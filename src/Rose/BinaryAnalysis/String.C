@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <sage3basic.h>
 
 #include <Rose/BinaryAnalysis/String.h>
 
@@ -9,9 +8,12 @@
 #include <Rose/StringUtility/NumberToString.h>
 
 // For finding strings in JVM class files
+#include <Cxx_GrammarDowncast.h>
 #include <SgAsmInterpretation.h>
-#include <SgAsmGenericHeader.h>
 #include <SgAsmGenericHeaderList.h>
+#include <SgAsmJvmFileHeader.h>
+#include <SgAsmJvmConstantPool.h>
+#include <SgAsmJvmConstantPoolEntry.h>
 
 #include <Sawyer/ProgressBar.h>
 
