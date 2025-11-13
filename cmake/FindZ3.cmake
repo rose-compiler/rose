@@ -28,8 +28,8 @@ macro(find_z3)
   # This is an attempt to auto-detect whether or not the Z3 lib prefix is lib or lib64. 
   # On RHEL 8, Z3 Cmake is usually at lib/cmake/z3, while on RHEL9, it is lib64/cmake/z3.
   # The key reason is that RHEL9 decides to put libraries at lib64 instead of lib, which can be queried via the CMAKE_INSTALL_LIBDIR variable.
-  if (DEFINED ROSE_HOST_OS_IS_RHEL)
-    include(GNUInstallDirs)
+  include(GNUInstallDirs)
+  if (NOT "${CMAKE_INSTALL_LIBDIR}" STREQUAL "")
     set(_Z3_LIB_PREFIX "${CMAKE_INSTALL_LIBDIR}")
   else()
     set(_Z3_LIB_PREFIX "lib")
