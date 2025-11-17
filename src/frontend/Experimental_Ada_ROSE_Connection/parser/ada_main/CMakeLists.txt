@@ -17,5 +17,8 @@ add_custom_target(run_parser_adapter ALL
         run_parser_adapter
     COMMENT "Building ada_main program with gprbuild"
 )
+  
+# Wait until asis_adapter is built
+add_dependencies(run_parser_adapter asis_adapter)
 
 #set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "obj")
