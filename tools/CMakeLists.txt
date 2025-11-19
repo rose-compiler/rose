@@ -1,10 +1,10 @@
-add_subdirectory(BinaryAnalysis)                              # Built by default
-add_subdirectory(checkFortranInterfaces EXCLUDE_FROM_ALL)    # Not built by default
-add_subdirectory(classMemberVariablesInLambdas EXCLUDE_FROM_ALL)
+add_subdirectory(BinaryAnalysis)
+add_subdirectory(checkFortranInterfaces)
+add_subdirectory(classMemberVariablesInLambdas)
 add_subdirectory(CodeThorn)
-add_subdirectory(featureVector EXCLUDE_FROM_ALL)
-add_subdirectory(globalVariablesInLambdas EXCLUDE_FROM_ALL)
-add_subdirectory(PortabilityTesting EXCLUDE_FROM_ALL)
+add_subdirectory(featureVector)
+add_subdirectory(globalVariablesInLambdas)
+add_subdirectory(PortabilityTesting)
 add_subdirectory(ReadWriteSetGeneration)
 
 #
