@@ -32,7 +32,6 @@ using namespace Rose;
 
 Rose_STL_Container<std::string> CommandlineProcessing::extraCppSourceFileSuffixes;
 
-// DQ (7/8/2005):
 Rose_STL_Container<string>
 CommandlineProcessing::generateArgListFromString ( string commandline )
    {
@@ -42,23 +41,15 @@ CommandlineProcessing::generateArgListFromString ( string commandline )
      unsigned long int subStringStart = 0;
      unsigned long int subStringEnd   = commandline.find(" ");
 
-  // printf ("commandline.size() = %ld \n",commandline.size());
      while (subStringStart < commandline.size())
         {
           string subString = commandline.substr(subStringStart,subStringEnd-subStringStart);
-       // printf ("subString (%ld,%ld) = %s \n",subStringStart,subStringEnd,subString.c_str());
-
-       // DQ (8/1/2005): Fix suggested by Milind (supporting astMerge in compilation of multiple files)
-       // subStringStart = subStringEnd;
-       // subStringEnd   = commandline.find(" ",subStringStart+1);
           subStringStart = subStringEnd + 1;
           subStringEnd   = commandline.find(" ",subStringStart);
 
-       // printf ("New values subStringStart = %ld subStringEnd = %ld \n",subStringStart,subStringEnd);
           if (subStringEnd == string::npos)
              {
                subStringEnd = commandline.size();
-            // printf ("Reset subStringEnd = %ld \n",subStringEnd);
              }
 
           argList.push_back(subString);
@@ -68,7 +59,6 @@ CommandlineProcessing::generateArgListFromString ( string commandline )
    }
 
 //! Convert a vector of string to a single string
-// std::string CommandlineProcessing::generateStringFromArgList( Rose_STL_Container<std::string> & argList)
 std::string CommandlineProcessing::generateStringFromArgList( const Rose_STL_Container<std::string> & argList)
 {
   string result;
@@ -86,7 +76,6 @@ Rose_STL_Container<string>
 CommandlineProcessing::generateArgListFromArgcArgv ( int argc, const char* argv[] )
    {
      Rose_STL_Container<string> argList;
-  // printf ("In generateArgListFromArgcArgv(): argc = %d \n",argc);
      for (int i=0; i < argc; i++)
         {
           if (argv[i] != NULL)
@@ -109,17 +98,11 @@ CommandlineProcessing::generateStringFromArgList ( Rose_STL_Container<string> ar
                string suffix = "";
          if (arg.length() > 2) suffix = arg.substr(arg.size() - 2);
          if (suffix == ".C" || arg.find("--edg:definition_list_file") == 0) {
-                 // DQ (5/13/2004): It was not a great idea to put this filter into this function
-                 // remove it and handle the filtering of definition_list_file better ...  later!
            continue;
-             }
-             }
-       // returnString += *i;
+         }
+       }
        returnString += *i + " ";
-        }
-
-  // printf ("In generateStringFromArgList(): returnString = %s \n",returnString.c_str());
-
+     }
      return returnString;
    }
 
@@ -143,62 +126,34 @@ CommandlineProcessing::generateArgcArgvFromList ( Rose_STL_Container<string> arg
      argv[argc] = NULL;
      for (int i=0; i < argc; i++)
         {
-       // DQ (9/25/2007): Moved from std::list to std::vector.
-       // string tempString = argList.front();
-       // argList.pop_front();
           string tempString = argList[i];
-       // argList.erase(argList.begin());
-
           int length = tempString.length();
           argv[i] = (char*) malloc ((length+1) * sizeof(char));
           strcpy(argv[i],tempString.c_str());
-       // printf ("argv[%d] = %s \n",i,argv[i]);
         }
 
-#if 0
-     printf ("Modified argv (argc = %d): \n",argc);
-     for (int i=0; i < argc; i++)
-        {
-          printf ("     argv[%d] = %s \n",i,argv[i]);
-        }
-#endif
    }
 
 void
 CommandlineProcessing::removeArgs ( vector<string> & argv, string prefix )
    {
      int prefixLength = prefix.length();
-
-  // printf ("In CommandlineProcessing::removeArgs prefix = %s prefixLength = %d \n",prefix.c_str(),prefixLength);
-
      for (unsigned int i=0; i < argv.size(); i++)
         {
           string argString = argv[i];
-       // printf ("argString = %s \n",argString.c_str());
-
           if ( argString.substr(0,prefixLength) == prefix )
              {
-            // printf ("Found an option to remove (removeArgs): %s \n",argString.c_str());
-
             // keep track of elements so that they can be deleted later (after exit from loop over the eleents)
                argv.erase(argv.begin() + i);
                --i; // To counteract the i++ in the loop header
              }
         }
-
-#if 0
-     printf ("Display arg list! \n");
-     Rose_STL_Container<string> l = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
-     printf ("In removeArgs (at base): argv = \n%s \n",StringUtility::listToString(l).c_str());
-#endif
    }
-
 
 void
 CommandlineProcessing::removeArgsWithParameters ( vector<string> & argv, string prefix )
    {
      unsigned int prefixLength = prefix.length();
-
      for (unsigned int i=0; i < argv.size(); i++)
         {
           string argString = argv[i];
@@ -291,29 +246,6 @@ CommandlineProcessing::generateOptionWithNameParameterList ( Rose_STL_Container<
                  {
                    optionList.push_back(*it);
                    it = argList.erase(it);
-
-#if 0
-                // DQ (1/25/2017): Comment this out as a test of C file command line generation to EDG.
-
-                // DQ (1/21/2017): Adding support for options taking more than one paramter.
-                   if (isOptionTakingThirdParameter(inputPrefix) == true)
-                      {
-                        if ( it->substr(0,prefixLength) != inputPrefix )
-                           {
-                             optionList.push_back(*it);
-                             it = argList.erase(it);
-                           }
-                          else
-                           {
-                             printf ("Error: missing 2nd parameter in option with two parameters \n");
-                             ROSE_ABORT();
-                           }
-#if 0
-                        printf ("Need to handle options taking more than one parameter (e.g. --edg_parameter:): inputPrefix = %s \n",inputPrefix.c_str());
-                        ROSE_ABORT();
-#endif
-                      }
-#endif
                  }
                 else
                  {
@@ -343,8 +275,6 @@ CommandlineProcessing::isOption ( vector<string> & argv, string optionPrefix, st
 bool
 CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string optionPrefix, string option, int & optionParameter, bool removeOption )
    {
-  // Use 1 at end of argument list to SLA to force removal of option from argv and decrement of argc
-  // int optionCount = sla(&argc, argv, optionPrefix.c_str(), "($)", option.c_str(), removeOption);
      int localOptionParameter = 0;
      int optionCount = sla(argv, optionPrefix, "($)^", option, &localOptionParameter, removeOption ? 1 : -1);
      if (optionCount > 0)
@@ -361,135 +291,14 @@ CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string opt
      return (optionCount > 0);
    }
 
-
-#if 0
-bool
-CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string optionPrefix, string option, string & optionParameter, bool removeOption )
-   {
-  // I could not make this work cleanly with valgrind withouth allocatting memory twice
-     string localString;
-     int optionCount = sla(argv, optionPrefix, "($)^", option, &localString, removeOption ? 1 : -1);
-     if (optionCount > 0)
-          optionParameter = localString;
-
-     return (optionCount > 0);
-   }
-#endif
-
 void
 CommandlineProcessing::addListToCommandLine ( vector<string> & argv , string prefix, Rose_STL_Container<string> argList )
    {
-#if 0
-     printf ("In addListToCommandLine(): prefix = %s \n",prefix.c_str());
-#endif
-  // bool outputPrefix = false;
-  // for (unsigned int i = 0; i < argList.size(); ++i)
      for (size_t i = 0; i < argList.size(); ++i)
         {
-#if 1
-       // DQ (1/25/2017): Original version of code (required for C test codes to pass, see C_tests directory).
-       // However, this causes a problem for the --edg_parameter support (which is fixed by the code below).
           argv.push_back(prefix + argList[i]);
-#else
-       // DQ (1/25/2017): Comment this out as a test of C file command line generation to EDG.
-
-       // DQ (1/21/2017): The prefix should only be on the first argument (if it is non-empty).
-       // argv.push_back(prefix + argList[i]);
-#if 0
-          printf ("   argList[%zu] = %s \n",i,argList[i].c_str());
-#endif
-          if (i == 0 && argList[i].empty() == false)
-             {
-               argv.push_back(prefix + argList[i]);
-               outputPrefix = true;
-             }
-            else
-             {
-            // Account for the first entry in the list being empty.
-               if (i > 0 && outputPrefix == false && argList[i].empty() == false)
-                  {
-                    argv.push_back(prefix + argList[i]);
-                    outputPrefix = true;
-                  }
-                 else
-                  {
-                    argv.push_back(argList[i]);
-                  }
-             }
-#endif
         }
    }
-
-#if 0
-Rose_STL_Container<string>
-CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argList, bool binaryMode )
-   {
-     Rose_STL_Container<string> sourceFileList;
-
-     Rose_STL_Container<string>::iterator i = argList.begin();
-
-  // skip the 0th entry since this is just the name of the program (e.g. rose)
-     ROSE_ASSERT(argList.size() > 0);
-     i++;
-
-     int counter = 0;
-     while ( i != argList.end() )
-        {
-       // Count up the number of filenames (if it is ZERO then this is likely a
-       // link line called using the compiler (required for template processing
-       // in C++ with most compilers)) if there is at least ONE then this is the
-       // source file.  Currently their can be up to maxFileNames = 256 files
-       // specified.
-
-       // most options appear as -<option>
-       // have to process +w2 (warnings option) on some compilers so include +<option>
-
-       // DQ (1/5/2008): Ignore things that would be obvious options using a "-" or "+" prefix.
-       // if ( ((*i)[0] != '-') || ((*i)[0] != '+') )
-          if ( ((*i)[0] != '-') && ((*i)[0] != '+') )
-             {
-            // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %" PRIuPTR " \n",counter,(*i).c_str(),(*i).size());
-
-            // bool foundSourceFile = false;
-
-               if ( isSourceFilename(*i) == false && isExecutableFilename(*i) == true )
-                  {
-                 // printf ("This is an executable file: *i = %s \n",(*i).c_str());
-                 // executableFileList.push_back(*i);
-                    sourceFileList.push_back(*i);
-                  }
-            // PC (4/27/2006): Support for custom source file suffixes
-            // if ( isSourceFilename(*i) )
-               if ( isObjectFilename(*i) == false && isSourceFilename(*i) == true )
-                  {
-                 // printf ("This is a source file: *i = %s \n",(*i).c_str());
-                 // foundSourceFile = true;
-                    sourceFileList.push_back(*i);
-                  }
-#if 0
-               if ( isObjectFilename(*i) )
-                  {
-                    objectFileList.push_back(*i);
-                  }
-#endif
-
-             }
-
-       // DQ (12/8/2007): Looking for rose options that take filenames that would accidentally be considered as source files.
-          if (isOptionTakingFileName(*i) == true)
-             {
-            // Jump over the next argument when such options are identified.
-               counter++;
-               i++;
-             }
-
-          counter++;
-          i++;
-        }
-
-     return sourceFileList;
-   }
-#endif
 
 bool
 CommandlineProcessing::isSourceFilename(const std::string& name, bool isAdaProject)
@@ -569,16 +378,14 @@ bool
 CommandlineProcessing::isCFileNameSuffix ( const std::string & suffix )
    {
   // Returns true only if this is a valid C source file name extension (suffix)
-
   // C source files conventionally use the suffixes ".c", C header files often use ".h".
 
      bool returnValue = false;
 
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
-
-     if (suffix == "c")
-          returnValue = true;
-
+     if (suffix == "c") {
+         returnValue = true;
+     }
      return returnValue;
    }
 
@@ -603,16 +410,6 @@ CommandlineProcessing::isCppFileNameSuffix ( const std::string & suffix )
              || suffix == "c++"
              || suffix == "cpp"
              || suffix == "cxx"
-//It seems that the upper-case versions of the above should also be accepted.
-//However, it does not look like GNU-g++ accepts them.
-//So, I am commenting them out
-             /*
-             || suffix == "CC"
-             || suffix == "CPP"
-             || suffix == "C++"
-             || suffix == "CP"
-             || suffix == "CXX"
-             */
              )
 #else//It is a case insensitive system
      if (suffix == "cc"
@@ -719,10 +516,7 @@ CommandlineProcessing::isFortranFileNameSuffixRequiringCPP ( const std::string &
 bool
 CommandlineProcessing::isFortran77FileNameSuffix ( const std::string & suffix )
    {
-  // DQ (11/17/2007): Added fortran mode specific suffix checking
-
   // Returns true only if this is a valid Fortran 77 source file name extension (suffix)
-
      bool returnValue = false;
 
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
@@ -731,12 +525,8 @@ CommandlineProcessing::isFortran77FileNameSuffix ( const std::string & suffix )
   // But to make the system more robust, accept either as recognised F77 Fortran source.
 
 #if(CASE_SENSITIVE_SYSTEM == 1)
-  // if ( suffix == "f77" || suffix == "F77" )
-  // if ( suffix == "f" || suffix == "F" )
      if ( suffix == "f" || suffix == "F" || suffix == "f77" || suffix == "F77" )
 #else//It is a case insensitive system
-  // if ( suffix == "f77" )
-  // if ( suffix == "f" )
      if ( suffix == "f" || suffix == "f77")
 #endif
         {
@@ -749,10 +539,7 @@ CommandlineProcessing::isFortran77FileNameSuffix ( const std::string & suffix )
 bool
 CommandlineProcessing::isFortran90FileNameSuffix ( const std::string & suffix )
    {
-  // DQ (11/17/2007): Added fortran mode specific suffix checking
-
   // Returns true only if this is a valid Fortran 90 source file name extension (suffix)
-
      bool returnValue = false;
 
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
@@ -772,10 +559,7 @@ CommandlineProcessing::isFortran90FileNameSuffix ( const std::string & suffix )
 bool
 CommandlineProcessing::isFortran95FileNameSuffix ( const std::string & suffix )
    {
-  // DQ (11/17/2007): Added fortran mode specific suffix checking
-
   // Returns true only if this is a valid Fortran 95 source file name extension (suffix)
-
      bool returnValue = false;
 
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
@@ -795,10 +579,7 @@ CommandlineProcessing::isFortran95FileNameSuffix ( const std::string & suffix )
 bool
 CommandlineProcessing::isFortran2003FileNameSuffix ( const std::string & suffix )
    {
-  // DQ (11/17/2007): Added fortran mode specific suffix checking
-
   // Returns true only if this is a valid Fortran 2003 source file name extension (suffix)
-
      bool returnValue = false;
 
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
@@ -818,10 +599,7 @@ CommandlineProcessing::isFortran2003FileNameSuffix ( const std::string & suffix 
 bool
 CommandlineProcessing::isFortran2008FileNameSuffix ( const std::string & suffix )
    {
-  // DQ (11/17/2007): Added fortran mode specific suffix checking
-
   // Returns true only if this is a valid Fortran 2008 source file name extension (suffix)
-
      bool returnValue = false;
 
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
@@ -842,10 +620,7 @@ CommandlineProcessing::isFortran2008FileNameSuffix ( const std::string & suffix 
 bool
 CommandlineProcessing::isCoArrayFortranFileNameSuffix ( const std::string & suffix )
    {
-  // DQ (1/23/2009): Added Co-Array fortran mode specific suffix checking
-
   // Returns true only if this is a valid Co-Array Fortran (extension of Fortran 2003) source file name extension (suffix)
-
      bool returnValue = false;
 
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
@@ -862,7 +637,6 @@ CommandlineProcessing::isCoArrayFortranFileNameSuffix ( const std::string & suff
      return returnValue;
    }
 
-//Liao, 6/6/2008 Support for UPC
 bool
 CommandlineProcessing::isUPCFileNameSuffix ( const std::string & suffix )
    {
@@ -920,7 +694,6 @@ CommandlineProcessing::isPythonFileNameSuffix ( const std::string & suffix )
      return returnValue;
    }
 
-// DQ (28/8/2017): Adding language support.
 bool
 CommandlineProcessing::isCsharpFileNameSuffix ( const std::string & suffix )
    {
@@ -967,17 +740,18 @@ CommandlineProcessing::isAdaFileNameSuffix ( const std::string& suffix, bool isA
    }
 
 bool
-CommandlineProcessing::isJovialFileNameSuffix ( const std::string & suffix )
-{
-   // Jovial file extension reflects usage found on web and uses only lower case (for now).
-   if (suffix == "jov" || suffix == "cpl" || suffix == "j73" || suffix == "jovial" || suffix == "rcmp")
-     {
+CommandlineProcessing::isJovialFileNameSuffix(const std::string& suffix) {
+    std::string lc{suffix};
+    std::transform(lc.begin(), lc.end(), lc.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+
+    // Jovial file extension reflects usage found on web (lower and upper case, not mixed)
+    if (lc == "jov" || lc == "cpl" || lc == "j73" || lc == "jovial" || lc == "rcmp") {
         return true;
-     }
-   return false;
+    }
+    return false;
 }
 
-// TV (05/17/2010) Support for CUDA
 bool
 CommandlineProcessing::isCudaFileNameSuffix ( const std::string & suffix )
    {
@@ -997,7 +771,6 @@ CommandlineProcessing::isCudaFileNameSuffix ( const std::string & suffix )
      return returnValue;
    }
 
-// TV (05/17/2010) Support for OpenCL
 bool
 CommandlineProcessing::isOpenCLFileNameSuffix ( const std::string & suffix )
    {
@@ -1071,17 +844,12 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".cxx");
           validSourceFileSuffixes.push_back(".C");
 
-       // Liao (6/6/2008)  Support for UPC
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
 
-       // driscoll6 (06/02/2011): Adding support for Python
           validSourceFileSuffixes.push_back(".py");
 
-       // TV (05/17/2010) Support for CUDA
           validSourceFileSuffixes.push_back(".cu");
-
-       // TV (05/17/2010) Support for OpenCL
           validSourceFileSuffixes.push_back(".ocl");
           validSourceFileSuffixes.push_back(".cl");
 #else
@@ -1102,13 +870,9 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
 
-       // driscoll6 (06/02/2011): Adding support for Python
           validSourceFileSuffixes.push_back(".py");
 
-       // TV (05/17/2010) Support for CUDA
           validSourceFileSuffixes.push_back(".cu");
-
-       // TV (05/17/2010) Support for OpenCL
           validSourceFileSuffixes.push_back(".ocl");
           validSourceFileSuffixes.push_back(".cl");
 #endif
@@ -1125,7 +889,6 @@ void
 CommandlineProcessing::initObjectFileSuffixList ( )
    {
      static bool first_call = true;
-
      if ( first_call == true )
         {
 #if(CASE_SENSITIVE_SYSTEM == 1)
@@ -1139,25 +902,3 @@ CommandlineProcessing::initObjectFileSuffixList ( )
           first_call = false;
         }
    }
-
-#if 0
-void
-CommandlineProcessing::initExecutableFileSuffixList ( )
-   {
-     static bool first_call = true;
-
-     if ( first_call == true )
-        {
-       // DQ (1/5/2008): For a binary (executable) file, no suffix is a valid suffix, so allow this case
-          validExecutableFileSuffixes.push_back("");
-
-#if(CASE_SENSITIVE_SYSTEM == 1)
-          validExecutableFileSuffixes.push_back(".exe");
-#else
-       // it is a case insensitive system
-          validExecutableFileSuffixes.push_back(".EXE");
-#endif
-          first_call = false;
-        }
-   }
-#endif
