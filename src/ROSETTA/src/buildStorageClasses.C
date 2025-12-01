@@ -752,6 +752,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgImplicitStatement::implicit_spec_enum" ) ||
                  ( varTypeString == "SgInitializedName::asm_register_name_enum" ) ||
                  ( varTypeString == "SgInitializedName::excess_specifier_enum" ) ||
+                 ( varTypeString == "SgInitializedName::e_flags" ) ||
                  ( varTypeString == "SgJovialDirectiveStatement::directive_types" ) ||
                  ( varTypeString == "SgJovialLabelDeclaration::label_type_enum" ) ||
                  ( varTypeString == "SgJovialForThenStatement::loop_statement_type_enum" ) ||
@@ -863,7 +864,6 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "long int" ) ||
                  ( varTypeString == "long long int" ) ||
                  ( varTypeString == "unsigned long long int" ) ||
-                 ( varTypeString == "int64_t") ||
                  varTypeString == "Rose::BinaryAnalysis::Address" ||
                  varTypeString == "BinaryAnalysis::Address" ||
                  varTypeString == "Address" ||
@@ -871,11 +871,13 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  varTypeString == "RelativeVirtualAddress" ||
                  varTypeString == "BinaryAnalysis::RelativeVirtualAddress" ||
                  varTypeString == "Rose::BinaryAnalysis::RelativeVirtualAddress" ||
+                 ( varTypeString == "int64_t") ||
                  ( varTypeString == "uint64_t" ) ||
                  ( varTypeString == "uint32_t" ) ||
                  ( varTypeString == "uint16_t" ) ||
                  ( varTypeString == "uint8_t" ) ||
                  ( varTypeString == "size_t" ) ||
+                 ( varTypeString == "std::int64_t" ) ||
                  ( varTypeString == "std::uint64_t" ) ||
                  ( varTypeString == "std::uint32_t" ) ||
                  ( varTypeString == "std::uint16_t" ) ||

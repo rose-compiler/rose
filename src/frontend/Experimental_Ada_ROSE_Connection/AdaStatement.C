@@ -705,46 +705,51 @@ namespace
     return constructInitializedNamePtrList(ctx, m, names, dcltype, initexpr, dummy);
   }
 
-
-
-  /// converts a parameter mode to its ROSE representation
-  SgTypeModifier
-  getMode(Mode_Kinds asisKind)
+  std::function<void(SgInitializedName*)>
+  parameterModeSetter(Mode_Kinds asisKind)
   {
-    SgTypeModifier res;
-
-    res.unsetDefault();
-
-    switch (asisKind)
+    if (asisKind == A_Default_In_Mode)
     {
-      case A_Default_In_Mode:
-        logKind("A_Default_In_Mode");
-        res.setDefault();
-        break;
-
-      case An_In_Mode:
-        logKind("An_In_Mode");
-        res.setIntent_in();
-        break;
-
-      case An_Out_Mode:
-        logKind("An_Out_Mode");
-        res.setIntent_out();
-        break;
-
-      case An_In_Out_Mode:
-        logKind("An_In_Out_Mode");
-        res.setIntent_inout();
-        break;
-
-      case Not_A_Mode: /* break; */
-      default:
-        ADA_ASSERT(false);
+      logKind("A_Default_In_Mode");
+      return [](SgInitializedName* n) -> void
+             {
+               ASSERT_not_null(n);
+               logWarn() << n->get_name() << " default" << std::endl;
+               n->set_default_parameter();
+             };
     }
 
-    return res;
-  }
+    if (asisKind == An_In_Mode)
+    {
+      logKind("An_In_Mode");
+      return [](SgInitializedName* n) -> void
+             {
+               ASSERT_not_null(n);
+               logWarn() << n->get_name() << " in" << std::endl;
+               n->set_in_parameter();
+             };
+    }
 
+    if (asisKind == An_Out_Mode)
+    {
+      logKind("An_Out_Mode");
+      return [](SgInitializedName* n) -> void
+             {
+               ASSERT_not_null(n);
+               logWarn() << n->get_name() << " out" << std::endl;
+               n->set_out_parameter();
+             };
+    }
+
+    ASSERT_require(asisKind == An_In_Out_Mode);
+    logKind("An_In_Out_Mode");
+    return [](SgInitializedName* n) -> void
+           {
+             ASSERT_not_null(n);
+             logWarn() << n->get_name() << " in out" << std::endl;
+             n->set_inout_parameter();
+           };
+  }
 
 
   /// creates a ROSE expression for an Asis declaration's initializer expression
@@ -787,8 +792,8 @@ namespace
 
   /// converts an Asis parameter declaration to a ROSE paramter (i.e., variable)
   ///   declaration.
-  SgVariableDeclaration&
-  getParm(Element_Struct& elem, std::vector<Element_ID>& secondaries, AstContext ctx)
+  SgInitializedNamePtrList
+  getParamList(Element_Struct& elem, std::vector<Element_ID>& secondaries, AstContext ctx)
   {
     using name_container = NameCreator::result_container;
 
@@ -811,11 +816,28 @@ namespace
                                                                          getVarInit(asisDecl, &parmtype, ctx),
                                                                          secondaries
                                                                        );
-    SgVariableDeclaration&   sgnode   = mkParameter(dclnames, getMode(asisDecl.Mode_Kind), ctx.scope());
+
+    std::for_each( dclnames.begin(), dclnames.end(),
+                   parameterModeSetter(asisDecl.Mode_Kind)
+                 );
+
+    return dclnames;
+  }
+
+  SgVariableDeclaration&
+  getParameter(Element_Struct& elem, std::vector<Element_ID>& secondaries, AstContext ctx)
+  {
+    ADA_ASSERT (elem.Element_Kind == A_Declaration);
+
+    Declaration_Struct&      asisDecl = elem.The_Union.Declaration;
+    ADA_ASSERT (  asisDecl.Declaration_Kind == A_Formal_Object_Declaration
+               // || asisDecl.Declaration_Kind == A_Parameter_Specification
+               );
+
+    SgInitializedNamePtrList dclnames = getParamList(elem, secondaries, ctx);
+    SgVariableDeclaration&   sgnode   = mkParameter(dclnames, ctx.scope());
 
     attachSourceLocation(sgnode, elem, ctx);
-    /* unused fields:
-    */
     return sgnode;
   }
 
@@ -830,12 +852,21 @@ namespace
 
       void operator()(Element_Struct& elem)
       {
-        SgVariableDeclaration& decl = getParm(elem, secondaries, ctx);
+        // SgVariableDeclaration& decl = getParameter(elem, secondaries, ctx);
 
         // in Ada multiple parameters can be declared
         //   within a single declaration.
-        for (SgInitializedName* parm : decl.get_variables())
+        for (sg::NotNull<SgInitializedName> parm : getParamList(elem, secondaries, ctx))
+        {
           parmlist.append_arg(parm);
+          createParameterSymbol(*parm, ctx.scope());
+        }
+
+        //~ if (reinterpret_cast<std::uint64_t>(&*parm) == 0x7fffeb4adbc0)
+        //~ {
+          //~ std::cerr << "2:" << parm->get_name() << " " << parm << " : " << parm->get_scope()
+                    //~ << std::endl;
+        //~ }
       }
 
     private:
@@ -4603,10 +4634,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Formal_Object_Declaration:              // 12.4(2)  -> Mode_Kinds
       {
         std::vector<Element_ID> dummy;
-        SgVariableDeclaration&  sgnode = getParm(elem, dummy, ctx);
+        SgVariableDeclaration&  sgnode = getParameter(elem, dummy, ctx);
 
-        // \todo is the call to append statement required?
-        //       getParm -> mkParameter: which calls fixVariableDeclaration
         ctx.appendStatement(sgnode);
         /* unused fields:
         */

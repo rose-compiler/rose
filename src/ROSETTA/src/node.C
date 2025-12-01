@@ -634,9 +634,6 @@ Grammar::setUpNodes ()
   //   InitializedName.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
   //          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-  // FMZ (2/18/2009)
-     InitializedName.setDataPrototype("bool","isCoArray","= false",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      InitializedName.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      InitializedName.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
@@ -653,6 +650,13 @@ Grammar::setUpNodes ()
   // This requirement comes from an Elsa test case: "int foo asm ("myfoo") = 2;" where the register name is unknown and so held as a string.
      InitializedName.setDataPrototype ( "std::string", "register_name_string", "= \"\"",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+#if BEFORE_MERGE_BOOLEAN_FLAGS
+
+  // FMZ (2/18/2009)
+     InitializedName.setDataPrototype("bool","isCoArray","= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // DQ (3/30/2019): I think this is redundent with the similar data member below.
   // DQ (12/20/2006): Record if global name qualification is required on the type.
@@ -673,6 +677,83 @@ Grammar::setUpNodes ()
   // in a separate "data statement".  This flag records if the initializer was defered (e.g. to a data statement).
      InitializedName.setDataPrototype("bool", "initializationDeferred", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/11/2010): Added support for fortran "protected" marking of variables.
+     InitializedName.setDataPrototype("bool", "protected_declaration", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the
+  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed
+  // to function.
+     InitializedName.setDataPrototype("bool","type_elaboration_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the
+  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed
+  // to function.
+     InitializedName.setDataPrototype("bool","global_qualification_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
+  // DQ (5/12/2011): Added information required for new name qualification support.
+  // InitializedName.setDataPrototype("bool","type_elaboration_required_for_type","= false",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     InitializedName.setDataPrototype("bool","type_elaboration_required_for_type","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
+  // DQ (5/12/2011): Added information required for new name qualification support.
+  // InitializedName.setDataPrototype("bool","global_qualification_required_for_type","= false",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     InitializedName.setDataPrototype("bool","global_qualification_required_for_type","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
+  // For example: "int array[];" This can be important to preserve when the primary declaration uses an
+  // array bound that is declared between the secondary and primary declarations.  See test2014_81.c and
+  // test2014_06.C.
+     InitializedName.setDataPrototype("bool", "hasArrayTypeWithEmptyBracketSyntax", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (7/26/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
+     InitializedName.setDataPrototype("bool","using_C11_Alignas_keyword","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/2/2014): Using C++11 auto keyword.
+     InitializedName.setDataPrototype("bool","using_auto_keyword","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
+     InitializedName.setDataPrototype("bool","using_device_keyword","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/14/2016): This is C++11 syntax for direct brace initalization (e.g. int n{} for EDG 4.11 and greater).
+     InitializedName.setDataPrototype     ( "bool", "is_braced_initialized", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/30/2019): Is initialized using the "A a = B" copy constructor syntax as opposed to the "A a(B)" syntax.
+  // This appears to make a different in Cxx11_tests/test2019_454.C.
+     InitializedName.setDataPrototype     ( "bool", "using_assignment_copy_constructor_syntax", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     InitializedName.setDataPrototype     ( "bool", "needs_definitions", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/10/2019): Need to be able to specify function parameters that are a part of C++11 parameter pack associated with variadic templates.
+     InitializedName.setDataPrototype     ( "bool", "is_parameter_pack", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     InitializedName.setDataPrototype     ( "bool", "is_pack_element", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif /*BEFORE_MERGE_BOOLEAN_FLAGS*/
+
+     InitializedName.setDataPrototype     ( "SgInitializedName::e_flags", "flags", "= e_flags_none",
+               NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     InitializedName.setDataPrototype("SgNode*","constant_or_type_argument_for_Alignas_keyword","= NULL",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
   // DQ (1/3/2009): Added support for gnu variable attributes.  Note that these can be specified on a per variable
   // basis and because a variable declaration can contain many variables, the attributs must live with the
@@ -709,9 +790,6 @@ Grammar::setUpNodes ()
   // DQ (1/3/2009): Added support for GNU attributes (reuse the enum declaration at the SgDeclarationModifier IR node).
      InitializedName.setDataPrototype("SgDeclarationModifier::gnu_declaration_visability_enum", "gnu_attribute_visability","= SgDeclarationModifier::e_unknown_visibility",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (9/11/2010): Added support for fortran "protected" marking of variables.
-     InitializedName.setDataPrototype("bool", "protected_declaration", "= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the
   // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed
@@ -719,17 +797,6 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype ( "int", "name_qualification_length", "= 0",
                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the
-  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed
-  // to function.
-     InitializedName.setDataPrototype("bool","type_elaboration_required","= false",
-                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (3/30/2019): This is needed to support pointers to member type variables, currently supporting in the
-  // SgVariableDeclaration, but that support is not general enough as in where pointer to member types are passed
-  // to function.
-     InitializedName.setDataPrototype("bool","global_qualification_required","= false",
-                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added support for name qualification on the type referenced by the InitializedName
@@ -739,19 +806,6 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
-  // DQ (5/12/2011): Added information required for new name qualification support.
-  // InitializedName.setDataPrototype("bool","type_elaboration_required_for_type","= false",
-  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     InitializedName.setDataPrototype("bool","type_elaboration_required_for_type","= false",
-                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
-  // DQ (5/12/2011): Added information required for new name qualification support.
-  // InitializedName.setDataPrototype("bool","global_qualification_required_for_type","= false",
-  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     InitializedName.setDataPrototype("bool","global_qualification_required_for_type","= false",
-                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
   // DQ (11/18/2013): Added final to support Java (which can use it to represent const function parameters in function declarations).
   // This support is represented as a declaration modifier (but that is not sufficient for use in function parameters).
@@ -759,46 +813,9 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype("bool","isFinal","= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-  // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
-  // For example: "int array[];" This can be important to preserve when the primary declaration uses an
-  // array bound that is declared between the secondary and primary declarations.  See test2014_81.c and
-  // test2014_06.C.
-     InitializedName.setDataPrototype("bool", "hasArrayTypeWithEmptyBracketSyntax", "= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (7/26/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
-     InitializedName.setDataPrototype("bool","using_C11_Alignas_keyword","= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     InitializedName.setDataPrototype("SgNode*","constant_or_type_argument_for_Alignas_keyword","= NULL",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/2/2014): Using C++11 auto keyword.
-     InitializedName.setDataPrototype("bool","using_auto_keyword","= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      InitializedName.setDataPrototype("SgType *","auto_decltype","= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
-     InitializedName.setDataPrototype("bool","using_device_keyword","= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (11/14/2016): This is C++11 syntax for direct brace initalization (e.g. int n{} for EDG 4.11 and greater).
-     InitializedName.setDataPrototype     ( "bool", "is_braced_initialized", "= false",
-               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (5/30/2019): Is initialized using the "A a = B" copy constructor syntax as opposed to the "A a(B)" syntax.
-  // This appears to make a different in Cxx11_tests/test2019_454.C.
-     InitializedName.setDataPrototype     ( "bool", "using_assignment_copy_constructor_syntax", "= false",
-               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     InitializedName.setDataPrototype     ( "bool", "needs_definitions", "= false",
-               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (2/10/2019): Need to be able to specify function parameters that are a part of C++11 parameter pack associated with variadic templates.
-     InitializedName.setDataPrototype     ( "bool", "is_parameter_pack", "= false",
-               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     InitializedName.setDataPrototype     ( "bool", "is_pack_element", "= false",
-               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair
      JavaMemberValuePair.setFunctionPrototype     ( "HEADER_JAVA_MEMBER_VALUE_PAIR", "../Grammar/LocatedNode.code");

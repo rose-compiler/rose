@@ -700,16 +700,25 @@ namespace Ada_ROSE_Translation
 
   /// creates a parameter declaration from a list of initialized names \p parms.
   /// \param parm      a list of individual parameters that get combined into a single parameter declaration
-  /// \param parammode the parameter modifier (e.g., in, out)
   /// \param scope     the scope of the parameter list
-  /// \pre the types of all initialized names must be the same
+  /// \pre the types and i.out modes of all initialized names must be the same
   /// \note in contrast to other mk* functions, mkParameter attaches the
   ///       new node to the scope (using fixVariableDeclaration).
+  /// \note ONLY USED for formal parameters
+  /// \details
+  ///   - creates a parameter declaration for the parameters listed in parms.
+  ///   - infers the in/out mode from the modes set in parms' elements
+  ///   - ONLY USE FOR FORMAL PARAMETERS
   SgVariableDeclaration&
   mkParameter( const SgInitializedNamePtrList& parms,
-               SgTypeModifier parmmode,
                SgScopeStatement& scope
              );
+
+  /// Creates an SgVariableSymbol for parameter \p parm in scope \p scope and
+  ///   sets \p parm's scope to \p scope.
+  /// \details
+  ///    - ONLY USED for parameters in C/C++ style procedure declarations in ROSE.
+  void createParameterSymbol(SgInitializedName& parm, SgScopeStatement& scope);
 
 
   /// combines a list of initialized names into a single declaration
@@ -798,11 +807,15 @@ namespace Ada_ROSE_Translation
 
   /// creates a variable reference expression to the only! variable
   ///   declared within the declaration of \p var.
+  /// \pre var.get_variables().size() == 1
+  /// \pre var.get_variables().front() != nullptr
+  /// \pre var.get_variables().front()->get_scope() != nullptr
   SgVarRefExp&
   mkVarRefExp(SgVariableDeclaration& var);
 
   /// creates a variable reference expression to the variable
   ///   identified by \p var.
+  /// \pre var.get_scope() != nullptr
   SgVarRefExp&
   mkVarRefExp(SgInitializedName& var);
 
@@ -1013,6 +1026,7 @@ namespace Ada_ROSE_Translation
   ///    support derived enum types
   SgAdaInheritedFunctionSymbol&
   mkAdaInheritedFunctionSymbol(SgFunctionSymbol& basesym, SgNamedType& assocType, SgScopeStatement& scope);
+
 
   //
   // conversions

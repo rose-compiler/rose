@@ -112,15 +112,23 @@ namespace
   const std::string PARAM_SEP = "; ";
 
   template <class UnparserT>
-  void unparseTypeModifiers(UnparserT& unparser, SgTypeModifier tymod)
+  void unparseParameterModes(UnparserT& unparser, const SgInitializedName& n)
   {
-    if (tymod.isIntent_out())   unparser.prn(" out");
-    if (tymod.isIntent_in())    unparser.prn(" in");
-    if (tymod.isIntent_inout()) unparser.prn(" in out");
+    if      (n.get_inout_parameter()) unparser.prn(" in out");
+    else if (n.get_in_parameter())    unparser.prn(" in");
+    else if (n.get_out_parameter())   unparser.prn(" out");
   }
 
   template <class UnparserT>
-  void unparseModifiers(UnparserT& unparser, SgDeclarationStatement& n)
+  void unparseTypeModifiers(UnparserT& unparser, SgTypeModifier tymod)
+  {
+    if (tymod.isIntent_out())   unparser.prn(" out");
+    else if (tymod.isIntent_in())    unparser.prn(" in");
+    else if (tymod.isIntent_inout()) unparser.prn(" in out");
+  }
+
+  template <class UnparserT>
+  void unparseModifiers(UnparserT& unparser, const SgDeclarationStatement& n)
   {
     unparseTypeModifiers(unparser, n.get_declarationModifier().get_typeModifier());
   }
@@ -166,12 +174,13 @@ namespace
   {
     using AdaDetailsUnparser::AdaDetailsUnparser;
 
-    void handle(SgVariableDeclaration& n)
+    // unparse parameter lists with SgVariableDeclaration parents
+    void handle(const SgVariableDeclaration& n)
     {
-      SgInitializedNamePtrList& params = n.get_variables();
-      ROSE_ASSERT(params.size());
+      const SgInitializedNamePtrList& params = n.get_variables();
+      ASSERT_require(params.size());
 
-      SgInitializedName&        primary  = SG_DEREF(params[0]);
+      SgInitializedName& primary = SG_DEREF(params[0]);
 
       prn(primary.get_name());
 
@@ -195,10 +204,33 @@ namespace
       }
     }
 
-    void operator()(SgVariableDeclaration* s)
+    // unparse parameter lists w/o SgVariableDeclaration parents
+    void handle(const SgInitializedName& n)
+    {
+      prn(n.get_name());
+      prn(": ");
+
+      unparseParameterModes(*this, n);
+      unparser.unparseType(n, n.get_type(), info);
+
+      if (SgInitializer* init = n.get_initializer())
+      {
+        prn(" := ");
+        unparser.unparseExpression(init, info);
+      }
+    }
+
+    void operator()(const SgVariableDeclaration* s)
     {
       prn(*sep);
       handle(SG_DEREF(s));
+      sep = &PARAM_SEP;
+    }
+
+    void operator()(const SgInitializedName* n)
+    {
+      prn(*sep);
+      handle(SG_DEREF(n));
       sep = &PARAM_SEP;
     }
   };
@@ -1234,7 +1266,7 @@ namespace
       prn(STMT_SEP);
     }
 
-      void handle(SgAdaAcceptStmt& n)
+    void handle(SgAdaAcceptStmt& n)
     {
       prn("accept ");
       expr(n.get_entry());
@@ -1926,27 +1958,40 @@ namespace
   {
     using parameter_decl_t = std::vector<SgVariableDeclaration*>;
 
-    parameter_decl_t           paramdecls;
+    // if no parameters exist, do not even put out parenthesis
+    if (params.empty())
+      return;
 
-    // Since SgFunctionParameterScope (and SgFunctionDefinition) do not allow
-    //   traversing the function parameter declarations, they are collected
-    //   from initialized names.
+    bool const withVariableDecl = isSgVariableDeclaration(SG_DEREF(params.front()).get_parent());
 
-    std::transform( params.begin(), params.end(),
-                    std::back_inserter(paramdecls),
-                    variableDeclaration
-                  );
-
-    parameter_decl_t::iterator aa = paramdecls.begin();
-    parameter_decl_t::iterator zz = std::unique(aa, paramdecls.end());
-
-    // print parenthesis only if parameters were present
-    if (aa != zz)
+    if (withVariableDecl)
     {
+      parameter_decl_t           paramdecls;
+
+      // Since SgFunctionParameterScope (and SgFunctionDefinition) do not allow
+      //   traversing the function parameter declarations, they are collected
+      //   from initialized names.
+
+      std::transform( params.begin(), params.end(),
+                      std::back_inserter(paramdecls),
+                      variableDeclaration
+                    );
+
+      parameter_decl_t::iterator aa = paramdecls.begin();
+      parameter_decl_t::iterator zz = std::unique(aa, paramdecls.end());
+      ASSERT_require(aa != zz);
+
       prn("(");
       std::for_each(aa, zz, AdaParamUnparser{unparser, info, os});
       prn(")");
+
+      return;
     }
+
+    // unparse standard ROSE parameter representation
+    prn("(");
+    std::for_each(params.begin(), params.end(), AdaParamUnparser{unparser, info, os});
+    prn(")");
   }
 
   void

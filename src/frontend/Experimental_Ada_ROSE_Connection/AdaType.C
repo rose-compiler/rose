@@ -1477,8 +1477,12 @@ namespace
          {
            const std::string&       parmName = parmNames[++parmNameIdx];
            SgInitializedName&       parmDecl = mkInitializedName(parmName, SG_DEREF(parmType), nullptr);
+
+           parmDecl.set_scope(&scope);
+#if WITH_ADA_PARAMETER_DECL
            SgInitializedNamePtrList parmList = {&parmDecl};
            /* SgVariableDeclaration&   pvDecl   =*/ mkParameter(parmList, defaultInMode, scope);
+#endif /*WITH_ADA_PARAMETER_DECL*/
 
            parmDecl.set_parent(&fnParmList);
            fnParmList.get_args().push_back(&parmDecl);

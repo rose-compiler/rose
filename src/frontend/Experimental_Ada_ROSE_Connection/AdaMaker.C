@@ -14,6 +14,7 @@
 #include "AdaMaker.h"
 
 #include <Rose/Diagnostics.h>
+#include <ROSE_FALLTHROUGH.h>
 #include "sageInterfaceAda.h"
 
 // turn on all GCC warnings after include files have been processed
@@ -220,27 +221,27 @@ namespace
                      << "\n    using default mode instead"
                      << (numerrout == 5 ? "\n    skipping future messages.." : "")
                      << std::endl;
-        /* fall-through */
+        ROSE_FALLTHROUGH;
 
       case sb::e_sourcePositionFrontendConstruction:
-        /* fall-through */
+        ROSE_FALLTHROUGH;
+
       case sb::e_sourcePositionDefault:
         startpos = Sg_File_Info::generateDefaultFileInfo();
         limitpos = Sg_File_Info::generateDefaultFileInfo();
-        if (hasOperatorPos) operatorpos = Sg_File_Info::generateDefaultFileInfo();
-
+        if (hasOperatorPos) { operatorpos = Sg_File_Info::generateDefaultFileInfo(); }
         break;
 
       case sb::e_sourcePositionTransformation:
         startpos = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
         limitpos = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-        if (hasOperatorPos) operatorpos = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+        if (hasOperatorPos) { operatorpos = Sg_File_Info::generateDefaultFileInfoForTransformationNode(); }
         break;
 
       case sb::e_sourcePositionCompilerGenerated:
         startpos = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
         limitpos = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
-        if (hasOperatorPos) operatorpos = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+        if (hasOperatorPos) { operatorpos = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode(); }
         break;
 
       case sb::e_sourcePositionNullPointers:
@@ -1738,6 +1739,7 @@ mkInitializedName(const std::string& varname, SgType& vartype, SgExpression* val
 {
   ASSERT_require(! (val && val->isTransformation()));
   SgInitializer*     varinit = mkInitializerAsNeeded(vartype, val);
+
   return SG_DEREF( sb::buildInitializedName(varname, &vartype, varinit) );
 }
 
@@ -1813,21 +1815,46 @@ namespace
 
     return vardcl;
   }
+
+  /// converts a parameter mode to its ROSE representation
+  SgTypeModifier
+  getParameterMode(const SgInitializedName& var)
+  {
+    SgTypeModifier res;
+
+    res.unsetDefault();
+
+    if (var.get_default_parameter())
+      res.setDefault();
+    else if (var.get_inout_parameter())
+      res.setIntent_inout();
+    else if (var.get_in_parameter())
+      res.setIntent_in();
+    else if (var.get_out_parameter())
+      res.setIntent_out();
+    else
+      ROSE_ABORT();
+
+    return res;
+  }
 } // anonymous namespace
+
+
 
 SgVariableDeclaration&
 mkParameter( const SgInitializedNamePtrList& parms,
-             SgTypeModifier parmmode,
              SgScopeStatement& scope
            )
 {
-  SgVariableDeclaration&    parmDecl = mkLocatedNode<SgVariableDeclaration>();
+  ASSERT_require(!parms.empty());
+
+  SgVariableDeclaration& parmDecl = mkLocatedNode<SgVariableDeclaration>();
 
   setInitializedNamesInDecl(parms.begin(), parms.end(), parmDecl);
 
   SgDeclarationModifier&    declMods = parmDecl.get_declarationModifier();
 
-  declMods.get_typeModifier() = parmmode;
+  declMods.get_typeModifier() = getParameterMode(SG_DEREF(parms.front()));
 
   si::fixVariableDeclaration(&parmDecl, &scope);
   parmDecl.set_parent(&scope);
@@ -1837,6 +1864,12 @@ mkParameter( const SgInitializedNamePtrList& parms,
 
   parmDecl.set_firstNondefiningDeclaration(&parmDecl);
   return parmDecl;
+}
+
+void createParameterSymbol(SgInitializedName& parm, SgScopeStatement& scope)
+{
+  parm.set_scope(&scope);
+  scope.insert_symbol(parm.get_name(), &mkBareNode<SgVariableSymbol>(&parm));
 }
 
 SgVariableDeclaration&
@@ -1975,10 +2008,15 @@ mkRecordParent(SgType& n)
 SgVarRefExp&
 mkVarRefExp(SgInitializedName& var)
 {
-  // the scope must be set for the builder interface to work as intended
   ASSERT_not_null(var.get_scope());
 
-  return SG_DEREF(sb::buildVarRefExp(&var));
+  SgSymbol*         sym    = var.get_symbol_from_symbol_table();
+
+  //~ if (sym == nullptr)
+    //~ std::cerr << var.get_name() << " / " << &var << std::endl;
+
+  SgVariableSymbol& varsym = SG_DEREF(isSgVariableSymbol(sym));
+  return SG_DEREF(sb::buildVarRefExp(&varsym));
 }
 
 SgVarRefExp&

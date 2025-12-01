@@ -707,21 +707,24 @@ namespace
     auto                   complete =
        [&suppl](SgFunctionParameterList& fnParmList, SgScopeStatement& scope)->void
        {
+         for (const ArgDesc& parmDesc : suppl.args())
+         {
+           SgType&            parmType = SG_DEREF(parmDesc.type());
+           const std::string& parmName = parmDesc.name();
+           SgInitializedName& parmDecl = mkInitializedName(parmName, parmType, nullptr);
+
+#if WITH_ADA_PARAMETER_DECL
          SgTypeModifier defaultInMode;
 
          defaultInMode.setDefault();
 
-         for (const ArgDesc& parmDesc : suppl.args())
-         {
-           // \todo use parmDesc.name() instead of parmNames
-           SgType&                  parmType = SG_DEREF(parmDesc.type());
-           const std::string&       parmName = parmDesc.name();
-           SgInitializedName&       parmDecl = mkInitializedName(parmName, parmType, nullptr);
            SgInitializedNamePtrList parmList = {&parmDecl};
            /* SgVariableDeclaration&   pvDecl   =*/ mkParameter(parmList, defaultInMode, scope);
+#endif /*WITH_ADA_PARAMETER_DECL*/
 
            parmDecl.set_parent(&fnParmList);
            fnParmList.get_args().push_back(&parmDecl);
+           createParameterSymbol(parmDecl, scope);
          }
        };
 

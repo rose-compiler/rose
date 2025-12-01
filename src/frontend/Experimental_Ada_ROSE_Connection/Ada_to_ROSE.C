@@ -1488,7 +1488,7 @@ namespace
     return std::all_of(arglst.begin(), arglst.end(), hasLiteralEq);
   }
 
-  bool callWithSystemAddress(const OverloadMap& m, const SgFunctionCallExp& call, const SgFunctionRefExp&)
+  bool callWithSystemAddress(const OverloadMap&, const SgFunctionCallExp& call, const SgFunctionRefExp&)
   {
     const SgExprListExp&       args   = SG_DEREF(call.get_args());
     const SgExpressionPtrList& arglst = args.get_expressions();

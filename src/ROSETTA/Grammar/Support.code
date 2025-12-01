@@ -4850,6 +4850,101 @@ HEADER_INITIALIZED_NAME_START
                e_excess_specifier_last /* sentry */
              };
 
+
+          enum e_flags : std::uint32_t
+             {
+               e_flags_none = 0,
+               e_flags_isCoArray = 1 << 0,
+               e_flags_requiresGlobalNameQualificationOnType = 1 << 1,
+               e_flags_shapeDeferred = 1 << 2,
+               e_flags_initializationDeferred = 1 << 3,
+               e_flags_protected_declaration = 1 << 4,
+               e_flags_type_elaboration_required = 1 << 5,
+               e_flags_global_qualification_required = 1 << 6,
+               e_flags_type_elaboration_required_for_type = 1 << 7,
+               e_flags_global_qualification_required_for_type = 1 << 8,
+               e_flags_hasArrayTypeWithEmptyBracketSyntax = 1 << 9,
+               e_flags_using_C11_Alignas_keyword = 1 << 10,
+               e_flags_using_auto_keyword = 1 << 11,
+               e_flags_using_device_keyword = 1 << 12,
+               e_flags_is_braced_initialized = 1 << 13,
+               e_flags_using_assignment_copy_constructor_syntax = 1 << 14,
+               e_flags_needs_definitions = 1 << 15,
+               e_flags_is_parameter_pack = 1 << 16,
+               e_flags_is_pack_element = 1 << 17,
+               e_flags_in_parameter = 1 << 18,
+               e_flags_out_parameter = 1 << 19,
+               e_flags_inout_parameter = (e_flags_in_parameter + e_flags_out_parameter),
+               e_flags_last = 1 << 20
+             };
+
+
+          bool get_isCoArray() const;
+          void set_isCoArray(bool val);
+
+          bool get_requiresGlobalNameQualificationOnType() const;
+          void set_requiresGlobalNameQualificationOnType(bool val);
+
+          bool get_shapeDeferred() const;
+          void set_shapeDeferred(bool val);
+
+          bool get_initializationDeferred() const;
+          void set_initializationDeferred(bool val);
+
+          bool get_protected_declaration() const;
+          void set_protected_declaration(bool val);
+
+          bool get_type_elaboration_required() const;
+          void set_type_elaboration_required(bool val);
+
+          bool get_global_qualification_required() const;
+          void set_global_qualification_required(bool val);
+
+          bool get_type_elaboration_required_for_type() const;
+          void set_type_elaboration_required_for_type(bool val);
+
+          bool get_global_qualification_required_for_type() const;
+          void set_global_qualification_required_for_type(bool val);
+
+          bool get_hasArrayTypeWithEmptyBracketSyntax() const;
+          void set_hasArrayTypeWithEmptyBracketSyntax(bool val);
+
+          bool get_using_C11_Alignas_keyword() const;
+          void set_using_C11_Alignas_keyword(bool val);
+
+          bool get_using_auto_keyword() const;
+          void set_using_auto_keyword(bool val);
+
+          bool get_using_device_keyword() const;
+          void set_using_device_keyword(bool val);
+
+          bool get_is_braced_initialized() const;
+          void set_is_braced_initialized(bool val);
+
+          bool get_using_assignment_copy_constructor_syntax() const;
+          void set_using_assignment_copy_constructor_syntax(bool val);
+
+          bool get_needs_definitions() const;
+          void set_needs_definitions(bool val);
+
+          bool get_is_parameter_pack() const;
+          void set_is_parameter_pack(bool val);
+
+          bool get_is_pack_element() const;
+          void set_is_pack_element(bool val);
+
+          bool get_inout_parameter() const;
+          void set_inout_parameter();
+
+          bool get_in_parameter() const;
+          void set_in_parameter();
+
+          bool get_out_parameter() const;
+          void set_out_parameter();
+
+          bool get_default_parameter() const;
+          void set_default_parameter();
+
           bool checkBit ( unsigned int bit ) const;
           void setBit ( unsigned int bit );
           void unsetBit ( unsigned int bit );
@@ -5055,14 +5150,6 @@ HEADER_INITIALIZED_NAME_START
           int get_name_qualification_length() const;
           void set_name_qualification_length(int name_qualification_length_for_type);
 
-       // DQ (3/31/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required() const;
-          void set_type_elaboration_required(bool type_elaboration_required_for_type);
-
-       // DQ (3/31/2019): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required() const;
-          void set_global_qualification_required(bool global_qualification_required_for_type);
-
        // DQ (5/29/2011): Added to support for new qualified name generation
       //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
           SgName get_qualified_name_prefix_for_type() const;
@@ -5070,14 +5157,6 @@ HEADER_INITIALIZED_NAME_START
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
           int get_name_qualification_length_for_type() const;
           void set_name_qualification_length_for_type(int name_qualification_length_for_type);
-
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_type_elaboration_required_for_type() const;
-          void set_type_elaboration_required_for_type(bool type_elaboration_required_for_type);
-
-       // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
-          bool get_global_qualification_required_for_type() const;
-          void set_global_qualification_required_for_type(bool global_qualification_required_for_type);
 
 HEADER_INITIALIZED_NAME_END
 
@@ -10860,39 +10939,22 @@ SgInitializedName::SgInitializedName() ROSE_DEPRECATED_FUNCTION
      p_storageModifier(NULL),
      p_scope(NULL),
      p_preinitialization(e_unknown_preinitialization),
-     p_isCoArray(false),
      p_register_name_code(SgInitializedName::e_invalid_register),
      p_excess_specifier(SgInitializedName::e_excess_specifier_none),
-     p_register_name_string(""),
-     p_requiresGlobalNameQualificationOnType(false),
-     p_shapeDeferred(false),
-     p_initializationDeferred(false),
+     p_register_name_string(),
+     p_flags(e_flags_none),
      p_gnu_attribute_modifierVector(e_last_gnu_variable_attribute,false),
      p_gnu_attribute_initialization_priority(0),
      p_gnu_attribute_named_weak_reference(""),
      p_gnu_attribute_named_alias(""),
      p_gnu_attribute_cleanup_function(""),
-     p_gnu_attribute_section_name(""),
+     p_gnu_attribute_section_name("s"),
      p_gnu_attribute_alignment(-1),
      p_gnu_attribute_visability(SgDeclarationModifier::e_unknown_visibility),
-     p_protected_declaration(false),
      p_name_qualification_length(0),
-     p_type_elaboration_required(false),
-     p_global_qualification_required(false),
-     p_name_qualification_length_for_type(false),
-     p_type_elaboration_required_for_type(0),
-     p_global_qualification_required_for_type(false),
-     p_hasArrayTypeWithEmptyBracketSyntax(false),
-     p_using_C11_Alignas_keyword(false),
+     p_name_qualification_length_for_type(0),
      p_constant_or_type_argument_for_Alignas_keyword(NULL),
-     p_using_auto_keyword(false),
-     p_auto_decltype(NULL),
-     p_using_device_keyword(false),
-     p_is_braced_initialized(false),
-     p_using_assignment_copy_constructor_syntax(false),
-     p_needs_definitions(false),
-     p_is_parameter_pack(false),
-     p_is_pack_element(false)
+     p_auto_decltype(NULL)
    {
   // This constructor has been added to support the previous API, I would like to depricate it.
    }
@@ -11001,32 +11063,41 @@ SgInitializedName::post_construction_initialization()
   // Borrow the enum definition (and default value from SgDeclarationModifier).
      p_gnu_attribute_visability              = SgDeclarationModifier::e_unknown_visibility;
 
+#if BEFORE_MERGE_BOOLEAN_FLAGS
   // FMZ added for coarray
-     p_isCoArray = false;
-
   // DQ (10/26/2010): These were not properly initialized.
+     p_isCoArray              = false;
+     // p_requiresGlobalNameQualificationOnType(false),
      p_shapeDeferred          = false;
      p_initializationDeferred = false;
      p_protected_declaration  = false;
+     // p_type_elaboration_required = false;
+     // p_global_qualification_required = false;
+     p_type_elaboration_required_for_type = false;
+     p_global_qualification_required_for_type = false;
+     p_hasArrayTypeWithEmptyBracketSyntax = false;
+     p_using_C11_Alignas_keyword = false;
+     p_using_auto_keyword = false;
+     p_using_device_keyword = false;
+     // p_is_braced_initialized = false;
+     // p_using_assignment_copy_constructor_syntax = false;
+     // p_needs_definitions = false;
+     // p_is_parameter_pack = false;
+     // p_is_pack_element = false;
+#endif /*BEFORE_MERGE_BOOLEAN_FLAGS*/
+
+     p_flags = e_flags_none; /*all false (default)*/
 
   // DQ (2/5/2014): I just noticed that the initialization of these were missing.
      p_name_qualification_length_for_type = 0;
-     p_type_elaboration_required_for_type = false;
-     p_global_qualification_required_for_type = false;
-
-  // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
-     p_hasArrayTypeWithEmptyBracketSyntax = false;
 
   // DQ (7/27/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
-     p_using_C11_Alignas_keyword                     = false;
      p_constant_or_type_argument_for_Alignas_keyword = NULL;
 
   // DQ (8/2/2014): Adding support for C++11 auto keyword.
-     p_using_auto_keyword = false;
      p_auto_decltype = NULL;
 
   // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
-     p_using_device_keyword = false;
 
   // DQ (6/10/2012): Testing for test2012_102.C.
   // mprintf ("In SgInitializedName::post_construction_initialization(): this = %p \n",this);
@@ -11048,13 +11119,10 @@ SgInitializedName::SgInitializedName (
      p_storageModifier(NULL),
      p_scope(NULL),
      p_preinitialization(e_unknown_preinitialization),
-     p_isCoArray(false),
      p_register_name_code(SgInitializedName::e_invalid_register),
      p_excess_specifier(SgInitializedName::e_excess_specifier_none),
-     p_register_name_string(""),
-     p_requiresGlobalNameQualificationOnType(false),
-     p_shapeDeferred(false),
-     p_initializationDeferred(false),
+     p_register_name_string(),
+     p_flags(e_flags_none),
      p_gnu_attribute_modifierVector(e_last_gnu_variable_attribute,false),
      p_gnu_attribute_initialization_priority(0),
      p_gnu_attribute_named_weak_reference(""),
@@ -11063,24 +11131,10 @@ SgInitializedName::SgInitializedName (
      p_gnu_attribute_section_name(""),
      p_gnu_attribute_alignment(-1),
      p_gnu_attribute_visability(SgDeclarationModifier::e_unknown_visibility),
-     p_protected_declaration(false),
      p_name_qualification_length(0),
-     p_type_elaboration_required(false),
-     p_global_qualification_required(false),
-     p_name_qualification_length_for_type(false),
-     p_type_elaboration_required_for_type(0),
-     p_global_qualification_required_for_type(false),
-     p_hasArrayTypeWithEmptyBracketSyntax(false),
-     p_using_C11_Alignas_keyword(false),
+     p_name_qualification_length_for_type(0),
      p_constant_or_type_argument_for_Alignas_keyword(NULL),
-     p_using_auto_keyword(false),
-     p_auto_decltype(NULL),
-     p_using_device_keyword(false),
-     p_is_braced_initialized(false),
-     p_using_assignment_copy_constructor_syntax(false),
-     p_needs_definitions(false),
-     p_is_parameter_pack(false),
-     p_is_pack_element(false)
+     p_auto_decltype(NULL)
    {
      post_construction_initialization();
    }
@@ -11099,13 +11153,10 @@ SgInitializedName::SgInitializedName(
      p_storageModifier(NULL),
      p_scope(scope),
      p_preinitialization(e_unknown_preinitialization),
-     p_isCoArray(false),
      p_register_name_code(SgInitializedName::e_invalid_register),
+     p_flags(e_flags_none),
      p_excess_specifier(SgInitializedName::e_excess_specifier_none),
-     p_register_name_string(""),
-     p_requiresGlobalNameQualificationOnType(false),
-     p_shapeDeferred(false),
-     p_initializationDeferred(false),
+     p_register_name_string(),
      p_gnu_attribute_modifierVector(e_last_gnu_variable_attribute,false),
      p_gnu_attribute_initialization_priority(0),
      p_gnu_attribute_named_weak_reference(""),
@@ -11114,24 +11165,10 @@ SgInitializedName::SgInitializedName(
      p_gnu_attribute_section_name(""),
      p_gnu_attribute_alignment(-1),
      p_gnu_attribute_visability(SgDeclarationModifier::e_unknown_visibility),
-     p_protected_declaration(false),
      p_name_qualification_length(0),
-     p_type_elaboration_required(false),
-     p_global_qualification_required(false),
-     p_name_qualification_length_for_type(false),
-     p_type_elaboration_required_for_type(0),
-     p_global_qualification_required_for_type(false),
-     p_hasArrayTypeWithEmptyBracketSyntax(false),
-     p_using_C11_Alignas_keyword(false),
+     p_name_qualification_length_for_type(0),
      p_constant_or_type_argument_for_Alignas_keyword(NULL),
-     p_using_auto_keyword(false),
-     p_auto_decltype(NULL),
-     p_using_device_keyword(false),
-     p_is_braced_initialized(false),
-     p_using_assignment_copy_constructor_syntax(false),
-     p_needs_definitions(false),
-     p_is_parameter_pack(false),
-     p_is_pack_element(false)
+     p_auto_decltype(NULL)
    {
      p_startOfConstruct = fileInfo;
      post_construction_initialization();
@@ -11140,7 +11177,6 @@ SgInitializedName::SgInitializedName(
 SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
    {
      p_name           = ptr.p_name;
-
      p_typeptr        = ptr.p_typeptr;
      p_initptr        = ptr.p_initptr;
 
@@ -11196,45 +11232,47 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
      p_register_name_string = "";
 
   // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
-     p_requiresGlobalNameQualificationOnType = ptr.p_requiresGlobalNameQualificationOnType;
 
   // DQ (1/3/2009): Added support for GNU variable attribues
      p_gnu_attribute_modifierVector          = ptr.p_gnu_attribute_modifierVector;
      p_gnu_attribute_initialization_priority = ptr.p_gnu_attribute_initialization_priority;
      p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
      p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
-     p_isCoArray                             = ptr.p_isCoArray;
+     p_flags                                 = ptr.p_flags;
 
-  // DQ (10/26/2010): Previously uninitialized data members.
+#if BEFORE_MERGE_BOOLEAN_FLAGS
+     p_isCoArray                             = ptr.p_isCoArray;
      p_shapeDeferred          = ptr.p_shapeDeferred;
      p_initializationDeferred = ptr.p_initializationDeferred;
      p_protected_declaration  = ptr.p_protected_declaration;
+     p_type_elaboration_required_for_type     = ptr.p_type_elaboration_required_for_type;
+     p_global_qualification_required_for_type = ptr.p_global_qualification_required_for_type;
+     p_hasArrayTypeWithEmptyBracketSyntax     = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
+     p_using_C11_Alignas_keyword                     = ptr.p_using_C11_Alignas_keyword;
+     p_constant_or_type_argument_for_Alignas_keyword = ptr.p_constant_or_type_argument_for_Alignas_keyword;
+     p_using_auto_keyword                     = ptr.p_using_auto_keyword;
+     p_auto_decltype                          = ptr.p_auto_decltype;
+     p_using_device_keyword                   = ptr.p_using_device_keyword;
+     p_requiresGlobalNameQualificationOnType = ptr.p_requiresGlobalNameQualificationOnType;
+#endif
 
   // DQ (2/5/2014): I just noticed that the initialization of these were missing.
      p_name_qualification_length_for_type     = ptr.p_name_qualification_length_for_type;
-     p_type_elaboration_required_for_type     = ptr.p_type_elaboration_required_for_type;
-     p_global_qualification_required_for_type = ptr.p_global_qualification_required_for_type;
 
 
   // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
-     p_hasArrayTypeWithEmptyBracketSyntax     = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
 
   // DQ (7/27/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
-     p_using_C11_Alignas_keyword                     = ptr.p_using_C11_Alignas_keyword;
-     p_constant_or_type_argument_for_Alignas_keyword = ptr.p_constant_or_type_argument_for_Alignas_keyword;
 
   // DQ (8/2/2014): Adding support for C++11 auto keyword.
-     p_using_auto_keyword                     = ptr.p_using_auto_keyword;
-     p_auto_decltype                          = ptr.p_auto_decltype;
 
   // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
-     p_using_device_keyword                   = ptr.p_using_device_keyword;
    }
 
 SgInitializedName&
 SgInitializedName::operator= (const SgInitializedName& ptr)
    {
-     assert(this != NULL);
+     ASSERT_this();
 
   /* check they are not the same name */
      if (this != &ptr)
@@ -11283,33 +11321,27 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
        // DQ (7/31/2006): Added support for asm declarations on variables
           p_register_name_string = ptr.p_register_name_string;
 
-       // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
-          p_requiresGlobalNameQualificationOnType = ptr.p_requiresGlobalNameQualificationOnType;
 
        // DQ (1/3/2009): Added support for GNU variable attribues
           p_gnu_attribute_modifierVector          = ptr.p_gnu_attribute_modifierVector;
           p_gnu_attribute_initialization_priority = ptr.p_gnu_attribute_initialization_priority;
           p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
           p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
+          p_flags                                 = ptr.p_flags;
+
+#if BEFORE_MERGE_BOOLEAN_FLAGS
           p_isCoArray                             = ptr.p_isCoArray;
-
-       // DQ (2/5/2014): I just noticed that the initialization of these were missing.
-          p_name_qualification_length_for_type     = ptr.p_name_qualification_length_for_type;
+          p_requiresGlobalNameQualificationOnType = ptr.p_requiresGlobalNameQualificationOnType;
           p_type_elaboration_required_for_type     = ptr.p_type_elaboration_required_for_type;
-          p_global_qualification_required_for_type = ptr.p_global_qualification_required_for_type;
-
-       // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
           p_hasArrayTypeWithEmptyBracketSyntax = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
-
-       // DQ (7/27/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
           p_using_C11_Alignas_keyword                     = ptr.p_using_C11_Alignas_keyword;
           p_constant_or_type_argument_for_Alignas_keyword = ptr.p_constant_or_type_argument_for_Alignas_keyword;
-
-       // DQ (8/2/2014): Adding support for C++11 auto keyword.
           p_using_auto_keyword                     = ptr.p_using_auto_keyword;
-
-       // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
           p_using_device_keyword                   = ptr.p_using_device_keyword;
+          p_global_qualification_required_for_type = ptr.p_global_qualification_required_for_type;
+#endif /*BEFORE_MERGE_BOOLEAN_FLAGS*/
+
+          p_name_qualification_length_for_type     = ptr.p_name_qualification_length_for_type;
         }
        else
         {
@@ -11318,7 +11350,6 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
         }
 
      assert(p_startOfConstruct != NULL);
-
      return *this;
    }
 
@@ -11512,10 +11543,433 @@ SgInitializedName::set_definition(SgDeclarationStatement * def)
      set_declptr(def);
    }
 
+
+// Bitwise OR operator
+inline SgInitializedName::e_flags operator|(SgInitializedName::e_flags a, SgInitializedName::e_flags b) {
+    return static_cast<SgInitializedName::e_flags>(
+        static_cast<std::uint32_t>(a) | static_cast<std::uint32_t>(b)
+    );
+}
+
+// Bitwise AND operator
+inline SgInitializedName::e_flags operator&(SgInitializedName::e_flags a, SgInitializedName::e_flags b) {
+    return static_cast<SgInitializedName::e_flags>(
+        static_cast<std::uint32_t>(a) & static_cast<std::uint32_t>(b)
+    );
+}
+
+// Bitwise XOR operator
+inline SgInitializedName::e_flags operator^(SgInitializedName::e_flags a, SgInitializedName::e_flags b) {
+    return static_cast<SgInitializedName::e_flags>(
+        static_cast<std::uint32_t>(a) ^ static_cast<std::uint32_t>(b)
+    );
+}
+
+// Bitwise NOT operator (unary)
+inline SgInitializedName::e_flags operator~(SgInitializedName::e_flags a) {
+    return static_cast<SgInitializedName::e_flags>(~static_cast<std::uint32_t>(a));
+}
+
+// Compound assignment operators
+inline SgInitializedName::e_flags& operator|=(SgInitializedName::e_flags& a, SgInitializedName::e_flags b) {
+    return a = a | b;
+}
+
+inline SgInitializedName::e_flags& operator&=(SgInitializedName::e_flags& a, SgInitializedName::e_flags b) {
+    return a = a & b;
+}
+
+inline SgInitializedName::e_flags& operator^=(SgInitializedName::e_flags& a, SgInitializedName::e_flags b) {
+    return a = a ^ b;
+}
+
+bool
+SgInitializedName::get_isCoArray() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_isCoArray) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_requiresGlobalNameQualificationOnType() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_requiresGlobalNameQualificationOnType) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_shapeDeferred() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_shapeDeferred) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_initializationDeferred() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_initializationDeferred) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_protected_declaration() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_protected_declaration) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_type_elaboration_required() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_type_elaboration_required) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_global_qualification_required() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_global_qualification_required) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_type_elaboration_required_for_type() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_type_elaboration_required_for_type) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_global_qualification_required_for_type() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_global_qualification_required_for_type) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_hasArrayTypeWithEmptyBracketSyntax() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_hasArrayTypeWithEmptyBracketSyntax) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_using_C11_Alignas_keyword() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_using_C11_Alignas_keyword) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_using_auto_keyword() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_using_auto_keyword) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_using_device_keyword() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_using_device_keyword) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_is_braced_initialized() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_is_braced_initialized) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_using_assignment_copy_constructor_syntax() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_using_assignment_copy_constructor_syntax) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_needs_definitions() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_needs_definitions) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_is_parameter_pack() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_is_parameter_pack) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_is_pack_element() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_is_pack_element) != e_flags_none;
+}
+
+bool
+SgInitializedName::get_inout_parameter() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_inout_parameter) == e_flags_inout_parameter;
+}
+
+void
+SgInitializedName::set_inout_parameter()
+{
+  ASSERT_this();
+  p_flags = p_flags | e_flags_inout_parameter; // set in/out flags
+}
+
+
+bool
+SgInitializedName::get_in_parameter() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_inout_parameter) == e_flags_in_parameter;
+}
+
+void
+SgInitializedName::set_in_parameter()
+{
+  ASSERT_this();
+  p_flags = (p_flags & ~e_flags_inout_parameter) | e_flags_in_parameter; // clear out flag/set in flag
+}
+
+bool
+SgInitializedName::get_out_parameter() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_inout_parameter) == e_flags_out_parameter;
+}
+
+void
+SgInitializedName::set_out_parameter()
+{
+  ASSERT_this();
+  p_flags = (p_flags & ~e_flags_inout_parameter) | e_flags_out_parameter; // clear in flag/set out flag
+}
+
+
+bool
+SgInitializedName::get_default_parameter() const
+{
+  ASSERT_this();
+  return (p_flags & e_flags_inout_parameter) == e_flags_none;
+}
+
+void
+SgInitializedName::set_default_parameter()
+{
+  ASSERT_this();
+  p_flags = (p_flags & ~e_flags_inout_parameter); // clear in/out flags
+}
+
+
+void
+SgInitializedName::set_isCoArray(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_isCoArray;
+    else
+        p_flags &= ~e_flags_isCoArray;
+}
+
+void
+SgInitializedName::set_requiresGlobalNameQualificationOnType(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_requiresGlobalNameQualificationOnType;
+    else
+        p_flags &= ~e_flags_requiresGlobalNameQualificationOnType;
+}
+
+void
+SgInitializedName::set_shapeDeferred(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_shapeDeferred;
+    else
+        p_flags &= ~e_flags_shapeDeferred;
+}
+
+void
+SgInitializedName::set_initializationDeferred(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_initializationDeferred;
+    else
+        p_flags &= ~e_flags_initializationDeferred;
+}
+
+void
+SgInitializedName::set_protected_declaration(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_protected_declaration;
+    else
+        p_flags &= ~e_flags_protected_declaration;
+}
+
+void
+SgInitializedName::set_type_elaboration_required(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_type_elaboration_required;
+    else
+        p_flags &= ~e_flags_type_elaboration_required;
+}
+
+void
+SgInitializedName::set_global_qualification_required(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_global_qualification_required;
+    else
+        p_flags &= ~e_flags_global_qualification_required;
+}
+
+void
+SgInitializedName::set_type_elaboration_required_for_type(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_type_elaboration_required_for_type;
+    else
+        p_flags &= ~e_flags_type_elaboration_required_for_type;
+}
+
+void
+SgInitializedName::set_global_qualification_required_for_type(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_global_qualification_required_for_type;
+    else
+        p_flags &= ~e_flags_global_qualification_required_for_type;
+}
+
+void
+SgInitializedName::set_hasArrayTypeWithEmptyBracketSyntax(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_hasArrayTypeWithEmptyBracketSyntax;
+    else
+        p_flags &= ~e_flags_hasArrayTypeWithEmptyBracketSyntax;
+}
+
+void
+SgInitializedName::set_using_C11_Alignas_keyword(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_using_C11_Alignas_keyword;
+    else
+        p_flags &= ~e_flags_using_C11_Alignas_keyword;
+}
+
+void
+SgInitializedName::set_using_auto_keyword(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_using_auto_keyword;
+    else
+        p_flags &= ~e_flags_using_auto_keyword;
+}
+
+void
+SgInitializedName::set_using_device_keyword(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_using_device_keyword;
+    else
+        p_flags &= ~e_flags_using_device_keyword;
+}
+
+void
+SgInitializedName::set_is_braced_initialized(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_is_braced_initialized;
+    else
+        p_flags &= ~e_flags_is_braced_initialized;
+}
+
+void
+SgInitializedName::set_using_assignment_copy_constructor_syntax(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_using_assignment_copy_constructor_syntax;
+    else
+        p_flags &= ~e_flags_using_assignment_copy_constructor_syntax;
+}
+
+void
+SgInitializedName::set_needs_definitions(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_needs_definitions;
+    else
+        p_flags &= ~e_flags_needs_definitions;
+}
+
+void
+SgInitializedName::set_is_parameter_pack(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_is_parameter_pack;
+    else
+        p_flags &= ~e_flags_is_parameter_pack;
+}
+
+void
+SgInitializedName::set_is_pack_element(bool val)
+{
+    ASSERT_this();
+
+    if (val)
+        p_flags |= e_flags_is_pack_element;
+    else
+        p_flags &= ~e_flags_is_pack_element;
+}
+
 bool
 SgInitializedName::checkBit ( unsigned int bit ) const
    {
-     assert (bit < e_last_gnu_variable_attribute);
+     ASSERT_require (bit < e_last_gnu_variable_attribute);
   // return p_gnu_attribute_modifierVector[bit];
      return (p_gnu_attribute_modifierVector[bit] == true);
    }
@@ -11523,14 +11977,14 @@ SgInitializedName::checkBit ( unsigned int bit ) const
 void
 SgInitializedName::setBit ( unsigned int bit )
    {
-     assert (bit < e_last_gnu_variable_attribute);
+     ASSERT_require (bit < e_last_gnu_variable_attribute);
      p_gnu_attribute_modifierVector[bit] = true;
    }
 
 void
 SgInitializedName::unsetBit ( unsigned int bit )
    {
-     assert (bit < e_last_gnu_variable_attribute);
+     ASSERT_require (bit < e_last_gnu_variable_attribute);
      p_gnu_attribute_modifierVector[bit] = false;
    }
 
@@ -11628,109 +12082,34 @@ void SgInitializedName::unset_ms_declspec_parameter_uuid()     { unsetBit(e_ms_d
 int
 SgInitializedName::get_name_qualification_length() const
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      return p_name_qualification_length;
    }
 
 void
 SgInitializedName::set_name_qualification_length ( int name_qualification_length )
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
   // This can't be called by the name qualification API (see test2015_26.C).
   // set_isModified(true);
 
      p_name_qualification_length = name_qualification_length;
    }
 
-// DQ (3/31/2019): Added support for name qualification on the SgInitializedName (as part fo support for SgMemberPointerType).
-bool
-SgInitializedName::get_type_elaboration_required () const
-   {
-     ROSE_ASSERT (this != NULL);
-     return p_type_elaboration_required;
-   }
-
-void
-SgInitializedName::set_type_elaboration_required ( bool type_elaboration_required )
-   {
-     ROSE_ASSERT (this != NULL);
-  // This can't be called by the name qualification API (see test2015_26.C).
-  // set_isModified(true);
-
-     p_type_elaboration_required = type_elaboration_required;
-   }
-
-// DQ (3/31/2019): Added support for name qualification on the SgInitializedName (as part fo support for SgMemberPointerType).
-bool
-SgInitializedName::get_global_qualification_required () const
-   {
-     ROSE_ASSERT (this != NULL);
-     return p_global_qualification_required;
-   }
-
-void
-SgInitializedName::set_global_qualification_required ( bool global_qualification_required )
-   {
-     ROSE_ASSERT (this != NULL);
-  // This can't be called by the name qualification API (see test2015_26.C).
-  // set_isModified(true);
-
-     p_global_qualification_required = global_qualification_required;
-   }
-
-// DQ (6/11/2015): Moved these six access functions, they should not be generated by ROSETTA
-// so that we could avoid them setting the isModified flag which is a problem in the
-// name qualification support for C++ (interfering with the token-based unparsing).
 int
-SgInitializedName::get_name_qualification_length_for_type() const
+SgInitializedName::get_name_qualification_length_for_type () const
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      return p_name_qualification_length_for_type;
    }
 
 void
 SgInitializedName::set_name_qualification_length_for_type ( int name_qualification_length_for_type )
    {
-     ROSE_ASSERT (this != NULL);
-  // This can't be called by the name qualification API (see test2015_26.C).
-  // set_isModified(true);
-
+     ASSERT_this();
      p_name_qualification_length_for_type = name_qualification_length_for_type;
    }
 
-bool
-SgInitializedName::get_type_elaboration_required_for_type () const
-   {
-     ROSE_ASSERT (this != NULL);
-     return p_type_elaboration_required_for_type;
-   }
-
-void
-SgInitializedName::set_type_elaboration_required_for_type ( bool type_elaboration_required_for_type )
-   {
-     ROSE_ASSERT (this != NULL);
-  // This can't be called by the name qualification API (see test2015_26.C).
-  // set_isModified(true);
-
-     p_type_elaboration_required_for_type = type_elaboration_required_for_type;
-   }
-
-bool
-SgInitializedName::get_global_qualification_required_for_type () const
-   {
-     ROSE_ASSERT (this != NULL);
-     return p_global_qualification_required_for_type;
-   }
-
-void
-SgInitializedName::set_global_qualification_required_for_type ( bool global_qualification_required_for_type )
-   {
-     ROSE_ASSERT (this != NULL);
-  // This can't be called by the name qualification API (see test2015_26.C).
-  // set_isModified(true);
-
-     p_global_qualification_required_for_type = global_qualification_required_for_type;
-   }
 
 SOURCE_INITIALIZED_NAME_END
 
@@ -12115,7 +12494,7 @@ Sg_File_Info::updateSourcePosition ( Sg_File_Info* update )
   // useful than the assignment operator for updating information and is used in the file:
   // fixupSourcePositionInformation.C.
 
-     assert(update != NULL);
+     ASSERT_require(update != NULL);
 
   // Must have matching file name (only have to compare file_id's)
      assert(p_file_id == update->p_file_id);

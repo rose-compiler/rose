@@ -668,7 +668,7 @@ ROSE_DLL_API void markSubtreeToBeUnparsed(SgNode* root, int physical_file_id);
 ROSE_DLL_API void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
 
 // DQ (7/8/2021): This is a tree traversal based version of this marking of a subtree which allows special handling of cast expressions.
-// Basically, cast expression should not be marked as transformations. 
+// Basically, cast expression should not be marked as transformations.
 ROSE_DLL_API void markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physical_file_id);
 
 // DQ (7/12/2021): Debugging code to locate specific node marked as a transforamtion in the AST.
@@ -858,14 +858,14 @@ void guardNode(SgLocatedNode * target, std::string guard);
 ROSE_DLL_API int moveUpInnerDanglingIfEndifDirective(SgLocatedNode* lnode);
 
 /* \brief scanning subtree from lnode, find and erase any NULL PreprocessingInfo pointers
-   The unparser expects PreprocessingInfo pointers are not NULL. 
+   The unparser expects PreprocessingInfo pointers are not NULL.
    We may introduce NULL pointers after moving some preprocessing info. from one place to another.
 */
 
 ROSE_DLL_API int eraseNullPreprocessingInfo (SgLocatedNode* lnode);
 
 
-/*  \brief For each comment, we store its container, idx within the container, 
+/*  \brief For each comment, we store its container, idx within the container,
          and depth level of the located node within AST from a selected root
 */
 struct PreprocessingInfoData {
@@ -1398,21 +1398,21 @@ void serialize(SgNode* node, std::string& prefix, bool hasRemaining, std::ostrin
 // A special node in the AST text dump
 template<typename T>
 void serialize_list(T& plist, std::string T_name, std::string& prefix, bool hasRemaining, std::ostringstream& out, std::string& edgeLabel)
-{       
+{
   out<<prefix;
   out<< (hasRemaining?"|---": "|___");
-        
+
 //  out<<"+"<<edgeLabel<<"+>";
   out<<" "<<edgeLabel<<" ->";
   // print address and type name
   //out<<"@"<<&plist<<" "<< typeid(T).name()<<" "; // mangled names are hard to read
   out<<"@"<<&plist<<" "<< T_name<<" ";
-  
+
   out<<std::endl;
-  
+
   int last_non_null_child_idx =-1;
   for (int i = (int) (plist.size())-1; i>=0; i--)
-  { 
+  {
     if (plist[i])
     {
       last_non_null_child_idx = i;
@@ -1421,7 +1421,7 @@ void serialize_list(T& plist, std::string T_name, std::string& prefix, bool hasR
   }
 
   for (size_t i=0; i< plist.size(); i++ )
-  { 
+  {
     bool n_hasRemaining=false;
     if ((int)i< last_non_null_child_idx) n_hasRemaining = true;
     std::string suffix= hasRemaining? "|   " : "    ";
@@ -2255,7 +2255,7 @@ void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
      func->set_parameterList(paralist);
      paralist->set_parent(func);
 
-     if (SageInterface::is_Ada_language())
+     if (SageInterface::is_Ada_language() && false /*Libadalang Frontend*/)
      {
        // Ada stores variable declarations in the function parameter scope (for functions)
        //   and in a discriminantScope (for discriminated declarations).
@@ -3098,4 +3098,3 @@ void clearSharedGlobalScopes(SgProject * project);
 
 
 #endif
-
