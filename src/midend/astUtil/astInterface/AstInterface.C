@@ -2813,6 +2813,21 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
              AstIdentical<AstTypeList, AstNodeType>(paramtypes1, paramtypes2, call_on_diff_type) &&
              AstIdentical(returntype1, returntype2, call_on_diff_type); 
   }
+  {
+    SgInitializedName *p1 = isSgInitializedName(first);
+    SgInitializedName *p2 = isSgInitializedName(second);
+    if (p1 != 0 && p2 != 0) {
+        if (p1->get_name().str() != p2->get_name().str()) {
+            return false;
+        }
+        if (AstIdentical(AstNodeType(p1->get_type()), AstNodeType(p2->get_type()))) {
+            return true;
+        }
+        return false;
+    }
+  }
+
+
   if (IsBlock(_first, 0, &args1) && IsBlock(_second, 0, &args2)) {
      return AstIdentical<AstNodeList,AstNodePtr>(args1, args2, call_on_diff);
   }
