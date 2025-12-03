@@ -105,7 +105,12 @@ void CollectDependences::CollectFromFile(std::istream& input_file) {
                   }
                   source = local_read_string(input_file); 
                }
-               Log.push("Setting source = " + source);
+               if (source == ";") {
+                  Log.push("Warning: Skipping empty dependence for " + dest +"!");
+                  next_string = ";"; source = "";
+                  break; 
+               } 
+               Log.push("Successfully setting source = " + source);
             } else if (next_string == "=") {
                attr = "";
                while ((next_string = local_read_string(input_file)) != "") {
