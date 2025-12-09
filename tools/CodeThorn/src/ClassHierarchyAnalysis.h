@@ -286,11 +286,9 @@ class ClassAnalysis : ClassAnalysisBase
     using base = ClassAnalysisBase;
 
     explicit
-    ClassAnalysis(bool fullTranslUnit)
-    : base(), completeTranslationUnit(fullTranslUnit)
+    ClassAnalysis(bool fullTranslUnit = false, std::uint32_t languageVersion = 199711L)
+    : base(), completeTranslationUnit(fullTranslUnit), langVersion(languageVersion)
     {}
-
-    ClassAnalysis() = default;
 
     using base::value_type;
     using base::mapped_type;
@@ -357,8 +355,20 @@ class ClassAnalysis : ClassAnalysisBase
     /// \endcode
     ClassAnalysisInfo classInfo(ClassKeyType classKey) const;
 
+    /// returns the version identifier of the standard
+    std::uint32_t languageStandard() const { return langVersion; }
+
+    static constexpr std::uint32_t Cxx98 = 199711L;
+    static constexpr std::uint32_t Cxx11 = 201103L;
+    static constexpr std::uint32_t Cxx14 = 201402L;
+    static constexpr std::uint32_t Cxx17 = 201703L;
+    static constexpr std::uint32_t Cxx20 = 202002L;
+    static constexpr std::uint32_t Cxx23 = 202302L;
+    static constexpr std::uint32_t Cxx26 = 202600L; // \todo needs correction
+
   private:
-    bool completeTranslationUnit = false;
+    bool          completeTranslationUnit;
+    std::uint32_t langVersion;
 };
 
 
@@ -528,12 +538,17 @@ void unorderedTraversal(const ClassAnalysis& all, ClassAnalysisConstFn fn);
 /// a predicate type to querying special member functions
 using SpecialMemberFunctionPredicate = std::function<bool(const SpecialMemberFunction&)>;
 
-/// generate predicates for querying special member functions
+/// Generate predicates for querying special member functions.
+/// \param  anyOp if false only user-defined operators match;
+///         otherwise user-defined and compiler-generated match.
+/// \result a predicate testing special member functions.
 /// \{
-SpecialMemberFunctionPredicate isCopyCtor();
-SpecialMemberFunctionPredicate isCopyAssign();
-SpecialMemberFunctionPredicate isDefaultCtor();
-SpecialMemberFunctionPredicate isDtor();
+SpecialMemberFunctionPredicate isCopyCtor(bool anyOp = true);
+SpecialMemberFunctionPredicate isCopyAssign(bool anyOp = true);
+SpecialMemberFunctionPredicate isMoveCtor(bool anyOp = true);
+SpecialMemberFunctionPredicate isMoveAssign(bool anyOp = true);
+SpecialMemberFunctionPredicate isDefaultCtor(bool anyOp = true);
+SpecialMemberFunctionPredicate isDtor(bool anyOp = true);
 SpecialMemberFunctionPredicate isUserDefinedCtor();
 /// \}
 

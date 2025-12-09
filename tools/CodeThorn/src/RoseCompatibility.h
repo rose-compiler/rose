@@ -337,11 +337,14 @@ class RoseCompatibilityBridge
     bool
     isAutoGeneratable(const ClassAnalysis& all, ClassKeyType clkey, FunctionKeyType fnkey) const;
 
-
     /// returns true if the class referenced by \p clkey is abstract.
     bool
     isAbstract(ClassKeyType clkey) const;
 
+    /// returns the version of the C++ language standard
+    /// \throws std::runtime_error if C++ standards are inconsistent or no C++ file is present
+    std::uint32_t
+    languageStandard() const;
 
     /// returns all callees (if known)
     /// \param  root, the subtree for which the result shall be computed
@@ -377,6 +380,11 @@ class RoseCompatibilityBridge
     DataMemberType
     typeOf(VariableKeyType var) const;
 
+    /// returns a list of available member functions in \p clazz that the C++ standard
+    ///   designates as special (i.e., destructor, default constructor, copy/move constructor,
+    ///   copy/move assignment operator).
+    /// \param  clazz the class that is examined
+    /// \return a list of categorized special functions together with supplemental information
     SpecialMemberFunctionContainer
     specialMemberFunctions(ClassKeyType clazz) const;
 

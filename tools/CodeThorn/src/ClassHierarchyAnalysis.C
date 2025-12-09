@@ -10,7 +10,7 @@
 #include <boost/range/adaptors.hpp>
 #include <boost/range/join.hpp>
 
-namespace ct = CodeThorn;
+namespace ct    = CodeThorn;
 namespace adapt = boost::adaptors;
 
 
@@ -328,38 +328,67 @@ namespace CodeThorn
 {
 
 SpecialMemberFunctionPredicate
-isCopyCtor()
+operator||(ct::SpecialMemberFunctionPredicate one, ct::SpecialMemberFunctionPredicate two)
 {
-  return [](const SpecialMemberFunction& smf)->bool
+  return [lhs=std::move(one), rhs=std::move(two)]
+         (const SpecialMemberFunction& smf)->bool
          {
-           return smf.isCopyCtor();
+           return lhs(smf) || rhs(smf);
+         };
+};
+
+
+SpecialMemberFunctionPredicate
+isCopyCtor(bool anyOp)
+{
+  return [anyOp](const SpecialMemberFunction& smf)->bool
+         {
+           return smf.isCopyCtor() && (anyOp || !smf.compilerGenerated());
          };
 }
 
 SpecialMemberFunctionPredicate
-isCopyAssign()
+isCopyAssign(bool anyOp)
 {
-  return [](const SpecialMemberFunction& smf)->bool
+  return [anyOp](const SpecialMemberFunction& smf)->bool
          {
-           return smf.isCopyAssign();
+           return smf.isCopyAssign() && (anyOp || !smf.compilerGenerated());
+         };
+}
+
+ct::SpecialMemberFunctionPredicate
+isMoveCtor(bool anyOp)
+{
+  return [anyOp](const ct::SpecialMemberFunction& smf)->bool
+         {
+           return smf.isMoveCtor() && (anyOp || !smf.compilerGenerated());
+         };
+}
+
+ct::SpecialMemberFunctionPredicate
+isMoveAssign(bool anyOp)
+{
+  return [anyOp](const ct::SpecialMemberFunction& smf)->bool
+         {
+           return smf.isMoveAssign() && (anyOp || !smf.compilerGenerated());
          };
 }
 
 SpecialMemberFunctionPredicate
-isDefaultCtor()
+isDefaultCtor(bool anyOp)
 {
-  return [](const SpecialMemberFunction& csf)->bool
+  return [anyOp](const SpecialMemberFunction& smf)->bool
          {
-           return csf.isDefaultCtor();
+           return smf.isDefaultCtor() && (anyOp || !smf.compilerGenerated());
          };
 }
 
 SpecialMemberFunctionPredicate
-isDtor()
+isDtor(bool anyOp)
 {
-  return [](const SpecialMemberFunction& csf)->bool
+  return [anyOp](const SpecialMemberFunction& smf)->bool
          {
-           return csf.isDestructor();
+           return smf.isDestructor() && (anyOp || !smf.compilerGenerated());;
          };
 }
 
@@ -368,17 +397,13 @@ isUserDefinedCtor()
 {
   return [](const ct::SpecialMemberFunction& smf)->bool
          {
-           return (  smf.isConstructor()
-                  && (!smf.compilerGenerated())
-                  );
+           return (smf.isConstructor() && !smf.compilerGenerated());
          };
 }
 
 bool hasSpecialFunction(const SpecialMemberFunctionContainer& specials, SpecialMemberFunctionPredicate pred)
 {
-  return std::any_of( specials.begin(), specials.end(),
-                      pred
-                    );
+  return std::any_of( specials.begin(), specials.end(), pred );
 }
 
 bool hasSpecialFunction(const ClassAnalysis& all, ClassKeyType clazz, SpecialMemberFunctionPredicate pred)
@@ -637,7 +662,6 @@ namespace
            };
   }
 
-
   using VariablePredicate = std::function<bool(ct::VariableKeyType)>;
 
   VariablePredicate
@@ -645,7 +669,6 @@ namespace
   {
     return [&all](ct::VariableKeyType var)->bool
            {
-             // \todo support array types
              ct::CompatibilityBridge compat;
              ct::DataMemberType      desc = compat.typeOf(var);
 
@@ -663,13 +686,8 @@ namespace
   {
     return [&all](ct::VariableKeyType var)->bool
            {
-             // \todo support array types
              ct::CompatibilityBridge compat;
              ct::DataMemberType      desc = compat.typeOf(var);
-
-             //~ if (desc.hasReference())
-               //~ return false;
-
              ct::ClassKeyType        clazz = desc.classType();
 
              return !clazz || hasSpecialFunction(all, clazz, ct::isCopyCtor());
@@ -681,26 +699,36 @@ namespace
   {
     return [&all](ct::VariableKeyType var)->bool
            {
-             // \todo support array types
              ct::CompatibilityBridge compat;
              ct::DataMemberType      desc = compat.typeOf(var);
-
-             //~ if (desc.hasReference())
-               //~ return false;
-
              ct::ClassKeyType        clazz = desc.classType();
 
              return !clazz || hasSpecialFunction(all, clazz, isCopyCtorConstRef());
            };
   }
 
+  VariablePredicate
+  isMoveOrCopyConstructible(const ct::ClassAnalysis& all)
+  {
+    return [ &all,
+             moveOrCopy=ct::isMoveCtor() || ct::isCopyCtor()
+           ]
+           (ct::VariableKeyType var)->bool
+           {
+             ct::CompatibilityBridge compat;
+             ct::DataMemberType      desc = compat.typeOf(var);
+
+             ct::ClassKeyType        clazz = desc.classType();
+
+             return !clazz || hasSpecialFunction(all, clazz, moveOrCopy);
+           };
+  }
 
   VariablePredicate
   isCopyAssignable(const ct::ClassAnalysis& all)
   {
     return [&all](ct::VariableKeyType var)->bool
            {
-             // \todo support array types
              ct::CompatibilityBridge compat;
              ct::DataMemberType      desc = compat.typeOf(var);
 
@@ -718,7 +746,6 @@ namespace
   {
     return [&all](ct::VariableKeyType var)->bool
            {
-             // \todo support array types
              ct::CompatibilityBridge compat;
              ct::DataMemberType      desc = compat.typeOf(var);
 
@@ -731,11 +758,31 @@ namespace
            };
   }
 
+  VariablePredicate
+  isMoveOrCopyAssignable(const ct::ClassAnalysis& all)
+  {
+    return [ &all,
+             moveOrCopy=ct::isMoveAssign() || ct::isCopyAssign()
+           ]
+           (ct::VariableKeyType var)->bool
+           {
+             ct::CompatibilityBridge compat;
+             ct::DataMemberType      desc = compat.typeOf(var);
 
-  void processDefaultCtor( const ct::ClassAnalysis& all,
-                           const ct::ClassAnalysis::value_type& rep,
-                           ct::SpecialMemberFunctionContainer& funcs
-                         )
+             if (desc.hasReference() || desc.isConst())
+               return false;
+
+             ct::ClassKeyType        clazz = desc.classType();
+
+             return !clazz || hasSpecialFunction(all, clazz, moveOrCopy);
+           };
+  }
+
+  ct::SpecialMemberFunctionContainer
+  processDefaultCtor( const ct::ClassAnalysis& all,
+                      const ct::ClassAnalysis::value_type& rep,
+                      ct::SpecialMemberFunctionContainer funcs
+                    )
   {
     // https://en.cppreference.com/w/cpp/language/default_constructor [3/21/25]
     // declared constructors
@@ -777,13 +824,13 @@ namespace
     const bool hasUserDefinedCtor = hasSpecialFunction(funcs, ct::isUserDefinedCtor());
 
     if (hasUserDefinedCtor)
-      return;
+      return funcs;
 
     // check if the frontend already generated a default constructor
     const bool hasCompilerGeneratedDefaultCtor = hasSpecialFunction(funcs, ct::isDefaultCtor());
 
     if (hasCompilerGeneratedDefaultCtor)
-      return;
+      return funcs;
 
     // check ancestors
     const ct::ClassData::AncestorContainer& bases = rep.second.ancestors();
@@ -792,7 +839,7 @@ namespace
                                                  );
 
     if (!basesHaveDefaultCtor)
-      return;
+      return funcs;
 
     // check data members
     const ct::ClassData::DataMemberContainer& data = rep.second.dataMembers();
@@ -801,39 +848,64 @@ namespace
                                                        );
 
     if (!dataIsDefaultConstructible)
-      return;
+      return funcs;
 
     funcs.emplace_back(nullptr, ct::SpecialMemberFunction::dctor, true, false, true);
+    return funcs;
   }
 
-  void processDefaultDtor( const ct::ClassAnalysis& /*all*/,
-                           const ct::ClassAnalysis::value_type& /*rep*/,
-                           ct::SpecialMemberFunctionContainer& funcs
-                         )
+  ct::SpecialMemberFunctionContainer
+  processDefaultDtor( const ct::ClassAnalysis& /*all*/,
+                      const ct::ClassAnalysis::value_type& /*rep*/,
+                      ct::SpecialMemberFunctionContainer funcs
+                    )
   {
     // check if the dtor is already present, either user-defined or compiler generated
     const bool hasDtor = ct::hasSpecialFunction(funcs, ct::isDtor());
 
-    if (hasDtor)
-      return;
+    if (!hasDtor)
+      funcs.emplace_back(nullptr, ct::SpecialMemberFunction::dtor, true, false, true);
 
-    funcs.emplace_back(nullptr, ct::SpecialMemberFunction::dtor, true, false, true);
+    return funcs;
   }
 
 
   // copy constructor
-  void processDefaultCopyCtor( const ct::ClassAnalysis& all,
-                               const ct::ClassAnalysis::value_type& rep,
-                               ct::SpecialMemberFunctionContainer& funcs
-                             )
+  ct::SpecialMemberFunctionContainer
+  processDefaultCopyCtor( const ct::ClassAnalysis& all,
+                          const ct::ClassAnalysis::value_type& rep,
+                          ct::SpecialMemberFunctionContainer funcs
+                        )
   {
+    // https://en.cppreference.com/w/cpp/language/copy_constructor.html
     // - no other user-defined (or compiler-generated) copy-constructor (cctor)
     // - all bases have a usable copy-constructor
     // - all data member can be copy-constructed
+    //
+    // C++11:
+    // The copy constructor is implicitly declared as deleted if the class has
+    //   a declared move constructor, or move assignment operator.
+    // If the class has a declared destructor or copy assignment operator, the
+    //   generation of the copy ctor is deprecated.
+
+    // Check if there is a defined copy constructor
+    // \note the compiler frontend could have already instantiated the copy ctor
+    //       so we do not need to handle it.
     const bool hasCopyCtor = ct::hasSpecialFunction(funcs, ct::isCopyCtor());
 
     if (hasCopyCtor)
-      return;
+      return funcs;
+
+    if (all.languageStandard() >= ct::ClassAnalysis::Cxx11)
+    {
+      const bool hasUserDefinedMoveFn = (  hasSpecialFunction(funcs, ct::isMoveCtor(false/*user-defined*/))
+                                        || hasSpecialFunction(funcs, ct::isMoveAssign(false/*user-defined*/))
+                                        );
+
+      // consider marking the function as deleted..
+      if (hasUserDefinedMoveFn)
+        return funcs;
+    }
 
     // check ancestors
     const ct::ClassData::AncestorContainer& bases = rep.second.ancestors();
@@ -843,56 +915,115 @@ namespace
 
     const bool basesHaveCopyCtor = (  basesSupportConstRefCCtor
                                    || std::all_of( bases.begin(), bases.end(),
-                                                   baseHasSpecialFunction(all, ct::isCopyCtor())
-                                                 )
+                                                   baseHasSpecialFunction(all, ct::isCopyCtor()))
                                    );
 
 
     if (!basesHaveCopyCtor)
-      return;
+      return funcs;
 
     // check data members
     const ct::ClassData::DataMemberContainer& data = rep.second.dataMembers();
+
     const bool dataSupportConstRefCCtor = std::all_of( data.begin(), data.end(),
                                                        isCopyConstructibleConstRef(all)
                                                      );
-    const bool dataIsCopyConstructible = (  dataSupportConstRefCCtor
+
+    const bool dataIsCopyConstructible = ( dataSupportConstRefCCtor
                                          || std::all_of( data.begin(), data.end(),
                                                          isCopyConstructible(all)
                                                        )
                                          );
 
     if (!dataIsCopyConstructible)
-      return;
+      return funcs;
 
     const bool withConstRef = basesSupportConstRefCCtor & dataSupportConstRefCCtor;
 
     funcs.emplace_back(nullptr, ct::SpecialMemberFunction::cctor, true, withConstRef, true);
+    return funcs;
   }
 
-
-
-  // copy constructor
-  void processDefaultCopyAssign( const ct::ClassAnalysis& all,
-                                 const ct::ClassAnalysis::value_type& rep,
-                                 ct::SpecialMemberFunctionContainer& funcs
-                               )
+  // move constructor
+  ct::SpecialMemberFunctionContainer
+  processDefaultMoveCtor( const ct::ClassAnalysis& all,
+                          const ct::ClassAnalysis::value_type& rep,
+                          ct::SpecialMemberFunctionContainer funcs
+                        )
   {
-    // If no user-defined [or compiler generated] copy assignment operators are provided for
-    // a class type, the compiler will always declare one as an inline public member of the class.
-    // This implicitly-declared copy assignment operator has the form T& T::operator=(const T&)
-    // if all of the following is true:
-    // - each direct base B of T has a copy assignment operator whose parameters are B or
-    //   const B& or const volatile B&;
-    // - each non-static data member M of T of class type or array of class type has a
-    //   copy assignment operator whose parameters are M or const M& or const volatile M&.
-    // [note compilers also seem to accept T& T::operator=(const T) as a vaild cassign.]
-    // Otherwise the implicitly-declared copy assignment operator is declared as T& T::operator=(T&).
-    //   [note, we do not generate T& T::operator=(T&).]
+    if (all.languageStandard() < ct::ClassAnalysis::Cxx11) // ONLY IF !C++11 or more recent
+      return funcs;
+
+    // In C++11, a move constructor is implicitly declared if the class does not declare a
+    // copy constructor, move constructor, copy assignment operator, move assignment operator, or destructor
+
+    // Check if any special function that would prevent move constructor generation is user-defined
+    const bool hasMoveCtor = ct::hasSpecialFunction(funcs, ct::isMoveCtor());
+
+    if (hasMoveCtor)
+      return funcs;
+
+    const bool hasUserDefinedSpecialFn = (  hasSpecialFunction(funcs, ct::isCopyCtor(false/*user-defined*/))
+                                         || hasSpecialFunction(funcs, ct::isCopyAssign(false/*user-defined*/))
+                                         || hasSpecialFunction(funcs, ct::isMoveAssign(false/*user-defined*/))
+                                         || hasSpecialFunction(funcs, ct::isDtor(false/*user-defined*/))
+                                         );
+
+    if (hasUserDefinedSpecialFn)
+      return funcs;
+
+    // check ancestors
+    const ct::ClassData::AncestorContainer& bases = rep.second.ancestors();
+    ct::SpecialMemberFunctionPredicate      moveOrCopyPred = ct::isMoveCtor() || ct::isCopyCtor();
+    const bool basesHaveMoveOrCopyCtor = std::all_of( bases.begin(), bases.end(),
+                                                      baseHasSpecialFunction(all, moveOrCopyPred)
+                                                    );
+
+    if (!basesHaveMoveOrCopyCtor)
+      return funcs;
+
+    // check data members
+    const ct::ClassData::DataMemberContainer& data = rep.second.dataMembers();
+    const bool dataIsMoveOrCopyConstructible = std::all_of( data.begin(), data.end(),
+                                                            isMoveOrCopyConstructible(all)
+                                                          );
+
+    if (!dataIsMoveOrCopyConstructible)
+      return funcs;
+
+    funcs.emplace_back(nullptr, ct::SpecialMemberFunction::mctor, true, false, true);
+    return funcs;
+  }
+
+  // copy assignment operator
+  ct::SpecialMemberFunctionContainer
+  processDefaultCopyAssign( const ct::ClassAnalysis& all,
+                            const ct::ClassAnalysis::value_type& rep,
+                            ct::SpecialMemberFunctionContainer funcs
+                          )
+  {
+    // In C++11, a copy assignment operator is implicitly declared if the class doesn't declare
+    // a copy assignment operator, move constructor, or move assignment operator.
+
+    // Check if there is a defined copy assignment operator
+    // \note the compiler frontend could have already instantiated the copy assignment
+    //       so we do not need to handle it.
     const bool hasCopyAssign = ct::hasSpecialFunction(funcs, ct::isCopyAssign());
 
     if (hasCopyAssign)
-      return;
+      return funcs;
+
+    if (all.languageStandard() >= ct::ClassAnalysis::Cxx11)
+    {
+      // Check if any special function that would prevent copy assignment generation is user-defined
+      const bool hasUserDefinedSpecialFn = (  hasSpecialFunction(funcs, ct::isMoveCtor(false/*user-defined*/))
+                                           || hasSpecialFunction(funcs, ct::isMoveAssign(false/*user-defined*/))
+                                           );
+
+      // consider marking as deleted
+      if (hasUserDefinedSpecialFn)
+        return funcs;
+    }
 
     // check ancestors
     const ct::ClassData::AncestorContainer& bases = rep.second.ancestors();
@@ -906,107 +1037,99 @@ namespace
                                      );
 
     if (!basesHaveCopyAssign)
-      return;
+      return funcs;
 
     // check data members
     const ct::ClassData::DataMemberContainer& data = rep.second.dataMembers();
-
-    const bool dataSupportCopyAssignConstRef = std::all_of( data.begin(), data.end(),
-                                                            isCopyAssignableConstRef(all)
-                                                          );
-
-
+    const bool dataSupportCopyAssignConstRef = std::all_of(data.begin(), data.end(), isCopyAssignableConstRef(all));
     const bool dataAreCopyAssignable = (  dataSupportCopyAssignConstRef
-                                       || std::all_of( data.begin(), data.end(),
-                                                       isCopyAssignable(all)
-                                                     )
+                                       || std::all_of(data.begin(), data.end(), isCopyAssignable(all))
                                        );
 
     if (!dataAreCopyAssignable)
-      return;
+      return funcs;
 
     const bool withConstRef = basesSupportCopyAssignConstRef & dataSupportCopyAssignConstRef;
 
     funcs.emplace_back(nullptr, ct::SpecialMemberFunction::cassign, true, withConstRef, true);
+    return funcs;
   }
 
-
-
-#if COPY_CTOR_ANALYSIS
-  // move constructor
-  void processDefaultMCtor(ct::ClassAnalysis& all, ct::ClassAnalysis::value_type& rep, ct::SpecialMemberFunctionContainer& funcs)
+  // move assignment operator
+  ct::SpecialMemberFunctionContainer
+  processDefaultMoveAssign( const ct::ClassAnalysis& all,
+                            const ct::ClassAnalysis::value_type& rep,
+                            ct::SpecialMemberFunctionContainer funcs
+                          )
   {
-    const bool hasUserDefinedCtor = std::any_of( funcs.begin(), funcs.end(),
-                                                 ct::isUserDefinedCtor()
-                                               );
+    if (all.languageStandard() < ct::ClassAnalysis::Cxx11)
+      return funcs;
 
-    if (hasUserDefinedCtor)
-      return;
+    // https://en.cppreference.com/w/cpp/language/move_operator.html
+
+    // Check if any special function that would prevent move assignment generation is user-defined
+    const bool hasMoveAssign = ct::hasSpecialFunction(funcs, ct::isMoveAssign());
+
+    if (hasMoveAssign)
+      return funcs;
+
+    const bool hasUserDefinedSpecialFn = (  hasSpecialFunction(funcs, ct::isCopyCtor(false/*user-defined*/))
+                                         || hasSpecialFunction(funcs, ct::isCopyAssign(false/*user-defined*/))
+                                         || hasSpecialFunction(funcs, ct::isMoveCtor(false/*user-defined*/))
+                                         || hasSpecialFunction(funcs, ct::isDtor(false/*user-defined*/))
+                                         );
+
+    if (hasUserDefinedSpecialFn)
+      return funcs;
 
     // check ancestors
-    const auto bases             = rep.second.ancestors() | adapt::filtered(DirectBase{});
-    const bool basesHaveCopyCtor = std::all_of( bases.begin(), bases.end(),
-                                                baseHashasCompilerSupported(all, isCopyCtor());
-                                              );
+    const ct::ClassData::AncestorContainer& bases = rep.second.ancestors();
+    ct::SpecialMemberFunctionPredicate      moveOrCopyPred = ct::isMoveAssign() || ct::isCopyAssign();
+    const bool basesHaveMoveOrCopyOper = std::all_of( bases.begin(), bases.end(),
+                                                      baseHasSpecialFunction(all, moveOrCopyPred)
+                                                    );
 
-    if (!basesHaveCopyCtor)
-      return;
+    if (!basesHaveMoveOrCopyOper)
+      return funcs;
 
     // check data members
     const ct::ClassData::DataMemberContainer& data = rep.second.dataMembers();
-    const bool dataHaveCopyCtor = std::all_of( data.begin(), data.end(),
-                                               dataHashasCompilerSupported(all, isCopyCtor());
-                                             );
+    const bool dataHaveMoveOrCopyOper = std::all_of(data.begin(), data.end(), isMoveOrCopyAssignable(all));
 
-    if (!dataHaveCopyCtor)
-      return;
+    if (!dataHaveMoveOrCopyOper)
+      return funcs;
 
-    funcs.emplace_back(nullptr, SpecialMemberFunction::cctor, true);
+    funcs.emplace_back(nullptr, ct::SpecialMemberFunction::massign, true, false, true);
+    return funcs;
   }
 
 
-  void processDefaultCAssign(ct::ClassAnalysis& all, ct::ClassAnalysis::value_type& rep, SpecialMemberFunctionContainer& funcs)
+  /// analyzes the special member functions in class associated with \p rep and generates information about missing
+  ///   functions that can be generated.
+  /// \param all class analysis to access information in base classes and classes of member types
+  /// \param rep the class analysis representation of a class to be analyzed
+  void
+  analyzeAutoGeneratedMemberFunctions(const ct::ClassAnalysis& all, ct::ClassAnalysis::value_type& rep)
   {
-    // If no user-defined copy assignment operators are provided for a class type,
-    //   the compiler will always declare one as an inline public member of the class.
-    //   This implicitly-declared copy assignment operator has the form T& T::operator=(const T&)
-    //   if all of the following is true:
-    //   - each direct base B of T has a copy assignment operator
-    //     whose parameters are B or const B& or const volatile B&;
-    //   - each non-static data member M of T of class type or array of class type
-    //     has a copy assignment operator whose parameters are
-    //     M or const M& or const volatile M&.
-    //   Otherwise the implicitly-declared copy assignment operator is declared as T& T::operator=(T&).
-
-    const bool hasUserDefinedDtor = std::any_of( funcs.begin(), funcs.end(),
-                                                 isDtor()
-                                               );
-
-    if (hasUserDefinedDtor)
-      return;
-
-    funcs.emplace_back(nullptr, ct::SpecialMemberFunction::mctor, true);
-  }
-#endif /*COPY_CTOR_ANALYSIS*/
-
-
-  void analyzeAutoGeneratedMemberFunctions(ct::ClassAnalysis& all, ct::ClassAnalysis::value_type& rep)
-  {
+    // compute the available special member functions
     ct::CompatibilityBridge            compat;
     ct::SpecialMemberFunctionContainer availFunctions = compat.specialMemberFunctions(rep.first);
 
-    processDefaultCtor(all, rep, availFunctions);
-    processDefaultDtor(all, rep, availFunctions);
-    processDefaultCopyCtor(all, rep, availFunctions);
-    processDefaultCopyAssign(all, rep, availFunctions);
+    // add special member functions that the compiler would generate
+    availFunctions = processDefaultCtor      (all, rep, std::move(availFunctions));
+    availFunctions = processDefaultDtor      (all, rep, std::move(availFunctions));
+    availFunctions = processDefaultCopyCtor  (all, rep, std::move(availFunctions));
+    availFunctions = processDefaultCopyAssign(all, rep, std::move(availFunctions));
 
-#if COPY_CTOR_ANALYSIS
-    processDefaultMCtor(availFunctions);
-#endif /*COPY_CTOR_ANALYSIS*/
+    availFunctions = processDefaultMoveCtor  (all, rep, std::move(availFunctions));
+    availFunctions = processDefaultMoveAssign(all, rep, std::move(availFunctions));
 
+    // set the analysis result in the class analysis
     rep.second.specialMemberFunctions() = std::move(availFunctions);
   }
 
+  /// analyzes the special member functions of all classes in \p all and
+  ///   generates information of missing special member functions.
   void analyzeSpecialMemberFunctions(ct::ClassAnalysis& all)
   {
     SAWYER_MESG(msgTrace())
@@ -1038,9 +1161,11 @@ namespace
     }
   }
 
-  // returns true iff lhs < rhs
   struct VFNameTypeOrder
   {
+    /// returns true iff fn \p lhs is ordered before \p rhs
+    ///   order considers (1) function name, (2) normalized types,
+    ///   but NOT return types and membership.
     bool operator()(ct::FunctionKeyType lhs, ct::FunctionKeyType rhs) const
     {
       static constexpr bool firstDecisiveComparison = false;
@@ -1054,13 +1179,7 @@ namespace
 
       return res < 0;
     }
-/*
-    template <class TupleWithFunctionKeyType>
-    bool operator()(const TupleWithFunctionKeyType& lhs, const TupleWithFunctionKeyType& rhs) const
-    {
-      return (*this)(std::get<0>(lhs), std::get<0>(rhs));
-    }
-*/
+
     const ct::CompatibilityBridge& compat;
   };
 
@@ -1081,10 +1200,7 @@ namespace
       }
 
       ASSERT_require(rel != ct::CompatibilityBridge::unrelated);
-      //~ std::cerr << compat.nameOf(drv) << " overrides " << compat.nameOf(bas)
-                //~ << std::endl;
-
-      const bool               covariant = rel == ct::CompatibilityBridge::covariant;
+      const bool covariant = rel == ct::CompatibilityBridge::covariant;
 
       vfunAnalysis.at(drv).overridden().emplace_back(bas, covariant);
       vfunAnalysis.at(bas).overriders().emplace_back(drv, covariant);
@@ -1173,7 +1289,9 @@ analyzeVirtualFunctions(const ClassAnalysis& all, bool normalizedSignature)
 AnalysesTuple
 analyzeClassesAndCasts(const CompatibilityBridge& compat, ASTRootType n)
 {
-  ClassAnalysis classes{true /* full view of translation unit */};
+  ASSERT_require(n != ASTRootType{});
+
+  ClassAnalysis classes{true /* full view of translation unit */, compat.languageStandard()};
   CastAnalysis  casts;
 
   compat.extractFromProject(classes, casts, n);
@@ -1206,7 +1324,7 @@ ClassAnalysis
 analyzeClassesFromMemoryPool()
 {
   ct::CompatibilityBridge compat;
-  ClassAnalysis classes{true /* full view of translation unit */};
+  ClassAnalysis classes{true /* full view of translation unit */, compat.languageStandard()};
 
   compat.extractFromMemoryPool(classes);
   inheritanceRelations(classes);
@@ -1218,8 +1336,10 @@ analyzeClassesFromMemoryPool()
 
 ClassAnalysis analyzeClass(ClassKeyType n)
 {
+  ASSERT_require(n != ClassKeyType{});
+
   CompatibilityBridge compat;
-  ClassAnalysis       classes{false /* incomplete view */};
+  ClassAnalysis       classes{false /* incomplete view */, compat.languageStandard()};
 
   // collect all classes reachable upwards from n
   compat.extractClassAndBaseClasses(classes, n);

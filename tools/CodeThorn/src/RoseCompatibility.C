@@ -111,7 +111,6 @@ namespace
     void handle(SgTemplateVariableDeclaration&)       {}
 
     static bool templated(const SgNode* n);
-    //~ void handle(SgTemplateTypedefDeclaration&)        {} // may need some handling
   };
 
   bool ExcludeTemplates::templated(const SgNode* n)
@@ -565,23 +564,6 @@ namespace
   int cmpArrayLength(const SgArrayType& lhs, const SgArrayType& rhs)
   {
     return cmpValue(arrayLengthAsString(lhs), arrayLengthAsString(rhs));
-
-    /*
-     * was:
-
-    int               cmpres = 0;
-    ct::AbstractValue lhsval = ct::evaluateExpressionWithEmptyState(lhs.get_index());
-    ct::AbstractValue rhsval = ct::evaluateExpressionWithEmptyState(rhs.get_index());
-
-    // \todo check correctness of array length comparison
-    firstDecisiveComparison
-    || (cmpres = cmpValue(lhsval.isConstInt(), rhsval.isConstInt()))
-    || (!lhsval.isConstInt()) // if not const, then assume that types are equal
-    || (cmpres = cmpValue(lhsval.getIntValue(), rhsval.getIntValue()))
-    ;
-
-    return cmpres;
-    */
   }
 
 
@@ -766,13 +748,11 @@ namespace
         ASSERT_require(lhs.variantT() != V_SgTypedefType);
         ASSERT_require(rhs.variantT() != V_SgTypedefType);
 
-        //~ res = cmpValue(SageType::static_variant, rhs.variantT());
         res = cmpValue(lhs.variantT(), rhs.variantT());
 
         // we are done, if the comparison was decisive
         if (res) return;
 
-        //~ handle2(lhs, SG_ASSERT_TYPE(const SageType, rhs));
         handle2(lhs, static_cast<const SageType&>(rhs));
       }
 
@@ -1162,6 +1142,179 @@ namespace
       static
       ReturnType get(TypeKeyType n);
   };
+
+
+
+  SgFile::standard_enum
+  languageStandardFromROSEmacroFile(const std::string& macroFile, std::size_t pos)
+  {
+    pos = macroFile.find("++", pos) + 2;
+    ASSERT_require(pos+2 < macroFile.size());
+
+    std::size_t const year = (macroFile[pos]-'0')*10 + macroFile[pos+1]-'0';
+
+    if (year == 98)
+      return SgFile::e_cxx98_standard;
+
+    if (year == 11)
+      return SgFile::e_cxx11_standard;
+
+    if (year == 14)
+      return SgFile::e_cxx14_standard;
+
+    if (year == 17)
+      return SgFile::e_cxx17_standard;
+
+    if (year == 20)
+      return SgFile::e_cxx20_standard;
+
+    if (year == 23)
+      return SgFile::e_cxx23_standard;
+
+    if (year == 26)
+      return SgFile::e_cxx26_standard;
+
+    return SgFile::e_default_standard;
+  }
+
+
+  /// extracts a version identifier from a project \p n.
+  /// \param  n a ROSE source project containing C++ files
+  /// \return the C++ version identifier macro associated with the standard.
+  /// \throw  throws an exception if version standards are inconsistent
+  /// \details
+  ///    * iterates through all C++ files in the project \p n
+  ///    * extracts the version according to the file's standard_enum
+  ///      returned by get_standard.
+  ///    * throws an exception if two files use different standards
+  ///    * returns the C++ standard.
+  std::uint32_t standardVersion(const std::vector<SgFile*>& files)
+  {
+    std::uint32_t    version = 0;
+
+    // Iterate through all files in the project
+    for (const SgFile* file : files)
+    {
+      const SgSourceFile* sourceFile = isSgSourceFile(file);
+
+      // Skip non source files
+      if (sourceFile == nullptr)
+        continue;
+
+      // Get the C++ standard from the file
+      std::uint32_t fileVersion  = 0;
+      SgFile::standard_enum fileLanguageStd = sourceFile->get_standard();
+
+      if (fileLanguageStd == SgFile::e_default_standard)
+      {
+        const std::size_t pos = sourceFile->getFileName().find("rose_edg_required_compiler_macros_");
+
+        if (pos != std::string::npos)
+        {
+          fileLanguageStd = languageStandardFromROSEmacroFile(sourceFile->getFileName(), pos);
+        }
+      }
+
+      // Map the standard_enum to appropriate version macro
+      switch (fileLanguageStd)
+      {
+        case SgFile::e_cxx98_standard:
+        case SgFile::e_cxx03_standard:
+            fileVersion = ct::ClassAnalysis::Cxx98;
+            break;
+
+        case SgFile::e_cxx11_standard:
+            fileVersion = ct::ClassAnalysis::Cxx11;
+            break;
+
+        case SgFile::e_cxx14_standard:
+            fileVersion = ct::ClassAnalysis::Cxx14;
+            break;
+
+        case SgFile::e_cxx17_standard:
+            fileVersion = ct::ClassAnalysis::Cxx17;
+            break;
+
+        case SgFile::e_cxx20_standard:
+            fileVersion = ct::ClassAnalysis::Cxx20;
+            break;
+
+        case SgFile::e_cxx23_standard:
+            fileVersion = ct::ClassAnalysis::Cxx23;
+            break;
+
+        case SgFile::e_cxx26_standard:
+            fileVersion = ct::ClassAnalysis::Cxx26;
+            break;
+
+        default:
+            /* not a C++ file */;
+      }
+
+      if (fileVersion != 0)
+      {
+        if (version == 0)
+          version = fileVersion;
+
+        if (version != fileVersion)
+        {
+          throw std::runtime_error( "Inconsistent C++ standards detected: "
+                                  + std::to_string(version)
+                                  + " vs "
+                                  + std::to_string(fileVersion)
+                                  );
+        }
+      }
+    }
+
+    // If no C++ files were found, throw an exception
+    if (version == 0)
+      throw std::runtime_error("No C++ files found in the project");
+
+    return version;
+  }
+/*
+  std::uint32_t standardVersion(const SgProject& n)
+  {
+    return standardVersion(n.get_fileList());
+  }
+*/
+
+  struct CollectSourceFilesFromMemoryPool : ROSE_VisitTraversal
+  {
+      CollectSourceFilesFromMemoryPool()  = default;
+      ~CollectSourceFilesFromMemoryPool() = default;
+
+      // Required traversal function
+      void visit (SgNode* node) override;
+
+      const std::vector<SgFile*>& files() const { return allSourceFiles; }
+    private:
+      std::vector<SgFile*> allSourceFiles;
+
+      CollectSourceFilesFromMemoryPool(const CollectSourceFilesFromMemoryPool&)            = delete;
+      CollectSourceFilesFromMemoryPool(CollectSourceFilesFromMemoryPool&&)                 = delete;
+      CollectSourceFilesFromMemoryPool& operator=(const CollectSourceFilesFromMemoryPool&) = delete;
+      CollectSourceFilesFromMemoryPool& operator=(CollectSourceFilesFromMemoryPool&&)      = delete;
+  };
+
+  void CollectSourceFilesFromMemoryPool::visit(SgNode* node)
+  {
+    SgSourceFile* sf = isSgSourceFile(node);
+    ASSERT_not_null(sf);
+
+    allSourceFiles.emplace_back(sf);
+  }
+}
+
+std::uint32_t
+RoseCompatibilityBridge::languageStandard() const
+{
+  CollectSourceFilesFromMemoryPool srcFileCollector;
+
+  SgSourceFile::traverseMemoryPoolNodes(srcFileCollector);
+
+  return standardVersion(srcFileCollector.files());
 }
 
 
@@ -1253,7 +1406,6 @@ RoseCompatibilityBridge::variableId(SgVariableDeclaration* var) const
 std::string
 RoseCompatibilityBridge::nameOf(VariableKeyType vid) const
 {
-  //~ return vid.toString(varMap);
   return SG_DEREF(vid).get_name();
 }
 
@@ -1589,7 +1741,6 @@ namespace
         if (drvTy.variantT() != SG_DEREF(basTy).variantT())
           return ReturnType{ nullptr, nullptr };
 
-        //~ const T&   baseType    = SG_ASSERT_TYPE(const T, *basTy);
         const T&   baseType    = static_cast<const T&>(*basTy);
         const bool prefixMatch = typeChk(drvTy, baseType);
 
@@ -1633,12 +1784,8 @@ RoseCompatibilityBridge::areSameOrCovariant( const ClassAnalysis& classes,
   const SgType*              drvRoot   = rootTypes.derivedRoot();
 
   if (!drvRoot)
-  {
-    //~ std::cerr << "w/o root: " << basId.getIdCode() << "<>" << drvId.getIdCode() << std::endl;
     return sg::dispatch(CovarianceChecker{classes, *basId}, drvId);
-  }
 
-  //~ std::cerr << "w/  root: " << basId.getIdCode() << "<>" << drvId.getIdCode() << std::endl;
   // test if the roots are covariant
   return sg::dispatch(CovarianceChecker{classes, SG_DEREF(rootTypes.baseRoot())}, drvRoot);
 }
@@ -1909,7 +2056,7 @@ namespace
     return { numNonDefault, numParams };
   }
 
-
+/*
   bool hasDestructor(const ct::ClassAnalysis::mapped_type& clazz)
   {
     const ct::SpecialMemberFunctionContainer& specials = clazz.specialMemberFunctions();
@@ -1927,6 +2074,7 @@ namespace
 
     return false;
   }
+*/
 
   bool
   hasDefaultAssignType( const SgMemberFunctionDeclaration& mfn,
@@ -1955,30 +2103,16 @@ namespace
     return hasDefaultAssignType(mfn, clkey, isMoveParameterType);
   }
 
-  bool canGenerateDefaultCopyAssign(const ct::ClassAnalysis::mapped_type& clazz)
+  ct::SpecialMemberFunctionPredicate
+  isCompilerGeneratedCopyAssignOverriding(const SgMemberFunctionDeclaration&)
   {
-    const ct::SpecialMemberFunctionContainer& specials = clazz.specialMemberFunctions();
-    auto       isCopyAssign = [](const ct::SpecialMemberFunction& smf) -> bool { return smf.isCopyAssign(); };
-    auto const lim          = specials.end();
-    auto const pos          = std::find_if(specials.begin(), lim, isCopyAssign);
-
-    // the default copy constructor can be generated if it can be generated but has not been provided
-    //   either by the frontend or by the user.
-    return (pos != lim) && (pos->function() == ct::FunctionKeyType{});
+    // \note we could check that the function passes in, is actually the special
+    //       member function.
+    return [](const ct::SpecialMemberFunction& smf)->bool
+           {
+             return smf.isCopyAssign() && smf.compilerGenerated();
+           };
   }
-
-  bool canGenerateDefaultMoveAssign(const ct::ClassAnalysis::mapped_type& clazz)
-  {
-    const ct::SpecialMemberFunctionContainer& specials = clazz.specialMemberFunctions();
-    auto       isMoveAssign = [](const ct::SpecialMemberFunction& smf) -> bool { return smf.isMoveAssign(); };
-    auto const lim          = specials.end();
-    auto const pos          = std::find_if(specials.begin(), lim, isMoveAssign);
-
-    // the default move constructor can be generated if it can be generated but has not been provided
-    //   either by the frontend or by the user.
-    return (pos != lim) && (pos->function() == ct::FunctionKeyType{});
-  }
-
 }
 
 namespace CodeThorn
@@ -1998,15 +2132,13 @@ RoseCompatibilityBridge::isAutoGeneratable(const ClassAnalysis& all, ClassKeyTyp
   const SgSpecialFunctionModifier& fnmod = memfn->get_specialFunctionModifier();
 
   if (fnmod.isDestructor())
-    res = !hasDestructor(all.at(clkey));
-  else if (fnmod.isConstructor())
-    res = !hasConstructor(all.at(clkey), *memfn);
-  else if (memfn->get_name() != "operator=") // \todo consider spaceship operator
+    res = !hasSpecialFunction(all, clkey, isDtor());
+  else if (memfn->get_name() != "operator=") // \todo consider presence of spaceship operator
     res = false;
   else if (hasDefaultCopyAssignType(*memfn, clkey))
-    res = canGenerateDefaultCopyAssign(all.at(clkey));
+    res = hasSpecialFunction(all, clkey, isCompilerGeneratedCopyAssignOverriding(*memfn));
   else if (hasDefaultMoveAssignType(*memfn, clkey))
-    res = canGenerateDefaultMoveAssign(all.at(clkey));
+    res = hasSpecialFunction(all, clkey, isMoveAssign());
 
   return res;
 }
@@ -2030,8 +2162,6 @@ RoseCompatibilityBridge::typeOf(VariableKeyType var) const
 
   if (const SgClassType* clazzty = isSgClassType(unCvTy.type()))
     clazz = getClassDefOpt(*clazzty);
-
-  // std::cerr << "u" << (unCvTy.type() ? typeid(*unCvTy.type()).name() : std::string{"null"}) << std::endl;
 
   const bool                isConst = unCvTy.hasConst();
   const bool                hasRef  = ty != unRefTy;
@@ -2098,9 +2228,7 @@ namespace
       CallData normalCall(const SgFunctionRefExp& n) const;
       CallData objectCall(const SgBinaryOp& n);
       CallData objectOrLambdaCall(const SgDotExp& n);
-      //~ CallData memPtrCall(const SgBinaryOp& n) const;
       CallData memberCall(const SgMemberFunctionRefExp& n) const;
-      //~ CallData arrPtrCall(const SgPntrArrRefExp& n) const;
       CallData unresolvable(const SgExpression& n) const;
 
       void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
@@ -2182,7 +2310,6 @@ namespace
 
     // lhs is the receiver expression
     sg::NotNull<const SgExpression> receiverExpr = n.get_lhs_operand();
-    // sg::NotNull<const SgClassType>  receiverClss = classtypeOfExpr(*receiverExpr);
     const SgClassType*              receiverClss = classtypeOfExpr(*receiverExpr, STRIP_PTRS);
 
     if (!receiverClss)
@@ -2434,6 +2561,10 @@ namespace
   {
     SgFunctionDeclaration* fndef = isSgFunctionDeclaration(fn->get_definingDeclaration());
     if (fndef == nullptr) return {};
+
+    // for all constructors, we also need to go through the constructor initializer lists
+    // ...
+    // \todo ..
 
     return sg::dispatch(CallDataFinder{}, fndef);
   }

@@ -374,7 +374,7 @@ namespace
                                        << std::endl;
 
                           // \todo abort on error
-                          // ASSERT_require(compat.isAutoGeneratable(all, vt.getClass(), res.function()));
+                          // ASSERT_require(compat.isGeneratableVirtualFunction(all, vt.getClass(), res.function()));
                         }
                       }
 
