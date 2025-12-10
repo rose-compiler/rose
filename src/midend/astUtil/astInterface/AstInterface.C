@@ -2817,12 +2817,14 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
     SgInitializedName *p1 = isSgInitializedName(first);
     SgInitializedName *p2 = isSgInitializedName(second);
     if (p1 != 0 && p2 != 0) {
-        if (p1->get_name().str() != p2->get_name().str()) {
+        if (std::string(p1->get_name().str()) != std::string(p2->get_name().str())) {
+            DebugDiff([&_first,&_second](){ return "AST different  name: " + AstToString(_first) + " vs " + AstToString(_second); });
             return false;
         }
         if (AstIdentical(AstNodeType(p1->get_type()), AstNodeType(p2->get_type()))) {
             return true;
         }
+        DebugDiff([&_first,&_second](){ return "AST different  type: " + AstToString(_first) + " vs " + AstToString(_second); });
         return false;
     }
   }
