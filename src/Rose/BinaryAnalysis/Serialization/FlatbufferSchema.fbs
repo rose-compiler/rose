@@ -1,0 +1,130 @@
+
+/// This places places the generated schema in a nested namespace. It might not work for non-C++ flatbuffer backends. 
+namespace Rose.BinaryAnalysis.Serialization.Flatbuffers;
+
+table Instruction {
+  address: uint64;
+  bytes: [ubyte];
+}
+
+table BasicBlock {
+  address: uint64;
+  instructions: [Instruction];
+}
+
+table DataBlock {
+  address: uint64;
+  type: [ubyte];
+  comment: string;
+}
+
+table SomeColumn {
+  column: uint64;
+}
+
+table None { }
+
+union Column { SomeColumn, None }
+
+table SourceLocation {
+  file_name: string;
+  line: uint64;
+  column: Column;
+}
+
+struct BasicBlockRef {
+  address: uint64;
+}
+
+struct InstructionRef {
+  address: uint64;
+}
+
+struct DataBlockRef {
+  address: uint64;
+}
+
+
+table Function {
+  address: uint64;
+  name: string;
+  /// Addresses of owned BasicBlocks, which are saved in the CFG
+  basic_blocks: [BasicBlockRef];
+  /// Addresses of owned DataBlocks, which are saved in the CFG
+  data_blocks: [DataBlockRef];
+  location: SourceLocation;
+}
+
+struct FunctionRef {
+  address: uint64;
+}
+
+enum CFGVertexType : ubyte {V_BASIC_BLOCK, V_UNDISCOVERED, V_INDETERMINIATE, V_NONEXISTING, V_USER_DEFINED}
+enum CFGEdgeType : ubyte {E_NORMAL, E_FUNCTION_CALL, E_FUNCTION_RETURN, E_CALL_RETURN, E_FUNCTION_XFER, E_USER_DEFINED}
+enum CFGEdgeConfidence : ubyte { ASSUMED, PROVED}
+
+table CFGVertex {
+  address: ubyte;
+  type: CFGVertexType;
+  /// Addresses of owned Functions, which are saved in the CFG
+  functions: [FunctionRef];
+}
+
+table CFGEdge {
+  from: ubyte;
+  to: ubyte;
+  type: CFGEdgeType;
+  confidence: CFGEdgeConfidence;
+}
+
+table CFG {
+  vertices : [CFGVertex];
+  edges : [CFGEdge];
+  basic_blocks: [BasicBlock];
+  functions: [Function];
+}
+
+table Interval {
+  lo: uint64;
+  hi: uint64;
+}
+
+/// We use explicit enum fields to enable OR'd together enums. 
+enum Accessibility : ubyte { EXECUTABLE = 0, WRITABLE = 1, READABLE = 2, IMMUTABLE = 4, PRIVATE = 8 }
+
+table Segment {
+  data: [ubyte];
+  offset: uint64;
+  /// Since the flag is OR'd together, we serialize a ubyte instead of the enum directly.
+  acessibility: ubyte;
+}
+
+table IntervalSegment {
+  interval: Interval;
+  segment: Segment;
+}
+
+table AddressMap {
+  entries: [IntervalSegment];
+}
+
+enum Endianness : ubyte {
+  ORDER_UNSPECIFIED, ORDER_LSB, ORDER_MSB,
+}
+
+table MemoryMap {
+  data: AddressMap;
+  endianness: Endianness;
+  name: string;
+}
+
+union AddressUser { InstructionRef, DataBlockRef }
+
+table AddressUsageEntry {
+  interval: Interval;
+  user: AddressUser;
+}
+
+table AddressUsageMap {
+  entries: [AddressUsageEntry];
+}
