@@ -781,6 +781,7 @@ Powerpc::decode_X_formInstruction_1F(State &state) {
                 return MAKE_INSN3_RC(mulhw, uisa, RT(state), RA(state), RB(state));
             }
         case 0x053: return MAKE_INSN1(mfmsr, oea, RT(state));
+        case 0x056: return MAKE_INSN2(dcbf, uisa, RA(state), RB(state));
         case 0x057:
             if (!reservedOk<31, 31>(state)) {
                 return MAKE_UNKNOWN();
@@ -1135,6 +1136,7 @@ Powerpc::decode_X_formInstruction_1F(State &state) {
         case 0x3C9: return MAKE_INSN3_RC(divduo, uisa, RT(state), RA(state), RB(state));
         case 0x3CB: return MAKE_INSN3_RC(divwuo, uisa, RT(state), RA(state), RB(state));
         case 0x3CE: return MAKE_INSN2(stfpdx, uncategorized, FRT(state), memrefx(state, T_V2_FLOAT64));
+        case 0x3D6: return MAKE_INSN2(icbi, uisa, RA(state), RB(state));
         case 0x3D7:
             if (!reservedOk<31, 31>(state)) {
                 return MAKE_UNKNOWN();
