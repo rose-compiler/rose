@@ -2829,12 +2829,22 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
     }
   }
 
+  { SgVarRefExp* v1 = isSgVarRefExp(first);
+    if (v1 != 0) {
+       if (IsSameVarRef(first,second)) {
+          return true;
+       }
+       return false;
+    }
+  }
+
 
   if (IsBlock(_first, 0, &args1) && IsBlock(_second, 0, &args2)) {
      return AstIdentical<AstNodeList,AstNodePtr>(args1, args2, call_on_diff);
   }
   { AstNodePtr exp1, exp2;
-    if (IsExprStmt(_first, &exp1) && IsExprStmt(_second, &exp2)) {
+    if ( (IsExprStmt(_first, &exp1) && IsExprStmt(_second, &exp2)) ||
+         (IsReturn(_first, &exp1) && IsReturn(_second, &exp2)) ) {
        return AstIdentical(exp1, exp2, call_on_diff, call_on_diff_type);
     }
   }

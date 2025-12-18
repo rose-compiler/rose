@@ -272,6 +272,7 @@ class ClusterDependences {
   public:
     // Call for each node of the graph to set up clustering.
     void setupNode (const std::string& s) {
+       assert(s != "");
        // If s has been clustered previously, return.
        if (cluster_map.find(s) != cluster_map.end()) return;
        // set up preliminary clustering.
@@ -286,6 +287,8 @@ class ClusterDependences {
 
     // Call for each edge of the graph to set up clustering.
     void setupEdge (const DependenceEntry& e) {
+       assert(e.first_entry() != "");
+       assert(e.second_entry() != "");
        // first entry is always a function.
        functions.insert(e.first_entry());
        if (e.type_entry() == "call") {
@@ -303,6 +306,8 @@ class ClusterDependences {
        std::list<std::string> work; 
        for (auto m : cluster_map) {
           auto node = m.first;
+          assert(m.second != "");
+          assert(m.first != "");
           // do nothing if it's already includes other nodes.
           if (clusters[m.second].size() > 1)  continue;
           work.push_back(node);
@@ -312,6 +317,7 @@ class ClusterDependences {
           // Fuse into the edge sink if this is 
           for (auto e : in_edge_map[node]) {
             auto c = cluster_map[e.first_entry()];
+            if (c == "") continue; // TODO: Not supposed to happen.
             if (connectivity.find(c) == connectivity.end()) 
                connectivity[c] == 0;
             else 
@@ -319,6 +325,7 @@ class ClusterDependences {
           }  
           for (auto e : out_edge_map[node]) {
             auto c = cluster_map[e.second_entry()];
+            if (c == "") continue; // TODO: not supposed to happen.
             if (connectivity.find(c) == connectivity.end()) 
                connectivity[c] == 0;
             else 
@@ -335,6 +342,7 @@ class ClusterDependences {
               if (con.second >= threshold) {
                  if (cluster == "") {
                     cluster = con.first;
+                    assert(cluster != "");
                     cluster_map[node] = cluster; 
                     clusters[cluster].insert(node);
                  } else {

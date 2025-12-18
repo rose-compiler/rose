@@ -295,7 +295,7 @@ public:
   bool IsGotoBefore( const AstNodePtr& s); // goto the point before destination
   bool IsGotoAfter( const AstNodePtr& s); // goto the point after destination
   bool IsLabelStatement( const AstNodePtr& s);
-  bool IsReturn(const AstNodePtr& s, AstNodePtr* val=0);
+  static bool IsReturn(const AstNodePtr& s, AstNodePtr* val=0);
 
   //!  Returns whether s is a function call, and if yes, returns information
   //!  about its parameters and return values.
@@ -356,7 +356,7 @@ public:
 
   static std::string GetVarName( const AstNodePtr& exp, bool use_global_unique_name = false);
 
-  bool IsSameVarRef( const AstNodePtr& v1, const AstNodePtr& v2);
+  static bool IsSameVarRef( const AstNodePtr& v1, const AstNodePtr& v2);
 
   /*QY: by default variable declarations are merely saved to be inserted later*/
   std::string NewVar (const AstNodeType& t, const std::string& name = "", 
