@@ -1842,8 +1842,8 @@ IsSameVarRef( const AstNodePtr& _n1, const AstNodePtr& _n2)
    AstNodePtrImpl n1(_n1), n2(_n2);
    std::string name1, name2;
    AstNodePtr scope1, scope2;
-   if (IsVarRef(n1, 0,&name1, &scope1) && IsVarRef(n2, 0, &name2, &scope2))
-       return name1 == name2 && scope1 == scope2;
+   if (IsVarRef(n1, 0,&name1, 0, 0, /*use_global_unique_name=*/true) && IsVarRef(n2, 0, &name2, 0, 0, /*use_global_unique_name=*/true))
+       return name1 == name2;
    return false;
 }
 
