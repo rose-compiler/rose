@@ -4,7 +4,6 @@ static const char *description =
 
 #include <batSupport.h>
 
-#include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Variables.h>
@@ -23,7 +22,7 @@ using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 struct Settings {
-    SerialIo::Format stateFormat = SerialIo::BINARY;    // format of RBA file
+    Serialization::Format stateFormat = Serialization::BINARY;    // format of RBA file
     bool demangle = true;                               // demangle file names
 };
 

@@ -7,7 +7,6 @@
 #include <Rose/As.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/InstructionProvider.h>
-#include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <boost/filesystem.hpp>
@@ -278,7 +277,7 @@ void registerSelfTests();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Create a command-line switch for the state file format. */
-Sawyer::CommandLine::Switch stateFileFormatSwitch(Rose::BinaryAnalysis::SerialIo::Format &fmt/*in,out*/);
+Sawyer::CommandLine::Switch stateFileFormatSwitch(Rose::BinaryAnalysis::Serialization::Format &fmt/*in,out*/);
 
 /** Check that output file name is valid or exit. */
 void checkRbaOutput(const boost::filesystem::path &name, Sawyer::Message::Facility &mlog);

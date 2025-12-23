@@ -35,7 +35,7 @@ struct Settings {
     bool showingInstructions = true;                    // show instructions in each vertex
     bool showingReturnEdges = false;                    // show function return edges
     std::set<std::string> functionNames;                // restrict output to these function names, addresses
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
 };
 
 Sawyer::Message::Facility mlog;

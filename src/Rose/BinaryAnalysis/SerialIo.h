@@ -6,18 +6,7 @@
 // Define this if you need to debug SerialIo -- it causes everything to run in the calling thread and avoid catching exceptions.
 //#define ROSE_DEBUG_SERIAL_IO
 
-// These have to be included early, before the definitions of the ROSE classes that are serialized
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/xml_iarchive.hpp>
-#include <boost/archive/xml_oarchive.hpp>
-#include <boost/iostreams/device/file_descriptor.hpp>
-#include <boost/iostreams/stream.hpp>
-#endif
-
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/Progress.h>
 #include <Rose/Exception.h>
 #include <ROSE_UNUSED.h>
@@ -29,6 +18,20 @@
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/thread.hpp>
+#include <functional>
+#include <memory>
+#include <vector>
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/xml_iarchive.hpp>
+#include <boost/archive/xml_oarchive.hpp>
+#endif
+
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -37,7 +40,7 @@ namespace BinaryAnalysis {
 // SerialIo
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Base class for binary state input and output.
+/** Extension of the base SerialIo class defined in BasicTypes.h
  *
  *  A @ref SerialIo object writes analysis results to a file, or initializes analysis results from a file. It handles
  *  such things as not storing the same object twice when referenced by different pointers, storing derived objects through
@@ -93,47 +96,29 @@ namespace BinaryAnalysis {
  *      loader->mlog[ERROR] <<e.what() <<"\n";
  *  }
  * @endcode */
-class SerialIo: public Sawyer::SharedObject {
+class SerialIo {
 public:
     /** Reference counting pointer. */
     using Ptr = SerialIoPtr;
 
-    /** Format of the state file. */
-    enum Format {
-        BINARY,         /**< Binary state files are smaller and faster than the other formats, but are not portable across
-                         *   architectures. */
-        TEXT,           /**< Textual binary state files use a custom format (Boost serialization format) that stores the
-                         *   data as ASCII text. They are larger and slower than binary files but not as large and slow
-                         *   as XML or JSON files. They are portable across architectures. */
-        XML             /**< The states are stored as XML, which is a very verbose and slow format. Avoid using this if
-                         *   possible. */
+    class OutputBackend;
+    class InputBackend;
+
+    struct BackendRegistration {
+        Serialization::Format format = Serialization::BINARY;
+        std::function<std::shared_ptr<OutputBackend>()> makeOutput;
+        std::function<std::shared_ptr<InputBackend>()> makeInput;
     };
 
-    /** Types of objects that can be saved. */
-    enum Savable {
-        NO_OBJECT           = 0x00000000, /**< Object type for newly-initialized serializers. */
-        PARTITIONER         = 0x00000001, /**< Rose::BinaryAnalysis::Partitioner2::Partitioner. */
-        AST                 = 0x00000002, /**< Abstract syntax tree. */
-        END_OF_DATA         = 0x0000fffe, /**< Marks the end of the data stream. */
-        ERROR               = 0x0000ffff, /**< Marks that the stream has encountered an error condition. */
-        USER_DEFINED        = 0x00010000, /**< First user-defined object number. */
-        USER_DEFINED_LAST   = 0xffffffff  /**< Last user-defined object number. */
-    };
-
-    /** Errors thrown by this API. */
-    class Exception: public Rose::Exception {
-    public:
-        /** Construct an exception with an error message. */
-        explicit Exception(const std::string &s): Rose::Exception(s) {}
-        ~Exception() throw() {}
-    };
+    static void registerBackend(BackendRegistration);
+    static const BackendRegistration* findBackend(Serialization::Format);
 
 private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_; // protects the following data members
-    Format format_;
+    Serialization::Format format_;
     Progress::Ptr progress_;
     bool isOpen_;
-    Savable objectType_;
+    Serialization::Savable objectType_;
 
 protected:
     Sawyer::ProgressBar<size_t> progressBar_;
@@ -146,7 +131,7 @@ protected:
 
 protected:
     SerialIo()
-        : format_(BINARY), progress_(Progress::instance()), isOpen_(false), objectType_(NO_OBJECT),
+        : format_(Serialization::BINARY), progress_(Progress::instance()), isOpen_(false), objectType_(Serialization::NO_OBJECT),
           progressBar_(mlog[Sawyer::Message::MARCH]), fd_(-1) {
         init();
         progressBar_.suffix(" bytes");
@@ -168,7 +153,7 @@ public:
     /** Create a new Savable enum constant.
      *
      *  This is a convenience function to create a new Savable constant which is an @p offset from USER_DEFINED. */
-    static Savable userSavable(unsigned offset);
+    static Serialization::Savable userSavable(unsigned offset);
 
     /** Property: File format.
      *
@@ -178,8 +163,8 @@ public:
      *  Thread safety: This method is thread-safe.
      *
      * @{ */
-    Format format() const;
-    void format(Format);
+    Serialization::Format format() const;
+    void format(Serialization::Format);
     /** @} */
 
     /** Property: Progress reporter.
@@ -228,19 +213,57 @@ public:
      *
      *  When using an input stream, this returns the type ID for the next object to be read from the stream. When using
      *  an output stream, it's the type of the object that was last written. */
-    Savable objectType() const;
+    Serialization::Savable objectType() const;
 
 protected:
     // Set or clear the isOpen flag.
     void setIsOpen(bool b);
 
     // Set object type to ERROR to indicate that a read was unsuccessful
-    void objectType(Savable);
+    void objectType(Serialization::Savable);
 
 private:
     void init();
 };
 
+/** Backend interface for SerialOutput implementations.
+ *
+ * This interface is payload-based rather than fd-based. It converts objects to
+ * binary payloads (std::vector<uint8_t>) that can be stored in the container format.
+ */
+class SerialIo::OutputBackend {
+  public:
+    virtual ~OutputBackend() = default;
+
+    /** Serialize a partitioner to a binary payload.
+     *
+     * @param partitioner The partitioner to serialize
+     * @param progress A callback function to report progress during serialization
+     * @return A vector containing the serialized partitioner data
+     */
+    virtual std::vector<uint8_t>
+    savePartitioner(const Partitioner2::PartitionerConstPtr& partitioner, Serialization::ProgressCallback progress) = 0;
+};
+
+/** Backend interface for SerialInput implementations.
+ *
+ * This interface is payload-based rather than fd-based. It converts binary
+ * payloads (std::vector<uint8_t>) back into objects.
+ */
+class SerialIo::InputBackend {
+  public:
+    virtual ~InputBackend() = default;
+
+    /** Deserialize a partitioner from a binary payload.
+     *
+     * @param data Pointer to the serialized data
+     * @param size Size of the serialized data in bytes
+     * @param progress A callback function to report progress during deserialization
+     * @return The deserialized partitioner object
+     */
+    virtual Partitioner2::PartitionerPtr
+    loadPartitioner(const uint8_t* data, size_t size, Serialization::ProgressCallback progress) = 0;
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SerialOutput
@@ -262,6 +285,8 @@ private:
     boost::archive::text_oarchive *text_archive_;
     boost::archive::xml_oarchive *xml_archive_;
 #endif
+    std::shared_ptr<Serialization::SerialFrame> frame_;
+    std::shared_ptr<SerialIo::OutputBackend>    backend_;
 
 protected:
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
@@ -280,6 +305,13 @@ public:
      *  The returned instance is in a detached state, therefore the @ref open method needs to be called before any I/O
      *  operations can be invoked. */
     static Ptr instance() { return Ptr(new SerialOutput); }
+
+    /** Create a progress callback that wraps the output's progress reporting.
+     *
+     * @param phase The name of the phase for progress reporting
+     * @return A callback function that reports progress to this SerialOutput
+     */
+    Serialization::ProgressCallback makeBackendProgressCallback(const char* phase);
 
     /** Save a binary analysis partitioner.
      *
@@ -327,10 +359,10 @@ public:
      *
      *  Throws an @ref Exception if any errors occur. */
     template<class T>
-    void saveObject(Savable objectTypeId, const T &object) {
+    void saveObject(Serialization::Savable objectTypeId, const T &object) {
         if (!isOpen())
             throw Exception("cannot save object when no file is open");
-        if (ERROR == objectType())
+        if (Serialization::ERROR == objectType())
             throw Exception("cannot save object because stream is in error state");
 
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
@@ -363,14 +395,14 @@ public:
 
 private:
     template<class T>
-    static void startWorker(SerialOutput *saver, Savable objectTypeId, const T *object, std::string *errorMessage) {
+    static void startWorker(SerialOutput *saver, Serialization::Savable objectTypeId, const T *object, std::string *errorMessage) {
         ASSERT_not_null(object);
         saver->asyncSave(objectTypeId, *object, errorMessage);
     }
 
     // This might run in its own thread.
     template<class T>
-    void asyncSave(Savable objectTypeId, const T &object, std::string *errorMessage) {
+    void asyncSave(Serialization::Savable objectTypeId, const T &object, std::string *errorMessage) {
         ASSERT_not_null(errorMessage);
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
         ROSE_UNUSED(objectTypeId);
@@ -381,21 +413,21 @@ private:
         try {
 #endif
             std::string roseVersion = ROSE_PACKAGE_VERSION;
-            objectType(ERROR);
+            objectType(Serialization::ERROR);
             switch (format()) {
-                case BINARY:
+                case Serialization::BINARY:
                     ASSERT_not_null(binary_archive_);
                     *binary_archive_ <<BOOST_SERIALIZATION_NVP(objectTypeId);
                     *binary_archive_ <<BOOST_SERIALIZATION_NVP(roseVersion);
                     *binary_archive_ <<BOOST_SERIALIZATION_NVP(object);
                     break;
-                case TEXT:
+                case Serialization::TEXT:
                     ASSERT_not_null(text_archive_);
                     *text_archive_ <<BOOST_SERIALIZATION_NVP(objectTypeId);
                     *text_archive_ <<BOOST_SERIALIZATION_NVP(roseVersion);
                     *text_archive_ <<BOOST_SERIALIZATION_NVP(object);
                     break;
-                case XML:
+                case Serialization::XML:
                     ASSERT_not_null(xml_archive_);
                     *xml_archive_ <<BOOST_SERIALIZATION_NVP(objectTypeId);
                     *xml_archive_ <<BOOST_SERIALIZATION_NVP(roseVersion);
@@ -436,8 +468,10 @@ private:
     boost::archive::text_iarchive *text_archive_;
     boost::archive::xml_iarchive *xml_archive_;
 #endif
+    std::shared_ptr<Serialization::SerialFrame> frame_;
+    std::shared_ptr<SerialIo::InputBackend>     backend_;
 
-protected:
+  protected:
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     SerialInput(): fileSize_(0), binary_archive_(NULL), text_archive_(NULL), xml_archive_(NULL) {}
 #else
@@ -455,6 +489,21 @@ public:
      * operation can be invoked. */
     static Ptr instance() { return Ptr(new SerialInput); }
 
+    /** Create a progress callback that wraps the input's progress reporting.
+     *
+     * @param phase The name of the phase for progress reporting
+     * @return A callback function that reports progress to this SerialInput
+     */
+    Serialization::ProgressCallback makeBackendProgressCallback(const char* phase);
+
+    /** Read a frame record from the container and validate its metadata.
+     *
+     * @param expectedType The expected object type for the record
+     * @return The validated frame record
+     * @throws Exception if the record's metadata doesn't match expectations
+     */
+    Serialization::FrameRecord readAndValidateRecord(Serialization::Savable expectedType);
+
     /** Type of next object in the input stream.
      *
      *  Returns an indication for the type of the next item in the input stream.
@@ -462,7 +511,7 @@ public:
      * Throws an @ref Exception if no file is attached.
      *
      * Thread safety: This method is not thread safe. */
-    Savable nextObjectType();
+    Serialization::Savable nextObjectType();
 
     /** Load a partitioner from the input stream.
      *
@@ -488,13 +537,13 @@ public:
      *
      * @{ */
     template<class T>
-    T loadObject(Savable objectTypeId) {
+    T loadObject(Serialization::Savable objectTypeId) {
         T object;
         loadObject<T>(objectTypeId, object);
         return object;
     }
     template<class T>
-    void loadObject(Savable objectTypeId, T &object) {
+    void loadObject(Serialization::Savable objectTypeId, T &object) {
         if (!isOpen())
             throw Exception("cannot load object when no file is open");
 
@@ -503,13 +552,13 @@ public:
         ROSE_UNUSED(object);
         throw Exception("binary state files are not supported in this configuration");
 #else
-        if (ERROR == objectType())
+        if (Serialization::ERROR == objectType())
             throw Exception("cannot read object because stream is in error state");
         if (objectType() != objectTypeId) {
             throw Exception("unexpected object type (expected " + boost::lexical_cast<std::string>(objectTypeId) +
                             " but read " + boost::lexical_cast<std::string>(objectType()) + ")");
         }
-        objectType(ERROR); // in case of exception
+        objectType(Serialization::ERROR); // in case of exception
         std::string errorMessage;
 #ifdef ROSE_DEBUG_SERIAL_IO
         asyncLoad(object, &errorMessage);
@@ -556,19 +605,19 @@ private:
 #endif
             std::string roseVersion;
             switch (format()) {
-                case BINARY:
+                case Serialization::BINARY:
                     ASSERT_not_null(binary_archive_);
                     *binary_archive_ >>BOOST_SERIALIZATION_NVP(roseVersion);
                     checkCompatibility(roseVersion);
                     *binary_archive_ >>BOOST_SERIALIZATION_NVP(object);
                     break;
-                case TEXT:
+                case Serialization::TEXT:
                     ASSERT_not_null(text_archive_);
                     *text_archive_ >>BOOST_SERIALIZATION_NVP(roseVersion);
                     checkCompatibility(roseVersion);
                     *text_archive_ >>BOOST_SERIALIZATION_NVP(object);
                     break;
-                case XML:
+                case Serialization::XML:
                     ASSERT_not_null(xml_archive_);
                     *xml_archive_ >>BOOST_SERIALIZATION_NVP(roseVersion);
                     checkCompatibility(roseVersion);

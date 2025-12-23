@@ -34,7 +34,6 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
-#include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BinaryAnalysis/VxworksTerminal.h>
@@ -1713,7 +1712,7 @@ EngineBinary::partition(const std::vector<std::string> &fileNames) {
                 throw Exception("specifying an RBA file excludes all other inputs");
         }
         if (fileNames.size() == 1 && isRbaFile(fileNames[0])) {
-            auto partitioner = Partitioner::instanceFromRbaFile(fileNames[0], SerialIo::BINARY);
+            auto partitioner = Partitioner::instanceFromRbaFile(fileNames[0], Serialization::BINARY);
             interpretation(partitioner->interpretation());
             return partitioner;
         } else {

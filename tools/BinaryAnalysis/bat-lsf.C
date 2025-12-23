@@ -33,7 +33,7 @@ namespace {
 Sawyer::Message::Facility mlog;
 
 struct Settings {
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
     bool demangle = false;
 };
 

@@ -31,7 +31,7 @@ Sawyer::Message::Facility mlog;
 enum class OutputFormat { UNSPECIFIED, NONE, HEXDUMP, SRECORDS, INTEL_HEX, BINARY, VXCORE_1, VXCORE_2 };
 
 struct Settings {
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
     OutputFormat outputFormat = OutputFormat::UNSPECIFIED;
     Sawyer::Optional<SRecord::Syntax> srecordSyntax;
     std::string outputPrefix;

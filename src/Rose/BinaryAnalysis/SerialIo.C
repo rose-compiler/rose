@@ -2,6 +2,19 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
+#include <Rose/BinaryAnalysis/Serialization/SerialFrame.h>
+
+#ifdef ROSE_ENABLE_FLATBUFFERS
+#include <Rose/BinaryAnalysis/Serialization/FlatbufferStorage.h>
+#endif
+
+#ifdef ROSE_ENABLE_FLATBUFFERS
+// Backend implementations live in separate translation units when enabled.
+extern "C" Rose::BinaryAnalysis::SerialIo::OutputBackend*
+RoseBinaryAnalysis_makeFlatbuffersSerialOutputBackend();
+extern "C" Rose::BinaryAnalysis::SerialIo::InputBackend*
+RoseBinaryAnalysis_makeFlatbuffersSerialInputBackend();
+#endif
 
 // This file implements the top-level serial I/O API in ROSE, but also serves as a place to put serialization functions that have
 // more dependencies than we want to include into header files. For instance, if class `T` has a data member that's a smart pointer
@@ -103,8 +116,15 @@
 #include <Rose/StringUtility/SplitJoin.h>
 #include <AstSerialization.h>                           // rose
 
+#include <vector>
+#include <utility>
+
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/stream.hpp>
+
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/serialization/base_object.hpp>
@@ -147,26 +167,47 @@ SerialIo_initDiagnostics() {
 
 Sawyer::Message::Facility SerialIo::mlog;
 
+namespace {
+std::vector<SerialIo::BackendRegistration>& backendRegistry() {
+    static std::vector<SerialIo::BackendRegistration> reg;
+    return reg;
+}
+} // namespace
+
+void
+SerialIo::registerBackend(BackendRegistration r) {
+    backendRegistry().push_back(std::move(r));
+}
+
+const SerialIo::BackendRegistration*
+SerialIo::findBackend(Serialization::Format f) {
+    for (const auto &r: backendRegistry()) {
+        if (r.format == f)
+            return &r;
+    }
+    return nullptr;
+}
+
 void
 SerialIo::init() {}
 
 SerialIo::~SerialIo() {}
 
-SerialIo::Savable
+Serialization::Savable
 SerialIo::userSavable(unsigned offset) {
-    unsigned retval = USER_DEFINED + offset;
-    ASSERT_require(retval >= USER_DEFINED && retval <= USER_DEFINED_LAST);
-    return (Savable)retval;
+    unsigned retval = Serialization::USER_DEFINED + offset;
+    ASSERT_require(retval >= Serialization::USER_DEFINED && retval <= Serialization::USER_DEFINED_LAST);
+    return (Serialization::Savable)retval;
 }
 
-SerialIo::Format
+Serialization::Format
 SerialIo::format() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return format_;
 }
 
 void
-SerialIo::format(Format fmt) {
+SerialIo::format(Serialization::Format fmt) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     if (fmt != format_) {
         if (isOpen_)
@@ -200,14 +241,14 @@ SerialIo::setIsOpen(bool b) {
     isOpen_ = b;
 }
 
-SerialIo::Savable
+Serialization::Savable
 SerialIo::objectType() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return objectType_;
 }
 
 void
-SerialIo::objectType(Savable t) {
+SerialIo::objectType(Serialization::Savable t) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     objectType_ = t;
 }
@@ -241,11 +282,7 @@ SerialOutput::open(const boost::filesystem::path &fileName) {
     if (isOpen())
         close();
 
-#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
-    ROSE_UNUSED(fileName);
-    throw Exception("binary state files are not supported in this configuration");
-#else
-    objectType(ERROR); // in case of exception
+    objectType(Serialization::ERROR); // in case of exception
 
     // Open, create, or truncate the output file
     if (fileName == "-") {
@@ -254,43 +291,117 @@ SerialOutput::open(const boost::filesystem::path &fileName) {
         throw Exception("cannot create or truncate file \"" + StringUtility::cEscape(fileName.string()) + "\"");
     }
 
-    // Wrap the file descriptor in an std::ostream interface and then a boost::archive.
-    try {
-        device_.open(fd_, boost::iostreams::never_close_handle);
-        file_.open(device_);
-        if (!file_.is_open())
-            throw Exception("failed to open boost stream for file \"" + StringUtility::cEscape(fileName.string()) + "\"");
+    // Create a callback for SerialFrame that wraps our progress indicator
+    auto ioCb = [this](size_t current, size_t total, const char* phase) {
+        progressBar_.value(current, 0, total);
+        if (Progress::Ptr p = progress())
+            p->update(Progress::Report(phase, current, total));
+    };
 
-        switch (format()) {
-            case BINARY:
-                binary_archive_ = new boost::archive::binary_oarchive(file_);
-                break;
-            case TEXT:
-                text_archive_ = new boost::archive::text_oarchive(file_);
-                break;
-            case XML:
-                xml_archive_ = new boost::archive::xml_oarchive(file_);
-                break;
+    // Initialize the container frame
+    frame_ = std::make_unique<Serialization::SerialFrame>();
+    frame_->openForWrite(fileName, ioCb);
+    frame_->writeFileHeader();
+
+    // Look up and create the appropriate backend for the format
+    try {
+        const BackendRegistration* backendReg = findBackend(format());
+        if (!backendReg) {
+            throw Exception("no backend registered for format " + boost::lexical_cast<std::string>(format()));
         }
+        backend_ = backendReg->makeOutput();
+        if (!backend_) {
+            throw Exception("failed to create output backend for format " + boost::lexical_cast<std::string>(format()));
+        }
+
+        // For backward compatibility, set up direct Boost archives for non-container usage
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+        if (format() == Serialization::BINARY || format() == Serialization::TEXT || format() == Serialization::XML) {
+            // Set up the Boost archive streams for direct object serialization
+            device_.open(fd_, boost::iostreams::never_close_handle);
+            file_.open(device_);
+            if (!file_.is_open())
+                throw Exception("failed to open boost stream for file \"" + StringUtility::cEscape(fileName.string()) + "\"");
+
+            if (format() == Serialization::BINARY) {
+                binary_archive_ = new boost::archive::binary_oarchive(file_);
+            } else if (format() == Serialization::TEXT) {
+                text_archive_ = new boost::archive::text_oarchive(file_);
+            } else if (format() == Serialization::XML) {
+                xml_archive_ = new boost::archive::xml_oarchive(file_);
+            }
+        }
+#endif
 
         if (Progress::Ptr p = progress())
             p->update(Progress::Report("saving", 0.0));
         progressBar_.value(0, 0, 0);
 
         setIsOpen(true);
-        objectType(NO_OBJECT);
+        objectType(Serialization::NO_OBJECT);
     } catch (const Exception &e) {
         throw;
     } catch (...) {
         throw Exception("failed to open for writing: file \"" + StringUtility::cEscape(fileName.string()) + "\"");
     }
-#endif
+}
+
+Serialization::ProgressCallback
+SerialOutput::makeBackendProgressCallback(const char* phase) {
+    return [this, phase](size_t current, size_t total, const char*) {
+        progressBar_.value(current, 0, total);
+        if (Progress::Ptr p = progress())
+            p->update(Progress::Report(phase, current, total));
+    };
 }
 
 void
 SerialOutput::savePartitioner(const Partitioner2::Partitioner::ConstPtr &partitioner) {
-    const Partitioner2::Partitioner *raw = partitioner.getRawPointer();
-    saveObject(PARTITIONER, raw);
+    if (!isOpen())
+        throw Exception("cannot save partitioner when no file is open");
+
+    if (format() == Serialization::FLATBUFFERS) {
+#ifdef ROSE_ENABLE_FLATBUFFERS
+        ASSERT_not_null(backend_);
+        ASSERT_not_null(frame_);
+
+        // Create a progress callback for the backend
+        auto progressCb = makeBackendProgressCallback("serializing-flatbuffers");
+
+        // Get serialized payload from the backend
+        std::vector<uint8_t> payload = backend_->savePartitioner(partitioner, progressCb);
+
+        // Create a FrameRecord with appropriate metadata
+        Serialization::FrameRecord frameRecord(Serialization::PARTITIONER, format());
+        frameRecord.setPayload(payload);
+
+        // Write the frame record
+        frame_->writeFrameRecord(frameRecord);
+        objectType(Serialization::PARTITIONER);
+        return;
+#else
+        throw Exception("FlatBuffers serialization not supported in this configuration");
+#endif
+    }
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+    // Use SerialFrame for container framing of partitioner data using in-memory serialization
+    ASSERT_not_null(frame_);
+
+    const Partitioner2::Partitioner* raw = partitioner.getRawPointer();
+
+    // Create a FrameRecord with appropriate metadata
+    Serialization::FrameRecord frameRecord(Serialization::PARTITIONER, format());
+
+    // Directly serialize the partitioner object into the frameRecord's payload
+    frameRecord.serializeObject(raw);
+
+    // Write the frame record
+    frame_->writeFrameRecord(frameRecord);
+    objectType(Serialization::PARTITIONER);
+#else
+    throw Exception("binary state files are not supported in this configuration");
+#endif
 }
 
 void
@@ -299,14 +410,14 @@ SerialOutput::saveAstHelper(SgNode *ast) {
         SgNode *oldParent = ast->get_parent();
         try {
             ast->set_parent(NULL);
-            saveObject(AST, ast);
+            saveObject(Serialization::AST, ast);
             ast->set_parent(oldParent);
         } catch (...) {
             ast->set_parent(oldParent);
             throw;
         }
     } else {
-        saveObject(AST, ast);
+        saveObject(Serialization::AST, ast);
     }
 }
 
@@ -322,30 +433,49 @@ SerialOutput::saveAst(SgBinaryComposite *ast) {
 
 void
 SerialOutput::close() {
-    if (isOpen() && objectType() != END_OF_DATA && objectType() != ERROR) {
-#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
-        throw Exception("binary state files are not supported in this configuration");
+    if (isOpen() && objectType() != Serialization::END_OF_DATA && objectType() != Serialization::ERROR) {
+        if (format() == Serialization::FLATBUFFERS) {
+#ifdef ROSE_ENABLE_FLATBUFFERS
+            if (backend_) {
+                backend_.reset();
+            }
 #else
-        Savable endMarker = END_OF_DATA;
-        switch (format()) {
-            case BINARY:
-                *binary_archive_ <<BOOST_SERIALIZATION_NVP(endMarker);
-                delete binary_archive_;
-                binary_archive_ = NULL;
-                break;
-            case TEXT:
-                *text_archive_ <<BOOST_SERIALIZATION_NVP(endMarker);
-                delete text_archive_;
-                text_archive_ = NULL;
-                break;
-            case XML:
-                *xml_archive_ <<BOOST_SERIALIZATION_NVP(endMarker);
-                delete xml_archive_;
-                xml_archive_ = NULL;
-                break;
-        }
-        file_.close();
+            throw Exception("FlatBuffers serialization not supported in this configuration");
 #endif
+        } else {
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+            Serialization::Savable endMarker = Serialization::END_OF_DATA;
+            switch (format()) {
+                case Serialization::BINARY:
+                    *binary_archive_ <<BOOST_SERIALIZATION_NVP(endMarker);
+                    delete binary_archive_;
+                    binary_archive_ = NULL;
+                    break;
+                case Serialization::TEXT:
+                    *text_archive_ <<BOOST_SERIALIZATION_NVP(endMarker);
+                    delete text_archive_;
+                    text_archive_ = NULL;
+                    break;
+                case Serialization::XML:
+                    *xml_archive_ <<BOOST_SERIALIZATION_NVP(endMarker);
+                    delete xml_archive_;
+                    xml_archive_ = NULL;
+                    break;
+                default:
+                    break;
+            }
+            file_.close();
+#else
+            throw Exception("binary state files are not supported in this configuration");
+#endif
+        }
+
+        // Close SerialFrame if it exists
+        if (frame_) {
+            frame_->close();
+            frame_.reset();
+        }
+
         SerialIo::close();
     }
 }
@@ -368,11 +498,7 @@ SerialInput::open(const boost::filesystem::path &fileName) {
     if (isOpen())
         close();
 
-#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
-    ROSE_UNUSED(fileName);
-    throw Exception("binary state files are not supported in this configuration");
-#else
-    objectType(ERROR); // in case of exception
+    objectType(Serialization::ERROR); // in case of exception
 
     // Open low-level file for read-only
     if (fileName == "-") {
@@ -382,56 +508,90 @@ SerialInput::open(const boost::filesystem::path &fileName) {
     }
 
     // File size is for progress reporting, so it's okay if we don't have a size
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+    fileSize_ = 0;
     struct stat sb;
     if (fstat(fd_, &sb) != -1)
         fileSize_ = sb.st_size;
+#else
+    size_t fileSize_ = 0;
+    struct stat sb;
+    if (fstat(fd_, &sb) != -1)
+        fileSize_ = sb.st_size;
+#endif
 
-    // Wrap the file descriptor in an std::ostream interface and then a boost::archive.
+    // Create a callback for SerialFrame that wraps our progress indicator
+    auto ioCb = [this](size_t current, size_t total, const char* phase) {
+        progressBar_.value(current, 0, total);
+        if (Progress::Ptr p = progress())
+            p->update(Progress::Report(phase, current, total));
+    };
+
+    // Initialize the container frame
+    frame_ = std::make_unique<Serialization::SerialFrame>();
+    frame_->openForRead(fileName, ioCb);
+    frame_->readAndVerifyFileHeader();
+
+    // Look up and create the appropriate backend for the format
     try {
-        device_.open(fd_, boost::iostreams::never_close_handle);
-        file_.open(device_);
-        if (!file_.is_open())
-            throw Exception("failed to open boost stream for file \"" + StringUtility::cEscape(fileName.string()) + "\"");
-
-        switch (format()) {
-            case BINARY:
-                binary_archive_ = new boost::archive::binary_iarchive(file_);
-                break;
-            case TEXT:
-                text_archive_ = new boost::archive::text_iarchive(file_);
-                break;
-            case XML:
-                xml_archive_ = new boost::archive::xml_iarchive(file_);
-                break;
+        const BackendRegistration* backendReg = findBackend(format());
+        if (!backendReg) {
+            throw Exception("no backend registered for format " + boost::lexical_cast<std::string>(format()));
         }
+        backend_ = backendReg->makeInput();
+        if (!backend_) {
+            throw Exception("failed to create input backend for format " + boost::lexical_cast<std::string>(format()));
+        }
+
+        // For backward compatibility, set up direct Boost archives for non-container usage
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+        if (format() == Serialization::BINARY || format() == Serialization::TEXT || format() == Serialization::XML) {
+            // Set up the Boost archive streams for direct object serialization
+            device_.open(fd_, boost::iostreams::never_close_handle);
+            file_.open(device_);
+            if (!file_.is_open())
+                throw Exception("failed to open boost stream for file \"" + StringUtility::cEscape(fileName.string()) + "\"");
+
+            if (format() == Serialization::BINARY) {
+                binary_archive_ = new boost::archive::binary_iarchive(file_);
+            } else if (format() == Serialization::TEXT) {
+                text_archive_ = new boost::archive::text_iarchive(file_);
+            } else if (format() == Serialization::XML) {
+                xml_archive_ = new boost::archive::xml_iarchive(file_);
+            }
+        }
+#endif
 
         if (Progress::Ptr p = progress())
             p->update(Progress::Report("loading", 0.0));
         progressBar_.value(0, 0, fileSize_);
 
         setIsOpen(true);
-        advanceObjectType();
+        if (format() == Serialization::FLATBUFFERS) {
+            objectType(Serialization::PARTITIONER);
+        } else {
+            advanceObjectType();
+        }
     } catch (const Exception &e) {
         throw;
     } catch (...) {
         throw Exception("failed to open for reading: file \"" + StringUtility::cEscape(fileName.string()) + "\"");
     }
-#endif
 }
 
 void
 SerialInput::advanceObjectType() {
     ASSERT_require(isOpen());
-    Savable typeId = NO_OBJECT;
+    Serialization::Savable typeId = Serialization::NO_OBJECT;
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     switch (format()) {
-        case BINARY:
+        case Serialization::BINARY:
             *binary_archive_ >>typeId;
             break;
-        case TEXT:
+        case Serialization::TEXT:
             *text_archive_ >>typeId;
             break;
-        case XML:
+        case Serialization::XML:
             *xml_archive_ >>BOOST_SERIALIZATION_NVP(typeId);
             break;
     }
@@ -439,42 +599,138 @@ SerialInput::advanceObjectType() {
     objectType(typeId);
 }
 
+Serialization::FrameRecord
+SerialInput::readAndValidateRecord(Serialization::Savable expectedType) {
+    ASSERT_not_null(frame_);
+    auto rec = frame_->readFrameRecord();
+
+    // Validate object type
+    if (rec.objectType() != expectedType) {
+        throw Exception(
+          "unexpected object type (expected " + boost::lexical_cast<std::string>(expectedType) + " but found " +
+          boost::lexical_cast<std::string>(rec.objectType()) + ")"
+        );
+    }
+
+    // Validate format
+    if (rec.format() != format()) {
+        throw Exception(
+          "format mismatch (expected " + boost::lexical_cast<std::string>(format()) + " but found " +
+          boost::lexical_cast<std::string>(rec.format()) + ")"
+        );
+    }
+
+    // Check ROSE version compatibility
+    checkCompatibility(rec.roseVersion());
+
+    return rec;
+}
+
+Serialization::ProgressCallback
+SerialInput::makeBackendProgressCallback(const char* phase) {
+    return [this, phase](size_t current, size_t total, const char*) {
+        progressBar_.value(current, 0, total);
+        if (Progress::Ptr p = progress())
+            p->update(Progress::Report(phase, current, total));
+    };
+}
+
 Partitioner2::Partitioner::Ptr
 SerialInput::loadPartitioner() {
-    Partitioner2::Partitioner *raw = nullptr;
-    loadObject(PARTITIONER, raw);
+    if (!isOpen())
+        throw Exception("cannot load partitioner when no file is open");
+
+    if (format() == Serialization::FLATBUFFERS) {
+#ifdef ROSE_ENABLE_FLATBUFFERS
+        ASSERT_not_null(backend_);
+        ASSERT_not_null(frame_);
+        
+        // Read and validate the frame record
+        auto frameRecord = readAndValidateRecord(Serialization::PARTITIONER);
+        
+        // Create a progress callback for the backend
+        auto progressCb = makeBackendProgressCallback("deserializing-flatbuffers");
+        
+        // Get the payload and deserialize it using the backend
+        const auto& payload = frameRecord.payload();
+        auto p = backend_->loadPartitioner(payload.data(), payload.size(), progressCb);
+        
+        objectType(Serialization::END_OF_DATA);
+        return p;
+#else
+        throw Exception("FlatBuffers serialization not supported in this configuration");
+#endif
+    }
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+    // Use SerialFrame for container framing of partitioner data
+    ASSERT_not_null(frame_);
+
+    // Read and validate the frame record
+    auto frameRecord = readAndValidateRecord(Serialization::PARTITIONER);
+
+    // Deserialize partitioner from payload
+    Partitioner2::Partitioner* raw = nullptr;
+    frameRecord.deserializeObject(raw);
+
+    objectType(Serialization::END_OF_DATA);
     return Partitioner2::Partitioner::Ptr(raw);
+#else
+    throw Exception("binary state files are not supported in this configuration");
+#endif
 }
 
 SgNode*
 SerialInput::loadAst() {
-    return loadObject<SgNode*>(AST);
+    return loadObject<SgNode*>(Serialization::AST);
 }
 
 void
 SerialInput::close() {
     if (isOpen()) {
-#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
-        throw Exception("binary state files are not supported in this configuration");
+        if (format() == Serialization::FLATBUFFERS) {
+#ifdef ROSE_ENABLE_FLATBUFFERS
+            if (backend_) {
+                backend_.reset();
+            }
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+            fileSize_ = 0;
+#endif
 #else
-        switch (format()) {
-            case BINARY:
-                delete binary_archive_;
-                binary_archive_ = NULL;
-                break;
-            case TEXT:
-                delete text_archive_;
-                text_archive_ = NULL;
-                break;
-            case XML:
-                delete xml_archive_;
-                xml_archive_ = NULL;
-                break;
+            throw Exception("FlatBuffers serialization not supported in this configuration");
+#endif
+        } else {
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+            switch (format()) {
+                case Serialization::BINARY:
+                    delete binary_archive_;
+                    binary_archive_ = NULL;
+                    break;
+                case Serialization::TEXT:
+                    delete text_archive_;
+                    text_archive_ = NULL;
+                    break;
+                case Serialization::XML:
+                    delete xml_archive_;
+                    xml_archive_ = NULL;
+                    break;
+                default:
+                    break;
+            }
+
+            file_.close();
+            fileSize_ = 0;
+#else
+            throw Exception("binary state files are not supported in this configuration");
+#endif
         }
 
-        file_.close();
-        fileSize_ = 0;
-#endif
+        // Close SerialFrame if it exists
+        if (frame_) {
+            frame_->close();
+            frame_.reset();
+        }
+
         SerialIo::close();
     }
 }

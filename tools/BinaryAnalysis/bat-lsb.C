@@ -31,7 +31,7 @@ namespace {
 Sawyer::Message::Facility mlog;
 
 struct Settings {
-    SerialIo::Format format = SerialIo::BINARY;
+    Serialization::Format format = Serialization::BINARY;
 };
 
 Sawyer::CommandLine::Parser

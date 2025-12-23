@@ -77,19 +77,22 @@ struct AddressUsageEntryBuilder;
 struct AddressUsageMap;
 struct AddressUsageMapBuilder;
 
-enum Column : uint8_t {
-  Column_NONE = 0,
-  Column_SomeColumn = 1,
-  Column_None = 2,
-  Column_MIN = Column_NONE,
-  Column_MAX = Column_None
+struct Partitioner;
+struct PartitionerBuilder;
+
+enum class Column : uint8_t {
+  NONE = 0,
+  SomeColumn = 1,
+  None = 2,
+  MIN = NONE,
+  MAX = None
 };
 
 inline const Column (&EnumValuesColumn())[3] {
   static const Column values[] = {
-    Column_NONE,
-    Column_SomeColumn,
-    Column_None
+    Column::NONE,
+    Column::SomeColumn,
+    Column::None
   };
   return values;
 }
@@ -105,43 +108,43 @@ inline const char * const *EnumNamesColumn() {
 }
 
 inline const char *EnumNameColumn(Column e) {
-  if (::flatbuffers::IsOutRange(e, Column_NONE, Column_None)) return "";
+  if (::flatbuffers::IsOutRange(e, Column::NONE, Column::None)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesColumn()[index];
 }
 
 template<typename T> struct ColumnTraits {
-  static const Column enum_value = Column_NONE;
+  static const Column enum_value = Column::NONE;
 };
 
 template<> struct ColumnTraits<Rose::BinaryAnalysis::Serialization::Flatbuffers::SomeColumn> {
-  static const Column enum_value = Column_SomeColumn;
+  static const Column enum_value = Column::SomeColumn;
 };
 
 template<> struct ColumnTraits<Rose::BinaryAnalysis::Serialization::Flatbuffers::None> {
-  static const Column enum_value = Column_None;
+  static const Column enum_value = Column::None;
 };
 
 bool VerifyColumn(::flatbuffers::Verifier &verifier, const void *obj, Column type);
-bool VerifyColumnVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
+bool VerifyColumnVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<Column> *types);
 
-enum CFGVertexType : uint8_t {
-  CFGVertexType_V_BASIC_BLOCK = 0,
-  CFGVertexType_V_UNDISCOVERED = 1,
-  CFGVertexType_V_INDETERMINIATE = 2,
-  CFGVertexType_V_NONEXISTING = 3,
-  CFGVertexType_V_USER_DEFINED = 4,
-  CFGVertexType_MIN = CFGVertexType_V_BASIC_BLOCK,
-  CFGVertexType_MAX = CFGVertexType_V_USER_DEFINED
+enum class CFGVertexType : uint8_t {
+  V_BASIC_BLOCK = 0,
+  V_UNDISCOVERED = 1,
+  V_INDETERMINIATE = 2,
+  V_NONEXISTING = 3,
+  V_USER_DEFINED = 4,
+  MIN = V_BASIC_BLOCK,
+  MAX = V_USER_DEFINED
 };
 
 inline const CFGVertexType (&EnumValuesCFGVertexType())[5] {
   static const CFGVertexType values[] = {
-    CFGVertexType_V_BASIC_BLOCK,
-    CFGVertexType_V_UNDISCOVERED,
-    CFGVertexType_V_INDETERMINIATE,
-    CFGVertexType_V_NONEXISTING,
-    CFGVertexType_V_USER_DEFINED
+    CFGVertexType::V_BASIC_BLOCK,
+    CFGVertexType::V_UNDISCOVERED,
+    CFGVertexType::V_INDETERMINIATE,
+    CFGVertexType::V_NONEXISTING,
+    CFGVertexType::V_USER_DEFINED
   };
   return values;
 }
@@ -159,30 +162,30 @@ inline const char * const *EnumNamesCFGVertexType() {
 }
 
 inline const char *EnumNameCFGVertexType(CFGVertexType e) {
-  if (::flatbuffers::IsOutRange(e, CFGVertexType_V_BASIC_BLOCK, CFGVertexType_V_USER_DEFINED)) return "";
+  if (::flatbuffers::IsOutRange(e, CFGVertexType::V_BASIC_BLOCK, CFGVertexType::V_USER_DEFINED)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesCFGVertexType()[index];
 }
 
-enum CFGEdgeType : uint8_t {
-  CFGEdgeType_E_NORMAL = 0,
-  CFGEdgeType_E_FUNCTION_CALL = 1,
-  CFGEdgeType_E_FUNCTION_RETURN = 2,
-  CFGEdgeType_E_CALL_RETURN = 3,
-  CFGEdgeType_E_FUNCTION_XFER = 4,
-  CFGEdgeType_E_USER_DEFINED = 5,
-  CFGEdgeType_MIN = CFGEdgeType_E_NORMAL,
-  CFGEdgeType_MAX = CFGEdgeType_E_USER_DEFINED
+enum class CFGEdgeType : uint8_t {
+  E_NORMAL = 0,
+  E_FUNCTION_CALL = 1,
+  E_FUNCTION_RETURN = 2,
+  E_CALL_RETURN = 3,
+  E_FUNCTION_XFER = 4,
+  E_USER_DEFINED = 5,
+  MIN = E_NORMAL,
+  MAX = E_USER_DEFINED
 };
 
 inline const CFGEdgeType (&EnumValuesCFGEdgeType())[6] {
   static const CFGEdgeType values[] = {
-    CFGEdgeType_E_NORMAL,
-    CFGEdgeType_E_FUNCTION_CALL,
-    CFGEdgeType_E_FUNCTION_RETURN,
-    CFGEdgeType_E_CALL_RETURN,
-    CFGEdgeType_E_FUNCTION_XFER,
-    CFGEdgeType_E_USER_DEFINED
+    CFGEdgeType::E_NORMAL,
+    CFGEdgeType::E_FUNCTION_CALL,
+    CFGEdgeType::E_FUNCTION_RETURN,
+    CFGEdgeType::E_CALL_RETURN,
+    CFGEdgeType::E_FUNCTION_XFER,
+    CFGEdgeType::E_USER_DEFINED
   };
   return values;
 }
@@ -201,22 +204,25 @@ inline const char * const *EnumNamesCFGEdgeType() {
 }
 
 inline const char *EnumNameCFGEdgeType(CFGEdgeType e) {
-  if (::flatbuffers::IsOutRange(e, CFGEdgeType_E_NORMAL, CFGEdgeType_E_USER_DEFINED)) return "";
+  if (::flatbuffers::IsOutRange(e, CFGEdgeType::E_NORMAL, CFGEdgeType::E_USER_DEFINED)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesCFGEdgeType()[index];
 }
 
-enum CFGEdgeConfidence : uint8_t {
-  CFGEdgeConfidence_ASSUMED = 0,
-  CFGEdgeConfidence_PROVED = 1,
-  CFGEdgeConfidence_MIN = CFGEdgeConfidence_ASSUMED,
-  CFGEdgeConfidence_MAX = CFGEdgeConfidence_PROVED
+/// We don't know what ASSUMED means. It might mean that it was provided as input by the user via a configuration file.
+/// PROVED means inferred via ROSE analysis (e.g., a fallthrough instruction)
+/// TODO: should we represent this as a union
+enum class CFGEdgeConfidence : uint8_t {
+  ASSUMED = 0,
+  PROVED = 1,
+  MIN = ASSUMED,
+  MAX = PROVED
 };
 
 inline const CFGEdgeConfidence (&EnumValuesCFGEdgeConfidence())[2] {
   static const CFGEdgeConfidence values[] = {
-    CFGEdgeConfidence_ASSUMED,
-    CFGEdgeConfidence_PROVED
+    CFGEdgeConfidence::ASSUMED,
+    CFGEdgeConfidence::PROVED
   };
   return values;
 }
@@ -231,29 +237,29 @@ inline const char * const *EnumNamesCFGEdgeConfidence() {
 }
 
 inline const char *EnumNameCFGEdgeConfidence(CFGEdgeConfidence e) {
-  if (::flatbuffers::IsOutRange(e, CFGEdgeConfidence_ASSUMED, CFGEdgeConfidence_PROVED)) return "";
+  if (::flatbuffers::IsOutRange(e, CFGEdgeConfidence::ASSUMED, CFGEdgeConfidence::PROVED)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesCFGEdgeConfidence()[index];
 }
 
 /// We use explicit enum fields to enable OR'd together enums. 
-enum Accessibility : uint8_t {
-  Accessibility_EXECUTABLE = 0,
-  Accessibility_WRITABLE = 1,
-  Accessibility_READABLE = 2,
-  Accessibility_IMMUTABLE = 4,
-  Accessibility_PRIVATE = 8,
-  Accessibility_MIN = Accessibility_EXECUTABLE,
-  Accessibility_MAX = Accessibility_PRIVATE
+enum class Accessibility : uint8_t {
+  EXECUTABLE = 0,
+  WRITABLE = 1,
+  READABLE = 2,
+  IMMUTABLE = 4,
+  PRIVATE = 8,
+  MIN = EXECUTABLE,
+  MAX = PRIVATE
 };
 
 inline const Accessibility (&EnumValuesAccessibility())[5] {
   static const Accessibility values[] = {
-    Accessibility_EXECUTABLE,
-    Accessibility_WRITABLE,
-    Accessibility_READABLE,
-    Accessibility_IMMUTABLE,
-    Accessibility_PRIVATE
+    Accessibility::EXECUTABLE,
+    Accessibility::WRITABLE,
+    Accessibility::READABLE,
+    Accessibility::IMMUTABLE,
+    Accessibility::PRIVATE
   };
   return values;
 }
@@ -275,24 +281,24 @@ inline const char * const *EnumNamesAccessibility() {
 }
 
 inline const char *EnumNameAccessibility(Accessibility e) {
-  if (::flatbuffers::IsOutRange(e, Accessibility_EXECUTABLE, Accessibility_PRIVATE)) return "";
+  if (::flatbuffers::IsOutRange(e, Accessibility::EXECUTABLE, Accessibility::PRIVATE)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesAccessibility()[index];
 }
 
-enum Endianness : uint8_t {
-  Endianness_ORDER_UNSPECIFIED = 0,
-  Endianness_ORDER_LSB = 1,
-  Endianness_ORDER_MSB = 2,
-  Endianness_MIN = Endianness_ORDER_UNSPECIFIED,
-  Endianness_MAX = Endianness_ORDER_MSB
+enum class Endianness : uint8_t {
+  ORDER_UNSPECIFIED = 0,
+  ORDER_LSB = 1,
+  ORDER_MSB = 2,
+  MIN = ORDER_UNSPECIFIED,
+  MAX = ORDER_MSB
 };
 
 inline const Endianness (&EnumValuesEndianness())[3] {
   static const Endianness values[] = {
-    Endianness_ORDER_UNSPECIFIED,
-    Endianness_ORDER_LSB,
-    Endianness_ORDER_MSB
+    Endianness::ORDER_UNSPECIFIED,
+    Endianness::ORDER_LSB,
+    Endianness::ORDER_MSB
   };
   return values;
 }
@@ -308,24 +314,24 @@ inline const char * const *EnumNamesEndianness() {
 }
 
 inline const char *EnumNameEndianness(Endianness e) {
-  if (::flatbuffers::IsOutRange(e, Endianness_ORDER_UNSPECIFIED, Endianness_ORDER_MSB)) return "";
+  if (::flatbuffers::IsOutRange(e, Endianness::ORDER_UNSPECIFIED, Endianness::ORDER_MSB)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesEndianness()[index];
 }
 
-enum AddressUser : uint8_t {
-  AddressUser_NONE = 0,
-  AddressUser_InstructionRef = 1,
-  AddressUser_DataBlockRef = 2,
-  AddressUser_MIN = AddressUser_NONE,
-  AddressUser_MAX = AddressUser_DataBlockRef
+enum class AddressUser : uint8_t {
+  NONE = 0,
+  InstructionRef = 1,
+  DataBlockRef = 2,
+  MIN = NONE,
+  MAX = DataBlockRef
 };
 
 inline const AddressUser (&EnumValuesAddressUser())[3] {
   static const AddressUser values[] = {
-    AddressUser_NONE,
-    AddressUser_InstructionRef,
-    AddressUser_DataBlockRef
+    AddressUser::NONE,
+    AddressUser::InstructionRef,
+    AddressUser::DataBlockRef
   };
   return values;
 }
@@ -341,25 +347,25 @@ inline const char * const *EnumNamesAddressUser() {
 }
 
 inline const char *EnumNameAddressUser(AddressUser e) {
-  if (::flatbuffers::IsOutRange(e, AddressUser_NONE, AddressUser_DataBlockRef)) return "";
+  if (::flatbuffers::IsOutRange(e, AddressUser::NONE, AddressUser::DataBlockRef)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesAddressUser()[index];
 }
 
 template<typename T> struct AddressUserTraits {
-  static const AddressUser enum_value = AddressUser_NONE;
+  static const AddressUser enum_value = AddressUser::NONE;
 };
 
 template<> struct AddressUserTraits<Rose::BinaryAnalysis::Serialization::Flatbuffers::InstructionRef> {
-  static const AddressUser enum_value = AddressUser_InstructionRef;
+  static const AddressUser enum_value = AddressUser::InstructionRef;
 };
 
 template<> struct AddressUserTraits<Rose::BinaryAnalysis::Serialization::Flatbuffers::DataBlockRef> {
-  static const AddressUser enum_value = AddressUser_DataBlockRef;
+  static const AddressUser enum_value = AddressUser::DataBlockRef;
 };
 
 bool VerifyAddressUser(::flatbuffers::Verifier &verifier, const void *obj, AddressUser type);
-bool VerifyAddressUserVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types);
+bool VerifyAddressUserVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<AddressUser> *types);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(8) BasicBlockRef FLATBUFFERS_FINAL_CLASS {
  private:
@@ -501,6 +507,7 @@ struct BasicBlock FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   uint64_t address() const {
     return GetField<uint64_t>(VT_ADDRESS, 0);
   }
+  /// We could factor this into a InstructionRef and save the Instructions in a top-level structure
   const ::flatbuffers::Vector<::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::Instruction>> *instructions() const {
     return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::Instruction>> *>(VT_INSTRUCTIONS);
   }
@@ -566,6 +573,7 @@ struct DataBlock FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   uint64_t address() const {
     return GetField<uint64_t>(VT_ADDRESS, 0);
   }
+  /// This type field could have a richer representation
   const ::flatbuffers::Vector<uint8_t> *type() const {
     return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_TYPE);
   }
@@ -725,10 +733,10 @@ struct SourceLocation FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   template<typename T> const T *column_as() const;
   const Rose::BinaryAnalysis::Serialization::Flatbuffers::SomeColumn *column_as_SomeColumn() const {
-    return column_type() == Rose::BinaryAnalysis::Serialization::Flatbuffers::Column_SomeColumn ? static_cast<const Rose::BinaryAnalysis::Serialization::Flatbuffers::SomeColumn *>(column()) : nullptr;
+    return column_type() == Rose::BinaryAnalysis::Serialization::Flatbuffers::Column::SomeColumn ? static_cast<const Rose::BinaryAnalysis::Serialization::Flatbuffers::SomeColumn *>(column()) : nullptr;
   }
   const Rose::BinaryAnalysis::Serialization::Flatbuffers::None *column_as_None() const {
-    return column_type() == Rose::BinaryAnalysis::Serialization::Flatbuffers::Column_None ? static_cast<const Rose::BinaryAnalysis::Serialization::Flatbuffers::None *>(column()) : nullptr;
+    return column_type() == Rose::BinaryAnalysis::Serialization::Flatbuffers::Column::None ? static_cast<const Rose::BinaryAnalysis::Serialization::Flatbuffers::None *>(column()) : nullptr;
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -781,7 +789,7 @@ inline ::flatbuffers::Offset<SourceLocation> CreateSourceLocation(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<::flatbuffers::String> file_name = 0,
     uint64_t line = 0,
-    Rose::BinaryAnalysis::Serialization::Flatbuffers::Column column_type = Rose::BinaryAnalysis::Serialization::Flatbuffers::Column_NONE,
+    Rose::BinaryAnalysis::Serialization::Flatbuffers::Column column_type = Rose::BinaryAnalysis::Serialization::Flatbuffers::Column::NONE,
     ::flatbuffers::Offset<void> column = 0) {
   SourceLocationBuilder builder_(_fbb);
   builder_.add_line(line);
@@ -795,7 +803,7 @@ inline ::flatbuffers::Offset<SourceLocation> CreateSourceLocationDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const char *file_name = nullptr,
     uint64_t line = 0,
-    Rose::BinaryAnalysis::Serialization::Flatbuffers::Column column_type = Rose::BinaryAnalysis::Serialization::Flatbuffers::Column_NONE,
+    Rose::BinaryAnalysis::Serialization::Flatbuffers::Column column_type = Rose::BinaryAnalysis::Serialization::Flatbuffers::Column::NONE,
     ::flatbuffers::Offset<void> column = 0) {
   auto file_name__ = file_name ? _fbb.CreateString(file_name) : 0;
   return Rose::BinaryAnalysis::Serialization::Flatbuffers::CreateSourceLocation(
@@ -919,8 +927,8 @@ struct CFGVertex FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_TYPE = 6,
     VT_FUNCTIONS = 8
   };
-  uint8_t address() const {
-    return GetField<uint8_t>(VT_ADDRESS, 0);
+  uint64_t address() const {
+    return GetField<uint64_t>(VT_ADDRESS, 0);
   }
   Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGVertexType type() const {
     return static_cast<Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGVertexType>(GetField<uint8_t>(VT_TYPE, 0));
@@ -931,7 +939,7 @@ struct CFGVertex FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint8_t>(verifier, VT_ADDRESS, 1) &&
+           VerifyField<uint64_t>(verifier, VT_ADDRESS, 8) &&
            VerifyField<uint8_t>(verifier, VT_TYPE, 1) &&
            VerifyOffset(verifier, VT_FUNCTIONS) &&
            verifier.VerifyVector(functions()) &&
@@ -943,8 +951,8 @@ struct CFGVertexBuilder {
   typedef CFGVertex Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_address(uint8_t address) {
-    fbb_.AddElement<uint8_t>(CFGVertex::VT_ADDRESS, address, 0);
+  void add_address(uint64_t address) {
+    fbb_.AddElement<uint64_t>(CFGVertex::VT_ADDRESS, address, 0);
   }
   void add_type(Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGVertexType type) {
     fbb_.AddElement<uint8_t>(CFGVertex::VT_TYPE, static_cast<uint8_t>(type), 0);
@@ -965,20 +973,20 @@ struct CFGVertexBuilder {
 
 inline ::flatbuffers::Offset<CFGVertex> CreateCFGVertex(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint8_t address = 0,
-    Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGVertexType type = Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGVertexType_V_BASIC_BLOCK,
+    uint64_t address = 0,
+    Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGVertexType type = Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGVertexType::V_BASIC_BLOCK,
     ::flatbuffers::Offset<::flatbuffers::Vector<const Rose::BinaryAnalysis::Serialization::Flatbuffers::FunctionRef *>> functions = 0) {
   CFGVertexBuilder builder_(_fbb);
+  builder_.add_address(address);
   builder_.add_functions(functions);
   builder_.add_type(type);
-  builder_.add_address(address);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<CFGVertex> CreateCFGVertexDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint8_t address = 0,
-    Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGVertexType type = Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGVertexType_V_BASIC_BLOCK,
+    uint64_t address = 0,
+    Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGVertexType type = Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGVertexType::V_BASIC_BLOCK,
     const std::vector<Rose::BinaryAnalysis::Serialization::Flatbuffers::FunctionRef> *functions = nullptr) {
   auto functions__ = functions ? _fbb.CreateVectorOfStructs<Rose::BinaryAnalysis::Serialization::Flatbuffers::FunctionRef>(*functions) : 0;
   return Rose::BinaryAnalysis::Serialization::Flatbuffers::CreateCFGVertex(
@@ -996,11 +1004,11 @@ struct CFGEdge FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_TYPE = 8,
     VT_CONFIDENCE = 10
   };
-  uint8_t from() const {
-    return GetField<uint8_t>(VT_FROM, 0);
+  uint64_t from() const {
+    return GetField<uint64_t>(VT_FROM, 0);
   }
-  uint8_t to() const {
-    return GetField<uint8_t>(VT_TO, 0);
+  uint64_t to() const {
+    return GetField<uint64_t>(VT_TO, 0);
   }
   Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGEdgeType type() const {
     return static_cast<Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGEdgeType>(GetField<uint8_t>(VT_TYPE, 0));
@@ -1010,8 +1018,8 @@ struct CFGEdge FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint8_t>(verifier, VT_FROM, 1) &&
-           VerifyField<uint8_t>(verifier, VT_TO, 1) &&
+           VerifyField<uint64_t>(verifier, VT_FROM, 8) &&
+           VerifyField<uint64_t>(verifier, VT_TO, 8) &&
            VerifyField<uint8_t>(verifier, VT_TYPE, 1) &&
            VerifyField<uint8_t>(verifier, VT_CONFIDENCE, 1) &&
            verifier.EndTable();
@@ -1022,11 +1030,11 @@ struct CFGEdgeBuilder {
   typedef CFGEdge Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_from(uint8_t from) {
-    fbb_.AddElement<uint8_t>(CFGEdge::VT_FROM, from, 0);
+  void add_from(uint64_t from) {
+    fbb_.AddElement<uint64_t>(CFGEdge::VT_FROM, from, 0);
   }
-  void add_to(uint8_t to) {
-    fbb_.AddElement<uint8_t>(CFGEdge::VT_TO, to, 0);
+  void add_to(uint64_t to) {
+    fbb_.AddElement<uint64_t>(CFGEdge::VT_TO, to, 0);
   }
   void add_type(Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGEdgeType type) {
     fbb_.AddElement<uint8_t>(CFGEdge::VT_TYPE, static_cast<uint8_t>(type), 0);
@@ -1047,15 +1055,15 @@ struct CFGEdgeBuilder {
 
 inline ::flatbuffers::Offset<CFGEdge> CreateCFGEdge(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint8_t from = 0,
-    uint8_t to = 0,
-    Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGEdgeType type = Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGEdgeType_E_NORMAL,
-    Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGEdgeConfidence confidence = Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGEdgeConfidence_ASSUMED) {
+    uint64_t from = 0,
+    uint64_t to = 0,
+    Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGEdgeType type = Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGEdgeType::E_NORMAL,
+    Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGEdgeConfidence confidence = Rose::BinaryAnalysis::Serialization::Flatbuffers::CFGEdgeConfidence::ASSUMED) {
   CFGEdgeBuilder builder_(_fbb);
-  builder_.add_confidence(confidence);
-  builder_.add_type(type);
   builder_.add_to(to);
   builder_.add_from(from);
+  builder_.add_confidence(confidence);
+  builder_.add_type(type);
   return builder_.Finish();
 }
 
@@ -1212,7 +1220,7 @@ struct Segment FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_DATA = 4,
     VT_OFFSET = 6,
-    VT_ACESSIBILITY = 8
+    VT_ACCESSIBILITY = 8
   };
   const ::flatbuffers::Vector<uint8_t> *data() const {
     return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_DATA);
@@ -1221,15 +1229,15 @@ struct Segment FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     return GetField<uint64_t>(VT_OFFSET, 0);
   }
   /// Since the flag is OR'd together, we serialize a ubyte instead of the enum directly.
-  uint8_t acessibility() const {
-    return GetField<uint8_t>(VT_ACESSIBILITY, 0);
+  uint8_t accessibility() const {
+    return GetField<uint8_t>(VT_ACCESSIBILITY, 0);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_DATA) &&
            verifier.VerifyVector(data()) &&
            VerifyField<uint64_t>(verifier, VT_OFFSET, 8) &&
-           VerifyField<uint8_t>(verifier, VT_ACESSIBILITY, 1) &&
+           VerifyField<uint8_t>(verifier, VT_ACCESSIBILITY, 1) &&
            verifier.EndTable();
   }
 };
@@ -1244,8 +1252,8 @@ struct SegmentBuilder {
   void add_offset(uint64_t offset) {
     fbb_.AddElement<uint64_t>(Segment::VT_OFFSET, offset, 0);
   }
-  void add_acessibility(uint8_t acessibility) {
-    fbb_.AddElement<uint8_t>(Segment::VT_ACESSIBILITY, acessibility, 0);
+  void add_accessibility(uint8_t accessibility) {
+    fbb_.AddElement<uint8_t>(Segment::VT_ACCESSIBILITY, accessibility, 0);
   }
   explicit SegmentBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -1262,11 +1270,11 @@ inline ::flatbuffers::Offset<Segment> CreateSegment(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> data = 0,
     uint64_t offset = 0,
-    uint8_t acessibility = 0) {
+    uint8_t accessibility = 0) {
   SegmentBuilder builder_(_fbb);
   builder_.add_offset(offset);
   builder_.add_data(data);
-  builder_.add_acessibility(acessibility);
+  builder_.add_accessibility(accessibility);
   return builder_.Finish();
 }
 
@@ -1274,13 +1282,13 @@ inline ::flatbuffers::Offset<Segment> CreateSegmentDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<uint8_t> *data = nullptr,
     uint64_t offset = 0,
-    uint8_t acessibility = 0) {
+    uint8_t accessibility = 0) {
   auto data__ = data ? _fbb.CreateVector<uint8_t>(*data) : 0;
   return Rose::BinaryAnalysis::Serialization::Flatbuffers::CreateSegment(
       _fbb,
       data__,
       offset,
-      acessibility);
+      accessibility);
 }
 
 struct IntervalSegment FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
@@ -1336,6 +1344,8 @@ inline ::flatbuffers::Offset<IntervalSegment> CreateIntervalSegment(
   return builder_.Finish();
 }
 
+/// Notice that this datastructure and the inline bytes for instructions are redundant for non-self-modifying code
+/// Self-modifying code will still need explicit instructions
 struct AddressMap FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef AddressMapBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
@@ -1442,7 +1452,7 @@ struct MemoryMapBuilder {
 inline ::flatbuffers::Offset<MemoryMap> CreateMemoryMap(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressMap> data = 0,
-    Rose::BinaryAnalysis::Serialization::Flatbuffers::Endianness endianness = Rose::BinaryAnalysis::Serialization::Flatbuffers::Endianness_ORDER_UNSPECIFIED,
+    Rose::BinaryAnalysis::Serialization::Flatbuffers::Endianness endianness = Rose::BinaryAnalysis::Serialization::Flatbuffers::Endianness::ORDER_UNSPECIFIED,
     ::flatbuffers::Offset<::flatbuffers::String> name = 0) {
   MemoryMapBuilder builder_(_fbb);
   builder_.add_name(name);
@@ -1454,7 +1464,7 @@ inline ::flatbuffers::Offset<MemoryMap> CreateMemoryMap(
 inline ::flatbuffers::Offset<MemoryMap> CreateMemoryMapDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressMap> data = 0,
-    Rose::BinaryAnalysis::Serialization::Flatbuffers::Endianness endianness = Rose::BinaryAnalysis::Serialization::Flatbuffers::Endianness_ORDER_UNSPECIFIED,
+    Rose::BinaryAnalysis::Serialization::Flatbuffers::Endianness endianness = Rose::BinaryAnalysis::Serialization::Flatbuffers::Endianness::ORDER_UNSPECIFIED,
     const char *name = nullptr) {
   auto name__ = name ? _fbb.CreateString(name) : 0;
   return Rose::BinaryAnalysis::Serialization::Flatbuffers::CreateMemoryMap(
@@ -1482,10 +1492,10 @@ struct AddressUsageEntry FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
   }
   template<typename T> const T *user_as() const;
   const Rose::BinaryAnalysis::Serialization::Flatbuffers::InstructionRef *user_as_InstructionRef() const {
-    return user_type() == Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUser_InstructionRef ? static_cast<const Rose::BinaryAnalysis::Serialization::Flatbuffers::InstructionRef *>(user()) : nullptr;
+    return user_type() == Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUser::InstructionRef ? static_cast<const Rose::BinaryAnalysis::Serialization::Flatbuffers::InstructionRef *>(user()) : nullptr;
   }
   const Rose::BinaryAnalysis::Serialization::Flatbuffers::DataBlockRef *user_as_DataBlockRef() const {
-    return user_type() == Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUser_DataBlockRef ? static_cast<const Rose::BinaryAnalysis::Serialization::Flatbuffers::DataBlockRef *>(user()) : nullptr;
+    return user_type() == Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUser::DataBlockRef ? static_cast<const Rose::BinaryAnalysis::Serialization::Flatbuffers::DataBlockRef *>(user()) : nullptr;
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -1533,7 +1543,7 @@ struct AddressUsageEntryBuilder {
 inline ::flatbuffers::Offset<AddressUsageEntry> CreateAddressUsageEntry(
     ::flatbuffers::FlatBufferBuilder &_fbb,
     ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::Interval> interval = 0,
-    Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUser user_type = Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUser_NONE,
+    Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUser user_type = Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUser::NONE,
     ::flatbuffers::Offset<void> user = 0) {
   AddressUsageEntryBuilder builder_(_fbb);
   builder_.add_user(user);
@@ -1594,16 +1604,118 @@ inline ::flatbuffers::Offset<AddressUsageMap> CreateAddressUsageMapDirect(
       entries__);
 }
 
+struct Partitioner FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef PartitionerBuilder Builder;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_VERSION = 4,
+    VT_ARCHITECTURE_NAME = 6,
+    VT_CFG = 8,
+    VT_MEMORY_MAP = 10,
+    VT_AUM = 12
+  };
+  uint32_t version() const {
+    return GetField<uint32_t>(VT_VERSION, 0);
+  }
+  const ::flatbuffers::String *architecture_name() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_ARCHITECTURE_NAME);
+  }
+  const Rose::BinaryAnalysis::Serialization::Flatbuffers::CFG *cfg() const {
+    return GetPointer<const Rose::BinaryAnalysis::Serialization::Flatbuffers::CFG *>(VT_CFG);
+  }
+  const Rose::BinaryAnalysis::Serialization::Flatbuffers::MemoryMap *memory_map() const {
+    return GetPointer<const Rose::BinaryAnalysis::Serialization::Flatbuffers::MemoryMap *>(VT_MEMORY_MAP);
+  }
+  const Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUsageMap *aum() const {
+    return GetPointer<const Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUsageMap *>(VT_AUM);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_VERSION, 4) &&
+           VerifyOffset(verifier, VT_ARCHITECTURE_NAME) &&
+           verifier.VerifyString(architecture_name()) &&
+           VerifyOffset(verifier, VT_CFG) &&
+           verifier.VerifyTable(cfg()) &&
+           VerifyOffset(verifier, VT_MEMORY_MAP) &&
+           verifier.VerifyTable(memory_map()) &&
+           VerifyOffset(verifier, VT_AUM) &&
+           verifier.VerifyTable(aum()) &&
+           verifier.EndTable();
+  }
+};
+
+struct PartitionerBuilder {
+  typedef Partitioner Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_version(uint32_t version) {
+    fbb_.AddElement<uint32_t>(Partitioner::VT_VERSION, version, 0);
+  }
+  void add_architecture_name(::flatbuffers::Offset<::flatbuffers::String> architecture_name) {
+    fbb_.AddOffset(Partitioner::VT_ARCHITECTURE_NAME, architecture_name);
+  }
+  void add_cfg(::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::CFG> cfg) {
+    fbb_.AddOffset(Partitioner::VT_CFG, cfg);
+  }
+  void add_memory_map(::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::MemoryMap> memory_map) {
+    fbb_.AddOffset(Partitioner::VT_MEMORY_MAP, memory_map);
+  }
+  void add_aum(::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUsageMap> aum) {
+    fbb_.AddOffset(Partitioner::VT_AUM, aum);
+  }
+  explicit PartitionerBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<Partitioner> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<Partitioner>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<Partitioner> CreatePartitioner(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t version = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> architecture_name = 0,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::CFG> cfg = 0,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::MemoryMap> memory_map = 0,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUsageMap> aum = 0) {
+  PartitionerBuilder builder_(_fbb);
+  builder_.add_aum(aum);
+  builder_.add_memory_map(memory_map);
+  builder_.add_cfg(cfg);
+  builder_.add_architecture_name(architecture_name);
+  builder_.add_version(version);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<Partitioner> CreatePartitionerDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t version = 0,
+    const char *architecture_name = nullptr,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::CFG> cfg = 0,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::MemoryMap> memory_map = 0,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::AddressUsageMap> aum = 0) {
+  auto architecture_name__ = architecture_name ? _fbb.CreateString(architecture_name) : 0;
+  return Rose::BinaryAnalysis::Serialization::Flatbuffers::CreatePartitioner(
+      _fbb,
+      version,
+      architecture_name__,
+      cfg,
+      memory_map,
+      aum);
+}
+
 inline bool VerifyColumn(::flatbuffers::Verifier &verifier, const void *obj, Column type) {
   switch (type) {
-    case Column_NONE: {
+    case Column::NONE: {
       return true;
     }
-    case Column_SomeColumn: {
+    case Column::SomeColumn: {
       auto ptr = reinterpret_cast<const Rose::BinaryAnalysis::Serialization::Flatbuffers::SomeColumn *>(obj);
       return verifier.VerifyTable(ptr);
     }
-    case Column_None: {
+    case Column::None: {
       auto ptr = reinterpret_cast<const Rose::BinaryAnalysis::Serialization::Flatbuffers::None *>(obj);
       return verifier.VerifyTable(ptr);
     }
@@ -1611,7 +1723,7 @@ inline bool VerifyColumn(::flatbuffers::Verifier &verifier, const void *obj, Col
   }
 }
 
-inline bool VerifyColumnVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types) {
+inline bool VerifyColumnVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<Column> *types) {
   if (!values || !types) return !values && !types;
   if (values->size() != types->size()) return false;
   for (::flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
@@ -1625,20 +1737,20 @@ inline bool VerifyColumnVector(::flatbuffers::Verifier &verifier, const ::flatbu
 
 inline bool VerifyAddressUser(::flatbuffers::Verifier &verifier, const void *obj, AddressUser type) {
   switch (type) {
-    case AddressUser_NONE: {
+    case AddressUser::NONE: {
       return true;
     }
-    case AddressUser_InstructionRef: {
+    case AddressUser::InstructionRef: {
       return verifier.VerifyField<Rose::BinaryAnalysis::Serialization::Flatbuffers::InstructionRef>(static_cast<const uint8_t *>(obj), 0, 8);
     }
-    case AddressUser_DataBlockRef: {
+    case AddressUser::DataBlockRef: {
       return verifier.VerifyField<Rose::BinaryAnalysis::Serialization::Flatbuffers::DataBlockRef>(static_cast<const uint8_t *>(obj), 0, 8);
     }
     default: return true;
   }
 }
 
-inline bool VerifyAddressUserVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<uint8_t> *types) {
+inline bool VerifyAddressUserVector(::flatbuffers::Verifier &verifier, const ::flatbuffers::Vector<::flatbuffers::Offset<void>> *values, const ::flatbuffers::Vector<AddressUser> *types) {
   if (!values || !types) return !values && !types;
   if (values->size() != types->size()) return false;
   for (::flatbuffers::uoffset_t i = 0; i < values->size(); ++i) {
@@ -1648,6 +1760,36 @@ inline bool VerifyAddressUserVector(::flatbuffers::Verifier &verifier, const ::f
     }
   }
   return true;
+}
+
+inline const Rose::BinaryAnalysis::Serialization::Flatbuffers::Partitioner *GetPartitioner(const void *buf) {
+  return ::flatbuffers::GetRoot<Rose::BinaryAnalysis::Serialization::Flatbuffers::Partitioner>(buf);
+}
+
+inline const Rose::BinaryAnalysis::Serialization::Flatbuffers::Partitioner *GetSizePrefixedPartitioner(const void *buf) {
+  return ::flatbuffers::GetSizePrefixedRoot<Rose::BinaryAnalysis::Serialization::Flatbuffers::Partitioner>(buf);
+}
+
+inline bool VerifyPartitionerBuffer(
+    ::flatbuffers::Verifier &verifier) {
+  return verifier.VerifyBuffer<Rose::BinaryAnalysis::Serialization::Flatbuffers::Partitioner>(nullptr);
+}
+
+inline bool VerifySizePrefixedPartitionerBuffer(
+    ::flatbuffers::Verifier &verifier) {
+  return verifier.VerifySizePrefixedBuffer<Rose::BinaryAnalysis::Serialization::Flatbuffers::Partitioner>(nullptr);
+}
+
+inline void FinishPartitionerBuffer(
+    ::flatbuffers::FlatBufferBuilder &fbb,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::Partitioner> root) {
+  fbb.Finish(root);
+}
+
+inline void FinishSizePrefixedPartitionerBuffer(
+    ::flatbuffers::FlatBufferBuilder &fbb,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::Flatbuffers::Partitioner> root) {
+  fbb.FinishSizePrefixed(root);
 }
 
 }  // namespace Flatbuffers

@@ -39,7 +39,7 @@ enum StackDeltaDomain {
 struct Settings {
     StackDeltaDomain domain = SD_INSTRUCTION;
     bool emitNan = true;
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
     std::set<std::string> functionNames;
     std::set<Address> addresses;
 };

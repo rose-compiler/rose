@@ -23,7 +23,7 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 Sawyer::Message::Facility mlog;
 
 struct Settings {
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
 };
 
 Sawyer::CommandLine::Parser

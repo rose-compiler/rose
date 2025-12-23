@@ -602,6 +602,10 @@ endif()
 if(Z3_FOUND AND TARGET z3::libz3)
   target_link_libraries(rose_object_library_dependencies INTERFACE z3::libz3)
 endif()
+if(ROSE_ENABLE_FLATBUFFERS)
+  target_link_libraries(rose_object_library_dependencies INTERFACE flatbuffers)
+endif()
+
 
 set(rose_LIB_OBJS   
   util_main
@@ -658,6 +662,7 @@ set(rose_LIB_OBJS
   roseBinaryAnalysisInstructionSemanticsBaseSemantics
   roseBinaryAnalysisModelChecker
   roseBinaryAnalysisPartitioner2
+  roseBinaryAnalysisSerialization
   roseBinaryAnalysisUnparser
   roseBinaryAnalysisVariables
   roseColor

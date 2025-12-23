@@ -926,7 +926,7 @@ EngineJvm::partition(const std::vector<std::string> &fileNames) {
                 throw Exception("specifying an RBA file excludes all other inputs");
         }
         if (fileNames.size() == 1 && isRbaFile(fileNames[0])) {
-            auto partitioner = Partitioner::instanceFromRbaFile(fileNames[0], SerialIo::BINARY);
+            auto partitioner = Partitioner::instanceFromRbaFile(fileNames[0], Serialization::BINARY);
             interpretation(partitioner->interpretation());
             return partitioner;
         } else {

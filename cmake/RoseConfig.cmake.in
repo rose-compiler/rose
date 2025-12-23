@@ -198,6 +198,8 @@ if(Rose_ZLIB_FOUND)
   find_dependency(ZLIB)
 endif()
 
+find_package(flatbuffers CONFIG REQUIRED)
+
 # Import the ROSE targets
 # This brings in Rose::rose and all its properties
 if(NOT TARGET Rose::rose)

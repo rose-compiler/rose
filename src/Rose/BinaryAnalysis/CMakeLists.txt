@@ -8,6 +8,7 @@ add_subdirectory(Dwarf)
 add_subdirectory(InstructionSemantics)
 add_subdirectory(ModelChecker)
 add_subdirectory(Partitioner2)
+add_subdirectory(Serialization)
 add_subdirectory(Unparser)
 add_subdirectory(Variables)
 

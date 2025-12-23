@@ -26,7 +26,7 @@ namespace {
 Sawyer::Message::Facility mlog;
 
 struct Settings {
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
     std::set<std::string> functionNames;
     std::set<Address> addresses;
 };

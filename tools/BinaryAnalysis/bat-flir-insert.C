@@ -30,7 +30,7 @@ using Flir = Rose::BinaryAnalysis::LibraryIdentification;
 static Sawyer::Message::Facility mlog;
 
 struct Settings {
-    SerialIo::Format stateFormat = SerialIo::BINARY;    // format for the RBA file
+    Serialization::Format stateFormat = Serialization::BINARY;    // format for the RBA file
     std::string connectUrl;                             // name of existing database
     std::string createUrl;                              // name of database to (re)create
     std::string libraryName;                            // name to use for library in the database

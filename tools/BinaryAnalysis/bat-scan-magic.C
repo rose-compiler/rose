@@ -25,7 +25,7 @@ struct Settings {
     AddressInterval limits;                             // limits for scanning (empty implies all addresses)
     size_t step = 1;                                    // amount by which to increment each time
     size_t maxBytes = 256;                              // number of bytes to check at one time
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
 };
 
 static Sawyer::CommandLine::Parser

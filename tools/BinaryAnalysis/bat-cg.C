@@ -27,7 +27,7 @@ struct Settings {
     bool inliningImports = false;                          // inline imported functions when creating GraphViz output
     std::set<std::string> functionNames;                   // restrict output to these function names, addresses,...
     std::set<Address> addresses;                           // ...and/or these functions
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
 };
 
 Sawyer::Message::Facility mlog;

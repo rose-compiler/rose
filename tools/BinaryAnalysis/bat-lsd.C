@@ -29,7 +29,7 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace {
 
 Sawyer::Message::Facility mlog;
-Rose::BinaryAnalysis::SerialIo::Format format = Rose::BinaryAnalysis::SerialIo::BINARY;
+Rose::BinaryAnalysis::Serialization::Format format = Rose::BinaryAnalysis::Serialization::BINARY;
 
 struct Settings {
     bool printingData = true;                           // print the actual data

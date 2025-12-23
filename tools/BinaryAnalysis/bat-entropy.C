@@ -23,7 +23,7 @@ static Sawyer::Message::Facility mlog;
 static const char *OVERFLOW_SUFFIX = "+++";
 
 struct Settings {
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
     size_t symbolSize = 1;                              // size of each symbol in bytes
     size_t windowSize = 1024;                           // size of each window in symbols
     size_t translation = 1;                             // window translation at each step in symbols

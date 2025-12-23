@@ -25,7 +25,7 @@ Sawyer::Message::Facility mlog;
 struct Settings {
     std::set<std::string> functionNames;
     std::set<Address> addresses;
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
 };
 
 static Sawyer::CommandLine::Parser

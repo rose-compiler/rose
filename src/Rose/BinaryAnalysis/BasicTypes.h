@@ -5,6 +5,7 @@
 #include <RoseFirst.h>
 
 // #include's for subdirectories and sub-namespaces are at the end of this header.
+#include <Rose/Exception.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 #include <Sawyer/SharedPointer.h>
 #include <memory>
@@ -49,11 +50,53 @@ using RegisterDictionaryPtr = Sawyer::SharedPointer<RegisterDictionary>; /**< Re
 class RegisterNames;
 class RegisterParts;
 class SerialInput;
-using SerialInputPtr = Sawyer::SharedPointer<SerialInput>; /**< Reference counting pointer. */
+using SerialInputPtr = std::shared_ptr<SerialInput>; /**< Reference counting pointer. */
 class SerialIo;
-using SerialIoPtr = Sawyer::SharedPointer<SerialIo>;    /**< Reference counting pointer. */
+using SerialIoPtr = std::shared_ptr<SerialIo>; /**< Reference counting pointer. */
 class SerialOutput;
-using SerialOutputPtr = Sawyer::SharedPointer<SerialOutput>; /**< Reference counting pointer. */
+using SerialOutputPtr = std::shared_ptr<SerialOutput>; /**< Reference counting pointer. */
+
+namespace Serialization {
+
+/** Format of the state file.
+ *
+ *  Regardless of format, the file begins with a magic header that identifies the container framing and allows
+ *  multiple objects to be stored sequentially. The format selects how object payloads are encoded. */
+enum Format {
+    BINARY,     /**< Binary payloads are smaller and faster than the other formats, but are not portable across
+                 *   architectures. */
+    TEXT,       /**< Textual payloads store the data as ASCII text. They are larger and slower than binary payloads
+                 *   but are portable across architectures. */
+    XML,        /**< The payloads are stored as XML, which is a very verbose and slow format. Avoid using this if
+                 *   possible. */
+    FLATBUFFERS /**< FlatBuffers payloads. Requires ROSE to be configured with FlatBuffers support
+                 *   (ENABLE_FLATBUFFERS_SERIALIZATION). */
+};
+
+/** Types of objects that can be saved. */
+enum Savable {
+    NO_OBJECT         = 0x00000000, /**< Object type for newly-initialized serializers. */
+    PARTITIONER       = 0x00000001, /**< Rose::BinaryAnalysis::Partitioner2::Partitioner. */
+    AST               = 0x00000002, /**< Abstract syntax tree. */
+    END_OF_DATA       = 0x0000fffe, /**< Marks the end of the data stream. */
+    ERROR             = 0x0000ffff, /**< Marks that the stream has encountered an error condition. */
+    USER_DEFINED      = 0x00010000, /**< First user-defined object number. */
+    USER_DEFINED_LAST = 0xffffffff  /**< Last user-defined object number. */
+};
+
+/** Errors thrown during serialization. */
+class Exception: public Rose::Exception {
+  public:
+    /** Construct an exception with an error message. */
+    explicit Exception(const std::string& s) : Rose::Exception(s) {}
+    ~Exception() throw() {}
+};
+
+/** Progress callback function type. */
+using ProgressCallback = std::function<void(size_t current, size_t total, const char* phase)>;
+class SerialFrame;
+class FrameRecord; 
+} // namespace Serialization
 class SmtlibSolver;
 class SmtSolver;
 using SmtSolverPtr = std::shared_ptr<SmtSolver>;  /**< Reference counting pointer. */

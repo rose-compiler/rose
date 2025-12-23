@@ -27,7 +27,7 @@ namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 Sawyer::Message::Facility mlog;
 
 struct Settings {
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
     Address alignment = 1;
     AddressInterval where = AddressInterval::whole();
     bool showSemanticTrace = false;

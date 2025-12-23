@@ -7,7 +7,6 @@
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Exception.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
-#include <Rose/BinaryAnalysis/SerialIo.h>
 
 #include <Sawyer/DistinctList.h>
 #include <Sawyer/SharedObject.h>
@@ -683,7 +682,7 @@ public:
     // The specified partitioner and the binary analysis components of the AST are saved into the specified file, which is
     // created if it doesn't exist and truncated if it does exist. The name should end with a ".rba" extension. The file can
     // be loaded by passing its name to the @ref partition function or by calling @ref loadPartitioner.
-    virtual void savePartitioner(const PartitionerConstPtr&, const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY)
+    virtual void savePartitioner(const PartitionerConstPtr&, const boost::filesystem::path&, Serialization::Format = Serialization::BINARY)
         ROSE_DEPRECATED("use Partitioner::saveAsRbaFile");
 
     // [Robb Matzke 2023-03-03]: deprecated
@@ -691,7 +690,7 @@ public:
     //
     // The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
     // partition function also understands how to open RBA files.
-    virtual PartitionerPtr loadPartitioner(const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY)
+    virtual PartitionerPtr loadPartitioner(const boost::filesystem::path&, Serialization::Format = Serialization::BINARY)
         ROSE_DEPRECATED("use Partitioner::instanceFromRbaFile");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

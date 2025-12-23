@@ -10,21 +10,22 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/StringUtility.h>
 
-#include <rose_strtoull.h>                              // rose
-#include <stringify.h>                                  // rose
+#include <rose_strtoull.h> // rose
+#include <stringify.h>     // rose
 
+#include <Sawyer/BitVector.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/FileSystem.h>
 #include <batSupport.h>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <iostream>
-#include <Sawyer/BitVector.h>
-#include <Sawyer/CommandLine.h>
-#include <Sawyer/FileSystem.h>
 
 using namespace Sawyer::Message::Common;
 using namespace Rose::BinaryAnalysis;
@@ -549,12 +550,12 @@ checkRoseVersionNumber(const std::string &need, Sawyer::Message::Stream &fatal) 
 }
 
 Sawyer::CommandLine::Switch
-stateFileFormatSwitch(SerialIo::Format &fmt) {
+stateFileFormatSwitch(Serialization::Format &fmt) {
     return Sawyer::CommandLine::Switch("state-format")
-        .argument("fmt", Sawyer::CommandLine::enumParser<SerialIo::Format>(fmt)
-                  ->with("binary", SerialIo::BINARY)
-                  ->with("text", SerialIo::TEXT)
-                  ->with("xml", SerialIo::XML))
+        .argument("fmt", Sawyer::CommandLine::enumParser<Serialization::Format>(fmt)
+                  ->with("binary", Serialization::BINARY)
+                  ->with("text", Serialization::TEXT)
+                  ->with("xml", Serialization::XML))
         .doc("Format of the binary analysis state file. The choices are:"
 
              "@named{binary}{Use a custom binary format that is small and fast but not portable.}"
@@ -664,7 +665,7 @@ struct CheckRbaIo: Rose::CommandLine::SelfTest {
 
         {
             SerialOutput::Ptr output = SerialOutput::instance();
-            output->format(SerialIo::BINARY);
+            output->format(Serialization::BINARY);
             output->open(tempRbaFile.name());
             auto arch = Architecture::findByName("intel-pentium4").orThrow();
             auto partitioner = P2::Partitioner::instance(arch);
@@ -673,7 +674,7 @@ struct CheckRbaIo: Rose::CommandLine::SelfTest {
 
         {
             SerialInput::Ptr input = SerialInput::instance();
-            input->format(SerialIo::BINARY);
+            input->format(Serialization::BINARY);
             input->open(tempRbaFile.name());
             P2::Partitioner::Ptr partitioner = input->loadPartitioner();
         }
@@ -1017,17 +1018,17 @@ computeInsnHistogram(const InstructionProvider &insns, const MemoryMap::Ptr &map
 void
 saveInsnHistogram(const InsnHistogram &histogram, const boost::filesystem::path &fileName) {
     auto io = SerialOutput::instance();
-    io->format(SerialIo::XML);
+    io->format(Serialization::XML);
     io->open(fileName);
-    io->saveObject(SerialIo::USER_DEFINED, histogram);
+    io->saveObject(Serialization::USER_DEFINED, histogram);
 }
 
 InsnHistogram
 loadInsnHistogram(const boost::filesystem::path &fileName) {
     auto io = SerialInput::instance();
-    io->format(SerialIo::XML);
+    io->format(Serialization::XML);
     io->open(fileName);
-    return io->loadObject<InsnHistogram>(SerialIo::USER_DEFINED);
+    return io->loadObject<InsnHistogram>(Serialization::USER_DEFINED);
 }
 
 std::vector<InsnHistogram>

@@ -91,7 +91,7 @@ Partitioner::instance(const Architecture::Base::ConstPtr &architecture, const Me
 }
 
 Partitioner::Ptr
-Partitioner::instanceFromRbaFile(const boost::filesystem::path &name, SerialIo::Format fmt) {
+Partitioner::instanceFromRbaFile(const boost::filesystem::path &name, Serialization::Format fmt) {
     Sawyer::Message::Stream info(mlog[INFO]);
     info <<"reading RBA state from " <<name;
     Sawyer::Stopwatch timer;
@@ -101,7 +101,7 @@ Partitioner::instanceFromRbaFile(const boost::filesystem::path &name, SerialIo::
 
     Partitioner::Ptr partitioner = archive->loadPartitioner();
 
-    while (archive->objectType() == SerialIo::AST)
+    while (archive->objectType() == Serialization::AST)
         archive->loadAst();
 
     info <<"; took " <<timer << "\n";
@@ -109,7 +109,7 @@ Partitioner::instanceFromRbaFile(const boost::filesystem::path &name, SerialIo::
 }
 
 void
-Partitioner::saveAsRbaFile(const boost::filesystem::path &name, SerialIo::Format fmt) const {
+Partitioner::saveAsRbaFile(const boost::filesystem::path &name, Serialization::Format fmt) const {
     Sawyer::Message::Stream info(mlog[INFO]);
     info <<"writing RBA state file to " <<name;
     Sawyer::Stopwatch timer;

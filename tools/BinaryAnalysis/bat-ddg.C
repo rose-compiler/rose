@@ -25,7 +25,7 @@ struct Settings {
     std::string outputPrefix = "-";                     // string to add to each output file name
     bool usingSubgraphs = true;                         // group vertices into functions
     std::set<std::string> functionNames;                // restrict output to these function names, addresses
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
 };
 
 Sawyer::Message::Facility mlog;

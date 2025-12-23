@@ -43,11 +43,11 @@ Sawyer::Message::Facility mlog;
 // Tool-specific command-line settings
 struct Settings {
     boost::filesystem::path outputFileName;
-    SerialIo::Format stateFormat;
+    Serialization::Format stateFormat;
     bool doRemap;
     bool skipOutput;
 
-    Settings(): outputFileName("-"), stateFormat(SerialIo::BINARY), doRemap(false), skipOutput(false) {}
+    Settings(): outputFileName("-"), stateFormat(Serialization::BINARY), doRemap(false), skipOutput(false) {}
 };
 
 // Build a command line parser without running it

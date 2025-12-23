@@ -1017,12 +1017,12 @@ Engine::partition(const std::string &fileName) {
 
 void
 Engine::savePartitioner(const Partitioner::ConstPtr &partitioner, const boost::filesystem::path &name,
-                        SerialIo::Format fmt) {
+                        Serialization::Format fmt) {
     partitioner->saveAsRbaFile(name, fmt);
 }
 
 Partitioner::Ptr
-Engine::loadPartitioner(const boost::filesystem::path &name, SerialIo::Format fmt) {
+Engine::loadPartitioner(const boost::filesystem::path &name, Serialization::Format fmt) {
     Partitioner::Ptr partitioner = Partitioner::instanceFromRbaFile(name, fmt);
     interpretation(partitioner->interpretation());
     return partitioner;

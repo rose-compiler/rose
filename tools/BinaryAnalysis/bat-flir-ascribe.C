@@ -33,7 +33,7 @@ using Libraries = Sawyer::Container::Map<std::string /*libhash*/, LibraryCountPa
 static Sawyer::Message::Facility mlog;
 
 struct Settings {
-    SerialIo::Format stateFormat = SerialIo::BINARY;    // format for the RBA file
+    Serialization::Format stateFormat = Serialization::BINARY;    // format for the RBA file
     bool showDetails = false;
     bool showSummary = true;
     Flir::Settings flir;

@@ -24,7 +24,7 @@ namespace Symbolic = Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemanti
 static Sawyer::Message::Facility mlog;
 
 struct Settings {
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
     std::set<std::string> functionNames;
     size_t maxIterations = 100;
 };

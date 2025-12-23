@@ -1110,6 +1110,21 @@ find_elf()
 include(FindDwarf)
 find_dwarf()
 
+# Flatbuffers. Either set FLATBUFFERS_ROOT to the installation prefix, or place the installation prefix on CMAKE_PREFIX_PATH.
+option(ENABLE_FLATBUFFERS_SERIALIZATION "Enable Flatbuffers serialization for binary analysis" OFF)
+
+# ROSE_ENABLE_FLATBUFFERS indicates whether FlatBuffers serialization is enabled for this build.
+set(ROSE_ENABLE_FLATBUFFERS OFF)
+
+if(ENABLE_FLATBUFFERS_SERIALIZATION)
+  message(STATUS "Looking for Flatbuffers library")
+  find_package(flatbuffers CONFIG REQUIRED)
+  set(ROSE_ENABLE_FLATBUFFERS ON)
+  message(STATUS "Flatbuffers found")
+else()
+  message(STATUS "Flatbuffers serialization disabled")
+endif()
+
 # Whether <sys/personality.h> is present (used by Rose::BinaryAnalysis::Debugger::Linux)
 find_path(ROSE_HAVE_SYS_PERSONALITY_H "sys/personality.h")
 

@@ -35,11 +35,11 @@ struct Settings {
     std::set<Address> addresses;
     BinaryAnalysis::Unparser::Settings unparser;
     bool discardNops;
-    SerialIo::Format stateFormat;
+    Serialization::Format stateFormat;
     std::string fileNamePrefix;
 
     Settings()
-        : discardNops(false), stateFormat(SerialIo::BINARY) {}
+        : discardNops(false), stateFormat(Serialization::BINARY) {}
 };
 
 // Create a command-line switch parser

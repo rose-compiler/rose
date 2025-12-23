@@ -24,7 +24,7 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 static Sawyer::Message::Facility mlog;
 
 struct Settings {
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
     boost::filesystem::path saveAs, augmentFrom;
 };
 
@@ -86,7 +86,7 @@ main(int argc, char *argv[]) {
         } else {
             try {
                 histogram = loadInsnHistogram(settings.augmentFrom);
-            } catch (const SerialIo::Exception &e) {
+            } catch (const Serialization::Exception &e) {
                 mlog[FATAL] <<e.what() <<"\n";
                 exit(1);
             }

@@ -130,12 +130,12 @@ ConcolicExecutor::partition(const Specimen::Ptr &specimen, const Architecture::P
 
         // Cache the results in the database.
         boost::filesystem::path rbaFileName = tempDir.name() / "specimen.rba";
-        partitioner->saveAsRbaFile(rbaFileName, SerialIo::BINARY);
+        partitioner->saveAsRbaFile(rbaFileName, Serialization::BINARY);
         database()->saveRbaFile(rbaFileName, specimenId);
     } else {
         Sawyer::FileSystem::TemporaryFile rbaFile;
         database()->extractRbaFile(rbaFile.name(), specimenId);
-        partitioner = P2::Partitioner::instanceFromRbaFile(rbaFile.name(), SerialIo::BINARY);
+        partitioner = P2::Partitioner::instanceFromRbaFile(rbaFile.name(), Serialization::BINARY);
     }
 
     ASSERT_not_null(partitioner);

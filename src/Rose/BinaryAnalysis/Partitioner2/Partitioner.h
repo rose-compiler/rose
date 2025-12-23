@@ -393,10 +393,10 @@ public:
      *
      *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
      *  Engine::partition function also understands how to open RBA files. */
-    static PartitionerPtr instanceFromRbaFile(const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
+    static PartitionerPtr instanceFromRbaFile(const boost::filesystem::path&, Serialization::Format = Serialization::BINARY);
 
     /** Save this partitioner as an RBA file. */
-    void saveAsRbaFile(const boost::filesystem::path &name, SerialIo::Format fmt) const;
+    void saveAsRbaFile(const boost::filesystem::path &name, Serialization::Format fmt) const;
 
     /** Move constructor. */
     Partitioner(BOOST_RV_REF(Partitioner));

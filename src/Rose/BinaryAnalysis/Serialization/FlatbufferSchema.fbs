@@ -9,11 +9,13 @@ table Instruction {
 
 table BasicBlock {
   address: uint64;
+  /// We could factor this into a InstructionRef and save the Instructions in a top-level structure
   instructions: [Instruction];
 }
 
 table DataBlock {
   address: uint64;
+  /// This type field could have a richer representation
   type: [ubyte];
   comment: string;
 }
@@ -61,18 +63,22 @@ struct FunctionRef {
 
 enum CFGVertexType : ubyte {V_BASIC_BLOCK, V_UNDISCOVERED, V_INDETERMINIATE, V_NONEXISTING, V_USER_DEFINED}
 enum CFGEdgeType : ubyte {E_NORMAL, E_FUNCTION_CALL, E_FUNCTION_RETURN, E_CALL_RETURN, E_FUNCTION_XFER, E_USER_DEFINED}
+
+/// We don't know what ASSUMED means. It might mean that it was provided as input by the user via a configuration file.
+/// PROVED means inferred via ROSE analysis (e.g., a fallthrough instruction)
+/// TODO: should we represent this as a union
 enum CFGEdgeConfidence : ubyte { ASSUMED, PROVED}
 
 table CFGVertex {
-  address: ubyte;
+  address: uint64;
   type: CFGVertexType;
   /// Addresses of owned Functions, which are saved in the CFG
   functions: [FunctionRef];
 }
 
 table CFGEdge {
-  from: ubyte;
-  to: ubyte;
+  from: uint64;
+  to: uint64;
   type: CFGEdgeType;
   confidence: CFGEdgeConfidence;
 }
@@ -96,7 +102,7 @@ table Segment {
   data: [ubyte];
   offset: uint64;
   /// Since the flag is OR'd together, we serialize a ubyte instead of the enum directly.
-  acessibility: ubyte;
+  accessibility: ubyte;
 }
 
 table IntervalSegment {
@@ -104,6 +110,8 @@ table IntervalSegment {
   segment: Segment;
 }
 
+/// Notice that this datastructure and the inline bytes for instructions are redundant for non-self-modifying code
+/// Self-modifying code will still need explicit instructions
 table AddressMap {
   entries: [IntervalSegment];
 }
@@ -128,3 +136,13 @@ table AddressUsageEntry {
 table AddressUsageMap {
   entries: [AddressUsageEntry];
 }
+
+table Partitioner {
+  version: uint32;
+  architecture_name: string;
+  cfg: CFG;
+  memory_map: MemoryMap;
+  aum: AddressUsageMap;
+}
+
+root_type Partitioner;

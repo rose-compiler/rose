@@ -65,7 +65,7 @@ metricName(EditDistanceMetric m) {
 struct Settings {
     EditDistanceMetric metric = METRIC_INSN;
     bool listPairings = true;
-    SerialIo::Format stateFormat = SerialIo::BINARY;
+    Serialization::Format stateFormat = Serialization::BINARY;
 };
 
 static Sawyer::CommandLine::Parser

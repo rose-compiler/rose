@@ -37,11 +37,11 @@ struct Settings {
     bool ignoreFailure;
     bool showingCcAnalysis;
     bool removeAnalysis;
-    SerialIo::Format stateFormat;
+    Serialization::Format stateFormat;
 
     Settings()
         : showingDictionary(false), showingRankedDefnNames(false), ignoreFailure(false), showingCcAnalysis(false),
-          removeAnalysis(false), stateFormat(SerialIo::BINARY) {}
+          removeAnalysis(false), stateFormat(Serialization::BINARY) {}
 
     bool isSilent() const {
         return !showingRankedDefnNames;
