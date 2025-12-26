@@ -3,9 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-// Define this if you need to debug SerialIo -- it causes everything to run in the calling thread and avoid catching exceptions.
-//#define ROSE_DEBUG_SERIAL_IO
 
+#include <Rose/BinaryAnalysis/Serialization/SerialFrame.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/Progress.h>
 #include <Rose/Exception.h>
@@ -17,13 +16,10 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/thread.hpp>
 #include <functional>
 #include <memory>
 #include <vector>
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-#include <boost/iostreams/device/file_descriptor.hpp>
-#include <boost/iostreams/stream.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -122,12 +118,7 @@ private:
 
 protected:
     Sawyer::ProgressBar<size_t> progressBar_;
-
-    // We use low-level file descriptors under an std::stream I/O interface in order to provide progress reports. This
-    // allows one thread to be reading from or writing to the file and another thread to monitor the file position to
-    // report progress. The C++ standard library doesn't have an API for wrapping file descriptors in a stream interface,
-    // so we use Boost.
-    int fd_;
+    int fd_; // Used by SerialFrame
 
 protected:
     SerialIo()
@@ -229,7 +220,7 @@ private:
 /** Backend interface for SerialOutput implementations.
  *
  * This interface is payload-based rather than fd-based. It converts objects to
- * binary payloads (std::vector<uint8_t>) that can be stored in the container format.
+ * binary payloads (std::vector<char>) that can be stored in the container format.
  */
 class SerialIo::OutputBackend {
   public:
@@ -241,14 +232,14 @@ class SerialIo::OutputBackend {
      * @param progress A callback function to report progress during serialization
      * @return A vector containing the serialized partitioner data
      */
-    virtual std::vector<uint8_t>
+    virtual std::vector<char>
     savePartitioner(const Partitioner2::PartitionerConstPtr& partitioner, Serialization::ProgressCallback progress) = 0;
 };
 
 /** Backend interface for SerialInput implementations.
  *
  * This interface is payload-based rather than fd-based. It converts binary
- * payloads (std::vector<uint8_t>) back into objects.
+ * payloads (std::vector<char>) back into objects.
  */
 class SerialIo::InputBackend {
   public:
@@ -262,7 +253,7 @@ class SerialIo::InputBackend {
      * @return The deserialized partitioner object
      */
     virtual Partitioner2::PartitionerPtr
-    loadPartitioner(const uint8_t* data, size_t size, Serialization::ProgressCallback progress) = 0;
+    loadPartitioner(const std::vector<char>& data, Serialization::ProgressCallback progress) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -278,22 +269,11 @@ public:
     using Ptr = SerialOutputPtr;
 
 private:
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-    boost::iostreams::file_descriptor_sink device_;
-    boost::iostreams::stream<boost::iostreams::file_descriptor_sink> file_;
-    boost::archive::binary_oarchive *binary_archive_;
-    boost::archive::text_oarchive *text_archive_;
-    boost::archive::xml_oarchive *xml_archive_;
-#endif
     std::shared_ptr<Serialization::SerialFrame> frame_;
     std::shared_ptr<SerialIo::OutputBackend>    backend_;
 
 protected:
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-    SerialOutput(): binary_archive_(NULL), text_archive_(NULL), xml_archive_(NULL) {}
-#else
     SerialOutput() {}
-#endif
 
 public:
     ~SerialOutput();
@@ -342,110 +322,48 @@ private:
     // support serialization and those that don't, which is why it's private. Use only the public functions because they'll
     // give you a nice compiler error if you try to save an Ast node type that isn't supported.
     void saveAstHelper(SgNode*);
-public:
 
+public:
     /** Save an object to the output stream.
      *
-     *  The @p objectTypeId and corresponding @p object are written to the output stream. The object must either implement
-     *  the Boost serialization interface or be understood by the Boost serialization interface.  The @p objectTypeId is
-     *  used to identify the object type when reading the archive later since the object type must be known before it can
-     *  be read.
+     *  The @p objectTypeId and corresponding @p object are written to the output stream. The object must either
+     * implement the Boost serialization interface or be understood by the Boost serialization interface.  The @p
+     * objectTypeId is used to identify the object type when reading the archive later since the object type must be
+     * known before it can be read.
      *
      *  If the @p object is a pointer, then the object is not actually written a second time if the same object has been
      *  written previously. Most objects recursively write all contained objects, and the elision of previously written
      *  objects becomes important in this case.  When reading object later, the input stream will appear to contain both
-     *  objects even if they're the same pointer, and will return the same pointer for both objects. I.e., object sharing
-     *  during output will result in object sharing during input.
+     *  objects even if they're the same pointer, and will return the same pointer for both objects. I.e., object
+     * sharing during output will result in object sharing during input.
      *
      *  Throws an @ref Exception if any errors occur. */
-    template<class T>
-    void saveObject(Serialization::Savable objectTypeId, const T &object) {
+    template <class T> void saveObject(Serialization::Savable objectTypeId, const T& object) {
         if (!isOpen())
             throw Exception("cannot save object when no file is open");
         if (Serialization::ERROR == objectType())
             throw Exception("cannot save object because stream is in error state");
+        if (!frame_)
+            throw Exception("frame container not initialized");
+        if (!backend_)
+            throw Exception("serialization backend not initialized");
 
-#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
-        ROSE_UNUSED(objectTypeId);
-        ROSE_UNUSED(object);
-        throw Exception("binary state files are not supported in this configuration");
-#elif defined(ROSE_DEBUG_SERIAL_IO)
-        std::string errorMessage;
-        asyncSave(objectTypeId, object, &errorMessage);
-#else
-        // A different thread saves the object while this thread updates the progress
-        std::string errorMessage;
-        boost::thread worker(startWorker<T>, this, objectTypeId, &object, &errorMessage);
-        boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
-        progressBar_.prefix("writing");
-        while (!worker.try_join_for(timeout)) {
-            off_t cur = ::lseek(fd_, 0, SEEK_CUR);
-            if (-1 == cur) {
-                ++progressBar_; // so a spinner moves
-            } else {
-                progressBar_.value(cur);
-                if (Progress::Ptr p = progress())
-                    p->update(Progress::Report(cur, NAN));
-            }
-        }
-        if (!errorMessage.empty())
-            throw Exception(errorMessage);
-#endif
-    }
-
-private:
-    template<class T>
-    static void startWorker(SerialOutput *saver, Serialization::Savable objectTypeId, const T *object, std::string *errorMessage) {
-        ASSERT_not_null(object);
-        saver->asyncSave(objectTypeId, *object, errorMessage);
-    }
-
-    // This might run in its own thread.
-    template<class T>
-    void asyncSave(Serialization::Savable objectTypeId, const T &object, std::string *errorMessage) {
-        ASSERT_not_null(errorMessage);
-#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
-        ROSE_UNUSED(objectTypeId);
-        ROSE_UNUSED(object);
-        ASSERT_not_reachable("not supported in this configuration");
-#else
-#if !defined(ROSE_DEBUG_SERIAL_IO)
         try {
-#endif
-            std::string roseVersion = ROSE_PACKAGE_VERSION;
-            objectType(Serialization::ERROR);
-            switch (format()) {
-                case Serialization::BINARY:
-                    ASSERT_not_null(binary_archive_);
-                    *binary_archive_ <<BOOST_SERIALIZATION_NVP(objectTypeId);
-                    *binary_archive_ <<BOOST_SERIALIZATION_NVP(roseVersion);
-                    *binary_archive_ <<BOOST_SERIALIZATION_NVP(object);
-                    break;
-                case Serialization::TEXT:
-                    ASSERT_not_null(text_archive_);
-                    *text_archive_ <<BOOST_SERIALIZATION_NVP(objectTypeId);
-                    *text_archive_ <<BOOST_SERIALIZATION_NVP(roseVersion);
-                    *text_archive_ <<BOOST_SERIALIZATION_NVP(object);
-                    break;
-                case Serialization::XML:
-                    ASSERT_not_null(xml_archive_);
-                    *xml_archive_ <<BOOST_SERIALIZATION_NVP(objectTypeId);
-                    *xml_archive_ <<BOOST_SERIALIZATION_NVP(roseVersion);
-                    *xml_archive_ <<BOOST_SERIALIZATION_NVP(object);
-                    break;
-            }
-            objectType(objectTypeId);
-#if !defined(ROSE_DEBUG_SERIAL_IO)
-        } catch (std::exception &e) {
-            *errorMessage = e.what();
-        } catch (...) {
-            *errorMessage = "failed to write object to output stream";
+
+            // Create a FrameRecord with appropriate metadata
+            Serialization::FrameRecord frameRecord(objectTypeId, format());
+
+            // Serialize the object into the frameRecord's payload
+            frameRecord.serializeObject(object);
+
+            // Write the frame record
+            frame_->writeFrameRecord(frameRecord);
+            this->objectType(objectTypeId);
+        } catch (const std::exception& e) {
+            throw Exception(std::string("Failed to save object using container: ") + e.what());
         }
-#endif
-#endif
     }
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SerialInput
@@ -460,23 +378,11 @@ public:
     using Ptr = SerialInputPtr;
 
 private:
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-    size_t fileSize_;
-    boost::iostreams::file_descriptor_source device_;
-    boost::iostreams::stream<boost::iostreams::file_descriptor_source> file_;
-    boost::archive::binary_iarchive *binary_archive_;
-    boost::archive::text_iarchive *text_archive_;
-    boost::archive::xml_iarchive *xml_archive_;
-#endif
     std::shared_ptr<Serialization::SerialFrame> frame_;
     std::shared_ptr<SerialIo::InputBackend>     backend_;
 
   protected:
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-    SerialInput(): fileSize_(0), binary_archive_(NULL), text_archive_(NULL), xml_archive_(NULL) {}
-#else
     SerialInput() {}
-#endif
 
 public:
     ~SerialInput();
@@ -536,113 +442,48 @@ public:
      *  the stream, and returned.  If an object is provided as the second argument, then it's initialized from the stream.
      *
      * @{ */
-    template<class T>
-    T loadObject(Serialization::Savable objectTypeId) {
+    template <class T> T loadObject(Serialization::Savable objectTypeId) {
+        if (!backend_)
+            throw Exception("serialization backend not initialized");
+
         T object;
         loadObject<T>(objectTypeId, object);
         return object;
     }
-    template<class T>
-    void loadObject(Serialization::Savable objectTypeId, T &object) {
+    template <class T> void loadObject(Serialization::Savable objectTypeId, T& object) {
         if (!isOpen())
             throw Exception("cannot load object when no file is open");
+        if (!frame_)
+            throw Exception("frame container not initialized");
+        if (!backend_)
+            throw Exception("serialization backend not initialized");
 
-#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
-        ROSE_UNUSED(objectTypeId);
-        ROSE_UNUSED(object);
-        throw Exception("binary state files are not supported in this configuration");
-#else
-        if (Serialization::ERROR == objectType())
-            throw Exception("cannot read object because stream is in error state");
-        if (objectType() != objectTypeId) {
-            throw Exception("unexpected object type (expected " + boost::lexical_cast<std::string>(objectTypeId) +
-                            " but read " + boost::lexical_cast<std::string>(objectType()) + ")");
+        try {
+            // Read and validate the frame record
+            auto frameRecord = readAndValidateRecord(objectTypeId);
+
+            // Deserialize object from payload
+            frameRecord.deserializeObject(object);
+
+            objectType(Serialization::END_OF_DATA);
+        } catch (const boost::archive::archive_exception& e) {
+            throw Exception(std::string("Failed to load object from Boost archive: ") + e.what());
+        } catch (const std::exception& e) {
+            throw Exception(std::string("Failed to load object using container: ") + e.what());
         }
-        objectType(Serialization::ERROR); // in case of exception
-        std::string errorMessage;
-#ifdef ROSE_DEBUG_SERIAL_IO
-        asyncLoad(object, &errorMessage);
-#else
-        boost::thread worker(startWorker<T>, this, &object, &errorMessage);
-        boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
-        progressBar_.prefix("reading");
-        while (!worker.try_join_for(timeout)) {
-            if (fileSize_ > 0) {
-                off_t cur = ::lseek(fd_, 0, SEEK_CUR);
-                if (cur != -1) {
-                    progressBar_.value(cur);
-                    if (Progress::Ptr p = progress())
-                        p->update(Progress::Report(cur, fileSize_));
-                }
-            } else {
-                ++progressBar_; // so the spinner moves
-            }
-        }
-        if (!errorMessage.empty())
-            throw Exception(errorMessage);
-#endif
-        advanceObjectType();
-#endif
     }
     /** @} */
-        
-private:
-    template<class T>
-    static void startWorker(SerialInput *loader, T *object, std::string *errorMessage) {
-        loader->asyncLoad(*object, errorMessage);
-    }
 
-    // Might run in its own thread
-    template<class T>
-    void asyncLoad(T &object, std::string *errorMessage) {
-        ASSERT_not_null(errorMessage);
-#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
-        ROSE_UNUSED(object);
-        ASSERT_not_reachable("not supported in this configuration");
-#else
-#if !defined(ROSE_DEBUG_SERIAL_IO)
-        try {
-#endif
-            std::string roseVersion;
-            switch (format()) {
-                case Serialization::BINARY:
-                    ASSERT_not_null(binary_archive_);
-                    *binary_archive_ >>BOOST_SERIALIZATION_NVP(roseVersion);
-                    checkCompatibility(roseVersion);
-                    *binary_archive_ >>BOOST_SERIALIZATION_NVP(object);
-                    break;
-                case Serialization::TEXT:
-                    ASSERT_not_null(text_archive_);
-                    *text_archive_ >>BOOST_SERIALIZATION_NVP(roseVersion);
-                    checkCompatibility(roseVersion);
-                    *text_archive_ >>BOOST_SERIALIZATION_NVP(object);
-                    break;
-                case Serialization::XML:
-                    ASSERT_not_null(xml_archive_);
-                    *xml_archive_ >>BOOST_SERIALIZATION_NVP(roseVersion);
-                    checkCompatibility(roseVersion);
-                    *xml_archive_ >>BOOST_SERIALIZATION_NVP(object);
-                    break;
-            }
-#if !defined(ROSE_DEBUG_SERIAL_IO)
-        } catch (const std::exception &e) {
-            *errorMessage = e.what();
-        } catch (...) {
-            *errorMessage = "failed to read object from input stream";
-        }
-#endif
-#endif
-    }
-
-    void checkCompatibility(const std::string &fileVersion);
-
-protected:
+  protected:
     // Read the next object type from the input stream
     void advanceObjectType();
+    
+    // Check ROSE version compatibility
+    void checkCompatibility(const std::string &fileVersion);
 };
 
-} // namespace
-} // namespace
+} // namespace BinaryAnalysis
+} // namespace Rose
 
 #endif
 #endif

@@ -81,7 +81,7 @@ SerialFrame::openForRead(const boost::filesystem::path& fileName, ProgressCallba
 void
 SerialFrame::closeInput() {
     if (inArchive_)
-        std::move(inArchive_);
+        inArchive_.reset();
     if (inStream_.is_open())
         inStream_.close();
     if (inDevice_.is_open())
@@ -91,11 +91,11 @@ SerialFrame::closeInput() {
 void
 SerialFrame::closeOutput() {
     if (outArchive_)
-        std::move(outArchive_);
-    if (inStream_.is_open())
-        inStream_.close();
-    if (inDevice_.is_open())
-        inDevice_.close();
+        outArchive_.reset();
+    if (outStream_.is_open())
+        outStream_.close();
+    if (outDevice_.is_open())
+        outDevice_.close();
 }
 
 void
