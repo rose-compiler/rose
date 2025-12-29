@@ -684,14 +684,35 @@ outputPredefinedMacros()
     The commandline is processed and the return parameter is the generate SgProject object.
  */
 
+ static
+ SgProject::constant_folding_enum
+ legacyConstantFoldingChoice(bool frontendConstantFolding)
+ {
+   return frontendConstantFolding
+            ? SgProject::e_folded_values_only
+            : SgProject::e_original_expressions_only;
+ }
+
 SgProject*
 frontend (int argc, char** argv, bool frontendConstantFolding )
    {
-     return frontend(std::vector<std::string>(argv, argv + argc),frontendConstantFolding);
+     return frontend(std::vector<std::string>(argv, argv + argc),legacyConstantFoldingChoice(frontendConstantFolding));
    }
 
 SgProject*
 frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
+   {
+     return frontend(argv, legacyConstantFoldingChoice(frontendConstantFolding));
+   }
+
+SgProject*
+frontend (int argc, char** argv, SgProject::constant_folding_enum constantFoldingBehavior )
+   {
+     return frontend(std::vector<std::string>(argv, argv + argc),constantFoldingBehavior);
+   }
+
+SgProject*
+frontend (const std::vector<std::string>& argv, SgProject::constant_folding_enum constantFoldingBehavior)
    {
   // DQ (4/11/2017): Call this as early as possible (usually good enough if it is here).
   // Note that there are ROSE-based tools that are calling the SgProject constructor directly,
@@ -726,7 +747,7 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
      SgProject* project = new SgProject;
 
      ASSERT_not_null(project);
-     project->set_frontendConstantFolding(frontendConstantFolding);
+     project->set_frontendConstantFolding(constantFoldingBehavior);
 
   // Create the AST by setting command-line options and then parsing all files from the command line
      project->parse(argv);

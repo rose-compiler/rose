@@ -2016,8 +2016,6 @@ namespace
   void
   AdaPreNameQualifier::computeNameQualForShared(const SgNode& ref, const SgNode* n)
   {
-    using NameQualMap = std::map<SgNode*, std::string>;
-
     NameQualificationMapType&     localQualMapForTypes = traversal.createQualMapForTypeSubtreeIfNeeded(ref);
     NameQualificationTraversalAda sub{traversal, localQualMapForTypes};
     InheritedAttribute            attr{res};

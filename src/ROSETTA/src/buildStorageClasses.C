@@ -733,6 +733,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "$GRAMMAR_PREFIX_UnaryOp::$GRAMMAR_PREFIX_op_mode" ) ||
                  ( varTypeString == "SgInitializedName::preinitialization_enum" ) ||
                  ( varTypeString == "SgProject::template_instantiation_enum" ) ||
+                 ( varTypeString == "SgProject::constant_folding_enum" ) ||
                  ( varTypeString == "SgTemplateParameter::template_parameter_enum" ) ||
                  ( varTypeString == "SgTemplateArgument::template_argument_enum" ) ||
                  ( varTypeString == "SgConstVolatileModifier::cv_modifier_enum" ) ||

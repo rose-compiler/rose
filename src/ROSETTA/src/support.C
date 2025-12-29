@@ -1917,7 +1917,9 @@ Grammar::setUpSupport ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/18/2011): Added support for specification of frontend constant folding (only supported in C/C++ using EDG).
-     Project.setDataPrototype("bool", "frontendConstantFolding", "= false",
+  // PP (12/30/2025): Add support for maintaining both original expression and constant folded values
+  //                  changed type form bool to SgProject::constant_folding_enum
+     Project.setDataPrototype("SgProject::constant_folding_enum", "frontendConstantFolding", "= SgProject::e_original_expressions_only",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/12/2013): Added Java support for a global scope spanning files. Might be

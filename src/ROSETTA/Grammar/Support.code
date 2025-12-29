@@ -6240,9 +6240,18 @@ HEADER_APPLICATION_PROJECT_START
                e_last          /*!< last value (used for error checking) */
              };
 
+          enum constant_folding_enum : std::uint8_t
+          {
+            e_original_expressions_only = 0,
+            e_folded_values_only = 1,
+            e_original_expressions_and_folded_values = 2,
+            e_skip_post_processing = 3,
+          };
+
+
       //! The only useful constructors (constant folding in the frontend is false by default).
-          SgProject(const std::vector<std::string>& argv, bool frontendConstantFolding = false);
-          SgProject(int argc, char** argv, bool frontendConstantFolding = false);
+          SgProject(const std::vector<std::string>& argv, constant_folding_enum frontendConstantFolding = e_original_expressions_only);
+          SgProject(int argc, char** argv, constant_folding_enum frontendConstantFolding = e_original_expressions_only);
 
        // DQ (4/10/2017): Adding support for use of Saywer for command line handling.
       //! Use of Saywer support for command line handling (work in progress).
@@ -15464,7 +15473,7 @@ SgProject::post_construction_initialization()
 }
 
 //! WARNING: this constructor invokes EDG front end (parse) and creates AST. Use frontend() instead.
-SgProject::SgProject(int argc, char** argv, bool frontendConstantFolding)
+SgProject::SgProject(int argc, char** argv, constant_folding_enum frontendConstantFolding)
    : SgProject()
    {
      ASSERT_this();
@@ -15481,7 +15490,7 @@ SgProject::SgProject(int argc, char** argv, bool frontendConstantFolding)
    }
 
 //! WARNING: this constructor invokes EDG front end (parse) and creates AST. Use frontend() instead.
-SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding )
+SgProject::SgProject ( const std::vector<std::string>& argv, constant_folding_enum frontendConstantFolding )
    : SgProject()
    {
      ASSERT_this();
@@ -16609,7 +16618,23 @@ SgProject::display ( const std::string & label ) const
      printf ("   p_binary_only()                           = %s \n",(p_binary_only == true) ? "true" : "false");
 
   // DQ (9/15/2013): Added debugging support for a previously missed data member.
-     printf ("   p_frontendConstantFolding                 = %s \n",(p_frontendConstantFolding == true) ? "true" : "false");
+  // PP (12/30/2025): Switched p_frontendConstantFolding to enum
+     switch (p_frontendConstantFolding)
+     {
+       case e_original_expressions_only:
+                printf ("   p_frontendConstantFolding                 = e_original_expressions_only");
+                break;
+
+       case e_folded_values_only:
+                printf ("   p_frontendConstantFolding                 = e_folded_values_only");
+                break;
+
+       case e_original_expressions_and_folded_values:
+                printf ("   p_frontendConstantFolding                 = e_original_expressions_and_folded_values");
+                break;
+
+       default: printf ("   p_frontendConstantFolding                 = unknown");
+     }
 
   // DQ (9/15/2013): Added debugging support for a new data member.
      printf ("   p_unparse_in_same_directory_as_input_file = %s \n",(p_unparse_in_same_directory_as_input_file == true) ? "true" : "false");

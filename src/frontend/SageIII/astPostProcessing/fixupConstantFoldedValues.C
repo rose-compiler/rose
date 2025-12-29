@@ -2,6 +2,7 @@
 #include "sage3basic.h"
 
 #include "Rose/AST/Utility.h"
+#include "Rose/Diagnostics.h"
 
 #if !defined(ROSE_PEDANTIC_FIXUP_CONSTANT_FOLDING)
 #  define ROSE_PEDANTIC_FIXUP_CONSTANT_FOLDING 0
@@ -38,59 +39,32 @@ static void deleteExpressionAndOriginalExpressionTree(SgNode * node) {
   }
 
   // Traverse the AST and delete successors
+  // Since only the traversal successors are traversed,
+  // PP wonders if this leaks memory if a node also owns other AST objects
+  // that are not included in the traversal.
   std::vector<SgNode*> successors = node->get_traversalSuccessorContainer();
   for (std::vector<SgNode*>::iterator n = successors.begin(); n != successors.end(); ++n) {
     if (*n != NULL ) {
       deleteExpressionAndOriginalExpressionTree(*n);
     }
   }
-  
+
   delete node;
 }
-
-struct ReplacePointerInParent : public SimpleReferenceToPointerHandler {
-  SgNode * old_ptr;
-  SgNode * new_ptr;
-  unsigned count;
-
-  ReplacePointerInParent(SgNode * old_ptr_, SgNode * new_ptr_) :
-    old_ptr(old_ptr_),
-    new_ptr(new_ptr_),
-    count(0)
-  {}
-
-  virtual void operator()(SgNode* & key, const SgName & /*debugStringName*/, bool /*is_traversed*/) {
-    if (key == old_ptr) {
-      ROSE_ASSERT(count == 0);
-      key = new_ptr;
-      count++;
-    }
-  }
-  
-  static void apply(SgNode * op, SgNode * np) {
-    SgNode * parent = op->get_parent();
-    ROSE_ASSERT(parent != NULL);
-
-    ReplacePointerInParent r(op, np);
-    parent->processDataMemberReferenceToPointers(&r);
-
-    np->set_parent(parent);
-  }
-};
 
 struct CollectExpressionTrees : public ROSE_VisitTraversal {
   // Root of an expression trees but *parent is not set*
   //    Triggers an ASSERTION if not empty
-  std::set<SgExpression *> orphans;
+  std::unordered_set<SgExpression *> orphans;
 
   // Root of an expression tree that is part of the AST
-  std::set<SgExpression *> roots;
+  std::unordered_set<SgExpression *> roots;
 
   // Root of an original expression tree (not part of the AST)
-  std::set<SgExpression *> originals;
+  std::unordered_set<SgExpression *> originals;
 
   // Root of an expression tree not reacheable from the AST (only testing successors)
-  std::set<SgExpression *> disconnected;
+  std::unordered_set<SgExpression *> disconnected;
 
 #if ROSE_GRAPHVIZ_EXPRESSION_TREES
   // Part of an expression tree but not root (only used for graph generation)
@@ -117,6 +91,11 @@ struct CollectExpressionTrees : public ROSE_VisitTraversal {
         return;
       }
 
+      if (expr_parent->get_alternativeExpr() == expr) {
+        /* nothing to do, constant folding has already been resolved */
+        return;
+      }
+
       std::vector<SgNode*> successors = expr_parent->get_traversalSuccessorContainer();
       if (std::find(successors.begin(), successors.end(), node) != successors.end()) {
 #if ROSE_GRAPHVIZ_EXPRESSION_TREES
@@ -127,13 +106,7 @@ struct CollectExpressionTrees : public ROSE_VisitTraversal {
 
       SgTypeTraitBuiltinOperator * ttbo_parent = isSgTypeTraitBuiltinOperator(expr_parent);
       if (ttbo_parent != NULL) {
-#if defined(__cpp_range_based_for) && __cpp_range_based_for >= 200907
         for (auto arg: ttbo_parent->get_args()) {
-#else
-        SgNodePtrList & args = ttbo_parent->get_args();
-        for (SgNodePtrList::iterator it = args.begin(); it != args.end(); it++) {
-          SgNode * arg = *it;
-#endif
           if (arg == expr) {
 #if ROSE_GRAPHVIZ_EXPRESSION_TREES
             subtrees.insert(expr);
@@ -215,14 +188,14 @@ void removeConstantFoldedValue(SgProject* /*project*/) {
 #endif
 
   std::map<SgNode *, SgNode *> replace_map;
-  std::set<SgExpression *> delete_set;
+  std::unordered_set<SgExpression *> delete_set;
 
   delete_set.insert(cet.disconnected.begin(), cet.disconnected.end());
   delete_set.insert(cet.orphans.begin(), cet.orphans.end());
 
   // We cut the chain as we process it starting from the latest element.
   // Some visited links could be seen as last element of a chain that has been cut by mistake.
-  std::set<SgExpression *> seen_in_ot_chain; 
+  std::unordered_set<SgExpression *> seen_in_ot_chain;
 
   for (auto child: cet.originals) {
     // Check that it is the actual original tree of a *potential* chain of substitutions
@@ -293,14 +266,134 @@ void removeConstantFoldedValue(SgProject* /*project*/) {
   }
 }
 
+/// replaces constant folded values with the original tree in the AST.
+/// preserves the folded value as an alternative, so it can be used
+/// by analysis that require or prefer constant folded values.
+/// \details
+///   modeled after removeConstantFoldedValue, but this
+///   preserves the folded values as alternative.
+void preserveConstantFoldedValue(SgProject* /*project*/) {
+  CollectExpressionTrees cet;
+  cet.traverseMemoryPool();
+
+  std::map<SgNode *, SgNode *> replace_map;
+  std::vector<std::pair<SgExpression*, SgExpression*> > folded_mapping;
+  std::unordered_set<SgExpression *> delete_set;
+
+  // Disconnected could be unused constant folded values.
+  // e.g., SgEnumVal, for which a constant folded value exists
+  //       for now it's unclear whether they need to be preserved also...
+  delete_set.insert(cet.disconnected.begin(), cet.disconnected.end());
+
+  // Orphans seem to be SgVarRefExp in template context.
+  // \todo consider getting to the bottom of why they exist and why are they traversed..
+  delete_set.insert(cet.orphans.begin(), cet.orphans.end());
+
+  // We cut the chain as we process it starting from the latest element.
+  // Some visited links could be seen as last element of a chain that has been cut by mistake.
+  std::unordered_set<SgExpression *> seen_in_ot_chain;
+
+  for (auto child: cet.originals) {
+    // Check that it is the actual original tree of a *potential* chain of substitutions
+    //    Note: I am not sure chain of substitutions occur with latest version of EDG
+    // \note
+    //   - child->get_originalExpressionTree() should be null in all original expression trees
+    //     I almost think that this should be asserted
+    //   - seen_in_ot_chain.insert(child).second is true if child has not been seen before
+    if (child->get_originalExpressionTree() == NULL && seen_in_ot_chain.insert(child).second) {
+      SgExpression* folded = get_parent_if_folded_in(child);
+      ASSERT_not_null(folded);
+      ASSERT_require(folded != child);
+
+      // Detach the selected expression from the chain of substitutions
+      //   `folded` is the direct parent of `child` in the chain
+      folded->set_originalExpressionTree(NULL);
+      seen_in_ot_chain.insert(folded);
+
+      // Traverse the chain of substitutions to find its first element with
+      //   the same original expression tree.
+      // Delete all expressions chains and just preserve the original folded value
+      SgExpression* folded_value = folded;
+      SgExpression* tmp = get_parent_if_folded_in(folded);
+
+      while (tmp) {
+        folded = tmp;
+        seen_in_ot_chain.insert(folded);
+        tmp = get_parent_if_folded_in(folded);
+      }
+
+      // Mark all (?) intermediaries to be deleted
+      if (folded->get_originalExpressionTree() != NULL) {
+        folded->set_originalExpressionTree(NULL);
+      }
+
+      bool replace_folded_by_child = delete_set.count(folded) == 0;
+
+      if (isSgEnumVal(folded)) {
+        // TODO 1st issue: the initializer of a variable using enum-value (`X::enum_e e = X::none`):
+        //        -> the value is in the original tree of the enum-value
+        //        -> this replacement create a type error in C++
+        // TODO 2nd issue: `enum { s = sizeof(struct X {  } };` definition of X would not be unparsed
+        //        -> not an issue if struct is anonymous
+        //        -> I cannot find a correct predicate would probably need to save more info in EDG
+        replace_folded_by_child = false;
+      }
+
+      // DQ (7/23/2020): Only required now for C++11 code using EDG 6.0 and GNU 10.1 (see Cxx11_tests/test2015_02.C).
+      // DQ (7/18/2020): Added support to permit Cxx11_tests/test2020_69.C to pass.
+      // TV: moved that to not break the pattern
+      replace_folded_by_child &= !isSgLambdaExp(child);
+
+      if (replace_folded_by_child) {
+        child->set_parent(folded->get_parent()); // prevent replacement from creating self loop if child is direct descendant of folded
+
+        replace_map[folded] = child;
+        folded_mapping.emplace_back(child, folded_value);
+
+        SgExpression* tmp2 = get_parent_if_folded_in(folded_value);
+
+        // the top most expression (folded)
+        //   will be replaced with child. child gets the bottom most
+        //   folded expression (folded_value) as alternative expression.
+        //   we can delete any node in the sequence (folded_value, folded].
+        while (tmp2) {
+          delete_set.insert(tmp2);
+          tmp2 = get_parent_if_folded_in(tmp2);
+        }
+      } else {
+        delete_set.insert(child);
+      }
+    }
+  }
+
+  Rose::AST::Utility::edgePointerReplacement(replace_map);
+
+  // attach the constant folded values as alternative under the original expression tree
+  for (auto repl : folded_mapping) {
+    SgExpression* original = repl.first;
+    SgExpression* folded   = repl.second;
+
+    ASSERT_not_null(folded);
+    ASSERT_not_null(original);
+
+    original->set_alternativeExpr(folded);
+    folded->set_parent(original);
+
+    ASSERT_require(delete_set.count(folded) == 0);
+    ASSERT_require(delete_set.count(original) == 0);
+  }
+
+  // delete the no-longer needed AST nodes.
+  for (auto expr: delete_set) {
+    deleteExpressionAndOriginalExpressionTree(expr);
+  }
+}
+
+
 struct RemoveOriginalExpressionTrees : public ROSE_VisitTraversal {
   void visit (SgNode* node) {
-    ROSE_ASSERT(node != nullptr);
-
-    SgExpression * exp = isSgExpression(node);
-    if (exp != nullptr) {
-      SgExpression * oet = exp->get_originalExpressionTree();
-      if (oet != nullptr) {
+    if (SgExpression * exp = isSgExpression(node)) {
+      if (SgExpression * oet = exp->get_originalExpressionTree()) {
         exp->set_originalExpressionTree(nullptr);
         deleteExpressionAndOriginalExpressionTree(oet);
       }
@@ -310,27 +403,37 @@ struct RemoveOriginalExpressionTrees : public ROSE_VisitTraversal {
 
 //! This removes the original expression tree from value expressions where it has been constant folded by EDG.
 void resetConstantFoldedValues( SgNode* node ) {
+   SgProject* const                       proj = isSgProject(node);
+   SgProject::constant_folding_enum const choice = proj ? proj->get_frontendConstantFolding()
+                                                        : SgProject::e_folded_values_only;
 
-#if 1
-  if (!isSgProject(node) || !((SgProject *)node)->get_frontendConstantFolding()) {
-    TimingPerformance timer1 ("Fixup Constant Folded Values (replace with original expression trees):");
+   switch (choice)
+   {
+      case SgProject::e_original_expressions_only:
+         {
+            TimingPerformance timer("resetConstantFoldedValues (original expression tree only):");
+            removeConstantFoldedValue(proj);
+            break;
+         }
 
-#if 1
- // removeConstantFoldedValue((SgProject *)node);
-    SgProject* project = isSgProject(node);
-    ROSE_ASSERT(project != NULL);
-    removeConstantFoldedValue(project);
-#else
-    printf ("In resetConstantFoldedValues(): Skipping call to removeConstantFoldedValue() \n");
-#endif
+      case SgProject::e_folded_values_only:
+         {
+            TimingPerformance timer("resetConstantFoldedValues (folded values only):");
+            RemoveOriginalExpressionTrees astFixupTraversal;
+            astFixupTraversal.traverseMemoryPool();
+            break;
+         }
 
-  } else {
-    TimingPerformance timer1 ("Fixup Constant Folded Values (remove the original expression tree, leaving the constant folded values):");
-    RemoveOriginalExpressionTrees astFixupTraversal;
-    astFixupTraversal.traverseMemoryPool();
-  }
-#else
-    printf ("In resetConstantFoldedValues(): Skipping body of resetConstantFoldedValues() \n");
-#endif
+      case SgProject::e_original_expressions_and_folded_values:
+         {
+            TimingPerformance timer("resetConstantFoldedValues (original expressions and folded values):");
+            preserveConstantFoldedValue(proj);
+            break;
+         }
 
+      default:
+         {
+            Rose::Diagnostics::mlog[Sawyer::Message::WARN] << "   p_frontendConstantFolding                 = skipped";
+         }
+   }
 }

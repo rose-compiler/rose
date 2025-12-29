@@ -27,10 +27,17 @@ std::string rose_boost_version_path();
 void outputPredefinedMacros();
 
 
-// Simple interface for ROSE (error codes are in SgProject.frontendErrorCode(), backendErrorCode() )
-// tps : Need to make this function (DLL) public 
-ROSE_DLL_API SgProject* frontend ( int argc, char** argv, bool frontendConstantFolding = false );
-ROSE_DLL_API SgProject* frontend ( const std::vector<std::string>& argv, bool frontendConstantFolding = false );
+//! Simple APIs for ROSE (error codes are in SgProject.frontendErrorCode(), backendErrorCode() )
+//! @{
+// tps : Need to make this function (DLL) public
+ROSE_DLL_API SgProject* frontend ( int argc, char** argv, bool frontendConstantFolding)
+  ROSE_DEPRECATED("use frontend(int, char**, SgProject::constant_folding_enum)");
+ROSE_DLL_API SgProject* frontend ( const std::vector<std::string>& argv, bool frontendConstantFolding)
+  ROSE_DEPRECATED("use frontend(const std::vector<std::string>&, SgProject::constant_folding_enum)");
+
+ROSE_DLL_API SgProject* frontend ( int argc, char** argv, SgProject::constant_folding_enum = SgProject::e_original_expressions_only );
+ROSE_DLL_API SgProject* frontend ( const std::vector<std::string>& argv, SgProject::constant_folding_enum = SgProject::e_original_expressions_only );
+//! @}
 
 // DQ (4/17/2015): After discussion with Liao, Markus, and Pei-Hung, we have agreed that
 // we want to support multiple SgProject IR nodes.  So in addition to the SgProject* frontend()
@@ -38,11 +45,11 @@ ROSE_DLL_API SgProject* frontend ( const std::vector<std::string>& argv, bool fr
 //   1) A SgProject member function "frontend()" that can be used to generate a new SgFile in
 //      an existing SgProject.
 //   2) A SgBuilder function for building an empty SgProject (without files).
-//   3) We will remove the use of the SageInterface::getProject() (which asserts that there 
+//   3) We will remove the use of the SageInterface::getProject() (which asserts that there
 //      is only one SgProject).
 
-// This builds a shell of a frontend SgProject with associated SgFile objects (but with empty 
-// SgGlobal objects) supporting only commandline processing and requiring the frontend to be 
+// This builds a shell of a frontend SgProject with associated SgFile objects (but with empty
+// SgGlobal objects) supporting only commandline processing and requiring the frontend to be
 // called explicitly for each SgFile object.  See tutorial/selectedFileTranslation.C for example.
 SgProject* frontendShell ( int argc, char** argv);
 ROSE_DLL_API SgProject* frontendShell ( const std::vector<std::string>& argv);
@@ -61,16 +68,16 @@ ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatH
 // other analysis only tool using ROSE. Called in tests/nonsmoke/functional/testAnalysis.C for example.
 ROSE_DLL_API int backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_USE_ROSE_macro = false );
 
-// DQ (2/6/2010): This backend forces all code to be generated but still uses the backend vendor 
+// DQ (2/6/2010): This backend forces all code to be generated but still uses the backend vendor
 // compiler to compile the original code.  This is a step between backendUsingOriginalInputFile(),
 // which does not generate code; and backend() which generated code and compiles it.  The use of
 // this backend permits an intermediate test of robustness where the code that we generate might
-// be generated incorrectly (usually with missing name qualification as required for a specific 
+// be generated incorrectly (usually with missing name qualification as required for a specific
 // backend (vendor) compiler).
 ROSE_DLL_API int backendGeneratesSourceCodeButCompilesUsingOriginalInputFile ( SgProject* project );
 
-//QY: new back end that performs only source-to-source translations 
-// of the original file. Furthermore, statements are copied from 
+//QY: new back end that performs only source-to-source translations
+// of the original file. Furthermore, statements are copied from
 // the original file if they are not changed
 ROSE_DLL_API int copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL );
 
@@ -88,7 +95,7 @@ ROSE_DLL_API void generateDOT ( const SgProject & project, std::string filenameP
 // ROSE_DLL_API void generateDOT ( SgNode* node, std::string baseFilename, std::string filenamePostfix = "" );
 ROSE_DLL_API void generateDOT ( SgNode* node, std::string filename );
 
-// DQ (9/1/2008): Added function to generate the compete AST when specificed with multiple files 
+// DQ (9/1/2008): Added function to generate the compete AST when specificed with multiple files
 // on the command line.  This is the older default behavior of generateDOT (from last year, or so).
 ROSE_DLL_API void generateDOT_withIncludes   ( const SgProject & project, std::string filenamePostfix = "" );
 ROSE_DLL_API void generateDOTforMultipleFile ( const SgProject & project, std::string filenamePostfix = "" );
@@ -137,7 +144,7 @@ namespace Rose
    {
   // This class serves as a catch all location for functions of general use within ROSE
   // we have added variables that are set using command line parameters to avoid the use of
-  // global variables.  
+  // global variables.
 
   // DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options such as:
   //    1) output of warnings from the EDG (or other) frontend.
@@ -235,7 +242,7 @@ namespace Rose
   // DQ (1/19/2021): This is part of moving to a new map that uses the SgSourceFile pointer instead of the fild_id.
      extern std::map<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > tokenSubsequenceMapOfMapsBySourceFile;
 
-  // DQ (5/27/2021): This is required for the token-based unparsing, specifically for knowing when to 
+  // DQ (5/27/2021): This is required for the token-based unparsing, specifically for knowing when to
   // unparse the trailing whitespace at the end of the last statement in a scope to the end of the scope.
      extern std::map<SgSourceFile*,std::map<SgScopeStatement*,std::pair<SgStatement*,SgStatement*> > > firstAndLastStatementsToUnparseInScopeMapBySourceFile;
 
@@ -274,13 +281,13 @@ namespace Rose
 
      void initDiagnostics();
 
-  // DQ (11/25/2020): These are the boolean variables that are computed in the function compute_language_kind() 
-  // and inlined via the SageInterface::is_<language kind>_language() functions.  This fixes a significant 
+  // DQ (11/25/2020): These are the boolean variables that are computed in the function compute_language_kind()
+  // and inlined via the SageInterface::is_<language kind>_language() functions.  This fixes a significant
   // performacne bug that was identified by Matt Sottile. First indications of this problem were from HPCToolKit,
-  // when it reported that there were large ammounts of time spent in the memory pool traversals, but the results 
-  // were not clear since we could not trace that to the SageInterface::is_<language kind>_language() functions 
+  // when it reported that there were large ammounts of time spent in the memory pool traversals, but the results
+  // were not clear since we could not trace that to the SageInterface::is_<language kind>_language() functions
   // directly.  Matt was able to identify the root cause of the problem.  It turns out the that the
-  // SageInterface::is_<language kind>_language() functions are implemented using a memory pool traversal of the 
+  // SageInterface::is_<language kind>_language() functions are implemented using a memory pool traversal of the
   // SgSourceFile (and SgBinaryFile, when binary analysis is enabled at configure time).  The new implementation
   // supports these boolean values to be inlined via the SageInterface::is_<language kind>_language() functions.
   // And the compute_language_kind() function is called from the:
@@ -288,7 +295,7 @@ namespace Rose
   // contained in the sage_support.C file.  This function is the single point at whcuh all of the SgFile IR nodes
   // (including SgSourceFile, and SgBinaryFile) are generated.
 
-  // Note: the semantics is that there is at least one of the language kind files processed by ROSE, across all 
+  // Note: the semantics is that there is at least one of the language kind files processed by ROSE, across all
   // SgFile objects across all SgProject objects.
      extern bool is_Ada_language;
      extern bool is_C_language;
@@ -315,10 +322,3 @@ namespace Rose
 #endif
 
 #endif // ifndef UTILITY_FUNCTIONS_H
-
-
-
-
-
-
-
