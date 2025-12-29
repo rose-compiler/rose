@@ -398,11 +398,17 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
         return new SymbolicFunction( opr, "new", v);
     case AstInterface::UOP_NOT:
         return new SymbolicFunction( opr, "!", v);
-    case AstInterface::UOP_CAST:
+    case AstInterface::UOP_CAST_C:
+    case AstInterface::UOP_CAST_REINTERP:
+    case AstInterface::UOP_CAST_STATIC:
+    case AstInterface::UOP_CAST_DYNAMIC:
+    case AstInterface::UOP_CAST_CONST:
         return v;
     case AstInterface::UOP_DECR1:
+    case AstInterface::UOP_DECR1_POST:
         return new SymbolicFunction( opr, "--", v);
     case AstInterface::UOP_INCR1:
+    case AstInterface::UOP_INCR1_POST:
         return new SymbolicFunction( opr, "++", v);
     default:
        std::cerr << "Cannot handle " << AstInterface::AstToString(exp) << ":" << opr << "\n";

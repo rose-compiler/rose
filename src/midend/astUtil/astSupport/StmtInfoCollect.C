@@ -124,14 +124,22 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
          modstack.back().modmap[AstNodePtrImpl(lhs).get_ptr()] =  ModRecord(AstNodePtrImpl(rhs).get_ptr(),additional);
        }
    }
-   else if (fa.IsUnaryOp(s, &opr, &lhs) &&
-           (opr == AstInterface::UOP_INCR1 || opr == AstInterface::UOP_DECR1)){
-      DebugLocalInfoCollect([](){ return "Is unary operator."; });
-      ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
-      if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
-         modstack.push_back(s);
-         modstack.back().modmap[AstNodePtrImpl(lhs).get_ptr()] =  ModRecord(AstNodePtrImpl(s).get_ptr(),true);
-      }
+   else if (fa.IsUnaryOp(s, &opr, &lhs)) {
+       // Below enumeate unary operators that modify its operand.
+       switch (opr) {
+         case AstInterface::UOP_INCR1:
+         case AstInterface::UOP_INCR1_POST:
+         case AstInterface::UOP_DECR1:
+         case AstInterface::UOP_DECR1_POST: {
+           DebugLocalInfoCollect([](){ return "Is unary operator."; });
+           ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
+           if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
+              modstack.push_back(s);
+              modstack.back().modmap[AstNodePtrImpl(lhs).get_ptr()] =  ModRecord(AstNodePtrImpl(s).get_ptr(),true);
+           } } // end of cases
+           break;
+          default: break;
+         }
    }
    else if (fa.IsVariableDecl( s, &vars, &args) || (additional=fa.IsAliasingDecl( s, &vars, &args))) {
       DebugLocalInfoCollect([](){ return "Is variable declaration."; });

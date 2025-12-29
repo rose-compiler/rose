@@ -154,7 +154,9 @@ public:
   // Types:
   typedef enum {OP_NONE = 0, 
            UOP_MINUS, UOP_ADDR, UOP_DEREF, UOP_ALLOCATE, UOP_NOT,
-           UOP_CAST, UOP_INCR1, UOP_DECR1, UOP_BIT_COMPLEMENT,
+           UOP_CAST_C, UOP_CAST_CONST, UOP_CAST_STATIC, UOP_CAST_DYNAMIC, UOP_CAST_REINTERP,
+           UOP_CAST_SAFE, UOP_CAST_ADA, 
+           UOP_INCR1, UOP_INCR1_POST, UOP_DECR1, UOP_DECR1_POST, UOP_BIT_COMPLEMENT,
            BOP_DOT_ACCESS, BOP_ARROW_ACCESS, 
            BOP_TIMES, BOP_DIVIDE, BOP_MOD, BOP_PLUS, BOP_MINUS, 
            BOP_EQ, BOP_LE, BOP_LT, BOP_NE, BOP_GT, BOP_GE, 
@@ -346,7 +348,7 @@ public:
   //! Create AST for constant values of  types int, bool, string, float, etc. as well as names of variable and function references. e.g: CreateConstant("memberfunction","floatArray::length")
   AstNodePtr CreateConstant( const std::string& valtype, const std::string& val);
 
-  static std::string GetGlobalUniqueName(const AstNodePtr& exp, std::string expname);
+  static std::string GetGlobalUniqueName(const AstNodePtr& exp, std::string expname, bool do_not_add_file_name = false);
   //! Check whether $exp$ is a variable reference; If yes, return type, name, scope, and global/local etc.
   static bool IsVarRef( const AstNodePtr& exp, AstNodeType* vartype = 0,
                    std::string* varname = 0, AstNodePtr* scope = 0, 

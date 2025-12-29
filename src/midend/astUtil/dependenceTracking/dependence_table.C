@@ -261,7 +261,7 @@ class ClusterDependences {
     int cluster_index_ = 0;
 
     bool setupNamespace(const std::string& s) {
-       auto namespace_pos = s.find("::");
+       auto namespace_pos = s.rfind("::");
        if (namespace_pos > 0 && namespace_pos < s.size()) {
            std::string cluster_name = s.substr(0, namespace_pos); 
            clusters[cluster_name].insert(s);

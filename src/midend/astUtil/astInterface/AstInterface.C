@@ -126,6 +126,7 @@ AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
       return AstNodePtrImpl(isSgTemplateFunctionDefinition(s)->get_declaration());
     case V_SgFunctionDeclaration:
     case V_SgMemberFunctionDeclaration:
+    case V_SgTemplateMemberFunctionDeclaration:
     case V_SgProcedureHeaderStatement:
     case V_SgTemplateInstantiationFunctionDecl:
     case V_SgTemplateInstantiationMemberFunctionDecl:
@@ -949,7 +950,7 @@ NewMemberFunc( SgClassDeclaration* classDecl, const std::string& name, SgType*  
 }
 
 std::string AstInterface::
-GetGlobalUniqueName(const AstNodePtr& _scope, std::string expname) {
+GetGlobalUniqueName(const AstNodePtr& _scope, std::string expname, bool do_not_add_file_name) {
   SgNode* scope = AstNodePtrImpl(_scope).get_ptr();
   assert(scope != 0);
   std::string result = expname;
@@ -981,13 +982,17 @@ GetGlobalUniqueName(const AstNodePtr& _scope, std::string expname) {
       } 
       scope = AstInterfaceImpl::GetScope(scope);
   }
-  if (scopename == "main") {
-    std::string filename = scope->get_file_info()->get_filenameString();
-    auto location = filename.rfind("/");
-    if (location < filename.size()) {
-       filename = filename.substr(location+1);
+  if (!do_not_add_file_name) {
+    if (scopename == "main" || CmdOptions::GetInstance()->HasOption("-global_via_filename")) {
+      std::string filename = scope->get_file_info()->get_filenameString();
+      auto location = filename.rfind("/");
+      if (location < filename.size()) {
+         filename = filename.substr(location+1);
+      }
+      if (result.find(filename) >= result.size()) {
+         result = filename + "::" + result;
+      }
     }
-    result = filename + "::" + result;
   }
   result.erase(std::remove_if(result.begin(), result.end(), ::isspace), result.end());
   return result;
@@ -1978,7 +1983,7 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
                *has_ptr_deref = true;
           }
           if (varname != 0) {
-             (*varname) = "*" + (*varname);
+             (*varname) = "_deref_" + (*varname);
           }
           if (vartype != 0) {
             SgPointerType* ptype = isSgPointerType(AstNodeTypeImpl(*vartype).get_ptr());
@@ -2621,15 +2626,26 @@ IsUnaryOp( const AstNodePtr& _exp, OperatorEnum* opr, AstNodePtr* opd)
        if (opd != 0) *opd = AstNodePtrImpl(isSgNewExp(exp)->get_constructor_args());
        return true;
     case V_SgCastExp:
-       if (opr != 0) *opr = UOP_CAST; 
+       if (opr != 0) {
+          switch (isSgCastExp(exp)->cast_type()) {
+          case SgCastExp::cast_type_enum::e_C_style_cast: *opr = UOP_CAST_C; break;
+          case SgCastExp::cast_type_enum::e_const_cast: *opr = UOP_CAST_CONST; break;
+          case SgCastExp::cast_type_enum::e_static_cast: *opr = UOP_CAST_STATIC; break;
+          case SgCastExp::cast_type_enum::e_dynamic_cast: *opr = UOP_CAST_DYNAMIC; break;
+          case SgCastExp::cast_type_enum::e_reinterpret_cast: *opr = UOP_CAST_REINTERP; break;
+          case SgCastExp::cast_type_enum::e_safe_cast: *opr = UOP_CAST_SAFE; break;
+          case SgCastExp::cast_type_enum::e_ada_type_qualification: *opr = UOP_CAST_ADA; break;
+          default: std::cerr << "Error: unexpected type cast enum." << "\n"; ROSE_ASSERT(false);
+          }
+       }
        if (opd != 0) *opd = AstNodePtrImpl(isSgCastExp(exp)->get_operand()); 
        return true;
     case V_SgMinusMinusOp:
-        if (opr != 0) *opr = UOP_DECR1; 
+        if (opr != 0) *opr = (isSgMinusMinusOp(exp)->get_mode() == SgUnaryOp::Sgop_mode::prefix)? UOP_DECR1 : UOP_DECR1_POST; 
         if (opd != 0) *opd = AstNodePtrImpl(isSgMinusMinusOp(exp)->get_operand());
         return true;
     case V_SgPlusPlusOp:
-        if (opr != 0) *opr = UOP_INCR1; 
+        if (opr != 0) *opr = (isSgPlusPlusOp(exp)->get_mode() == SgUnaryOp::Sgop_mode::prefix)?  UOP_INCR1 : UOP_INCR1_POST; 
         if (opd != 0) *opd = AstNodePtrImpl(isSgPlusPlusOp(exp)->get_operand());
         return true;
     case V_SgAsmOp:
@@ -3068,7 +3084,7 @@ GetTypeInfo(SgType* t, std::string *tname, std::string* stripname, int* size, bo
     if (pointer_type != 0) {
        GetTypeInfo(pointer_type->get_base_type(), tname, stripname, size, use_global_name);
        if (tname != 0) {
-          *tname = (*tname) + "*";
+          *tname = (*tname) + "_ptr_";
        }
        return;
     }
@@ -3083,15 +3099,21 @@ GetTypeInfo(SgType* t, std::string *tname, std::string* stripname, int* size, bo
       typeName=insDecl->get_templateDeclaration()->get_qualified_name();
     }
     else if (use_global_name) {
-      typeName = AstInterface::GetGlobalUniqueName(decl, typeName);
+      typeName = AstInterface::GetGlobalUniqueName(decl, typeName, /*do not use file name*/true);
     } 
   }
 
   std::string r1 = ::StripGlobalQualifier(typeName);
   std::string result = "";
   for (size_t i = 0; i < r1.size(); ++i) {
-    if (r1[i] == '[' || r1[i] == ']' || r1[i] == '{' || r1[i] == '}' || r1[i] == ',') {
+    if (r1[i] == '[' || r1[i] == ']' || r1[i] == '{' || r1[i] == '}' || r1[i] == ',' || r1[i] == '.') {
       result.push_back('_');
+    }
+    else if (r1[i] == '&') {
+      result = result + "_ref_";
+    }
+    else if (r1[i] == '*') {
+      result = result + "_deref_";
     }
     else if (r1[i] != ' ')
       result.push_back(r1[i]);
@@ -3728,7 +3750,9 @@ CreateUnaryOP( OperatorEnum op, const AstNodePtr& _a0)
    case UOP_MINUS: 
      result = new SgMinusOp( GetFileInfo(), e, e->get_type());
      break;
-   case UOP_CAST:
+   case UOP_CAST_C:
+   case UOP_CAST_STATIC:
+   case UOP_CAST_REINTERP:
      result = new SgCastExp( GetFileInfo(), e, e->get_type());
      break;
    case UOP_DEREF:
@@ -4519,9 +4543,14 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
           return "using_" + isSgUsingDirectiveStatement(variable)->get_namespaceDeclaration()->get_name().getString();
      case V_SgTypedefDeclaration:
      case V_SgTemplateTypedefDeclaration:
-          return "typedef_" + AstInterface::GetGlobalUniqueName(variable->get_parent(), isSgTypedefDeclaration(variable)->get_name().getString());
+          return "typedef_" + AstInterface::GetGlobalUniqueName(variable->get_parent(), isSgTypedefDeclaration(variable)->get_name().getString(), /*do not use file name*/true);
      case V_SgStaticAssertionDeclaration:
           return OperatorDeclaration::operator_signature(variable);
+     case V_SgClassDefinition:
+          return GetVariableSignature(isSgClassDefinition(variable)->get_declaration());
+     case V_SgClassDeclaration:
+     case V_SgTemplateClassDeclaration:
+          return "class_" + std::string(isSgClassDeclaration(variable)->get_name().str()); 
      default: break;
     }
     
@@ -4557,7 +4586,7 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
     {
      AstNodeType alloc_type; 
      if (IsMemoryAllocation(variable, &alloc_type)) {
-        return res + "new_" + GetGlobalUniqueName(variable, GetTypeName(alloc_type));
+        return res + "new_" + GetGlobalUniqueName(variable, GetTypeName(alloc_type), /*do_not_use_file_name*/true);
      }
     }
     {
@@ -4577,7 +4606,7 @@ bool AstInterface::IsLocalRef(const AstNodePtr& ref, const AstNodePtr& scope, bo
 
    std::string scope_name;
    if (! AstInterface::IsBlock(scope, &scope_name)) {
-     std::cerr << "Expecting a block but getting :" << scope->class_name() << "\n";
+     //std::cerr << "TODO: Expecting a block but getting :" << scope->class_name() << "\n";
      //TODO(QY): need to make each scope a block for consistency. 
      //assert(false);
    }
