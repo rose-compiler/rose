@@ -39,19 +39,19 @@ namespace CodeThorn {
 
   PropertyValueTable* SpotConnection::getLtlResults() {
     if (ltlResults) {
-      return ltlResults; 
+      return ltlResults;
     } else {
       cerr<< "ERROR: LTL results requested even though the SpotConnection has not been initialized yet." << endl;
       assert(0);
     }
   }
 
-  void SpotConnection::resetLtlResults() { 
+  void SpotConnection::resetLtlResults() {
     ROSE_ASSERT(ltlResults);
-    ltlResults->init(ltlResults->size()); 
+    ltlResults->init(ltlResults->size());
   }
 
-  void SpotConnection::resetLtlResults(int property) { 
+  void SpotConnection::resetLtlResults(int property) {
     ROSE_ASSERT(ltlResults);
     ltlResults->setPropertyValue(property, PROPERTY_VALUE_UNKNOWN);
     ltlResults->setCounterexample(property, "");
@@ -60,7 +60,7 @@ namespace CodeThorn {
   void SpotConnection::setModeLTLDriven(bool ltlDriven) {
     modeLTLDriven=ltlDriven;
   }
-  void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg, 
+  void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg,
                                            LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers) {
     if (stg.size() == 0 && !modeLTLDriven) {
       cout << "STATUS: the transition system used as a model is empty, LTL behavior could not be checked." << endl;
@@ -68,17 +68,17 @@ namespace CodeThorn {
     }
     if (!stg.isPrecise() && !stg.isComplete()) {
       return;  //neither falsification nor verification works
-    } 
+    }
 
     //initializing the atomic propositions used based on I/O values
     spot::ltl::atomic_prop_set* sap = getAtomicProps(ltlRersMapping);
 
-    //instantiate a new dictionary for atomic propositions 
+    //instantiate a new dictionary for atomic propositions
     // (will be used by the model tgba as well as by the ltl formula tgbas)
     spot::bdd_dict dict;
     //create a tgba from CodeThorn's STG model
     SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, ltlRersMapping);
-    LtlProperty ltlProperty; 
+    LtlProperty ltlProperty;
     ltlProperty.ltlString = ltlResults->getFormula(propertyNum);
     ltlProperty.propertyNumber = propertyNum;
     checkAndUpdateResults(ltlProperty, ct_tgba, stg, withCounterexample, spuriousNoAnswers);
@@ -89,7 +89,7 @@ namespace CodeThorn {
   PropertyValue SpotConnection::checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<string> annotationsOfModeledTransitions) {
     if (!stg.isPrecise() && !stg.isComplete()) {
       return PROPERTY_VALUE_UNKNOWN;  //neither falsification nor verification works
-    } 
+    }
     PropertyValue result;
     spot::ltl::atomic_prop_set* sap = getAtomicProps(ltlProperty);
     // for an over-approximation, all atomic propositions need to be modeled in the stg in order to analyze if the property holds
@@ -100,7 +100,7 @@ namespace CodeThorn {
         }
       }
     }
-    //instantiate a new dictionary for atomic propositions 
+    //instantiate a new dictionary for atomic propositions
     // (will be used by the model tgba as well as by the ltl formula tgbas)
     spot::bdd_dict dict;
     //create a tgba from CodeThorn's STG model
@@ -124,7 +124,7 @@ namespace CodeThorn {
     return result;
   }
 
-  void SpotConnection::checkAndUpdateResults(LtlProperty property, SpotTgba* ct_tgba, TransitionGraph& stg, 
+  void SpotConnection::checkAndUpdateResults(LtlProperty property, SpotTgba* ct_tgba, TransitionGraph& stg,
                                              bool withCounterexample, bool spuriousNoAnswers) {
     std::string* pCounterExample;
     if (checkFormula(ct_tgba, property.ltlString , ct_tgba->get_dict(), &pCounterExample)) {  //SPOT returns that the formula could be verified
@@ -168,12 +168,12 @@ namespace CodeThorn {
 
       //initializing the atomic propositions used based on I/O values
       spot::ltl::atomic_prop_set* sap = getAtomicProps(ltlRersMapping);
-      //instantiate a new dictionary for atomic propositions 
+      //instantiate a new dictionary for atomic propositions
       // (will be used by the model tgba as well as by the ltl formula tgbas)
       spot::bdd_dict dict;
       //create a tgba from CodeThorn's STG model
       SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, ltlRersMapping);
-      std::string* pCounterExample; 
+      std::string* pCounterExample;
       ROSE_ASSERT(ltlResults);
       std::list<int>* yetToEvaluate = ltlResults->getPropertyNumbers(PROPERTY_VALUE_UNKNOWN);
       for (std::list<int>::iterator i = yetToEvaluate->begin(); i != yetToEvaluate->end(); ++i) {
@@ -216,9 +216,9 @@ namespace CodeThorn {
   }
 
   ParProSpotTgba* SpotConnection::toTgba(ParProTransitionGraph& stg) {
-    // retrieve all atomic propositions found in the given LTL propeties 
+    // retrieve all atomic propositions found in the given LTL propeties
     spot::ltl::atomic_prop_set* sap = getAtomicProps();
-    //instantiate a new dictionary for atomic propositions 
+    //instantiate a new dictionary for atomic propositions
     spot::bdd_dict* dict = new spot::bdd_dict();
     //create a tgba from CodeThorn's STG model
     ParProSpotTgba* ct_tgba = new ParProSpotTgba(stg, *sap, *dict);
@@ -232,15 +232,15 @@ namespace CodeThorn {
     }
     if (!stg.isPrecise() && !stg.isComplete()) {
       return;  //neither falsification nor verification works
-    } else { 
-      // retrieve all atomic propositions found in the given LTL propeties 
+    } else {
+      // retrieve all atomic propositions found in the given LTL propeties
       spot::ltl::atomic_prop_set* sap = getAtomicProps();
-      //instantiate a new dictionary for atomic propositions 
+      //instantiate a new dictionary for atomic propositions
       // (will be used by the model tgba as well as by the ltl formula tgbas)
       spot::bdd_dict dict;
       //create a tgba from CodeThorn's STG model
       ParProSpotTgba* ct_tgba = new ParProSpotTgba(stg, *sap, dict);
-      std::string* pCounterExample; 
+      std::string* pCounterExample;
       std::list<int>* yetToEvaluate = ltlResults->getPropertyNumbers(PROPERTY_VALUE_UNKNOWN);
       for (std::list<int>::iterator i = yetToEvaluate->begin(); i != yetToEvaluate->end(); ++i) {
         if (checkFormula(ct_tgba, ltlResults->getFormula(*i), ct_tgba->get_dict(), &pCounterExample)) {  //SPOT returns that the formula could be verified
@@ -293,14 +293,14 @@ namespace CodeThorn {
   }
 
   bool SpotConnection::checkFormula(spot::tgba* ct_tgba, std::string ltl_string, spot::bdd_dict* dict, std::string** ce_ptr) {
- 
+
     bool result;
     //cout<<"STATUS: parsing LTL: "<<ltl_string<<endl;
     negateFormula(ltl_string);
     spot::ltl::parse_error_list pel;
     const spot::ltl::formula* f = spot::ltl::parse(ltl_string, pel);
     if (spot::ltl::format_parse_errors(std::cerr, ltl_string, pel)) {
-      f->destroy();						
+      f->destroy();
       cerr<<"Error: ltl format error."<<endl;
       assert(0);
     }
@@ -329,7 +329,7 @@ namespace CodeThorn {
           //assign a string representation of the counterexample if the corresponding out parameter is set
           std::string r = runResult.str();
           r = filterCounterexample(r, args.getBool("counterexamples-with-output"));
-          *ce_ptr = new string(r);//formatRun(r);	
+          *ce_ptr = new string(r);//formatRun(r);
           delete run;
         } else {
           cerr << "ERROR: SPOT says a counterexample exist but no accepting run could be returned." << endl;
@@ -358,7 +358,7 @@ namespace CodeThorn {
       result->insert(sap->begin(), sap->end());
       delete sap;
       sap = NULL;
-    } 
+    }
     delete propertyNumbers;
     propertyNumbers = NULL;
     return result;
@@ -369,7 +369,7 @@ namespace CodeThorn {
     spot::ltl::parse_error_list pel;
     const spot::ltl::formula* formula = spot::ltl::parse(ltlFormula, pel);
     if (spot::ltl::format_parse_errors(std::cerr, ltlFormula, pel)) {
-      formula->destroy();						
+      formula->destroy();
       cerr<<"Error: ltl format error."<<endl;
       ROSE_ASSERT(0);
     }
@@ -393,7 +393,7 @@ namespace CodeThorn {
     spot::ltl::parse_error_list pel;
     const spot::ltl::formula* atomic_props = spot::ltl::parse(ltl_props, pel);
     if (spot::ltl::format_parse_errors(std::cerr, ltl_props, pel)) {
-      atomic_props->destroy();						
+      atomic_props->destroy();
       cerr<<"Error: ltl format error."<<endl;
       assert(0);
     }
@@ -410,13 +410,13 @@ namespace CodeThorn {
     while (std::getline(input, line)){
       //basic assumption: there is a formula after each number "#X:" (X being an integer) before the next number occurs
       // e.g. "#1:", the number by which the porperty is being refered to comes after '#'
-      if (line.size() > 0 && line.at(0) == '#' && line.find_first_of(':') != string::npos) {  
+      if (line.size() > 0 && line.at(0) == '#' && line.find_first_of(':') != string::npos) {
         int endIndex = line.find_first_of (':', 0); //the ':' marks the end of the property number
         nextFormula->propertyNumber = boost::lexical_cast<int>(line.substr(1, (endIndex-1)));
         explicitPropertyNumber = true;
       } else if (line.size() > 0 && line.at(0) == '(') {   // '(' at column 0 indicates the beginning of a formula
         if (!explicitPropertyNumber) {  //enumerate those properties without any ID from 0 (therefore either all or non should have a number)
-          nextFormula->propertyNumber = defaultPropertyNumber; 
+          nextFormula->propertyNumber = defaultPropertyNumber;
           defaultPropertyNumber++;
         }
         nextFormula->ltlString = parseWeakUntil(line);
@@ -463,7 +463,7 @@ namespace CodeThorn {
     //result->append("******************************\n");
     result->append("I/O run:\n");
     std::string* temp =  filter_run_IO_only(run);
-    result->append( *temp ); result->append("\n");	
+    result->append( *temp ); result->append("\n");
     delete temp;
     result->append("******************************\n");
     result->append("input run only:\n");
@@ -497,7 +497,7 @@ namespace CodeThorn {
     // 1.) read in list of prefix props and cycle props
     std::list<std::string> prefix, cycle;
     std::istringstream run(spotRun);
-    std::string result = "";	
+    std::string result = "";
     std::string line;
     enum PartOfRun {RUN_PREFIX, RUN_CYCLE, RUN_UNKNOWN};
     PartOfRun currentPart = RUN_UNKNOWN;
@@ -513,11 +513,11 @@ namespace CodeThorn {
       } else if (line.at(0) == '|') {  //indicates a transition
         line = line.substr(1, (line.size()-1));	//cut off the '|' prefix
         boost::trim(line);
-        vector<std::string> transitionAndAccSet; 
-        boost::split(transitionAndAccSet, line, boost::is_any_of("{")); 
+        vector<std::string> transitionAndAccSet;
+        boost::split(transitionAndAccSet, line, boost::is_any_of("{"));
         line = *transitionAndAccSet.begin();       //cut off "{<acceptance-sets>}" suffix
         // iterate over all propositions in the transition and only add the non-negated one
-        vector<std::string> props; 		
+        vector<std::string> props;
         boost::split_regex(props, line, boost::regex("( & )|(\\{)"));
         //cout << "DEBUG: props.size(): " << props.size()  << endl;
         vector<string>::iterator i;
@@ -533,25 +533,25 @@ namespace CodeThorn {
               assert(0);
             }
           }
-        }			
+        }
       }
     }
-    // 2.) remove output states from the returned counterexample if parameter "includeOutputStates" is false   
+    // 2.) remove output states from the returned counterexample if parameter "includeOutputStates" is false
     std::list<std::string> returnedPrefix;
     std::list<std::string> returnedCycle;
     for (std::list<std::string>::iterator i = prefix.begin(); i != prefix.end() ; ++i) {
-      if (i->at(0) == 'i' || (includeOutputStates && i->at(0) == 'o' )) { 
+      if (i->at(0) == 'i' || (includeOutputStates && i->at(0) == 'o' )) {
         returnedPrefix.push_back(*i);
         //cout << "DEBUG: added " << (*i) << " to returnedPrefix. " << endl;
       }
     }
     for (std::list<std::string>::iterator i = cycle.begin(); i != cycle.end() ; ++i) {
-      if (i->at(0) == 'i' || (includeOutputStates && i->at(0) == 'o' )) { 
+      if (i->at(0) == 'i' || (includeOutputStates && i->at(0) == 'o' )) {
         returnedCycle.push_back(*i);
         //cout << "DEBUG: added " << (*i) << " to returnedCycle. " << endl;
       }
     }
-  
+
     // 3.) concatenate and return both prefix and cycle as a formatted string
     result += "[";
     for (std::list<std::string>::iterator i = returnedPrefix.begin(); i != returnedPrefix.end() ; ++i) {
@@ -575,14 +575,14 @@ namespace CodeThorn {
     //cout << "DEBUG: result in function: " << result  << endl;
   }
 
-  // return a string representation of the I/O characters from the given spot run. 
+  // return a string representation of the I/O characters from the given spot run.
   // return only the input characters if parameter "inputOnly" is true.
   std::string* SpotConnection::filter_run_IO_only(string& spotRun, bool inputOnly) {
     bool cycleStart = false;
     bool firstEntry = true;
     std::istringstream run(spotRun);
-    std::string* result = new string();	
-    std::string line;	
+    std::string* result = new string();
+    std::string line;
     while (std::getline(run, line)){
       boost::trim(line);
       if (line.at(0) == 'C') {  //identify where the cycle part of the run begins
@@ -591,7 +591,7 @@ namespace CodeThorn {
         line = line.substr(1, (line.size()-1));	//cut off the '|' prefix
         boost::trim(line);
         // iterate over all propositions in the transition and only add the non-negated one
-        vector<std::string> props; 		
+        vector<std::string> props;
         boost::split_regex(props, line, boost::regex("( & )|(\\{)"));
         vector<string>::iterator iter;
         for(iter = props.begin(); iter < props.end(); iter++) {
@@ -610,20 +610,20 @@ namespace CodeThorn {
               cycleStart = false;
             }
           }
-        }			
-      }			
+        }
+      }
     }
-    *result += ")*";	
+    *result += ")*";
     return result;
   };
 
   std::string SpotConnection::formatIOChar(std::string prop, bool firstEntry, bool cycleStart) {
     std::string result;
-    if (!firstEntry && !cycleStart){ 
+    if (!firstEntry && !cycleStart){
       result = ", ";
-    } else if (!firstEntry && cycleStart) {  
-      result = "]("; 
-    } else if (firstEntry && cycleStart) {  
+    } else if (!firstEntry && cycleStart) {
+      result = "](";
+    } else if (firstEntry && cycleStart) {
       result = "(";
     } else {
       result = "[";
@@ -636,7 +636,7 @@ namespace CodeThorn {
     spot::ltl::parse_error_list pel;
     const spot::ltl::formula* formula = spot::ltl::parse(ltlFormula, pel);
     if (spot::ltl::format_parse_errors(std::cerr, ltlFormula, pel)) {
-      formula->destroy();						
+      formula->destroy();
       cerr<<"Error: ltl format error."<<endl;
       ROSE_ASSERT(0);
     }
@@ -672,14 +672,14 @@ namespace CodeThorn {
 
 namespace CodeThorn {
   SpotConnection::SpotConnection() {  reportUndefinedFunction(); };
-  SpotConnection::SpotConnection(std::string ltl_formulae_file) {  reportUndefinedFunction(); }
-  SpotConnection::SpotConnection(std::list<std::string> ltl_formulae) { reportUndefinedFunction(); }
+  SpotConnection::SpotConnection(std::string /*ltl_formulae_file*/) {  reportUndefinedFunction(); }
+  SpotConnection::SpotConnection(std::list<std::string> /*ltl_formulae*/) { reportUndefinedFunction(); }
 
-  void SpotConnection::init(std::string ltl_formulae_file) {
+  void SpotConnection::init(std::string /*ltl_formulae_file*/) {
     reportUndefinedFunction();
   }
 
-  void SpotConnection::init(std::list<std::string> ltl_formulae) {
+  void SpotConnection::init(std::list<std::string> /*ltl_formulae*/) {
     reportUndefinedFunction();
   }
 
@@ -688,49 +688,49 @@ namespace CodeThorn {
     return nullptr;
   }
 
-  void SpotConnection::resetLtlResults() { 
+  void SpotConnection::resetLtlResults() {
     reportUndefinedFunction();
   }
 
-  void SpotConnection::resetLtlResults(int property) { 
+  void SpotConnection::resetLtlResults(int /*property*/) {
     reportUndefinedFunction();
   }
 
-  void SpotConnection::setModeLTLDriven(bool ltlDriven) {
+  void SpotConnection::setModeLTLDriven(bool /*ltlDriven*/) {
     reportUndefinedFunction();
   }
-  void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg, 
-                                           LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers) {
+  void SpotConnection::checkSingleProperty(int /*propertyNum*/, TransitionGraph& /*stg*/,
+                                           LtlRersMapping /*ltlRersMapping*/, bool /*withCounterexample*/, bool /*spuriousNoAnswers*/) {
     reportUndefinedFunction();
   }
 
-  PropertyValue SpotConnection::checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<string> annotationsOfModeledTransitions) {
+  PropertyValue SpotConnection::checkPropertyParPro(string /*ltlProperty*/, ParProTransitionGraph& /*stg*/, set<string> /*annotationsOfModeledTransitions*/) {
     reportUndefinedFunction();
     PropertyValue v=PROPERTY_VALUE_UNKNOWN;
     return v;
   }
 
-  void SpotConnection::checkLtlProperties(TransitionGraph& stg,
-                                          LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers) {
+  void SpotConnection::checkLtlProperties(TransitionGraph& /*stg*/,
+                                          LtlRersMapping /*ltlRersMapping*/, bool /*withCounterexample*/, bool /*spuriousNoAnswers*/) {
     reportUndefinedFunction();
   }
 
-  ParProSpotTgba* SpotConnection::toTgba(ParProTransitionGraph& stg) {
+  ParProSpotTgba* SpotConnection::toTgba(ParProTransitionGraph& /*stg*/) {
     reportUndefinedFunction();
     return nullptr;
   }
 
-  void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<string> annotationsOfModeledTransitions) {
+  void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& /*stg*/, bool /*withCounterexample*/, bool /*spuriousNoAnswers*/, set<string> /*annotationsOfModeledTransitions*/) {
     reportUndefinedFunction();
   }
 
-  std::string SpotConnection::spinSyntax(std::string ltlFormula) {
+  std::string SpotConnection::spinSyntax(std::string /*ltlFormula*/) {
     reportUndefinedFunction();
     string s;
     return s;
   }
 
-  set<string> SpotConnection::atomicPropositions(string ltlFormula) {
+  set<string> SpotConnection::atomicPropositions(string /*ltlFormula*/) {
     reportUndefinedFunction();
     set<string> s;
     return s;
@@ -743,4 +743,3 @@ namespace CodeThorn {
 } // end of namespace CodeThorn
 
 #endif // HAVE_SPOT
-

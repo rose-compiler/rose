@@ -31,7 +31,7 @@ namespace
 
   ct::ObjectLayout
   computeObjectLayout( const ct::ClassAnalysis& all,
-                       const ct::ObjectLayoutContainer& layouts,
+                       const ct::ObjectLayoutContainer&,
                        const ct::ClassAnalysis::value_type& clazz
                      )
   {

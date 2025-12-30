@@ -11,14 +11,14 @@ namespace CodeThorn {
   }
   ReadWriteListener::~ReadWriteListener() {
   }
-  void ReadWriteListener::readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc) {
+  void ReadWriteListener::readingFromMemoryLocation(Label, PStatePtr, AbstractValue&) {
   }
-  void ReadWriteListener::writingToMemoryLocation(Label lab, PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) {
+  void ReadWriteListener::writingToMemoryLocation(Label, PState*, AbstractValue&, AbstractValue&) {
   }
   // evalResult.value() holds AbstractValue of boolean value
-  void ReadWriteListener::trueFalseEdgeEvaluation(Edge edge, SingleEvalResult& evalResult , EStatePtr estate) {
+  void ReadWriteListener::trueFalseEdgeEvaluation(Edge, SingleEvalResult&, EStatePtr) {
   }
-  void ReadWriteListener::functionCallExternal(Edge edge, EStatePtr estate) {
+  void ReadWriteListener::functionCallExternal(Edge, EStatePtr) {
   }
     void ReadWriteListener::setLabeler(Labeler* labeler) {
     _labeler=labeler;

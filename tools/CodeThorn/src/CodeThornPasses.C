@@ -92,7 +92,7 @@ namespace CodeThorn {
     return Pass::createIcfg(ctOpt,root,tc,labeler,classAnalysis,virtualFunctions,ICFG_backward);
   }
 
-  CFAnalysis* Pass::createIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassAnalysis* classAnalysis, VirtualFunctionAnalysis* virtualFunctions, ICFGDirection icfgDirection) {
+  CFAnalysis* Pass::createIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassAnalysis* classAnalysis, VirtualFunctionAnalysis* virtualFunctions, ICFGDirection /*icfgDirection*/) {
     tc.startTimer();
 
     CFAnalysis* cfanalyzer=new CFAnalysis(labeler);

@@ -11,7 +11,7 @@ using namespace AstUtility;
 using namespace CodeThorn;
 
 namespace CodeThorn {
-  
+
   bool CPAstAttribute::isConstantInteger(VariableId varId) {
     ROSE_ASSERT(_elem);
     return _elem->isUniqueConst(varId);
@@ -22,7 +22,7 @@ namespace CodeThorn {
     return _elem->uniqueConst(varId);
   }
 
-  void CPAstAttribute::toStream(ostream& os, VariableIdMapping* vim) {
+  void CPAstAttribute::toStream(ostream&, VariableIdMapping*) {
   }
 
   string CPAstAttribute::toString(){
@@ -50,4 +50,3 @@ namespace CodeThorn {
 
 //CPAstAttribute::~CPAstAttribute() {
 //}
-

@@ -3,6 +3,7 @@
  *************************************************************/
 
 #include "rose.h"
+#include "ROSE_UNUSED.h"
 
 #include "codethorn.h"
 #include "SgNodeHelper.h"
@@ -41,7 +42,7 @@
 #include "CtxCallStrings.h" // for setting call string options
 #include "AnalysisReporting.h"
 
-// Z3-based analyser / SSA 
+// Z3-based analyser / SSA
 #if HAVE_Z3
 #include "z3-prover-connection/SSAGenerator.h"
 #include "z3-prover-connection/ReachabilityAnalyzerZ3.h"
@@ -85,20 +86,21 @@ void optionallyRunZ3AndExit(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
 #ifdef HAVE_Z3
   if(ctOpt.z3BasedReachabilityAnalysis)
     {
-      assert(ctOpt.z3UpperInputBound!=-1 && ctOpt.z3VerifierErrorNumber!=-1);	
+      assert(ctOpt.z3UpperInputBound!=-1 && ctOpt.z3VerifierErrorNumber!=-1);
       int RERSUpperBoundForInput=ctOpt.z3UpperInputBound;
       int RERSVerifierErrorNumber=ctOpt.z3VerifierErrorNumber;
       cout << "generateSSAForm()" << endl;
-      ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, analyzer, &logger);	
+      ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, analyzer, &logger);
       cout << "checkReachability()" << endl;
       reachAnalyzer->checkReachability();
 
       exit(0);
     }
 #else
+  ROSE_UNUSED(ctOpt); ROSE_UNUSED(analyzer);
   cerr<<"optionallyRunZ3AndExit: Z3 not installed."<<endl;
   exit(1);
-#endif	
+#endif
 }
 
 void optionallyRunSSAGeneratorAndExit(CodeThornOptions& ctOpt, CTAnalysis* analyzer) {
@@ -109,6 +111,7 @@ void optionallyRunSSAGeneratorAndExit(CodeThornOptions& ctOpt, CTAnalysis* analy
     exit(0);
   }
 #else
+  ROSE_UNUSED(ctOpt); ROSE_UNUSED(analyzer);
   cerr<<"optionallyRunSSAGeneratorAndExit: Z3 not installed."<<endl;
   exit(1);
 #endif
@@ -128,13 +131,13 @@ int main( int argc, char * argv[] ) {
     tc.startTimer();
     CodeThornOptions ctOpt;
     ctOpt.sharedPStates=false; // experimental
-    
+
     LTLOptions ltlOpt; // to be moved into separate tool
     ParProOptions parProOpt; // options only available in parprothorn
     parseCommandLine(argc, argv, logger,CodeThorn::CodeThornLib::getCodeThornLibraryVersionNumber(),ctOpt,ltlOpt,parProOpt);
     mfacilities.control(ctOpt.logLevel); SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
     ctOpt.configurePrecisionOption();
- 
+
     IOAnalyzer* analyzer=CodeThornLib::createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
     CodeThornLib::optionallyRunInternalChecks(ctOpt,argc,argv);
     CodeThornLib::optionallyRunExprEvalTestAndExit(ctOpt,argc,argv);
@@ -146,10 +149,10 @@ int main( int argc, char * argv[] ) {
     case 10 :  {
       solver = new Solver10(); break; // only available in LTLThornLib
     }
-    case 11 :  {  
+    case 11 :  {
       solver = new Solver11(); break; // only available in LTLThornLib
     }
-    case 12 :  {  
+    case 12 :  {
       solver = new Solver12(); break; // only available in LTLThornLib
     }
     default:
@@ -175,7 +178,7 @@ int main( int argc, char * argv[] ) {
       ctOpt.setAnalysisList(analysisList);
       if(ctOpt.status) cout<<"STATUS: codethorn: Number of activated analyses: "<<ctOpt.analysisList().size()<<endl;
     }
-    
+
     SgProject* project=runRoseFrontEnd(argc,argv,ctOpt,tc);
     if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
     optionallyRunRoseAstChecks(ctOpt, project);
@@ -188,7 +191,7 @@ int main( int argc, char * argv[] ) {
       delete vim;
       exit(0);
     }
-    
+
     optionallyGenerateAstStatistics(ctOpt, project);
     optionallyGenerateTraversalInfoAndExit(ctOpt, project);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
@@ -196,11 +199,11 @@ int main( int argc, char * argv[] ) {
     VariableIdMappingExtended* vimOrig=CodeThorn::CodeThornLib::createVariableIdMapping(ctOpt,project); // only used for program statistics of original non-normalized program
     //AbstractValue::setVariableIdMapping(vim);
     logger[TRACE]<<"VIM (orig) created."<<endl;
-    
+
     ProgramInfo originalProgramInfo(project,vimOrig);
     originalProgramInfo.compute();
     logger[TRACE]<<"Program info (orig) computed."<<endl;
-    
+
     if(ctOpt.programStatsFileName.size()>0) {
       originalProgramInfo.toCsvFileDetailed(ctOpt.programStatsFileName,ctOpt.csvReportModeString);
     }
@@ -275,7 +278,7 @@ int main( int argc, char * argv[] ) {
     }
 
     analyzer->printStatusMessageLine("==============================================================");
-    
+
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
     if(analyzer->getSolver()->checksAssertions())
       optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
@@ -291,7 +294,7 @@ int main( int argc, char * argv[] ) {
     if(analyzer->getSolver()->createsTransitionSystem()) {
       runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
       processCtOptGenerateAssertions(ctOpt, analyzer, project);
-    
+
       if(ctOpt.reduceStg) {
         analyzer->reduceStgToInOutStates();
       }
@@ -336,4 +339,3 @@ int main( int argc, char * argv[] ) {
   mfacilities.shutdown();
   return 0;
 }
-

@@ -603,7 +603,7 @@ void Normalization::resetLineColInfo(SgLocatedNode* locNode, SgNodeHelper::LineC
   if(locNode) {
     if(auto fileInfoPtr=locNode->get_file_info()) {
       fileInfoPtr->set_line(lcPair.first);
-      fileInfoPtr->set_col(lcPair.second);          
+      fileInfoPtr->set_col(lcPair.second);
     }
   }
 }
@@ -665,7 +665,7 @@ void Normalization::resetLineColInfo(SgLocatedNode* locNode, SgNodeHelper::LineC
         cerr<<"Error: Normalization: Variable declaration in condition of while or do-while statement. Not supported yet."<<endl;
         exit(1);
       }
-      
+
       SgNodeHelper::LineColPair lcPair=SgNodeHelper::lineColumnPair(oldWhileCond); // preserve original lin/col info
       SgExprStatement* exprStmt=SageBuilder::buildExprStatement(SageBuilder::buildIntValHex(1));
       SgNodeHelper::setCond(stmt,exprStmt);
@@ -890,7 +890,7 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
 
           // ii) insert tmp-var initializer
           insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
-          
+
           setFileInfo(tmpVarDeclaration,originalFileInfo);
           // ii) replace use of expr with tmp-var and set file info of original AST
           bool deleteReplacedExpression=false;
@@ -1322,7 +1322,7 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
     return ifStmt;
   }
 
-  SgIfStmt* Normalization::generateBoolVarIfElseStmt(SgExpression* cond, SgVarRefExp* varRefExp,SgStatement* true_body, SgStatement* false_body, SgScopeStatement* scope) {
+  SgIfStmt* Normalization::generateBoolVarIfElseStmt(SgExpression* cond, SgVarRefExp* varRefExp,SgStatement* true_body, SgStatement* false_body, SgScopeStatement* /*scope*/) {
     ROSE_ASSERT(varRefExp);
     SgExpression* lhs=varRefExp;
     SgExpression* rhs=SageBuilder::buildBoolValExp(true);
@@ -1516,12 +1516,12 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
     SageInterface::convertAllForsToWhiles (top);
   }
 
-  void Normalization::transformContinueToGotoStmts(SgWhileStmt* whileStmt) {
+  void Normalization::transformContinueToGotoStmts(SgWhileStmt*) {
     cerr<<"Error: transforming continue to goto stmt in while loop not supported yet."<<endl;
     exit(1);
   }
 
-  void Normalization::transformContinueToGotoStmts(SgDoWhileStmt* whileStmt) {
+  void Normalization::transformContinueToGotoStmts(SgDoWhileStmt*) {
     cerr<<"Error: transforming continue to goto stmt in do-while loop not supported yet."<<endl;
     exit(1);
   }
@@ -1750,4 +1750,3 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
     tmpVarMapping.insert(TmpVarMappingPair(tmpVarNr,decl));
   }
 } // end of namespace CodeThorn
-

@@ -6,27 +6,27 @@
 #include "RERS_empty_specialization.h"
 
 namespace RERS_Problem {
-  //input and output are pointers to arrays in the parallel version 
+  //input and output are pointers to arrays in the parallel version
   int* output;
   int* input; //added because the input variable is now transformed into a global variable
-  void __empty_rersGlobalVarsCallInit(CodeThorn::CTAnalysis* analyzer, CodeThorn::PState& pstate, int thread_id) {
+  void __empty_rersGlobalVarsCallInit(CodeThorn::CTAnalysis*, CodeThorn::PState&, int /*thread_id*/) {
     std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<std::endl;
     exit(1);
   }
-  void __empty_rersGlobalVarsCallReturnInit(CodeThorn::CTAnalysis* analyzer, CodeThorn::PState& pstate, int thread_id) {
+  void __empty_rersGlobalVarsCallReturnInit(CodeThorn::CTAnalysis*, CodeThorn::PState&, int /*thread_id*/) {
     std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<std::endl;
     exit(1);
   }
-  void __empty_rersGlobalVarsArrayInit(int numberOfThreads) {
+  void __empty_rersGlobalVarsArrayInit(int /*numberOfThreads*/) {
     std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<std::endl;
     exit(1);
   }
 
-  void __empty_createGlobalVarAddressMaps(CodeThorn::CTAnalysis* analyzer) {
+  void __empty_createGlobalVarAddressMaps(CodeThorn::CTAnalysis*) {
     std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<std::endl;
     exit(1);
   }
-  void __empty_calculate_output(int numberOfThreads) { 
+  void __empty_calculate_output(int /*numberOfThreads*/) {
     std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<std::endl;
     exit(1);
   }

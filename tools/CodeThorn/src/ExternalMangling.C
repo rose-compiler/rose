@@ -1164,7 +1164,6 @@ namespace
     if (vla)
       return mglArrayVL;
 
-
     // fallback code for when constants are not preserved by the frontend
     CodeThorn::AbstractValue aVal = CodeThorn::evaluateExpressionWithEmptyState(const_cast<SgExpression*>(idx));
 
@@ -1172,8 +1171,9 @@ namespace
       return std::to_string(aVal.getIntValue());
 
     roseError() << "UNABLE to mangle array index of type: " << idx->class_name()
-                << "  was Rose's frontend called with SgProject::e_original_expressions_and_folded_values?"
-                << "\n  using string: " << idx->unparseToString()
+                << "  was ROSE's frontend called with SgProject::e_original_expressions_and_folded_values"
+                << "      or SgProject::e_folded_values_only?"
+                << "\n  using string for mangling: " << idx->unparseToString()
                 << std::endl;
 
     return idx->unparseToString();

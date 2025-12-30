@@ -34,7 +34,7 @@ struct CtxUnfoldFactory : PropertyStateFactory
 
 struct CtxUnfoldTransfer : DFTransferFunctions
 {
-  void transfer(Edge e, Lattice& element) override
+  void transfer(Edge /*e*/, Lattice& element) override
   {
 #if 0
     Labeler& labeler = SG_DEREF(getLabeler());

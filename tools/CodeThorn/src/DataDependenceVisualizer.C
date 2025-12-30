@@ -40,7 +40,7 @@ string CodeThorn::DataDependenceVisualizer::nodeSourceCode(Label lab) {
   return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
 }
 
-void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnalysis* cfanalyzer, string fileName, TopologicalSort* topSort) {
+void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(SgNode* /*root*/, CFAnalysis* cfanalyzer, string fileName, TopologicalSort* topSort) {
 
   /*
     generates a new cfg and a dot-cluster for each function and
@@ -95,7 +95,7 @@ void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(SgNode* ro
   myfile.close();
 }
 
-void CodeThorn::DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
+void CodeThorn::DataDependenceVisualizer::generateDot(SgNode* /*root*/, string fileName) {
   std::ofstream myfile;
   myfile.open(fileName.c_str(),std::ios::out);
   myfile<<"digraph DataDependence {"<<endl;

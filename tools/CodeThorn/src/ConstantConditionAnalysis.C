@@ -4,7 +4,7 @@
 
 using namespace CodeThorn;
 
-void ConstantConditionAnalysis::trueFalseEdgeEvaluation(Edge edge, SingleEvalResult& evalResult , EStatePtr estate) {
+void ConstantConditionAnalysis::trueFalseEdgeEvaluation(Edge /*edge*/, SingleEvalResult& evalResult , EStatePtr estate) {
   BoolLattice newVal;
   if(evalResult.isTrue())
     newVal=BoolLattice(1);
@@ -12,7 +12,7 @@ void ConstantConditionAnalysis::trueFalseEdgeEvaluation(Edge edge, SingleEvalRes
     newVal=BoolLattice(0);
   else
     newVal=BoolLattice(CodeThorn::Top());
-  
+
   BoolLattice oldVal=constConditions[estate->label()];
   // combine old with new value (boolean lattice). If it always evaluates to True, it remains True. Analogous for False; otherwise Top (=unknown)
   constConditions[estate->label()]=oldVal.lub(newVal);

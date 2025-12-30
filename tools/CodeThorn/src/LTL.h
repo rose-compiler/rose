@@ -19,20 +19,20 @@ extern unsigned short ltl_label;
 /// Copyright (c) 2012 Lawrence Livermore National Security, LLC.
 /// Produced at the Lawrence Livermore National Laboratory
 /// Written by Adrian Prantl <adrian@llnl.gov>.
-/// 
+///
 /// UCRL-CODE-155962.
 /// All rights reserved.
-/// 
+///
 /// This file is part of ROSE. For details, see http://www.rosecompiler.org/.
 /// Please read the COPYRIGHT file for Our Notice and for the BSD License.
-/// 
+///
 /// </pre>
 ///
 /// \date 2012
 /// \author Adrian Prantl
 namespace CodeThorn {
 namespace LTL {
-  
+
   /// Inherited Attribute for visitor pattern
   class InheritedAttribute {};
 
@@ -55,9 +55,9 @@ namespace LTL {
   class True;
   class False;
 
-  enum NodeType { 
-    e_Error=0, 
-    e_InputSymbol, e_OutputSymbol, e_NegInputSymbol, e_NegOutputSymbol, 
+  enum NodeType {
+    e_Error=0,
+    e_InputSymbol, e_OutputSymbol, e_NegInputSymbol, e_NegOutputSymbol,
     e_True, e_False,
     e_Not, e_Next, e_Eventually, e_Globally, e_And, e_Or, e_Until,
     e_WeakUntil, e_Release };
@@ -67,21 +67,21 @@ namespace LTL {
    */
   class BottomUpVisitor {
   public:
-    virtual void visit(const InputSymbol* e) {}
-    virtual void visit(const OutputSymbol* e) {}
-    virtual void visit(const NegInputSymbol* e) {}
-    virtual void visit(const NegOutputSymbol* e) {}
-    virtual void visit(const Not* e) {}
-    virtual void visit(const Next* e) {}
-    virtual void visit(const Eventually* e) {}
-    virtual void visit(const Globally* e) {}
-    virtual void visit(const And* e) {}
-    virtual void visit(const Or* e) {}
-    virtual void visit(const Until* e) {}
-    virtual void visit(const WeakUntil* e) {}
-    virtual void visit(const Release* e) {}
-    virtual void visit(const True* e) {}
-    virtual void visit(const False* e) {}
+    virtual void visit(const InputSymbol*) {}
+    virtual void visit(const OutputSymbol*) {}
+    virtual void visit(const NegInputSymbol*) {}
+    virtual void visit(const NegOutputSymbol*) {}
+    virtual void visit(const Not*) {}
+    virtual void visit(const Next*) {}
+    virtual void visit(const Eventually*) {}
+    virtual void visit(const Globally*) {}
+    virtual void visit(const And*) {}
+    virtual void visit(const Or*) {}
+    virtual void visit(const Until*) {}
+    virtual void visit(const WeakUntil*) {}
+    virtual void visit(const Release*) {}
+    virtual void visit(const True*) {}
+    virtual void visit(const False*) {}
   };
 
   /**
@@ -90,21 +90,21 @@ namespace LTL {
    */
   class TopDownVisitor {
   public:
-    virtual IAttr visit(InputSymbol* e,     IAttr a) { return a; }
-    virtual IAttr visit(OutputSymbol* e,    IAttr a) { return a; }
-    virtual IAttr visit(NegInputSymbol* e,  IAttr a) { return a; }
-    virtual IAttr visit(NegOutputSymbol* e, IAttr a) { return a; }
-    virtual IAttr visit(Not* e,             IAttr a) { return a; }
-    virtual IAttr visit(Next* e,            IAttr a) { return a; }
-    virtual IAttr visit(Eventually* e,      IAttr a) { return a; }
-    virtual IAttr visit(Globally* e,        IAttr a) { return a; }
-    virtual IAttr visit(And* e,             IAttr a) { return a; }
-    virtual IAttr visit(Or* e,              IAttr a) { return a; }
-    virtual IAttr visit(Until* e,           IAttr a) { return a; }
-    virtual IAttr visit(WeakUntil* e,       IAttr a) { return a; }
-    virtual IAttr visit(Release* e,         IAttr a) { return a; }
-    virtual IAttr visit(True* e,            IAttr a) { return a; }
-    virtual IAttr visit(False* e,           IAttr a) { return a; }
+    virtual IAttr visit(InputSymbol*,     IAttr a) { return a; }
+    virtual IAttr visit(OutputSymbol*,    IAttr a) { return a; }
+    virtual IAttr visit(NegInputSymbol*,  IAttr a) { return a; }
+    virtual IAttr visit(NegOutputSymbol*, IAttr a) { return a; }
+    virtual IAttr visit(Not*,             IAttr a) { return a; }
+    virtual IAttr visit(Next*,            IAttr a) { return a; }
+    virtual IAttr visit(Eventually*,      IAttr a) { return a; }
+    virtual IAttr visit(Globally*,        IAttr a) { return a; }
+    virtual IAttr visit(And*,             IAttr a) { return a; }
+    virtual IAttr visit(Or*,              IAttr a) { return a; }
+    virtual IAttr visit(Until*,           IAttr a) { return a; }
+    virtual IAttr visit(WeakUntil*,       IAttr a) { return a; }
+    virtual IAttr visit(Release*,         IAttr a) { return a; }
+    virtual IAttr visit(True*,            IAttr a) { return a; }
+    virtual IAttr visit(False*,           IAttr a) { return a; }
   };
 
 #define LTL_ATOMIC_VISITOR                        \
@@ -165,7 +165,7 @@ namespace LTL {
   class BinaryExpr : public Expr {
   public:
     Expr *expr1, *expr2;
-    BinaryExpr(std::string _id, NodeType _type, Expr *e1, Expr *e2): 
+    BinaryExpr(std::string _id, NodeType _type, Expr *e1, Expr *e2):
       Expr(_id, _type), expr1(e1), expr2(e2) {
       assert(e1 && e2);
       label = ltl_label++;
@@ -180,10 +180,10 @@ namespace LTL {
   class InputSymbol : public Expr {
   public:
     char c;
-    InputSymbol(int _c) { 
+    InputSymbol(int _c) {
       label = ltl_label++;
       type = e_InputSymbol;
-      c = (char)_c; 
+      c = (char)_c;
       std::stringstream s;
       s << "input("<<std::string(1, c)<<")";//^"<<label;
       id = s.str();
@@ -194,7 +194,7 @@ namespace LTL {
   class OutputSymbol : public Expr {
   public:
     char c;
-    OutputSymbol(int _c) { 
+    OutputSymbol(int _c) {
       label = ltl_label++;
       type = e_OutputSymbol;
       c = (char)_c;
@@ -251,7 +251,7 @@ namespace LTL {
     LTL_ATOMIC_VISITOR
   };
 
-                    
+
   /// ! / ¬ operator
   class Not : public UnaryExpr {
   public:
@@ -279,7 +279,7 @@ namespace LTL {
     Globally(Expr *e) : UnaryExpr("globally", e_Globally, e) {}
     LTL_UNARY_VISITOR
   };
-                    
+
   class And : public BinaryExpr {
   public:
     And(Expr *e1, Expr *e2) : BinaryExpr("and", e_And, e1, e2) {}
@@ -332,9 +332,9 @@ namespace LTL {
     Formula(Expr& e1) :e(e1), expr_size(ltl_label) {
       class WellFormedVisitor: public TopDownVisitor {
       public:
-        struct Attr: public InheritedAttribute { 
+        struct Attr: public InheritedAttribute {
           Attr(bool q) : quantified(q) {}
-          bool quantified; 
+          bool quantified;
         };
 
     // FIXME: is there a less ugly way to implement generic attributes?
@@ -343,22 +343,22 @@ namespace LTL {
         static IAttr newAttr(bool b)  { return new Attr(b); }
 
         IAttr visit(InputSymbol* e, IAttr a) {
-      e->quantified=getAttr(a)->quantified; 
-          if (!getAttr(a)->quantified) throw "unquantified input operation"; 
+      e->quantified=getAttr(a)->quantified;
+          if (!getAttr(a)->quantified) throw "unquantified input operation";
           return a;
         }
         IAttr visit(OutputSymbol* e, IAttr a) {
-      e->quantified=getAttr(a)->quantified; 
+      e->quantified=getAttr(a)->quantified;
           if (!getAttr(a)->quantified) throw "unquantified output operation";
           return a;
         }
         IAttr visit(NegInputSymbol* e, IAttr a) {
-      e->quantified=getAttr(a)->quantified; 
-          if (!getAttr(a)->quantified) throw "unquantified input operation"; 
+      e->quantified=getAttr(a)->quantified;
+          if (!getAttr(a)->quantified) throw "unquantified input operation";
           return a;
         }
         IAttr visit(NegOutputSymbol* e, IAttr a) {
-      e->quantified=getAttr(a)->quantified; 
+      e->quantified=getAttr(a)->quantified;
           if (!getAttr(a)->quantified) throw "unquantified output operation";
           return a;
         }
@@ -393,7 +393,7 @@ namespace LTL {
   };
 
 } // namespace LTL
- 
+
 } // namespace CodeThorn
 
 #endif

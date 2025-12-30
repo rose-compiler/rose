@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "ROSE_UNUSED.h"
 
 #include "PropertyValueTable.h"
 #include "CodeThornException.h"
@@ -378,14 +379,14 @@ string PropertyValueTable::getLtlsRersFormat(bool withResults, bool withAnnotati
     if (withResults) {
       PropertyValue val = _propertyValueTable[i->first];
       if (val == PROPERTY_VALUE_YES) {
-  propertiesRersFormat << "\t true";
+        propertiesRersFormat << "\t true";
       } else if (val == PROPERTY_VALUE_NO) {
-  propertiesRersFormat << "\t false";
+        propertiesRersFormat << "\t false";
       } else if (val == PROPERTY_VALUE_UNKNOWN) {
-  propertiesRersFormat << "\t unknown";
+        propertiesRersFormat << "\t unknown";
       } else {
-  cerr << "ERROR: Unknown PropertyValue detected." << endl;
-  ROSE_ASSERT(0);
+        cerr << "ERROR: Unknown PropertyValue detected." << endl;
+        ROSE_ASSERT(0);
       }
     }
     if (withAnnotations) {
@@ -397,6 +398,7 @@ string PropertyValueTable::getLtlsRersFormat(bool withResults, bool withAnnotati
   }
   return propertiesRersFormat.str();
 #else
+  ROSE_UNUSED(withResults); ROSE_UNUSED(withAnnotations);
   cerr<<"PropertyValueTable::getLtlsRersFormat requires SPOT. SPOT is not installed."<<endl;
   exit(1);
 #endif

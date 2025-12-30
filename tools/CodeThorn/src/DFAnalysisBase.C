@@ -208,7 +208,7 @@ namespace CodeThorn
 
 #include <sstream>
 
-  DFAstAttribute* DFAnalysisBase::createDFAstAttribute(Lattice* elem) {
+  DFAstAttribute* DFAnalysisBase::createDFAstAttribute(Lattice* /*elem*/) {
     // elem ignored in default function
     return new DFAstAttribute();
   }
@@ -274,4 +274,3 @@ namespace CodeThorn
   }
 
 }
-

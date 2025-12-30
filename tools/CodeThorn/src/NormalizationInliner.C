@@ -10,7 +10,7 @@ namespace CodeThorn {
     return _numInlinedFunctions;
   }
 
-  void NormalizationInliner::inlineFunctions(SgNode* root) {
+  void NormalizationInliner::inlineFunctions(SgNode*) {
     _numInlinedFunctions=0;
   }
 
@@ -39,7 +39,7 @@ namespace CodeThorn {
     }
     _numInlinedFunctions=nInlined;
   }
-  
+
   bool RoseInliner::isAstContaining(SgNode *haystack, SgNode *needle) {
     struct T1: AstSimpleProcessing {
       SgNode *needle;

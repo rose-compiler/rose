@@ -13,7 +13,7 @@ using namespace std;
 
 ParallelSystem::ParallelSystem() :
 _stg(NULL),
-_stgOverApprox(NULL), 
+_stgOverApprox(NULL),
 _stgUnderApprox(NULL) {
 }
 
@@ -106,12 +106,12 @@ EdgeAnnotationMap ParallelSystem::edgeAnnotationMap() {
 }
 
 // define order for ParallelSystems
-bool CodeThorn::operator<(const ParallelSystem& p1, const ParallelSystem& p2) { 
+bool CodeThorn::operator<(const ParallelSystem& p1, const ParallelSystem& p2) {
   if (p1.size()!= p2.size()) {
     return p1.size() < p2.size();
   }
-  for (map<int, Flow*>::iterator i1=p1.components().begin(), i2=p2.components().begin(); 
-       i1!=p1.components().end(); 
+  for (map<int, Flow*>::iterator i1=p1.components().begin(), i2=p2.components().begin();
+       i1!=p1.components().end();
        (++i1, ++i2)) {
     if ((*i1).first != (*i2).first) {
       return (*i1).first < (*i2).first;
@@ -124,8 +124,8 @@ bool CodeThorn::operator==(const ParallelSystem& p1, const ParallelSystem& p2) {
   if (p1.size()!= p2.size()) {
     return false;
   }
-  for (map<int, Flow*>::iterator i1=p1.components().begin(), i2=p2.components().begin(); 
-       i1!=p1.components().end(); 
+  for (map<int, Flow*>::iterator i1=p1.components().begin(), i2=p2.components().begin();
+       i1!=p1.components().end();
        (++i1, ++i2)) {
     if ((*i1).first != (*i2).first) {
       return false;
@@ -172,7 +172,7 @@ pair<string, string> ParProLtlMiner::randomTemporalFormula(set<string>& atomicPr
     description += ")";
     break;
   }
-  case 1 :  {  // F( X and X…) 
+  case 1 :  {  // F( X and X…)
     formula += "F(";
     description = "(the following will finally happen: ";
     pair<string,string> rareEvent = randomRareEventFormula(atomicPropositions, temporalDepth, false);
@@ -269,7 +269,7 @@ pair<string, string> ParProLtlMiner::randomFrequentEventFormula(set<string>& ato
     numberDisOrConjuncted = randomIntInRange(pair<int,int>(1,2));
   }
   switch(production) {
-  case 0 :  {  //  !(a or b …) 
+  case 0 :  {  //  !(a or b …)
     formula = "!";
     description += "a transition other than ";
     if (numberDisOrConjuncted > 1) {
@@ -315,7 +315,7 @@ pair<string, string> ParProLtlMiner::randomFrequentEventFormula(set<string>& ato
   return pair<string,string>(formula, description);
 }
 
-pair<string, string> ParProLtlMiner::randomRareEventFormula(set<string>& atomicPropositions, int temporalDepth, bool withOuterParens) {
+pair<string, string> ParProLtlMiner::randomRareEventFormula(set<string>& atomicPropositions, int temporalDepth, bool /*withOuterParens*/) {
   ROSE_ASSERT(temporalDepth >= 1 &&  temporalDepth <= 2);  // currently using fixed parameters, other case should not occur
   string formula = "";
   string description = "";
@@ -326,7 +326,7 @@ pair<string, string> ParProLtlMiner::randomRareEventFormula(set<string>& atomicP
     production = randomIntInRange(pair<int,int>(0,2));
   }
   switch(production) {
-  case 0 :  {  //  a 
+  case 0 :  {  //  a
     string atomicProposition = randomAtomicProposition(atomicPropositions);
     formula += atomicProposition;
     description += "\"" + atomicProposition + "\" is triggered";
@@ -376,36 +376,36 @@ string ParProLtlMiner::randomLtlFormula(vector<string> atomicPropositions, int m
     production = rand() % numberOfRules;
   }
   switch(production) {
-    case 0 :  {  return ("( " + randomLtlFormula(atomicPropositions, (maxProductions - 1)) 
-	               + " & " 
+    case 0 :  {  return ("( " + randomLtlFormula(atomicPropositions, (maxProductions - 1))
+	               + " & "
 		       + randomLtlFormula(atomicPropositions, (maxProductions - 1)) + " )");
 	      }
-    case 1 :  {  return ("( " + randomLtlFormula(atomicPropositions, (maxProductions - 1)) 
-	               + " | " 
+    case 1 :  {  return ("( " + randomLtlFormula(atomicPropositions, (maxProductions - 1))
+	               + " | "
 		       + randomLtlFormula(atomicPropositions, (maxProductions - 1)) + " )");
-	      } 
-    case 2 :  {  return ("( " + randomLtlFormula(atomicPropositions, (maxProductions - 1)) 
-	               + " -> " 
+	      }
+    case 2 :  {  return ("( " + randomLtlFormula(atomicPropositions, (maxProductions - 1))
+	               + " -> "
 		       + randomLtlFormula(atomicPropositions, (maxProductions - 1)) + " )");
 	      }
     case 3 :  {  return "F( " + randomLtlFormula(atomicPropositions, (maxProductions - 1)) + " )" ;
-	      } 
+	      }
     case 4 :  {  return "G( " + randomLtlFormula(atomicPropositions, (maxProductions - 1)) + " )" ;
-	      } 
-    case 5 :  {  return ("( " + randomLtlFormula(atomicPropositions, (maxProductions - 1)) 
-	               + " U " 
+	      }
+    case 5 :  {  return ("( " + randomLtlFormula(atomicPropositions, (maxProductions - 1))
+	               + " U "
 		       + randomLtlFormula(atomicPropositions, (maxProductions - 1)) + " )");
 	      }
-    case 6 :  {  return ("( " + randomLtlFormula(atomicPropositions, (maxProductions - 1)) 
-	               + " W " 
+    case 6 :  {  return ("( " + randomLtlFormula(atomicPropositions, (maxProductions - 1))
+	               + " W "
 		       + randomLtlFormula(atomicPropositions, (maxProductions - 1)) + " )");
 	      }
-    case 7 :  {  return ("( " + randomLtlFormula(atomicPropositions, (maxProductions - 1)) 
-	               + " R " 
+    case 7 :  {  return ("( " + randomLtlFormula(atomicPropositions, (maxProductions - 1))
+	               + " R "
 		       + randomLtlFormula(atomicPropositions, (maxProductions - 1)) + " )");
-	      } 
+	      }
     case 8 :  {  return "!( " + randomLtlFormula(atomicPropositions, (maxProductions - 1)) + " )" ;
-	      } 
+	      }
     case 9 :  {  return "\"" + atomicPropositions[(rand() % atomicPropositions.size())] + "\"";
 	      }
   }
@@ -434,7 +434,7 @@ PropertyValueTable* ParProLtlMiner::mineProperties(ParallelSystem& system, int m
     }
     string ltlProperty = randomLtlFormula(annotations).first;
     if (_spotConnection.checkPropertyParPro(ltlProperty, *system.stgOverApprox(), system.getAnnotations()) == PROPERTY_VALUE_YES) {
-      bool passedFilter; 
+      bool passedFilter;
       if (_storeComputedSystems) {
 	const ParallelSystem* systemPtr = _subsystems.processNewOrExisting(system);
 	passedFilter = passesFilter(ltlProperty, PROPERTY_VALUE_YES, systemPtr, minNumComponents);
@@ -485,7 +485,7 @@ PropertyValueTable* ParProLtlMiner::mineProperties(ParallelSystem& system, int m
     string ltlFormula = ltlProperty.first;
     if (verifiableCount < minNumVerifiable
 	&& _spotConnection.checkPropertyParPro(ltlFormula, *system.stgOverApprox(), system.getAnnotations()) == PROPERTY_VALUE_YES) {
-      bool passedFilter; 
+      bool passedFilter;
       if (_storeComputedSystems) {
 	const ParallelSystem* systemPtr = _subsystems.processNewOrExisting(system);
 	passedFilter = passesFilter(ltlFormula, PROPERTY_VALUE_YES, systemPtr, minNumComponents);
@@ -516,7 +516,7 @@ PropertyValueTable* ParProLtlMiner::mineProperties(ParallelSystem& system, int m
   return result;
 }
 
-PropertyValueTable* ParProLtlMiner::minePropertiesLtsMin(ParallelSystem& system, int minNumComponents, int minNumVerifiable, int minNumFalsifiable) {
+PropertyValueTable* ParProLtlMiner::minePropertiesLtsMin(ParallelSystem& system, int /*minNumComponents*/, int minNumVerifiable, int minNumFalsifiable) {
   PropertyValueTable* result = new PropertyValueTable();
   int verifiableCount = 0;
   int falsifiableCount = 0;
@@ -541,16 +541,16 @@ PropertyValueTable* ParProLtlMiner::minePropertiesLtsMin(ParallelSystem& system,
     if (verifiableCount < minNumVerifiable &&
 	_ltsminConnection.checkPropertyParPro(ltlFormulaLtsmin, system.components()) == PROPERTY_VALUE_YES) {
       //      if (passesFilterLtsMin(ltlFormulaLtsmin, PROPERTY_VALUE_YES, system, minNumComponents)) {
-	result->addProperty(ltlFormula, PROPERTY_VALUE_YES);
-	result->setAnnotation(result->getPropertyNumber(ltlFormula), system.toString());
-	verifiableCount++;
+      result->addProperty(ltlFormula, PROPERTY_VALUE_YES);
+      result->setAnnotation(result->getPropertyNumber(ltlFormula), system.toString());
+      verifiableCount++;
 	//      }
     } else if (falsifiableCount < minNumFalsifiable &&
 	       _ltsminConnection.checkPropertyParPro(ltlFormulaLtsmin, system.components()) == PROPERTY_VALUE_NO) {
       //      if (passesFilterLtsMin(ltlFormulaLtsmin, PROPERTY_VALUE_NO, system, minNumComponents)) {
-	result->addProperty(ltlFormula, PROPERTY_VALUE_NO);
-	result->setAnnotation(result->getPropertyNumber(ltlFormula), system.toString());
-	falsifiableCount++;
+      result->addProperty(ltlFormula, PROPERTY_VALUE_NO);
+      result->setAnnotation(result->getPropertyNumber(ltlFormula), system.toString());
+      falsifiableCount++;
 	//      }
     }
   }
@@ -652,7 +652,7 @@ bool ParProLtlMiner::passesFilter(string ltlProperty, PropertyValue correctValue
   return true;
 }
 
-void ParProLtlMiner::exploreSubsystemsAndAddToWorklist(const ParallelSystem* system, 
+void ParProLtlMiner::exploreSubsystemsAndAddToWorklist(const ParallelSystem* system,
 						       ComponentApproximation approxMode, list<const ParallelSystem*>& worklist) {
   if (_subsystemsOf.find(system) == _subsystemsOf.end()) {
     initiateSubsystemsOf(system); // compute the successors if they do not exist in the DAG yet
@@ -677,9 +677,9 @@ void ParProLtlMiner::exploreSubsystemsAndAddToWorklist(const ParallelSystem* sys
   }
 }
 
-void ParProLtlMiner::exploreSubsystemsAndAddToWorklist(ParallelSystem& system, 
+void ParProLtlMiner::exploreSubsystemsAndAddToWorklist(ParallelSystem& system,
 						       ComponentApproximation approxMode, list<ParallelSystem>& worklist) {
-  list<ParallelSystem> subsystems = initiateSubsystemsOf(system); 
+  list<ParallelSystem> subsystems = initiateSubsystemsOf(system);
   // compute the required approximated STGs
   for (list<ParallelSystem>::iterator i=subsystems.begin(); i!=subsystems.end(); ++i) {
     if (approxMode == COMPONENTS_OVER_APPROX) {
@@ -729,5 +729,3 @@ list<ParallelSystem> ParProLtlMiner::initiateSubsystemsOf(ParallelSystem& system
   }
   return result;
 }
-
-

@@ -196,7 +196,7 @@ namespace
         data.back()[nm] = std::move(val);
       }
 
-      void arrayBegin(const std::string& nm) override final
+      void arrayBegin(const std::string&) override final
       {
         data.push_back(json::json::array());
       }
@@ -269,7 +269,7 @@ namespace
         out << el;
       }
 
-      void arrayEnd(const std::string& nm) override final
+      void arrayEnd(const std::string&) override final
       {
         ASSERT_require(firstElement.size() > 1);
         out << ']';

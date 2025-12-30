@@ -214,7 +214,7 @@ void RewriteSystem::normalizeFloatingPointNumbersForUnparsing(SgNode*& root) {
 }
 
 // returns true for required swap, false if no swap is required
-bool requiresSwap(SgExpression* lhs, SgExpression* rhs, VariableIdMapping* variableIdMapping) {
+bool requiresSwap(SgExpression* lhs, SgExpression* rhs, VariableIdMapping* /*variableIdMapping*/) {
   return AstTerm::astTermWithNullValuesToString(lhs)>AstTerm::astTermWithNullValuesToString(rhs);
 }
 
@@ -264,7 +264,7 @@ bool isValueOne(SgExpression* valueNode) {
     }
   }
   return false;
-}    
+}
 
 bool isValueZero(SgExpression* valueNode) {
   if(SgIntVal* val=isSgIntVal(valueNode)) {
@@ -301,11 +301,11 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
       2) normalize expressions (reordering of inner nodes and leave nodes)
       3) constant folding (leave nodes)
    */
-  
+
   if(getRewriteCondStmt()) {
     rewriteCondStmtInAst(root);
   }
-  
+
   if(performCompoundAssignmentsElimination) {
     rewriteCompoundAssignments(root);
   }
@@ -360,7 +360,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
              someTransformationApplied=true;
            }
          }
-       }       
+       }
        {
          // (-E2)+E1 => E1-E2
          string m2="$OriginalExp=SgAddOp(SgMinusOp($E2),$E1)"; // this must be a separate rule (cannot use 'or' with above rule) because both can match
@@ -378,7 +378,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
              _rewriteStatistics.numUnaryMinusToBinaryMinusConversion++;
              someTransformationApplied=true;
            }
-         }       
+         }
        }
        {
          // (-E1)-E2 => -(E1+E2)
@@ -398,7 +398,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
              SgNodeHelper::replaceExpression(originalExp,newMinusOp,false);
              someTransformationApplied=true;
            }
-         }       
+         }
        }
        {
          // E1-(-E2) => E1+E2
@@ -417,9 +417,9 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
              SgNodeHelper::replaceExpression(originalExp,newAddOp,false);
              someTransformationApplied=true;
            }
-         }       
+         }
        }
-     }     
+     }
 
      if(ruleAlgebraic) {
        int cnt=0;
@@ -468,7 +468,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
                }
                minusNode->set_operand(remainsNode);
                SgNodeHelper::replaceExpression(op,minusNode,false);
-               transformationApplied=true; 
+               transformationApplied=true;
                someTransformationApplied=true;
                cnt++;
              }
@@ -512,7 +512,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
                }
                SgExpression* newMinusOp=SageBuilder::buildMinusOp(remainsNode);
                SgNodeHelper::replaceExpression(op,newMinusOp,false);
-               transformationApplied=true; 
+               transformationApplied=true;
                someTransformationApplied=true;
                _rewriteStatistics.numZeroSubEConversion++;
                cnt++;
@@ -579,7 +579,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
                  cout<<"Rule algebraic: "<<op->unparseToString()<<" => "<<remainsNode->unparseToString()<<endl;
                }
                SgNodeHelper::replaceExpression(op,remainsNode,false);
-               transformationApplied=true; 
+               transformationApplied=true;
                someTransformationApplied=true;
                cnt++;
              }

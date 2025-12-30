@@ -3,12 +3,12 @@
 #include "AstUtility.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
-#include "DFSolver1.h" 
+#include "DFSolver1.h"
 
 
 using namespace std;
 
-namespace CodeThorn 
+namespace CodeThorn
 {
 
   CSDFAnalysisBase::CSDFAnalysisBase()
@@ -26,7 +26,7 @@ namespace CodeThorn
   void CSDFAnalysisBase::initializeSolver() {
     ROSE_ASSERT(getInitialElementFactory());
     ROSE_ASSERT(getFlow());
-     
+
     _solver = new DFSolver1( _workList,
                              _analyzerDataPreInfo,
                              _analyzerDataPostInfo,
@@ -34,18 +34,18 @@ namespace CodeThorn
                              *getFlow(),
                              *_transferFunctions
                              );
-  
+
     ROSE_ASSERT(_solver);
   }
 
-  void CSDFAnalysisBase::setPreInfo(Label lab, Context context, Lattice*) {
+  void CSDFAnalysisBase::setPreInfo(Label, Context, Lattice*) {
   }
 
-  Lattice* CSDFAnalysisBase::getPreInfo(Label lab, Context context) {
+  Lattice* CSDFAnalysisBase::getPreInfo(Label lab, Context) {
     return _analyzerDataPreInfo.at(lab.getId());
   }
 
-  Lattice* CSDFAnalysisBase::getPostInfo(Label lab, Context context) {
+  Lattice* CSDFAnalysisBase::getPostInfo(Label lab, Context) {
     return _analyzerDataPostInfo[lab.getId()];
   }
 
@@ -87,8 +87,8 @@ namespace CodeThorn
   CSDFAnalysisBase::initializeAnalyzerDataInfo() {
     Labeler*              labeler = getLabeler();
     PropertyStateFactory* factory = getInitialElementFactory();
-    ROSE_ASSERT(factory && labeler);  
-    const size_t          numLabels = labeler->numberOfLabels(); 
+    ROSE_ASSERT(factory && labeler);
+    const size_t          numLabels = labeler->numberOfLabels();
 
     _analyzerDataPreInfo.reserve(numLabels);
     _analyzerDataPostInfo.reserve(numLabels);
@@ -192,4 +192,3 @@ namespace CodeThorn
   }
 
 }
-

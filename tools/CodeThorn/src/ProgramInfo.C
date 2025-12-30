@@ -152,7 +152,7 @@ std::string ProgramInfo::toStringCompared(ProgramInfo* other) {
   return ss.str();
 }
 
-void ProgramInfo::writeFunctionCallNodesToFile(string fileName, Labeler* labeler) {
+void ProgramInfo::writeFunctionCallNodesToFile(string fileName, Labeler*) {
   ROSE_ASSERT(_validData);
   std::ofstream outFile;
   outFile.open(fileName.c_str(),std::ios::out);

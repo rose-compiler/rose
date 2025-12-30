@@ -709,7 +709,7 @@ namespace CodeThorn {
     return _analyzer->isRegisterAddress(memLoc);
   }
 
-  void EStateTransferFunctions::transferFunctionEntryPrintStatus(Edge edge, EStatePtr estate, std::string fileName, std::string functionName) {
+  void EStateTransferFunctions::transferFunctionEntryPrintStatus(Edge /*edge*/, EStatePtr estate, std::string fileName, std::string functionName) {
     if(_analyzer->getOptionsRef().status) {
       if(_analyzer->getOptionsRef().precisionLevel==1) {
         size_t numFunctions=_analyzer->getTotalNumberOfFunctions();
@@ -791,7 +791,7 @@ namespace CodeThorn {
   }
 
   // called from transferForkFunction
-  std::list<EStatePtr> EStateTransferFunctions::transferForkFunctionWithExternalTargetFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall) {
+  std::list<EStatePtr> EStateTransferFunctions::transferForkFunctionWithExternalTargetFunction(Edge edge, EStatePtr estate, SgFunctionCallExp*) {
     //_analyzer->recordExternalFunctionCall(funCall); funcall would be forkFunction
     // arg5 is expression with functino pointer to external function
     list<EStatePtr> estateList;
@@ -1132,7 +1132,7 @@ namespace CodeThorn {
     return elistify(transferVariableDeclarationEState(decl,estate, edge.target()));
   }
 
-  std::list<EStatePtr> EStateTransferFunctions::transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferGnuExtensionStmtExpr(SgNode* /*nextNodeToAnalyze1*/, Edge /*edge*/, EStatePtr estate) {
     //cout<<"WARNING: ignoring GNU extension StmtExpr (EStateTransferFunctions::transferGnuExtensionStmtExpr)"<<endl;
     return elistify(estate);
   }
@@ -1492,7 +1492,7 @@ namespace CodeThorn {
     }
   }
 
-  EStatePtr EStateTransferFunctions::transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel) {
+  EStatePtr EStateTransferFunctions::transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration*, SgInitializedName* initName, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel) {
     CallString cs=currentEState->getCallString();
     Label label=currentEState->label();
     PStatePtr newPState=currentEState->pstate();
@@ -2065,7 +2065,7 @@ namespace CodeThorn {
     cout << ss.str()<<endl;
   }
 
-  void EStateTransferFunctions::printEvaluateExpressionInfo(SgNode* node,EStatePtr estate, EvalMode mode) {
+  void EStateTransferFunctions::printEvaluateExpressionInfo(SgNode* node,EStatePtr /*estate*/, EvalMode mode) {
     stringstream ss;
     ss<<"          "<<std::setw(6+2)<<" "<<"evaluateExpression    : "<<node->unparseToString()<<" [evalmode"<<mode<<": "<<AstTerm::astTermWithNullValuesToString(node)<<"]";
     #pragma omp critical (STATUS_MESSAGES)
@@ -2426,7 +2426,7 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalOp(SgNode* node,
                                                                  SingleEvalResult lhsResult,
                                                                  SingleEvalResult rhsResult,
-                                                                 EStatePtr estate, EvalMode mode) {
+                                                                 EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     AbstractValue::Operator op=sgNodeToAbstractValueOperator(node);
     res.estate=estate;
@@ -2631,7 +2631,7 @@ namespace CodeThorn {
   /////////////////////////////////////////////////////////////////////////////////////////////////
 
   // evaluation functions
-  SingleEvalResult EStateTransferFunctions::evalConditionalExpr(SgConditionalExp* condExp, EStatePtr estate, EvalMode mode) {
+  SingleEvalResult EStateTransferFunctions::evalConditionalExpr(SgConditionalExp* condExp, EStatePtr estate, EvalMode /*mode*/) {
     SgExpression* cond=condExp->get_conditional_exp();
     SingleEvalResult condResult=evaluateExpression(cond,estate);
     SingleEvalResult singleResult=condResult;
@@ -2712,40 +2712,40 @@ namespace CodeThorn {
     ROSE_ASSERT(false);
   }
 
-  SingleEvalResult EStateTransferFunctions::evalEqualOp(SgEqualityOp* node,
+  SingleEvalResult EStateTransferFunctions::evalEqualOp(SgEqualityOp*,
                                                                       SingleEvalResult lhsResult,
                                                                       SingleEvalResult rhsResult,
-                                                                      EStatePtr estate, EvalMode mode) {
+                                                                      EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorEq(rhsResult.result));
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalNotEqualOp(SgNotEqualOp* node,
+  SingleEvalResult EStateTransferFunctions::evalNotEqualOp(SgNotEqualOp*,
                                                                          SingleEvalResult lhsResult,
                                                                          SingleEvalResult rhsResult,
-                                                                         EStatePtr estate, EvalMode mode) {
+                                                                         EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorNotEq(rhsResult.result));
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalAndOp(SgAndOp* node,
+  SingleEvalResult EStateTransferFunctions::evalAndOp(SgAndOp*,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EStatePtr estate, EvalMode mode) {
+                                                                    EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorAnd(rhsResult.result));
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalOrOp(SgOrOp* node,
+  SingleEvalResult EStateTransferFunctions::evalOrOp(SgOrOp*,
                                                                    SingleEvalResult lhsResult,
                                                                    SingleEvalResult rhsResult,
-                                                                   EStatePtr estate, EvalMode mode) {
+                                                                   EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=lhsResult.result.operatorOr(rhsResult.result);
@@ -2757,10 +2757,10 @@ namespace CodeThorn {
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalAddOp(SgAddOp* node,
+  SingleEvalResult EStateTransferFunctions::evalAddOp(SgAddOp*,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EStatePtr estate, EvalMode mode) {
+                                                                    EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     if(lhsResult.result.isPtr()) {
@@ -2775,10 +2775,10 @@ namespace CodeThorn {
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalSubOp(SgSubtractOp* node,
+  SingleEvalResult EStateTransferFunctions::evalSubOp(SgSubtractOp*,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EStatePtr estate, EvalMode mode) {
+                                                                    EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     if(lhsResult.result.isPtr() && rhsResult.result.isPtr()) {
@@ -2797,69 +2797,69 @@ namespace CodeThorn {
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalMulOp(SgMultiplyOp* node,
+  SingleEvalResult EStateTransferFunctions::evalMulOp(SgMultiplyOp*,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EStatePtr estate, EvalMode mode) {
+                                                                    EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=AbstractValue::operatorMul(lhsResult.result,rhsResult.result);
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalDivOp(SgDivideOp* node,
+  SingleEvalResult EStateTransferFunctions::evalDivOp(SgDivideOp*,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EStatePtr estate, EvalMode mode) {
+                                                                    EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=AbstractValue::operatorDiv(lhsResult.result,rhsResult.result);
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalModOp(SgModOp* node,
+  SingleEvalResult EStateTransferFunctions::evalModOp(SgModOp*,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EStatePtr estate, EvalMode mode) {
+                                                                    EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=AbstractValue::operatorMod(lhsResult.result,rhsResult.result);
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalBitwiseAndOp(SgBitAndOp* node,
+  SingleEvalResult EStateTransferFunctions::evalBitwiseAndOp(SgBitAndOp*,
                                                                            SingleEvalResult lhsResult,
                                                                            SingleEvalResult rhsResult,
-                                                                           EStatePtr estate, EvalMode mode) {
+                                                                           EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorBitwiseAnd(rhsResult.result));
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalBitwiseOrOp(SgBitOrOp* node,
+  SingleEvalResult EStateTransferFunctions::evalBitwiseOrOp(SgBitOrOp*,
                                                                           SingleEvalResult lhsResult,
                                                                           SingleEvalResult rhsResult,
-                                                                          EStatePtr estate, EvalMode mode) {
+                                                                          EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorBitwiseOr(rhsResult.result));
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalBitwiseXorOp(SgBitXorOp* node,
+  SingleEvalResult EStateTransferFunctions::evalBitwiseXorOp(SgBitXorOp*,
                                                                            SingleEvalResult lhsResult,
                                                                            SingleEvalResult rhsResult,
-                                                                           EStatePtr estate, EvalMode mode) {
+                                                                           EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorBitwiseXor(rhsResult.result));
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalBitwiseComplementOp(SgBitComplementOp* node,
+  SingleEvalResult EStateTransferFunctions::evalBitwiseComplementOp(SgBitComplementOp*,
                                                                                   SingleEvalResult operandResult,
-                                                                                  EStatePtr estate, EvalMode mode) {
+                                                                                  EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=operandResult.result.operatorBitwiseComplement();
@@ -2867,10 +2867,10 @@ namespace CodeThorn {
   }
 
   SingleEvalResult
-  EStateTransferFunctions::evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
+  EStateTransferFunctions::evalGreaterOrEqualOp(SgGreaterOrEqualOp*,
                                                 SingleEvalResult lhsResult,
                                                 SingleEvalResult rhsResult,
-                                                EStatePtr estate, EvalMode mode) {
+                                                EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
@@ -2878,10 +2878,10 @@ namespace CodeThorn {
   }
 
   SingleEvalResult
-  EStateTransferFunctions::evalGreaterThanOp(SgGreaterThanOp* node,
+  EStateTransferFunctions::evalGreaterThanOp(SgGreaterThanOp*,
                                              SingleEvalResult lhsResult,
                                              SingleEvalResult rhsResult,
-                                             EStatePtr estate, EvalMode mode) {
+                                             EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorMore(rhsResult.result));
@@ -2889,10 +2889,10 @@ namespace CodeThorn {
   }
 
   SingleEvalResult
-  EStateTransferFunctions::evalLessOrEqualOp(SgLessOrEqualOp* node,
+  EStateTransferFunctions::evalLessOrEqualOp(SgLessOrEqualOp*,
                                              SingleEvalResult lhsResult,
                                              SingleEvalResult rhsResult,
-                                             EStatePtr estate, EvalMode mode) {
+                                             EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorLessOrEq(rhsResult.result));
@@ -2900,10 +2900,10 @@ namespace CodeThorn {
   }
 
   SingleEvalResult
-  EStateTransferFunctions::evalLessThanOp(SgLessThanOp* node,
+  EStateTransferFunctions::evalLessThanOp(SgLessThanOp*,
                                           SingleEvalResult lhsResult,
                                           SingleEvalResult rhsResult,
-                                          EStatePtr estate, EvalMode mode) {
+                                          EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorLess(rhsResult.result));
@@ -2911,10 +2911,10 @@ namespace CodeThorn {
   }
 
   SingleEvalResult
-  EStateTransferFunctions::evalBitwiseShiftLeftOp(SgLshiftOp* node,
+  EStateTransferFunctions::evalBitwiseShiftLeftOp(SgLshiftOp*,
                                                   SingleEvalResult lhsResult,
                                                   SingleEvalResult rhsResult,
-                                                  EStatePtr estate, EvalMode mode) {
+                                                  EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorBitwiseShiftLeft(rhsResult.result));
@@ -2922,10 +2922,10 @@ namespace CodeThorn {
   }
 
   SingleEvalResult
-  EStateTransferFunctions::evalBitwiseShiftRightOp(SgRshiftOp* node,
+  EStateTransferFunctions::evalBitwiseShiftRightOp(SgRshiftOp*,
                                                    SingleEvalResult lhsResult,
                                                    SingleEvalResult rhsResult,
-                                                   EStatePtr estate, EvalMode mode) {
+                                                   EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorBitwiseShiftRight(rhsResult.result));
@@ -3150,10 +3150,10 @@ namespace CodeThorn {
     ROSE_ASSERT(false); // not reachable
   }
 
-  SingleEvalResult EStateTransferFunctions::evalCommaOp(SgCommaOpExp* node,
-                                                                      SingleEvalResult lhsResult,
+  SingleEvalResult EStateTransferFunctions::evalCommaOp(SgCommaOpExp*,
+                                                                      SingleEvalResult /*lhsResult*/,
                                                                       SingleEvalResult rhsResult,
-                                                                      EStatePtr estate, EvalMode mode) {
+                                                                      EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     // lhsResult is ignored in comma op
@@ -3162,17 +3162,17 @@ namespace CodeThorn {
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalNotOp(SgNotOp* node,
+  SingleEvalResult EStateTransferFunctions::evalNotOp(SgNotOp*,
                                                                     SingleEvalResult operandResult,
-                                                                    EStatePtr estate, EvalMode mode) {
+                                                                    EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=operandResult.result.operatorNot();
     return res;
   }
-  SingleEvalResult EStateTransferFunctions::evalUnaryMinusOp(SgMinusOp* node,
+  SingleEvalResult EStateTransferFunctions::evalUnaryMinusOp(SgMinusOp*,
                                                                            SingleEvalResult operandResult,
-                                                                           EStatePtr estate, EvalMode mode) {
+                                                                           EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=operandResult.result.operatorUnaryMinus();
@@ -3180,7 +3180,7 @@ namespace CodeThorn {
   }
 
   SingleEvalResult EStateTransferFunctions::evalSizeofOp(SgSizeOfOp* node,
-                                                                       EStatePtr estate, EvalMode mode) {
+                                                                       EStatePtr estate, EvalMode /*mode*/) {
     // two cases: (1) operand is a type, operand is a an expression
     SAWYER_MESG(logger[TRACE])<<"evalSizeofOp(started):"<<node->unparseToString()<<endl;
     SgType* operandType=node->get_operand_type();
@@ -3219,7 +3219,7 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalCastOp(SgCastExp* node,
                                                                      SingleEvalResult operandResult,
-                                                                     EStatePtr estate, EvalMode mode) {
+                                                                     EStatePtr estate, EvalMode /*mode*/) {
     // TODO: truncation of values
     // TODO: adapt pointer value element size
     SgType* targetType=node->get_type();
@@ -3357,7 +3357,7 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalAddressOfOp(SgAddressOfOp* node,
                                                                           SingleEvalResult operandResult,
-                                                                          EStatePtr estate, EvalMode mode) {
+                                                                          EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     AbstractValue operand=operandResult.result;
@@ -3370,7 +3370,7 @@ namespace CodeThorn {
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalDereferenceOp(SgPointerDerefExp* node,
+  SingleEvalResult EStateTransferFunctions::evalDereferenceOp(SgPointerDerefExp*,
                                                                             SingleEvalResult operandResult,
                                                                             EStatePtr estate, EvalMode mode) {
     return semanticEvalDereferenceOp(operandResult,estate,mode);
@@ -3414,9 +3414,9 @@ namespace CodeThorn {
 
   SingleEvalResult
   EStateTransferFunctions::evalAssignOp(SgAssignOp* node,
-                                        SingleEvalResult lhsResult /* ignored */,
+                                        SingleEvalResult /*lhsResult*/,
                                         SingleEvalResult rhsResult,
-                                        Label targetLabel, EStatePtr estate, EvalMode mode) {
+                                        Label targetLabel, EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     std::list<EStatePtr> estateList=evalAssignOp3(node, targetLabel, estate);
     ROSE_ASSERT(estateList.size()==1);
@@ -3481,27 +3481,27 @@ namespace CodeThorn {
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalPreIncrementOp(SgPlusPlusOp* node,
+  SingleEvalResult EStateTransferFunctions::evalPreIncrementOp(SgPlusPlusOp*,
                                                                              SingleEvalResult operandResult,
-                                                                             EStatePtr estate, EvalMode mode) {
+                                                                             EStatePtr estate, EvalMode /*mode*/) {
     AbstractValue address=operandResult.result;
     ROSE_ASSERT(address.isPtr()||address.isTop());
     AbstractValue change=1;
     return evalPreComputationOp(estate,address,change);
   }
 
-  SingleEvalResult EStateTransferFunctions::evalPreDecrementOp(SgMinusMinusOp* node,
+  SingleEvalResult EStateTransferFunctions::evalPreDecrementOp(SgMinusMinusOp*,
                                                                              SingleEvalResult operandResult,
-                                                                             EStatePtr estate, EvalMode mode) {
+                                                                             EStatePtr estate, EvalMode /*mode*/) {
     AbstractValue address=operandResult.result;
     ROSE_ASSERT(address.isPtr()||address.isTop());
     AbstractValue change=-1;
     return evalPreComputationOp(estate,address,change);
   }
 
-  SingleEvalResult EStateTransferFunctions::evalPostIncrementOp(SgPlusPlusOp* node,
+  SingleEvalResult EStateTransferFunctions::evalPostIncrementOp(SgPlusPlusOp*,
                                                                               SingleEvalResult operandResult,
-                                                                              EStatePtr estate, EvalMode mode) {
+                                                                              EStatePtr estate, EvalMode /*mode*/) {
     AbstractValue address=operandResult.result;
     ROSE_ASSERT(address.isPtr()||address.isTop());
     AbstractValue change=1;
@@ -3509,9 +3509,9 @@ namespace CodeThorn {
   }
 
 
-  SingleEvalResult EStateTransferFunctions::evalPostDecrementOp(SgMinusMinusOp* node,
+  SingleEvalResult EStateTransferFunctions::evalPostDecrementOp(SgMinusMinusOp*,
                                                                               SingleEvalResult operandResult,
-                                                                              EStatePtr estate, EvalMode mode) {
+                                                                              EStatePtr estate, EvalMode /*mode*/) {
     AbstractValue address=operandResult.result;
     ROSE_ASSERT(address.isPtr()||address.isTop());
     AbstractValue change=-1;
@@ -3520,7 +3520,7 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalPlusPlusOp(SgPlusPlusOp* node,
                                                                          SingleEvalResult operandResult,
-                                                                         EStatePtr estate, EvalMode mode) {
+                                                                         EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     if(SgNodeHelper::isPrefixIncDecOp(node)) {
@@ -3536,7 +3536,7 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalMinusMinusOp(SgMinusMinusOp* node,
                                                                            SingleEvalResult operandResult,
-                                                                           EStatePtr estate, EvalMode mode) {
+                                                                           EStatePtr estate, EvalMode /*mode*/) {
     SingleEvalResult res;
     res.estate=estate;
     if(SgNodeHelper::isPrefixIncDecOp(node)) {
@@ -3550,7 +3550,7 @@ namespace CodeThorn {
     ROSE_ASSERT(false);
   }
 
-  SingleEvalResult EStateTransferFunctions::evalLValueDotOrArrowExp(SgNode* node, EStatePtr estate, EvalMode mode) {
+  SingleEvalResult EStateTransferFunctions::evalLValueDotOrArrowExp(SgNode* node, EStatePtr estate, EvalMode /*mode*/) {
     ROSE_ASSERT(isSgDotExp(node)||isSgArrowExp(node));
     SingleEvalResult res;
     res.init(estate,AbstractValue::createBot());
@@ -3571,7 +3571,7 @@ namespace CodeThorn {
     ROSE_ASSERT(false);
   }
 
-  SingleEvalResult EStateTransferFunctions::evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EStatePtr estate, EvalMode mode) {
+  SingleEvalResult EStateTransferFunctions::evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EStatePtr estate, EvalMode /*mode*/) {
     // for now we ignore array refs on lhs
     // TODO: assignments in index computations of ignored array ref
     // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
@@ -4197,7 +4197,7 @@ namespace CodeThorn {
   }
 
   // inactive, replaced by version 2
-  void EStateTransferFunctions::recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label label) {
+  void EStateTransferFunctions::recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label /*label*/) {
 #pragma omp critical(VIOLATIONRECORDING)
     {
       ROSE_ASSERT(analysisSelector<_violatingLocations.size());
@@ -4206,7 +4206,7 @@ namespace CodeThorn {
   }
 
   // inactive, replaced by version 2
-  void EStateTransferFunctions::recordPotentialViolatingLocation(enum AnalysisSelector analysisSelector, Label label) {
+  void EStateTransferFunctions::recordPotentialViolatingLocation(enum AnalysisSelector analysisSelector, Label /*label*/) {
 #pragma omp critical(VIOLATIONRECORDING)
     {
       ROSE_ASSERT(analysisSelector<_violatingLocations.size());
@@ -4425,7 +4425,7 @@ namespace CodeThorn {
     writeUndefToMemoryLocation(lab,pstate,memLoc);
   }
 
-  void EStateTransferFunctions::writeUndefToMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc) {
+  void EStateTransferFunctions::writeUndefToMemoryLocation(Label /*lab*/, PStatePtr pstate, AbstractValue memLoc) {
     if(memLoc.isBot()) {
       return;
     }
@@ -4494,7 +4494,7 @@ namespace CodeThorn {
   // is only relevant for external functions (when the implementation
   // does not exist in input program and the semantics are available in
   // the analyzer (e.g. malloc, strlen, etc.))
-  list<EStatePtr> EStateTransferFunctions::evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EStatePtr currentEState, bool useConstraints) {
+  list<EStatePtr> EStateTransferFunctions::evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EStatePtr currentEState, bool /*useConstraints*/) {
     CallString cs=currentEState->getCallString();
     SAWYER_MESG(logger[TRACE]) <<"evaluating arguments of function call:"<<funCall->unparseToString()<<endl;
     SingleEvalResult evalResult=evalFunctionCallArguments(funCall, currentEState);

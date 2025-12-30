@@ -215,7 +215,7 @@ void CodeThorn::CTAnalysis::deleteWorkLists() {
   }
 }
 
-void CodeThorn::CTAnalysis::setWorkLists(ExplorationMode explorationMode) {
+void CodeThorn::CTAnalysis::setWorkLists(ExplorationMode /*explorationMode*/) {
   deleteWorkLists();
   switch(_explorationMode) {
   case EXPL_UNDEFINED:
@@ -734,7 +734,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2(TimingCollector& tc) {
   tc.stopTimer(TimingCollector::transitionSystemAnalysis);
 }
 
-void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
+void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& /*tc*/) {
   this->printStatusMessageLine("==============================================================");
   if(_ctOpt.status) cout<<"Initializing initial state(s) ... ";
   //ROSE_ASSERT(this->_root);

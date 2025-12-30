@@ -37,7 +37,7 @@ namespace CodeThorn {
       return false;
     }
   }
-  
+
   void AnalysisReporting::printSeparationLine() {
     cout<<separationLine();
   }
@@ -70,7 +70,7 @@ namespace CodeThorn {
         }
         report.setReachableLocations(reachableLabels);
         report.setUnreachableLocations(unreachableLabels);
-        
+
         switch(analysisSel) {
         case ANALYSIS_NULL_POINTER:
         case ANALYSIS_OUT_OF_BOUNDS:
@@ -162,7 +162,7 @@ namespace CodeThorn {
           deadLocations.insert(loc);
         }
       }
-      
+
       for(auto sloc : deadLocations) {
         locationsCSVFileData<<sloc<<endl;
       }
@@ -224,7 +224,7 @@ namespace CodeThorn {
       for(auto s : resultSet) {
         locationsCSVFileData<<s<<endl;
       }
-        
+
       if(ctOpt.status) {
         cout<<"constant true        locations: "<<setw(6)<<constTrueCnt<<endl;
         cout<<"constant false       locations: "<<setw(6)<<constFalseCnt<<endl;
@@ -238,14 +238,14 @@ namespace CodeThorn {
           if(!ctOpt.quiet)
             cout<<"Generated analysis results in file "<<fileName<<endl;
         }
-        
+
       }
-      
+
     } else {
       cout<<"WARNING: Opaque Predicate Analysis report generation: plug-in not registered."<<endl;
     }
   }
-  
+
   void AnalysisReporting::generateAnalysisLocationCsvReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
@@ -256,7 +256,7 @@ namespace CodeThorn {
       ProgramLocationsReport locations=analyzer->getEStateTransferFunctions()->getProgramLocationsReport(analysisSel);
       string fileName=ctOpt.reportFilePath+"/"+analysisName+"-locations.csv";
 
-      // override with user-provided name 
+      // override with user-provided name
       if(analysisSel==ANALYSIS_NULL_POINTER && ctOpt.nullPointerAnalysisFileName.size()>0 && ctOpt.nullPointerAnalysisFileName!="null-pointer.csv") {
 	fileName=ctOpt.nullPointerAnalysisFileName;
       } else if(analysisSel==ANALYSIS_OUT_OF_BOUNDS && ctOpt.outOfBoundsAnalysisFileName.size()>0 && ctOpt.outOfBoundsAnalysisFileName!="out-of-bounds.csv") {
@@ -270,12 +270,12 @@ namespace CodeThorn {
       locations.writeResultFile(ctOpt,fileName,analyzer->getLabeler());
     }
   }
-                             
+
   void AnalysisReporting::generateNullPointerAnalysisStats(CodeThorn::CTAnalysis* analyzer) {
     ProgramLocationsAnalysis pla;
     LabelSet pdlSet=pla.pointerDereferenceLocations(*analyzer->getLabeler());
     cout<<"Found "<<pdlSet.size()<<" pointer dereference locations."<<endl;
-    
+
   }
   void AnalysisReporting::generateAstNodeStats(CodeThornOptions& ctOpt, SgProject* sageProject) {
     if(ctOpt.info.printAstNodeStats||ctOpt.info.astNodeStatsCSVFileName.size()>0) {
@@ -318,7 +318,7 @@ namespace CodeThorn {
         exit(1);
       }
     }
- 
+
 #if 1
     if(ctOpt.analyzedExternalFunctionCallsCSVFileName.size()>0) {
       string fileName=ctOpt.reportFilePath+"/"+ctOpt.analyzedExternalFunctionCallsCSVFileName;
@@ -440,8 +440,8 @@ namespace CodeThorn {
       //cout<<"DEBUG:entrylabel:"<<entryLabel.toString()<<" : "<<funVer<<" : "<< analyzer->getLabeler()->getNode(entryLabel)->unparseToString()<<endl;
     }
   }
-  
-  void AnalysisReporting::computeFunctionReportData(CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
+
+  void AnalysisReporting::computeFunctionReportData(CodeThorn::CTAnalysis* analyzer, string /*analysisName*/, ProgramLocationsReport& report) {
     Flow& flow=*analyzer->getFlow();
     std::map<Label,VerificationResult> fMap;
     LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
@@ -470,7 +470,7 @@ namespace CodeThorn {
     LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
     calculatefMap(fMap,analyzer,functionEntryLabels,flow,report);
     //InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(flow);
-    
+
     stringstream csvFileEntries;
     string csvEntryType;
     for(auto entryLabel : functionEntryLabels ) {
@@ -494,7 +494,7 @@ namespace CodeThorn {
           csvFileEntries<<fileName<<","<<functionName<<","<<csvEntryType<<endl;
       }
     }
-    
+
     if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, csvFileName, csvFileEntries.str())) {
       cerr<<"Error: could not generate function verification CSV file "<<csvFileName<<endl;
       exit(1);
@@ -502,9 +502,9 @@ namespace CodeThorn {
       if(!ctOpt.quiet) cout<<"Generated function verification CSV file "<<csvFileName<<endl;
     }
   }
-  
 
-  string AnalysisReporting::getVerificationFunctionsOverview(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
+
+  string AnalysisReporting::getVerificationFunctionsOverview(CodeThornOptions& /*ctOpt*/, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
     computeFunctionReportData(analyzer,analysisName,report);
     // compute stats
     int numProvenFunctions=numVerifiedFunctions+numFalsifiedFunctions;
@@ -549,5 +549,5 @@ namespace CodeThorn {
 	cout<<"Generated unused-variables report in file "<<fileName<<endl;
     }
   }
-  
+
 } // end of namespace CodeThorn

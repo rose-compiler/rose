@@ -26,7 +26,7 @@ namespace
   }
 
   static inline
-  void dbg_rd(std::ostream& os, char sep, Lattice* lat)
+  void dbg_rd(std::ostream& /*os*/, char /*sep*/, Lattice* /*lat*/)
   {
     //RDLattice has been removed
     //RDLattice& rdlat = dynamic_cast<RDLattice&>(sg::deref(lat));

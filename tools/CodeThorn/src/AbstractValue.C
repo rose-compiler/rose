@@ -162,7 +162,7 @@ AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, lo
   return aval;
 }
 
-void AbstractValue::initInteger(CodeThorn::BuiltInType btype, long int ival) {
+void AbstractValue::initInteger(CodeThorn::BuiltInType /*btype*/, long int ival) {
   valueType=AbstractValue::AV_INTEGER;
   setValue(ival);
 }
@@ -180,9 +180,9 @@ void AbstractValue::initDouble(CodeThorn::BuiltInType btype, double dval) {
 }
 
 // type conversion
-AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::AV_TOP;intValue=0;} // intValue=0 superfluous
+AbstractValue::AbstractValue(Top /*e*/) {valueType=AbstractValue::AV_TOP;intValue=0;} // intValue=0 superfluous
 // type conversion
-AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::AV_BOT;intValue=0;} // intValue=0 superfluous
+AbstractValue::AbstractValue(Bot /*e*/) {valueType=AbstractValue::AV_BOT;intValue=0;} // intValue=0 superfluous
 
 AbstractValue::AbstractValue(unsigned char x) {
   initInteger(BITYPE_CHAR,x);

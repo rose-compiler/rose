@@ -286,7 +286,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
 #endif
 }
 
-void DFTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element) {
+void DFTransferFunctions::transferExpression(Label, SgExpression*, Lattice&) {
   // default identity function
 }
 
@@ -296,23 +296,23 @@ void DFTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* expr, 
 
 
 
-void DFTransferFunctions::transferDeclaration(Label label, SgVariableDeclaration* decl, Lattice& element) {
+void DFTransferFunctions::transferDeclaration(Label, SgVariableDeclaration*, Lattice&) {
   // default identity function
 }
 
-void DFTransferFunctions::transferEmptyStmt(Label label, SgStatement* stmt, Lattice& element) {
+void DFTransferFunctions::transferEmptyStmt(Label, SgStatement*, Lattice&) {
   // default identity function
 }
 
-void DFTransferFunctions::transferSwitchCase(Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate) {
+void DFTransferFunctions::transferSwitchCase(Label,SgStatement*, SgCaseOptionStmt*,Lattice&) {
   // default identity function
 }
 
-void DFTransferFunctions::transferSwitchDefault(Label lab,SgStatement* condStmt, SgDefaultOptionStmt* caseStmt,Lattice& pstate) {
+void DFTransferFunctions::transferSwitchDefault(Label,SgStatement*, SgDefaultOptionStmt*,Lattice&) {
   // default identity function
 }
 
-void DFTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element) {
+void DFTransferFunctions::transferFunctionCall(Label, SgFunctionCallExp*, SgExpressionPtrList&, Lattice&) {
   // default identity function
 }
 
@@ -320,7 +320,7 @@ void DFTransferFunctions::transferConstructorCall(Label, SgConstructorInitialize
   // default identity function
 }
 
-void DFTransferFunctions::transferExternalFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element) {
+void DFTransferFunctions::transferExternalFunctionCall(Label, SgFunctionCallExp*, SgExpressionPtrList&, Lattice&) {
   // default identity function
 }
 
@@ -336,7 +336,7 @@ void DFTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhs
 }
 */
 
-void DFTransferFunctions::transferFunctionCallReturn(Label lab, VariableId varId, SgFunctionCallExp* callExp, Lattice& element) {
+void DFTransferFunctions::transferFunctionCallReturn(Label, VariableId, SgFunctionCallExp*, Lattice&) {
   // default identity function
 }
 
@@ -344,12 +344,12 @@ void DFTransferFunctions::transferConstructorCallReturn(Label, VariableId, SgCon
   // default identity function
 }
 
-void DFTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) {
+void DFTransferFunctions::transferFunctionEntry(Label, SgFunctionDefinition*,SgInitializedNamePtrList&, Lattice&) {
   // default identity function
 }
 
 
-void DFTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) {
+void DFTransferFunctions::transferFunctionExit(Label, SgFunctionDefinition*, VariableIdSet&, Lattice&) {
   // default identity function
 }
 
@@ -405,7 +405,7 @@ PropertyStateFactory* DFTransferFunctions::getInitialElementFactory() {
   return _initialElementFactory;
 }
 
-void DFTransferFunctions::initializeExtremalValue(Lattice& element) {
+void DFTransferFunctions::initializeExtremalValue(Lattice&) {
   // default empty function
 }
 

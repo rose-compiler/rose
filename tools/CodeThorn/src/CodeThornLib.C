@@ -168,36 +168,36 @@ namespace CodeThorn {
       Solver* solver = nullptr;
       // solver "factory"
       switch(ctOpt.solver) {
-      case 5 :  {  
+      case 5 :  {
         solver = new Solver5(); break;
       }
-      case 16 :  {  
+      case 16 :  {
         solver = new Solver16(); break; // variant of solver5
       }
-      case 17 :  {  
+      case 17 :  {
         solver = new Solver17(); break; // does not create a TS
       }
       case 18 :  {
-        Solver18* solver18= new Solver18(); 
+        Solver18* solver18= new Solver18();
         solver18->setAbstractionConsistencyCheckFlag(ctOpt.abstractionConsistencyCheck);
         solver18->setPassThroughOptimizationFlag(ctOpt.passThroughOptimization);
         solver=solver18;
         break; // does not create a TS
       }
-      case 19 :  {  
+      case 19 :  {
         solver = new Solver19(); break; // does not create a TS
       }
-      case 8 :  {  
+      case 8 :  {
         solver = new Solver8(); break;
       }
-      default :  { 
+      default :  {
         logger[ERROR] <<"Unknown solver ID: "<<ctOpt.solver<<endl;
         exit(1);
       }
       }
       return solver;
     }
-    
+
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr) {
       CTAnalysis* analyzer=new CTAnalysis();
       Solver* solver=new Solver16();
@@ -213,7 +213,7 @@ namespace CodeThorn {
       delete vid;
       delete exprAnalyzer;
       delete analyzer;
-      
+
       return aVal;
     }
 
@@ -263,7 +263,7 @@ namespace CodeThorn {
       }
     }
 
-    void optionallySetRersMapping(CodeThornOptions ctOpt,LTLOptions ltlOpt,IOAnalyzer* analyzer) {
+    void optionallySetRersMapping(CodeThornOptions /*ctOpt*/,LTLOptions ltlOpt,IOAnalyzer* analyzer) {
       // guard to check if LTL checking is activated
       if(ltlOpt.ltlRersMappingFileName.size()==0 && ltlOpt.ltlInAlphabet.size()==0 && ltlOpt.ltlOutAlphabet.size()==0)
         return;
@@ -380,7 +380,7 @@ namespace CodeThorn {
       return analyzer;
     }
 
-    IOAnalyzer* createEStateAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, Labeler* labeler, VariableIdMappingExtended* vid, CFAnalysis* cfAnalysis, Solver* solver) {
+    IOAnalyzer* createEStateAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, Labeler*, VariableIdMappingExtended*, CFAnalysis*, Solver*) {
       IOAnalyzer* ioAnalyzer=CodeThornLib::createAnalyzer(ctOpt,ltlOpt);
       return ioAnalyzer;
     }
@@ -457,7 +457,7 @@ namespace CodeThorn {
 	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
 	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),icfgFileName,analyzer->getTopologicalSort());
         cout<<"Generated ICFG dot file "<<icfgFileName<<endl;
-        
+
 	cout << "=============================================================="<<endl;
       }
       if (ctOpt.visualization.icfgFileName.size()>0 && !ctOpt.visualization.vis) {
@@ -468,7 +468,7 @@ namespace CodeThorn {
         analyzer->getCFAnalyzer()->generateIcfgDotFile(ctOpt.visualization.icfgFileName,analyzer->getTopologicalSort());
 	cout << "generated "<<icfgFileName<<" (top sort: "<<(analyzer->getTopologicalSort()!=0)<<")"<<endl;
       }
-      
+
 
       if(ctOpt.visualization.visTg2) {
         string dotFile3=visualizer.foldedTransitionGraphToDot();
@@ -575,7 +575,7 @@ namespace CodeThorn {
 	if(ctOpt.status) cout<< "STATUS: ROSE AST checks started."<<endl;
 	runRoseAstChecks(sageProject);
 	if(ctOpt.status) cout << "STATUS: ROSE AST checks finished."<<endl;
-	      
+
         // test: constant expressions
         {
           if(ctOpt.status) cout <<"STATUS: testing constant expressions started."<<endl;
@@ -593,7 +593,7 @@ namespace CodeThorn {
         }
       }
     }
-    
+
     void optionallyRunRoseAstChecksAndExit(CodeThornOptions& ctOpt, SgProject* sageProject) {
       optionallyRunRoseAstChecks(ctOpt,sageProject);
       if(ctOpt.runRoseAstChecks) {
@@ -694,7 +694,7 @@ namespace CodeThorn {
       if(ctOpt.info.printVariableIdMapping||ctOpt.info.printTypeSizeMapping||ctOpt.info.typeSizeMappingCSVFileName.size()>0||ctOpt.info.dumpFunctionCallMapping) {
         exit(0);
       }
-      
+
     }
 
     void optionallyRunNormalization(CodeThornOptions& ctOpt,SgProject* sageProject, TimingCollector& timingCollector) {
@@ -888,7 +888,7 @@ namespace CodeThorn {
     }
 #endif
 
-    string getRunTimeAndMemoryUsageReport(CodeThornOptions& ctOpt,TimingCollector& tc) {
+    string getRunTimeAndMemoryUsageReport(CodeThornOptions& /*ctOpt*/,TimingCollector& tc) {
       stringstream ss;
       ss<<tc.toString();
       ss<<"Total memory                   : "<<CodeThorn::getPhysicalMemorySize()/(1024*1024) <<" MiB"<<endl;
@@ -918,7 +918,7 @@ namespace CodeThorn {
       vim->typeSizeOverviewtoStream(ss);
       return ss.str();
     }
-    
+
     std::string programStatsToString(ProgramInfo* progInfo1, ProgramInfo* progInfo2, VariableIdMappingExtended* vim) {
       stringstream ss;
       ss<<progInfo1->toStringCompared(progInfo2);
@@ -974,7 +974,7 @@ namespace CodeThorn {
       return numSymZero==0 && numDeleted==0;
     }
 
-    
+
     void optionallyGenerateLineColumnCsv(CodeThornOptions& ctOpt, SgProject* node) {
       string fileName=ctOpt.info.astTraversalLineColumnCSVFileName;
       if(fileName.size()>0) {

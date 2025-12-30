@@ -98,7 +98,7 @@ string CodeThorn::ProgramLocationsReport::findOriginalProgramLocationOfNode(SgNo
 string CodeThorn::ProgramLocationsReport::fileInfoAsFormattedProgramLocation(SgNode* node) {
   return SgNodeHelper::sourceFilenameToString(node)+","+SgNodeHelper::sourceLineColumnToString(node);
 }
-  
+
 // not used anymore
 string CodeThorn::ProgramLocationsReport::sourceCodeAtLabel(Labeler* labeler, Label lab) {
   if(lab.isValid()) {
@@ -158,7 +158,7 @@ void ProgramLocationsReport::recordPotentialLocation(CodeThorn::Label lab) {
       potentialLocations.insert(lab);
   }
 }
- 
+
 size_t ProgramLocationsReport::numDefinitiveLocations() {
   return definitiveLocations.size();
 }
@@ -205,16 +205,16 @@ void CodeThorn::ProgramLocationsReport::writeResultFile(CodeThornOptions& ctOpt,
   }
 }
 
-void CodeThorn::ProgramLocationsReport::writeResultToStream(CodeThornOptions& ctOpt, std::ostream& stream, CodeThorn::Labeler* labeler) {
+void CodeThorn::ProgramLocationsReport::writeResultToStream(CodeThornOptions&, std::ostream& stream, CodeThorn::Labeler* labeler) {
   writeAllDefinitiveLocationsToStream(stream,labeler,true,true);
   writeAllPotentialLocationsToStream(stream,labeler,true,true);
 }
 
-void CodeThorn::ProgramLocationsReport::writeAllDefinitiveLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation) {
+void CodeThorn::ProgramLocationsReport::writeAllDefinitiveLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool /*qualifier*/, bool /*programLocation*/) {
   writeLocationsToStream(stream,labeler,definitiveLocations,"definitive",true);
 }
 
-void CodeThorn::ProgramLocationsReport::writeAllPotentialLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation) {
+void CodeThorn::ProgramLocationsReport::writeAllPotentialLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool /*qualifier*/, bool /*programLocation*/) {
   writeLocationsToStream(stream,labeler,potentialLocations,"potential",true);
 }
 
@@ -231,7 +231,7 @@ void CodeThorn::ProgramLocationsReport::writeLocationsToStream(std::ostream& str
   }
 }
 
-void ProgramLocationsReport::writeLocationsVerificationOverview(CodeThornOptions& ctOpt, std::ostream& os, Labeler* labeler) {
+void ProgramLocationsReport::writeLocationsVerificationOverview(CodeThornOptions&, std::ostream& os, Labeler*) {
   int int_n=reachableLocations.size();
   double n=(double)int_n;
   LabelSet verified=verifiedLocations();
@@ -261,4 +261,3 @@ void ProgramLocationsReport::writeLocationsVerificationOverview(CodeThornOptions
   }
 #endif
 }
-

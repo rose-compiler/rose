@@ -150,7 +150,7 @@ VariableId Specialization::determineVariableIdToSpecialize(SgFunctionDefinition*
   return variableId;
 }
 
-int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, EStateTransferFunctions* exprAnalyzer, EStatePtr estate, SgNode* root) {
+int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping*, EStateTransferFunctions* exprAnalyzer, EStatePtr estate, SgNode* root) {
   typedef pair<SgExpression*,int> SubstitutionPair;
   typedef list<SubstitutionPair > SubstitutionList;
   SubstitutionList substitutionList;
@@ -275,7 +275,7 @@ void Specialization::extractArrayUpdateOperations(CTAnalysis* ana,
         ROSE_ASSERT(succSet.size()==1);
        EStatePtrSet::iterator i=succSet.begin();
        estate=*i;
-     }  
+     }
      numberOfExtractedUpdates++;
      //cout<<"DEBUG: updates: "<<numberOfExtractedUpdates<<"/"<<_maxNumberOfExtractedUpdates<<endl;
      if(numberOfExtractedUpdates==_maxNumberOfExtractedUpdates) {
@@ -330,7 +330,7 @@ void Specialization::extractArrayUpdateOperations(CTAnalysis* ana,
     }
     rewriteSystem.getRewriteStatisticsPtr()->numArrayUpdates++;
     arrayUpdates[i]=EStateExprInfo(p_estate,p_exp,p_expCopy2);
-  }    
+  }
 }
 
 
@@ -348,9 +348,9 @@ SgNode* Specialization::findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNo
       }
     }
     // there is no concept for before-the-start iterator (therefore this is checked this way) -> change this rbegin/rend
-    if(pos==arrayUpdates.begin()) 
+    if(pos==arrayUpdates.begin())
       break;
-    --pos; 
+    --pos;
   } while (1);
 
   return 0;
@@ -370,9 +370,9 @@ SgNode* Specialization::findDefAssignOfUse(SgVarRefExp* useRefNode, ArrayUpdates
       }
     }
     // there is no concept for before-the-start iterator (therefore this is checked this way) -> change this rbegin/rend
-    if(pos==arrayUpdates.begin()) 
+    if(pos==arrayUpdates.begin())
       break;
-    --pos; 
+    --pos;
   } while (1);
 
   return 0;
@@ -618,7 +618,7 @@ void Specialization::writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates,
           ROSE_ASSERT(!(*j)->attributeExists("AstUnparseAttribute"));
           AstUnparseAttribute* ssaNameAttribute=new AstUnparseAttribute((*j)->unparseToString()+string("_")+(*j)->getAttribute("Number")->toString(),AstUnparseAttribute::e_replace);
           (*j)->setAttribute("AstUnparseAttribute",ssaNameAttribute);
-        }            
+        }
       }
       assignments.push_back((*i).second->unparseToString());
       break;
@@ -657,7 +657,7 @@ SgExpressionPtrList& Specialization::getInitializerListOfArrayVariable(VariableI
   cerr<<"Error: getInitializerListOfArrayVariable failed."<<endl;
   exit(1);
 }
-#endif    
+#endif
 
 string Specialization::flattenArrayInitializer(SgVariableDeclaration* decl, VariableIdMapping* variableIdMapping) {
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
@@ -668,7 +668,7 @@ string Specialization::flattenArrayInitializer(SgVariableDeclaration* decl, Vari
     ROSE_ASSERT(initializer);
     stringstream ss;
     // x[2] = {1,2};"). In this case the SgExprListExp ("{1,2}") is wrapped in an SgAggregateInitializer
-    // SgExprListExp* SgAggregateInitializer->get_initializers () const 
+    // SgExprListExp* SgAggregateInitializer->get_initializers () const
     // pointer variable initializer
     if(SgAggregateInitializer* arrayInit=isSgAggregateInitializer(initializer)) {
       string arrayName=variableIdMapping->variableName(variableIdMapping->variableId(decl));
@@ -780,7 +780,7 @@ void Specialization::transformArrayProgram(SgProject* root, CTAnalysis* analyzer
         } else {
           cout<<"Error: ArrayIndex: unknown (dimension>1)";
           exit(1);
-        }          
+        }
       }
     }
   }
@@ -835,11 +835,11 @@ void Specialization::transformArrayProgram(SgProject* root, CTAnalysis* analyzer
     int accessSubscript=arrayAccess.getSubscript(0);
 #endif
     //SageInterface::removeStatement(*i);
-    
+
     //SgNodeHelper::replaceAstWithString((*i),"POINTER-INIT-ARRAY:"+(*i)->unparseToString()+"...;");
   }
-  
-  //list<pair<SgPntrArrRefExp*,ArrayElementAccessData> > 
+
+  //list<pair<SgPntrArrRefExp*,ArrayElementAccessData> >
   cout<<"STATUS: Replacing Expressions ... ";
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(isSgAssignOp(*i)) {
@@ -934,5 +934,5 @@ void Specialization::transformArrayProgram(SgProject* root, CTAnalysis* analyzer
     SgVariableDeclaration* decl=*i;
     SageInterface::removeStatement(decl);
   }
-      
+
 }

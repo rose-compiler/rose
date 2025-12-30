@@ -83,7 +83,7 @@ namespace
       void handle(const SgNode& n)       { SG_UNEXPECTED_NODE(n); }
 
       /// fallback method for regular function calls
-      void handle(const SgExpression& n)
+      void handle(const SgExpression&)
       {
         CallTargetSet::getPropertiesForExpression(&callexp, nullptr /*classHierarchy*/, res);
 

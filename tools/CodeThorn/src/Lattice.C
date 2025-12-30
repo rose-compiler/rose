@@ -6,7 +6,7 @@
 CodeThorn::Lattice::~Lattice() {
 }
 
-void CodeThorn::Lattice::toStream(std::ostream& os, VariableIdMapping* vim) {
+void CodeThorn::Lattice::toStream(std::ostream& os, VariableIdMapping* /*vim*/) {
   os<< (isBot() ? "bot" : "<lattice-element>");
 }
 
@@ -36,4 +36,3 @@ bool CodeThorn::Lattice::isBot() const {
   ROSE_ASSERT(false);
 }
 #endif
-

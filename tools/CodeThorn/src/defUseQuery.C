@@ -70,7 +70,7 @@ void DefUseVarsInfo::copyUseToDef()
 
 // combine the two DefUseVarsInfo functions
 DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1, const DefUseVarsInfo& duvi2)
-{  
+{
   const VarsInfo& duvi1DefVarsInfo = duvi1.getDefVarsInfoRef();
   const VariableIdInfoMap& duvi1DefVarsInfoMap = duvi1DefVarsInfo.first;
 
@@ -91,7 +91,7 @@ DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1, const DefUseVarsInfo& duvi
   VariableIdInfoMap& rduviDefVarsInfoMap = rduviDefVarsInfo.first;
   VariableIdInfoMap& rduviUseVarsInfoMap = rduviUseVarsInfo.first;
   FunctionCallExpSet rduviFuncSet;
-  
+
   // we are merging two maps
   // <VariableId, type> entry should not be different if present in two maps
   // maps are really small and therefore its ok to
@@ -102,14 +102,14 @@ DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1, const DefUseVarsInfo& duvi
 
   rduviUseVarsInfoMap.insert(duvi1UseVarsInfoMap.begin(), duvi1UseVarsInfoMap.end());
   rduviUseVarsInfoMap.insert(duvi2UseVarsInfoMap.begin(), duvi2UseVarsInfoMap.end());
-  
+
   set_union(duvi1FuncSet.begin(), duvi1FuncSet.end(),
             duvi2FuncSet.begin(), duvi2FuncSet.end(),
             std::inserter(rduviFuncSet, rduviFuncSet.begin()));
 
   rduviDefVarsInfo.second = duvi1DefVarsInfo.second || duvi2DefVarsInfo.second;
   rduviUseVarsInfo.second = duvi1UseVarsInfo.second || duvi2UseVarsInfo.second;
- 
+
   bool rduviUseAfterDef = duvi1.getUseAfterDef() || duvi2.getUseAfterDef();
 
   return DefUseVarsInfo(rduviDefVarsInfo, rduviUseVarsInfo, rduviFuncSet, rduviUseAfterDef);
@@ -118,7 +118,7 @@ DefUseVarsInfo operator+(const DefUseVarsInfo& duvi1, const DefUseVarsInfo& duvi
 std::string DefUseVarsInfo::functionCallExpSetPrettyPrint(FunctionCallExpSet& func_set)
 {
   std::ostringstream oss;
-  FunctionCallExpSet::iterator it = func_set.begin(); 
+  FunctionCallExpSet::iterator it = func_set.begin();
   oss << "{";
   for( ;it != func_set.end(); )
   {
@@ -161,7 +161,7 @@ std::string DefUseVarsInfo::str(VariableIdMapping& vidm)
   return oss.str();
 }
 
-void DefUseVarsInfo::addAllArrayElements(SgInitializedName* array_name, VariableIdMapping& vidm, bool def)
+void DefUseVarsInfo::addAllArrayElements(SgInitializedName* array_name, VariableIdMapping& vidm, bool /*def*/)
 {
   assert(array_name);
   //VariableId array_var_id = vidm.variableId(array_name);
@@ -373,7 +373,7 @@ void ExprWalker::visit(SgPntrArrRefExp* ref)
     }
     // raise the appropriate flag
     // since the operand is no longer array
-    if(isModExpr) {      
+    if(isModExpr) {
     lduvi.getDefVarsInfoMod().second = true;
     }
     else {
@@ -405,7 +405,7 @@ void ExprWalker::visit(SgPointerDerefExp* sgn)
     VarsInfo& def_s = duvi.getDefVarsInfoMod();
     def_s.second = true;
   }
-  else 
+  else
   {
     VarsInfo& use_s = duvi.getUseVarsInfoMod();
     use_s.second = true;
@@ -430,8 +430,8 @@ void ExprWalker::visit(SgPointerDerefExp* sgn)
   // In expressions like *(*(arr + i) + j), *(arr + i)
   // is of SgArrayType and adds more complications to the walker. Here we
   // are conservative and just raise the flag when we don't know what
-  // exactly is modified.  
-  
+  // exactly is modified.
+
   SgNode* operand = sgn->get_operand();
   DefUseVarsInfo rduvi = getDefUseVarsInfo_rec(operand, vidm, false);
 
@@ -455,7 +455,7 @@ void ExprWalker::visit(SgArrowExp* sgn)
   }
   else
   {
-    rduvi = getDefUseVarsInfo_rec(rhs_expr, vidm, false); 
+    rduvi = getDefUseVarsInfo_rec(rhs_expr, vidm, false);
   }
   // left is only used
   lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false);
@@ -481,7 +481,7 @@ void ExprWalker::visit(SgDotExp* sgn)
   }
   else
   {
-    rduvi = getDefUseVarsInfo_rec(rhs_expr, vidm, false); 
+    rduvi = getDefUseVarsInfo_rec(rhs_expr, vidm, false);
   }
   // left is only used
   lduvi = getDefUseVarsInfo_rec(lhs_addr, vidm, false);
@@ -500,7 +500,7 @@ void ExprWalker::visit(SgDotExp* sgn)
 // process first operand with no-mod semantics
 // second operand is processed with mod semantics if the flag is true
 // keep only the side-effects from first operand and drop the uses
-// 
+//
 void ExprWalker::visit(SgCommaOpExp* sgn)
 {
   SgNode* lhs_op = sgn->get_lhs_operand();
@@ -522,9 +522,9 @@ void ExprWalker::visit(SgCommaOpExp* sgn)
   if(lduvi.isUseAfterDefCandidate()) {
     lduvi.setUseAfterDef();
   }
-  
+
   // (i=j+1, a) = expr
-  // combine the lhs and rhs of SgCommaOp only 
+  // combine the lhs and rhs of SgCommaOp only
   // if the lhs does something
   if(!lduvi.isDefSetEmpty()) {
     duvi = lduvi + rduvi;
@@ -543,7 +543,7 @@ void ExprWalker::visit(SgDotStarOp* sgn)
   // flag is raised depending on whether we are on lhs or rhs
   // operands are collected with use semantics
   SgNode* lhs_op = sgn->get_lhs_operand();
-  SgNode* rhs_op = sgn->get_rhs_operand();  
+  SgNode* rhs_op = sgn->get_rhs_operand();
   DefUseVarsInfo lduvi, rduvi;
   lduvi = getDefUseVarsInfo_rec(lhs_op, vidm, false);
   rduvi = getDefUseVarsInfo_rec(rhs_op, vidm, false);
@@ -554,7 +554,7 @@ void ExprWalker::visit(SgDotStarOp* sgn)
     rduvi.setUseAfterDef();
   }
   duvi = lduvi + rduvi;
-  
+
   // raise flag based on which side of SgAssignOp
   if(isModExpr) {
     VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
@@ -563,7 +563,7 @@ void ExprWalker::visit(SgDotStarOp* sgn)
   else {
     VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
     use_vars_info.second = true;
-  }   
+  }
 }
 
 void ExprWalker::visit(SgArrowStarOp* sgn)
@@ -573,7 +573,7 @@ void ExprWalker::visit(SgArrowStarOp* sgn)
   // flag is raised depending on whether we are on lhs or rhs
   // operands are collected with use semantics
   SgNode* lhs_op = sgn->get_lhs_operand();
-  SgNode* rhs_op = sgn->get_rhs_operand();  
+  SgNode* rhs_op = sgn->get_rhs_operand();
   DefUseVarsInfo lduvi, rduvi;
   lduvi = getDefUseVarsInfo_rec(lhs_op, vidm, false);
   rduvi = getDefUseVarsInfo_rec(rhs_op, vidm, false);
@@ -584,7 +584,7 @@ void ExprWalker::visit(SgArrowStarOp* sgn)
     rduvi.setUseAfterDef();
   }
   duvi = lduvi + rduvi;
-  
+
   // raise flag based on which side of SgAssignOp
   if(isModExpr) {
     VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
@@ -593,7 +593,7 @@ void ExprWalker::visit(SgArrowStarOp* sgn)
   else {
     VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
     use_vars_info.second = true;
-  }   
+  }
 }
 
 /**********************************************************
@@ -746,7 +746,7 @@ void ExprWalker::visit(SgConditionalExp* sgn)
   if(isModExpr) {
     tduvi = getDefUseVarsInfo_rec(true_exp, vidm, true);
     fduvi = getDefUseVarsInfo_rec(false_exp, vidm, true);
-    
+
   }
   else {
     tduvi = getDefUseVarsInfo_rec(true_exp, vidm, false);
@@ -964,7 +964,7 @@ void ExprWalker::visit(SgDesignatedInitializer* sgn)
   // designated initializer assigns members of variables, struct and union
   // entire struct/array/union is initialized by a parent initializer
   // SgDesignatedInitializer only initializes individual members
-  // array example: int arr[4] = { 1, [2] = 4, [3] = 5}; 
+  // array example: int arr[4] = { 1, [2] = 4, [3] = 5};
   // SgDesignatedInitializer is used to initialize element [2] and [3]
   // No VariableId for arr[2] or arr[3]
   // struct example; struct { int a; }; struct A sA = { .a = 0};
@@ -973,7 +973,7 @@ void ExprWalker::visit(SgDesignatedInitializer* sgn)
   // we don't have any VariableId
   // we cannot be always consistent on what is defined
   // simply collect all the variables that can be used
-  
+
   SgInitializer* initializer = sgn->get_memberInit();
   duvi = getDefUseVarsInfo_rec(initializer, vidm, false);
   if(duvi.isUseAfterDefCandidate()) {
@@ -989,11 +989,11 @@ void ExprWalker::visit(SgVarRefExp* sgn)
 {
   // get the VariableId
   VariableId vid = vidm.variableId(sgn);
-  
+
   ROSE_ASSERT(vid.isValid());
 
   // determine type info
-  VariableIdTypeInfo sgn_type_info = getVariableIdTypeInfo(vid, vidm); 
+  VariableIdTypeInfo sgn_type_info = getVariableIdTypeInfo(vid, vidm);
 
   VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
   VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
@@ -1011,7 +1011,7 @@ void ExprWalker::visit(SgVarRefExp* sgn)
 void ExprWalker::visit(SgInitializedName* sgn)
 {
   VariableId vid = vidm.variableId(sgn);
-  
+
   // some SgInitializedName do not have symbols
   // VariableId is not created for such SgInitializedName
   // check and return if we are processing such SgInitializedName
@@ -1029,7 +1029,7 @@ void ExprWalker::visit(SgInitializedName* sgn)
   // SgInitializedName always define a variable
   // it should always be in def_set
   VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
-  
+
   // determine the type info
   VariableIdTypeInfo sgn_type_info = getVariableIdTypeInfo(vid, vidm);
 
@@ -1042,29 +1042,29 @@ void ExprWalker::visit(SgInitializedName* sgn)
   duvi = duvi + rduvi;
 }
 
-void ExprWalker::visit(SgValueExp* sgn)
+void ExprWalker::visit(SgValueExp*)
 {
   // dont need to do anything
 }
 
-void ExprWalker::visit(SgNullExpression* sgn)
+void ExprWalker::visit(SgNullExpression*)
 {
   // dont need to do anything
 }
 
-void ExprWalker::visit(SgFunctionRefExp* sgn)
+void ExprWalker::visit(SgFunctionRefExp*)
 {
   // not sure
   // does not have any def/use semantics
 }
 
-void ExprWalker::visit(SgMemberFunctionRefExp* sgn)
+void ExprWalker::visit(SgMemberFunctionRefExp*)
 {
   // not sure
   // does not have any def/use semantics
 }
 
-void ExprWalker::visit(SgThisExp* sgn)
+void ExprWalker::visit(SgThisExp*)
 {
   // we dont know anything about the 'this' exp
   // 'this' cannot be modified
@@ -1075,31 +1075,31 @@ void ExprWalker::visit(SgThisExp* sgn)
   //throw oss.str();
 }
 
-void ExprWalker::visit(SgClassNameRefExp* sgn)
+void ExprWalker::visit(SgClassNameRefExp*)
 {
   // no variableid
 }
 
-void ExprWalker::visit(SgLabelRefExp* sgn)
+void ExprWalker::visit(SgLabelRefExp*)
 {
   // no variableid
 }
 
-void ExprWalker::visit(SgTemplateFunctionRefExp* sgn)
+void ExprWalker::visit(SgTemplateFunctionRefExp*)
 {
 }
-void ExprWalker::visit(SgTemplateMemberFunctionRefExp* sgn)
+void ExprWalker::visit(SgTemplateMemberFunctionRefExp*)
 {
 }
-void ExprWalker::visit(SgTypeTraitBuiltinOperator* sgn)
-{
-}
-
-void ExprWalker::visit(SgPseudoDestructorRefExp* sgn)
+void ExprWalker::visit(SgTypeTraitBuiltinOperator*)
 {
 }
 
-void ExprWalker::visit(SgStatementExpression* sgn)
+void ExprWalker::visit(SgPseudoDestructorRefExp*)
+{
+}
+
+void ExprWalker::visit(SgStatementExpression*)
 {
   // not C++
   // gnu extension
@@ -1108,7 +1108,7 @@ void ExprWalker::visit(SgStatementExpression* sgn)
   // can support this when the interface can take statement nodes
 }
 
-void ExprWalker::visit(SgAsmOp* sgn)
+void ExprWalker::visit(SgAsmOp*)
 {
   // these are extensions
 }
@@ -1151,12 +1151,12 @@ DefUseVarsInfo getDefUseVarsInfo(SgNode* sgn, VariableIdMapping& vidm)
 
 DefUseVarsInfo getDefUseVarsInfoExpr(SgExpression* sgn, VariableIdMapping& vidm)
 {
-  return getDefUseVarsInfo_rec(sgn, vidm, false);  
+  return getDefUseVarsInfo_rec(sgn, vidm, false);
 }
 
 DefUseVarsInfo getDefUseVarsInfoInitializedName(SgInitializedName* sgn, VariableIdMapping& vidm)
 {
-  return getDefUseVarsInfo_rec(sgn, vidm, false);  
+  return getDefUseVarsInfo_rec(sgn, vidm, false);
 }
 
 DefUseVarsInfo getDefUseVarsInfoVariableDeclaration(SgVariableDeclaration* sgn, VariableIdMapping& vidm)

@@ -4,26 +4,26 @@
 namespace CodeThorn
 {
 
-bool CtxReachabilityLattice::approximatedBy(Lattice& other) const 
+bool CtxReachabilityLattice::approximatedBy(Lattice& other) const
 {
   CtxReachabilityLattice& that = dynamic_cast<CtxReachabilityLattice&>(other);
-  
-  return !isReachable() || that.isReachable(); 
+
+  return !isReachable() || that.isReachable();
 }
 
-void CtxReachabilityLattice::combine(Lattice& other) 
+void CtxReachabilityLattice::combine(Lattice& other)
 {
   CtxReachabilityLattice& that = dynamic_cast<CtxReachabilityLattice&>(other);
-  
+
   reachable = isReachable() || that.isReachable();
 }
-    
-bool CtxReachabilityLattice::isBot() const 
+
+bool CtxReachabilityLattice::isBot() const
 {
   return !isReachable();
 }
-    
-void CtxReachabilityLattice::toStream(std::ostream& os, VariableIdMapping* vim) 
+
+void CtxReachabilityLattice::toStream(std::ostream& os, VariableIdMapping*)
 {
   if (!isReachable()) os << '!';
   os << "r";

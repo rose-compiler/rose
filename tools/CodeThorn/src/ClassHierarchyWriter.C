@@ -210,7 +210,7 @@ namespace
     printFunctions(os, "Overrides", className, funcName, vfuns, vfn.overridden());
   }
 
-  bool printsData(const ct::VirtualFunctionDesc& vfn, bool withOverridden)
+  bool printsData(const ct::VirtualFunctionDesc&, bool)
   {
     return true;
     // return vfn.overriders().size() || vfn.overridden().size();
@@ -484,7 +484,7 @@ namespace
         out() << "ofsToTop (todo)";
       }
 
-      virtual void operator()(const ct::TypeInfoPointer& tyinf)
+      virtual void operator()(const ct::TypeInfoPointer& /*tyinf*/  )
       {
         out() << "typeinfo (todo)";
       }

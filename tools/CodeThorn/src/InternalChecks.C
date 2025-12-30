@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "ROSE_UNUSED.h"
 
 #include "codethorn.h"
 #include "SgNodeHelper.h"
@@ -63,6 +64,7 @@ void checkLargeSets() {
   check("integer set: bot,-10, ... ,+10,top",cilSet.size()==22); // 1+20+1
 }
 bool CodeThorn::internalChecks(int argc, char *argv[]) {
+  ROSE_UNUSED(argc); ROSE_UNUSED(argv);
   try {
     // checkTypes() writes into checkresult
     checkTypes();
@@ -104,7 +106,7 @@ void nocheck(string checkIdentifier, bool checkResult) {
 void check(string checkIdentifier, bool checkResult, bool check=true) {
 
   static int checkNr=1;
-  cout << color("white") << "CHECK "<<checkNr<<": "; 
+  cout << color("white") << "CHECK "<<checkNr<<": ";
   if(!check) {
     cout<<color("white")<<"----";
   } else {
@@ -125,7 +127,7 @@ void check(string checkIdentifier, bool checkResult, bool check=true) {
 void checkTypes() {
   VariableIdMappingExtended variableIdMapping;
   AbstractValue::setVariableIdMapping(&variableIdMapping);
-  
+
   PState s1;
   cout << "RUNNING CHECKS:"<<endl;
   {
@@ -183,7 +185,7 @@ void checkTypes() {
     check("c=c.operatorOr(d) => c isTrue ",c.isTrue());
     AbstractValue f=CodeThorn::Bot();
     d=CodeThorn::Bot();
-    
+
     a=d.operatorAnd(f);
     check("d=bot;f=bot;a=d.operatorAnd(f); => a isBot",a.isBot());
     f=false;
@@ -233,7 +235,7 @@ void checkTypes() {
     check("c2!=c3",c2!=c3);
 
     {
-      // check for equalities 
+      // check for equalities
       {
         Constraint c1(Constraint::EQ_VAR_CONST,var_x,1);
         Constraint c2=Constraint(Constraint::EQ_VAR_CONST,var_y,2);
@@ -254,7 +256,7 @@ void checkTypes() {
         cs1.addConstraint(c3);
         Constraint c5(Constraint::EQ_VAR_VAR,var_x,var_y);
         cs1.addConstraint(c5);
-        check("c5:constraintExists(EQ_VAR_VAR,x,y) == true",cs1.constraintExists(Constraint(Constraint::EQ_VAR_VAR,var_x,var_y)));    
+        check("c5:constraintExists(EQ_VAR_VAR,x,y) == true",cs1.constraintExists(Constraint(Constraint::EQ_VAR_VAR,var_x,var_y)));
 
         check("c1:constraintExists(EQ_VAR_CONST,x,1) == false",cs1.constraintExists(Constraint::EQ_VAR_CONST,var_x,1)==false);
         check("c1:constraintExists(NEQ_VAR_CONST,x,1) == true",cs1.constraintExists(Constraint::NEQ_VAR_CONST,var_x,1)==true);
@@ -309,8 +311,8 @@ void checkTypes() {
     }
   }
 #endif
-  
-  {  
+
+  {
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR NUMBER LATTICE:"<<endl;
     AbstractValue cint1(1);
@@ -388,9 +390,9 @@ void checkTypes() {
     check("constint-strictWeak-smaller-1",strictWeakOrderingIsSmaller(val1,val2)==true);
 
     s4.writeToMemoryLocation(x,valtop);
-    check("created s4; inserted x=top; s4.readFromMemoryLocation(x).isTop",s4.readFromMemoryLocation(x).isTop());    
+    check("created s4; inserted x=top; s4.readFromMemoryLocation(x).isTop",s4.readFromMemoryLocation(x).isTop());
     pstateSet.processNewOrExisting(s4);
-    check("inserted s4 => size of pstateSet == 4",pstateSet.size()==4);    
+    check("inserted s4 => size of pstateSet == 4",pstateSet.size()==4);
     PStatePtr pstateptr4=const_cast<PStatePtr>(pstateSet.processNewOrExisting(s4)); // version 1
     check("obtain pointer to s4 from pstateSet and check !=0",pstateptr4!=0);
 
@@ -404,7 +406,7 @@ void checkTypes() {
     cs1.addConstraint(Constraint(Constraint::NEQ_VAR_CONST,x,1));
     const ConstraintSet* cs1ptr=csm.processNewOrExisting(cs1);
     es1=EState(1,pstateptr1,cs1ptr);
-    
+
     ConstraintSet cs2;
     cs2.addConstraint(Constraint(Constraint::EQ_VAR_CONST,x,1));
     const ConstraintSet* cs2ptr=csm.processNewOrExisting(cs2);
@@ -521,11 +523,11 @@ void checkTypes() {
       CodeThorn::Parse::parseString(parseString,ss); // throws exception if it fails
       char next;
       ss>>next;
-      check(string("Parsing: ")+parseString+" from:"+s+" Next:"+next,true);      
+      check(string("Parsing: ")+parseString+" from:"+s+" Next:"+next,true);
     }
   } // end of stream operator checks
 
-  {  
+  {
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR CALL STRINGS:"<<endl;
     CallString s1;

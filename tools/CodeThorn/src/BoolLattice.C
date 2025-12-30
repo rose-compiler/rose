@@ -28,10 +28,10 @@ CodeThorn::BoolLattice::BoolLattice():value(CodeThorn::BoolLattice::BL_BOT) {}
 CodeThorn::BoolLattice::BoolLattice(bool val) {if(val) value=CodeThorn::BoolLattice::BL_TRUE; else value=CodeThorn::BoolLattice::BL_FALSE;}
 
 // type conversion
-CodeThorn::BoolLattice::BoolLattice(Top e) {value=CodeThorn::BoolLattice::BL_TOP;}
+CodeThorn::BoolLattice::BoolLattice(Top /*e*/) {value=CodeThorn::BoolLattice::BL_TOP;}
 
 // type conversion
-CodeThorn::BoolLattice::BoolLattice(Bot e) {value=CodeThorn::BoolLattice::BL_BOT;}
+CodeThorn::BoolLattice::BoolLattice(Bot /*e*/) {value=CodeThorn::BoolLattice::BL_BOT;}
 
 // type conversion
 CodeThorn::BoolLattice::BoolLattice(int x) {if(x==0) value=CodeThorn::BoolLattice::BL_FALSE; else value=CodeThorn::BoolLattice::BL_TRUE;}

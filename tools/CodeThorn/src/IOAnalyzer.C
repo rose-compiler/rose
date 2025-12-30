@@ -51,7 +51,7 @@ void IOAnalyzer::setLTLDrivenStartEState(EStatePtr estate) {
   // this function is only used in ltl-driven mode (otherwise it is not necessary)
   ROSE_ASSERT(getModeLTLDriven());
   transitionGraph.setStartEState(estate);
-  
+
 }
 
 void IOAnalyzer::postInitializeSolver() {
@@ -65,26 +65,26 @@ void IOAnalyzer::postInitializeSolver() {
 
 }
 
-/*! 
+/*!
   * \author Marc Jasper
   * \date 2014.
  */
 void IOAnalyzer::extractRersIOAssertionTraces() {
-  for (list<pair<int, EStatePtr> >::iterator i = _firstAssertionOccurences.begin(); 
-       i != _firstAssertionOccurences.end(); 
+  for (list<pair<int, EStatePtr> >::iterator i = _firstAssertionOccurences.begin();
+       i != _firstAssertionOccurences.end();
        ++i ) {
     SAWYER_MESG(logger[TRACE])<< "STATUS: extracting trace leading to failing assertion: " << i->first << endl;
     addCounterexample(i->first, i->second);
   }
 }
 
-/*! 
+/*!
   * \author Marc Jasper
   * \date 2014.
  */
 void IOAnalyzer::addCounterexample(int assertCode, EStatePtr assertEState) {
   _counterexampleGenerator.setType(CounterexampleGenerator::TRACE_TYPE_RERS_CE);
-  ExecutionTrace* trace = 
+  ExecutionTrace* trace =
     _counterexampleGenerator.traceLeadingTo(assertEState);
   if(RersCounterexample* rersCe = dynamic_cast<RersCounterexample*>(trace)) {
     string ceString;
@@ -93,7 +93,7 @@ void IOAnalyzer::addCounterexample(int assertCode, EStatePtr assertEState) {
     } else {
       ceString = rersCe->toRersIString(_ltlRersMapping); // MS 8/6/20: changed to use mapping
     }
-    reachabilityResults.strictUpdateCounterexample(assertCode, ceString);    
+    reachabilityResults.strictUpdateCounterexample(assertCode, ceString);
     delete rersCe;
     rersCe = nullptr;
   } else {
@@ -101,7 +101,7 @@ void IOAnalyzer::addCounterexample(int assertCode, EStatePtr assertEState) {
   }
 }
 
-/*! 
+/*!
   * \author Marc Jasper
   * \date 2014.
  */
@@ -122,7 +122,7 @@ void IOAnalyzer::removeOutputOutputTransitions() {
   }
 }
 
-/*! 
+/*!
   * \author Marc Jasper
   * \date 2014.
  */
@@ -143,7 +143,7 @@ void IOAnalyzer::removeInputInputTransitions() {
   }
 }
 
-/*! 
+/*!
   * \author Marc Jasper
   * \date 2014.
  */
@@ -189,7 +189,7 @@ void IOAnalyzer::reduceToObservableBehavior() {
   }
 }
 
-/*! 
+/*!
   * \author Marc Jasper
   * \date 2014, 2015.
  */
@@ -234,7 +234,7 @@ void IOAnalyzer::setAnalyzerToSolver8(EStatePtr startEState, bool resetAnalyzerD
   //cout << "STATUS: reset to solver 8 finished."<<endl;
 }
 
-/*! 
+/*!
   * \author Marc Jasper
   * \date 2014, 2015.
  */
@@ -257,7 +257,7 @@ void IOAnalyzer::resetAnalysis() {
   _prevStateSetSizeResource = 0;
 }
 
-void IOAnalyzer::printAnalyzerStatistics(/* not used */ double totalRunTime, string title) {
+void IOAnalyzer::printAnalyzerStatistics(double /*totalRunTime*/, string title) {
   long pstateSetSize=getPStateSet()->size();
   long pstateSetMaxCollisions=getPStateSet()->maxCollisions();
   long pstateSetLoadFactor=getPStateSet()->loadFactor();
@@ -298,7 +298,7 @@ void IOAnalyzer::printAnalyzerStatistics(/* not used */ double totalRunTime, str
 }
 
 void IOAnalyzer::setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
-                       CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
+                       CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& /*parProOpt*/) {
   analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
 
   // this must be set early, as subsequent initialization depends on this flag
@@ -445,14 +445,14 @@ void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions ctOpt, LTLOptions 
   AbstractValue::byteMode=ctOpt.byteMode;
   AbstractValue::strictChecking=ctOpt.strictChecking;
 
-  if (ctOpt.callStringLength >= 2) 
+  if (ctOpt.callStringLength >= 2)
     setFiniteCallStringMaxLength(ctOpt.callStringLength);
 
   setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
   setStdFunctionSemantics(ctOpt.stdFunctions);
 
   setup(this, logger, ctOpt, ltlOpt, parProOpt);
-    
+
   switch(int mode=ctOpt.interpreterMode) {
   case 0: setInterpreterMode(IM_DISABLED); break;
   case 1: setInterpreterMode(IM_ENABLED); break;

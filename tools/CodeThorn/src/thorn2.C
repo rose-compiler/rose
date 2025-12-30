@@ -497,7 +497,7 @@ struct Acuity
 
 
 void
-Acuity::writeObjLayoutIfRequested( const ct::CompatibilityBridge& compatLayer,
+Acuity::writeObjLayoutIfRequested( const ct::CompatibilityBridge&,
                                    const Parameters& params,
                                    ct::ClassNameFn& classNameFn,
                                    ct::VarNameFn& varNameFn,
@@ -586,7 +586,7 @@ Acuity::writeVTables( const ct::CompatibilityBridge& compatLayer,
 
 
 void
-Acuity::writeVFunctions( const ct::CompatibilityBridge& compatLayer,
+Acuity::writeVFunctions( const ct::CompatibilityBridge&,
                          const Parameters& params,
                          ct::ClassNameFn& classNameFn,
                          ct::FuncNameFn& funcNameFn,
@@ -615,7 +615,7 @@ Acuity::writeVFunctions( const ct::CompatibilityBridge& compatLayer,
 }
 
 void
-Acuity::writeVBaseInfoIfRequested( const ct::CompatibilityBridge& compatLayer,
+Acuity::writeVBaseInfoIfRequested( const ct::CompatibilityBridge&,
                                    const Parameters& params,
                                    ct::ClassNameFn& classNameFn,
                                    ct::ClassFilterFn include,
@@ -774,4 +774,3 @@ int main( int argc, char * argv[] )
   mfacilities.shutdown();
   return errorCode;
 }
-

@@ -391,8 +391,8 @@ namespace
       if (isDtor(n)) nontrivial(&n);
     }
 
-    void handle(SgFunctionDeclaration& n) { } // subsumes the two beneath
-    void handle(SgTemplateFunctionDeclaration& n) { }
+    void handle(SgFunctionDeclaration&) { } // subsumes the two beneath
+    void handle(SgTemplateFunctionDeclaration&) { }
     void handle(SgTemplateInstantiationFunctionDecl& n)
     {
       logWarn() << "instance " << n.get_name() << std::endl;
@@ -899,7 +899,7 @@ namespace
   };
 
 
-  bool isConvertibleTo(SgExpression& expr, SgInitializedName& parm)
+  bool isConvertibleTo(SgExpression& /*expr*/, SgInitializedName& /*parm*/)
   {
     // \todo implement
     return true;
@@ -1539,7 +1539,7 @@ namespace
     return res;
   }
 
-  SgStatement& dtorCallLocation(SgStatement& stmt, SgInitializedName& var)
+  SgStatement& dtorCallLocation(SgStatement&, SgInitializedName& var)
   {
     SgVariableDeclaration& decl = sg::ancestor<SgVariableDeclaration>(var);
     SgStatement*           next = si::getNextStatement(&decl);
@@ -1695,7 +1695,7 @@ namespace
       : clsdef(classdef), fndcl(memdcl)
       {}
 
-      void execute(CxxTransformStats& stat)
+      void execute(CxxTransformStats&)
       {
         logTrace() << "creating defining operator= .."
                    << std::endl;
@@ -2348,7 +2348,7 @@ namespace
       {}
 
       static
-      bool sameParameterTypes(SgMemberFunctionDeclaration& lhs, SgMemberFunctionDeclaration& rhs)
+      bool sameParameterTypes(SgMemberFunctionDeclaration&, SgMemberFunctionDeclaration&)
       {
         // \todo
         return true;
@@ -3605,7 +3605,7 @@ namespace
 
       void handle(SgNode& n)                   { descend(n); }
 
-      void handle(SgNewExp& n)                 { /* do not descend */ }
+      void handle(SgNewExp&)                   { /* do not descend */ }
 
       void handle(SgConstructorInitializer& n) { report(n); }
       void handle(SgThisExp& n)                { report(n); }
@@ -3733,7 +3733,7 @@ namespace
     normalize(computeTransform<CxxNormalizationCheck>, root, stats);
   }
 
-  void normalizeCxx1(Normalization& norm, SgNode* root)
+  void normalizeCxx1(Normalization&, SgNode* root)
   {
     logInfo() << "Starting C++ normalization. (Phase 1/2)" << std::endl;
     logTrace() << "Not normalizing templates.." << std::endl;
@@ -3745,7 +3745,7 @@ namespace
     logInfo() << "Finished C++ normalization. (Phase 1/2)" << std::endl;
   }
 
-  void normalizeCxx2(Normalization& norm, SgNode* root)
+  void normalizeCxx2(Normalization&, SgNode* root)
   {
     logInfo() << "Starting C++ normalization. (Phase 2/2)" << std::endl;
     logTrace() << "Not normalizing templates.." << std::endl;

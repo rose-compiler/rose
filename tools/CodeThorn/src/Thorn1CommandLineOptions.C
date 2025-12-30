@@ -33,11 +33,11 @@ void checkZ3Options(CodeThornOptions& ctOpt) {
     cerr << "Error: Options selected that require the Z3 library, however Z3 was not selected during configuration." << endl;
     exit(1);
   }
-#endif	
+#endif
 }
 
 CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version,
-                                                CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
+                                                CodeThornOptions& ctOpt, LTLOptions& /*ltlOpt*/, ParProOptions& /*parProOpt*/) {
 
   // Command line option handling.
   po::options_description visibleOptions("Supported options");
@@ -66,7 +66,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("vim-report-file",po::value< string >(&ctOpt.vimReportFileName),"Generates a report of ast symbol check and some additional ast checks.")
     ;
 
-  visibleOptions.add_options()            
+  visibleOptions.add_options()
     ("config", po::value< string >(&ctOpt.configFileName), "Use the configuration specified in file <arg>.")
     ("colors", po::value< bool >(&ctOpt.colors)->default_value(true)->implicit_value(true),"Use colors in output.")
     ("quiet", po::value< bool >(&ctOpt.quiet)->default_value(false)->implicit_value(true), "Produce no output on screen.")
@@ -150,9 +150,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
       continue;
     }
     if (currentArg[0] != '-' ){
-      continue;  // not an option      
+      continue;  // not an option
     }
-    // explicitly keep options relevant to the ROSE frontend (white list) 
+    // explicitly keep options relevant to the ROSE frontend (white list)
     else if (currentArg == "-I") {
       assert(i+1<argc);
       ++i;
@@ -169,7 +169,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
         continue;
       }
     }
-    // No match with elements in the white list above. 
+    // No match with elements in the white list above.
     // Must be a CodeThorn option, therefore remove it from argv.
     //cout<<"Removing option "<<argv[i]<<endl;
     //argv[i] = strdup("");
@@ -177,4 +177,3 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
   return args;
 }
-

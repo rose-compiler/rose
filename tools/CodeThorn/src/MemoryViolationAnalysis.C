@@ -18,7 +18,7 @@ namespace CodeThorn {
   void MemoryViolationAnalysis::setEStateTransferFunctions(EStateTransferFunctions* tf) {
     _estateTransferFunctions=tf;
   }
-  
+
   void MemoryViolationAnalysis::readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc) {
     //cout<<"MEM CHECK: @"<<lab.toString()<<": READ: @"<< memLoc.toString()<<":"<<pstate->readFromMemoryLocation(memLoc).toString()<<endl;
     auto violation=checkMemoryAddress(memLoc);
@@ -39,7 +39,7 @@ namespace CodeThorn {
     recordViolation(violation,lab);
   }
 
-  void MemoryViolationAnalysis::writingToMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& newValue) {
+  void MemoryViolationAnalysis::writingToMemoryLocation(Label lab, PStatePtr /*pstate*/, AbstractValue& memLoc, AbstractValue& /*newValue*/) {
     //cout<<"MEM CHECK: @"<<lab.toString()<<": WRITE: @"<< memLoc.toString()<<" = "<<newValue<<endl;
     auto violation=checkMemoryAddress(memLoc);
     recordViolation(violation,lab);
@@ -119,7 +119,7 @@ namespace CodeThorn {
       }
     }
     return resultList;
-  }    
+  }
 
   void MemoryViolationAnalysis::recordViolation(MemoryAccessViolationSet violationList, Label label) {
     ROSE_ASSERT(_estateTransferFunctions);

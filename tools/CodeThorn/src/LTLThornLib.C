@@ -40,7 +40,7 @@ void initDiagnosticsLTL() {
   CounterexampleGenerator::initDiagnostics();
 }
 
-void optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer* analyzer,TimingCollector& timingCollector) {
+void optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer* analyzer,TimingCollector&) {
     // pattern search: requires that exploration mode is set,
     // otherwise no pattern search is performed
     if(ctOpt.patSearch.explorationMode.size()>0) {
@@ -51,7 +51,7 @@ void optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer*
 }
 
 #ifndef HAVE_SPOT
-void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* analyzer, TimingCollector& tc) {
+void runLTLAnalysis(CodeThornOptions&, LTLOptions& ltlOpt, IOAnalyzer*, TimingCollector&) {
   if(ltlOpt.activeOptionsRequireSPOTLibrary()) {
     cerr<<"Error: ltlthorn was compiled without SPOT. runLTLAnalysis not available."<<endl;
     exit(1);
@@ -96,7 +96,7 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
   double infPathsOnlyTime = 0;
   double stdIoOnlyTime = 0;
 
- 
+
   TimeMeasurement timer;
   if(ltlOpt.stdIOOnly) {
     SAWYER_MESG(logger[TRACE]) << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
@@ -343,5 +343,5 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
 }
 
 #endif // HAVE_SPOT
-  
+
 } // end of namespace
