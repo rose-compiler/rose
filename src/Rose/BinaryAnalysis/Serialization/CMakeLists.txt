@@ -12,7 +12,7 @@ set(SERIALIZATION_SOURCES
 # Add Boost-specific backend if enabled
 if(ROSE_ENABLE_BOOST_SERIALIZATION)
   list(APPEND SERIALIZATION_SOURCES
-    BoostSerialIoBackend.C
+    Boost.C
   )
 endif()
 
@@ -20,7 +20,7 @@ endif()
 if(ROSE_ENABLE_FLATBUFFERS)
   list(APPEND SERIALIZATION_SOURCES
     FlatbufferStorage.C
-    FlatbuffersSerialIoBackend.C
+    Flatbuffer.C
   )
 endif()
 

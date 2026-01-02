@@ -3,12 +3,11 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-
-#include <Rose/BinaryAnalysis/Serialization/SerialFrame.h>
-#include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/Progress.h>
-#include <Rose/Exception.h>
 #include <ROSE_UNUSED.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Serialization/SerialFrame.h>
+#include <Rose/Exception.h>
+#include <Rose/Progress.h>
 
 #include <Sawyer/Message.h>
 #include <Sawyer/ProgressBar.h>
@@ -28,7 +27,6 @@
 #include <boost/archive/xml_oarchive.hpp>
 #endif
 
-
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -39,12 +37,12 @@ namespace BinaryAnalysis {
 /** Extension of the base SerialIo class defined in BasicTypes.h
  *
  *  A @ref SerialIo object writes analysis results to a file, or initializes analysis results from a file. It handles
- *  such things as not storing the same object twice when referenced by different pointers, storing derived objects through
- *  base-class pointers, and providing progress reports.
+ *  such things as not storing the same object twice when referenced by different pointers, storing derived objects
+ * through base-class pointers, and providing progress reports.
  *
- *  The file in which the state is stored is accessed sequentially, making it suitable to send output to a stream or read
- *  from a stream.  This also means that most of the interface for these objects has no need to be thread-safe, although
- *  the progress-reporting part of the API is thread-safe.
+ *  The file in which the state is stored is accessed sequentially, making it suitable to send output to a stream or
+ * read from a stream.  This also means that most of the interface for these objects has no need to be thread-safe,
+ * although the progress-reporting part of the API is thread-safe.
  *
  *  As objects are written to the output stream, they are each preceded by a object type identifier. These integer type
  *  identifiers are available when reading from the stream in order to decide which type of object to read next.
@@ -93,42 +91,42 @@ namespace BinaryAnalysis {
  *  }
  * @endcode */
 class SerialIo {
-public:
+  public:
     /** Reference counting pointer. */
     using Ptr = SerialIoPtr;
 
-    class OutputBackend;
-    class InputBackend;
+    class Deserializer;
+    class Serializer;
 
-    struct BackendRegistration {
-        Serialization::Format format = Serialization::BINARY;
-        std::function<std::shared_ptr<OutputBackend>()> makeOutput;
-        std::function<std::shared_ptr<InputBackend>()> makeInput;
+    struct SerializationRegistration {
+        Serialization::Format                          format = Serialization::BINARY;
+        std::function<std::shared_ptr<Deserializer>()> deserializer;
+        std::function<std::shared_ptr<Serializer>()>   serializer;
     };
 
-    static void registerBackend(BackendRegistration);
-    static const BackendRegistration* findBackend(Serialization::Format);
+    static void                                              registerSerialization(SerializationRegistration);
+    static const Sawyer::Optional<SerializationRegistration> findSerialization(Serialization::Format);
 
-private:
+  private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_; // protects the following data members
-    Serialization::Format format_;
-    Progress::Ptr progress_;
-    bool isOpen_;
-    Serialization::Savable objectType_;
+    Serialization::Format               format_;
+    Progress::Ptr                       progress_;
+    bool                                isOpen_;
+    Serialization::Savable              objectType_;
 
-protected:
+  protected:
     Sawyer::ProgressBar<size_t> progressBar_;
-    int fd_; // Used by SerialFrame
+    int                         fd_; // Used by SerialFrame
 
-protected:
-    SerialIo()
-        : format_(Serialization::BINARY), progress_(Progress::instance()), isOpen_(false), objectType_(Serialization::NO_OBJECT),
-          progressBar_(mlog[Sawyer::Message::MARCH]), fd_(-1) {
+  protected:
+    SerialIo() :
+      format_(Serialization::BINARY), progress_(Progress::instance()), isOpen_(false),
+      objectType_(Serialization::NO_OBJECT), progressBar_(mlog[Sawyer::Message::MARCH]), fd_(-1) {
         init();
         progressBar_.suffix(" bytes");
     }
 
-public:
+  public:
     /** Message facility. */
     static Sawyer::Message::Facility mlog;
 
@@ -155,25 +153,26 @@ public:
      *
      * @{ */
     Serialization::Format format() const;
-    void format(Serialization::Format);
+    void                  format(Serialization::Format);
     /** @} */
 
     /** Property: Progress reporter.
      *
-     *  A progress reporting object can be specified in which case the I/O operations will update this object. I/O objects are
-     * created with an initial progress reporter, but this can be changed at any time.
+     *  A progress reporting object can be specified in which case the I/O operations will update this object. I/O
+     * objects are created with an initial progress reporter, but this can be changed at any time.
      *
      * Thread safety: This method is thread-safe.
      *
      * @{ */
     Progress::Ptr progress() const;
-    void progress(const Progress::Ptr&);
+    void          progress(const Progress::Ptr&);
     /** @} */
 
     /** Attach a file.
      *
-     *  When opening an output stream, the file is created or truncated; when opening an input stream the file must already
-     *  exist. If a file is already attached, then the previous file is closed first before this new one is opened.
+     *  When opening an output stream, the file is created or truncated; when opening an input stream the file must
+     * already exist. If a file is already attached, then the previous file is closed first before this new one is
+     * opened.
      *
      *  Throws an @ref Exception if the file cannot be attached or the previous if any, cannot be closed.
      *
@@ -182,8 +181,8 @@ public:
 
     /** Detach a file.
      *
-     *  If a file is attached to this I/O object, that file is closed and this object is set to its detached state. This is
-     *  a no-op if no file is attached.
+     *  If a file is attached to this I/O object, that file is closed and this object is set to its detached state. This
+     * is a no-op if no file is attached.
      *
      *  Throws an @ref Exception if the file cannot be detached.
      *
@@ -206,25 +205,40 @@ public:
      *  an output stream, it's the type of the object that was last written. */
     Serialization::Savable objectType() const;
 
-protected:
+  protected:
     // Set or clear the isOpen flag.
     void setIsOpen(bool b);
 
     // Set object type to ERROR to indicate that a read was unsuccessful
     void objectType(Serialization::Savable);
 
-private:
+  private:
     void init();
+
+  protected:
+    /** Create a progress callback that wraps the IO progress reporting.
+     *
+     * @param phase The name of the phase for progress reporting
+     * @return A callback function that reports progress to this IO object
+     */
+    Serialization::ProgressCallback makeProgressCallback(const char* phase);
+
+    /* Legacy declarations for compatibility */
+  public:
+    using Format                   = Serialization::Format;
+    static constexpr Format BINARY = Serialization::BINARY;
+    static constexpr Format TEXT   = Serialization::TEXT;
+    static constexpr Format XML    = Serialization::XML;
 };
 
-/** Backend interface for SerialOutput implementations.
+/** Interface for serializer implementations.
  *
  * This interface is payload-based rather than fd-based. It converts objects to
  * binary payloads (std::vector<char>) that can be stored in the container format.
  */
-class SerialIo::OutputBackend {
+class SerialIo::Serializer {
   public:
-    virtual ~OutputBackend() = default;
+    virtual ~Serializer() = default;
 
     /** Serialize a partitioner to a binary payload.
      *
@@ -236,14 +250,14 @@ class SerialIo::OutputBackend {
     savePartitioner(const Partitioner2::PartitionerConstPtr& partitioner, Serialization::ProgressCallback progress) = 0;
 };
 
-/** Backend interface for SerialInput implementations.
+/** Interface for deserializer implementations.
  *
  * This interface is payload-based rather than fd-based. It converts binary
  * payloads (std::vector<char>) back into objects.
  */
-class SerialIo::InputBackend {
+class SerialIo::Deserializer {
   public:
-    virtual ~InputBackend() = default;
+    virtual ~Deserializer() = default;
 
     /** Deserialize a partitioner from a binary payload.
      *
@@ -264,20 +278,20 @@ class SerialIo::InputBackend {
  *
  *  Writes binary analysis state to a file that can be read later to re-initialize ROSE to the same state. */
 class SerialOutput: public SerialIo {
-public:
+  public:
     /** Reference counting pointer. */
     using Ptr = SerialOutputPtr;
 
-private:
+  private:
     std::shared_ptr<Serialization::SerialFrame> frame_;
-    std::shared_ptr<SerialIo::OutputBackend>    backend_;
+    std::shared_ptr<SerialIo::Serializer>       serializer_;
 
-protected:
+  protected:
     SerialOutput() {}
 
-public:
+  public:
     ~SerialOutput();
-    void open(const boost::filesystem::path &fileName) override;
+    void open(const boost::filesystem::path& fileName) override;
     void close() override;
 
     /** Factory method to create a new instance.
@@ -285,13 +299,6 @@ public:
      *  The returned instance is in a detached state, therefore the @ref open method needs to be called before any I/O
      *  operations can be invoked. */
     static Ptr instance() { return Ptr(new SerialOutput); }
-
-    /** Create a progress callback that wraps the output's progress reporting.
-     *
-     * @param phase The name of the phase for progress reporting
-     * @return A callback function that reports progress to this SerialOutput
-     */
-    Serialization::ProgressCallback makeBackendProgressCallback(const char* phase);
 
     /** Save a binary analysis partitioner.
      *
@@ -312,18 +319,20 @@ public:
      *  Throws an @ref Exception if the AST cannot be saved. It is permissible to pass a null pointer, in which case the
      *  null pointer is saved and can be read back later.
      *
-     *  Thread safety: This method is not thread-safe. Furthermore, it temporarily sets the parent pointer of the specified
-     *  AST node to null and thus may interfere with threads that reading this part of the AST.  It is unsafe to invoke this
-     *  method while other threads are modifying this part of the AST since AST modification is not thread safe. */
+     *  Thread safety: This method is not thread-safe. Furthermore, it temporarily sets the parent pointer of the
+     * specified AST node to null and thus may interfere with threads that reading this part of the AST.  It is unsafe
+     * to invoke this method while other threads are modifying this part of the AST since AST modification is not thread
+     * safe. */
     void saveAst(SgAsmNode*);
     void saveAst(SgBinaryComposite*);
-private:
-    // The saveAstHelper is what actually gets called for the functions above. It doesn't descriminate between nodes that
-    // support serialization and those that don't, which is why it's private. Use only the public functions because they'll
-    // give you a nice compiler error if you try to save an Ast node type that isn't supported.
+
+  private:
+    // The saveAstHelper is what actually gets called for the functions above. It doesn't descriminate between nodes
+    // that support serialization and those that don't, which is why it's private. Use only the public functions because
+    // they'll give you a nice compiler error if you try to save an Ast node type that isn't supported.
     void saveAstHelper(SgNode*);
 
-public:
+  public:
     /** Save an object to the output stream.
      *
      *  The @p objectTypeId and corresponding @p object are written to the output stream. The object must either
@@ -345,11 +354,40 @@ public:
             throw Exception("cannot save object because stream is in error state");
         if (!frame_)
             throw Exception("frame container not initialized");
-        if (!backend_)
-            throw Exception("serialization backend not initialized");
+        if (!serializer_)
+            throw Exception("serializer not initialized");
 
+        // Save the object in a different thread and update the progress in this thread
+        std::string                 errorMessage;
+        boost::thread               worker(startWorker<T>, this, objectTypeId, object, errorMessage);
+        boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
+
+        progressBar_.prefix("writing");
+
+        while (!worker.try_join_for(timeout)) {
+            off_t cur = ::lseek(fd_, 0, SEEK_CUR);
+            if (-1 == cur) {
+                ++progressBar_; // so a spinner moves
+            } else {
+                progressBar_.value(cur);
+                if (Progress::Ptr p = progress())
+                    p->update(Progress::Report(cur, NAN));
+            }
+        }
+        if (!errorMessage.empty())
+            throw Exception(errorMessage);
+    }
+
+  private:
+    template <class T>
+    static void
+    startWorker(SerialOutput* saver, Serialization::Savable objectTypeId, const T& object, std::string& errorMessage) {
+        saver->saveWorker(objectTypeId, object, errorMessage);
+    }
+
+    template <class T>
+    void saveWorker(Serialization::Savable objectTypeId, const T& object, std::string& errorMessage) {
         try {
-
             // Create a FrameRecord with appropriate metadata
             Serialization::FrameRecord frameRecord(objectTypeId, format());
 
@@ -360,7 +398,9 @@ public:
             frame_->writeFrameRecord(frameRecord);
             this->objectType(objectTypeId);
         } catch (const std::exception& e) {
-            throw Exception(std::string("Failed to save object using container: ") + e.what());
+            errorMessage = std::string("Failed to save object using container: ") + e.what();
+        } catch (...) {
+            errorMessage = "failed to write object to output stream";
         }
     }
 };
@@ -373,20 +413,20 @@ public:
  *
  *  Reads a previously saved binary analysis state file to re-initialize ROSE to a previous state. */
 class SerialInput: public SerialIo {
-public:
+  public:
     /** Reference counting pointer. */
     using Ptr = SerialInputPtr;
 
-private:
+  private:
     std::shared_ptr<Serialization::SerialFrame> frame_;
-    std::shared_ptr<SerialIo::InputBackend>     backend_;
+    std::shared_ptr<SerialIo::Deserializer>     deserializer_;
 
   protected:
     SerialInput() {}
 
-public:
+  public:
     ~SerialInput();
-    void open(const boost::filesystem::path &fileName) override;
+    void open(const boost::filesystem::path& fileName) override;
     void close() override;
 
     /** Factory method to create a new instance.
@@ -394,13 +434,6 @@ public:
      * The returned instance is in a detached state, therefore the @ref open method needs to be called before any I/O
      * operation can be invoked. */
     static Ptr instance() { return Ptr(new SerialInput); }
-
-    /** Create a progress callback that wraps the input's progress reporting.
-     *
-     * @param phase The name of the phase for progress reporting
-     * @return A callback function that reports progress to this SerialInput
-     */
-    Serialization::ProgressCallback makeBackendProgressCallback(const char* phase);
 
     /** Read a frame record from the container and validate its metadata.
      *
@@ -429,7 +462,7 @@ public:
 
     /** Load an AST from the input stream.
      *
-     *  Loads an AST from the intput stream and returns a pointer to its root. If a null AST was stored, then a null
+     *  Loads an AST from the input stream and returns a pointer to its root. If a null AST was stored, then a null
      *  pointer is returned.
      *
      * Throws an @ref Exception if no file is attached to this I/O object or if the next object to be read from the
@@ -438,12 +471,13 @@ public:
 
     /** Load an object from the input stream.
      *
-     *  An object with the specified tag must exist as the next item in the stream. Such an object is created, initialized from
-     *  the stream, and returned.  If an object is provided as the second argument, then it's initialized from the stream.
+     *  An object with the specified tag must exist as the next item in the stream. Such an object is created,
+     * initialized from the stream, and returned.  If an object is provided as the second argument, then it's
+     * initialized from the stream.
      *
      * @{ */
     template <class T> T loadObject(Serialization::Savable objectTypeId) {
-        if (!backend_)
+        if (!deserializer_)
             throw Exception("serialization backend not initialized");
 
         T object;
@@ -455,8 +489,8 @@ public:
             throw Exception("cannot load object when no file is open");
         if (!frame_)
             throw Exception("frame container not initialized");
-        if (!backend_)
-            throw Exception("serialization backend not initialized");
+        if (!deserializer_)
+            throw Exception("deserializer not initialized");
 
         try {
             // Read and validate the frame record
@@ -477,9 +511,9 @@ public:
   protected:
     // Read the next object type from the input stream
     void advanceObjectType();
-    
+
     // Check ROSE version compatibility
-    void checkCompatibility(const std::string &fileVersion);
+    void checkCompatibility(const std::string& fileVersion);
 };
 
 } // namespace BinaryAnalysis

@@ -199,7 +199,7 @@ class SerialFrame {
     boost::iostreams::stream<boost::iostreams::file_descriptor_sink> outStream_;
     std::unique_ptr<boost::archive::binary_oarchive>                 outArchive_;
 
-    ProgressCallback ioCb_;
+    ProgressCallback progress_;
 
     void closeInput();
     void closeOutput();
@@ -209,6 +209,9 @@ class SerialFrame {
     // Helpers to write/read a size-prefixed blob.
     void              writeBlob(const std::vector<char>& data);
     std::vector<char> readBlob();
+
+    static void startWriteWorker(SerialFrame* saver, const std::vector<char>& data);
+    void writeWorker(const std::vector<char>& data);
 };
 
 } // namespace Serialization

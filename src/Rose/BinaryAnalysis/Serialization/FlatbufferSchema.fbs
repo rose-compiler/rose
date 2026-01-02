@@ -1,148 +1,288 @@
+// Generate rose_generated.rs by running this command using the same version of flatc as that listed
+// in the Cargo.toml (i.e, the FlatBuffers compiler and the FlatBuffers library used when compiling
+// this crate should be the same version).
+//
+// ```
+// flatc --rust rose.fbs
+// ```
+// 
+// TODO:
+//   - data blocks with info about what functions own them (if any)
+//   - source location for each instruction (if available)
+//
+// NOT PROVIDED DIRECTLY SINCE CAN BE COMPUTED FROM OTHER DATA
+//   - address usage map (AUM)
+//   - function ownership per instruction
 
-/// This places places the generated schema in a nested namespace. It might not work for non-C++ flatbuffer backends. 
-namespace Rose.BinaryAnalysis.Serialization.Flatbuffers;
+namespace Rose.BinaryAnalysis.Serialization.FlatBuffers;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Memory Map
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-table Instruction {
-  address: uint64;
-  bytes: [ubyte];
-}
-
-table BasicBlock {
-  address: uint64;
-  /// We could factor this into a InstructionRef and save the Instructions in a top-level structure
-  instructions: [Instruction];
-}
-
-table DataBlock {
-  address: uint64;
-  /// This type field could have a richer representation
-  type: [ubyte];
-  comment: string;
-}
-
-table SomeColumn {
-  column: uint64;
-}
-
-table None { }
-
-union Column { SomeColumn, None }
-
-table SourceLocation {
-  file_name: string;
-  line: uint64;
-  column: Column;
-}
-
-struct BasicBlockRef {
-  address: uint64;
-}
-
-struct InstructionRef {
-  address: uint64;
-}
-
-struct DataBlockRef {
-  address: uint64;
-}
-
-
-table Function {
-  address: uint64;
-  name: string;
-  /// Addresses of owned BasicBlocks, which are saved in the CFG
-  basic_blocks: [BasicBlockRef];
-  /// Addresses of owned DataBlocks, which are saved in the CFG
-  data_blocks: [DataBlockRef];
-  location: SourceLocation;
-}
-
-struct FunctionRef {
-  address: uint64;
-}
-
-enum CFGVertexType : ubyte {V_BASIC_BLOCK, V_UNDISCOVERED, V_INDETERMINIATE, V_NONEXISTING, V_USER_DEFINED}
-enum CFGEdgeType : ubyte {E_NORMAL, E_FUNCTION_CALL, E_FUNCTION_RETURN, E_CALL_RETURN, E_FUNCTION_XFER, E_USER_DEFINED}
-
-/// We don't know what ASSUMED means. It might mean that it was provided as input by the user via a configuration file.
-/// PROVED means inferred via ROSE analysis (e.g., a fallthrough instruction)
-/// TODO: should we represent this as a union
-enum CFGEdgeConfidence : ubyte { ASSUMED, PROVED}
-
-table CFGVertex {
-  address: uint64;
-  type: CFGVertexType;
-  /// Addresses of owned Functions, which are saved in the CFG
-  functions: [FunctionRef];
-}
-
-table CFGEdge {
-  from: uint64;
-  to: uint64;
-  type: CFGEdgeType;
-  confidence: CFGEdgeConfidence;
-}
-
-table CFG {
-  vertices : [CFGVertex];
-  edges : [CFGEdge];
-  basic_blocks: [BasicBlock];
-  functions: [Function];
-}
-
-table Interval {
-  lo: uint64;
-  hi: uint64;
-}
-
-/// We use explicit enum fields to enable OR'd together enums. 
-enum Accessibility : ubyte { EXECUTABLE = 0, WRITABLE = 1, READABLE = 2, IMMUTABLE = 4, PRIVATE = 8 }
-
-table Segment {
-  data: [ubyte];
-  offset: uint64;
-  /// Since the flag is OR'd together, we serialize a ubyte instead of the enum directly.
-  accessibility: ubyte;
-}
-
-table IntervalSegment {
-  interval: Interval;
-  segment: Segment;
-}
-
-/// Notice that this datastructure and the inline bytes for instructions are redundant for non-self-modifying code
-/// Self-modifying code will still need explicit instructions
-table AddressMap {
-  entries: [IntervalSegment];
+// Accessibility bit flags that can be OR'd together.
+enum Accessibility : ubyte {
+    EXECUTABLE = 1,
+    WRITABLE = 2,
+    READABLE = 4,
+    IMMUTABLE = 8,
+    PRIVATE = 16
 }
 
 enum Endianness : ubyte {
-  ORDER_UNSPECIFIED, ORDER_LSB, ORDER_MSB,
+    ORDER_UNSPECIFIED,
+    ORDER_LSB,
+    ORDER_MSB,
+}
+
+table Segment {
+    address: uint64;
+    bytes: [ubyte];
+    accessibility: ubyte; // Accessibility bits OR'd together
+    name: string; // optional
 }
 
 table MemoryMap {
-  data: AddressMap;
-  endianness: Endianness;
-  name: string;
+    endianness: Endianness;
+    segments: [Segment];
 }
 
-union AddressUser { InstructionRef, DataBlockRef }
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Instructions
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-table AddressUsageEntry {
-  interval: Interval;
-  user: AddressUser;
+// One machine instruction.
+table Instruction {
+    address: uint64;
+    bytes: [ubyte];
+    mnemonic: string; // optional
+    operands: string; // optional
 }
 
-table AddressUsageMap {
-  entries: [AddressUsageEntry];
+// All known instructions. Every instruction has a unique address.
+table InstructionList {
+ instructions: [Instruction];
 }
 
-table Partitioner {
-  version: uint32;
-  architecture_name: string;
-  cfg: CFG;
-  memory_map: MemoryMap;
-  aum: AddressUsageMap;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Basic blocks
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// A basic block is an non-empty, ordered list of instruction addresses. The address of a basic
+// block is the address of its first instruction.
+table BasicBlock {
+    addresses: [uint64]; // addresses of contained instructions in execution order
 }
 
-root_type Partitioner;
+// All known basic blocks.
+table BasicBlockList {
+    basic_blocks: [BasicBlock]; // list of basic blocks with unique starting addresses
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Functions
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+table Function {
+    entry_addr: uint64;
+    instructions: [uint64]; // non-empty instruction addresses belonging to this function
+    name: string; // optional name for function
+}
+
+// List of all known functions.
+table FunctionList {
+    functions: [Function]; // list of functions with unique entry addresses
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Control flow graph.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+enum CfgEdgePurpose : uint8 {
+    FunctionCall,        // edge represents a function call
+    FunctionTransfer,    // edge goes from one function to another, but not a call; e.g., tail call optimization
+    FunctionReturn,      // return edge from a function to its caller(s)
+    CallReturn,          // an edge from a calling location to where the function would return if it returns
+    Normal,              // normal
+}
+
+// Data associated with a CFG edge.
+table CfgEdgeData {
+    purpose: CfgEdgePurpose;
+}
+
+// A CFG edge that points to an address. If the address is that of an instruction then the target
+// will be a node in the CFG and a basic block with that address will exist in the BasicBlockList
+// table. If the edge points to a non-instruction address, then the address will not be a node in
+// the CFG nor will there be an instruction or basic block with that address.
+table AddressTarget {
+    address: uint64;
+}
+
+// An indeterminate target has no data. It's a pointer to an unknown location.
+table IndeterminateTarget {}
+
+// The target end of a CFG edge. CFG edges don't necessarily need to point to a node in the CFG,
+// although they always originate from such a node.
+union CfgEdgeTarget {
+    AddressTarget,
+    IndeterminateTarget
+}
+    
+// An edge has a source, target, and data. The source is always a basic block address. The target
+// does not necessarily need to be a node in the control flow graph, although it usually is.
+table CfgEdge {
+    src: uint64; // source address
+    tgt: CfgEdgeTarget;
+    data: CfgEdgeData;
+}
+
+// A CFG is represented explicitly by its edges. The union of the edge source addresses are the
+// nodes of the CFG and are instruction addresses.
+//
+// Note that ROSE CFGs usually point to basic blocks rather than individual instructions, so when
+// loading the CFG into ROSE you'll probably want to collapse nodes based on the `BasicBlockList`.
+table Cfg {
+    edges: [CfgEdge];
+}
+    
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Root of the entire document.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Root object for the flatbuffers file. Every flatbuffers file will store exactly one of these
+// objects at the top level, and nothing else.
+table Root {
+    memory_map: MemoryMap;
+    instructions: InstructionList;
+    basic_blocks: BasicBlockList;
+    functions: FunctionList;
+    cfg: Cfg;
+}
+
+// 
+// 
+// 
+// 
+// 
+// table BasicBlock {
+//   address: uint64;
+//   instructions: [Instruction];
+// }
+// 
+// table DataBlock {
+//   address: uint64;
+//   type: [ubyte];
+//   comment: string;
+// }
+// 
+// table SomeColumn {
+//   column: uint64;
+// }
+// 
+// table None { }
+// 
+// union Column { SomeColumn, None }
+// 
+// table SourceLocation {
+//   file_name: string;
+//   line: uint64;
+//   column: Column;
+// }
+// 
+// table BasicBlockRef {
+//   address: uint64;
+// }
+// 
+// table InstructionRef {
+//   address: uint64;
+// }
+// 
+// table DataBlockRef {
+//   address: uint64;
+// }
+// 
+// 
+// table Function {
+//   address: uint64;
+//   name: string;
+//   /// Addresses of owned BasicBlocks, which are saved in the CFG
+//   basic_blocks: [BasicBlockRef];
+//   /// Addresses of owned DataBlocks, which are saved in the CFG
+//   data_blocks: [DataBlockRef];
+//   location: SourceLocation;
+// }
+// 
+// table FunctionRef {
+//   address: uint64;
+// }
+// 
+// enum CFGVertexType : ubyte {V_BASIC_BLOCK, V_UNDISCOVERED, V_INDETERMINIATE, V_NONEXISTING, V_USER_DEFINED}
+// enum CFGEdgeType : ubyte {E_NORMAL, E_FUNCTION_CALL, E_FUNCTION_RETURN, E_CALL_RETURN, E_FUNCTION_XFER, E_USER_DEFINED}
+// enum CFGEdgeConfidence : ubyte { ASSUMED, PROVED}
+// 
+// table CFGVertex {
+//   address: uint64;
+//   type: CFGVertexType;
+//   /// Addresses of owned Functions, which are saved in the CFG
+//   functions: [FunctionRef];
+// }
+// 
+// table CFGEdge {
+//   from: uint64;
+//   to: uint64;
+//   type: CFGEdgeType;
+//   confidence: CFGEdgeConfidence;
+// }
+// 
+// table CFG {
+//   vertices : [CFGVertex];
+//   edges : [CFGEdge];
+//   basic_blocks: [BasicBlock];
+//   functions: [Function];
+// }
+// 
+// table Interval {
+//   lo: uint64;
+//   hi: uint64;
+// }
+// 
+// /// We use explicit enum fields to enable OR'd together enums. 
+// enum Accessibility : ubyte { EXECUTABLE = 0, WRITABLE = 1, READABLE = 2, IMMUTABLE = 4, PRIVATE = 8 }
+// 
+// table Segment {
+//   data: [ubyte];
+//   offset: uint64;
+//   /// Since the flag is OR'd together, we serialize a ubyte instead of the enum directly.
+//   accessibility: ubyte;
+// }
+// 
+// table IntervalSegment {
+//   interval: Interval;
+//   segment: Segment;
+// }
+// 
+// table AddressMap {
+//   entries: [IntervalSegment];
+// }
+// 
+// enum Endianness : ubyte {
+//   ORDER_UNSPECIFIED, ORDER_LSB, ORDER_MSB,
+// }
+// 
+// table MemoryMap {
+//   data: AddressMap;
+//   endianness: Endianness;
+//   name: string;
+// }
+// 
+// union AddressUser { InstructionRef, DataBlockRef }
+// 
+// table AddressUsageEntry {
+//   interval: Interval;
+//   user: AddressUser;
+// }
+// 
+// table AddressUsageMap {
+//   entries: [AddressUsageEntry];
+// }
+// 

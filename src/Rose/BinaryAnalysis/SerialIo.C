@@ -15,16 +15,8 @@
 #include <Rose/BinaryAnalysis/Serialization/FlatbufferStorage.h>
 #endif
 
-#ifdef ROSE_ENABLE_FLATBUFFERS
-// Backend implementations live in separate translation units when enabled.
-extern "C" Rose::BinaryAnalysis::SerialIo::OutputBackend*
-RoseBinaryAnalysis_makeFlatbuffersSerialOutputBackend();
-extern "C" Rose::BinaryAnalysis::SerialIo::InputBackend*
-RoseBinaryAnalysis_makeFlatbuffersSerialInputBackend();
-#endif
-
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/stream.hpp>
@@ -75,24 +67,25 @@ SerialIo_initDiagnostics() {
 Sawyer::Message::Facility SerialIo::mlog;
 
 namespace {
-std::vector<SerialIo::BackendRegistration>& backendRegistry() {
-    static std::vector<SerialIo::BackendRegistration> reg;
+std::vector<SerialIo::SerializationRegistration>&
+serializationRegistry() {
+    static std::vector<SerialIo::SerializationRegistration> reg;
     return reg;
 }
 } // namespace
 
 void
-SerialIo::registerBackend(BackendRegistration r) {
-    backendRegistry().push_back(std::move(r));
+SerialIo::registerSerialization(SerializationRegistration r) {
+    serializationRegistry().push_back(std::move(r));
 }
 
-const SerialIo::BackendRegistration*
-SerialIo::findBackend(Serialization::Format f) {
-    for (const auto &r: backendRegistry()) {
+const Sawyer::Optional<SerialIo::SerializationRegistration>
+SerialIo::findSerialization(Serialization::Format f) {
+    for (const auto& r : serializationRegistry()) {
         if (r.format == f)
-            return &r;
+            return r;
     }
-    return nullptr;
+    return {};
 }
 
 void
@@ -130,7 +123,7 @@ SerialIo::progress() const {
 }
 
 void
-SerialIo::progress(const Progress::Ptr &p) {
+SerialIo::progress(const Progress::Ptr& p) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     progress_ = p;
 }
@@ -189,30 +182,26 @@ SerialOutput::open(const boost::filesystem::path& fileName) {
     objectType(Serialization::ERROR); // in case of exception
 
     // Create a callback for SerialFrame that wraps our progress indicator
-    auto ioCb = [this](size_t current, size_t total, const char* phase) {
-        progressBar_.value(current, 0, total);
-        if (Progress::Ptr p = progress())
-            p->update(Progress::Report(phase, current, total));
-    };
+    auto progressCB = makeProgressCallback("serializing");
 
     try {
         // Initialize the container frame - it will handle the file opening
         frame_ = std::make_unique<Serialization::SerialFrame>();
-        frame_->openForWrite(fileName, ioCb);
+        frame_->openForWrite(fileName, progressCB);
         frame_->writeFileHeader();
 
         // Look up and create the appropriate backend for the format
-        const BackendRegistration* backendReg = findBackend(format());
-        if (!backendReg) {
+        const auto serializers = findSerialization(format());
+        if (!serializers) {
             throw Exception("no backend registered for format " + boost::lexical_cast<std::string>(format()));
         }
-        backend_ = backendReg->makeOutput();
-        if (!backend_) {
-            throw Exception("failed to create output backend for format " + boost::lexical_cast<std::string>(format()));
+        serializer_ = serializers->serializer();
+        if (!serializer_) {
+            throw Exception("failed to create serializer for format " + boost::lexical_cast<std::string>(format()));
         }
 
         if (Progress::Ptr p = progress())
-            p->update(Progress::Report("saving", 0.0));
+            p->update(Progress::Report("serializing", 0.0));
         progressBar_.value(0, 0, 0);
 
         setIsOpen(true);
@@ -224,28 +213,19 @@ SerialOutput::open(const boost::filesystem::path& fileName) {
     }
 }
 
-Serialization::ProgressCallback
-SerialOutput::makeBackendProgressCallback(const char* phase) {
-    return [this, phase](size_t current, size_t total, const char*) {
-        progressBar_.value(current, 0, total);
-        if (Progress::Ptr p = progress())
-            p->update(Progress::Report(phase, current, total));
-    };
-}
-
 void
 SerialOutput::savePartitioner(const Partitioner2::Partitioner::ConstPtr& partitioner) {
     if (!isOpen())
         throw Exception("cannot save partitioner when no file is open");
 
-    ASSERT_not_null(backend_);
+    ASSERT_not_null(serializer_);
     ASSERT_not_null(frame_);
 
-    // Create a progress callback for the backend
-    auto progressCb = makeBackendProgressCallback("serializing-flatbuffers");
+    // Create a progress callback for the serializer
+    auto progress = makeProgressCallback("serializing");
 
-    // Get serialized payload from the backend
-    std::vector<char> payload = backend_->savePartitioner(partitioner, progressCb);
+    // Get serialized payload from the serializer
+    std::vector<char> payload = serializer_->savePartitioner(partitioner, progress);
 
     // Create a FrameRecord with appropriate metadata
     Serialization::FrameRecord frameRecord(Serialization::PARTITIONER, format());
@@ -258,9 +238,9 @@ SerialOutput::savePartitioner(const Partitioner2::Partitioner::ConstPtr& partiti
 }
 
 void
-SerialOutput::saveAstHelper(SgNode *ast) {
+SerialOutput::saveAstHelper(SgNode* ast) {
     if (ast) {
-        SgNode *oldParent = ast->get_parent();
+        SgNode* oldParent = ast->get_parent();
         try {
             ast->set_parent(NULL);
             saveObject(Serialization::AST, ast);
@@ -275,20 +255,20 @@ SerialOutput::saveAstHelper(SgNode *ast) {
 }
 
 void
-SerialOutput::saveAst(SgAsmNode *ast) {
+SerialOutput::saveAst(SgAsmNode* ast) {
     saveAstHelper(ast);
 }
 
 void
-SerialOutput::saveAst(SgBinaryComposite *ast) {
+SerialOutput::saveAst(SgBinaryComposite* ast) {
     saveAstHelper(ast);
 }
 
 void
 SerialOutput::close() {
     if (isOpen() && objectType() != Serialization::END_OF_DATA && objectType() != Serialization::ERROR) {
-        if (backend_)
-            backend_.reset();
+        if (serializer_)
+            serializer_.reset();
 
         if (frame_) {
             Serialization::FrameRecord frameRecord(Serialization::END_OF_DATA, format());
@@ -349,13 +329,13 @@ SerialInput::open(const boost::filesystem::path& fileName) {
         }
 
         // Look up and create the appropriate backend for the format
-        const BackendRegistration* backendReg = findBackend(format());
-        if (!backendReg) {
+        const auto serializers = findSerialization(format());
+        if (!serializers) {
             throw Exception("no backend registered for format " + boost::lexical_cast<std::string>(format()));
         }
-        backend_ = backendReg->makeInput();
-        if (!backend_) {
-            throw Exception("failed to create input backend for format " + boost::lexical_cast<std::string>(format()));
+        deserializer_ = serializers->deserializer();
+        if (!deserializer_) {
+            throw Exception("failed to create deserializer for format " + boost::lexical_cast<std::string>(format()));
         }
 
         if (Progress::Ptr p = progress())
@@ -416,11 +396,35 @@ SerialInput::readAndValidateRecord(Serialization::Savable expectedType) {
 }
 
 Serialization::ProgressCallback
-SerialInput::makeBackendProgressCallback(const char* phase) {
-    return [this, phase](size_t current, size_t total, const char*) {
-        progressBar_.value(current, 0, total);
-        if (Progress::Ptr p = progress())
+SerialIo::makeProgressCallback(const char* phase) {
+
+    const auto updateValue = [this](size_t current, size_t total) {
+        if (total == -1) {
+            progressBar_.value(current);
+        } else {
+            progressBar_.value(0, current, total);
+        }
+    };
+
+    const auto updateProgress = [this](size_t current, size_t total, const std::string& phase) {
+        auto p = progress();
+
+        if (total == -1) {
+            p->update(Progress::Report(current, NAN));
+        } else {
             p->update(Progress::Report(phase, current, total));
+        }
+    };
+
+    return [this, phase, updateValue, updateProgress](size_t current, size_t total, const char* innerPhase) {
+        std::string name = phase;
+        name             = name + "-" + innerPhase;
+
+        progressBar_.prefix(name);
+
+        updateValue(current, total);
+        if (progress())
+            updateProgress(current, total, name);
     };
 }
 
@@ -429,44 +433,21 @@ SerialInput::loadPartitioner() {
     if (!isOpen())
         throw Exception("cannot load partitioner when no file is open");
 
-    if (format() == Serialization::FLATBUFFERS) {
-#ifdef ROSE_ENABLE_FLATBUFFERS
-        ASSERT_not_null(backend_);
-        ASSERT_not_null(frame_);
-        
-        // Read and validate the frame record
-        auto frameRecord = readAndValidateRecord(Serialization::PARTITIONER);
-        
-        // Create a progress callback for the backend
-        auto progressCb = makeBackendProgressCallback("deserializing-flatbuffers");
-        
-        // Get the payload and deserialize it using the backend
-        const auto& payload = frameRecord.payload();
-        auto p = backend_->loadPartitioner(payload.data(), payload.size(), progressCb);
-        
-        objectType(Serialization::END_OF_DATA);
-        return p;
-#else
-        throw Exception("FlatBuffers serialization not supported in this configuration");
-#endif
-    }
-
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
-    // Use SerialFrame for container framing of partitioner data
+    ASSERT_not_null(deserializer_);
     ASSERT_not_null(frame_);
 
     // Read and validate the frame record
     auto frameRecord = readAndValidateRecord(Serialization::PARTITIONER);
 
-    // Deserialize partitioner from payload
-    Partitioner2::Partitioner* raw = nullptr;
-    frameRecord.deserializeObject(raw);
+    // Create a progress callback for the deserializer
+    auto progress = makeProgressCallback("deserializing");
+
+    // Get the payload and deserialize it using the deserializer
+    const auto& payload = frameRecord.payload();
+    auto        p       = deserializer_->loadPartitioner(payload, progress);
 
     objectType(Serialization::END_OF_DATA);
-    return Partitioner2::Partitioner::Ptr(raw);
-#else
-    throw Exception("binary state files are not supported in this configuration");
-#endif
+    return p;
 }
 
 SgNode*
@@ -477,8 +458,8 @@ SerialInput::loadAst() {
 void
 SerialInput::close() {
     if (isOpen()) {
-        if (backend_)
-            backend_.reset();
+        if (deserializer_)
+            deserializer_.reset();
 
         if (frame_) {
             frame_->close();
@@ -490,7 +471,7 @@ SerialInput::close() {
 }
 
 void
-SerialInput::checkCompatibility(const std::string &fileVersion) {
+SerialInput::checkCompatibility(const std::string& fileVersion) {
     const std::string roseVersion = ROSE_PACKAGE_VERSION;
     if (roseVersion == fileVersion)
         return;
@@ -498,9 +479,9 @@ SerialInput::checkCompatibility(const std::string &fileVersion) {
     std::vector<std::string> fileParts = Rose::StringUtility::split('.', fileVersion);
     std::vector<std::string> roseParts = Rose::StringUtility::split('.', roseVersion);
 
-    // ROSE uses a dotted quad for the version number, as in W.X.Y.Z where W is zero, X is the major version, Y is the minor
-    // version, and Z is the patch version. Backward compatibility is ensured when W and X are the same for the file and the
-    // ROSE library and ROSE's Y.Z is greater than or equal to the file's Y.Z.
+    // ROSE uses a dotted quad for the version number, as in W.X.Y.Z where W is zero, X is the major version, Y is the
+    // minor version, and Z is the patch version. Backward compatibility is ensured when W and X are the same for the
+    // file and the ROSE library and ROSE's Y.Z is greater than or equal to the file's Y.Z.
     //
     // Examples:
     //       File Version           ROSE library version   ROSE library can read the file?
@@ -514,12 +495,11 @@ SerialInput::checkCompatibility(const std::string &fileVersion) {
     if (fileParts.size() != 4)
         throw Exception("invalid file version string \"" + StringUtility::cEscape(fileVersion) + "\"");
 
-    if (fileParts[0] == roseParts[0] &&
-        fileParts[1] == roseParts[1] &&
-        (fileParts[2] <= roseParts[2] ||
-         (fileParts[2] == roseParts[2] && fileParts[3] <= roseParts[3]))) {
+    if (fileParts[0] == roseParts[0] && fileParts[1] == roseParts[1] &&
+        (fileParts[2] <= roseParts[2] || (fileParts[2] == roseParts[2] && fileParts[3] <= roseParts[3]))) {
         if (fileVersion != roseVersion)
-            mlog[WARN] <<"RBA file version " <<fileVersion <<" is being read by ROSE version " <<roseVersion <<"\n";
+            mlog[WARN] << "RBA file version " << fileVersion << " is being read by ROSE version " << roseVersion
+                       << "\n";
     } else {
         throw Exception("ROSE library " + roseVersion + " cannot read file version " + fileVersion);
     }

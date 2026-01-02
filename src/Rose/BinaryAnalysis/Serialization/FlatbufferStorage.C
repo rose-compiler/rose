@@ -159,20 +159,20 @@ fromAccessibilityMask(uint8_t m) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static flatbuffers::Offset<Fbs::Instruction>
-saveInstruction(flatbuffers::FlatBufferBuilder &b, SgAsmInstruction *insn) {
+saveInstruction(flatbuffers::FlatBufferBuilder& b, SgAsmInstruction* insn) {
     ASSERT_not_null(insn);
-    const auto &raw     = insn->get_raw_bytes();
-    auto        fbBytes = b.CreateVector(reinterpret_cast<const uint8_t *>(raw.data()), raw.size());
+    const auto& raw     = insn->get_rawBytes();
+    auto        fbBytes = b.CreateVector(reinterpret_cast<const uint8_t*>(raw.data()), raw.size());
     return Fbs::CreateInstruction(b, insn->get_address(), fbBytes);
 }
 
 static flatbuffers::Offset<Fbs::BasicBlock>
-saveBasicBlock(flatbuffers::FlatBufferBuilder &b, const P2::BasicBlockPtr &bb) {
+saveBasicBlock(flatbuffers::FlatBufferBuilder& b, const P2::BasicBlockPtr& bb) {
     ASSERT_not_null(bb);
 
     std::vector<flatbuffers::Offset<Fbs::Instruction>> insns;
     insns.reserve(bb->nInstructions());
-    for (SgAsmInstruction *insn : bb->instructions())
+    for (SgAsmInstruction* insn : bb->instructions())
         insns.push_back(saveInstruction(b, insn));
 
     auto fbInsns = b.CreateVector(insns);
@@ -180,7 +180,7 @@ saveBasicBlock(flatbuffers::FlatBufferBuilder &b, const P2::BasicBlockPtr &bb) {
 }
 
 static flatbuffers::Offset<Fbs::SourceLocation>
-saveSourceLocation(flatbuffers::FlatBufferBuilder &b, const SourceLocation &sl) {
+saveSourceLocation(flatbuffers::FlatBufferBuilder& b, const SourceLocation& sl) {
     auto fbName = b.CreateString(sl.fileName().string());
 
     Fbs::Column               columnType = Fbs::Column::NONE;
@@ -198,7 +198,7 @@ saveSourceLocation(flatbuffers::FlatBufferBuilder &b, const SourceLocation &sl) 
 }
 
 static flatbuffers::Offset<Fbs::Function>
-saveFunction(flatbuffers::FlatBufferBuilder &b, const P2::FunctionPtr &f) {
+saveFunction(flatbuffers::FlatBufferBuilder& b, const P2::FunctionPtr& f) {
     ASSERT_not_null(f);
 
     std::vector<Fbs::BasicBlockRef> bbs;
@@ -208,7 +208,7 @@ saveFunction(flatbuffers::FlatBufferBuilder &b, const P2::FunctionPtr &f) {
 
     std::vector<Fbs::DataBlockRef> dbs;
     dbs.reserve(f->nDataBlocks());
-    for (const P2::DataBlockPtr &db : f->dataBlocks())
+    for (const P2::DataBlockPtr& db : f->dataBlocks())
         dbs.push_back(Fbs::DataBlockRef(db->address()));
 
     auto fbName = b.CreateString(f->name());
@@ -220,12 +220,12 @@ saveFunction(flatbuffers::FlatBufferBuilder &b, const P2::FunctionPtr &f) {
 }
 
 static flatbuffers::Offset<Fbs::CFGVertex>
-saveCfgVertex(flatbuffers::FlatBufferBuilder &b, const P2::ControlFlowGraph::Vertex &v) {
-    const auto &val = v.value();
+saveCfgVertex(flatbuffers::FlatBufferBuilder& b, const P2::ControlFlowGraph::Vertex& v) {
+    const auto& val = v.value();
 
     std::vector<Fbs::FunctionRef> owners;
     owners.reserve(val.nOwningFunctions());
-    for (const auto &fun : val.owningFunctions().values())
+    for (const auto& fun : val.owningFunctions().values())
         owners.push_back(Fbs::FunctionRef(fun->address()));
 
     auto fbOwners = b.CreateVectorOfStructs(owners);
@@ -235,7 +235,7 @@ saveCfgVertex(flatbuffers::FlatBufferBuilder &b, const P2::ControlFlowGraph::Ver
 }
 
 static flatbuffers::Offset<Fbs::CFGEdge>
-saveCfgEdge(flatbuffers::FlatBufferBuilder &b, const P2::ControlFlowGraph::Edge &e) {
+saveCfgEdge(flatbuffers::FlatBufferBuilder& b, const P2::ControlFlowGraph::Edge& e) {
     const auto fromVal = e.source()->value();
     const auto toVal   = e.target()->value();
 
@@ -244,7 +244,7 @@ saveCfgEdge(flatbuffers::FlatBufferBuilder &b, const P2::ControlFlowGraph::Edge 
     if (!fromVal.optionalAddress() || !toVal.optionalAddress())
         return {};
 
-    const auto &val = e.value();
+    const auto& val = e.value();
     return Fbs::CreateCFGEdge(
       b, fromVal.address(), toVal.address(), toFbsEdgeType(val.type()), toFbsEdgeConfidence(val.confidence())
     );
@@ -252,7 +252,7 @@ saveCfgEdge(flatbuffers::FlatBufferBuilder &b, const P2::ControlFlowGraph::Edge 
 
 static flatbuffers::Offset<Fbs::CFG>
 saveCfg(
-  flatbuffers::FlatBufferBuilder &b, const P2::ControlFlowGraph &cfg, const std::vector<P2::FunctionPtr> &functions
+  flatbuffers::FlatBufferBuilder& b, const P2::ControlFlowGraph& cfg, const std::vector<P2::FunctionPtr>& functions
 ) {
     std::vector<flatbuffers::Offset<Fbs::CFGVertex>> vertices;
     vertices.reserve(cfg.nVertices());
@@ -263,14 +263,14 @@ saveCfg(
     std::vector<flatbuffers::Offset<Fbs::BasicBlock>> bbs;
     bbs.reserve(cfg.nVertices());
 
-    for (const auto &v : cfg.vertices()) {
+    for (const auto& v : cfg.vertices()) {
         if (v.value().optionalAddress())
             vertices.push_back(saveCfgVertex(b, v));
         if (v.value().bblock())
             bbs.push_back(saveBasicBlock(b, v.value().bblock()));
     }
 
-    for (const auto &e : cfg.edges()) {
+    for (const auto& e : cfg.edges()) {
         auto fbEdge = saveCfgEdge(b, e);
         if (!fbEdge.IsNull())
             edges.push_back(fbEdge);
@@ -278,7 +278,7 @@ saveCfg(
 
     std::vector<flatbuffers::Offset<Fbs::Function>> fbFuns;
     fbFuns.reserve(functions.size());
-    for (const auto &f : functions)
+    for (const auto& f : functions)
         fbFuns.push_back(saveFunction(b, f));
 
     auto fbVertices  = b.CreateVector(vertices);
@@ -290,14 +290,14 @@ saveCfg(
 }
 
 static flatbuffers::Offset<Fbs::Interval>
-saveInterval(flatbuffers::FlatBufferBuilder &b, const AddressInterval &interval) {
+saveInterval(flatbuffers::FlatBufferBuilder& b, const AddressInterval& interval) {
     if (interval.isEmpty())
         return Fbs::CreateInterval(b, 0, 0);
     return Fbs::CreateInterval(b, interval.least(), interval.greatest());
 }
 
 static flatbuffers::Offset<Fbs::Segment>
-saveSegment(flatbuffers::FlatBufferBuilder &b, const MemoryMap::Super::Segment &seg) {
+saveSegment(flatbuffers::FlatBufferBuilder& b, const MemoryMap::Super::Segment& seg) {
     const auto           buf = seg.buffer();
     std::vector<uint8_t> data(buf->data(), buf->data() + buf->size());
     auto                 fbData = b.CreateVector(data);
@@ -305,24 +305,24 @@ saveSegment(flatbuffers::FlatBufferBuilder &b, const MemoryMap::Super::Segment &
 }
 
 static flatbuffers::Offset<Fbs::IntervalSegment>
-saveIntervalSegment(flatbuffers::FlatBufferBuilder &b, const MemoryMap::Super::Node &node) {
+saveIntervalSegment(flatbuffers::FlatBufferBuilder& b, const MemoryMap::Super::Node& node) {
     auto fbInterval = saveInterval(b, node.key());
     auto fbSeg      = saveSegment(b, node.value());
     return Fbs::CreateIntervalSegment(b, fbInterval, fbSeg);
 }
 
 static flatbuffers::Offset<Fbs::AddressMap>
-saveAddressMap(flatbuffers::FlatBufferBuilder &b, const MemoryMap::Super &map) {
+saveAddressMap(flatbuffers::FlatBufferBuilder& b, const MemoryMap::Super& map) {
     std::vector<flatbuffers::Offset<Fbs::IntervalSegment>> entries;
     entries.reserve(map.size());
-    for (const auto &node : map.nodes())
+    for (const auto& node : map.nodes())
         entries.push_back(saveIntervalSegment(b, node));
     auto fbEntries = b.CreateVector(entries);
     return Fbs::CreateAddressMap(b, fbEntries);
 }
 
 static flatbuffers::Offset<Fbs::MemoryMap>
-saveMemoryMap(flatbuffers::FlatBufferBuilder &b, const MemoryMap &map) {
+saveMemoryMap(flatbuffers::FlatBufferBuilder& b, const MemoryMap& map) {
     auto fbData = saveAddressMap(b, map);
     auto fbName = b.CreateString(map.name());
     return Fbs::CreateMemoryMap(b, fbData, toFbsEndianness(map.byteOrder()), fbName);
@@ -333,13 +333,13 @@ saveMemoryMap(flatbuffers::FlatBufferBuilder &b, const MemoryMap &map) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static MemoryMap::Ptr
-loadMemoryMap(const Fbs::MemoryMap *fbMap) {
+loadMemoryMap(const Fbs::MemoryMap* fbMap) {
     auto map = MemoryMap::instance();
     map->byteOrder(fromFbsEndianness(fbMap->endianness()));
     if (auto name = fbMap->name())
         map->name(name->str());
 
-    const Fbs::AddressMap *fbAddrMap = fbMap->data();
+    const Fbs::AddressMap* fbAddrMap = fbMap->data();
     if (!fbAddrMap || !fbAddrMap->entries())
         return map;
 
@@ -379,7 +379,7 @@ loadMemoryMap(const Fbs::MemoryMap *fbMap) {
 // FlatbufferPartitionerSaver
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FlatbufferPartitionerSaver::FlatbufferPartitionerSaver(const P2::PartitionerConstPtr &p) : partitioner_(p) {}
+FlatbufferPartitionerSaver::FlatbufferPartitionerSaver(const P2::PartitionerConstPtr& p) : partitioner_(p) {}
 
 FlatbufferPartitionerSaver::~FlatbufferPartitionerSaver() {}
 
@@ -408,18 +408,18 @@ FlatbufferPartitionerSaver::save() {
     bytes_.assign(b.GetBufferPointer(), b.GetBufferPointer() + b.GetSize());
 }
 
-std::pair<const uint8_t *, size_t>
+std::pair<const uint8_t*, size_t>
 FlatbufferPartitionerSaver::buffer() const {
-    return {bytes_.data(), bytes_.size()};
+    return {reinterpret_cast<const uint8_t*>(bytes_.data()), bytes_.size()};
 }
 
 void
-FlatbufferPartitionerSaver::write(std::ostream &o) const {
-    o.write(reinterpret_cast<const char *>(bytes_.data()), static_cast<std::streamsize>(bytes_.size()));
+FlatbufferPartitionerSaver::write(std::ostream& o) const {
+    o.write(reinterpret_cast<const char*>(bytes_.data()), static_cast<std::streamsize>(bytes_.size()));
 }
 
 void
-FlatbufferPartitionerSaver::write(const boost::filesystem::path &p) const {
+FlatbufferPartitionerSaver::write(const boost::filesystem::path& p) const {
     std::ofstream f(p.string().c_str(), std::ios::binary);
     if (!f)
         throw std::runtime_error("cannot open \"" + p.string() + "\" for writing");
@@ -435,7 +435,7 @@ FlatbufferPartitionerLoader::FlatbufferPartitionerLoader() {}
 FlatbufferPartitionerLoader::~FlatbufferPartitionerLoader() {}
 
 FlatbufferPartitionerLoader
-FlatbufferPartitionerLoader::fromFile(const boost::filesystem::path &p) {
+FlatbufferPartitionerLoader::fromFile(const boost::filesystem::path& p) {
     std::ifstream f(p.string().c_str(), std::ios::binary);
     if (!f)
         throw std::runtime_error("cannot open \"" + p.string() + "\" for reading");
@@ -443,14 +443,14 @@ FlatbufferPartitionerLoader::fromFile(const boost::filesystem::path &p) {
 }
 
 FlatbufferPartitionerLoader
-FlatbufferPartitionerLoader::fromStream(std::istream &in) {
-    std::vector<uint8_t> bytes;
+FlatbufferPartitionerLoader::fromStream(std::istream& in) {
+    std::vector<char> bytes;
     in.seekg(0, std::ios::end);
     std::streampos end = in.tellg();
     in.seekg(0, std::ios::beg);
     if (end > 0) {
         bytes.resize(static_cast<size_t>(end));
-        in.read(reinterpret_cast<char *>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
+        in.read(bytes.data(), static_cast<std::streamsize>(bytes.size()));
     } else {
         // Non-seekable stream
         std::vector<char> buf(4096);
@@ -465,15 +465,22 @@ FlatbufferPartitionerLoader::fromStream(std::istream &in) {
 }
 
 FlatbufferPartitionerLoader
-FlatbufferPartitionerLoader::fromBytes(std::vector<uint8_t> bytes) {
+FlatbufferPartitionerLoader::fromBytes(std::vector<char>&& bytes) {
     FlatbufferPartitionerLoader loader;
-    loader.bytes_ = std::move(bytes);
+    loader.bytes_ = std::move(bytes); // std::move on && is a true move
+    return loader;
+}
+
+FlatbufferPartitionerLoader
+FlatbufferPartitionerLoader::fromBytes(const std::vector<char>& bytes) {
+    FlatbufferPartitionerLoader loader;
+    loader.bytes_ = std::move(bytes); // std::move on const& is a copy
     return loader;
 }
 
 bool
 FlatbufferPartitionerLoader::verify() const {
-    flatbuffers::Verifier v(bytes_.data(), bytes_.size());
+    flatbuffers::Verifier v(reinterpret_cast<const uint8_t*>(bytes_.data()), bytes_.size());
     return v.VerifyBuffer<Fbs::Partitioner>();
 }
 
@@ -482,21 +489,21 @@ FlatbufferPartitionerLoader::load() const {
     if (!verify())
         throw std::runtime_error("invalid flatbuffer data for Partitioner");
 
-    const Fbs::Partitioner *root = Fbs::GetPartitioner(bytes_.data());
+    const Fbs::Partitioner* root = Fbs::GetPartitioner(bytes_.data());
     ASSERT_not_null(root);
 
-    const auto fbArchName = root->architecture_name();
-    if (!fbArchName)
+    const auto arch_name = root->architecture_name();
+    if (!arch_name)
         throw std::runtime_error("flatbuffer partitioner has no architecture_name");
 
-    auto arch = Architecture::findByName(fbArchName->str()).orThrow();
+    auto arch = Architecture::findByName(arch_name->str()).orThrow();
     auto map  = loadMemoryMap(root->memory_map());
 
     // Create a fresh partitioner.
     auto partitioner = P2::Partitioner::instance(arch, map);
 
     // Recreate functions list first.
-    const Fbs::CFG *fbCfg = root->cfg();
+    const Fbs::CFG* fbCfg = root->cfg();
     if (!fbCfg)
         return partitioner;
 

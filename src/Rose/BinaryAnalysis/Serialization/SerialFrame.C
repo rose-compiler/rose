@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/Serialization/SerialFrame.h>
+#include <Rose/BinaryAnalysis/SerialIo.h>
 
 #include <Rose/StringUtility/Escape.h>
 
@@ -11,6 +12,10 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream.hpp>
+
+#include <Sawyer/Message.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Synchronization.h>
 
 #include <iostream>
 
@@ -47,7 +52,7 @@ SerialFrame::openForWrite(const boost::filesystem::path& fileName, ProgressCallb
     if (mode_ != Mode::Closed)
         close();
 
-    ioCb_ = ioCb;
+    progress_ = ioCb;
     if (fileName == "-") {
         fd_ = 1; // stdout
     } else {
@@ -65,7 +70,7 @@ SerialFrame::openForRead(const boost::filesystem::path& fileName, ProgressCallba
     if (mode_ != Mode::Closed)
         close();
 
-    ioCb_ = ioCb;
+    progress_ = ioCb;
     if (fileName == "-") {
         fd_ = 0; // stdin
     } else {
@@ -132,8 +137,8 @@ SerialFrame::close() {
         ::close(fd_);
         fd_ = -1;
     }
-    mode_ = Mode::Closed;
-    ioCb_ = ProgressCallback();
+    mode_     = Mode::Closed;
+    progress_ = ProgressCallback();
 }
 
 void
@@ -178,11 +183,31 @@ SerialFrame::readAndVerifyFileHeader() {
 }
 
 void
+SerialFrame::startWriteWorker(SerialFrame* saver, const std::vector<char>& data) {
+    saver->writeWorker(data);
+}
+
+void
+SerialFrame::writeWorker(const std::vector<char>& data) {
+    (*outArchive_) & data;
+}
+
+void
 SerialFrame::writeBlob(const std::vector<char>& data) {
     ensureWriting();
-    (*outArchive_) & data;
-    if (ioCb_)
-        ioCb_(static_cast<std::size_t>(data.size()), static_cast<std::size_t>(data.size()), "writing");
+
+    std::string                 errorMessage;
+    boost::thread               worker(startWriteWorker, this, data);
+    boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
+
+    while (!worker.try_join_for(timeout)) {
+        off_t cur = ::lseek(fd_, 0, SEEK_CUR);
+        if (progress_)
+            progress_(cur, data.size(), "writing");
+    }
+
+    if (progress_)
+        progress_(data.size(), data.size(), "writing");
 }
 
 std::vector<char>
@@ -190,8 +215,8 @@ SerialFrame::readBlob() {
     ensureReading();
     std::vector<char> data;
     (*inArchive_) & data;
-    if (ioCb_)
-        ioCb_(static_cast<std::size_t>(data.size()), static_cast<std::size_t>(data.size()), "reading");
+    if (progress_)
+        progress_(data.size(), data.size(), "reading");
     return data;
 }
 

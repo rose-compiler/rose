@@ -81,7 +81,11 @@ createSwitchParser(Settings &settings) {
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] [@v{specimen}]");
     parser.with(tool);
     parser.with(BinaryAnalysis::Unparser::commandLineSwitches(settings.unparser));
-    parser.with(Rose::CommandLine::genericSwitches());
+
+    SwitchGroup gen = Rose::CommandLine::genericSwitches();
+    gen.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
+
+    parser.with(gen);
     return parser;
 }
 

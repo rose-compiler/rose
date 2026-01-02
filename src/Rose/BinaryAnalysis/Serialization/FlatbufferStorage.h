@@ -3,7 +3,6 @@
 
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#ifdef ROSE_ENABLE_FLATBUFFERS
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
@@ -23,11 +22,11 @@ namespace Serialization {
 class FlatbufferPartitionerSaver {
   public:
     /** Construct a saver for an existing partitioner. */
-    explicit FlatbufferPartitionerSaver(const Partitioner2::PartitionerConstPtr &);
+    explicit FlatbufferPartitionerSaver(const Partitioner2::PartitionerConstPtr&);
     ~FlatbufferPartitionerSaver();
 
-    FlatbufferPartitionerSaver(const FlatbufferPartitionerSaver &)            = delete;
-    FlatbufferPartitionerSaver &operator=(const FlatbufferPartitionerSaver &) = delete;
+    FlatbufferPartitionerSaver(const FlatbufferPartitionerSaver&)            = delete;
+    FlatbufferPartitionerSaver& operator=(const FlatbufferPartitionerSaver&) = delete;
 
     /** Serialize the partitioner into the internal FlatBuffer. */
     void save();
@@ -35,17 +34,17 @@ class FlatbufferPartitionerSaver {
     /** Pointer + size view into the internal FlatBuffer.
      *
      *  Valid after @ref save has been called. */
-    std::pair<const uint8_t *, size_t> buffer() const;
+    std::pair<const uint8_t*, size_t> buffer() const;
 
     /** Write buffer to a stream. */
-    void write(std::ostream &) const;
+    void write(std::ostream&) const;
 
     /** Write buffer to a file. */
-    void write(const boost::filesystem::path &) const;
+    void write(const boost::filesystem::path&) const;
 
   private:
     Partitioner2::PartitionerConstPtr partitioner_;
-    std::vector<uint8_t>              bytes_;
+    std::vector<char>              bytes_;
 };
 
 /** Loads a Partitioner2::Partitioner from a FlatBuffer. */
@@ -54,19 +53,22 @@ class FlatbufferPartitionerLoader {
     FlatbufferPartitionerLoader();
     ~FlatbufferPartitionerLoader();
 
-    FlatbufferPartitionerLoader(const FlatbufferPartitionerLoader &)            = delete;
-    FlatbufferPartitionerLoader &operator=(const FlatbufferPartitionerLoader &) = delete;
-    FlatbufferPartitionerLoader(FlatbufferPartitionerLoader &&)                 = default;
-    FlatbufferPartitionerLoader &operator=(FlatbufferPartitionerLoader &&)      = default;
+    FlatbufferPartitionerLoader(const FlatbufferPartitionerLoader&)            = delete;
+    FlatbufferPartitionerLoader& operator=(const FlatbufferPartitionerLoader&) = delete;
+    FlatbufferPartitionerLoader(FlatbufferPartitionerLoader&&)                 = default;
+    FlatbufferPartitionerLoader& operator=(FlatbufferPartitionerLoader&&)      = default;
 
     /** Initialize a loader from a file. */
-    static FlatbufferPartitionerLoader fromFile(const boost::filesystem::path &);
+    static FlatbufferPartitionerLoader fromFile(const boost::filesystem::path&);
 
     /** Initialize a loader from a stream (reads until EOF). */
-    static FlatbufferPartitionerLoader fromStream(std::istream &);
+    static FlatbufferPartitionerLoader fromStream(std::istream&);
 
-    /** Initialize a loader from an existing buffer. */
-    static FlatbufferPartitionerLoader fromBytes(std::vector<uint8_t>);
+    /** Initialize a loader from an existing buffer, taking ownership of the buffer. */
+    static FlatbufferPartitionerLoader fromBytes(std::vector<char>&&);
+
+    /** Initialize a loader from an existing buffer without ownership of the buffer. */
+    static FlatbufferPartitionerLoader fromBytes(const std::vector<char>&);
 
     /** Verify that the loaded bytes are a valid FlatBuffer for the Partitioner root type. */
     bool verify() const;
@@ -75,13 +77,12 @@ class FlatbufferPartitionerLoader {
     Partitioner2::PartitionerPtr load() const;
 
   private:
-    std::vector<uint8_t> bytes_;
+    std::vector<char> bytes_;
 };
 
 } // namespace Serialization
 } // namespace BinaryAnalysis
 } // namespace Rose
 
-#endif
 #endif
 #endif

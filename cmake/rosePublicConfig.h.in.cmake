@@ -29,6 +29,9 @@
 /* Enable Boost serialization */
 #cmakedefine ROSE_ENABLE_BOOST_SERIALIZATION
 
+/* Enable Flatbuffers serialization */
+#cmakedefine ROSE_ENABLE_FLATBUFFERS
+
 /* Define if Z3 library is available */
 #cmakedefine ROSE_HAVE_Z3 @ROSE_HAVE_Z3@
 

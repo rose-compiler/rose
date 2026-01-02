@@ -550,20 +550,28 @@ checkRoseVersionNumber(const std::string &need, Sawyer::Message::Stream &fatal) 
 }
 
 Sawyer::CommandLine::Switch
-stateFileFormatSwitch(Serialization::Format &fmt) {
+stateFileFormatSwitch(Serialization::Format& fmt) {
     return Sawyer::CommandLine::Switch("state-format")
-        .argument("fmt", Sawyer::CommandLine::enumParser<Serialization::Format>(fmt)
-                  ->with("binary", Serialization::BINARY)
-                  ->with("text", Serialization::TEXT)
-                  ->with("xml", Serialization::XML))
-        .doc("Format of the binary analysis state file. The choices are:"
+      .argument(
+        "fmt", Sawyer::CommandLine::enumParser<Serialization::Format>(fmt)
+                 ->with("binary", Serialization::BINARY)
+                 ->with("text", Serialization::TEXT)
+                 ->with("xml", Serialization::XML)
+                 ->with("flatbuffers", Serialization::FLATBUFFERS)
+      )
+      .doc(
+        "Format of the binary analysis state file. The choices are:"
 
-             "@named{binary}{Use a custom binary format that is small and fast but not portable.}"
+        "@named{binary}{Use a custom binary format that is small and fast but not portable.}"
 
-             "@named{text}{Use a custom text format that is medium size and portable.}"
+        "@named{text}{Use a custom text format that is medium size and portable.}"
 
-             "@named{xml}{Use an XML format that is verbose and portable. This format can also be transcribed "
-             "using the rose-xml2json tool (or other tools) to JSON.}");
+        "@named{xml}{Use an XML format that is verbose and portable. This format can also be transcribed "
+        "using the rose-xml2json tool (or other tools) to JSON.}"
+
+        "@named{flatbuffers}{Use an experimental binary schema using flatbuffers that is significantly faster, but "
+        "incomplete.}"
+      );
 }
 
 void

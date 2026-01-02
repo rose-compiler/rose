@@ -1,6 +1,5 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 
 // This file implements the boost serialization logic for ROSE binary analysis. It also is a place for serialization
 // functions that have more dependencies than we want to include into header files. For instance, if class `T` has a
@@ -8,7 +7,7 @@
 // `T::serialize` needs the definition of `P`. Declarations are cheap (`class P;`) but definitions are expensive
 // (`#include <P.h>`). And since these are occuring in a header file ("T.h") they get multiplied by the number of
 // translation units that directly or indirectly include the header. Therefore, when it's possible to eliminate P's
-// definition from T.h by moving `T::serialize` to this file (BoostSerialIoBackend.C) we do so.
+// definition from T.h by moving `T::serialize` to this file (Boost.C) we do so.
 //
 // In other words, here's what we're trying to accomplish. The old code:
 //
@@ -67,7 +66,7 @@
 //    +-------------------------------------------------------------------------------------------
 //
 //    +-------------------------------------------------------------------------------------------
-//    |// BoostSerialIoBackend.C
+//    |// Boost.C
 //    |
 //    |#include <P.h>                                   // expensive definition for `P`
 //    |
@@ -80,18 +79,19 @@
 //    +-------------------------------------------------------------------------------------------
 #include <sage3basic.h>
 
-#include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Partitioner2.h>
-#include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ConcreteLocation.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionProvider.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/Partitioner2.h>
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
@@ -100,13 +100,12 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 #include <Rose/StringUtility/Escape.h>
 #include <Rose/StringUtility/SplitJoin.h>
 
-#include <AstSerialization.h>                           // rose
+#include <AstSerialization.h> // rose
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -115,6 +114,9 @@
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/filter/counter.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/ref.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <sstream>
 
@@ -124,12 +126,51 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 // Class for Boost-based serialization backend
-class BoostSerialOutputBackend final: public SerialIo::OutputBackend {
+class BoostSerializer final: public SerialIo::Serializer {
   private:
     Serialization::Format format_;
 
   public:
-    explicit BoostSerialOutputBackend(Serialization::Format format) : format_(format) {}
+    explicit BoostSerializer(Serialization::Format format) : format_(format) {}
+
+    static void startSaveWorker(
+      BoostSerializer* saver, const Partitioner2::PartitionerConstPtr& partitioner, std::ostream& out_stream,
+      std::string& error_message
+    ) {
+        saver->saveWorker(partitioner, out_stream, error_message);
+    }
+
+    void saveWorker(
+      const Partitioner2::PartitionerConstPtr& partitioner, std::ostream& out_stream, std::string& error_message
+    ) {
+
+        const auto raw = partitioner.getRawPointer();
+
+        try {
+            switch (format_) {
+            case Serialization::BINARY: {
+                boost::archive::binary_oarchive ar(out_stream);
+                ar << raw;
+                break;
+            }
+            case Serialization::TEXT: {
+                boost::archive::text_oarchive ar(out_stream);
+                ar << raw;
+                break;
+            }
+            case Serialization::XML: {
+                boost::archive::xml_oarchive ar(out_stream);
+                ar << BOOST_SERIALIZATION_NVP(raw);
+                break;
+            }
+            default:
+                throw Serialization::Exception("unsupported format in Boost serialization backend");
+            }
+
+        } catch (const std::exception& e) {
+            error_message = std::string("Boost serialization failed: ") + e.what();
+        }
+    }
 
     std::vector<char> savePartitioner(
       const Partitioner2::PartitionerConstPtr& partitioner, Serialization::ProgressCallback progress
@@ -137,121 +178,133 @@ class BoostSerialOutputBackend final: public SerialIo::OutputBackend {
 
         // Report initial progress
         if (progress)
-            progress(0, 0, "serializing-boost");
+            progress(0, -1, "boost");
 
-        // Use the raw pointer for serialization
-        const Partitioner2::Partitioner* raw = partitioner.getRawPointer();
+        boost::iostreams::counter counter;       // Track written bytes for progress
+        std::string               error_message; // Report asynchronous write errors
 
-        std::vector<char>                            out_data;
-        auto                                         out_sink = boost::iostreams::back_inserter(out_data);
-        boost::iostreams::stream<decltype(out_sink)> out_stream(out_sink);
+        std::vector<char> out_data;
+        auto              out_sink = boost::iostreams::back_inserter(out_data);
 
-        try {
-            switch (format_) {
-            case Serialization::BINARY: {
-                boost::archive::binary_oarchive ar(out_stream);
-                ar & raw;
-                break;
-            }
-            case Serialization::TEXT: {
-                boost::archive::text_oarchive ar(out_stream);
-                ar & raw;
-                break;
-            }
-            case Serialization::XML: {
-                boost::archive::xml_oarchive ar(out_stream);
-                ar&                          BOOST_SERIALIZATION_NVP(raw);
-                break;
-            }
-            default:
-                throw Serialization::Exception("unsupported format in Boost serialization backend");
-            }
+        boost::iostreams::filtering_ostream out_stream;
 
-            // Report completion
+        out_stream.push(boost::ref(counter));
+        out_stream.push(out_sink);
+
+        boost::thread               worker(startSaveWorker, this, partitioner, boost::ref(out_stream), error_message);
+        boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
+
+        while (!worker.try_join_for(timeout)) {
             if (progress)
-                progress(out_data.size(), out_data.size(), "serializing-boost");
-
-        } catch (const std::exception& e) {
-            throw Serialization::Exception(std::string("Boost serialization failed: ") + e.what());
+                progress(counter.characters(), -1, "boost");
         }
+
+        if (progress)
+            progress(out_data.size(), out_data.size(), "boost");
 
         return out_data;
     }
 };
 
 // Class for Boost-based deserialization backend
-class BoostSerialInputBackend final: public SerialIo::InputBackend {
+class BoostDeserializer final: public SerialIo::Deserializer {
   private:
     Serialization::Format format_;
 
   public:
-    explicit BoostSerialInputBackend(Serialization::Format format) : format_(format) {}
+    explicit BoostDeserializer(Serialization::Format format) : format_(format) {}
+
+    static void startLoadWorker(
+      BoostDeserializer* saver, std::istream& in_stream, Partitioner2::Partitioner*& obj, std::string& error_message
+    ) {
+        saver->loadWorker(in_stream, obj, error_message);
+    }
+
+    void loadWorker(std::istream& in_stream, Partitioner2::Partitioner*& obj, std::string& error_message) {
+
+        try {
+            switch (format_) {
+            case Serialization::BINARY: {
+                boost::archive::binary_iarchive ar(in_stream);
+                ar >> obj;
+                break;
+            }
+            case Serialization::TEXT: {
+                boost::archive::text_iarchive ar(in_stream);
+                ar >> obj;
+                break;
+            }
+            case Serialization::XML: {
+                boost::archive::xml_iarchive ar(in_stream);
+                ar >> BOOST_SERIALIZATION_NVP(obj);
+                break;
+            }
+            default:
+                throw Serialization::Exception("unsupported format in Boost deserialization backend");
+            }
+
+        } catch (const std::exception& e) {
+            error_message = std::string("Boost deserialization failed: ") + e.what();
+        }
+    }
 
     Partitioner2::PartitionerPtr
     loadPartitioner(const std::vector<char>& data, Serialization::ProgressCallback progress) override {
 
         // Report initial progress
         if (progress)
-            progress(0, data.size(), "deserializing-boost");
+            progress(0, data.size(), "boost");
 
-        // Create a string from the binary data
         boost::iostreams::stream<boost::iostreams::array_source> data_stream(data.data(), data.size());
 
-        Partitioner2::Partitioner* raw = nullptr;
+        Partitioner2::Partitioner* obj = nullptr;
 
-        try {
-            switch (format_) {
-            case Serialization::BINARY: {
-                boost::archive::binary_iarchive ar(data_stream);
-                ar & raw;
-                break;
-            }
-            case Serialization::TEXT: {
-                boost::archive::text_iarchive ar(data_stream);
-                ar & raw;
-                break;
-            }
-            case Serialization::XML: {
-                boost::archive::xml_iarchive ar(data_stream);
-                ar&                          BOOST_SERIALIZATION_NVP(raw);
-                break;
-            }
-            default:
-                throw Serialization::Exception("unsupported format in Boost serialization backend");
-            }
+        boost::iostreams::counter counter;       // Track written bytes for progress
+        std::string               error_message; // Report asynchronous load errors
 
-            // Report completion
+        boost::iostreams::filtering_istream in_stream;
+
+        in_stream.push(boost::ref(counter));
+        in_stream.push(data_stream);
+
+        boost::thread               worker(startLoadWorker, this, boost::ref(in_stream), boost::ref(obj), error_message);
+        boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
+
+        while (!worker.try_join_for(timeout)) {
             if (progress)
-                progress(data.size(), data.size(), "deserializing-boost");
-
-        } catch (const std::exception& e) {
-            throw Serialization::Exception(std::string("Boost deserialization failed: ") + e.what());
+                progress(counter.characters(), data.size(), "boost");
         }
 
-        return Partitioner2::PartitionerPtr(raw);
+        if (progress)
+            progress(data.size(), data.size(), "boost");
+
+        return Partitioner2::PartitionerPtr(obj);
     }
 };
 
-// Static initialization to register the Boost backends
+// Static initialization to register the Boost serializer and deserializer
 namespace {
-struct RegisterBoostBackends {
-    RegisterBoostBackends() {
-        SerialIo::registerBackend(
-          {Serialization::BINARY, []() { return std::make_unique<BoostSerialOutputBackend>(Serialization::BINARY); },
-           []() { return std::make_unique<BoostSerialInputBackend>(Serialization::BINARY); }}
-        );
+struct RegisterBoostSerialization {
+    RegisterBoostSerialization() {
+        SerialIo::registerSerialization({
+          Serialization::BINARY,                                                       /* format */
+          []() { return std::make_shared<BoostDeserializer>(Serialization::BINARY); }, /* deserializer factory */
+          []() { return std::make_shared<BoostSerializer>(Serialization::BINARY); },   /* serializer factory */
+        });
 
-        SerialIo::registerBackend(
-          {Serialization::TEXT, []() { return std::make_unique<BoostSerialOutputBackend>(Serialization::TEXT); },
-           []() { return std::make_unique<BoostSerialInputBackend>(Serialization::TEXT); }}
-        );
+        SerialIo::registerSerialization({
+          Serialization::TEXT,                                                       /* format */
+          []() { return std::make_shared<BoostDeserializer>(Serialization::TEXT); }, /* deserializer factory */
+          []() { return std::make_shared<BoostSerializer>(Serialization::TEXT); },   /* serializer factory */
+        });
 
-        SerialIo::registerBackend(
-          {Serialization::XML, []() { return std::make_unique<BoostSerialOutputBackend>(Serialization::XML); },
-           []() { return std::make_unique<BoostSerialInputBackend>(Serialization::XML); }}
-        );
+        SerialIo::registerSerialization({
+          Serialization::XML,                                                       /* format */
+          []() { return std::make_shared<BoostDeserializer>(Serialization::XML); }, /* deserializer factory */
+          []() { return std::make_shared<BoostSerializer>(Serialization::XML); },   /* serializer factory */
+        });
     }
-} registerBoostBackends;
+} registerBoostSerialization;
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -806,12 +859,6 @@ Partitioner::serializeCommon(S& s, const unsigned version) {
 template <class S>
 void
 Partitioner::save(S& s, const unsigned version) const {
-    mlog[INFO] << "Saving partitioner with version " << version << "\n";
-    if (!architecture_) {
-        mlog[INFO] << "Null architecture\n";
-    } else {
-        mlog[INFO] << "Architecture: " << architecture_->name() << "\n";
-    }
     const_cast<Partitioner*>(this)->serializeCommon(s, version);
     if (version >= 3)
         saveAst(s, interpretation_);
@@ -1004,5 +1051,4 @@ BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperat
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 #endif // ROSE_ENABLE_BINARY_ANALYSIS
