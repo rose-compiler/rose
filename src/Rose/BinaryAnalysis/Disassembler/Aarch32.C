@@ -141,7 +141,7 @@ Aarch32::disassembleOne(const MemoryMap::Ptr &map, Address va, AddressSet *succe
         throw Exception("instruction pointer out of range", va);
     uint8_t bytes[4];                                   // largest possible instruction is 4 bytes
     ASSERT_require(sizeof bytes >= instructionAlignment_);
-    const size_t nRead = map->at(va).limit(instructionAlignment_).require(MemoryMap::EXECUTABLE).read(bytes).size();
+    const size_t nRead = map->at(va).limit(sizeof bytes).require(MemoryMap::EXECUTABLE).read(bytes).size();
     if (0 == nRead)
         throw Exception("short read", va);
     uint32_t word = bytesToWord(nRead, bytes);
@@ -1305,6 +1305,11 @@ Aarch32::typeForMemoryRead(const cs_insn &insn) {
                 default:
                     ASSERT_require("invalid size field in bits 8 and 9: 0b00");
             }
+
+        case Kind::ARM_INS_TBB:
+            return SageBuilderAsm::buildTypeU8();
+        case Kind::ARM_INS_TBH:
+            return SageBuilderAsm::buildTypeU16();
 
         default:
             ASSERT_not_reachable("memory read instruction not handled");

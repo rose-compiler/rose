@@ -310,7 +310,7 @@ ArmAarch32::bytesPerInstruction() const {
         case InstructionSet::A32:
             return 2;
         case InstructionSet::T32:
-            return 4;
+            return Sawyer::Container::Interval<size_t>::hull(2, 4);
     }
     ASSERT_not_reachable("invalid instruction set");
 }
