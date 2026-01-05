@@ -57,6 +57,10 @@ if(ENABLE_BINARY_ANALYSIS)
   target_link_libraries(bat-dis PRIVATE bat)
   install(TARGETS bat-dis DESTINATION bin)
 
+  add_executable(bat-linear bat-linear.C)
+  target_link_libraries(bat-linear PRIVATE bat)
+  install(TARGETS bat-linear DESTINATION bin)
+
   add_executable(bat-dwarf-lines bat-dwarf-lines.C)
   target_link_libraries(bat-dwarf-lines PRIVATE bat)
   install(TARGETS bat-dwarf-lines DESTINATION bin)
