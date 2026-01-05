@@ -18,6 +18,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
+
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>

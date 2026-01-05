@@ -19,8 +19,7 @@ endif()
 # Add FlatBuffers-specific backend if enabled
 if(ROSE_ENABLE_FLATBUFFERS)
   list(APPEND SERIALIZATION_SOURCES
-    FlatbufferStorage.C
-    Flatbuffer.C
+    FlatBuffer.C
   )
 endif()
 

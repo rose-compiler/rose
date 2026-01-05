@@ -1,7 +1,14 @@
-// Generate rose_generated.rs by running this command using the same version of flatc as that listed
-// in the Cargo.toml (i.e, the FlatBuffers compiler and the FlatBuffers library used when compiling
-// this crate should be the same version).
+// To generate the C++ implementation, run this command from the root of the ROSE source repository:
+// ```
+// flatc \
+//        --cpp \
+//        --scoped-enums \
+//        --filename-suffix '' \
+//        -o src/Rose/BinaryAnalysis/Serialization \
+//        src/Rose/BinaryAnalysis/Serialization/FlatBufferSchema.fbs
+// ```
 //
+// To generate the rust implementation, run this command: 
 // ```
 // flatc --rust rose.fbs
 // ```
@@ -15,11 +22,12 @@
 //   - function ownership per instruction
 
 namespace Rose.BinaryAnalysis.Serialization.FlatBuffers;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Memory Map
+/// Memory Map
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Accessibility bit flags that can be OR'd together.
+/// Accessibility bit flags that can be OR'd together.
 enum Accessibility : ubyte {
     EXECUTABLE = 1,
     WRITABLE = 2,
@@ -36,65 +44,74 @@ enum Endianness : ubyte {
 
 table Segment {
     address: uint64;
-    bytes: [ubyte];
-    accessibility: ubyte; // Accessibility bits OR'd together
-    name: string; // optional
+    bytes: [ubyte] (required);
+    /// Accessibility bits OR'd together
+    accessibility: ubyte; 
+    /// optional name
+    name: string; 
 }
 
 table MemoryMap {
     endianness: Endianness;
-    segments: [Segment];
+    segments: [Segment] (required);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Instructions
+/// Instructions
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// One machine instruction.
+/// One machine instruction.
 table Instruction {
     address: uint64;
-    bytes: [ubyte];
-    mnemonic: string; // optional
-    operands: string; // optional
+    bytes: [ubyte] (required);
+    /// optional mnemonic
+    mnemonic: string;
+    /// optional operands
+    operands: string;
 }
 
-// All known instructions. Every instruction has a unique address.
+/// All known instructions. Every instruction has a unique address.
 table InstructionList {
- instructions: [Instruction];
+ instructions: [Instruction] (required);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Basic blocks
+/// Basic blocks
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// A basic block is an non-empty, ordered list of instruction addresses. The address of a basic
-// block is the address of its first instruction.
+/// A basic block is an non-empty, ordered list of instruction addresses. The address of a basic
+/// block is the address of its first instruction.
 table BasicBlock {
-    addresses: [uint64]; // addresses of contained instructions in execution order
+    /// addresses of contained instructions in execution order
+    addresses: [uint64] (required); 
 }
 
-// All known basic blocks.
+/// All known basic blocks.
 table BasicBlockList {
-    basic_blocks: [BasicBlock]; // list of basic blocks with unique starting addresses
+    /// list of basic blocks with unique starting addresses
+    basic_blocks: [BasicBlock] (required); 
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Functions
+/// Functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 table Function {
     entry_addr: uint64;
-    instructions: [uint64]; // non-empty instruction addresses belonging to this function
-    name: string; // optional name for function
+    /// non-empty instruction addresses belonging to this function
+    instructions: [uint64] (required);
+    /// optional name for function
+    name: string; 
 }
 
-// List of all known functions.
+/// List of all known functions.
 table FunctionList {
-    functions: [Function]; // list of functions with unique entry addresses
+    /// list of functions with unique entry addresses
+    functions: [Function] (required); 
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Control flow graph.
+/// Control flow graph.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum CfgEdgePurpose : uint8 {
@@ -105,63 +122,62 @@ enum CfgEdgePurpose : uint8 {
     Normal,              // normal
 }
 
-// Data associated with a CFG edge.
+/// Data associated with a CFG edge.
 table CfgEdgeData {
     purpose: CfgEdgePurpose;
 }
 
-// A CFG edge that points to an address. If the address is that of an instruction then the target
-// will be a node in the CFG and a basic block with that address will exist in the BasicBlockList
-// table. If the edge points to a non-instruction address, then the address will not be a node in
-// the CFG nor will there be an instruction or basic block with that address.
+/// A CFG edge that points to an address. If the address is that of an instruction then the target
+/// will be a node in the CFG and a basic block with that address will exist in the BasicBlockList
+/// table. If the edge points to a non-instruction address, then the address will not be a node in
+/// the CFG nor will there be an instruction or basic block with that address.
 table AddressTarget {
     address: uint64;
 }
 
-// An indeterminate target has no data. It's a pointer to an unknown location.
+/// An indeterminate target has no data. It's a pointer to an unknown location.
 table IndeterminateTarget {}
 
-// The target end of a CFG edge. CFG edges don't necessarily need to point to a node in the CFG,
-// although they always originate from such a node.
+/// The target end of a CFG edge. CFG edges don't necessarily need to point to a node in the CFG,
+/// although they always originate from such a node.
 union CfgEdgeTarget {
     AddressTarget,
     IndeterminateTarget
 }
     
-// An edge has a source, target, and data. The source is always a basic block address. The target
-// does not necessarily need to be a node in the control flow graph, although it usually is.
+/// An edge has a source, target, and data. The source is always a basic block address. The target
+/// does not necessarily need to be a node in the control flow graph, although it usually is.
 table CfgEdge {
     src: uint64; // source address
-    tgt: CfgEdgeTarget;
-    data: CfgEdgeData;
+    tgt: CfgEdgeTarget (required);
+    data: CfgEdgeData (required);
 }
 
-// A CFG is represented explicitly by its edges. The union of the edge source addresses are the
-// nodes of the CFG and are instruction addresses.
-//
-// Note that ROSE CFGs usually point to basic blocks rather than individual instructions, so when
-// loading the CFG into ROSE you'll probably want to collapse nodes based on the `BasicBlockList`.
+/// A CFG is represented explicitly by its edges. The union of the edge source addresses are the
+/// nodes of the CFG and are instruction addresses.
+///
+/// Note that ROSE CFGs usually point to basic blocks rather than individual instructions, so when
+/// loading the CFG into ROSE you'll probably want to collapse nodes based on the `BasicBlockList`.
 table Cfg {
-    edges: [CfgEdge];
+    edges: [CfgEdge] (required);
 }
     
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Root of the entire document.
+/// Root of the entire document.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Root object for the flatbuffers file. Every flatbuffers file will store exactly one of these
-// objects at the top level, and nothing else.
+/// Root object for the flatbuffers file. Every flatbuffers file will store exactly one of these
+/// objects at the top level, and nothing else.
 table Root {
-    memory_map: MemoryMap;
-    instructions: InstructionList;
-    basic_blocks: BasicBlockList;
-    functions: FunctionList;
-    cfg: Cfg;
+    memory_map: MemoryMap (required);
+    instructions: InstructionList (required);
+    basic_blocks: BasicBlockList (required);
+    functions: FunctionList (required);
+    cfg: Cfg (required);
 }
 
-// 
-// 
-// 
+root_type Root;
+
 // 
 // 
 // table BasicBlock {

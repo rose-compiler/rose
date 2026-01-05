@@ -12,7 +12,7 @@
 #include <AstSerialization.h>
 
 #ifdef ROSE_ENABLE_FLATBUFFERS
-#include <Rose/BinaryAnalysis/Serialization/FlatbufferStorage.h>
+#include <Rose/BinaryAnalysis/Serialization/FlatBuffer.h>
 #endif
 
 #include <utility>
