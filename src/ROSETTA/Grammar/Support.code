@@ -4373,7 +4373,7 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
    };
 
 
-std::ostream & operator<< ( std::ostream & os, const rose_hash_multimap::iterator & rhm_it );
+std::ostream & operator<< (std::ostream& os, const rose_hash_multimap::iterator& rhm_it);
 
 HEADER_SYMBOL_TABLE_PREDECLARATION_END
 
@@ -4654,10 +4654,6 @@ HEADER_SYMBOL_TABLE_END
 HEADER_SYMBOL_TABLE_POSTDECLARATION_START
 
 HEADER_SYMBOL_TABLE_POSTDECLARATION_END
-
-
-// HEADER SYMBOL_TABLE_POSTDECLARATION_START
-// HEADER SYMBOL_TABLE_POSTDECLARATION_END
 
 
 HEADER_BASECLASS_START
@@ -7086,7 +7082,7 @@ HEADER_UNPARSE_INFO_START
 
           SgName get_array_index_list();
 
-          void set_array_index_list(SgExpression *e, SgUnparse_Info finfo );
+          void set_array_index_list(SgExpression *e, SgUnparse_Info finfo);
           void unset_array_index_list();
 
        // Support for processing of recursive references to structure tags within the data
@@ -7490,15 +7486,10 @@ SgSymbolTable::setCaseInsensitive(bool b)
         }
    }
 
-std::ostream & operator<< ( std::ostream & os, const rose_hash_multimap::iterator & rhm_it )
-   {
-  // DQ (1/19/2006): Error reported by Michelle Strout when compiled with g++ 4.0.2 on 64 bit machines
-  // os << " pair (" << (*rhm_it).first.str() << "," << (int)((*rhm_it).second) << ")";
-  // os << " pair (" << (*rhm_it).first.str() << "," << ((*rhm_it).second) << ")";
-  // JJW (7/10/2008): The iterator may not be valid, so don't try to print what it points to
-     os << "<iterator>";
-     return os;
-   }
+std::ostream & operator<< (std::ostream& os, const rose_hash_multimap::iterator& /*rhm_it*/) {
+    os << "<iterator>";
+    return os;
+}
 
 SgName
 SgSymbolTable::get_name( const SgNode* node) const
@@ -11174,7 +11165,7 @@ SgInitializedName::SgInitializedName(
      post_construction_initialization();
    }
 
-SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
+SgInitializedName::SgInitializedName(const SgInitializedName& ptr)
    {
      p_name           = ptr.p_name;
      p_typeptr        = ptr.p_typeptr;
@@ -11349,7 +11340,8 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
           mprintf ("SgInitializedName::operator=(): Attempt to copy self to self \n");
         }
 
-     assert(p_startOfConstruct != NULL);
+     ASSERT_not_null(p_startOfConstruct);
+
      return *this;
    }
 
@@ -17709,11 +17701,9 @@ SgUnparse_Info::get_array_index_list()
 { return p_array_index_list; }
 
 void
-SgUnparse_Info::set_array_index_list(SgExpression *e, SgUnparse_Info finfo )
-   {
-     mprintf ("ERROR: not implemented in SAGE3! \n");
-     ROSE_ABORT();
-   }
+SgUnparse_Info::set_array_index_list(SgExpression* e, SgUnparse_Info finfo) {
+    ASSERT_require2(false, "ERROR: not implemented in SAGE3!\n");
+}
 
 void
 SgUnparse_Info::unset_array_index_list()
