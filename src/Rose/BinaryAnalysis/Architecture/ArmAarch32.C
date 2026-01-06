@@ -2350,6 +2350,11 @@ ArmAarch32::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
     return retval;
 }
 
+Address
+ArmAarch32::addressFromEncodedAddress(Address addr) const {
+    return addr & ~0x1;
+}
+
 Disassembler::Base::Ptr
 ArmAarch32::newInstructionDecoder() const {
     switch (instructionSet()) {

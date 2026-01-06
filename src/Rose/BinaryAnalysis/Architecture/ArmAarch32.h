@@ -102,6 +102,7 @@ public:
     bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) const override;
     Sawyer::Optional<Address> branchTarget(SgAsmInstruction*) const override;
     AddressSet getSuccessors(SgAsmInstruction*, bool &complete) const override;
+    Address addressFromEncodedAddress(Address addr) const override;
 
     Disassembler::BasePtr newInstructionDecoder() const override;
     Unparser::BasePtr newUnparser() const override;

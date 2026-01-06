@@ -358,6 +358,14 @@ public:
                                      const MemoryMapPtr &initial_memory) const;
     /** @} */
 
+    /** Align a target address.
+     *
+     *  On an architecture like ARM AArch32 T32, the low-order bit of the target address is not used as an address, but rather
+     *  it indicates whether the target is T32 or or A32. Even symbols encode this information.
+     *
+     *  This function takes an address with other encoded information, and returns only the address. */
+    virtual Address addressFromEncodedAddress(Address addr) const;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Architecture-specific stuff for a partitioning engine.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

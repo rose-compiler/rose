@@ -260,6 +260,11 @@ Base::getSuccessors(const std::vector<SgAsmInstruction*> &insns, bool &complete,
     }
 }
 
+Address
+Base::addressFromEncodedAddress(Address addr) const {
+    return addr;
+}
+
 std::vector<Partitioner2::FunctionPrologueMatcher::Ptr>
 Base::functionPrologueMatchers(const Partitioner2::EnginePtr&) const {
     return {};

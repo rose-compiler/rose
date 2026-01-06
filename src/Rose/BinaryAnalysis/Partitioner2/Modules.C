@@ -3,6 +3,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 
 #include <Rose/AST/Traversal.h>
+#include <Rose/BinaryAnalysis/Architecture.h>
 #include <Rose/BinaryAnalysis/Demangler.h>
 #include <Rose/BinaryAnalysis/Hexdump.h>
 #include <Rose/BinaryAnalysis/String.h>
@@ -730,7 +731,7 @@ findSymbolFunctions(const Partitioner::ConstPtr &partitioner, SgAsmGenericHeader
         if (symbol->get_definitionState() == SgAsmGenericSymbol::SYM_DEFINED &&
             symbol->get_type()      == SgAsmGenericSymbol::SYM_FUNC &&
             symbol->get_value()     != 0) {
-            Address value = fileHeader->get_baseVa() + symbol->get_value();
+            Address value = partitioner->architecture()->addressFromEncodedAddress(fileHeader->get_baseVa() + symbol->get_value());
             SgAsmGenericSection *section = symbol->get_bound();
 
             // Add a function at the symbol's value. If the symbol is bound to a section and the section is mapped at a
