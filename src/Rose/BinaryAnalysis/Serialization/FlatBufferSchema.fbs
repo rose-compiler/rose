@@ -24,6 +24,14 @@
 namespace Rose.BinaryAnalysis.Serialization.FlatBuffers;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Specimen architecture information
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+table Architecture {
+    name: string;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Memory Map
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -169,12 +177,12 @@ table Cfg {
 /// Root object for the flatbuffers file. Every flatbuffers file will store exactly one of these
 /// objects at the top level, and nothing else.
 table Root {
+    architecture: Architecture (required);
     memory_map: MemoryMap (required);
     instructions: InstructionList (required);
     basic_blocks: BasicBlockList (required);
     functions: FunctionList (required);
     cfg: Cfg (required);
-    architecture: string;
 }
 
 root_type Root;

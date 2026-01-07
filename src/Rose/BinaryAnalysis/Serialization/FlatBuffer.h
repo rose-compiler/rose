@@ -82,7 +82,7 @@ class Serializer {
     std::unique_ptr<flatbuffers::FlatBufferBuilder> builder_;
 
   protected:
-    Handle<Instruction> instruction(const SgAsmInstruction*& insn);
+    Handle<Instruction> instruction(const SgAsmInstruction* const& insn);
     Handle<BasicBlock>  basicBlock(const Partitioner2::BasicBlockPtr& bb);
     Handle<Function>    function(const Partitioner2::FunctionPtr& f);
     Handle<CfgEdge>     cfgEdge(const Partitioner2::ControlFlowGraph::Edge& e);

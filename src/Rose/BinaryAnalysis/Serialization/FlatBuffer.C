@@ -202,7 +202,7 @@ fromAccessibilityMask(uint8_t m) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Serializer::Handle<FB::Instruction>
-Serializer::instruction(const SgAsmInstruction*& insn) {
+Serializer::instruction(const SgAsmInstruction* const& insn) {
     ASSERT_not_null(insn);
     const auto& raw     = insn->get_rawBytes();
     auto        fbBytes = builder_->CreateVector(reinterpret_cast<const uint8_t*>(raw.data()), raw.size());
@@ -322,6 +322,28 @@ Serializer::instructions_bbs(const std::vector<P2::BasicBlockPtr>& p_bbs) {
     std::vector<Handle<FB::Instruction>> instrs;
     std::vector<Handle<FB::BasicBlock>>  bbs;
 
+    AddressIntervalSet seen_instrs;
+
+    for (const auto& bb : p_bbs) {
+
+        ASSERT_always_not_null2(bb, "Null basic block in serialization");
+
+        std::vector<Address> bb_addrs;
+        bb_addrs.reserve(bb->nInstructions());
+
+        for (const auto& instr : bb->instructions()) {
+
+            const auto instr_addr = instr->get_address();
+
+            bb_addrs.emplace_back(instr_addr);
+
+            if (!seen_instrs.contains(instr_addr)) {
+                instrs.emplace_back(instruction(instr));
+                seen_instrs.insert(instr_addr);
+            }
+        }
+    }
+
     const auto fb_instrs = FB::CreateInstructionList(*builder_, builder_->CreateVector(instrs));
     const auto fb_bbs    = FB::CreateBasicBlockList(*builder_, builder_->CreateVector(bbs));
 
@@ -332,6 +354,9 @@ Serializer::Handle<FB::FunctionList>
 Serializer::functions(const std::vector<Partitioner2::FunctionPtr>& p_funs) {
 
     std::vector<Handle<FB::Function>> funs;
+
+    for (const auto fun : p_funs)
+        funs.emplace_back(function(fun));
 
     return FB::CreateFunctionList(*builder_, builder_->CreateVector(funs));
 }
