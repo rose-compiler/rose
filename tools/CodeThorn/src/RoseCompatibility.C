@@ -520,8 +520,55 @@ namespace
     return EQ;
   }
 
+  std::string
+  arrayLengthAsString(bool vla, const SgExpression* idx)
+  {
+    if (idx == nullptr)
+      return {};
+
+    if (const SgExpression* alt = idx->get_alternativeExpr())
+      return arrayLengthAsString(vla, alt);
+
+    if (/*const SgNullExpression* valExp =*/ isSgNullExpression(idx))
+      return {};
+
+    if (const SgValueExp* valExp = isSgValueExp(idx))
+      return valExp->get_constant_folded_value_as_string();
+
+    if (const SgCastExp* castExp = isSgCastExp(idx))
+      return arrayLengthAsString(vla, castExp->get_operand());
+
+    if (vla)
+      return "_vla_";
+
+    // fallback code for when constants are not preserved by the frontend
+    CodeThorn::AbstractValue aVal = CodeThorn::evaluateExpressionWithEmptyState(const_cast<SgExpression*>(idx));
+
+    if (aVal.isConstInt())
+      return std::to_string(aVal.getIntValue());
+
+    msgError() << "UNABLE to get constant array length: " << idx->class_name()
+               << "  was Rose's frontend called with SgProject::e_original_expressions_and_folded_values?"
+               << "\n  using string: " << idx->unparseToString()
+               << std::endl;
+
+    return idx->unparseToString();
+    // SG_UNEXPECTED_NODE(*idx);
+  }
+
+  std::string
+  arrayLengthAsString(const SgArrayType& n)
+  {
+    return arrayLengthAsString(n.get_is_variable_length_array(), n.get_index());
+  }
+
   int cmpArrayLength(const SgArrayType& lhs, const SgArrayType& rhs)
   {
+    return cmpValue(arrayLengthAsString(lhs), arrayLengthAsString(rhs));
+
+    /*
+     * was:
+
     int               cmpres = 0;
     ct::AbstractValue lhsval = ct::evaluateExpressionWithEmptyState(lhs.get_index());
     ct::AbstractValue rhsval = ct::evaluateExpressionWithEmptyState(rhs.get_index());
@@ -534,6 +581,7 @@ namespace
     ;
 
     return cmpres;
+    */
   }
 
 

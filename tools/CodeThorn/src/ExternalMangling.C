@@ -9,6 +9,7 @@
 #include <cctype>
 #include <algorithm>
 
+#include <Rose/Diagnostics.h>
 #include <sageGeneric.h>
 #include <sageInterface.h>
 #include <Combinatorics.h>
@@ -18,7 +19,6 @@
 #include <boost/algorithm/string/replace.hpp>
 
 #include "CodeThornLib.h"
-
 // #include "stringcompress.hpp"
 
 //~ #include <boost/range/algorithm_ext/for_each.hpp>
@@ -27,6 +27,38 @@
 namespace si = SageInterface;
 namespace adapt = boost::adaptors;
 
+namespace
+{
+inline
+auto roseTrace() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::TRACE])
+{
+  return Rose::Diagnostics::mlog[Sawyer::Message::TRACE];
+}
+
+inline
+auto roseInfo() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::INFO])
+{
+  return Rose::Diagnostics::mlog[Sawyer::Message::INFO];
+}
+
+inline
+auto roseWarn() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::WARN])
+{
+  return Rose::Diagnostics::mlog[Sawyer::Message::WARN];
+}
+
+inline
+auto roseError() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::ERROR])
+{
+  return Rose::Diagnostics::mlog[Sawyer::Message::ERROR];
+}
+
+inline
+auto roseFatal() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::FATAL])
+{
+  return Rose::Diagnostics::mlog[Sawyer::Message::FATAL];
+}
+}
 
 
 namespace
@@ -1111,48 +1143,41 @@ namespace
   }
 
 
-  std::string ExternalMangler::mangleArrayIndexExpressionOpt(bool vla, const SgExpression* idx)
+  std::string
+  ExternalMangler::mangleArrayIndexExpressionOpt(bool vla, const SgExpression* idx)
   {
     if (idx == nullptr)
       return {};
 
+    if (const SgExpression* alt = idx->get_alternativeExpr())
+      return mangleArrayIndexExpressionOpt(vla, alt);
+
     if (/*const SgNullExpression* valExp =*/ isSgNullExpression(idx))
       return {};
 
-    if (/*const SgValueExp* valExp =*/ isSgValueExp(idx))
-      return idx->unparseToString();
+    if (const SgValueExp* valExp = isSgValueExp(idx))
+      return valExp->get_constant_folded_value_as_string();
 
     if (const SgCastExp* castExp = isSgCastExp(idx))
       return mangleArrayIndexExpressionOpt(vla, castExp->get_operand());
 
+    if (vla)
+      return mglArrayVL;
+
+
+    // fallback code for when constants are not preserved by the frontend
     CodeThorn::AbstractValue aVal = CodeThorn::evaluateExpressionWithEmptyState(const_cast<SgExpression*>(idx));
 
     if (aVal.isConstInt())
       return std::to_string(aVal.getIntValue());
 
-    if (vla)
-      return mglArrayVL;
+    roseError() << "UNABLE to mangle array index of type: " << idx->class_name()
+                << "  was Rose's frontend called with SgProject::e_original_expressions_and_folded_values?"
+                << "\n  using string: " << idx->unparseToString()
+                << std::endl;
 
-    SG_UNEXPECTED_NODE(*idx);
-/*
-    if (const SgVarRefExp* varRefExp = isSgVarRefExp(idx))
-    {
-      std::string                    mangled;
-      sg::NotNull<SgVariableSymbol>  variableSymbol   = isSgVariableSymbol(varRefExp->get_symbol());
-      sg::NotNull<SgInitializedName> indexDeclaration = variableSymbol->get_declaration();
-
-      if (vla)
-      {
-        mangled = mglArrayVL;
-      }
-      else
-      {
-        mangled = mangleInitializedName(indexDeclaration); // find constant value
-      }
-
-      return mangled;
-    }
-*/
+    return idx->unparseToString();
+    // SG_UNEXPECTED_NODE(*idx);
   }
 
   std::string ExternalMangler::mangleMemberFunctionQualifiers(const SgMemberFunctionType& n)
