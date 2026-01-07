@@ -33,8 +33,8 @@ if(ROSE_ENABLE_FLATBUFFERS)
   add_dependencies(roseBinaryAnalysisSerialization rosetta_generated)
 
   install(FILES
-    FlatbufferStorage.h
-    FlatbufferSchema.h
+    FlatBuffer.h
+    FlatBufferSchema.h
     DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/Serialization
   )
 endif()

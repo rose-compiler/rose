@@ -14,6 +14,8 @@
 #include <Rose/BinaryAnalysis/Serialization/FlatBufferSchema.h>
 #include <Rose/StringUtility/Escape.h>
 
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+
 #include <unistd.h>
 
 #include <sage3basic.h>
@@ -259,7 +261,7 @@ Serializer::cfgEdge(const P2::ControlFlowGraph::Edge& e) {
     FB::CfgEdgeTarget        target_type;
     Serializer::Handle<void> fb_target;
 
-    if (partitioner_->basicBlockExists(toVal.address())) {
+    if (toVal.optionalAddress() && partitioner_->basicBlockExists(toVal.address())) {
         target_type = FB::CfgEdgeTarget::AddressTarget;
         fb_target   = FB::CreateAddressTarget(*builder_, toVal.address()).Union();
     } else {
@@ -314,8 +316,25 @@ Serializer::mmap(const BinaryAnalysis::MemoryMap& map) {
     return FB::CreateMemoryMap(*builder_, endianness, fb_segs);
 }
 
-Serializer::Serializer(const P2::PartitionerConstPtr& p) :
-  partitioner_(p), builder_{std::make_unique<flatbuffers::FlatBufferBuilder>(1024 * 1024)} {}
+std::pair<Serializer::Handle<FB::InstructionList>, Serializer::Handle<FB::BasicBlockList>>
+Serializer::instructions_bbs(const std::vector<P2::BasicBlockPtr>& p_bbs) {
+
+    std::vector<Handle<FB::Instruction>> instrs;
+    std::vector<Handle<FB::BasicBlock>>  bbs;
+
+    const auto fb_instrs = FB::CreateInstructionList(*builder_, builder_->CreateVector(instrs));
+    const auto fb_bbs    = FB::CreateBasicBlockList(*builder_, builder_->CreateVector(bbs));
+
+    return std::make_pair(fb_instrs, fb_bbs);
+}
+
+Serializer::Handle<FB::FunctionList>
+Serializer::functions(const std::vector<Partitioner2::FunctionPtr>& p_funs) {
+
+    std::vector<Handle<FB::Function>> funs;
+
+    return FB::CreateFunctionList(*builder_, builder_->CreateVector(funs));
+}
 
 Serializer::Handle<FB::Root>
 Serializer::partitioner() {
@@ -324,16 +343,20 @@ Serializer::partitioner() {
     const auto archName   = partitioner_->architecture()->name();
     auto       fbArchName = builder_->CreateString(archName);
 
-    const auto functions = partitioner_->functions();
-
     // Save major structures.
     auto fbMap = mmap(*partitioner_->memoryMap());
     auto fbCfg = cfg(partitioner_->cfg());
 
-    // TODO: instructions, functions, and basic blocks
+    const auto instrs_bbs = instructions_bbs(partitioner_->basicBlocks());
+    const auto funs       = functions(partitioner_->functions());
 
-    return FB::CreateRoot(*builder_, fbMap, 0, 0, 0, fbCfg);
+    return FB::CreateRoot(*builder_, fbMap, instrs_bbs.first, instrs_bbs.second, funs, fbCfg, fbArchName);
 }
+
+// Top-level serializer methods
+
+Serializer::Serializer(const P2::PartitionerConstPtr& p) :
+  partitioner_(p), builder_{std::make_unique<flatbuffers::FlatBufferBuilder>(1024 * 1024)} {}
 
 void
 Serializer::save() {
@@ -365,10 +388,6 @@ Serializer::write(const boost::filesystem::path& p) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Deserializer
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Deserializer::Deserializer() {}
-
-Deserializer::~Deserializer() {}
 
 Deserializer
 Deserializer::fromFile(const boost::filesystem::path& p) {
@@ -448,77 +467,81 @@ Deserializer::mmap(const FB::MemoryMap* map) const {
     return ba_map;
 }
 
+void
+Deserializer::instruction(const Instruction* const& fb_instr) {
+
+    const auto        instr_addr = fb_instr->address();
+    const auto        instr_prov = partitioner_->instructionProvider();
+    SgAsmInstruction* insn       = instr_prov.at(instr_addr); // Automatically disassembles the address
+
+    instructions_[instr_addr] = insn;
+}
+
+void
+Deserializer::basic_block(const BasicBlock* const& fb_bb) {
+
+    const auto bb_addr = *fb_bb->addresses()->begin();
+    auto       bb      = P2::BasicBlock::instance(bb_addr, partitioner_);
+
+    for (const auto& instr_addr : *fb_bb->addresses())
+        bb->append(partitioner_, instructions_[instr_addr]);
+
+    basic_blocks_[bb_addr] = bb;
+    partitioner_->attachBasicBlock(bb);
+}
+
+void
+Deserializer::function(const Function* const& fb_fun) {
+
+    auto fun = P2::Function::instance(fb_fun->entry_addr(), fb_fun->name()->str());
+
+    for (const auto& instr_addr : *fb_fun->instructions()) {
+        if (basic_blocks_.at(instr_addr))
+            fun->insertBasicBlock(instr_addr);
+    }
+
+    partitioner_->attachFunction(fun);
+}
+
+void
+Deserializer::cfg(const Cfg* const&) {}
+
 P2::PartitionerPtr
-Deserializer::load() const {
+Deserializer::load() {
     if (!verify())
         throw Exception("invalid flatbuffer data for Partitioner");
 
     const FB::Root* root = FB::GetRoot(bytes_.data());
     ASSERT_not_null(root);
 
-    // const auto arch_name = root->architecture_name();
-    const auto arch_name = "ppc"; // TODO
-    // if (!arch_name)
-    //     throw Exception("serialized partitioner has no architecture name");
+    const auto arch_name = root->architecture();
 
-    // auto arch = Architecture::findByName(arch_name->str()).orThrow();
-    auto arch = Architecture::findByName(arch_name).orThrow();
-    auto map  = mmap(root->memory_map());
+    auto arch = Architecture::findByName(arch_name->str());
+    if (!arch_name)
+        arch = Architecture::findByName("ppc32-be");
+    auto map = mmap(root->memory_map());
 
     // Create a fresh partitioner.
-    auto partitioner = P2::Partitioner::instance(arch, map);
+    partitioner_ = P2::Partitioner::instance(*arch, map);
 
-    // First recreate datablocks. They are relatively simple and are consumed "by reference" (vs by address),
-    // so we save a map from datablock start address to datablock reference (pointer).
+    // 1. Create all basic blocks by creating the constituent instructions via discoverInstruction. Make a map from bb
+    // start address to basic block.
+    //    Attach the basic block once discovered.
+    // 2. Create all functions by creating a detached function and then inserting all constituent bbs.
+    // 3. Rebuild CFG by direct insertion into cfg_ field
 
-    using DataBlock = Rose::BinaryAnalysis::Partitioner2::DataBlock;
+    for (const auto& fb_instr : *root->instructions()->instructions())
+        instruction(fb_instr);
 
-    std::unordered_map<Address, DataBlock::Ptr> data_blocks;
+    for (const auto& fb_bb : *root->basic_blocks()->basic_blocks())
+        basic_block(fb_bb);
 
-    // const auto fb_dbs = *root->data
+    for (const auto& fb_fun : *root->functions()->functions())
+        function(fb_fun);
 
-    const auto fb_cfg = root->cfg();
-    if (!fb_cfg)
-        throw Exception("serialized partitioner has no CFG");
+    cfg(root->cfg());
 
-    // First, re-discover basic blocks, which (should) disassemble the contents
-    // if (fb_cfg->basic_blocks()) {
-    //     for (auto fbBb : *fb_cfg->basic_blocks()) {
-    //         if (!fbBb)
-    //             continue;
-    //         auto bb = partitioner->discoverBasicBlock(fbBb->address());
-    //         if (bb)
-    //             partitioner->attachBasicBlock(bb);
-    //     }
-    // }
-
-    // // Attach functions and placeholders.
-    // if (fb_cfg->functions()) {
-    //     for (auto fb_fun : *fb_cfg->functions()) {
-    //         if (!fb_fun)
-    //             continue;
-    //         auto fun =
-    //           P2::Function::instance(fb_fun->address(), fb_fun->name() ? fb_fun->name()->str() : std::string());
-
-    //         // Add basic blocks to function
-    //         if (fb_fun->basic_blocks()) {
-    //             for (auto fb_bb : *fb_fun->basic_blocks())
-    //                 fun->insertBasicBlock(fb_bb->address());
-    //         }
-
-    //         // Add datablocks to function
-    //         if (fb_fun->data_blocks()) {
-    //             for (auto fb_db : *fb_fun->data_blocks()) {
-    //                 if (const auto db = data_blocks.at(fb_db->address()))
-    //                     fun->insertDataBlock(db);
-    //             }
-    //         }
-
-    //         partitioner->attachFunction(fun);
-    //     }
-    // }
-
-    return partitioner;
+    return partitioner_;
 }
 
 } // namespace Serialization

@@ -5,7 +5,9 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <sage3basic.h>
 
@@ -87,19 +89,16 @@ class Serializer {
     Handle<Cfg>         cfg(const Partitioner2::ControlFlowGraph& cfg);
     Handle<Segment>     segment(const BinaryAnalysis::MemoryMap::Super::Node& seg);
     Handle<MemoryMap>   mmap(const BinaryAnalysis::MemoryMap& map);
-    Handle<Root>        partitioner(/*partitioner_*/);
+    std::pair<Handle<InstructionList>, Handle<BasicBlockList>>
+                         instructions_bbs(const std::vector<Partitioner2::BasicBlockPtr>& bbs);
+    Handle<FunctionList> functions(const std::vector<Partitioner2::FunctionPtr>& funs);
+    Handle<Root>         partitioner(/*partitioner_*/);
 };
 
 /** Loads a Partitioner2::Partitioner from a FlatBuffer. */
 class Deserializer {
   public:
-    Deserializer();
-    ~Deserializer();
-
-    Deserializer(const Deserializer&)            = delete;
-    Deserializer& operator=(const Deserializer&) = delete;
-    Deserializer(Deserializer&&)                 = default;
-    Deserializer& operator=(Deserializer&&)      = default;
+    Deserializer() = default;
 
     /** Initialize a loader from a file. */
     static Deserializer fromFile(const boost::filesystem::path&);
@@ -117,13 +116,46 @@ class Deserializer {
     bool verify() const;
 
     /** Materialize and return a new partitioner instance from the FlatBuffer data. */
-    Partitioner2::PartitionerPtr load() const;
+    Partitioner2::PartitionerPtr load();
 
   private:
+    // Underlying bytes
     std::vector<char> bytes_;
 
-  protected:
+    // Current partitioner
+    Partitioner2::Partitioner::Ptr partitioner_;
+
+    // Index ROSE instructions and basic blocks by start address.
+    // This is needed because generally FlatBuffer structures use addresses as lightweight references.
+    // For example, FlatBuffer basic blocks save their constituent instructions as a list of addresses.
+    // We use external explicit maps (instead of the partitioner) so that the Deserializer can create detached
+    // partitioner objects.
+    std::unordered_map<Address, SgAsmInstruction*>             instructions_;
+    std::unordered_map<Address, Partitioner2::BasicBlock::Ptr> basic_blocks_;
+
+    /**
+     * Create a ROSE memory map from a FlatBuffer memory map.
+     * This function has no side effects and assumes that the input map is non-null.
+     */
     BinaryAnalysis::MemoryMap::Ptr mmap(const MemoryMap* map) const;
+
+    /**
+     * Deserialization factory methods. Each of these methods is responsible for updating deserialization state.
+     * They each assume that the input FlatBuffer pointer is non-null.
+     *
+     * The basic_block, function, and cfg factory methods additionally modify the partitioner by attaching the built
+     * object (or updating the CFG structure).
+     */
+
+    // The instruction method makes no assumptions other than that the input pointer is non-null.
+    void instruction(const Instruction* const& instr);
+    // The basic_block method assumes that all instructions have been discovered and that instructions_ is up-to-date.
+    void basic_block(const BasicBlock* const& bb);
+    // The function method assumes that all basic blocks have been discovered and that basic_blocks_ is up-to-date.
+    void function(const Function* const& fun);
+    // The cfg method assumes that all functions and basic blocks have been discovered and that basic_blocks_ is
+    // up-to-date.
+    void cfg(const Cfg* const& cfg);
 };
 
 } // namespace FlatBuffers

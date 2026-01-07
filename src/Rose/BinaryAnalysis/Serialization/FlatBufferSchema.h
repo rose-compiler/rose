@@ -1078,7 +1078,8 @@ struct Root FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_INSTRUCTIONS = 6,
     VT_BASIC_BLOCKS = 8,
     VT_FUNCTIONS = 10,
-    VT_CFG = 12
+    VT_CFG = 12,
+    VT_ARCHITECTURE = 14
   };
   const Rose::BinaryAnalysis::Serialization::FlatBuffers::MemoryMap *memory_map() const {
     return GetPointer<const Rose::BinaryAnalysis::Serialization::FlatBuffers::MemoryMap *>(VT_MEMORY_MAP);
@@ -1095,6 +1096,9 @@ struct Root FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const Rose::BinaryAnalysis::Serialization::FlatBuffers::Cfg *cfg() const {
     return GetPointer<const Rose::BinaryAnalysis::Serialization::FlatBuffers::Cfg *>(VT_CFG);
   }
+  const ::flatbuffers::String *architecture() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_ARCHITECTURE);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffsetRequired(verifier, VT_MEMORY_MAP) &&
@@ -1107,6 +1111,8 @@ struct Root FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            verifier.VerifyTable(functions()) &&
            VerifyOffsetRequired(verifier, VT_CFG) &&
            verifier.VerifyTable(cfg()) &&
+           VerifyOffset(verifier, VT_ARCHITECTURE) &&
+           verifier.VerifyString(architecture()) &&
            verifier.EndTable();
   }
 };
@@ -1130,6 +1136,9 @@ struct RootBuilder {
   void add_cfg(::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::FlatBuffers::Cfg> cfg) {
     fbb_.AddOffset(Root::VT_CFG, cfg);
   }
+  void add_architecture(::flatbuffers::Offset<::flatbuffers::String> architecture) {
+    fbb_.AddOffset(Root::VT_ARCHITECTURE, architecture);
+  }
   explicit RootBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -1152,14 +1161,35 @@ inline ::flatbuffers::Offset<Root> CreateRoot(
     ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::FlatBuffers::InstructionList> instructions = 0,
     ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::FlatBuffers::BasicBlockList> basic_blocks = 0,
     ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::FlatBuffers::FunctionList> functions = 0,
-    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::FlatBuffers::Cfg> cfg = 0) {
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::FlatBuffers::Cfg> cfg = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> architecture = 0) {
   RootBuilder builder_(_fbb);
+  builder_.add_architecture(architecture);
   builder_.add_cfg(cfg);
   builder_.add_functions(functions);
   builder_.add_basic_blocks(basic_blocks);
   builder_.add_instructions(instructions);
   builder_.add_memory_map(memory_map);
   return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<Root> CreateRootDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::FlatBuffers::MemoryMap> memory_map = 0,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::FlatBuffers::InstructionList> instructions = 0,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::FlatBuffers::BasicBlockList> basic_blocks = 0,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::FlatBuffers::FunctionList> functions = 0,
+    ::flatbuffers::Offset<Rose::BinaryAnalysis::Serialization::FlatBuffers::Cfg> cfg = 0,
+    const char *architecture = nullptr) {
+  auto architecture__ = architecture ? _fbb.CreateString(architecture) : 0;
+  return Rose::BinaryAnalysis::Serialization::FlatBuffers::CreateRoot(
+      _fbb,
+      memory_map,
+      instructions,
+      basic_blocks,
+      functions,
+      cfg,
+      architecture__);
 }
 
 inline bool VerifyCfgEdgeTarget(::flatbuffers::Verifier &verifier, const void *obj, CfgEdgeTarget type) {
