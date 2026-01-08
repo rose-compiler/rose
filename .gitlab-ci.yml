@@ -466,3 +466,6 @@ Push-Weekly-Generated:
       - job: Create-Generated
     script:
         - ./$TEST_DIRECTORY/util/push_weekly_generated.sh
+
+Ubuntu-EDG-Binary:
+    extends: .release-base
