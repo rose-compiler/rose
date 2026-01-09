@@ -260,7 +260,7 @@ CustomMemoryPoolDOTGenerationData::skipEdge(EdgeType e)
        else
         {
           printf ("ERROR: In CustomMemoryPoolDOTGenerationData::skipEdge(): edge is already present in set \n");
-          ROSE_ABORT();
+          ASSERT_require(false);
         }
 
   // find() operator on edge set.
@@ -311,6 +311,7 @@ CustomMemoryPoolDOTGenerationData::additionalNodeInfo(SgNode* node)
 std::string
 CustomMemoryPoolDOTGenerationData::additionalNodeOptions(SgNode* node)
    {
+  // This virtual function adds options (after the node label) in the output DOT file
      std::string returnString;
 
      const NodeType tmp (node,"","");
@@ -1240,8 +1241,8 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           ASSERT_not_null(type);
 
           string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
-          string labelWithSourceCode;
 
+          string labelWithSourceCode;
           SgTypeDefault* defaultType = isSgTypeDefault(node);
           if (defaultType != nullptr)
              {
@@ -1461,7 +1462,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                          default:
                             {
                               printf ("Error: default reached in case V_SgTemplateArgument: templateArgument->get_argumentType() \n");
-                              ROSE_ABORT();
+                              ASSERT_require(false);
                             }
                        }
 
@@ -1501,7 +1502,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                          default:
                             {
                               printf ("Error: default reached in case V_SgTemplateParameter: templateParameter->get_argumentType() = %d \n",templateParameter->get_parameterType());
-                              ROSE_ABORT();
+                              ASSERT_require(false);
                             }
                        }
 
@@ -1944,22 +1945,18 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
              {
                defaultFilter(node);
              }
-
           if ( filterFlags->m_type == 1) 
              {
                typeFilter(node);
              }
-
           if ( filterFlags->m_expression == 1) 
              {
                expressionFilter(node);
              }
-
           if ( filterFlags->m_emptySymbolTable == 1) 
              {
                emptySymbolTableFilter(node);
              }
-
           if ( filterFlags->m_emptyBasicBlock == 1) 
              {
                emptyBasicBlockFilter(node);
@@ -1969,7 +1966,6 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
              {
                emptyFunctionParameterListFilter(node);
              }
-
           if ( filterFlags->m_variableDefinition == 1) 
              {
                variableDefinitionFilter(node);
@@ -1984,12 +1980,10 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
              {
                ctorInitializerListFilter(node);
              }
-
           if ( filterFlags->m_symbol == 1) 
              {
                symbolFilter(node);
              }
-
           if ( filterFlags->m_asmFileFormat == 1) 
              {
                asmFileFormatFilter(node);
