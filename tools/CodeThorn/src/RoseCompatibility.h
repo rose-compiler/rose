@@ -225,7 +225,7 @@ class RoseCompatibilityBridge
 
     /// returns the location of function implementation \p fid if available
     ///   otherwise returns the location of the first non-defining declaration.
-    SourceLocation location(AnyKeyType fid) const;
+    SourceLocation location(AnyKeyType fid, bool resolveInstantiations = false) const;
 
     /// compares the name of functions \p lhs and \p rhs
     /// \param lhs some function

@@ -162,6 +162,7 @@ namespace
 
   std::string functionName(ct::FunctionKeyType fn)
   {
+    // return si::get_name(fn);
     return SG_DEREF(fn).get_name();
   }
 
@@ -1274,19 +1275,64 @@ RoseCompatibilityBridge::uniqueName(AnyKeyType id) const
 
 namespace
 {
-  SourceLocation _location(const SgLocatedNode& loc)
+  struct AlternativeNode : sg::DispatchHandler<const SgLocatedNode*>
   {
-    const Sg_File_Info* start = loc.get_startOfConstruct();
-    ASSERT_not_null(start);
-    const Sg_File_Info* limit = loc.get_endOfConstruct();
-    ASSERT_not_null(limit);
+    [[noreturn]]
+    auto
+    alt(const SgNode& n, const SgNode*) const -> std::nullptr_t { SG_UNEXPECTED_NODE(n); }
+
+    auto
+    alt(const SgLocatedNode& n, const SgLocatedNode*) const -> const SgLocatedNode* { return &n; }
+
+    template <class SageInstantiantionNode>
+    auto
+    alt(const SageInstantiantionNode& n, const SgLocatedNode*) const -> decltype(n.get_templateDeclaration())
+    {
+      return n.get_templateDeclaration();
+    }
+
+    template <class SageNode>
+    void handle(const SageNode& n) { res = alt(n, &n); }
+  };
+
+  const SgLocatedNode& alternativeNode(const SgLocatedNode& n)
+  {
+    if (const SgLocatedNode* res = sg::dispatch(AlternativeNode{}, &n))
+      return *res;
+
+    return n;
+  }
+
+  SourceLocation _location(const SgLocatedNode& loc, bool resolveInstantiations)
+  {
+    sg::NotNull<const Sg_File_Info> start = loc.get_startOfConstruct();
+    sg::NotNull<const Sg_File_Info> limit = loc.get_endOfConstruct();
+
+    if (resolveInstantiations && start->isCompilerGenerated())
+      return _location(alternativeNode(loc), false);
+
+    if (false && start->isCompilerGenerated())
+    {
+      if (const SgTemplateFunctionDeclaration* tfn = isSgTemplateFunctionDeclaration(&loc))
+        msgError() << "5: " << tfn->get_name() << std::endl;
+      else if (const SgTemplateInstantiationFunctionDecl* tif = isSgTemplateInstantiationFunctionDecl(&loc))
+        msgError() << "4: " << tif->get_name() << std::endl;
+      else if (const SgTemplateMemberFunctionDeclaration* tmf = isSgTemplateMemberFunctionDeclaration(&loc))
+        msgError() << "3: " << tmf->get_name() << std::endl;
+      else if (const SgMemberFunctionDeclaration* mfn = isSgMemberFunctionDeclaration(&loc))
+        msgError() << "2: " << mfn->get_name() << std::endl;
+      else if (const SgFunctionDeclaration* fun = isSgFunctionDeclaration(&loc))
+        msgError() << "1: " << fun->get_name() << std::endl;
+      else
+        msgError() << "0: " << typeid(loc).name() << std::endl;
+    }
 
     return { start->get_filenameString(), start->get_line(), start->get_col(), limit->get_line(), limit->get_col() };
   }
 }
 
 
-SourceLocation RoseCompatibilityBridge::location(AnyKeyType key) const
+SourceLocation RoseCompatibilityBridge::location(AnyKeyType key, bool resolveInstantiations) const
 {
   if (key == AnyKeyType{})
     return {"", 0, 0, 0, 0};
@@ -1296,7 +1342,7 @@ SourceLocation RoseCompatibilityBridge::location(AnyKeyType key) const
   {
     sg::NotNull<const SgClassDeclaration> dcl = isSgClassDeclaration(cls->get_parent());
 
-    return _location(*dcl);
+    return _location(*dcl, resolveInstantiations);
   }
 
   if (const SgFunctionDeclaration* fn = isSgFunctionDeclaration(key))
@@ -1304,11 +1350,11 @@ SourceLocation RoseCompatibilityBridge::location(AnyKeyType key) const
     if (const SgFunctionDeclaration* fndef = isSgFunctionDeclaration(fn->get_definingDeclaration()))
       fn = fndef;
 
-    return _location(*fn);
+    return _location(*fn, resolveInstantiations);
   }
 
   if (VariableKeyType var = isSgInitializedName(key))
-    return _location(*var);
+    return _location(*var, resolveInstantiations);
 
   return {"unknown", 0, 0, 0, 0};
 }
@@ -2169,13 +2215,33 @@ namespace
 
     Optional<ClassKeyType>             clskey;
     const SgClassDeclaration*          clsdcl = n.get_class_decl();
+    const SgType*                      ctorty = stripTypeAlias(n.get_expression_type());
 
-    if (clsdcl) clskey = &getClassDef(*clsdcl);
-    else
+    if (clsdcl)
+      clskey = &getClassDef(*clsdcl);
+    else if (const SgClassType* clsty = isSgClassType(ctorty))
     {
-      msgError() << "NO class in: " << n.get_parent()->unparseToString() << std::endl;
+      if (const SgClassDefinition* clsdef = getClassDefOpt(*clsty))
+        clskey = clsdef;
+    }
 
-      logPathToGlobal(msgError(), &n);
+    if (!clskey)
+    {
+      msgWarn() << "Constructor call (SgConstructorInitializer) w/o class (n.get_class_decl() == nullptr) in:"
+                << "\n  " << SG_DEREF(n.get_parent()).unparseToString()
+                << "\n  ctor: " << (mfn ? mfn->get_name().getString() : std::string{"null"})
+                << "\n  type node: " << (ctorty ? ctorty->class_name() : std::string{"null"})
+                << std::endl;
+
+      if (false)
+        logPathToGlobal(msgWarn(), &n);
+    }
+    else if (!mfn)
+    {
+      msgWarn() << "Constructor call (SgConstructorInitializer) w/o constructor (n.get_declaration() == nullptr) in:"
+                << "\n  " << SG_DEREF(n.get_parent()).unparseToString()
+                << "\n  class name: " << compat.nameOf(*clskey)
+                << std::endl;
     }
 
     return { fnkey, &n, clskey, &n, false };

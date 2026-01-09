@@ -214,10 +214,7 @@ namespace
     }
 
     if (num)
-    {
-      msgError() << "DUPLI " << num << std::endl;
-      throw std::runtime_error("oops, duplicate mangled name..");
-    }
+      throw std::runtime_error("error, duplicate mangled name..");
   }
 #endif /* DEBUG_CODE */
 

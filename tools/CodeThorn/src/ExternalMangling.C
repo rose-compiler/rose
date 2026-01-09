@@ -157,6 +157,7 @@ namespace
   constexpr const char* const mglFuncOperatorLessThan     = "__le";
   constexpr const char* const mglFuncOperatorGreater      = "__gt";
   constexpr const char* const mglFuncOperatorGreaterThan  = "__gq";
+  constexpr const char* const mglFuncOperatorLiteral      = "__li";
 
   constexpr const char* const mglTypedefDeclaration       = "typedef_";
   constexpr const char* const mglTypedefDeclarationDelim  = "__typedef_declaration";
@@ -275,7 +276,6 @@ namespace
 
     using base::insert;
   };
-
 
 
   struct ExternalMangler : sg::DispatchHandler<std::string>
@@ -399,7 +399,8 @@ namespace
       std::string coreName(const SgInitializedName& n);
 
 
-      std::string functionName(const SgFunctionDeclaration&);
+      std::string functionName(const SgFunctionDeclaration& n);
+      std::string functionName(const SgFunctionDeclaration& n, std::string name);
       std::string simpleName(std::string n, const char* caller = "");
       std::string simpleName(const char* prefix, std::string n, const char* caller = "");
 
@@ -694,7 +695,7 @@ namespace
       void handle(const SgTemplateInstantiationFunctionDecl& n)
       {
         res = join( mangleScope(n.get_scope())
-                  , simpleName(n.get_templateName(), "tfn")
+                  , simpleName(functionName(n, n.get_templateName()), "tfn")
                   , mglTemplateArgs
                   , mangleNodeSequence(n.get_templateArguments(), mglExtendedSep)
                   , mglTemplateArgsDelim
@@ -706,7 +707,7 @@ namespace
       void handle(const SgTemplateInstantiationMemberFunctionDecl& n)
       {
         res = join( mangleScope(n.get_scope())
-                  , simpleName(n.get_templateName(), "tmf")
+                  , simpleName(functionName(n, n.get_templateName()), "tmf")
                   , mglTemplateArgs
                   , mangleNodeSequence(n.get_templateArguments(), mglExtendedSep)
                   , mglTemplateArgsDelim
@@ -742,8 +743,12 @@ namespace
       std::string internalLinkageID;
   };
 
-  std::string ExternalMangler::simpleName(std::string name, const char*)
+  std::string ExternalMangler::simpleName(std::string name, const char* dbg)
   {
+    if (false)
+      if (name.find("operator") != std::string::npos)
+        msgError() << "sn " << dbg << ": " << name << std::endl;
+
     return name;
   }
 
@@ -766,7 +771,7 @@ namespace
     return (n.get_name() == "main") && isSgGlobal(n.get_scope());
   }
 
-  std::string fortranFunctionName(const SgFunctionDeclaration& n)
+  std::string fortranFunctionName(const SgFunctionDeclaration& n, std::string name)
   {
     if (n.get_declarationModifier().isBind())
     {
@@ -778,8 +783,6 @@ namespace
       // \todo
       // shall we generate name according to linkage?
     }
-
-    std::string name = n.get_name();
 
     boost::to_lower(name);
 
@@ -800,8 +803,13 @@ namespace
 
   std::string ExternalMangler::functionName(const SgFunctionDeclaration& n)
   {
+    return functionName(n, n.get_name());
+  }
+
+  std::string ExternalMangler::functionName(const SgFunctionDeclaration& n, std::string name)
+  {
     if (si::is_Fortran_language())
-      return fortranFunctionName(n);
+      return fortranFunctionName(n, std::move(name));
 
     const SgSpecialFunctionModifier& special = n.get_specialFunctionModifier();
 
@@ -809,10 +817,9 @@ namespace
     if (special.isDestructor())
       return mglMemFuncDtor;
 
-    std::string name = n.get_name();
-    const bool  isOperator = special.isOperator();
+    const bool  isOperator = special.isOperator() || boost::starts_with(name, "operator");
 
-    if (isOperator) // begins with "operator"
+    if (isOperator)
     {
       std::string mangled;
 
@@ -907,18 +914,25 @@ namespace
         mangled = mglFuncOperatorOr;
       else if (boost::ends_with(name, ","))
         mangled = mglFuncOperatorComma;
+      else if (boost::starts_with(name, "operator \"\" "))
+        mangled = join( mglFuncOperatorLiteral
+                      , name.substr(std::string{"operator \"\" "}.size())
+                      );
+      else if (special.isConversion())
+        mangled = join( mglFuncOperatorConv
+                      , mangleType(SG_DEREF(n.get_type()).get_return_type())
+                      , mglFuncOperatorConvDelim
+                      );
 
-      ASSERT_require(mangled.size());
+      if (mangled.size() == 0)
+      {
+        msgError() << "mangled.size() == 0, " << name << std::endl;
+        throw std::runtime_error{"unable to mangle " + name};
+      }
+
       return mangled;
     }
 
-    if (special.isConversion())
-    {
-      return join( mglFuncOperatorConv
-                 , mangleType(SG_DEREF(n.get_type()).get_return_type())
-                 , mglFuncOperatorConvDelim
-                 );
-    }
 
     if (makeMainUnique && isMainFunction(n))
     {
@@ -927,6 +941,9 @@ namespace
                  , mangleInternalLinkage(n)
                  );
     }
+
+    if (name.find("operator") != std::string::npos)
+      msgError() << "mangling:" << name << std::endl;
 
     return name;
   }
