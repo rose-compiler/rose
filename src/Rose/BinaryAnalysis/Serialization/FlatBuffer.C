@@ -1,6 +1,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <sage3basic.h>
+
 #include <Rose/BinaryAnalysis/Serialization/FlatBuffer.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
@@ -18,8 +20,6 @@
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 #include <unistd.h>
-
-#include <sage3basic.h>
 
 #include <Sawyer/Access.h>
 
