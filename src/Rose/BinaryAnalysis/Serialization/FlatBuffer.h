@@ -9,7 +9,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
-#include <sage3basic.h>
+#include <rosePublicConfig.h>
 
 #include <boost/filesystem/path.hpp>
 
@@ -70,10 +70,10 @@ class Serializer {
      *  Valid only after @ref save has been called. */
     std::pair<const uint8_t*, size_t> buffer() const;
 
-    /** Write encoding to a stream. Valid  */
+    /** Write encoding to a stream. Valid only after @ref save has been called.  */
     void write(std::ostream&) const;
 
-    /** Write buffer to a file. */
+    /** Write buffer to a file. Valid only after @ref save has been called. */
     void write(const boost::filesystem::path&) const;
 
   private:
@@ -90,7 +90,7 @@ class Serializer {
     Handle<Segment>     segment(const BinaryAnalysis::MemoryMap::Super::Node& seg);
     Handle<MemoryMap>   mmap(const BinaryAnalysis::MemoryMap& map);
     std::pair<Handle<InstructionList>, Handle<BasicBlockList>>
-                         instructions_bbs(const std::vector<Partitioner2::BasicBlockPtr>& bbs);
+                         instructionsBasicBlocks(const std::vector<Partitioner2::BasicBlockPtr>& bbs);
     Handle<FunctionList> functions(const std::vector<Partitioner2::FunctionPtr>& funs);
     Handle<Root>         partitioner(/*partitioner_*/);
 };
@@ -115,7 +115,16 @@ class Deserializer {
     /** Verify that the loaded bytes are a valid FlatBuffer for the Partitioner root type. */
     bool verify() const;
 
-    /** Materialize and return a new partitioner instance from the FlatBuffer data. */
+    /** Materialize and return a new partitioner instance from the FlatBuffer data.
+     *
+     *  The algorithm is implemented as follows:
+     *    1. Create a partitioner from the input architecture and memory map.
+     *    2. Rebuild instructions via an instruction provider and discoverInstruction. Map from instruction address to
+     * rebuilt instruction.
+     *    3. Rebuild basic blocks by appending the constituent instructions (requires the instruction map from 2.).
+     *    4. Rebuild functions by attaching basic blocks from step 3. Additionally add placeholder basic blocks for
+     * empty functions.
+     **/
     Partitioner2::PartitionerPtr load();
 
   private:
@@ -123,7 +132,7 @@ class Deserializer {
     std::vector<char> bytes_;
 
     // Current partitioner
-    Partitioner2::Partitioner::Ptr partitioner_;
+    Partitioner2::PartitionerPtr partitioner_;
 
     // Index ROSE instructions and basic blocks by start address.
     // This is needed because generally FlatBuffer structures use addresses as lightweight references.
@@ -143,14 +152,14 @@ class Deserializer {
      * Deserialization factory methods. Each of these methods is responsible for updating deserialization state.
      * They each assume that the input FlatBuffer pointer is non-null.
      *
-     * The basic_block, function, and cfg factory methods additionally modify the partitioner by attaching the built
+     * The basicBlock, function, and cfg factory methods additionally modify the partitioner by attaching the built
      * object (or updating the CFG structure).
      */
 
     // The instruction method makes no assumptions other than that the input pointer is non-null.
     void instruction(const Instruction* const& instr);
-    // The basic_block method assumes that all instructions have been discovered and that instructions_ is up-to-date.
-    void basic_block(const BasicBlock* const& bb);
+    // The basicBlock method assumes that all instructions have been discovered and that instructions_ is up-to-date.
+    void basicBlock(const BasicBlock* const& bb);
     // The function method assumes that all basic blocks have been discovered and that basic_blocks_ is up-to-date.
     void function(const Function* const& fun);
     // The cfg method assumes that all functions and basic blocks have been discovered and that basic_blocks_ is

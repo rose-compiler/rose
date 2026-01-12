@@ -12,6 +12,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/Serialization/FlatBufferSchema.h>
+#include <Rose/StringUtility.h>
 #include <Rose/StringUtility/Escape.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
@@ -231,13 +232,6 @@ Serializer::Handle<FB::Function>
 Serializer::function(const P2::FunctionPtr& f) {
     ASSERT_not_null(f);
 
-    // JS: Why not directly save basic blocks instead of instructions?
-
-    // std::vector<FB::BasicBlockRef> bbs;
-    // bbs.reserve(f->nBasicBlocks());
-    // for (Address va : f->basicBlockAddresses())
-    //     bbs.push_back(FB::BasicBlockRef(va));
-
     std::vector<uint64_t> insns;
     insns.reserve(f->nBasicBlocks());
     for (const auto& bb_va : f->basicBlockAddresses()) {
@@ -317,7 +311,7 @@ Serializer::mmap(const BinaryAnalysis::MemoryMap& map) {
 }
 
 std::pair<Serializer::Handle<FB::InstructionList>, Serializer::Handle<FB::BasicBlockList>>
-Serializer::instructions_bbs(const std::vector<P2::BasicBlockPtr>& p_bbs) {
+Serializer::instructionsBasicBlocks(const std::vector<P2::BasicBlockPtr>& p_bbs) {
 
     std::vector<Handle<FB::Instruction>> instrs;
     std::vector<Handle<FB::BasicBlock>>  bbs;
@@ -342,6 +336,8 @@ Serializer::instructions_bbs(const std::vector<P2::BasicBlockPtr>& p_bbs) {
                 seen_instrs.insert(instr_addr);
             }
         }
+
+        bbs.emplace_back(basicBlock(bb));
     }
 
     const auto fb_instrs = FB::CreateInstructionList(*builder_, builder_->CreateVector(instrs));
@@ -372,7 +368,7 @@ Serializer::partitioner() {
     auto fbMap = mmap(*partitioner_->memoryMap());
     auto fbCfg = cfg(partitioner_->cfg());
 
-    const auto instrs_bbs = instructions_bbs(partitioner_->basicBlocks());
+    const auto instrs_bbs = instructionsBasicBlocks(partitioner_->basicBlocks());
     const auto funs       = functions(partitioner_->functions());
 
     return FB::CreateRoot(*builder_, fbMap, instrs_bbs.first, instrs_bbs.second, funs, fbCfg, fbArchName);
@@ -503,7 +499,7 @@ Deserializer::instruction(const Instruction* const& fb_instr) {
 }
 
 void
-Deserializer::basic_block(const BasicBlock* const& fb_bb) {
+Deserializer::basicBlock(const BasicBlock* const& fb_bb) {
 
     const auto bb_addr = *fb_bb->addresses()->begin();
     auto       bb      = P2::BasicBlock::instance(bb_addr, partitioner_);
@@ -520,16 +516,26 @@ Deserializer::function(const Function* const& fb_fun) {
 
     auto fun = P2::Function::instance(fb_fun->entry_addr(), fb_fun->name()->str());
 
+    // For weird functions with no actual body, insert an empty basic block.
+    // Normal functions (with actual bodies) will be handled in the main case.
+
+    if (!basic_blocks_.count(fb_fun->entry_addr())) {
+        auto bb = P2::BasicBlock::instance(fb_fun->entry_addr(), partitioner_);
+        partitioner_->attachBasicBlock(bb);
+        fun->insertBasicBlock(fb_fun->entry_addr());
+    }
+
     for (const auto& instr_addr : *fb_fun->instructions()) {
-        if (basic_blocks_.at(instr_addr))
+        if (basic_blocks_.count(instr_addr)) {
             fun->insertBasicBlock(instr_addr);
+        }
     }
 
     partitioner_->attachFunction(fun);
 }
 
 void
-Deserializer::cfg(const Cfg* const&) {}
+Deserializer::cfg(const Cfg* const& fb_cfg) {}
 
 P2::PartitionerPtr
 Deserializer::load() {
@@ -549,22 +555,18 @@ Deserializer::load() {
     // Create a fresh partitioner.
     partitioner_ = P2::Partitioner::instance(*arch, map);
 
-    // 1. Create all basic blocks by creating the constituent instructions via discoverInstruction. Make a map from bb
-    // start address to basic block.
-    //    Attach the basic block once discovered.
-    // 2. Create all functions by creating a detached function and then inserting all constituent bbs.
-    // 3. Rebuild CFG by direct insertion into cfg_ field
-
     for (const auto& fb_instr : *root->instructions()->instructions())
         instruction(fb_instr);
 
     for (const auto& fb_bb : *root->basic_blocks()->basic_blocks())
-        basic_block(fb_bb);
+        basicBlock(fb_bb);
 
     for (const auto& fb_fun : *root->functions()->functions())
         function(fb_fun);
 
     cfg(root->cfg());
+
+    partitioner_->checkConsistency();
 
     return partitioner_;
 }

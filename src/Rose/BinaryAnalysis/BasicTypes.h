@@ -95,7 +95,13 @@ class Exception: public Rose::Exception {
 /** Progress callback function type. */
 using ProgressCallback = std::function<void(size_t current, size_t total, const char* phase)>;
 class SerialFrame;
-class FrameRecord; 
+class FrameRecord;
+
+namespace FlatBuffers {
+class Serializer;
+class Deserializer;
+} // namespace FlatBuffers
+
 } // namespace Serialization
 class SmtlibSolver;
 class SmtSolver;

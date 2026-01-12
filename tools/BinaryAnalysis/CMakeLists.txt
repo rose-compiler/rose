@@ -157,6 +157,13 @@ if(ENABLE_BINARY_ANALYSIS)
   target_link_libraries(bat-xml-to-json PRIVATE bat)
   install(TARGETS bat-xml-to-json DESTINATION bin)
 
+  # bat-flatc depends on FlatBuffers support
+  if (ROSE_ENABLE_FLATBUFFERS)
+    add_executable(bat-flatc bat-flatc.C)
+    target_link_libraries(bat-flatc PRIVATE bat)
+    install(TARGETS bat-flatc DESTINATION bin)
+  endif()
+
   # Also include these targets to build under the `tools` custom target.
   add_dependencies(tools
   bat
@@ -194,5 +201,10 @@ if(ENABLE_BINARY_ANALYSIS)
   bat-trace
   bat-var
   bat-xml-to-json)
+
+   # bat-flatc depends on FlatBuffers support
+  if (ROSE_ENABLE_FLATBUFFERS)
+    add_dependencies(tools bat-flatc)
+  endif()
 
 endif()

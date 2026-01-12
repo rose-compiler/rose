@@ -80,31 +80,18 @@ class FrameRecord {
         return record;
     }
 
-    /** Get access to the payload data. */
-    std::vector<char>& payload() { return payload_; }
-
-    /** Get const access to the payload data. */
+    /** Field getter and setters. */
     const std::vector<char>& payload() const { return payload_; }
+    void payload(const std::vector<char>& payload) { payload_ = payload; }
 
-    /** Set the payload data. */
-    void setPayload(const std::vector<char>& payload) { payload_ = payload; }
 
-    /** Get the object type. */
     Serialization::Savable objectType() const { return objectType_; }
-
-    /** Set the object type. */
     void objectType(Serialization::Savable type) { objectType_ = type; }
 
-    /** Get the format. */
     Serialization::Format format() const { return format_; }
-
-    /** Set the format. */
     void format(Serialization::Format fmt) { format_ = fmt; }
 
-    /** Get the ROSE version. */
     std::string roseVersion() const { return roseVersion_; }
-
-    /** Set the ROSE version. */
     void roseVersion(const std::string& ver) { roseVersion_ = ver; }
 
     /** Get the payload size. */

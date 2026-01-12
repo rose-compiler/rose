@@ -35,6 +35,10 @@
 #include <boost/serialization/access.hpp>
 #endif
 
+#ifdef ROSE_ENABLE_FLATBUFFERS
+#include <Rose/BinaryAnalysis/Serialization/FlatBuffer.h>
+#endif
+
 #include <ostream>
 #include <set>
 #include <string>
@@ -356,6 +360,11 @@ private:
     template<class Archive> void save(Archive&, unsigned) const;
     template<class Archive> void load(Archive&, unsigned);
     BOOST_SERIALIZATION_SPLIT_MEMBER();
+#endif
+
+#ifdef ROSE_ENABLE_FLATBUFFERS
+private:
+    friend class Rose::BinaryAnalysis::Serialization::FlatBuffers::Deserializer;
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

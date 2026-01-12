@@ -229,7 +229,7 @@ SerialOutput::savePartitioner(const Partitioner2::Partitioner::ConstPtr& partiti
 
     // Create a FrameRecord with appropriate metadata
     Serialization::FrameRecord frameRecord(Serialization::PARTITIONER, format());
-    frameRecord.setPayload(payload);
+    frameRecord.payload(payload);
 
     // Write the frame record
     frame_->writeFrameRecord(frameRecord);
@@ -383,10 +383,8 @@ SerialInput::readAndValidateRecord(Serialization::Savable expectedType) {
 
     // Validate format
     if (rec.format() != format()) {
-        throw Exception(
-          "format mismatch (expected " + boost::lexical_cast<std::string>(format()) + " but found " +
-          boost::lexical_cast<std::string>(rec.format()) + ")"
-        );
+        mlog[WARN] << "serialization format mismatch (expected " << format() << " but found " << rec.format() << ")"
+                   << std::endl;
     }
 
     // Check ROSE version compatibility

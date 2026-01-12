@@ -255,7 +255,10 @@ public:
                 break;
             case P2::V_BASIC_BLOCK: {
                 P2::BasicBlock::Ptr bb = vertex->value().bblock();
-                ASSERT_not_null(bb);
+                if (!bb) {
+                    std::cerr << "Null basic block!?! at addr:" << (void*) vertex->value().address() << std::endl;
+                    ASSERT_not_null(bb);
+                }
                 const std::set<Address> &bbVas = function_->basicBlockAddresses();
                 if (bbVas.find(bb->address()) != bbVas.end()) // block local to this function?
                     retval = "B" + StringUtility::numberToString(++nLocalBlocks_) + " ";
