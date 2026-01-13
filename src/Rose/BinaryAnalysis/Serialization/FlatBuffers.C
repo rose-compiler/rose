@@ -1,5 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_FLATBUFFERS
 
 #include <sage3basic.h>
 
@@ -582,4 +583,5 @@ Deserializer::load() {
 } // namespace BinaryAnalysis
 } // namespace Rose
 
+#endif
 #endif

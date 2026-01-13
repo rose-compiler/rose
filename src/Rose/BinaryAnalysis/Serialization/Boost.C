@@ -1,5 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 
 // This file implements the boost serialization logic for ROSE binary analysis. It also is a place for serialization
 // functions that have more dependencies than we want to include into header files. For instance, if class `T` has a
@@ -1051,4 +1052,5 @@ BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperat
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#endif // ROSE_ENABLE_BOOST_SERIALIZATION
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

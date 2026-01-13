@@ -246,6 +246,9 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/RegisterParts.C							\
 	BinaryAnalysis/RelativeVirtualAddress.C						\
 	BinaryAnalysis/ReturnValueUsed.C						\
+	BinaryAnalysis/Serialization/Boost.C                    \
+	BinaryAnalysis/Serialization/FlatBuffers.C              \
+	BinaryAnalysis/Serialization/SerialFrame.C              \
 	BinaryAnalysis/SerialIo.C							\
 	BinaryAnalysis/SmtCommandLine.C							\
 	BinaryAnalysis/SmtlibSolver.C							\

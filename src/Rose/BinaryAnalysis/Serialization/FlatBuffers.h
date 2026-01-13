@@ -3,6 +3,7 @@
 
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_FLATBUFFERS
 
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
@@ -174,5 +175,6 @@ class Deserializer {
 } // namespace BinaryAnalysis
 } // namespace Rose
 
+#endif
 #endif
 #endif
