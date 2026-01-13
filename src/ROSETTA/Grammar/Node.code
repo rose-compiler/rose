@@ -58,12 +58,8 @@ class AstRegExAttribute;
 class AstAttribute;
 class AstAttributeMechanism;
 struct ReferenceToPointerHandler;
-
-// DQ (3/18/2006): Forward declarations of classes used to control and tailor the code generation.
 class UnparseDelegate;
 class UnparseFormatHelp;
-
-// DQ (4/32/2006): g++ 4.0.2 requires a forward declaration for this (a friend class declaration is not sufficient!)
 class AstSpecificDataManagingClassStorageClass;
 
 HEADER_NODE_PREDECLARATION_END
@@ -106,17 +102,15 @@ HEADER_START
       //! Access function for parent node.
           SgNode* get_parent () const;
 
-       // DQ (3/4/2022): Added access function for p_parent for debugging.
       //! Access function for direct access to uncomputed value of parent node.
           SgNode* get_raw_parent () const;
 
       //! Query function for if the input IR nodes is a child of the current IR node.
           bool isChild ( SgNode* node ) const;
 
-       //! This function unparses the AST node (excluding comments and unnecessary white space)
-           virtual std::string unparseToString(SgUnparse_Info* info) const;
-
-           std::string unparseToString() const;
+      //! This function unparses the AST node (excluding comments and unnecessary white space)
+          virtual std::string unparseToString(SgUnparse_Info* info) const;
+          std::string unparseToString() const;
 
        //! This function unparses the AST node (including comments and white space)
           std::string unparseToCompleteString();
@@ -136,7 +130,7 @@ HEADER_START
           int variant() const ROSE_DEPRECATED_FUNCTION {return (int)this->variantT();}
 
        // AS (10/22/2007): build function to return class hierachy subtree of a VariantT
-          static std::vector<VariantT> getClassHierarchySubTreeFunction( VariantT v);
+          static std::vector<VariantT> getClassHierarchySubTreeFunction(VariantT v);
           static void getClassHierarchySubTreeFunction( VariantT v, std::vector<VariantT>&);
 
       /*! \brief DOCS IN HEADER: Access function for p_isVisited flag used previously by the AST traversals.
@@ -175,8 +169,6 @@ HEADER_START
           This qualified name is stored with reference to where the name is used (as required) instead
           of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
        */
-       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-       // static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForNames();
           static SgUnorderedMapNodeToString & get_globalQualifiedNameMapForNames();
 
       /*! \brief Access function for name qualification support (for names).
@@ -184,8 +176,6 @@ HEADER_START
           This qualified name is stored with reference to where the name is used (as required) instead
           of with the IR node of what is names (e.g. function declaration, variable declaration, etc.).
        */
-       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-       // static void set_globalQualifiedNameMapForNames ( const std::map<SgNode*,std::string> & X );
           static void set_globalQualifiedNameMapForNames ( const SgUnorderedMapNodeToString & X );
 
       /*! \brief Access function for name qualification support (for type).
@@ -194,8 +184,6 @@ HEADER_START
           of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
-       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-       // static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTypes();
           static SgUnorderedMapNodeToString & get_globalQualifiedNameMapForTypes();
 
       /*! \brief Access function for name qualification support (for type).
@@ -204,30 +192,22 @@ HEADER_START
           of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
-       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-       // static void set_globalQualifiedNameMapForTypes ( const std::map<SgNode*,std::string> & X );
           static void set_globalQualifiedNameMapForTypes ( const SgUnorderedMapNodeToString & X );
 
-       // DQ (3/13/2019): Added name qualification support for references to types than can embed many types.
       /*! \brief Access function for name qualification support (for maps of types).
 
           This qualified name is stored with reference to where the type is used (as required) instead
           of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
-       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-       // static std::map<SgNode*,std::map<SgNode*,std::string> > & get_globalQualifiedNameMapForMapsOfTypes();
           static std::map<SgNode*,SgUnorderedMapNodeToString> & get_globalQualifiedNameMapForMapsOfTypes();
 
-       // DQ (3/13/2019): Added name qualification support for references to types than can embed many types.
       /*! \brief Access function for name qualification support (for maps of types).
 
           This qualified name is stored with reference to where the type is used (as required) instead
           of with the IR node representing the type (which are typically shared) (e.g. function return
           type, variable type, etc.).
        */
-       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-       // static void set_globalQualifiedNameMapForMapsOfTypes ( const std::map<SgNode*,std::map<SgNode*,std::string> > & X );
           static void set_globalQualifiedNameMapForMapsOfTypes ( const std::map<SgNode*,SgUnorderedMapNodeToString> & X );
 
       /*! \brief Access function for name qualification support (for template headers in template declarations).
@@ -239,15 +219,12 @@ HEADER_START
           name qualification of template declarations (along with the more common form of name qualication
           that also applies to template declarations).
        */
-       // DQ (8/11/2025): Adding support for unordered maps for name qualification.
-       // static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTemplateHeaders();
           static SgUnorderedMapNodeToString & get_globalQualifiedNameMapForTemplateHeaders();
 
       /*! \brief Access function for name qualification support (for template headers in template declarations).
 
           See documentation in get_globalQualifiedNameMapForTemplateHeaders() (above).
        */
-       // static void set_globalQualifiedNameMapForTemplateHeaders ( const std::map<SgNode*,std::string> & X );
           static void set_globalQualifiedNameMapForTemplateHeaders ( const SgUnorderedMapNodeToString & X );
 
       /*! \brief Access function for name qualification support (for names of types).
@@ -281,7 +258,6 @@ HEADER_START
          but some of the names and the syntax for calling the interface have changed. The
          pointer to the AstAttributeMechanism is now generated by ROSETTA.
       */
-     /* */
      //! Add a new attribute represented by the named string.
          virtual void addNewAttribute(std::string s,AstAttribute* a);
      //! Returns attribute of name 's'.
@@ -340,7 +316,6 @@ HEADER_START
           These are the virtual function definitions, they are overloaded for SgLocatedNode
           and a few of the SgSupport IR nodes.
        */
-
       /*! \brief File information containing filename, line number, column number,
                  and if the SgNode is a part of a new transformation, etc.
 
@@ -365,7 +340,6 @@ HEADER_START
 
           These functions return control flow graph nodes for various positions
           around a construct. */
-      /* */
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
      /*! \brief Returns the CFG node for just before this AST node */
@@ -380,7 +354,6 @@ HEADER_START
           These functions are used internally inside the control flow graph
           view code.  The public interface for this functionality is given
           below this section. */
-      /* */
 
       /*! \brief Determine the CFG index for the end of this construct. */
           virtual unsigned int cfgIndexForEnd() const;
@@ -406,7 +379,6 @@ HEADER_START
           static SgFunctionTypeTable* get_globalFunctionTypeTable();
        //! Access function for symbol table specific to function types.
           static void set_globalFunctionTypeTable(SgFunctionTypeTable* globalFunctionTypeTable);
-
        //! Access function for symbol table specific to non-function types.
           static SgTypeTable* get_globalTypeTable();
        //! Access function for symbol table specific to non-function types.
@@ -416,10 +388,6 @@ HEADER_START
           static std::vector<std::tuple<unsigned char*, unsigned, VariantT>> all_pools;
      public:
           static VariantT variantFromPool(SgNode const * n);
-
-      /* \brief Mangled name cache for improved performance of mangled name generation
-          This mangle name caching is implemented to support better performance.
-       */
 
       /*! \brief Computes the number of nodes in the defined subtree of the AST.
 
@@ -694,13 +662,10 @@ SOURCE_START
 // Start of source code for SgNode
 // ###############################
 
-// Support for global function type symbol table (moved to be static data pointer)
+// Support for global function type symbol table
 SgFunctionTypeTable* SgNode::p_globalFunctionTypeTable = nullptr;
-
-// DQ (7/22/2010): Added type table for non-function types (supports construction of unique types).
 SgTypeTable*         SgNode::p_globalTypeTable         = nullptr;
 
-// DQ (3/12/2007): Added mangled name map to improve performance of generating mangled names
 std::map<SgNode*,std::string> SgNode::p_globalMangledNameMap;
 std::map<std::string,uint64_t> SgNode::p_shortMangledNameCache;
 
@@ -718,7 +683,6 @@ std::unordered_map<SgNode*,std::string> SgNode::p_globalTypeNameMap;
 // DQ (3/13/2019): The fix for referencing types than contain many parts is to have a map of maps
 // to the generated name qualification substrings for each type, all associted with a single reference
 // node to the statement refering to the type.
-// DQ (8/11/2025): Adding support for unordered maps for name qualification.
 std::map<SgNode*,SgUnorderedMapNodeToString> SgNode::p_globalQualifiedNameMapForMapsOfTypes;
 
 #if ALT_FIXUP_COPY
@@ -1002,8 +966,6 @@ SgNode::set_isVisited(bool /*isVisited*/)
    }
 
 //  ! Permits specification of parent node (connects the AST tree)
-/*  ! This function is called internally to connect the elements of the grammar to form the AST.
- */
 void
 SgNode::set_parent(SgNode* parent)
    {
@@ -1011,7 +973,6 @@ SgNode::set_parent(SgNode* parent)
      ASSERT_require(this != parent);
      p_parent = parent;
 
-  // I think this should be always be true, so let's inforce it (this happends for test2005_64.C)
      if ( ( variantT() == V_SgClassDeclaration ) && ( parent != nullptr && parent->variantT() == V_SgFunctionParameterList ) )
         {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
@@ -1019,20 +980,20 @@ SgNode::set_parent(SgNode* parent)
 #endif
         }
 
-     if ( ( variantT() == V_SgTemplateDeclaration ) && ( parent != nullptr && parent->variantT() == V_SgTemplateInstantiationFunctionDecl ) )
+     if ((variantT() == V_SgTemplateDeclaration) && (parent != nullptr && parent->variantT() == V_SgTemplateInstantiationFunctionDecl))
         {
           printf ("Warning: Found case in set_parent() where this is a SgTemplateDeclaration and parent is a SgTemplateInstantiationFunctionDecl \n");
           ASSERT_require(false);
         }
 
-     if ( ( variantT() == V_SgClassDeclaration ) && ( parent != nullptr && parent->variantT() == V_SgGlobal ) )
+     if ((variantT() == V_SgClassDeclaration ) && (parent != nullptr && parent->variantT() == V_SgGlobal))
         {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
           printf ("Warning: Found case in set_parent() where this is a SgClassDeclaration and parent is a SgGlobal \n");
 #endif
         }
 
-     if ( ( variantT() == V_SgTemplateInstantiationDecl ) && ( parent != nullptr && parent->variantT() == V_SgClassType ) )
+     if ((variantT() == V_SgTemplateInstantiationDecl) && (parent != nullptr && parent->variantT() == V_SgClassType))
         {
           printf ("Warning: Found case in set_parent() where this is a SgTemplateInstantiationDecl and parent is a SgClassType \n");
           printf ("Exiting in this case! \n");
@@ -1069,7 +1030,7 @@ SgNode::get_raw_parent() const
 
 //! Query function for if the input IR nodes is a child of the current IR node.
 bool
-SgNode::isChild ( SgNode* node ) const
+SgNode::isChild(SgNode* node) const
    {
      return (getChildIndex(node) != -1);
    }
