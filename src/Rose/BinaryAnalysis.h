@@ -61,6 +61,7 @@
 #include <Rose/BinaryAnalysis/RegisterParts.h>
 #include <Rose/BinaryAnalysis/RelativeVirtualAddress.h>
 #include <Rose/BinaryAnalysis/ReturnValueUsed.h>
+#include <Rose/BinaryAnalysis/Serialization.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SmtCommandLine.h>
 #include <Rose/BinaryAnalysis/SmtlibSolver.h>
