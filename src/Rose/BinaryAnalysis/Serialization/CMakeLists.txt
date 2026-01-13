@@ -28,10 +28,10 @@ add_library(roseBinaryAnalysisSerialization OBJECT
   ${SERIALIZATION_SOURCES}
 )
 
+add_dependencies(roseBinaryAnalysisSerialization rosetta_generated)
+
 # Add dependencies as needed
 if(ROSE_ENABLE_FLATBUFFERS)
-  add_dependencies(roseBinaryAnalysisSerialization rosetta_generated)
-
   install(FILES
     FlatBuffers.h
     FlatBufferSchema.h
