@@ -16,7 +16,7 @@ static const char* description =
 #include <Rose/Diagnostics.h>
 
 #include <Rose/BinaryAnalysis/SerialIo.h>
-#include <Rose/BinaryAnalysis/Serialization/FlatBuffer.h>
+#include <Rose/BinaryAnalysis/Serialization/FlatBuffers.h>
 #include <Rose/BinaryAnalysis/Serialization/SerialFrame.h>
 
 #include <Sawyer/Stopwatch.h>
@@ -44,7 +44,7 @@ struct Settings {
     // Desired ROSE rba format
     Serialization::Format stateFormat;
 
-    Settings() : outputFileName("-"), stateFormat(Serialization::BINARY) {}
+    Settings() : outputFileName("-"), stateFormat(Serialization::FLATBUFFERS) {}
 };
 
 // Build a command line parser without running it

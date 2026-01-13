@@ -19,7 +19,7 @@ endif()
 # Add FlatBuffers-specific backend if enabled
 if(ROSE_ENABLE_FLATBUFFERS)
   list(APPEND SERIALIZATION_SOURCES
-    FlatBuffer.C
+    FlatBuffers.C
   )
 endif()
 
@@ -33,7 +33,7 @@ if(ROSE_ENABLE_FLATBUFFERS)
   add_dependencies(roseBinaryAnalysisSerialization rosetta_generated)
 
   install(FILES
-    FlatBuffer.h
+    FlatBuffers.h
     FlatBufferSchema.h
     DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/Serialization
   )

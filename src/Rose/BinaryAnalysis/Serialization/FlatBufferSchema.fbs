@@ -8,6 +8,8 @@
 //        src/Rose/BinaryAnalysis/Serialization/FlatBufferSchema.fbs
 // ```
 //
+// Make sure to add a #include <RoseFirst.h> at the top of the generated header to satisfy the policy checker!
+//
 // To generate the rust implementation, run this command: 
 // ```
 // flatc --rust rose.fbs

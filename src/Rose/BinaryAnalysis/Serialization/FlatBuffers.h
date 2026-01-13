@@ -5,6 +5,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -82,6 +83,7 @@ class Serializer {
     std::unique_ptr<flatbuffers::FlatBufferBuilder> builder_;
 
   protected:
+    Handle<Architecture> architecture(const BinaryAnalysis::Architecture::BaseConstPtr& arch);
     Handle<Instruction> instruction(const SgAsmInstruction* const& insn);
     Handle<BasicBlock>  basicBlock(const Partitioner2::BasicBlockPtr& bb);
     Handle<Function>    function(const Partitioner2::FunctionPtr& f);

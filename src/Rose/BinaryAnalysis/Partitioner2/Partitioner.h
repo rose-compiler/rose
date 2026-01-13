@@ -36,7 +36,7 @@
 #endif
 
 #ifdef ROSE_ENABLE_FLATBUFFERS
-#include <Rose/BinaryAnalysis/Serialization/FlatBuffer.h>
+#include <Rose/BinaryAnalysis/Serialization/FlatBuffers.h>
 #endif
 
 #include <ostream>

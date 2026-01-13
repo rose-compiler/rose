@@ -3,7 +3,7 @@
 
 #include <sage3basic.h>
 
-#include <Rose/BinaryAnalysis/Serialization/FlatBuffer.h>
+#include <Rose/BinaryAnalysis/Serialization/FlatBuffers.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
@@ -202,6 +202,15 @@ fromAccessibilityMask(uint8_t m) {
 // Helpers: save individual objects
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Serializer::Handle<FB::Architecture>
+Serializer::architecture(const BinaryAnalysis::Architecture::BaseConstPtr& arch) {
+    ASSERT_not_null(arch);
+    const auto name   = partitioner_->architecture()->name();
+    auto       fbName = builder_->CreateString(name);
+
+    return FB::CreateArchitecture(*builder_, fbName);
+}
+
 Serializer::Handle<FB::Instruction>
 Serializer::instruction(const SgAsmInstruction* const& insn) {
     ASSERT_not_null(insn);
@@ -359,19 +368,16 @@ Serializer::functions(const std::vector<Partitioner2::FunctionPtr>& p_funs) {
 
 Serializer::Handle<FB::Root>
 Serializer::partitioner() {
-    // Architecture info, currently unused (but will be used in the future)
-    ASSERT_not_null(partitioner_->architecture());
-    const auto archName   = partitioner_->architecture()->name();
-    auto       fbArchName = builder_->CreateString(archName);
 
     // Save major structures.
-    auto fbMap = mmap(*partitioner_->memoryMap());
-    auto fbCfg = cfg(partitioner_->cfg());
+    auto fbArch = architecture(partitioner_->architecture());
+    auto fbMap  = mmap(*partitioner_->memoryMap());
+    auto fbCfg  = cfg(partitioner_->cfg());
 
     const auto instrs_bbs = instructionsBasicBlocks(partitioner_->basicBlocks());
     const auto funs       = functions(partitioner_->functions());
 
-    return FB::CreateRoot(*builder_, fbMap, instrs_bbs.first, instrs_bbs.second, funs, fbCfg, fbArchName);
+    return FB::CreateRoot(*builder_, fbArch, fbMap, instrs_bbs.first, instrs_bbs.second, funs, fbCfg);
 }
 
 // Top-level serializer methods
@@ -545,11 +551,11 @@ Deserializer::load() {
     const FB::Root* root = FB::GetRoot(bytes_.data());
     ASSERT_not_null(root);
 
-    const auto arch_name = root->architecture();
+    const auto arch_name = root->architecture()->name()->str();
 
-    auto arch = Architecture::findByName(arch_name->str());
-    if (!arch_name)
-        arch = Architecture::findByName("ppc32-be");
+    auto arch = BinaryAnalysis::Architecture::findByName(arch_name);
+    if (arch)
+        arch = BinaryAnalysis::Architecture::findByName("ppc32-be");
     auto map = mmap(root->memory_map());
 
     // Create a fresh partitioner.
