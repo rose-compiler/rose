@@ -141,6 +141,7 @@ install(FILES
   RegisterParts.h
   RelativeVirtualAddress.h
   ReturnValueUsed.h
+  Serialization.h
   SerialIo.h
   SmtCommandLine.h
   SmtlibSolver.h

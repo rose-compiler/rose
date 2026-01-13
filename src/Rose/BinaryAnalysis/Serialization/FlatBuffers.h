@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_Serialization_FlatBuffer_H
-#define ROSE_BinaryAnalysis_Serialization_FlatBuffer_H
+#ifndef ROSE_BinaryAnalysis_Serialization_FlatBuffers_H
+#define ROSE_BinaryAnalysis_Serialization_FlatBuffers_H
 
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS

@@ -15,9 +15,7 @@ static const char* description =
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 
-#include <Rose/BinaryAnalysis/SerialIo.h>
-#include <Rose/BinaryAnalysis/Serialization/FlatBuffers.h>
-#include <Rose/BinaryAnalysis/Serialization/SerialFrame.h>
+#include <Rose/BinaryAnalysis/Serialization.h>
 
 #include <Sawyer/Stopwatch.h>
 

@@ -3,8 +3,8 @@
 #include <RoseFirst.h>
 
 
-#ifndef FLATBUFFERS_GENERATED_FLATBUFFERSCHEMA_ROSE_BINARYANALYSIS_SERIALIZATION_FLATBUFFERS_H_
-#define FLATBUFFERS_GENERATED_FLATBUFFERSCHEMA_ROSE_BINARYANALYSIS_SERIALIZATION_FLATBUFFERS_H_
+#ifndef ROSE_BinaryAnalysis_Serialization_FlatBufferSchema_H
+#define ROSE_BinaryAnalysis_Serialization_FlatBufferSchema_H
 
 #include "flatbuffers/flatbuffers.h"
 
