@@ -514,6 +514,8 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/RegisterParts.h						\
 	Rose/BinaryAnalysis/RelativeVirtualAddress.h					\
 	Rose/BinaryAnalysis/ReturnValueUsed.h						\
+	Rose/BinaryAnalysis/Serialization.h							\
+	Rose/BinaryAnalysis/Serialization/SerialFrame.h				\
 	Rose/BinaryAnalysis/SerialIo.h							\
 	Rose/BinaryAnalysis/SmtCommandLine.h						\
 	Rose/BinaryAnalysis/SmtlibSolver.h						\
