@@ -2808,6 +2808,50 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
   AstNodePtr body1, body2;
   AstTypeList paramtypes1, paramtypes2;
   AstNodeType returntype1, returntype2;
+  // Both first and second should have the same variantT.
+  switch (first->variantT()) {
+  case V_SgInitializedName: {
+        SgInitializedName *p1 = isSgInitializedName(first);
+        SgInitializedName *p2 = isSgInitializedName(second);
+        assert (p1 != 0 && p2 != 0); 
+        if (std::string(p1->get_name().str()) != std::string(p2->get_name().str())) {
+            DebugDiff([&_first,&_second](){ return "AST different  name: " + AstToString(_first) + " vs " + AstToString(_second); });
+            return false;
+        }
+        if (AstIdentical(AstNodeType(p1->get_type()), AstNodeType(p2->get_type()))) {
+            return true;
+        }
+        DebugDiff([&_first,&_second](){ return "AST different  type: " + AstToString(_first) + " vs " + AstToString(_second); });
+        return false;
+     }
+  case V_SgVarRefExp: { 
+      SgVarRefExp* v1 = isSgVarRefExp(first);
+      assert (v1 != 0); 
+      if (IsSameVarRef(first,second)) {
+          return true;
+       }
+       return false;
+     }
+  case V_SgClassDefinition: {
+      SgClassDefinition* p1 = isSgClassDefinition(first);
+      SgClassDefinition* p2 = isSgClassDefinition(second);
+      assert (p1 != 0 && p2 != 0); 
+      const auto& base1 = p1->get_inheritances();
+      const auto& base2 = p2->get_inheritances();
+      if (!AstIdentical(base1, base2, call_on_diff)) {
+         return false;
+      }
+      // The rest will be handled by the IsBlock check below.
+      break;
+   }
+   case V_SgBaseClass: {
+      SgBaseClass* p1 = isSgBaseClass(first);
+      SgBaseClass* p2 = isSgBaseClass(second);
+      return  p1->get_baseClassModifier()->get_modifier() == p2->get_baseClassModifier()->get_modifier() &&
+              std::string(p1->get_base_class()->get_name().str()) == std::string(p2->get_base_class()->get_name().str());
+    } 
+  default: break;
+  }
   if (IsFunctionCall(_first, &f1, &params1, &args1, &paramtypes1, &returntype1) && 
        IsFunctionCall(_second, &f2, &params2, &args2, &paramtypes2, &returntype2)) {
      return AstIdentical(f1, f2, call_on_diff, call_on_diff_type) &&
@@ -2829,32 +2873,6 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
              AstIdentical<AstTypeList, AstNodeType>(paramtypes1, paramtypes2, call_on_diff_type) &&
              AstIdentical(returntype1, returntype2, call_on_diff_type); 
   }
-  {
-    SgInitializedName *p1 = isSgInitializedName(first);
-    SgInitializedName *p2 = isSgInitializedName(second);
-    if (p1 != 0 && p2 != 0) {
-        if (std::string(p1->get_name().str()) != std::string(p2->get_name().str())) {
-            DebugDiff([&_first,&_second](){ return "AST different  name: " + AstToString(_first) + " vs " + AstToString(_second); });
-            return false;
-        }
-        if (AstIdentical(AstNodeType(p1->get_type()), AstNodeType(p2->get_type()))) {
-            return true;
-        }
-        DebugDiff([&_first,&_second](){ return "AST different  type: " + AstToString(_first) + " vs " + AstToString(_second); });
-        return false;
-    }
-  }
-
-  { SgVarRefExp* v1 = isSgVarRefExp(first);
-    if (v1 != 0) {
-       if (IsSameVarRef(first,second)) {
-          return true;
-       }
-       return false;
-    }
-  }
-
-
   if (IsBlock(_first, 0, &args1) && IsBlock(_second, 0, &args2)) {
      return AstIdentical<AstNodeList,AstNodePtr>(args1, args2, call_on_diff);
   }

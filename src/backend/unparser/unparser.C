@@ -1897,7 +1897,9 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                          printf ("WARNING: SgFileList support not implemented for unparser...\n");
                          break;
                        }
-
+                    case V_SgBaseClass:
+                         printf ("WARNING: SgBaseClass support not implemented for unparser...\n");
+                         break;
                  // Perhaps the support for SgFile and SgProject shoud be moved to this location?
                     default:
                        {
