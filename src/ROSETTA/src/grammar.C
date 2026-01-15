@@ -23,7 +23,6 @@ using namespace Rose;
 // If this is going to be turned back on it should be completed and thoroughly tested.
 #define BUILD_ATERM_SUPPORT 0
 
-// MS: temporary (TODO: move to processing class)
 static string RTIContainerName = "rtiContainer";  // put this into the respective processing class as private member
 static string RTIreturnType    = "RTIReturnType"; // typedef in Grammar/Common.code
 
@@ -40,27 +39,27 @@ vector<GrammarFile*> Grammar::fileList;
 // #                   Grammar Member Functions                   #
 // ################################################################
 
-Grammar::~Grammar ()
+Grammar::~Grammar()
 {
 }
 
-Grammar::Grammar ( const string& inputGrammarName,
-                   const string& inputPrefixName,
-                   const string& inputGrammarNameBaseClass,
-                   const Grammar* inputParentGrammar,
-                   const string& t_directory)
+Grammar::Grammar(const string& inputGrammarName,
+                 const string& inputPrefixName,
+                 const string& inputGrammarNameBaseClass,
+                 const Grammar* inputParentGrammar,
+                 const string& t_directory)
    {
 
   // Intialize some member data
   // By default the parent grammar is not known
      target_directory = t_directory;
-     parentGrammar = NULL;
+     parentGrammar = nullptr;
 
   // We want to set the parent grammar as early as possible since the specification of terminals/nonterminals is
   // dependent upon the the current grammar being a "RootGrammar" (using the isRootGrammar() member function)
   // and the value of the boolean returned from isRootGrammardepends upon the pointer to the parentGrammar being set!
      bool skipConstructionOfParseFunctions = false;
-     if (inputParentGrammar == NULL)
+     if (inputParentGrammar == nullptr)
         {
        // We want to skip the construction of parse member function for the C++ grammar
           skipConstructionOfParseFunctions = true;
@@ -108,7 +107,6 @@ Grammar::Grammar ( const string& inputGrammarName,
      setUpSymbols();
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-  // DQ (3/15/2007): Added support for binaries
      setUpBinaryInstructions();
 #endif
 
@@ -140,18 +138,17 @@ Grammar::consistencyCheck() const
      }
    }
 
-
 const Grammar*
-Grammar::getParentGrammar ()
+Grammar::getParentGrammar()
    {
      return parentGrammar;
    }
 
 void
-Grammar::setParentGrammar ( const Grammar & GrammarPointer )
+Grammar::setParentGrammar(const Grammar &GrammarPointer)
    {
      parentGrammar = &GrammarPointer;
-     ROSE_ASSERT (parentGrammar != NULL);
+     ASSERT_not_null(parentGrammar);
    }
 
 bool
@@ -160,11 +157,11 @@ Grammar::isRootGrammar ()
   // Determine if this is the C++ grammar at the root of the heiarchy of grammars
   // Don't call the getParentGrammar() member function since if the
   // parentGrammar is false it will trigger an assert (which we want to keep)
-     return (parentGrammar == NULL) ? true : false;
+     return (parentGrammar == nullptr) ? true : false;
    }
 
 void
-Grammar::setRootOfGrammar ( AstNodeClass* RootNodeForGrammar )
+Grammar::setRootOfGrammar(AstNodeClass* RootNodeForGrammar)
    {
      rootNode = RootNodeForGrammar;
    }
@@ -176,12 +173,12 @@ Grammar::getRootOfGrammar ()
    }
 
 void
-Grammar::addGrammarElement ( AstNodeClass & X )
+Grammar::addGrammarElement(AstNodeClass &X)
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      X.setGrammar(this);
      const AstNodeClass *const &Y = &X;
-     terminalList.push_back ( (AstNodeClass *const &) Y );
+     terminalList.push_back((AstNodeClass *const &) Y);
      astVariantToTerminalMap[this->getVariantForTerminal(X)] = &X;
    }
 
@@ -191,7 +188,7 @@ Grammar::getGrammarPrefixName() const
   // This function returns the name of the grammar and is used to substitute for
   // "$GRAMMAR_PREFIX_" in the name of the generated classes that represent the
   // terminals and nonterminals of the grammar.
-     ROSE_ASSERT(this != NULL);
+     ASSERT_this();
      return grammarPrefixName;
    }
 
@@ -201,7 +198,7 @@ Grammar::getGrammarName() const
   // This function returns the name of the grammar and is used to substitute for
   // "$GRAMMAR_PREFIX_" in the name of the generated classes that represent the
   // terminals and nonterminals of the grammar.
-     ROSE_ASSERT(this != NULL);
+     ASSERT_this();
      return grammarName;
    }
 
@@ -218,9 +215,9 @@ Grammar::getGrammarTagName()
   // the root grammar (base level grammar) has a NULL pointer for it's parent grammar.
   // This is sufficient for its identification.
 
-     ROSE_ASSERT(this != NULL);
+     ASSERT_this();
      string returnName = "";
-     if (parentGrammar != NULL)
+     if (parentGrammar != nullptr)
         {
           returnName = getGrammarPrefixName();
         }
@@ -233,41 +230,38 @@ Grammar::getGrammarTagName()
  **********************************/
 
 AstNodeClass &
-Grammar::terminalConstructor ( const string& lexeme, Grammar & X, const string& stringVar, const string& tagString )
+Grammar::terminalConstructor(const string& lexeme, Grammar &X, const string& stringVar, const string& tagString)
    {
   // These functions build AstNodeClass and nonterminal objects to be associated with this grammar
   // Using a member function to construct these serves several purposes:
   // 1) organizes terminals and nonterminals with there respective grammar (without ambiguity)
   // 2) avoids or deferes the implementation of the envelop/letter interface mechanism so
   //    that the letter will have a scope longer than the envelope
-
-     AstNodeClass* t = new AstNodeClass ( lexeme, X, stringVar, tagString, true );
-     ROSE_ASSERT (t);
+     AstNodeClass* t = new AstNodeClass(lexeme, X, stringVar, tagString, true);
+     ASSERT_not_null(t);
      return *(t);
    }
 
 AstNodeClass &
-Grammar::nonTerminalConstructor ( const string& lexeme, Grammar& X, const string& stringVar, const string& tagString, const SubclassListBuilder & builder, bool canHaveInstances )
+Grammar::nonTerminalConstructor(const string& lexeme, Grammar& X, const string& stringVar, const string& tagString, const SubclassListBuilder &builder, bool canHaveInstances)
    {
   // These functions build AstNodeClass and nonterminal objects to be associated with this grammar
   // Using a member function to construct these serves several purposes:
   // 1) organizes terminals and nonterminals with their respective grammar (without ambiguity)
   // 2) avoids or defers the implementation of the envelop/letter interface mechanism so
   //    that the letter will have a scope longer than the envelope
-
-     AstNodeClass* nt = new AstNodeClass ( lexeme, X, stringVar, tagString, canHaveInstances, builder );
-     ROSE_ASSERT (nt);
+     AstNodeClass* nt = new AstNodeClass(lexeme, X, stringVar, tagString, canHaveInstances, builder);
+     ASSERT_not_null(nt);
      return *(nt);
    }
 
 #define OUTPUT_TO_FILE true
 
 StringUtility::FileWithLineNumbers
-Grammar::readFileWithPos ( const string& inputFileName )
+Grammar::readFileWithPos(const string& inputFileName)
    {
   // Reads entire text file and places contents into a single string
   // We implemennt a file cache to improve the performance of this file access
-
      vector<GrammarFile*>::iterator i;
      for (i = fileList.begin(); i != fileList.end(); i++)
         {
@@ -280,7 +274,7 @@ Grammar::readFileWithPos ( const string& inputFileName )
      StringUtility::FileWithLineNumbers result = StringUtility::readFileWithPos(inputFileName);
 
      GrammarFile *file = new GrammarFile(inputFileName,result);
-     ROSE_ASSERT (file != NULL);
+     ASSERT_not_null(file);
 
      fileList.push_back(file);
      return result;
@@ -301,18 +295,18 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers & outputString,
        // retry opening the file...
           ROSE_ShowFile.open(outputFilename.c_str());
         }
-     ROSE_ASSERT (ROSE_ShowFile.good() == true);
+     ASSERT_require(ROSE_ShowFile.good() == true);
 
   // Select an output stream for the program tree display (cout or <filename>.C.roseShow)
   // Macro OUTPUT_SHOWFILE_TO_FILE is defined in the transformation_1.h header file
-     ostream & outputStream = (OUTPUT_TO_FILE ? (ROSE_ShowFile) : (cout));
-     ROSE_ASSERT (outputStream.good() == true);
+     ostream &outputStream = (OUTPUT_TO_FILE ? (ROSE_ShowFile) : (cout));
+     ASSERT_require(outputStream.good() == true);
 
      outputStream << StringUtility::toString(outputString, outputFilename);
-     ROSE_ASSERT (outputStream.good() == true);
+     ASSERT_require(outputStream.good() == true);
 
      ROSE_ShowFile.close();
-     ROSE_ASSERT (outputStream.good() == true);
+     ASSERT_require(outputStream.good() == true);
    }
 
 
@@ -325,7 +319,7 @@ Grammar::appendFile ( const StringUtility::FileWithLineNumbers & outputString,
      string outputFilename = (directoryName == "." ? "" : directoryName + "/") + className + fileExtension;
 
      ofstream ROSE_ShowFile(outputFilename.c_str(),std::ios::out | std::ios::app);
-     ROSE_ASSERT (ROSE_ShowFile.good() == true);
+     ASSERT_require(ROSE_ShowFile.good() == true);
 
   // Select an output stream for the program tree display (cout or <filename>.C.roseShow)
   // Macro OUTPUT_SHOWFILE_TO_FILE is defined in the transformation_1.h header file
@@ -333,10 +327,10 @@ Grammar::appendFile ( const StringUtility::FileWithLineNumbers & outputString,
      ROSE_ASSERT (outputStream.good() == true);
 
      outputStream << StringUtility::toString(outputString, outputFilename);
-     ROSE_ASSERT (outputStream.good() == true);
+     ASSERT_require(outputStream.good() == true);
 
      ROSE_ShowFile.close();
-     ROSE_ASSERT (outputStream.good() == true);
+     ASSERT_require(outputStream.good() == true);
    }
 
 void
@@ -349,7 +343,6 @@ Grammar::generateStringListsFromSubtreeLists ( AstNodeClass & node,
   // SUBTREE_LISTs (including the SUBTREE_LISTs of the current node).
   // Since we want the parent node list elements listed first we
   // perform a postorder traversal.
-
   vector<GrammarString *>::const_iterator grammarStringIterator;
   vector<GrammarString *> &listOfIncludes = (node.*listFunction)(AstNodeClass::SUBTREE_LIST,AstNodeClass::INCLUDE_LIST);
   vector<GrammarString *> &listOfExcludes = (node.*listFunction)(AstNodeClass::SUBTREE_LIST,AstNodeClass::EXCLUDE_LIST);
@@ -361,12 +354,12 @@ Grammar::generateStringListsFromSubtreeLists ( AstNodeClass & node,
   for( grammarStringIterator = listOfIncludes.begin();
        grammarStringIterator != listOfIncludes.end();
        grammarStringIterator++)
-    AstNodeClass::addElementToList (includeList, **grammarStringIterator );
+    AstNodeClass::addElementToList(includeList, **grammarStringIterator);
 
   for( grammarStringIterator = listOfExcludes.begin();
        grammarStringIterator != listOfExcludes.end();
        grammarStringIterator++)
-    AstNodeClass::addElementToList (excludeList, **grammarStringIterator );
+    AstNodeClass::addElementToList(excludeList, **grammarStringIterator);
 
 #if CHECK_LISTS
   checkListOfGrammarStrings(includeList);
@@ -375,9 +368,9 @@ Grammar::generateStringListsFromSubtreeLists ( AstNodeClass & node,
 
 #endif
 
-  if (node.getBaseClass() != NULL) {
+  if (node.getBaseClass() != nullptr) {
     // Recursive function call
-    generateStringListsFromSubtreeLists (*(node.getBaseClass()), includeList, excludeList, listFunction );
+    generateStringListsFromSubtreeLists(*(node.getBaseClass()), includeList, excludeList, listFunction);
   }
   else {
   }
@@ -392,12 +385,12 @@ Grammar::generateStringListsFromSubtreeLists ( AstNodeClass & node,
   for( grammarStringIterator = listOfIncludes.begin();
        grammarStringIterator != listOfIncludes.end();
        grammarStringIterator++)
-    AstNodeClass::addElementToList (includeList, **grammarStringIterator );
+    AstNodeClass::addElementToList(includeList, **grammarStringIterator);
 
   for( grammarStringIterator = listOfExcludes.begin();
        grammarStringIterator != listOfExcludes.end();
        grammarStringIterator++)
-    AstNodeClass::addElementToList (excludeList, **grammarStringIterator );
+    AstNodeClass::addElementToList(excludeList, **grammarStringIterator);
 
 #if CHECK_LISTS
   checkListOfGrammarStrings(includeList);
@@ -430,12 +423,12 @@ Grammar::generateStringListsFromLocalLists ( AstNodeClass & node,
   for( grammarStringIterator = listOfIncludes.begin();
        grammarStringIterator != listOfIncludes.end();
        grammarStringIterator++)
-    AstNodeClass::addElementToList (includeList, **grammarStringIterator );
+    AstNodeClass::addElementToList(includeList, **grammarStringIterator);
 
   for( grammarStringIterator = listOfExcludes.begin();
        grammarStringIterator != listOfExcludes.end();
        grammarStringIterator++)
-    AstNodeClass::addElementToList (excludeList, **grammarStringIterator );
+    AstNodeClass::addElementToList(excludeList, **grammarStringIterator);
 
 #if CHECK_LISTS
   checkListOfGrammarStrings(includeList);
@@ -444,9 +437,9 @@ Grammar::generateStringListsFromLocalLists ( AstNodeClass & node,
 
 #endif
 
-  if (node.getBaseClass() != NULL) {
+  if (node.getBaseClass() != nullptr) {
     // Recursive function call
-    generateStringListsFromLocalLists (*(node.getBaseClass()), includeList, excludeList, listFunction );
+    generateStringListsFromLocalLists(*(node.getBaseClass()), includeList, excludeList, listFunction);
   }
 
 #if CHECK_LISTS
@@ -459,7 +452,7 @@ Grammar::generateStringListsFromLocalLists ( AstNodeClass & node,
   for( grammarStringIterator = listOfIncludes.begin();
        grammarStringIterator != listOfIncludes.end();
        grammarStringIterator++)
-    AstNodeClass::addElementToList (includeList, **grammarStringIterator );
+    AstNodeClass::addElementToList(includeList, **grammarStringIterator);
 
   for( grammarStringIterator = listOfExcludes.begin();
        grammarStringIterator != listOfExcludes.end();
@@ -484,7 +477,6 @@ Grammar::generateStringListsFromAllLists ( AstNodeClass & node,
   // This function traverses back through the grammar tree to collect the elements in the
   // SUBTREE_LISTs and in the LOCAL_LISTs (including the lists of the current node).
   // Since we want the parent node list elements listed first we perform a postorder traversal.
-
   vector<GrammarString *>::const_iterator grammarStringIterator;
 
   vector<GrammarString *> &listOfSubTreeIncludes = (node.*listFunction)(AstNodeClass::SUBTREE_LIST,AstNodeClass::INCLUDE_LIST);
@@ -497,10 +489,10 @@ Grammar::generateStringListsFromAllLists ( AstNodeClass & node,
   checkListOfGrammarStrings(excludeList);
 #endif
 
-  if (node.getBaseClass() != NULL)
+  if (node.getBaseClass() != nullptr)
     {
       // Recursive function call
-      generateStringListsFromAllLists (*(node.getBaseClass()), includeList, excludeList, listFunction );
+      generateStringListsFromAllLists(*(node.getBaseClass()), includeList, excludeList, listFunction);
     }
 
 #if CHECK_LISTS
@@ -512,22 +504,22 @@ Grammar::generateStringListsFromAllLists ( AstNodeClass & node,
   for( grammarStringIterator = listOfSubTreeIncludes.begin();
        grammarStringIterator != listOfSubTreeIncludes.end();
        grammarStringIterator++)
-    AstNodeClass::addElementToList (includeList, **grammarStringIterator );
+    AstNodeClass::addElementToList(includeList, **grammarStringIterator);
 
   for( grammarStringIterator = listOfSubTreeExcludes.begin();
        grammarStringIterator != listOfSubTreeExcludes.end();
        grammarStringIterator++)
-    AstNodeClass::addElementToList (excludeList, **grammarStringIterator );
+    AstNodeClass::addElementToList(excludeList, **grammarStringIterator);
 
   for( grammarStringIterator = listOfLocalIncludes.begin();
        grammarStringIterator != listOfLocalIncludes.end();
        grammarStringIterator++)
-    AstNodeClass::addElementToList (includeList, **grammarStringIterator );
+    AstNodeClass::addElementToList(includeList, **grammarStringIterator);
 
   for( grammarStringIterator = listOfLocalExcludes.begin();
        grammarStringIterator != listOfLocalExcludes.end();
        grammarStringIterator++)
-    AstNodeClass::addElementToList (excludeList, **grammarStringIterator );
+    AstNodeClass::addElementToList(excludeList, **grammarStringIterator);
 
 #if CHECK_LISTS
   checkListOfGrammarStrings(includeList);
@@ -594,8 +586,8 @@ Grammar::buildListFromLists ( AstNodeClass & node,
 {
   vector<GrammarString *> includeList;
   vector<GrammarString *> excludeList;
-  ROSE_ASSERT (includeList.size() == 0);
-  ROSE_ASSERT (excludeList.size() == 0);
+  ASSERT_require(includeList.size() == 0);
+  ASSERT_require(excludeList.size() == 0);
 
   // Initialize with local node data
   includeList = (node.*listFunction)(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
@@ -604,10 +596,10 @@ Grammar::buildListFromLists ( AstNodeClass & node,
   // Now generate the additions to the lists from the parent node subtree lists
   // and the subtree lists of the current node
   if (node.getBaseClass())
-    generateStringListsFromSubtreeLists ( *(node.getBaseClass()), includeList, excludeList, listFunction );
+    generateStringListsFromSubtreeLists(*(node.getBaseClass()), includeList, excludeList, listFunction);
 
   // Now edit the list to remove elements appearing within the exclude list
-  editStringList ( includeList, excludeList );
+  editStringList(includeList, excludeList);
 
   return includeList;
 }
@@ -625,15 +617,11 @@ Grammar::buildStringForPrototypes ( AstNodeClass & node )
                                    &GrammarString::getFunctionPrototypeString );
    }
 
-
-// DQ (9/28/2022): Fixing compiler warning for argument not used.
-// StringUtility::FileWithLineNumbers Grammar::buildStringForVariantFunctionSource ( AstNodeClass & node )
 StringUtility::FileWithLineNumbers
 Grammar::buildStringForVariantFunctionSource ()
    {
   // Every node in the grammar has a function that identifies it with a numerical value
   // (e.g. SCOPE_STMT).
-
      return StringUtility::FileWithLineNumbers();
    }
 
@@ -752,13 +740,12 @@ Grammar::buildTraverseMemoryPoolSupport( AstNodeClass & node, StringUtility::Fil
           treeNodeIterator != node.subclasses.end();
           treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator) != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
+          ASSERT_not_null(*treeNodeIterator);
+          ASSERT_not_null((*treeNodeIterator)->getBaseClass());
 
           buildTraverseMemoryPoolSupport(**treeNodeIterator,outputFile);
         }
    }
-
 
 StringUtility::FileWithLineNumbers
 Grammar::buildStringForNodeIdSource ( AstNodeClass & node )
@@ -767,16 +754,13 @@ Grammar::buildStringForNodeIdSource ( AstNodeClass & node )
      StringUtility::FileWithLineNumbers returnString = readFileWithPos (nodeIdFileName);
 
      returnString = GrammarString::copyEdit(returnString,"$CLASSNAME",node.getName());
-
      return returnString;
    }
 
 void
 Grammar::buildNodeIdSupport( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
    {
-
      StringUtility::FileWithLineNumbers editString = buildStringForNodeIdSource(node);
-
      outputFile += editString;
 
   // Call this function recursively on the children of this node in the tree
@@ -785,8 +769,8 @@ Grammar::buildNodeIdSupport( AstNodeClass & node, StringUtility::FileWithLineNum
           treeNodeIterator != node.subclasses.end();
           treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator) != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
+          ASSERT_not_null(*treeNodeIterator);
+          ASSERT_not_null((*treeNodeIterator)->getBaseClass());
 
           buildNodeIdSupport(**treeNodeIterator,outputFile);
         }
@@ -804,7 +788,6 @@ Grammar::buildStringToTestPointerForContainmentInMemoryPoolSource ( AstNodeClass
      string classSpecificString;
      string classSpecificVisitorPatternString;
      string classSpecificMemoryUsageString;
-
      string className = node.getName();
 
      returnString = GrammarString::copyEdit(returnString,"$CLASS_SPECIFIC_STATIC_MEMBERS_MEMORY_USED",classSpecificMemoryUsageString);
@@ -835,7 +818,6 @@ void
 Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      StringUtility::FileWithLineNumbers editString = buildStringForCheckingIfDataMembersAreInMemoryPoolSource(node);
-
      outputFile += editString;
 
   // Call this function recursively on the children of this node in the tree
@@ -844,8 +826,8 @@ Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( AstNodeClass
           treeNodeIterator != node.subclasses.end();
           treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator) != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
+          ASSERT_not_null(*treeNodeIterator);
+          ASSERT_not_null((*treeNodeIterator)->getBaseClass());
 
           buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(**treeNodeIterator,outputFile);
         }
@@ -855,8 +837,6 @@ Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( AstNodeClass
 StringUtility::FileWithLineNumbers
 Grammar::buildStringForReturnDataMemberPointersSource ( AstNodeClass & node )
    {
-  // DQ & JH (1/17/2006): Added support for testing data members pointers if they point to IR nodes
-
      //AS Look at this one to see how the code in buildStringToTestPointerForContainmentInMemoryPoolSource is called
      //to generate code for checking the memory pool.
      string isClassNameFunctionTemplateFileName   = "../Grammar/grammarReturnDataMemberPointers.macro";
@@ -884,19 +864,15 @@ Grammar::buildStringForReturnDataMemberPointersSupport( AstNodeClass & node, Str
           treeNodeIterator != node.subclasses.end();
           treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator) != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
-
+          ASSERT_not_null(*treeNodeIterator);
+          ASSERT_not_null((*treeNodeIterator)->getBaseClass());
           buildStringForReturnDataMemberPointersSupport(**treeNodeIterator,outputFile);
         }
    }
 
-
 StringUtility::FileWithLineNumbers
 Grammar::buildStringForProcessDataMemberReferenceToPointersSource ( AstNodeClass & node )
    {
-  // DQ & JH (1/17/2006): Added support for testing data members pointers if they point to IR nodes
-
      //AS Look at this one to see how the code in buildStringToTestPointerForContainmentInMemoryPoolSource is called
      //to generate code for checking the memory pool.
      string isClassNameFunctionTemplateFileName   = "../Grammar/grammarProcessDataMemberReferenceToPointers.macro";
@@ -915,7 +891,6 @@ void
 Grammar::buildStringForProcessDataMemberReferenceToPointersSupport( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      StringUtility::FileWithLineNumbers editString = buildStringForProcessDataMemberReferenceToPointersSource(node);
-
      outputFile += editString;
 
   // Call this function recursively on the children of this node in the tree
@@ -924,19 +899,16 @@ Grammar::buildStringForProcessDataMemberReferenceToPointersSupport( AstNodeClass
           treeNodeIterator != node.subclasses.end();
           treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator) != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
+          ASSERT_not_null(*treeNodeIterator);
+          ASSERT_not_null((*treeNodeIterator)->getBaseClass());
 
           buildStringForProcessDataMemberReferenceToPointersSupport(**treeNodeIterator,outputFile);
         }
    }
 
-
 StringUtility::FileWithLineNumbers
 Grammar::buildStringForGetChildIndexSource ( AstNodeClass & node )
    {
-  // DQ (3/7/2007): Added support for getting the index position associated with the list of IR nodes children in any IR node.
-
      string isClassNameFunctionTemplateFileName   = "../Grammar/grammarGetChildIndex.macro";
      StringUtility::FileWithLineNumbers returnString = readFileWithPos (isClassNameFunctionTemplateFileName);
 
@@ -953,7 +925,6 @@ void
 Grammar::buildStringForGetChildIndexSupport( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      StringUtility::FileWithLineNumbers editString = buildStringForGetChildIndexSource(node);
-
      outputFile += editString;
 
   // Call this function recursively on the children of this node in the tree
@@ -962,8 +933,8 @@ Grammar::buildStringForGetChildIndexSupport( AstNodeClass & node, StringUtility:
           treeNodeIterator != node.subclasses.end();
           treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator) != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
+          ASSERT_not_null(*treeNodeIterator);
+          ASSERT_not_null((*treeNodeIterator)->getBaseClass());
 
           buildStringForGetChildIndexSupport(**treeNodeIterator,outputFile);
         }
@@ -1016,8 +987,6 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
   // Rasmussen (08/25/2022): Removed all untyped Sage nodes. Ultimately it proved easier to
   // construct regular IR nodes from the Jovial parser. Using the untyped system just led to an
   // unnecessary step and wasted effort.
-
-  // PP (06/03/20): Added Ada nodes
 
   // Except in the root class for the virtual access function.
      if ( (nodeName == "XXXPragma"                  && variableNameString == "startOfConstruct")  ||
@@ -1121,7 +1090,6 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
      return returnResult;
    }
 
-// DQ (3/22/2017): Added to support output of "override" keyword to reduce Clang warnings.
 bool
 generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString & data )
    {
@@ -1258,7 +1226,6 @@ Grammar::buildStringForDataAccessFunctionDeclaration ( AstNodeClass & node )
 
           string codeString = data.getDataAccessFunctionPrototypeString();
 
-       // DQ (3/22/2017): Do the edits for the data member access function protytypes to add "override" keyword.
           bool use_override_keyword = generate_override_keyword(node,data);
           if (use_override_keyword == false)
              {
@@ -1275,7 +1242,6 @@ Grammar::buildStringForDataAccessFunctionDeclaration ( AstNodeClass & node )
           codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_GET", " override");
           codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_SET", " override");
 
-       // StringUtility::FileWithLineNumbers tempString(1, StringUtility::StringWithLineNumber(data.getDataAccessFunctionPrototypeString(), "" /* "<getDataAccessFunctionPrototypeString>" */, 1));
           StringUtility::FileWithLineNumbers tempString(1, StringUtility::StringWithLineNumber(codeString, "" /* "<getDataAccessFunctionPrototypeString>" */, 1));
           returnString += tempString;
         }
@@ -1283,9 +1249,6 @@ Grammar::buildStringForDataAccessFunctionDeclaration ( AstNodeClass & node )
      return returnString;
    }
 
-
-// DQ (9/28/2022): Fixing compiler warning for argument not used.
-// bool Grammar::buildConstructorParameterList ( AstNodeClass & node, vector<GrammarString *> & constructorParameterList, ConstructParamEnum config )
 bool
 Grammar::buildConstructorParameterList ( AstNodeClass & node, vector<GrammarString *> & constructorParameterList )
    {
@@ -1295,7 +1258,7 @@ Grammar::buildConstructorParameterList ( AstNodeClass & node, vector<GrammarStri
   // in the constructor parameters of child grammar elements.
 
   // The input list shoud be empty
-     ROSE_ASSERT(constructorParameterList.size() == 0);
+     ASSERT_require(constructorParameterList.size() == 0);
 
   // Now build the constructor using the data specified at the node and its parents!
   // Use an exclusion mechanism to exclude data before being used within the
@@ -1365,8 +1328,6 @@ Grammar::buildConstructorParameterListStringForEssentialDataMembers(AstNodeClass
   return result;
 }
 
-// DQ (9/28/2022): Fixing compiler warning for argument not used.
-// string Grammar::buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool* complete )
 string
 Grammar::buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, bool* complete )
    {
@@ -1375,11 +1336,10 @@ Grammar::buildConstructorParameterListString ( AstNodeClass & node, bool withIni
      vector<GrammarString *> constructorParameterList;
      vector<GrammarString *>::iterator stringListIterator;
 
-  // DQ (9/28/2022): Fixing compiler warning for argument not used.
-  // bool r = buildConstructorParameterList (node,constructorParameterList, config);
      bool r = buildConstructorParameterList (node,constructorParameterList);
-     if (complete != 0)
+     if (complete != 0) {
           *complete = r;
+     }
 
 #if ROSE_DEBUG > 0
      for( stringListIterator = constructorParameterList.begin();
@@ -1392,10 +1352,9 @@ Grammar::buildConstructorParameterListString ( AstNodeClass & node, bool withIni
         }
 #endif
 
-  // Build the parameter string for the constructor
      string constructorParameterString;
-
      int listSize = constructorParameterList.size();
+
   // Put the constructor paramteres into the parameter string
      for( stringListIterator = constructorParameterList.begin();
           stringListIterator != constructorParameterList.end();
@@ -1412,7 +1371,7 @@ Grammar::buildConstructorParameterListString ( AstNodeClass & node, bool withIni
              }
             else
              {
-               ROSE_ASSERT (withInitializers == false);
+               ASSERT_require(withInitializers == false);
                tempConstructorParameterString = constructorParameter.getBaseClassConstructorSourceParameterString();
              }
 
@@ -1421,7 +1380,6 @@ Grammar::buildConstructorParameterListString ( AstNodeClass & node, bool withIni
        // If there is another parameter to add in then separate them with a ","
           if (i < listSize-1)
              {
-               // BP : 10/24/2001, delete extra memory
                constructorParameterString += ", ";
              }
           i++;
@@ -1429,7 +1387,6 @@ Grammar::buildConstructorParameterListString ( AstNodeClass & node, bool withIni
 
      return constructorParameterString;
    }
-
 
 StringUtility::FileWithLineNumbers
 Grammar::buildDataMemberVariableDeclarations ( AstNodeClass & node )
@@ -1445,7 +1402,6 @@ Grammar::buildDataMemberVariableDeclarations ( AstNodeClass & node )
 
      return result;
    }
-
 
 StringUtility::FileWithLineNumbers
 Grammar::buildFriendDeclarations ( AstNodeClass & node )
@@ -1476,7 +1432,6 @@ Grammar::buildFriendDeclarations ( AstNodeClass & node )
 StringUtility::FileWithLineNumbers
 Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node )
    {
-
   // This function builds a single string containing:
   //    1) Data Access function prototypes (e.g. "void set_data( int data ); int get_data(void); ..." )
   //    2) Constructor prototype (e.g. "$CLASSNAME ( data = 0, $Data* someSageData = NULL );" )
@@ -1500,28 +1455,22 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
      if (node.generateConstructor() == true)
         {
           bool complete = false;
-       // DQ (9/28/2022): Fixing compiler warning for variable not used.
-       // ConstructParamEnum cur = CONSTRUCTOR_PARAMETER;
           string constructorPrototype = "\n     public: \n";
           bool withInitializers = true;
           bool withTypes        = true;
 
        // Get the SgLocatedNode so that we can set the data member as not being a constructor
        // parameter so that we can reuse the same code generation source code.
-          AstNodeClass* parentNode = getNamedNode ( node, "SgLocatedNode" );
-          if (parentNode != NULL)
+          AstNodeClass* parentNode = getNamedNode(node, "SgLocatedNode");
+          if (parentNode != nullptr)
              {
-            // DQ (9/28/2022): Fixing compiler warning for argument not used.
-            // GrammarString* returnValue = getNamedDataMember ( *parentNode, "startOfConstruct" );
-               GrammarString* returnValue = getNamedDataMember ( *parentNode );
-               ROSE_ASSERT(returnValue != NULL);
+               GrammarString* returnValue = getNamedDataMember(*parentNode);
+               ASSERT_not_null(returnValue);
 
             // DQ (11/7/2006): Mark it temporarily as NOT a constructor parameter.
                string defaultInitializer = returnValue->getDefaultInitializerString();
                returnValue->defaultInitializerString = "";
 
-            // DQ (9/28/2022): Fixing compiler warning for argument not used.
-            // string constructorParameterString_1 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                string constructorParameterString_1 = buildConstructorParameterListString(node,withInitializers,withTypes, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_1 + "); \n";
 
@@ -1531,20 +1480,14 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
             // DQ (11/7/2006): Mark it temporarily as NOT a constructor parameter.
                returnValue->setIsInConstructorParameterList(NO_CONSTRUCTOR_PARAMETER);
 
-            // DQ (9/28/2022): Fixing compiler warning for argument not used.
-            // string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_2 + "); \n";
 
-            // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
                returnValue->setIsInConstructorParameterList(CONSTRUCTOR_PARAMETER);
                returnValue->defaultInitializerString = defaultInitializer;
              }
             else
              {
-            // DQ (9/28/2022): Fixing compiler warning for argument not used.
-            // If not a SgLocatedNode then output the normal constructor prototype (with all the default arguments).
-            // string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString + "); \n";
                withInitializers = false;
@@ -1556,17 +1499,12 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
         }
 
 #if BUILD_ATERM_SUPPORT
-  // DQ (10/7/2014): Adding support for Aterm specific function to build ROSE IR nodes (we want it generated independent of if (node.generateConstructor() == true)).
-  // if (node.generateConstructor() == true)
         {
           bool complete = false;
           ConstructParamEnum cur = CONSTRUCTOR_PARAMETER;
           bool withInitializers = true;
           bool withTypes        = true;
           string constructorPrototype = "\n     public: \n";
-
-       // DQ (9/28/2022): Fixing compiler warning for argument not used.
-       // string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
           string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, &complete);
 
           constructorPrototype = constructorPrototype + "         static " + string(className) + "* build_node_from_nonlist_children(" + constructorParameterString + "); \n";
@@ -1580,13 +1518,12 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
 
 void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& complete, const StringUtility::FileWithLineNumbers& constructorSourceCodeTemplate, AstNodeClass& node, StringUtility::FileWithLineNumbers& returnString) {
   StringUtility::FileWithLineNumbers constructorSource = constructorSourceCodeTemplate;
-  if (node.getBaseClass() != NULL) {
+  if (node.getBaseClass() != nullptr) {
     string parentClassName = node.getBaseClass()->getName();
     string baseClassParameterString;
     bool withInitializers = false;
     bool withTypes        = false;
- // DQ (9/28/2022): Fixing compiler warning for argument not used.
- // baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes, config);
+
     baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes);
     string preInitializationString = parentClassName + "($BASECLASS_PARAMETERS)";
     preInitializationString = ": " + preInitializationString;
@@ -1598,8 +1535,6 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
 
   bool withInitializers         = false;
   bool withTypes                = true;
-// DQ (9/28/2022): Fixing compiler warning for argument not used.
-// string constructorParameterString = buildConstructorParameterListString (node,withInitializers,withTypes,config,&complete);
   string constructorParameterString = buildConstructorParameterListString (node,withInitializers,withTypes,&complete);
   constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterString);
   constructorSource = GrammarString::copyEdit (constructorSource,"$CLASSNAME",node.getName());
@@ -1607,8 +1542,6 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
   if (config == NO_CONSTRUCTOR_PARAMETER) {
     constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY","");
   } else {
- // DQ (9/28/2022): Fixing compiler warning for argument not used.
- // string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
     string constructorFunctionBody = node.buildConstructorBody(withInitializers);
     constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
   }
@@ -1637,9 +1570,7 @@ Grammar::buildConstructor ( AstNodeClass & node )
   //   /* now a call to the user defined intialization function */
   //      post_construction_initialization();
   //    }
-
      string className = node.getName();
-
      StringUtility::FileWithLineNumbers returnString;
 
      if (node.generateDestructor() == true)
@@ -1689,13 +1620,7 @@ Grammar::buildConstructor ( AstNodeClass & node )
 StringUtility::FileWithLineNumbers
 Grammar::buildAtermConstructor ( AstNodeClass & node )
    {
-  // DQ (10/10/2014): This function is only called to generate the skeleton for a
-  // small part of the API to translate Aterms to ROSE IR nodes.
-
-  // DQ (10/7/2014): Build the Aterm support static member function (constructor).
-
      StringUtility::FileWithLineNumbers returnString;
-
      string constructorTemplateFileName = "../Grammar/grammarAtermConstructorDefinitionMacros.macro";
      StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = readFileWithPos (constructorTemplateFileName);
 
@@ -1732,8 +1657,8 @@ Grammar::buildCopyMemberFunctions ( AstNodeClass & node, StringUtility::FileWith
           treeNodeIterator != node.subclasses.end();
           treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator) != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
+          ASSERT_not_null(*treeNodeIterator);
+          ASSERT_not_null((*treeNodeIterator)->getBaseClass());
 
           buildCopyMemberFunctions(**treeNodeIterator,outputFile);
         }
@@ -1742,18 +1667,14 @@ Grammar::buildCopyMemberFunctions ( AstNodeClass & node, StringUtility::FileWith
 void
 Grammar::buildGrammarClassSourceCode ( StringUtility::FileWithLineNumbers & outputFile )
    {
-     fprintf(stderr, "This should not be called! \n");
-     ROSE_ABORT();
+     ASSERT_require2(false, "This should not be called!\n");
 
      string fileName  = "../Grammar/grammarMainClassSourceCodeMacros.macro";
-
-  // grammarMainClassParseFunctionSourceCode
      string parseFunctionFileName = "../Grammar/grammarMainClassParseFunctionSourceCode.macro";
 
      StringUtility::FileWithLineNumbers sourceCodeTemplate = readFileWithPos (fileName);
      StringUtility::FileWithLineNumbers parseFunctionSourceCodeTemplate = readFileWithPos (parseFunctionFileName);
 
-     // BP : 10/25/2001, rewrote to do only one alloc
      StringUtility::FileWithLineNumbers finalOutputString = sourceCodeTemplate;
      if(!isRootGrammar()==true)
        finalOutputString.insert(finalOutputString.end(), parseFunctionSourceCodeTemplate.begin(), parseFunctionSourceCodeTemplate.end());
@@ -1770,7 +1691,7 @@ Grammar::getDerivedClassDeclaration ( AstNodeClass & node )
    {
      string derivedClassString;
 
-     if (node.getBaseClass() != NULL)
+     if (node.getBaseClass() != nullptr)
        derivedClassString = string(": public ") + node.getBaseClass()->getName();
 
      return derivedClassString;
@@ -1817,7 +1738,6 @@ Grammar::buildHeaderStringAfterMarker( const string& marker, const string& fileN
      }
      ROSE_ASSERT (!"Marker not found");
 
-  // DQ (11/28/2009): MSVC warns that this function should return a value from all paths.
      return headerFileTemplate;
    }
 
@@ -2126,8 +2046,6 @@ Grammar::buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outp
   // COPY the length into the string at "LIST_LENGTH"
      startString = GrammarString::copyEdit (startString,"$LIST_LENGTH",listLengthString);
 
-     // BP : 10/25/2001, this new version of the code only performs one new memory allocation,
-     // uses list iterators instead of the operator[], and should be a lot faster
      string openString      = "          {";
      string separatorString = ", \"";
      string closeString     = "\"}, \n";
@@ -2145,9 +2063,7 @@ Grammar::buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outp
      }
 
      string endString = "          {V_SgNumVariants, \"last tag\" } \n   }; \n\n\n";
-
      endString = GrammarString::copyEdit (endString,"$MARKER",getGrammarName());
-
      string finalString = startString + middleString + endString;
 
      outputFile.push_back(StringUtility::StringWithLineNumber(finalString, "", 1));
@@ -2160,9 +2076,6 @@ Grammar::buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
      string sourceFileInsertionSeparator = "MEMBER_FUNCTION_DEFINITIONS";
      string fileName = "../Grammar/grammarClassDefinitionMacros.macro";
      StringUtility::FileWithLineNumbers sourceFileTemplate = readFileWithPos (fileName);
-
-  // place this string into a separate locations (isolate it from side effects)
-     // BP : 10/25/2001, no need to duplicate here
 
      StringUtility::FileWithLineNumbers sourceBeforeInsertion;
      sourceBeforeInsertion += buildHeaderStringBeforeMarker(sourceFileInsertionSeparator, fileName);
@@ -2183,9 +2096,6 @@ Grammar::buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
      StringUtility::FileWithLineNumbers editStringMiddleNodeDataMemberFunctions = buildConstructor (node);
      StringUtility::FileWithLineNumbers editStringMiddleNodeMemberFunctions = buildStringForSource(node);
 
-  // Place the constructor at the top of the node specific code for this element of grammar
-  // BP : 10/24/2001, keep track of memory
-
      editedStringMiddle += editStringMiddleNodeMemberFunctions;
      editedStringMiddle += editStringMiddleNodeDataMemberFunctions;
 
@@ -2203,8 +2113,8 @@ Grammar::buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
      vector<AstNodeClass *>::iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin(); treeNodeIterator != node.subclasses.end(); treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator) != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
+          ASSERT_not_null(*treeNodeIterator);
+          ASSERT_not_null((*treeNodeIterator)->getBaseClass());
 
           buildSourceFiles(**treeNodeIterator,outputFile);
         }
@@ -2215,9 +2125,6 @@ Grammar::buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
 void
 Grammar::buildAtermBuildFunctionsSourceFile( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
    {
-  // DQ (10/10/2014): This function is only called to generate the skeleton for a
-  // small part of the API to translate Aterms to ROSE IR nodes.
-
      printf ("At TOP of Grammar::buildAtermBuildFunctionsSourceFile() \n");
 
      StringUtility::FileWithLineNumbers editStringMiddleNodeDataMemberFunctions = buildAtermConstructor (node);
@@ -2229,8 +2136,8 @@ Grammar::buildAtermBuildFunctionsSourceFile( AstNodeClass & node, StringUtility:
      vector<AstNodeClass *>::iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin(); treeNodeIterator != node.subclasses.end(); treeNodeIterator++ )
         {
-          ROSE_ASSERT ((*treeNodeIterator) != NULL);
-          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
+          ASSERT_not_null(*treeNodeIterator);
+          ASSERT_not_null((*treeNodeIterator)->getBaseClass());
 
           buildAtermBuildFunctionsSourceFile(**treeNodeIterator,outputFile);
         }
@@ -2276,7 +2183,7 @@ size_t Grammar::getVariantForNode(const std::string& name) const {
   if (it == this->astNodeToVariantMap.end()) {
     std::cerr << "Could not find variant number for " << name << std::endl;
     std::cerr << "This node name must be added to the list in $(top_srcdir)/src/ROSETTA/astNodeList" << std::endl;
-    abort();
+    ASSERT_require(false);
   }
   return it->second;
 }
@@ -2287,7 +2194,7 @@ size_t Grammar::getVariantForTerminal(const AstNodeClass& t) const {
 
 string Grammar::getNodeForVariant(size_t var) const {
   std::map<size_t, std::string>::const_iterator it = this->astVariantToNodeMap.find(var);
-  ROSE_ASSERT (it != this->astVariantToNodeMap.end());
+  ASSERT_require(it != this->astVariantToNodeMap.end());
   return it->second;
 }
 
@@ -2297,7 +2204,7 @@ AstNodeClass& Grammar::getTerminalForVariant(size_t var)
 
   // Note that when this assertion fails it can be because the IR nodes
   // name is listed more than once in the "astNodeList" file.
-     ROSE_ASSERT (it != this->astVariantToTerminalMap.end());
+     ASSERT_require(it != this->astVariantToTerminalMap.end());
 
      ROSE_ASSERT (it->second);
      return *(it->second);
@@ -2423,10 +2330,8 @@ Grammar::buildTransformationSupport()
      return returnString;
    }
 
-// DQ (9/28/2022): Fixing compiler warning for argument not used.
-// StringUtility::FileWithLineNumbers Grammar::extractStringFromFile ( const string& startMarker, const string& endMarker, const string& filename, const string& directory )
 StringUtility::FileWithLineNumbers
-Grammar::extractStringFromFile ( const string& startMarker, const string& endMarker, const string& filename )
+Grammar::extractStringFromFile(const string& startMarker, const string& endMarker, const string& filename)
    {
   // Open file
      StringUtility::FileWithLineNumbers fileString = Grammar::readFileWithPos (filename);
@@ -2467,7 +2372,7 @@ Grammar::extractStringFromFile ( const string& startMarker, const string& endMar
         {
           fprintf(stderr, "Error: could not locate endMarker = %s in file = %s \n",endMarker.c_str(),filename.c_str());
         }
-     ROSE_ASSERT (found);
+     ASSERT_require(found);
 
      return fileString;
    }
@@ -2480,7 +2385,7 @@ Grammar::getFilenameForGlobalDeclarations()
    }
 
 void
-Grammar::setFilenameForGlobalDeclarations( const string& filename )
+Grammar::setFilenameForGlobalDeclarations(const string& filename)
    {
      filenameForGlobalDeclarations = filename;
    }
@@ -2501,8 +2406,6 @@ Grammar::buildMiscSupportDeclarations()
      return returnString;
    }
 
-// MS: new automatically generated variant. Replaces variant().
-// used in variantT()
 string
 Grammar::buildVariantEnums() {
   string s=string("enum VariantT \n{\n");
@@ -2533,7 +2436,6 @@ Grammar::buildVariantEnums() {
 // SgBreakStmt       | true   |  true       | true        |
 // --------------------------------------------------------
 // The table, however, instead of storing booleans, is represented using bits in a byte.
-
 
 static uint8_t ** classHierarchyCastTable;
 
@@ -2627,8 +2529,6 @@ void Grammar::buildClassHierarchyCastTable(AstNodeClass * astNodeClass, vector<A
     myParentsDescendents.insert(myParentsDescendents.end(), myDescendents.begin(), myDescendents.end());
 }
 
-// AS: new automatically generated variant. Replaces variant().
-// used in variantT()
 string
 Grammar::buildClassHierarchySubTreeFunction() {
 
@@ -2678,8 +2578,6 @@ Grammar::buildClassHierarchySubTreeFunction() {
   return s;
 }
 
-// AS: new automatically generated variant. Replaces variant().
-// used in variantT()
 string
 Grammar::buildMemoryPoolBasedVariantVectorTraversalSupport() {
 
@@ -2816,7 +2714,6 @@ Grammar::buildSerializationSupport(std::ostream &declarations, std::ostream &def
 string
 Grammar::buildReferenceToPointerHandlerCode()
    {
-  // DQ (3/9/2013): Adding support to exclude some code from SWIG.
      string s;
      s += string("#ifndef SWIG \n\n");
      s += "#ifndef REFERENCETOPOINTERHANDLER_DEFINED\n"
@@ -2841,8 +2738,7 @@ Grammar::buildReferenceToPointerHandlerCode()
         {
           s +=  "     void apply(" + terminalList[i]->name + " *&r, const SgName &n, bool traverse)\n"
                 "        {\n"
-                "          ROSE_ASSERT(this != NULL);\n"
-             // "          ROSE_ASSERT(r != NULL);\n"
+                "          ASSERT_this();\n"
                 "          static_cast<ImplClass *>(this)->genericApply(r, n, traverse);\n"
                 "        }\n\n";
         }
@@ -2881,7 +2777,6 @@ Grammar::buildReferenceToPointerHandlerCode()
 
           "#endif // REFERENCETOPOINTERHANDLER_DEFINED\n\n";
 
-  // DQ (3/9/2013): Adding support to exclude some code from SWIG.
      s += string("#endif // endif for ifndef SWIG \n\n");
 
      return s;
@@ -2910,17 +2805,17 @@ Grammar::buildCode ()
   // buildTree();
   // Get the root node (the only one without a parent)
   // Also, add the grammar prefix to each and every node
-     this->setRootOfGrammar(NULL);
+     this->setRootOfGrammar(nullptr);
      for (vector<AstNodeClass*>::const_iterator i = terminalList.begin(); i != terminalList.end(); ++i)
         {
           (*i)->addGrammarPrefixToName();
-          if ((*i)->getBaseClass() == NULL)
+          if ((*i)->getBaseClass() == nullptr)
              {
                this->setRootOfGrammar(*i);
              }
         }
-     ROSE_ASSERT (this->getRootOfGrammar());
-     ROSE_ASSERT (rootNode != NULL);
+     ASSERT_require(this->getRootOfGrammar());
+     ASSERT_not_null(rootNode);
 
   // **************************************************************
   //                 AST HEADER FILE GENERATION
@@ -2931,7 +2826,6 @@ Grammar::buildCode ()
   // Put in comment block for Doxygen (so that autogenerated
   // grammars can be automatically documented).
 
-  // DQ (12/28/2009): Removed references to files that should be elsewhere to simplify splitting large files generated by ROSETTA..
      string headerString = "#ifndef $IFDEF_MARKER_H\n"
                            "#define $IFDEF_MARKER_H\n"
                            "\n"
@@ -3020,8 +2914,6 @@ Grammar::buildCode ()
          ROSE_ArrayGrammarHeaderFile <<"#include <" + getGrammarName() + "StorageClasses.h>\n";
      }
 
-     // Declarations for I/O functions. These never depended on any of the CxxGrammarMetaProgram tool's inputs, so they've been
-     // moved to a non-generated header file.
      ROSE_ArrayGrammarHeaderFile <<"#include <sageContainer.h>\n";
 
      // Generate class definitions
@@ -3123,12 +3015,11 @@ Grammar::buildCode ()
      buildVariantsStringDataBase(ROSE_ArrayGrammarSourceFile);
 
   // Now build the source code for the terminals and non-terminals in the grammar
-     ROSE_ASSERT (rootNode != NULL);
+     ASSERT_not_null(rootNode);
      buildSourceFiles(*rootNode,ROSE_ArrayGrammarSourceFile);
      if (verbose)
          cout << "DONE: buildSourceFiles()" << endl;
 
-  // DQ (5/24/2005): Support for evaluation of memory sizes of IR nodes
      string memoryStorageEvaluationSupport = buildMemoryStorageEvaluationSupport();
      ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(memoryStorageEvaluationSupport, "", 1));
 
@@ -3152,13 +3043,12 @@ Grammar::buildCode ()
 
      ROSE_NewAndDeleteOperatorSourceFile.push_back(StringUtility::StringWithLineNumber("#include \"Cxx_GrammarMemoryPoolSupport.h\"\n", "", 1));
   // Now build the source code for the terminals and non-terminals in the grammar
-     ROSE_ASSERT (rootNode != NULL);
+     ASSERT_not_null(rootNode);
 
      buildNewAndDeleteOperators(*rootNode,ROSE_NewAndDeleteOperatorSourceFile);
      if (verbose)
          cout << "DONE: buildNewAndDeletOperators()" << endl;
 
-  // DQ(10/22/2007): fixed missed variable renaming.
      Grammar::writeFile(ROSE_NewAndDeleteOperatorSourceFile, target_directory, getGrammarName() + "NewAndDeleteOperators", ".C");
 
    //--------------------------------------------
@@ -3169,7 +3059,7 @@ Grammar::buildCode ()
      ROSE_TraverseMemoryPoolSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
      ROSE_TraverseMemoryPoolSourceFile.push_back(StringUtility::StringWithLineNumber("#include \"Cxx_GrammarMemoryPoolSupport.h\"\n", "", 1));
   // Now build the source code for the terminals and non-terminals in the grammar
-     ROSE_ASSERT (rootNode != NULL);
+     ASSERT_not_null(rootNode);
 
      buildTraverseMemoryPoolSupport(*rootNode,ROSE_TraverseMemoryPoolSourceFile);
      if (verbose)
@@ -3184,7 +3074,7 @@ Grammar::buildCode ()
 
      ROSE_NodeIdSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
   // Now build the source code for the terminals and non-terminals in the grammar
-     ROSE_ASSERT (rootNode != NULL);
+     ASSERT_not_null(rootNode);
 
      buildNodeIdSupport(*rootNode,ROSE_NodeIdSourceFile);
      if (verbose)
@@ -3200,7 +3090,7 @@ Grammar::buildCode ()
      ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
      ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile.push_back(StringUtility::StringWithLineNumber("#include \"Cxx_GrammarMemoryPoolSupport.h\"\n", "", 1));
   // Now build the source code for the terminals and non-terminals in the grammar
-     ROSE_ASSERT (rootNode != NULL);
+     ASSERT_not_null(rootNode);
 
      buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(*rootNode,ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile);
      if (verbose)
@@ -3213,11 +3103,11 @@ Grammar::buildCode ()
   // --------------------------------------------
      string returnClassHierarchySubTreeFileName = string(getGrammarName()) + "ReturnClassHierarchySubTree.C";
      fstream ROSE_returnClassHierarchySubTreeSourceFile(std::string(target_directory+"/"+returnClassHierarchySubTreeFileName).c_str(),ios::out);
-     ROSE_ASSERT (ROSE_returnClassHierarchySubTreeSourceFile.good() == true);
+     ASSERT_require(ROSE_returnClassHierarchySubTreeSourceFile.good() == true);
 
      ROSE_returnClassHierarchySubTreeSourceFile << includeHeaderString;
   // Now build the source code for the terminals and non-terminals in the grammar
-     ROSE_ASSERT (rootNode != NULL);
+     ASSERT_not_null(rootNode);
 
      ROSE_returnClassHierarchySubTreeSourceFile << buildClassHierarchySubTreeFunction();
      // Include the classHierarchyCastTable in the file for fast casting between compatible types
@@ -3231,10 +3121,10 @@ Grammar::buildCode ()
   // --------------------------------------------
      string memoryPoolTraversalFileName = "AstQueryMemoryPool.h";
      fstream ROSE_memoryPoolTraversalSourceFile(std::string(target_directory+"/"+ memoryPoolTraversalFileName).c_str(),ios::out);
-     ROSE_ASSERT (ROSE_memoryPoolTraversalSourceFile.good() == true);
+     ASSERT_require(ROSE_memoryPoolTraversalSourceFile.good() == true);
 
   // Now build the source code for the terminals and non-terminals in the grammar
-     ROSE_ASSERT (rootNode != NULL);
+     ASSERT_not_null(rootNode);
 
      ROSE_memoryPoolTraversalSourceFile << buildMemoryPoolBasedVariantVectorTraversalSupport();
      if (verbose)
@@ -3248,7 +3138,7 @@ Grammar::buildCode ()
 
      ROSE_ReturnDataMemberPointersSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
   // Now build the source code for the terminals and non-terminals in the grammar
-     ROSE_ASSERT (rootNode != NULL);
+     ASSERT_not_null(rootNode);
 
      buildStringForReturnDataMemberPointersSupport(*rootNode,ROSE_ReturnDataMemberPointersSourceFile);
      if (verbose)
@@ -3263,7 +3153,7 @@ Grammar::buildCode ()
 
      ROSE_ProcessDataMemberReferenceToPointersSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
   // Now build the source code for the terminals and non-terminals in the grammar
-     ROSE_ASSERT (rootNode != NULL);
+     ASSERT_not_null(rootNode);
 
      buildStringForProcessDataMemberReferenceToPointersSupport(*rootNode,ROSE_ProcessDataMemberReferenceToPointersSourceFile);
      if (verbose)
@@ -3278,7 +3168,7 @@ Grammar::buildCode ()
 
      ROSE_GetChildIndexSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
   // Now build the source code for the terminals and non-terminals in the grammar
-     ROSE_ASSERT (rootNode != NULL);
+     ASSERT_not_null(rootNode);
 
      buildStringForGetChildIndexSupport(*rootNode,ROSE_GetChildIndexSourceFile);
      if (verbose)
@@ -3293,7 +3183,7 @@ Grammar::buildCode ()
 
      ROSE_CopyMemberFunctionsSourceFile << includeHeaderString;
   // Now build the source code for the terminals and non-terminals in the grammar
-     ROSE_ASSERT (rootNode != NULL);
+     ASSERT_not_null(rootNode);
 
      buildCopyMemberFunctions(*rootNode,ROSE_CopyMemberFunctionsSourceFile);
      if (verbose)
