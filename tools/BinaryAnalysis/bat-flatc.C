@@ -83,15 +83,17 @@ createSwitchParser(Settings& settings) {
 }
 
 // Convert FlatBuffer file to RBA file
-void fbToRBA(const boost::filesystem::path& inputFileName, const boost::filesystem::path& outputFileName, Serialization::Format stateFormat) {
-    mlog[INFO] << "Converting FlatBuffer to RBA: " << inputFileName << " -> " << outputFileName << "\n";
-    
+void
+fbToRBA(
+  const boost::filesystem::path& input, const boost::filesystem::path& output, Serialization::Format stateFormat
+) {
+    mlog[INFO] << "Converting FlatBuffer to RBA: " << input << " -> " << output << "\n";
+
     // Read the FlatBuffer file
-    std::ifstream inFile(inputFileName.string().c_str(), std::ios::binary);
-    if (!inFile) {
-        throw Exception("cannot open input file: " + inputFileName.string());
-    }
-    
+    std::ifstream inFile(input.string().c_str(), std::ios::binary);
+    if (!inFile)
+        throw Exception("cannot open input file: " + input.string());
+
     std::vector<char> fbData;
     inFile.seekg(0, std::ios::end);
     size_t size = inFile.tellg();
@@ -99,74 +101,75 @@ void fbToRBA(const boost::filesystem::path& inputFileName, const boost::filesyst
     fbData.resize(size);
     inFile.read(fbData.data(), size);
     inFile.close();
-    
+
     if (stateFormat == Serialization::FLATBUFFERS) {
         // Just wrap the FlatBuffer data in a framed RBA file
         mlog[INFO] << "Using direct FlatBuffer inlining\n";
-        
+
         // Create a frame record with the FlatBuffer data
         Serialization::FrameRecord frameRecord(Serialization::PARTITIONER, Serialization::FLATBUFFERS);
         frameRecord.payload(fbData);
-        
+
         // Write to output file using SerialFrame
         std::shared_ptr<Serialization::SerialFrame> frame = std::make_shared<Serialization::SerialFrame>();
-        frame->openForWrite(outputFileName, nullptr);
+        frame->openForWrite(output, nullptr);
         frame->writeFileHeader();
         frame->writeFrameRecord(frameRecord);
         frame->close();
     } else {
         // Use the SerialIO interface to rebuild the partitioner and save it
         mlog[INFO] << "Rebuilding partitioner\n";
-        
+
         // Create and verify the loader
         auto loader = FB::Deserializer::fromBytes(fbData);
-        if (!loader.verify()) {
-            throw Exception("invalid FlatBuffer partitioner data in " + inputFileName.string());
-        }
-        
+        if (!loader.verify())
+            throw Exception("invalid FlatBuffer partitioner data in " + input.string());
+
         // Load the partitioner
         auto partitioner = loader.load();
-        if (!partitioner) {
+        if (!partitioner)
             throw Exception("failed to load partitioner from FlatBuffer data");
-        }
-        
+
         // Save the partitioner using SerialIo
         SerialOutput::Ptr saver = SerialOutput::instance();
         saver->format(stateFormat);
-        saver->open(outputFileName);
+        saver->open(output);
         saver->savePartitioner(partitioner);
         saver->close();
     }
-    
+
     mlog[INFO] << "Conversion complete\n";
 }
 
 // Convert RBA file to FlatBuffer file
-void rbaToFB(const boost::filesystem::path& inputFileName, const boost::filesystem::path& outputFileName, Serialization::Format stateFormat) {
-    mlog[INFO] << "Converting RBA to FlatBuffer: " << inputFileName << " -> " << outputFileName << "\n";
-    
+void
+rbaToFB(
+  const boost::filesystem::path& input, const boost::filesystem::path& output, Serialization::Format stateFormat
+) {
+    mlog[INFO] << "Converting RBA to FlatBuffer: " << input << " -> " << output << "\n";
+
     // Load the partitioner from the RBA file
     Partitioner2::PartitionerPtr partitioner;
     try {
-        partitioner = Partitioner2::Partitioner::instanceFromRbaFile(inputFileName.string(), stateFormat);
+        partitioner = Partitioner2::Partitioner::instanceFromRbaFile(input.string(), stateFormat);
         if (!partitioner) {
-            throw Exception("failed to load partitioner from " + inputFileName.string());
+            throw Exception("failed to load partitioner from " + input.string());
         }
     } catch (const std::exception& e) {
-        throw Exception("cannot load partitioner from " + inputFileName.string() + ": " + e.what());
+        throw Exception("cannot load partitioner from " + input.string() + ": " + e.what());
     }
-    
+
     // Serialize the partitioner to FlatBuffer
     FB::Serializer saver(partitioner);
     saver.save();
-    
+
     // Write to output file
     try {
-        saver.write(outputFileName);
+        saver.write(output);
     } catch (const std::exception& e) {
-        throw Exception("failed to write FlatBuffer output to " + outputFileName.string() + ": " + e.what());
+        throw Exception("failed to write FlatBuffer output to " + output.string() + ": " + e.what());
     }
-    
+
     mlog[INFO] << "Conversion complete\n";
 }
 
@@ -199,7 +202,7 @@ main(int argc, char* argv[]) {
     try {
         // Determine conversion direction based on file extension
         std::string ext = settings.inputFileName.extension().string();
-        
+
         if (boost::iequals(ext, ".fbs")) {
             // FlatBuffer to RBA conversion
             fbToRBA(settings.inputFileName, settings.outputFileName, settings.stateFormat);

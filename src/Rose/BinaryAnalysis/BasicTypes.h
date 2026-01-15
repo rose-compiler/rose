@@ -5,8 +5,8 @@
 #include <RoseFirst.h>
 
 // #include's for subdirectories and sub-namespaces are at the end of this header.
-#include <Rose/Exception.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
+#include <Rose/Exception.h>
 #include <Sawyer/SharedPointer.h>
 #include <memory>
 
@@ -39,11 +39,11 @@ class HotPatch;
 class LibraryIdentification;
 class MagicNumber;
 class MemoryMap;
-using MemoryMapPtr = Sawyer::SharedPointer<MemoryMap>;  /**< Reference counting pointer. */
+using MemoryMapPtr = Sawyer::SharedPointer<MemoryMap>; /**< Reference counting pointer. */
 class NoOperation;
 class Reachability;
 class ReadWriteSets;
-using ReadWriteSetsPtr = std::shared_ptr<ReadWriteSets>; /**< Reference counting pointer. */
+using ReadWriteSetsPtr    = std::shared_ptr<ReadWriteSets>;  /**< Reference counting pointer. */
 using RegisterDescriptors = std::vector<RegisterDescriptor>; /**< List of register descriptors in dictionary. */
 class RegisterDictionary;
 using RegisterDictionaryPtr = Sawyer::SharedPointer<RegisterDictionary>; /**< Reference counting pointer. */
@@ -92,8 +92,11 @@ class Exception: public Rose::Exception {
     ~Exception() throw() {}
 };
 
-/** Progress callback function type. */
-using ProgressCallback = std::function<void(size_t current, size_t total, const char* phase)>;
+/** Progress callback function. If the callee knows how much data will be read, it should be passed as the @ref total
+ * parameter. If it is unknown, the @ref total parameter should be empty.
+ */
+using ProgressCallback = std::function<void(size_t current, Sawyer::Optional<size_t> total, const std::string& phase)>;
+
 class SerialFrame;
 class FrameRecord;
 
@@ -105,7 +108,7 @@ class Deserializer;
 } // namespace Serialization
 class SmtlibSolver;
 class SmtSolver;
-using SmtSolverPtr = std::shared_ptr<SmtSolver>;  /**< Reference counting pointer. */
+using SmtSolverPtr = std::shared_ptr<SmtSolver>; /**< Reference counting pointer. */
 class SourceLocations;
 class SRecord;
 class SymbolicExpresssionParser;
@@ -119,17 +122,17 @@ namespace PointerDetection {
 class Analysis;
 class PointerDescriptor;
 class Settings;
-} // namespace
+} // namespace PointerDetection
 
 namespace ReturnValueUsed {
 class Analysis;
 class CallSiteResults;
-} // namespace
+} // namespace ReturnValueUsed
 
 namespace StackDelta {
 class Analysis;
 void initNamespace();
-} // namespace
+} // namespace StackDelta
 
 namespace Strings {
 class AnyCodePoint;
@@ -149,26 +152,26 @@ class StringFinder;
 class TerminatedString;
 class Utf8CharacterEncodingForm;
 class Utf16CharacterEncodingForm;
-} // namespace
+} // namespace Strings
 
 namespace SymbolicExpression {
 class Exception;
 class ExprExprHashMap;
 class Formatter;
 class Interior;
-using InteriorPtr = Sawyer::SharedPointer<Interior>;    /**< Reference counting pointer. */
+using InteriorPtr = Sawyer::SharedPointer<Interior>; /**< Reference counting pointer. */
 class Leaf;
-using LeafPtr = Sawyer::SharedPointer<Leaf>;            /**< Reference counting pointer. */
+using LeafPtr = Sawyer::SharedPointer<Leaf>; /**< Reference counting pointer. */
 class Node;
-using Ptr = Sawyer::SharedPointer<Node>;                /**< Reference counting pointer. */
+using Ptr = Sawyer::SharedPointer<Node>; /**< Reference counting pointer. */
 class Simplifier;
 class Type;
 class Visitor;
-} // namespace
+} // namespace SymbolicExpression
 using SymbolicExpressionPtr = SymbolicExpression::Ptr;
 
-} // namespace
-} // namespace
+} // namespace BinaryAnalysis
+} // namespace Rose
 
 #endif
 

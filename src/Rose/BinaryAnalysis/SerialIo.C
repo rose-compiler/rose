@@ -182,7 +182,7 @@ SerialOutput::open(const boost::filesystem::path& fileName) {
     objectType(Serialization::ERROR); // in case of exception
 
     // Create a callback for SerialFrame that wraps our progress indicator
-    auto progressCB = makeProgressCallback("serializing");
+    auto progressCB = makeProgressCB("serializing");
 
     try {
         // Initialize the container frame - it will handle the file opening
@@ -199,10 +199,6 @@ SerialOutput::open(const boost::filesystem::path& fileName) {
         if (!serializer_) {
             throw Exception("failed to create serializer for format " + boost::lexical_cast<std::string>(format()));
         }
-
-        if (Progress::Ptr p = progress())
-            p->update(Progress::Report("serializing", 0.0));
-        progressBar_.value(0, 0, 0);
 
         setIsOpen(true);
         objectType(Serialization::NO_OBJECT);
@@ -222,7 +218,7 @@ SerialOutput::savePartitioner(const Partitioner2::Partitioner::ConstPtr& partiti
     ASSERT_not_null(frame_);
 
     // Create a progress callback for the serializer
-    auto progress = makeProgressCallback("serializing");
+    auto progress = makeProgressCB("serializing");
 
     // Get serialized payload from the serializer
     std::vector<char> payload = serializer_->savePartitioner(partitioner, progress);
@@ -299,19 +295,14 @@ SerialInput::open(const boost::filesystem::path& fileName) {
 
     objectType(Serialization::ERROR); // in case of exception
 
-    // Create a callback for SerialFrame that wraps our progress indicator
-    auto ioCb = [this](size_t current, size_t total, const char* phase) {
-        progressBar_.value(current, 0, total);
-        if (Progress::Ptr p = progress())
-            p->update(Progress::Report(phase, current, total));
-    };
+    auto progressCB = makeProgressCB("deserializing");
 
     try {
         // Initialize the container frame - it will handle the file opening
         frame_ = std::make_unique<Serialization::SerialFrame>();
 
         // Open the file and read the header, but handle header errors specially
-        frame_->openForRead(fileName, ioCb);
+        frame_->openForRead(fileName, progressCB);
 
         try {
             frame_->readAndVerifyFileHeader();
@@ -337,10 +328,6 @@ SerialInput::open(const boost::filesystem::path& fileName) {
         if (!deserializer_) {
             throw Exception("failed to create deserializer for format " + boost::lexical_cast<std::string>(format()));
         }
-
-        if (Progress::Ptr p = progress())
-            p->update(Progress::Report("loading", 0.0));
-        progressBar_.value(0, 0, 0);
 
         setIsOpen(true);
         objectType(Serialization::PARTITIONER);
@@ -394,35 +381,22 @@ SerialInput::readAndValidateRecord(Serialization::Savable expectedType) {
 }
 
 Serialization::ProgressCallback
-SerialIo::makeProgressCallback(const char* phase) {
+SerialIo::makeProgressCB(const std::string& phase) {
 
-    const auto updateValue = [this](size_t current, size_t total) {
-        if (total == -1) {
+    return [this, phase](size_t current, Sawyer::Optional<size_t> total, const std::string& innerPhase) {
+        std::string name = phase + "-" + innerPhase;
+
+        if (total) {
+            progressBar_.value(current, *total);
+        } else {
             progressBar_.value(current);
-        } else {
-            progressBar_.value(0, current, total);
         }
-    };
-
-    const auto updateProgress = [this](size_t current, size_t total, const std::string& phase) {
-        auto p = progress();
-
-        if (total == -1) {
-            p->update(Progress::Report(current, NAN));
-        } else {
-            p->update(Progress::Report(phase, current, total));
-        }
-    };
-
-    return [this, phase, updateValue, updateProgress](size_t current, size_t total, const char* innerPhase) {
-        std::string name = phase;
-        name             = name + "-" + innerPhase;
-
         progressBar_.prefix(name);
 
-        updateValue(current, total);
-        if (progress())
-            updateProgress(current, total, name);
+        double prog_total = total ? *total : NAN;
+        if (auto p = progress()) {
+            p->update(Progress::Report(current, prog_total));
+        }
     };
 }
 
@@ -438,7 +412,7 @@ SerialInput::loadPartitioner() {
     auto frameRecord = readAndValidateRecord(Serialization::PARTITIONER);
 
     // Create a progress callback for the deserializer
-    auto progress = makeProgressCallback("deserializing");
+    auto progress = makeProgressCB("deserializing");
 
     // Get the payload and deserialize it using the deserializer
     const auto& payload = frameRecord.payload();

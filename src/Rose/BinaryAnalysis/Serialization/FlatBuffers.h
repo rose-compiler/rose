@@ -5,8 +5,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #ifdef ROSE_ENABLE_FLATBUFFERS
 
-#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -85,13 +85,13 @@ class Serializer {
 
   protected:
     Handle<Architecture> architecture(const BinaryAnalysis::Architecture::BaseConstPtr& arch);
-    Handle<Instruction> instruction(const SgAsmInstruction* const& insn);
-    Handle<BasicBlock>  basicBlock(const Partitioner2::BasicBlockPtr& bb);
-    Handle<Function>    function(const Partitioner2::FunctionPtr& f);
-    Handle<CfgEdge>     cfgEdge(const Partitioner2::ControlFlowGraph::Edge& e);
-    Handle<Cfg>         cfg(const Partitioner2::ControlFlowGraph& cfg);
-    Handle<Segment>     segment(const BinaryAnalysis::MemoryMap::Super::Node& seg);
-    Handle<MemoryMap>   mmap(const BinaryAnalysis::MemoryMap& map);
+    Handle<Instruction>  instruction(const SgAsmInstruction* const& insn);
+    Handle<BasicBlock>   basicBlock(const Partitioner2::BasicBlockPtr& bb);
+    Handle<Function>     function(const Partitioner2::FunctionPtr& f);
+    Handle<CfgEdge>      cfgEdge(const Partitioner2::ControlFlowGraph::Edge& e);
+    Handle<Cfg>          cfg(const Partitioner2::ControlFlowGraph& cfg);
+    Handle<Segment>      segment(const BinaryAnalysis::MemoryMap::Super::Node& seg);
+    Handle<MemoryMap>    mmap(const BinaryAnalysis::MemoryMap& map);
     std::pair<Handle<InstructionList>, Handle<BasicBlockList>>
                          instructionsBasicBlocks(const std::vector<Partitioner2::BasicBlockPtr>& bbs);
     Handle<FunctionList> functions(const std::vector<Partitioner2::FunctionPtr>& funs);

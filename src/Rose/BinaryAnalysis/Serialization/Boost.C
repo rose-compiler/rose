@@ -179,7 +179,7 @@ class BoostSerializer final: public SerialIo::Serializer {
 
         // Report initial progress
         if (progress)
-            progress(0, -1, "boost");
+            progress(0, Sawyer::Nothing(), "boost");
 
         boost::iostreams::counter counter;       // Track written bytes for progress
         std::string               error_message; // Report asynchronous write errors
@@ -197,7 +197,7 @@ class BoostSerializer final: public SerialIo::Serializer {
 
         while (!worker.try_join_for(timeout)) {
             if (progress)
-                progress(counter.characters(), -1, "boost");
+                progress(counter.characters(), Sawyer::Nothing(), "boost");
         }
 
         if (progress)
@@ -268,7 +268,7 @@ class BoostDeserializer final: public SerialIo::Deserializer {
         in_stream.push(boost::ref(counter));
         in_stream.push(data_stream);
 
-        boost::thread               worker(startLoadWorker, this, boost::ref(in_stream), boost::ref(obj), error_message);
+        boost::thread worker(startLoadWorker, this, boost::ref(in_stream), boost::ref(obj), error_message);
         boost::chrono::milliseconds timeout((unsigned)(1000 * Sawyer::ProgressBarSettings::minimumUpdateInterval()));
 
         while (!worker.try_join_for(timeout)) {
@@ -874,11 +874,6 @@ template <class S>
 void
 Partitioner::load(S& s, const unsigned version) {
     mlog[INFO] << "Loading partitioner with version " << version << "\n";
-    if (!architecture_) {
-        mlog[INFO] << "Null architecture\n";
-    } else {
-        mlog[INFO] << "Architecture: " << architecture_->name() << "\n";
-    }
     serializeCommon(s, version);
     if (version >= 3) {
         SgNode* node    = restoreAst(s);
@@ -889,6 +884,11 @@ Partitioner::load(S& s, const unsigned version) {
         std::string architecture;
         s&          BOOST_SERIALIZATION_NVP(architecture);
         architecture_ = Architecture::findByName(architecture).orThrow();
+    }
+    if (!architecture_) {
+        mlog[INFO] << "Null architecture when loading\n";
+    } else {
+        mlog[INFO] << "Architecture: " << architecture_->name() << "\n";
     }
     rebuildVertexIndices();
 }

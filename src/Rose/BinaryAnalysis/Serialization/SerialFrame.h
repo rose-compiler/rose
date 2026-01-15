@@ -82,17 +82,16 @@ class FrameRecord {
 
     /** Field getter and setters. */
     const std::vector<char>& payload() const { return payload_; }
-    void payload(const std::vector<char>& payload) { payload_ = payload; }
-
+    void                     payload(const std::vector<char>& payload) { payload_ = payload; }
 
     Serialization::Savable objectType() const { return objectType_; }
-    void objectType(Serialization::Savable type) { objectType_ = type; }
+    void                   objectType(Serialization::Savable type) { objectType_ = type; }
 
     Serialization::Format format() const { return format_; }
-    void format(Serialization::Format fmt) { format_ = fmt; }
+    void                  format(Serialization::Format fmt) { format_ = fmt; }
 
     std::string roseVersion() const { return roseVersion_; }
-    void roseVersion(const std::string& ver) { roseVersion_ = ver; }
+    void        roseVersion(const std::string& ver) { roseVersion_ = ver; }
 
     /** Get the payload size. */
     std::uint64_t payloadSize() const { return payload_.size(); }
@@ -140,14 +139,12 @@ class FrameRecord {
  * call ::read/::write directly. */
 class SerialFrame {
   public:
-    using ProgressCallback = Serialization::ProgressCallback;
-
     SerialFrame();
     ~SerialFrame();
 
     // Open/close for writing or reading.
-    void openForWrite(const boost::filesystem::path& fileName, ProgressCallback ioCb);
-    void openForRead(const boost::filesystem::path& fileName, ProgressCallback ioCb);
+    void openForWrite(const boost::filesystem::path& fileName, ProgressCallback saveCB);
+    void openForRead(const boost::filesystem::path& fileName, ProgressCallback loadCB);
 
     // Close boost streams and fd, adjust fd and mode if necessary
     void close();
@@ -186,6 +183,7 @@ class SerialFrame {
     boost::iostreams::stream<boost::iostreams::file_descriptor_sink> outStream_;
     std::unique_ptr<boost::archive::binary_oarchive>                 outArchive_;
 
+    // Progress reporting
     ProgressCallback progress_;
 
     void closeInput();
@@ -198,7 +196,7 @@ class SerialFrame {
     std::vector<char> readBlob();
 
     static void startWriteWorker(SerialFrame* saver, const std::vector<char>& data);
-    void writeWorker(const std::vector<char>& data);
+    void        writeWorker(const std::vector<char>& data);
 };
 
 } // namespace Serialization

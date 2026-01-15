@@ -217,12 +217,12 @@ class SerialIo {
     void init();
 
   protected:
-    /** Create a progress callback that wraps the IO progress reporting.
+    /** Create progress callbacks that wraps the IO progress reporting.
      *
      * @param phase The name of the phase for progress reporting
-     * @return A callback function that reports progress to this IO object
+     * @return A callback function that reports progress
      */
-    Serialization::ProgressCallback makeProgressCallback(const char* phase);
+    Serialization::ProgressCallback makeProgressCB(const std::string& phase);
 
     /* Legacy declarations for compatibility */
   public:

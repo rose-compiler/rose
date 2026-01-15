@@ -46,16 +46,16 @@ class FlatBufferSerializer final: public SerialIo::Serializer {
       const Partitioner2::PartitionerConstPtr& partitioner, Serialization::ProgressCallback progress
     ) override {
 
+        // Report initial progress
+        if (progress)
+            progress(0, Sawyer::Nothing(), "flatbuffers");
+
         Serialization::FlatBuffers::Serializer saver(partitioner);
         saver.save();
 
         auto buf = saver.buffer();
         ASSERT_require(buf.first != nullptr);
         const size_t nBytes = buf.second;
-
-        // Report initial progress
-        if (progress)
-            progress(0, nBytes, "flatbuffers");
 
         // Copy the buffer to a vector
         std::vector<char> payload(buf.first, buf.first + nBytes);
@@ -75,7 +75,7 @@ class FlatBufferDeserializer final: public SerialIo::Deserializer {
 
         // Report initial progress
         if (progress)
-            progress(0, data.size(), "flatbuffer");
+            progress(0, data.size(), "flatbuffers");
 
         // Create and verify the loader
         auto loader = Serialization::FlatBuffers::Deserializer::fromBytes(std::move(data));
@@ -84,7 +84,7 @@ class FlatBufferDeserializer final: public SerialIo::Deserializer {
 
         // Report completion
         if (progress)
-            progress(data.size(), data.size(), "flatbuffer");
+            progress(data.size(), data.size(), "flatbuffers");
 
         return loader.load();
     }
@@ -552,15 +552,21 @@ Deserializer::load() {
     const FB::Root* root = FB::GetRoot(bytes_.data());
     ASSERT_not_null(root);
 
-    const auto arch_name = root->architecture()->name()->str();
+    const auto arch_name    = root->architecture()->name()->str();
+    const auto default_arch = "ppc32-be";
 
-    auto arch = BinaryAnalysis::Architecture::findByName(arch_name);
-    if (arch)
-        arch = BinaryAnalysis::Architecture::findByName("ppc32-be");
+    auto arch =
+      BinaryAnalysis::Architecture::findByName(arch_name)
+        .orElse([arch_name](const auto& e) -> auto {
+            std::cerr << "Unknown architecture, defaulting to PowerPC: " << arch_name << std::endl;
+            return Sawyer::makeError(e);
+        })
+        .orElse(BinaryAnalysis::Architecture::findByName(default_arch))
+        .orThrow(Exception("Unknown or missing architecture name: " + arch_name + " (default: " + default_arch + ")"));
     auto map = mmap(root->memory_map());
 
     // Create a fresh partitioner.
-    partitioner_ = P2::Partitioner::instance(*arch, map);
+    partitioner_ = P2::Partitioner::instance(arch, map);
 
     for (const auto& fb_instr : *root->instructions()->instructions())
         instruction(fb_instr);
