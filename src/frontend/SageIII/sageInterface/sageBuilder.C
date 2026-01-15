@@ -1,10 +1,4 @@
-// tps (01/14/2010) : Switching from rose.h to sage3
-// test cases are put into tests/nonsmoke/functional/roseTests/astInterfaceTests
-// Last modified, by Liao, Jan 10, 2008
-
-// includes "sageBuilder.h"
 #include "sage3basic.h"
-
 #include <rose_config.h>
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -18,8 +12,6 @@
 #endif
 
 #include <boost/algorithm/string/trim.hpp>
-
-// DQ (4/3/2012): Added so that I can enforce some rules as the AST is constructed.
 #include "AstConsistencyTests.h"
 
 // DQ (2/27/2014): We need this feature to support the function: fixupCopyOfAstFromSeparateFileInNewTargetAst()
@@ -599,7 +591,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
                  // DQ (8/12/2013): This can be either an SgExpression or SgInitializedName.
                     ROSE_ASSERT (templateArgument->get_expression() != NULL || templateArgument->get_initializedName() != NULL);
                     ROSE_ASSERT (templateArgument->get_expression() == NULL || templateArgument->get_initializedName() == NULL);
-                    if (templateArgument->get_expression() != NULL)
+                    if (templateArgument->get_expression() != nullptr)
                        {
                          SgExpression* expression = templateArgument->get_expression();
                          ASSERT_not_null(expression);
@@ -607,7 +599,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
                       // Now we care about types of expression that could require name qualification.
                       // Is there anything more than SgVarRefExp that we need to worry about?
                          SgVarRefExp* varRefExp = isSgVarRefExp(expression);
-                         if (varRefExp != NULL)
+                         if (varRefExp != nullptr)
                             {
                            // SgVariableSymbol* variableSymbol = isSgVariableSymbol(varRefExp->get_symbol());
                               SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
@@ -719,7 +711,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
          }
 
      delete info;
-     info = NULL;
+     info = nullptr;
 
      return returnName;
    }
@@ -743,7 +735,7 @@ SageBuilder::unparseTemplateArgumentToString (SgTemplateArgument* templateArgume
      SgName returnName = templateArgument->unparseToString(info);
 
      delete info;
-     info = NULL;
+     info = nullptr;
 
      return returnName;
    }
@@ -757,7 +749,7 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
 
      ROSE_ASSERT(decl != NULL);
 
-     SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+     SgTemplateArgumentPtrList* templateArgumentsList = nullptr;
 
      switch(decl->variantT())
         {
@@ -773,7 +765,7 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
           case V_SgMemberFunctionDeclaration:
           case V_SgClassDeclaration:
              {
-               templateArgumentsList = NULL;
+               templateArgumentsList = nullptr;
                break;
              }
 
@@ -839,7 +831,7 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
 
           case V_SgTemplateDeclaration:
              {
-               templateArgumentsList = NULL;
+               templateArgumentsList = nullptr;
                break;
              }
 
@@ -869,7 +861,7 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
 
      ROSE_ASSERT(decl != NULL);
 
-     SgTemplateParameterPtrList* templateParameterList = NULL;
+     SgTemplateParameterPtrList* templateParameterList = nullptr;
 
      switch(decl->variantT())
         {
@@ -890,7 +882,7 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
           case V_SgTemplateVariableInstantiation:
           case V_SgTemplateInstantiationDecl:
              {
-               templateParameterList = NULL;
+               templateParameterList = nullptr;
                break;
              }
 
@@ -957,7 +949,7 @@ SageBuilder::setTemplateArgumentParents( SgDeclarationStatement* decl )
 
      SgTemplateArgumentPtrList* templateArgumentsList = getTemplateArgumentList(decl);
 
-     if (templateArgumentsList != NULL)
+     if (templateArgumentsList != nullptr)
         {
           SgDeclarationStatement* first_decl = decl->get_firstNondefiningDeclaration();
           ROSE_ASSERT(first_decl != NULL);
@@ -966,15 +958,14 @@ SageBuilder::setTemplateArgumentParents( SgDeclarationStatement* decl )
           while (i != templateArgumentsList->end())
              {
                SgNode* parent = (*i)->get_parent();
-               if (parent== NULL)
+               if (parent == nullptr)
                   {
-                 // (*i)->set_parent(decl);
                     (*i)->set_parent(first_decl);
                   }
                  else
                   {
                     SgScopeStatement* scope = isSgScopeStatement(parent);
-                    if (scope != NULL)
+                    if (scope != nullptr)
                        {
                       // Template Arguments should have had there parents set to a scope when they were build, we want
                       // to refine that now that the declaration which we want them to be specified in has been build.
@@ -983,7 +974,7 @@ SageBuilder::setTemplateArgumentParents( SgDeclarationStatement* decl )
                       else
                        {
                          SgDeclarationStatement* declaration = isSgDeclarationStatement(parent);
-                         if (declaration != NULL)
+                         if (declaration != nullptr)
                             {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
                               printf ("In setTemplateArgumentParents(): Template argument already set to declaration = %p = %s \n",declaration,declaration->class_name().c_str());
@@ -1014,7 +1005,7 @@ SageBuilder::setTemplateParameterParents( SgDeclarationStatement* decl )
 
      SgTemplateParameterPtrList* templateParameterList = getTemplateParameterList(decl);
 
-     if (templateParameterList != NULL)
+     if (templateParameterList != nullptr)
         {
           SgDeclarationStatement* first_decl = decl->get_firstNondefiningDeclaration();
           ROSE_ASSERT(first_decl != NULL);
@@ -1023,14 +1014,14 @@ SageBuilder::setTemplateParameterParents( SgDeclarationStatement* decl )
           while (i != templateParameterList->end())
              {
                SgNode* parent = (*i)->get_parent();
-               if (parent == NULL)
+               if (parent == nullptr)
                   {
                     (*i)->set_parent(first_decl);
                   }
                  else
                   {
                     SgScopeStatement* scope = isSgScopeStatement(parent);
-                    if (scope != NULL)
+                    if (scope != nullptr)
                        {
                       // Template Arguments should have had their parents set to a scope when they were build, we want
                       // to refine that now that the declaration which we want them to be specified in has been build.
@@ -1055,13 +1046,13 @@ SageBuilder::testTemplateArgumentParents( SgDeclarationStatement* decl )
 
      SgTemplateArgumentPtrList* templateArgumentsList = getTemplateArgumentList(decl);
 
-     if (templateArgumentsList != NULL)
+     if (templateArgumentsList != nullptr)
         {
           SgTemplateArgumentPtrList::iterator i = templateArgumentsList->begin();
           while (i != templateArgumentsList->end())
              {
                SgNode* parent = (*i)->get_parent();
-               if (parent == NULL)
+               if (parent == nullptr)
                   {
                     printf ("Error: In testTemplateArgumentParents(): decl = %p = %s has template argument = %p with null parent \n",decl,decl->class_name().c_str(),*i);
                   }
@@ -1088,13 +1079,13 @@ SageBuilder::testTemplateParameterParents( SgDeclarationStatement* decl )
 
      SgTemplateParameterPtrList* templateParameterList = getTemplateParameterList(decl);
 
-     if (templateParameterList != NULL)
+     if (templateParameterList != nullptr)
         {
           SgTemplateParameterPtrList::iterator i = templateParameterList->begin();
           while (i != templateParameterList->end())
              {
                SgNode* parent = (*i)->get_parent();
-               if (parent == NULL)
+               if (parent == nullptr)
                   {
                     printf ("Error: In testTemplateParameterParents(): decl = %p = %s has template argument = %p with null parent \n",decl,decl->class_name().c_str(),*i);
                   }
@@ -1126,7 +1117,7 @@ SageBuilder::setTemplateArgumentsInDeclaration( SgDeclarationStatement* decl, Sg
 
      SgTemplateArgumentPtrList* templateArgumentsList_from_declaration = getTemplateArgumentList(decl);
 
-     if (templateArgumentsList_from_declaration != NULL)
+     if (templateArgumentsList_from_declaration != nullptr)
         {
           *templateArgumentsList_from_declaration = *templateArgumentsList_input;
 
@@ -1150,7 +1141,7 @@ SageBuilder::setTemplateSpecializationArgumentsInDeclaration( SgDeclarationState
 
      SgTemplateArgumentPtrList* templateSpecializationArgumentsList_from_declaration = getTemplateArgumentList(decl);
 
-     if (templateSpecializationArgumentsList_from_declaration != NULL)
+     if (templateSpecializationArgumentsList_from_declaration != nullptr)
         {
           *templateSpecializationArgumentsList_from_declaration = *templateSpecializationArgumentsList_input;
 
@@ -1173,7 +1164,7 @@ SageBuilder::setTemplateParametersInDeclaration( SgDeclarationStatement* decl, S
 
      SgTemplateParameterPtrList* templateParameterList_from_declaration = getTemplateParameterList(decl);
 
-     if (templateParameterList_from_declaration != NULL)
+     if (templateParameterList_from_declaration != nullptr)
         {
           *templateParameterList_from_declaration = *templateParameterList_input;
 
@@ -1189,7 +1180,7 @@ SageBuilder::setTemplateParametersInDeclaration( SgDeclarationStatement* decl, S
 // should be transparently generated for most variable declaration builder
 // deferred symbol insertion, scope setting , etc
 // do them when it is actually used with the  parameterList!!
-SgInitializedName * SageBuilder::buildInitializedName ( const SgName & name, SgType* type, SgInitializer* init /* = NULL */) {
+SgInitializedName* SageBuilder::buildInitializedName(const SgName& name, SgType* type, SgInitializer* init/*= NULL*/) {
 #if DEBUG__buildInitializedName
   std::cout << "SageBuilder::buildInitializedName" << std::endl;
   std::cout << "  name = " << name << std::endl;
@@ -1240,14 +1231,13 @@ SgInitializedName * SageBuilder::buildInitializedName_nfi ( const SgName & name,
 //  int i;
 SgVariableDeclaration*
 SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
- //(const SgName & name, SgType* type, SgInitializer * varInit= NULL, SgScopeStatement* scope = NULL)
 {
-  if (scope == NULL)
+  if (scope == nullptr)
     scope = SageBuilder::topScopeStack();
    ROSE_ASSERT(name.is_null() == false);
    ROSE_ASSERT(type != NULL);
 
-  SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
+  SgVariableDeclaration* varDecl = new SgVariableDeclaration(name, type, varInit);
   ROSE_ASSERT(varDecl);
 
 // DQ (8/21/2011): Note that the default is to set the declaration modifier's access modifier to be
@@ -1255,7 +1245,7 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 // by the unparser for most languguages in ROSE.
   varDecl->set_firstNondefiningDeclaration(varDecl);
 
-  if (scope!=NULL)
+  if (scope != nullptr)
   {
     // Liao 12/13/2010
     // Fortran subroutine/function parameters have corresponding variable declarations in the body
@@ -1265,11 +1255,11 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
     if (SageInterface::is_Fortran_language())
     {
       SgFunctionDefinition * f_def = getEnclosingProcedure (scope);
-      if (f_def != NULL)
+      if (f_def != nullptr)
       {
      // DQ (5/21/2013): Removed direct reference to symbol table (namespace handling is only supported at the SgScopeStatement level).
         SgVariableSymbol * v_symbol = f_def->lookup_variable_symbol(name);
-        if (v_symbol != NULL) // find a function parameter with the same name
+        if (v_symbol != nullptr) // find a function parameter with the same name
         {
           // replace the default one with the one from parameter
           SgInitializedName *default_initName = varDecl->get_decl_item (name);
@@ -1326,17 +1316,7 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   ROSE_ASSERT((variableDefinition_original->get_endOfConstruct())!=NULL);
 
   setSourcePositionAtRootAndAllChildren(varDecl);
-  //ROSE_ASSERT (isSgVariableDefinition(initName->get_declptr())->get_startOfConstruct()!=NULL);
-
-
-  // DQ (4/16/2015): This is replaced with a better implementation.
-  // DQ (4/15/2015): We should reset the isModified flags as part of the transforamtion
-  // because we have added statements explicitly marked as transformations.
-  // checkIsModifiedFlag(varDecl);
-     unsetNodesMarkedAsModified(varDecl);
-
-// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(varDecl,"testing buildVariableDeclaration(): 9") == false);
-// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(scope,"testing buildVariableDeclaration(): 9-scope") == false);
+  unsetNodesMarkedAsModified(varDecl);
 
   return varDecl;
 }
@@ -1353,13 +1333,13 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
 
 #if DEBUG_BUILD_VARIABLE_DECLARATION
      printf ("In SageBuilder::buildVariableDeclaration_nfi(): name = %s scope = %p varInit = %p \n",name.str(),scope,varInit);
-     if (scope != NULL)
+     if (scope != nullptr)
         {
           printf (" --- scope = %p = %s \n",scope,scope->class_name().c_str());
         }
 #endif
 
-     if (scope == NULL)
+     if (scope == nullptr)
         {
 #if DEBUG_BUILD_VARIABLE_DECLARATION
           printf ("Scope determined from the SageBuilder::topScopeStack() \n");
@@ -1378,8 +1358,8 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
 #endif
 
   // If there was a previous use of the variable, then there will be an existing symbol with it's declaration pointing to the SgInitializedName object.
-     SgVariableDeclaration * varDecl = NULL;
-     if (variableSymbol == NULL)
+     SgVariableDeclaration* varDecl = nullptr;
+     if (variableSymbol == nullptr)
         {
           varDecl = new SgVariableDeclaration(name, type, varInit);
 #if DEBUG_BUILD_VARIABLE_DECLARATION
@@ -1406,7 +1386,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
 
 #if DEBUG_BUILD_VARIABLE_DECLARATION
           printf ("In SageBuilder::buildVariableDeclaration_nfi(): initializedName->get_parent() = %p \n",initializedName->get_parent());
-          if (initializedName->get_parent() != NULL)
+          if (initializedName->get_parent() != nullptr)
              {
                printf ("In SageBuilder::buildVariableDeclaration_nfi(): initializedName->get_parent() = %p = %s \n",initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
              }
@@ -1415,7 +1395,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
 #if DEBUG_BUILD_VARIABLE_DECLARATION
        // DQ (6/24/2019): If this has been previously built as part of a variable use (in a class declaration),
        // then it should not be attached to the class definition as a variable declaration yet, and we should reuse it.
-          if (associatedVariableDeclaration != NULL && associatedVariableDeclaration->get_parent() != NULL)
+          if (associatedVariableDeclaration != nullptr && associatedVariableDeclaration->get_parent() != nullptr)
              {
                printf ("In SageBuilder::buildVariableDeclaration_nfi(): associatedVariableDeclaration->get_parent() = %p = %s \n",
                     associatedVariableDeclaration->get_parent(),associatedVariableDeclaration->get_parent()->class_name().c_str());
@@ -1424,14 +1404,14 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
 
 #if DEBUG_BUILD_VARIABLE_DECLARATION
           printf ("associatedVariableDeclaration = %p \n",associatedVariableDeclaration);
-          if (associatedVariableDeclaration != NULL)
+          if (associatedVariableDeclaration != nullptr)
              {
                printf ("associatedVariableDeclaration->get_builtFromUseOnly() = %s \n",associatedVariableDeclaration->get_builtFromUseOnly() ? "true" : "false");
              }
 #endif
 
        // DQ (6/25/2019): Trigger the reuse of the available variable declaration.
-          bool reuseTheAssociatedVariableDeclaration = ((associatedVariableDeclaration != NULL) && (associatedVariableDeclaration->get_builtFromUseOnly() == true));
+          bool reuseTheAssociatedVariableDeclaration = ((associatedVariableDeclaration != nullptr) && (associatedVariableDeclaration->get_builtFromUseOnly() == true));
           if (reuseTheAssociatedVariableDeclaration == true)
              {
             // Build a seperate SgVariableDeclaration so that we can avoid sharing the SgInitializedName
@@ -1447,16 +1427,14 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
                varDecl->set_builtFromUseOnly(false);
 
             // DQ (6/24/2019): Set the parent to NULL, since we are reusing this variable declaration and it would not have been set correctly before.
-               varDecl->set_parent(NULL);
+               varDecl->set_parent(nullptr);
 
             // DQ (6/24/2019): this veriable declaration that is being reused, should not have had an initializer (check this).
                SgInitializedName* variable = getFirstInitializedName(varDecl);
                ROSE_ASSERT(variable != NULL);
 
-            // DQ (6/25/2019): See Cxx11_tests/test2019_121.C and Cxx11_tests/test2019_482.C.
-            // ROSE_ASSERT(variable->get_initptr() == NULL);
 #if DEBUG_BUILD_VARIABLE_DECLARATION
-               if (variable->get_initptr() != NULL)
+               if (variable->get_initptr() != nullptr)
                   {
                     printf ("Found initializer associated with variable declaration being reused: variable = %p name = %s \n",variable,variable->get_name().str());
                   }
@@ -1472,11 +1450,11 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
             // EDG/ROSE translation, then where was not associated SgVariableDeclaration built (an inconsistancy).
             // So we want to check for the parent being a scope statement (e.g. SgIfStmt or other statement that can
             // accept a conditional expression where in C++ it can alternatively declare a variable.
-               if (associatedVariableDeclaration == NULL)
+               if (associatedVariableDeclaration == nullptr)
                   {
                     ROSE_ASSERT(initializedName->get_parent() != NULL);
                     SgScopeStatement* scopeStatement = isSgScopeStatement(initializedName->get_parent());
-                    if (scopeStatement != NULL)
+                    if (scopeStatement != nullptr)
                        {
 #if DEBUG_BUILD_VARIABLE_DECLARATION
                          printf ("scopeStatement = %p = %s \n",scopeStatement,scopeStatement->class_name().c_str());
@@ -1494,19 +1472,16 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
             // For example: variable declarations in conditionals (e.g. SgIfStmt, and other scope statements).
             // DQ (6/26/2019): Build an additional variable to support another reference to the original variable.
             // Note: we need another one because either one can have an initializer that cannot be shared in the AST.
-               SgInitializedName* additional_variable = NULL;
+               SgInitializedName* additional_variable = nullptr;
 
 #if DEBUG_BUILD_VARIABLE_DECLARATION
                printf ("In SageBuilder::buildVariableDeclaration_nfi(): initializedName->get_scope()     = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
 #endif
                SgScopeStatement* scopeStatement = isSgScopeStatement(initializedName->get_parent());
-               if (scopeStatement != NULL)
+               if (scopeStatement != nullptr)
                   {
                     additional_variable = initializedName;
-
-                 // DQ (6/28/2019): Support case when the borrowed SgInitializedName has a valid initializer.
-                 // DQ (6/26/2019): Adding the initializer.
-                    if (additional_variable->get_initptr() != NULL)
+                    if (additional_variable->get_initptr() != nullptr)
                        {
 #if DEBUG_BUILD_VARIABLE_DECLARATION
                          printf ("In SageBuilder::buildVariableDeclaration_nfi(): borrowed SgInitializedName is alread initialized \n");
@@ -1644,19 +1619,19 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
 
 
 SgVariableDefinition*
-SageBuilder::buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitializedName* init_name,  SgInitializer *init)
+SageBuilder::buildVariableDefinition_nfi(SgVariableDeclaration* decl, SgInitializedName* init_name, SgInitializer* init)
 {
 // refactored from ROSETTA/Grammar/Statement.code SgVariableDeclaration::append_variable ()
 
-  ROSE_ASSERT (decl!=NULL);
-  ROSE_ASSERT (init_name !=NULL);
+  ASSERT_not_null(decl);
+  ASSERT_not_null(init_name);
   // init can be NULL
 
-  SgVariableDefinition *defn_stmt = NULL;
+  SgVariableDefinition* defn_stmt = nullptr;
   if (!isSgFunctionType(init_name->get_type()))
   {
-    Sg_File_Info* copyOfFileInfo = NULL;
-    if (decl->get_file_info() != NULL)
+    Sg_File_Info* copyOfFileInfo = nullptr;
+    if (decl->get_file_info() != nullptr)
     {
       copyOfFileInfo = new Sg_File_Info(*(decl->get_file_info()));
       ROSE_ASSERT (copyOfFileInfo != NULL);
@@ -1669,7 +1644,7 @@ SageBuilder::buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitial
 
       // DQ (3/13/2007): We can't enforce that the endOfConstruct is set (if the interface using the startOfConstruct is used.
       // DQ (2/3/2007): Need to build the endOfConstruct position as well.
-      if (decl->get_endOfConstruct() != NULL)
+      if (decl->get_endOfConstruct() != nullptr)
       {
         Sg_File_Info* copyOfEndOfConstruct = new Sg_File_Info(*(decl->get_endOfConstruct()));
         defn_stmt->set_endOfConstruct(copyOfEndOfConstruct);
@@ -1684,7 +1659,7 @@ SageBuilder::buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitial
     ROSE_ASSERT(defn_stmt != NULL);
   }
   else
-    defn_stmt = NULL;
+    defn_stmt = nullptr;
   return defn_stmt ;
 }
 
@@ -1749,28 +1724,26 @@ SageBuilder::buildTemplateVariableInstantiation (
 #define DEBUG__SageBuilder__buildTemplateVariableInstantiation_nfi 0
 
 SgTemplateVariableInstantiation*
-SageBuilder::buildTemplateVariableInstantiation_nfi (
-  const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope,
-  SgTemplateVariableDeclaration* tpl_decl,
-  SgTemplateArgumentPtrList & tpl_args
-) {
+SageBuilder::buildTemplateVariableInstantiation_nfi(
+  const SgName& name, SgType* type, SgInitializer* varInit, SgScopeStatement* scope,
+  SgTemplateVariableDeclaration* /*tpl_decl*/, SgTemplateArgumentPtrList& tpl_args) {
 #if DEBUG__SageBuilder__buildTemplateVariableInstantiation_nfi
      std::cout << "SageBuilder::buildTemplateVariableInstantiation_nfi" << std::endl;
      std::cout << "  name = " << name.getString() << std::endl;
      std::cout << "  type = " << std::hex << type << " : " << ( type ? type->class_name() : "" ) << std::endl;
      std::cout << "  scope = " << std::hex << scope << " : " << ( scope ? scope->class_name() : "" ) << std::endl;
 #endif
-     ROSE_ASSERT (type != NULL);
+     ASSERT_not_null(type);
 
      SgName nameWithoutTemplateArguments = name;
-     SgName nameWithTemplateArguments    = appendTemplateArgumentsToName(name,tpl_args);
+     SgName nameWithTemplateArguments = appendTemplateArgumentsToName(name,tpl_args);
 #if DEBUG__SageBuilder__buildTemplateVariableInstantiation_nfi
      std::cout << "  nameWithoutTemplateArguments = " << nameWithoutTemplateArguments.getString() << std::endl;
      std::cout << "  nameWithTemplateArguments    = " << nameWithTemplateArguments.getString() << std::endl;
 #endif
 
-     ROSE_ASSERT (scope != NULL);
-     ROSE_ASSERT(type != NULL);
+     ASSERT_not_null(scope);
+     ASSERT_not_null(type);
 
      SgTemplateVariableInstantiation * varDecl = new SgTemplateVariableInstantiation(name, type, varInit);
      ROSE_ASSERT(varDecl);
@@ -1789,17 +1762,16 @@ SageBuilder::buildTemplateVariableInstantiation_nfi (
        fixVariableDeclaration(varDecl, scope);
      }
 
-     SgInitializedName *initName = varDecl->get_decl_item (name);
-     ROSE_ASSERT(initName);
-     ROSE_ASSERT((initName->get_declptr()) != nullptr);
+     SgInitializedName* initName = varDecl->get_decl_item(name);
+     ASSERT_not_null(initName);
+     ASSERT_not_null((initName->get_declptr()));
 #if DEBUG__SageBuilder__buildTemplateVariableInstantiation_nfi
      std::cout << "  initName = " << std::hex << initName << " : " << ( initName ? initName->class_name() : "" ) << std::endl;
 #endif
 
      SgVariableDefinition* variableDefinition_original = isSgVariableDefinition(initName->get_declptr());
-     ROSE_ASSERT(variableDefinition_original != NULL);
+     ASSERT_not_null(variableDefinition_original);
      setOneSourcePositionNull(variableDefinition_original);
-
      setOneSourcePositionNull(varDecl);
 
      return varDecl;
@@ -1946,21 +1918,18 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
 
 
 SgTemplateTypedefDeclaration*
-SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base )
-   {
-  // DQ (11/2/2014): Adding support for templated typedef.
+SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName& name, SgType* base_type, SgScopeStatement* scope, bool /*has_defining_base*/)
+{
+     ASSERT_not_null(base_type);
 
-     ROSE_ASSERT (base_type != NULL);
-
-     if (scope == NULL )
-        {
-          scope = SageBuilder::topScopeStack();
-        }
+     if (scope == nullptr) {
+         scope = SageBuilder::topScopeStack();
+     }
 
   // We don't yet support bottom up construction for this node yet
-     ROSE_ASSERT(scope != NULL);
+     ASSERT_not_null(scope);
 
-     SgDeclarationStatement* base_decl = NULL;
+     SgDeclarationStatement* base_decl = nullptr;
 
   // DQ (3/20/2012): I don't remember why we need to provide the symbol for the scope of the
   // parent rather then the scope. But as I recall there was a special corner of C++ that
@@ -2075,7 +2044,7 @@ SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* ba
 
 ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
 SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(
-  SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base,
+  SgName& name, SgType* base_type, SgScopeStatement* scope, bool /*has_defining_base*/,
   SgTemplateTypedefDeclaration* templateTypedefDeclaration,
   SgTemplateArgumentPtrList & templateArgumentsList
 ) {
@@ -2084,7 +2053,7 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(
      std::cout << "  name = " << name.getString() << std::endl;
      std::cout << "  base_type = " << std::hex << base_type << " : " << ( base_type ? base_type->class_name() : "" ) << std::endl;
 #endif
-     ROSE_ASSERT (base_type != NULL);
+     ASSERT_not_null(base_type);
 
      SgName nameWithoutTemplateArguments = name;
      SgName nameWithTemplateArguments    = appendTemplateArgumentsToName(nameWithoutTemplateArguments,templateArgumentsList);
@@ -2094,51 +2063,45 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(
 #endif
 
   // We don't yet support bottom up construction for this node yet
-     ROSE_ASSERT(scope != NULL);
-
-     SgDeclarationStatement* base_decl = NULL;
+     ASSERT_not_null(scope);
+     SgDeclarationStatement* base_decl = nullptr;
 
   // DQ (3/20/2012): I don't remember why we need to provide the symbol for the scope of the
   // parent rather then the scope. But as I recall there was a special corner of C++ that
   // required this sort of support.
-     SgSymbol* parent_scope = NULL;
-     if (scope != NULL)
+     SgSymbol* parent_scope = nullptr;
+     if (scope != nullptr)
         {
-          ROSE_ASSERT(scope->get_parent() != NULL);
+          ASSERT_not_null(scope->get_parent());
           SgDeclarationStatement* declaration = isSgDeclarationStatement(scope->get_parent());
-          if (declaration != NULL)
+          if (declaration != nullptr)
              {
-               ROSE_ASSERT(declaration->get_firstNondefiningDeclaration() != NULL);
+               ASSERT_not_null(declaration->get_firstNondefiningDeclaration());
                parent_scope = declaration->search_for_symbol_from_symbol_table();
-
-               ROSE_ASSERT(parent_scope != NULL);
+               ASSERT_not_null(parent_scope);
              }
         }
-
-  // DQ (11/5/2014): I think this might be set afterward.
-     ROSE_ASSERT(templateTypedefDeclaration != NULL);
+     ASSERT_not_null(templateTypedefDeclaration);
 
      SgTemplateTypedefSymbol* prexisting_template_typedef_symbol = scope->lookup_template_typedef_symbol(nameWithTemplateArguments);
-     if (prexisting_template_typedef_symbol != NULL)
+     if (prexisting_template_typedef_symbol != nullptr)
         {
           SgDeclarationStatement* declarationStatement = prexisting_template_typedef_symbol->get_declaration();
-          ROSE_ASSERT(declarationStatement != NULL);
+          ASSERT_not_null(declarationStatement);
 #if DEBUG__SageBuilder__buildTemplateInstantiationTypedefDeclaration_nfi
           std::cout << "  declarationStatement = " << declarationStatement << " : " << declarationStatement->class_name() << std::endl;
 #endif
           SgTemplateInstantiationTypedefDeclaration* return_declaration = isSgTemplateInstantiationTypedefDeclaration(declarationStatement);
-          ROSE_ASSERT(return_declaration != NULL);
+          ASSERT_not_null(return_declaration);
           return return_declaration;
         }
-     ROSE_ASSERT(scope->lookup_template_typedef_symbol(nameWithTemplateArguments) == NULL);
+     ASSERT_require(scope->lookup_template_typedef_symbol(nameWithTemplateArguments) == nullptr);
 
-  // DQ (2/25/2018): Not clear if we want to use the template name with arguments.
-  // Calling: SgTemplateInstantiationTypedefDeclaration(SgName, SgType*, SgTypedefType*, SgDeclarationStatement*, SgSymbol*, SgTemplateTypedefDeclaration*, SgTemplateArgumentPtrList)
-     SgTypedefType* typedefType = NULL;
+     SgTypedefType* typedefType = nullptr;
      SgTemplateInstantiationTypedefDeclaration* type_decl =
           new SgTemplateInstantiationTypedefDeclaration(nameWithTemplateArguments, base_type, typedefType, base_decl, parent_scope, templateTypedefDeclaration, templateArgumentsList);
-     ROSE_ASSERT(type_decl != NULL);
-     ROSE_ASSERT(type_decl->get_base_type() == base_type);
+     ASSERT_not_null(type_decl);
+     ASSERT_require(type_decl->get_base_type() == base_type);
 
 #if DEBUG__SageBuilder__buildTemplateInstantiationTypedefDeclaration_nfi
      std::cout << "  type_decl = " << std::hex << type_decl << " : " << ( type_decl ? type_decl->class_name() : "" ) << std::endl;
@@ -2146,72 +2109,65 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(
 #endif
 
   // DQ (2/27/2018): This is a change in the constructor semantics, we now have to build the type explicitly.
-  // printf ("We now have to build the type explicitly \n");
-     ROSE_ASSERT(type_decl->get_type() == NULL);
-
+     ASSERT_require(type_decl->get_type() == nullptr);
 
   // DQ (2/27/2018): Set the template name that this instantiation is using.
      type_decl->set_templateName(nameWithoutTemplateArguments);
 
-     ROSE_ASSERT(scope != NULL);
+     ASSERT_not_null(scope);
      type_decl->set_scope(scope);
 
   // DQ (3/1/2018): A bug in the name of the template with arguments has been detected (extra spaces in
   // the name generated by type_decl->resetTemplateName()), make sure that we have a consistant naming.
-     ROSE_ASSERT(type_decl->get_name() == nameWithTemplateArguments);
+     ASSERT_require(type_decl->get_name() == nameWithTemplateArguments);
 
-  // DQ (2/28/2018): Added debugging to track down redundnat symbol.
-     if (scope->lookup_template_typedef_symbol(nameWithTemplateArguments) != NULL)
+     if (scope->lookup_template_typedef_symbol(nameWithTemplateArguments) != nullptr)
         {
           printf ("Error: it appears that there is already a symbol in scope = %p = %s for name = %s \n",scope,scope->class_name().c_str(),name.str());
         }
-     ROSE_ASSERT(scope->lookup_template_typedef_symbol(nameWithTemplateArguments) == NULL);
-
-
-  // DQ (2/26/2018): Can we assert this?
-     ROSE_ASSERT(type_decl->get_type() == NULL);
+     ASSERT_require(scope->lookup_template_typedef_symbol(nameWithTemplateArguments) == nullptr);
+     ASSERT_require(type_decl->get_type() == nullptr);
 
      SgTypedefType* new_typedefType = SgTypedefType::createType(type_decl);
-     ROSE_ASSERT(new_typedefType != NULL);
+     ASSERT_not_null(new_typedefType);
 
      type_decl->set_type(new_typedefType);
-     ROSE_ASSERT(type_decl->get_type() != NULL);
-     ROSE_ASSERT(type_decl->get_scope() != NULL);
+     ASSERT_not_null(type_decl->get_type());
+     ASSERT_not_null(type_decl->get_scope());
 
-     type_decl->set_firstNondefiningDeclaration (type_decl);
-     type_decl->set_definingDeclaration(NULL);
+     type_decl->set_firstNondefiningDeclaration(type_decl);
+     type_decl->set_definingDeclaration(nullptr);
 
      setOneSourcePositionNull(type_decl);
-
      setTemplateArgumentsInDeclaration(type_decl,&templateArgumentsList);
 
-     ROSE_ASSERT(type_decl->get_firstNondefiningDeclaration() != NULL);
-     ROSE_ASSERT(type_decl->get_definingDeclaration() == NULL);
-     ROSE_ASSERT(type_decl->get_firstNondefiningDeclaration() == type_decl);
+     ASSERT_not_null(type_decl->get_firstNondefiningDeclaration());
+     ASSERT_require(type_decl->get_definingDeclaration() == nullptr);
+     ASSERT_require(type_decl->get_firstNondefiningDeclaration() == type_decl);
 
-     ROSE_ASSERT(type_decl->get_type() != NULL);
-     ROSE_ASSERT(scope != NULL);
+     ASSERT_not_null(type_decl->get_type());
+     ASSERT_not_null(scope);
 
 #if DEBUG__SageBuilder__buildTemplateInstantiationTypedefDeclaration_nfi
      std::cout << "  type_decl = " << std::hex << type_decl << " : " << ( type_decl ? type_decl->class_name() : "" ) << std::endl;
      std::cout << "    ->get_base_type() = " << std::hex << type_decl->get_base_type() << " : " << ( type_decl->get_base_type() ? type_decl->get_base_type()->class_name() : "" ) << std::endl;
 #endif
 
-     if (scope != NULL)
+     if (scope != nullptr)
         {
-          if (scope->lookup_template_typedef_symbol(nameWithTemplateArguments) != NULL)
+          if (scope->lookup_template_typedef_symbol(nameWithTemplateArguments) != nullptr)
              {
                printf ("Error: it appears that there is already a symbol in scope = %p = %s for nameWithTemplateArguments = %s \n",scope,scope->class_name().c_str(),nameWithTemplateArguments.str());
              }
-          ROSE_ASSERT(scope->lookup_template_typedef_symbol(nameWithTemplateArguments) == NULL);
+          ASSERT_require(scope->lookup_template_typedef_symbol(nameWithTemplateArguments) == nullptr);
 
           SgTemplateTypedefSymbol* typedef_symbol = new SgTemplateTypedefSymbol(type_decl);
-          ROSE_ASSERT(typedef_symbol);
+          ASSERT_not_null(typedef_symbol);
 
           scope->insert_symbol(nameWithTemplateArguments,typedef_symbol);
           type_decl->set_scope(scope);
           type_decl->set_parent(scope);
-          ROSE_ASSERT(scope->lookup_template_typedef_symbol(nameWithTemplateArguments) != NULL);
+          ASSERT_not_null(scope->lookup_template_typedef_symbol(nameWithTemplateArguments));
         }
 
 #if DEBUG__SageBuilder__buildTemplateInstantiationTypedefDeclaration_nfi
@@ -2221,10 +2177,6 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(
 
      return type_decl;
    }
-
-
-
-
 
 //-----------------------------------------------
 // Assertion `definingDeclaration != NULL || firstNondefiningDeclaration != NULL'
@@ -2680,7 +2632,7 @@ template <class actualFunction>
 actualFunction*
 SageBuilder::buildNondefiningFunctionDeclaration_T (
    const SgName & XXX_name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction,
-   SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags,
+   SgScopeStatement* scope, SgExprListExp* /*decoratorList*/, unsigned int functionConstVolatileFlags,
    SgTemplateArgumentPtrList* templateArgumentsList, SgTemplateParameterPtrList* templateParameterList,
    SgStorageModifier::storage_modifier_enum sm
 ) {
@@ -8116,9 +8068,7 @@ SgJavaThrowStatement *SageBuilder::buildJavaThrowStatement(SgThrowOp *op)
   return throw_stmt;
 }
 
-// DQ (9/3/2011): Changed the API to conform to the Java grammar.
-// SgJavaForEachStatement *SageBuilder::buildJavaForEachStatement(SgInitializedName *variable, SgExpression *collection, SgStatement *body)
-SgJavaForEachStatement *SageBuilder::buildJavaForEachStatement(SgVariableDeclaration *variable, SgExpression *collection, SgStatement *body)
+SgJavaForEachStatement* SageBuilder::buildJavaForEachStatement(SgVariableDeclaration* variable, SgExpression* collection, SgStatement* body)
 {
   SgJavaForEachStatement *foreach_stmt = new SgJavaForEachStatement(variable, collection, body);
   ROSE_ASSERT(foreach_stmt);
