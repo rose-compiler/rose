@@ -28,14 +28,22 @@
 //   Supporting function used in both cases of the constant folding handling
 // ****************************************************************************
 
-static void deleteExpressionAndOriginalExpressionTree(SgNode * node) {
+/// deletes \p node and all owned subtrees
+/// \param node     the node to be deleted
+/// \param safeMode if set, node types that could lead to dangling pointers
+///                 in constantFolding mode are not deleted.
+/// \details
+///   More info on the dangling pointer issue is described under Issue #907.
+static void deleteExpressionAndOriginalExpressionTree(SgNode * node, bool safeMode = false) {
   // Skip node that have already been deleted
   if (node->get_freepointer() != AST_FileIO::IS_VALID_POINTER()) return;
+
+  if (safeMode && isSgTypeTraitBuiltinOperator(node)) return;
 
   // If it is an expression delete the associated original expression tree
   SgExpression * exp = isSgExpression(node);
   if (exp != NULL && exp->get_originalExpressionTree() != NULL) {
-    deleteExpressionAndOriginalExpressionTree(exp->get_originalExpressionTree());
+    deleteExpressionAndOriginalExpressionTree(exp->get_originalExpressionTree(), safeMode);
   }
 
   // Traverse the AST and delete successors
@@ -45,7 +53,7 @@ static void deleteExpressionAndOriginalExpressionTree(SgNode * node) {
   std::vector<SgNode*> successors = node->get_traversalSuccessorContainer();
   for (std::vector<SgNode*>::iterator n = successors.begin(); n != successors.end(); ++n) {
     if (*n != NULL ) {
-      deleteExpressionAndOriginalExpressionTree(*n);
+      deleteExpressionAndOriginalExpressionTree(*n, safeMode);
     }
   }
 
@@ -393,9 +401,11 @@ void preserveConstantFoldedValue(SgProject* /*project*/) {
 struct RemoveOriginalExpressionTrees : public ROSE_VisitTraversal {
   void visit (SgNode* node) {
     if (SgExpression * exp = isSgExpression(node)) {
+      // deleting SgTypeTraitBuiltinOperator may leave dangling pointers,
+      //   thus they are temporarily not deleted.
       if (SgExpression * oet = exp->get_originalExpressionTree()) {
         exp->set_originalExpressionTree(nullptr);
-        deleteExpressionAndOriginalExpressionTree(oet);
+        deleteExpressionAndOriginalExpressionTree(oet, true);
       }
     }
   }
