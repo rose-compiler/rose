@@ -19,6 +19,7 @@
 #include <boost/algorithm/string/replace.hpp>
 
 #include "CodeThornLib.h"
+#include "RoseCompatibility.h"
 // #include "stringcompress.hpp"
 
 //~ #include <boost/range/algorithm_ext/for_each.hpp>
@@ -26,9 +27,11 @@
 
 namespace si = SageInterface;
 namespace adapt = boost::adaptors;
+namespace ct = CodeThorn;
 
 namespace
 {
+
 inline
 auto roseTrace() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::TRACE])
 {
@@ -124,9 +127,9 @@ namespace
   constexpr const char* const mglArrayType                = "_Ab_";
   constexpr const char* const mglArrayTypeDelim           = "_Ae_";
   constexpr const char* const mglArrayIndex               = "_index_";
-  constexpr const char* const mglArrayVL                  = "vla_dimension";
+  constexpr const char* const mglArrayVL                  = "vla_dim";
 
-  constexpr const char* const mglAnonymousTypeName        = "_anonymousType_";
+  constexpr const char* const mglAnonymousTypeName        = "_anontype_";
 
   constexpr const char* const mglModifierAliased          = "A";
   constexpr const char* const mglModifierNotNull          = "N";
@@ -191,13 +194,16 @@ namespace
   constexpr const char* const mglFuncOperatorGreaterThan  = "__gq";
   constexpr const char* const mglFuncOperatorLiteral      = "__li";
 
-  constexpr const char* const mglTypedefDeclaration       = "typedef_";
-  constexpr const char* const mglTypedefDeclarationDelim  = "__typedef_declaration";
+  constexpr const char* const mglTypedefDeclaration       = "__tdefB__";
+  constexpr const char* const mglTypedefDeclarationDelim  = "__tdefE__";
   constexpr const char* const mglEnum                     = "_enum_";
   constexpr const char* const mglClass                    = "_class_";
   constexpr const char* const mglTemplateArgs             = "_tas_";
   constexpr const char* const mglTemplateArgsDelim        = "_tab_";
   constexpr const char* const mglTemplateArgumentPack     = "start_of_pack_expansion_argument";
+  constexpr const char* const mglParameterIdx             = "_parmidx_";
+  constexpr const char* const mglVariableLoc              = "_varlocs_";
+  constexpr const char* const mglUnknownType              = "__unknowntype";
 
   constexpr const char* const mglElideFunctionScope       = "_function_parameter_scope_";
 
@@ -214,14 +220,20 @@ namespace
   constexpr bool              ITANIUM_ABI                 = false;
 
 
+  template <class Seq>
+  void append(std::string& s, const Seq& seq) { s.append(seq.begin(), seq.end()); }
+
+  void append(std::string& s, const SgName& name) { append(s, name.getString()); }
+  void append(std::string& s, const char* el) { s.append(el); }
+
   void join_(std::string&) {}
 
   template<typename First, typename... Rest>
-  void join_(std::string& os, First&& first, Rest&&... rest)
+  void join_(std::string& s, First&& first, Rest&&... rest)
   {
-    os.append(first);
+    append(s, first);
 
-    join_(os, rest...);
+    join_(s, rest...);
   }
 
   template <class... Args>
@@ -263,8 +275,7 @@ namespace
     return s;
   }
 
-  template <class... Args>
-  std::string externalName(const SgNode& n, Args&&... args);
+  std::string externalName(const SgNode& n, bool uniqMain = false, bool returnType = true, bool ptrToArr = false);
 
   template <class... Args>
   std::string externalName(sg::NotNull<const SgNode> n, Args&&... args)
@@ -321,14 +332,11 @@ namespace
         NO_RETURN_TYPE      = !WITH_RETURN_TYPE,
 
         ARRAY_TO_POINTER    = true,
-        NO_ARRAY_TO_POINTER = !WITH_RETURN_TYPE
+        NO_ARRAY_TO_POINTER = !ARRAY_TO_POINTER
       };
 
       explicit
-      ExternalMangler( bool uniqueMain = NO_UNQIUE_MAIN,
-                       bool useReturnType = WITH_RETURN_TYPE,
-                       bool arrayToPointer = NO_ARRAY_TO_POINTER
-                     )
+      ExternalMangler(bool uniqueMain, bool useReturnType, bool arrayToPointer)
       : Base(),
         makeMainUnique(uniqueMain),
         withReturnType(useReturnType),
@@ -398,9 +406,16 @@ namespace
       std::string mangleInternalLinkage(const SgLocatedNode&);
 
       std::string mangleInternalLinkageIfStatic(const SgDeclarationStatement&);
-      std::string mangleInternalLinkageIfStatic(sg::NotNull<const SgDeclarationStatement> n)
+      std::string mangleInternalLinkageIfStatic(const sg::NotNull<SgDeclarationStatement> n)
       {
         return mangleInternalLinkageIfStatic(*n);
+      }
+
+      std::string mangleInternalLinkageIfStaticVariable(const SgVariableDeclaration* n)
+      {
+        if (n) return mangleInternalLinkageIfStatic(*n);
+
+        return {};
       }
 
       std::string mangleInternalLinkageIfAnonymous(const SgNamespaceDeclarationStatement&);
@@ -426,9 +441,9 @@ namespace
       //
       //
 
-      std::string coreName(const SgNamespaceDeclarationStatement& n);
-      std::string coreName(const SgFunctionDeclaration& n, std::string linkage = {});
-      std::string coreName(const SgInitializedName& n);
+      std::string scopeQualifiedName(const SgNamespaceDeclarationStatement& n);
+      std::string scopeQualifiedName(const SgFunctionDeclaration& n, std::string linkage = {});
+      std::string scopeQualifiedName(const SgInitializedName& n);
 
 
       std::string functionName(const SgFunctionDeclaration& n);
@@ -496,6 +511,7 @@ namespace
 
       void handle(const SgTypeEllipse&)           { res = mglEllipse; }
       void handle(const SgTypeNullptr&)           { res = mglNullptr; }
+      // void handle(const SgTypeUnknown&)           { res = mglUnknownType; /*todo*/}
 
       void handle(const SgDeclType& n)            { res = mangleType(n.get_base_type()); }
 
@@ -503,6 +519,7 @@ namespace
       {
         sg::NotNull<const SgType> baseTy = n.get_base_type();
         bool                      typedefsAnonymousDecl = false;
+
 
         // for a anonymous class/union/enum declared in a typedef
         //   use the typedef name.
@@ -524,7 +541,11 @@ namespace
                   );
       }
 
-      void handle(const SgPointerType& n)         { res = mangleIndirection(mglPointerType, mglPointerTypeDelim, n.get_base_type()); }
+      void handle(const SgPointerType& n)
+      {
+        res = mangleIndirection(mglPointerType, mglPointerTypeDelim, n.get_base_type());
+      }
+
       void handle(const SgReferenceType& n)       { res = mangleIndirection(mglReferenceType, mglReferenceTypeDelim, n.get_base_type()); }
       void handle(const SgRvalueReferenceType& n) { res = mangleIndirection(mglRvalueReferenceType, mglRvalueReferenceTypeDelim, n.get_base_type()); }
 
@@ -543,7 +564,7 @@ namespace
         const SgTypePtrList&                           parmTypeList = funParameterTypeList->get_arguments();
 
         res = join( mglFunctionType
-                  , mangleReturnType(n.get_return_type()) // return types are not part of the C mangling
+                  , mangleReturnType(n.get_return_type()) // return types are not part of the C function name mangling
                   , mangleNodeSequence(parmTypeList, mglSimpleSep, ARRAY_TO_POINTER)
                   , mglFunctionTypeDelim
                   );
@@ -626,8 +647,8 @@ namespace
 
       void handle(const SgInitializedName& n)
       {
-        res = join( coreName(n)
-                  , mangleInternalLinkageIfStatic(isSgVariableDeclaration(n.get_parent()))
+        res = join( scopeQualifiedName(n)
+                  , mangleInternalLinkageIfStaticVariable(isSgVariableDeclaration(n.get_parent()))
                   );
       }
 
@@ -661,40 +682,11 @@ namespace
         res = todo("dcl:", n);
       }
 
-      void handle(const SgEnumDeclaration& n)
-      {
-        sg::NotNull<const SgScopeStatement> scope = n.get_scope();
-        std::string                         qualifiers = isSgFunctionDefinition(scope)
-                                                             ?  std::string{mglElideFunctionScope}
-                                                             :  mangleScope(scope);
 
-        res = join( qualifiers
-                  , mglEnum
-                  , simpleName(n.get_name(), "enm")
-                  );
-      }
+      void handle(const SgEnumDeclaration& n);
+      void handle(const SgClassDeclaration& n);
 
-      void handle(const SgClassDeclaration& n)
-      {
-        SgName className = n.get_name();
-
-        if (false /* wip - mangleAnonymousTypes */)
-        {
-          bool const isAnonymousName = className.getString().rfind("__anonymous_0x", 0) != std::string::npos;
-
-          if (isAnonymousName)
-          {
-            // ...
-          }
-        }
-
-        // \todo how about class/unions in parameter lists? Handle like enums?
-
-        res = join( mangleScope(n.get_scope())
-                  , mglClass
-                  , simpleName(className, "cls")
-                  );
-      }
+      void handle(const SgFunctionParameterList& n) { res = mangleParentNode(n); }
 
       void handle(const SgTemplateInstantiationDecl& n)
       {
@@ -709,19 +701,19 @@ namespace
 
       void handle(const SgNamespaceDeclarationStatement& n)
       {
-        res = join( coreName(n)
+        res = join( scopeQualifiedName(n)
                   , mangleInternalLinkageIfAnonymous(n)
                   );
       }
 
       void handle(const SgFunctionDeclaration& n)
       {
-        res = coreName(n, mangleInternalLinkageIfStatic(n));
+        res = scopeQualifiedName(n, mangleInternalLinkageIfStatic(n));
       }
 
       void handle(const SgMemberFunctionDeclaration& n)
       {
-        res = coreName(n);
+        res = scopeQualifiedName(n);
       }
 
       void handle(const SgTemplateInstantiationFunctionDecl& n)
@@ -777,9 +769,8 @@ namespace
 
   std::string ExternalMangler::simpleName(std::string name, const char* dbg)
   {
-    if (false)
-      if (name.find("operator") != std::string::npos)
-        msgError() << "sn " << dbg << ": " << name << std::endl;
+    if (name.size() == 0)
+      msgError() << "sn " << dbg << ": '" << name << "'" << std::endl;
 
     return name;
   }
@@ -1059,8 +1050,12 @@ namespace
     return externalName(n, makeMainUnique);
   }
 
-  std::string mangleFilename(std::string filename)
+  std::string mangleFilename(ct::StringView filename)
   {
+    std::string res;
+
+    res.reserve(filename.size());
+
     auto replCh = [](char c) -> char
                   {
                     if ((c == '/') | (c == '\\') | (c == '.'))
@@ -1069,8 +1064,19 @@ namespace
                     return c;
                   };
 
-    std::transform(filename.begin(), filename.end(), filename.begin(), replCh);
-    return filename;
+    std::transform(filename.begin(), filename.end(), std::back_inserter(res), replCh);
+    return res;
+  }
+
+  std::string mangleLocation(ct::SourceLocation loc, const char* prefix)
+  {
+    return join( prefix
+               , mangleFilename(loc.file())
+               , mglSimpleSep
+               , std::to_string(loc.startLine())
+               , mglSimpleSep
+               , std::to_string(loc.startCol())
+               );
   }
 
   std::string ExternalMangler::mangleInternalLinkage(const SgLocatedNode& n)
@@ -1219,7 +1225,47 @@ namespace
               );
   }
 
-  std::string ExternalMangler::coreName(const SgNamespaceDeclarationStatement& n)
+  std::string handleAnonymousName(const SgDeclarationStatement& n, std::string name)
+  {
+    if (name.rfind("__anonymous_0x", 0) == std::string::npos)
+      return name;
+
+    ct::RoseCompatibilityBridge compat;
+    ct::SourceLocation          loc = compat.location(&n, true /*resolve instantiation*/);
+
+    return mangleLocation(loc, mglAnonymousTypeName);
+  }
+
+  void ExternalMangler::handle(const SgEnumDeclaration& n)
+  {
+    std::string                         enumName = handleAnonymousName(n, n.get_name());
+    sg::NotNull<const SgScopeStatement> scope = n.get_scope();
+    std::string                         qualifiers = isSgFunctionDefinition(scope)
+                                                         ?  std::string{mglElideFunctionScope}
+                                                         :  mangleScope(scope);
+
+    res = join( qualifiers
+              , mglEnum
+              , simpleName(enumName, "enm")
+              );
+  }
+
+
+  void ExternalMangler::handle(const SgClassDeclaration& n)
+  {
+    std::string className = handleAnonymousName(n, n.get_name());
+
+    // \todo how about class/unions in parameter lists? Handle like enums?
+
+    res = join( mangleScope(n.get_scope())
+              , mglClass
+              , simpleName(className, "cls")
+              );
+  }
+
+
+  std::string
+  ExternalMangler::scopeQualifiedName(const SgNamespaceDeclarationStatement& n)
   {
     std::string             name  = n.get_name();
     const SgScopeStatement* scope = n.get_scope();
@@ -1246,7 +1292,8 @@ namespace
     return n.get_scope();
   }
 
-  std::string ExternalMangler::coreName(const SgFunctionDeclaration& n, std::string linkage)
+  std::string
+  ExternalMangler::scopeQualifiedName(const SgFunctionDeclaration& n, std::string linkage)
   {
     const SgScopeStatement* scope = scopeForFunctionMangling(n);
 
@@ -1258,37 +1305,95 @@ namespace
                );
   }
 
-  std::string ExternalMangler::coreName(const SgInitializedName& n)
+  std::string
+  ExternalMangler::scopeQualifiedName(const SgInitializedName& n)
   {
-    const SgScopeStatement* scope     = enclosingScope(n);
-    const bool              skipScope = isSgGlobal(scope);
+    const SgScopeStatement*   scope     = enclosingScope(n);
+    const bool                skipScope = isSgGlobal(scope);
+    std::string               name      = n.get_name();
+    sg::NotNull<const SgNode> parent    = n.get_parent();
+
+    // \todo
+    //   this needs to be extended to identify variables that need
+    //   to be mangled using source location information, otherwise the
+    //   generated names would not be unique.
+    //   ex:
+    // \code
+    //   // ex 1:
+    //   void foo()
+    //   {
+    //      { int i = 0; }
+    //      { int i = 0; } // different i
+    //   }
+    // \endcode
+
+    if (const SgFunctionParameterList* parmlst = isSgFunctionParameterList(parent))
+    {
+      // function parameters are modeled using indices, so that parameter names
+      //   can be uniquely identified although they may be renamed in the definition.
+      //   ex:
+      // \code
+      //   void foo(int i);
+      //   void foo(int j); // i and j designate the same variable
+      // \endcode
+      const SgInitializedNamePtrList& parms = parmlst->get_args();
+      auto const                      beg = parms.begin();
+      std::size_t                     num = std::distance(beg, std::find(beg, parms.end(), &n));
+      sg::NotNull<const SgNode>       root = parmlst->get_parent();
+
+      name = join(mglParameterIdx, std::to_string(num));
+    }
+    else if (name.size() == 0)
+    {
+      ct::RoseCompatibilityBridge compat;
+
+      name = mangleLocation(compat.location(&n, true/*resolve instantiations*/), mglVariableLoc);
+
+      msgWarn() << "mangling an unnamed parameter in: " << parent->unparseToString()
+                << " as '" << name << "'"
+                << std::endl;
+    }
 
     if (skipScope)
-      return simpleName(n.get_name(), "in2");
+      return simpleName(name, "in2");
 
     return join( mangleScope(scope)
-               , simpleName(n.get_name(), "ini")
+               , simpleName(name, "ini")
                );
   }
 
+  using MangledNameHashKey = std::tuple<const SgNode*, bool, bool, bool>;
 
-  template <class... Args>
-  std::string externalName(const SgNode& n, Args&&... args)
+  struct MangledNameHashKeyFn : public std::unary_function<MangledNameHashKey, std::size_t>
   {
-    static std::unordered_map<const SgNode*, std::string> m;
+    std::size_t operator()(const MangledNameHashKey& key) const
+    {
+      return ( std::hash<const void*>{}(std::get<0>(key))
+             ^ (std::hash<bool>{}(std::get<1>(key)) << 2)
+             ^ (std::hash<bool>{}(std::get<2>(key)) << 1)
+             ^ (std::hash<bool>{}(std::get<3>(key)) << 0)
+             );
+    }
+  };
 
-    std::string& mangled = m[&n];
+  using MangledNameHash = std::unordered_map<MangledNameHashKey, std::string, MangledNameHashKeyFn>;
 
-    if (mangled.empty())
-      mangled = sg::dispatch(ExternalMangler{std::forward<Args>(args)...}, &n);
+  std::unordered_map<std::string, uint64_t> shortMangledNameCache;
+  std::unordered_map<uint64_t, std::string> mangledNameHashCollisionCheckMap;
+  MangledNameHash                           alreadyMangledShort;
+  MangledNameHash                           alreadyMangledLong;
 
-    return mangled;
+
+
+  std::string externalName(const SgNode& n, bool uniqMain, bool returnType, bool ptrToArr)
+  {
+    std::string& cached = alreadyMangledLong[{&n, uniqMain, returnType, ptrToArr}];
+
+    if (cached.size() == 0)
+      cached = sg::dispatch(ExternalMangler{uniqMain, returnType, ptrToArr}, &n);
+
+    return cached;
   }
-
-
-  std::unordered_map<std::string, uint64_t>      shortMangledNameCache;
-  std::unordered_map<uint64_t, std::string>      mangledNameHashCollisionCheckMap;
-  std::unordered_map<const SgNode*, std::string> alreadyMangled;
 }
 
 
@@ -1359,11 +1464,20 @@ const std::string& _mangle( const SgNode& n,
                             bool withPointerToArrayDecay = ExternalMangler::NO_ARRAY_TO_POINTER
                           )
 {
-  std::string& cached = alreadyMangled[&n];
+  std::string& cached = alreadyMangledShort[{&n, withUniqueMain, withReturnType, withPointerToArrayDecay}];
 
   if (cached.size() == 0)
   {
     cached = shorten(externalName(n, withUniqueMain, withReturnType, withPointerToArrayDecay));
+/*
+    if (cached.size() == 0)
+    {
+      std::cerr << n.get_parent()->get_parent()->unparseToString() << "/" << typeid(*n.get_parent()->get_parent()).name()
+                << "\n  " << externalName(n, withUniqueMain, withReturnType, withPointerToArrayDecay)
+                << "\n  " << cached
+                << std::endl;
+    }
+*/
     ASSERT_require(cached.size() != 0);
   }
 
@@ -1372,6 +1486,15 @@ const std::string& _mangle( const SgNode& n,
 
 const std::string& mangle(const SgDeclarationStatement& n, NameShortener shorten, bool withUniqueMain)
 {
+  const bool unableToMangle = (  isSgFunctionParameterList(&n)
+                              || isSgVariableDeclaration(&n)
+                              || isSgStaticAssertionDeclaration(&n)
+                              || isSgCtorInitializerList(&n)
+                              );
+
+  if (unableToMangle)
+    throw std::runtime_error{std::string{"unable to mangle type: "} + n.class_name()};
+
   return _mangle(n, std::move(shorten), withUniqueMain);
 }
 
@@ -1421,7 +1544,8 @@ void clearManglingCache()
 {
   shortMangledNameCache.clear();
   mangledNameHashCollisionCheckMap.clear();
-  alreadyMangled.clear();
+  alreadyMangledShort.clear();
+  alreadyMangledLong.clear();
 }
 
 }

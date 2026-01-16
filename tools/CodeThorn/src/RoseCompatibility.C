@@ -1401,6 +1401,15 @@ SourceLocation RoseCompatibilityBridge::location(AnyKeyType key, bool resolveIns
     return _location(*fn, resolveInstantiations);
   }
 
+  // for forward compatibility
+  if (const SgDeclarationStatement* sagedcl = isSgDeclarationStatement(key))
+  {
+    if (const SgDeclarationStatement* sagedef = sagedcl->get_definingDeclaration())
+      sagedcl = sagedef;
+
+    return _location(*sagedcl, resolveInstantiations);
+  }
+
   if (VariableKeyType var = isSgInitializedName(key))
     return _location(*var, resolveInstantiations);
 
