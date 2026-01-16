@@ -880,9 +880,10 @@ UnformattedSink::maybePrefix(const Mesg &mesg, const MesgProps &props) {
 // not thread-safe
 SAWYER_EXPORT std::string
 UnformattedSink::maybeBody(const Mesg &mesg, const MesgProps &/*props*/) {
-    std::string retval;
-    if (!mesg.isEmpty())
-        retval = mesg.text().substr(gang()->ntext());
+    std::string retval = mesg.text();
+    const auto ntext = gang()->ntext();
+    if (!mesg.isEmpty() && ntext >= 0 && ntext <= retval.size())
+        retval = retval.substr(ntext);
     return retval;
 }
 
