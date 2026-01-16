@@ -201,7 +201,7 @@ HEADER_GRAPH_START
      void append_properties( int addr, const std::string & prop );
 
  //! Support for adding SgGraphNode to SgGraph.
-     SgGraphNode* addNode( const std::string & name = "", SgNode* sg_node = NULL);
+     SgGraphNode* addNode( const std::string & name = "", SgNode* sg_node = nullptr);
 
  //! Add support for externally build SgGraphNode objects
      SgGraphNode* addNode( SgGraphNode* node );
@@ -2128,7 +2128,7 @@ SOURCE_ATTRIBUTE_SUPPORT_START
 void
 $CLASSNAME::addNewAttribute( std::string s, AstAttribute* a )
    {
-     if (get_attributeMechanism() == NULL)
+     if (get_attributeMechanism() == nullptr)
         {
           set_attributeMechanism( new AstAttributeMechanism() );
           ROSE_ASSERT(get_attributeMechanism() != NULL);
@@ -2139,7 +2139,7 @@ $CLASSNAME::addNewAttribute( std::string s, AstAttribute* a )
 void
 $CLASSNAME::setAttribute( std::string s, AstAttribute* a )
    {
-     if (get_attributeMechanism() == NULL)
+     if (get_attributeMechanism() == nullptr)
         {
           set_attributeMechanism( new AstAttributeMechanism() );
           ROSE_ASSERT(get_attributeMechanism() != NULL);
@@ -2176,7 +2176,7 @@ $CLASSNAME::removeAttribute(std::string s)
      if (remainingCount == 0)
         {
           delete get_attributeMechanism();
-          set_attributeMechanism(NULL);
+          set_attributeMechanism(nullptr);
         }
    }
 
@@ -2184,7 +2184,7 @@ bool
 $CLASSNAME::attributeExists(std::string s) const
    {
      bool returnValue = false;
-     if (get_attributeMechanism() != NULL)
+     if (get_attributeMechanism() != nullptr)
           returnValue = get_attributeMechanism()->exists(s);
      return returnValue;
    }
@@ -2193,7 +2193,7 @@ int
 $CLASSNAME::numberOfAttributes() const
    {
      int returnValue = 0;
-     if (get_attributeMechanism() != NULL)
+     if (get_attributeMechanism() != nullptr)
           returnValue = get_attributeMechanism()->size();
      return returnValue;
    }
@@ -2243,23 +2243,17 @@ SOURCE_MODIFIER_END
 SOURCE_MODIFIER_NODES_START
 
 // These are generated
-SgModifierNodes::SgModifierNodes()
-   {
-  // p_nodes[0] = p_nodes[1] = p_nodes[2] = p_nodes[3] = (SgModifierType*)0L;
-  // p_next = (SgModifierNodes*)0L;
-  // MK: Call the following function instead
-     post_construction_initialization();
-   }
+SgModifierNodes::SgModifierNodes() {
+    post_construction_initialization();
+}
 
 void
 SgModifierNodes::post_construction_initialization()
    {
-  // nodes = new (SgModifierType*)[4];
-  // p_nodes[0] = p_nodes[1] = p_nodes[2] = p_nodes[3] = (SgModifierType*)0L;
-  // MK: p_nodes is an STL vector now, it needs to be initilized differently
-     for (int i= 0; i<4; i++)
-          p_nodes.push_back((SgModifierType*) NULL);
-     p_next = (SgModifierNodes*) NULL;
+     for (int i= 0; i<4; i++) {
+         p_nodes.push_back((SgModifierType*) nullptr);
+     }
+     p_next = (SgModifierNodes*) nullptr;
    }
 
 SOURCE_MODIFIER_NODES_END
@@ -2267,23 +2261,20 @@ SOURCE_MODIFIER_NODES_END
 
 SOURCE_CV_TYPE_MODIFIER_START
 
-$CLASSNAME::$CLASSNAME ( const $CLASSNAME & X )
-   {
-     p_modifier = X.p_modifier;
-   }
+$CLASSNAME::$CLASSNAME(const $CLASSNAME& X) {
+    p_modifier = X.p_modifier;
+}
 
 $CLASSNAME &
-$CLASSNAME::operator= ( const $CLASSNAME & X )
-   {
-     p_modifier = X.p_modifier;
-     return *this;
-   }
+$CLASSNAME::operator= (const $CLASSNAME& X) {
+    p_modifier = X.p_modifier;
+    return *this;
+}
 
 void
-$CLASSNAME::post_construction_initialization()
-   {
-     p_modifier = e_default;
-   }
+$CLASSNAME::post_construction_initialization() {
+    p_modifier = e_default;
+}
 
 bool $CLASSNAME::isUnknown() const { return p_modifier == e_unknown; }
 void $CLASSNAME::setUnknown()      { p_modifier = e_unknown; }
@@ -3528,42 +3519,42 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 SgTypeModifier &
 SgDeclarationModifier::get_typeModifier ()
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      return p_typeModifier;
    }
 
 SgAccessModifier &
 SgDeclarationModifier::get_accessModifier ()
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      return p_accessModifier;
    }
 
 SgStorageModifier &
 SgDeclarationModifier::get_storageModifier ()
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      return p_storageModifier;
    }
 
 const SgTypeModifier &
 SgDeclarationModifier::get_typeModifier () const
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      return p_typeModifier;
    }
 
 const SgAccessModifier &
 SgDeclarationModifier::get_accessModifier () const
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      return p_accessModifier;
    }
 
 const SgStorageModifier &
 SgDeclarationModifier::get_storageModifier () const
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      return p_storageModifier;
    }
 
@@ -3907,28 +3898,28 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 SgConstVolatileModifier &
 $CLASSNAME::get_constVolatileModifier ()
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      return p_constVolatileModifier;
    }
 
 SgUPC_AccessModifier &
 $CLASSNAME::get_upcModifier ()
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      return p_upcModifier;
    }
 
 SgStructureModifier &
 $CLASSNAME::get_structureModifier ()
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      return p_structureModifier;
    }
 
 SgElaboratedTypeModifier &
 $CLASSNAME::get_elaboratedTypeModifier ()
    {
-     ROSE_ASSERT (this != NULL);
+     ASSERT_this();
      return p_elaboratedTypeModifier;
    }
 
@@ -15511,8 +15502,8 @@ SgFile*
 SgProject::operator[](unsigned int i)
    {
   // Since we use an STL vector internally we can use the vector::operator[] directly.
-     assert(p_fileList_ptr != NULL);
-     assert(i < (unsigned)numberOfFiles());
+     ASSERT_not_null(p_fileList_ptr);
+     ASSERT_require(i < (unsigned)numberOfFiles());
      return p_fileList_ptr->get_listOfFiles()[i];
    }
 
@@ -15529,22 +15520,20 @@ SgFile* SgProject::operator[](std::string filename)
      SgFilePtrList::iterator i = p_fileList_ptr->get_listOfFiles().begin();
      while (i != p_fileList_ptr->get_listOfFiles().end())
         {
-          ROSE_ASSERT(*i != NULL);
+          ASSERT_not_null(*i);
        // Find the matching SgFile object using the get_sourceFileNameWithPath()
-          if (filename == (*i)->get_sourceFileNameWithPath())
-             {
-               return *i;
-             }
+          if (filename == (*i)->get_sourceFileNameWithPath()) {
+              return *i;
+          }
 
           i++;
         }
      return nullptr;
    }
 
-std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<string> & l )
-   {
-     return os;
-   }
+std::ostream & operator<< (std::ostream& os, const Rose_STL_Container<string>& /*l*/) {
+    return os;
+}
 
 SgFilePtrList &
 SgProject::get_fileList() const
@@ -17726,7 +17715,7 @@ SgUnparse_Info::get_array_index_list()
 { return p_array_index_list; }
 
 void
-SgUnparse_Info::set_array_index_list(SgExpression* e, SgUnparse_Info finfo) {
+SgUnparse_Info::set_array_index_list(SgExpression* e, SgUnparse_Info /*finfo*/) {
     ASSERT_require2(false, "ERROR: not implemented in SAGE3!\n");
 }
 
