@@ -166,6 +166,37 @@ inline SgExpression * get_parent_if_folded_in(SgExpression * expr) {
   }
 }
 
+/// checks if the original expression tree \p child can replace
+///   the folded expression \p folded.
+/// \param folded the folded expression
+/// \param child  folded's child representing the original expression tree
+/// \param delete_set a set of expressions that are marked for deletion.
+bool
+exprIsUnfoldable(SgExpression* folded, const SgExpression* child, const std::unordered_set<SgExpression *>& delete_set)
+{
+  bool res = delete_set.count(folded) == 0;
+
+  // TODO 1st issue: the initializer of a variable using enum-value (`X::enum_e e = X::none`):
+  //        -> the value is in the original tree of the enum-value
+  //        -> this replacement create a type error in C++
+  // TODO 2nd issue: `enum { s = sizeof(struct X {  } };` definition of X would not be unparsed
+  //        -> not an issue if struct is anonymous
+  //        -> I cannot find a correct predicate would probably need to save more info in EDG
+  res &= !isSgEnumVal(folded);
+
+  // DQ (7/23/2020): Only required now for C++11 code using EDG 6.0 and GNU 10.1 (see Cxx11_tests/test2015_02.C).
+  // DQ (7/18/2020): Added support to permit Cxx11_tests/test2020_69.C to pass.
+  // TV: moved that to not break the pattern
+  res &= !isSgLambdaExp(child);
+
+  // skip unfolding when ROSE public github issue #103 is detected.
+  res &= !(  isSgAggregateInitializer(folded)
+          && (!isSgInitializer(child))
+          && isSgDesignatedInitializer(folded->get_parent())
+          );
+  return res;
+}
+
 void removeConstantFoldedValue(SgProject* /*project*/) {
   CollectExpressionTrees cet;
   cet.traverseMemoryPool();
@@ -234,27 +265,7 @@ void removeConstantFoldedValue(SgProject* /*project*/) {
         folded->set_originalExpressionTree(NULL);
       }
 
-      bool replace_folded_by_child = true;
-
-      // Folded already marked for delete
-      if (delete_set.find(folded) != delete_set.end()) {
-        replace_folded_by_child = false; // Child will be deleted too
-      }
-
-      if (isSgEnumVal(folded)) {
-        // TODO 1st issue: the initializer of a variable using enum-value (`X::enum_e e = X::none`):
-        //        -> the value is in the original tree of the enum-value
-        //        -> this replacement create a type error in C++
-        // TODO 2nd issue: `enum { s = sizeof(struct X {  } };` definition of X would not be unparsed
-        //        -> not an issue if struct is anonymous
-        //        -> I cannot find a correct predicate would probably need to save more info in EDG
-        replace_folded_by_child = false;
-      }
-
-      // DQ (7/23/2020): Only required now for C++11 code using EDG 6.0 and GNU 10.1 (see Cxx11_tests/test2015_02.C).
-      // DQ (7/18/2020): Added support to permit Cxx11_tests/test2020_69.C to pass.
-      // TV: moved that to not break the pattern
-      replace_folded_by_child &= !isSgLambdaExp(child);
+      bool const replace_folded_by_child = exprIsUnfoldable(folded, child, delete_set);
 
       if (replace_folded_by_child) {
         child->set_parent(folded->get_parent()); // prevent replacement from creating self loop if child is direct descendant of folded
@@ -335,22 +346,7 @@ void preserveConstantFoldedValue(SgProject* /*project*/) {
         folded->set_originalExpressionTree(NULL);
       }
 
-      bool replace_folded_by_child = delete_set.count(folded) == 0;
-
-      if (isSgEnumVal(folded)) {
-        // TODO 1st issue: the initializer of a variable using enum-value (`X::enum_e e = X::none`):
-        //        -> the value is in the original tree of the enum-value
-        //        -> this replacement create a type error in C++
-        // TODO 2nd issue: `enum { s = sizeof(struct X {  } };` definition of X would not be unparsed
-        //        -> not an issue if struct is anonymous
-        //        -> I cannot find a correct predicate would probably need to save more info in EDG
-        replace_folded_by_child = false;
-      }
-
-      // DQ (7/23/2020): Only required now for C++11 code using EDG 6.0 and GNU 10.1 (see Cxx11_tests/test2015_02.C).
-      // DQ (7/18/2020): Added support to permit Cxx11_tests/test2020_69.C to pass.
-      // TV: moved that to not break the pattern
-      replace_folded_by_child &= !isSgLambdaExp(child);
+      bool const replace_folded_by_child = exprIsUnfoldable(folded, child, delete_set);
 
       if (replace_folded_by_child) {
         child->set_parent(folded->get_parent()); // prevent replacement from creating self loop if child is direct descendant of folded
