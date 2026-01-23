@@ -4298,120 +4298,69 @@ struct hash_Name
 
  */
 
-// tps (11/19/2009) : Constructor of hash_multimap in MSVS is different
-// CH (4/8/2010): Use boost::unordered instead
+class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr> {
+  protected:
+    SgNode* parent;
+    bool case_insensitive_semantics;
 
-class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>
-   {
-     protected:
-          SgNode * parent;
-          bool case_insensitive_semantics;
+  public:
+    rose_hash_multimap()
+      : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(17,hash_Name(this),eqstr(this)), parent(nullptr), case_insensitive_semantics(false) { }
 
-     public:
-       // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
-       // DQ (11/27/2010): Newer version of code after adding support for case insensitive behavior.
-          rose_hash_multimap()
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(17,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
-             {
-             }
+    rose_hash_multimap(int sz)
+      : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz,hash_Name(this),eqstr(this)), parent(nullptr), case_insensitive_semantics(false) { }
 
-         rose_hash_multimap(int sz)
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
-             {
-             }
+    rose_hash_multimap(const rose_hash_multimap& rhs)
+      : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(rhs), parent(rhs.parent), case_insensitive_semantics(rhs.case_insensitive_semantics) { }
 
-          rose_hash_multimap(const rose_hash_multimap & rhs)
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs), parent(rhs.parent), case_insensitive_semantics(rhs.case_insensitive_semantics)
-             {
-             }
+    void set_parent(SgNode* new_parent) {
+        parent = new_parent;
+    }
 
-          void set_parent(SgNode * new_parent)
-             {
-               parent = new_parent;
-             }
+    SgNode* get_parent() const {
+        return parent;
+    }
 
-          SgNode* get_parent() const
-             {
-               return parent;
-             }
+    void set_case_insensitive_semantics(bool b) {
+        case_insensitive_semantics = b;
+    }
 
-       // DQ (11/28/2010): Added support to set/unset case sensitivity in symbol table handling.
-          void set_case_insensitive_semantics(bool b)
-             {
-               case_insensitive_semantics = b;
-             }
+    bool get_case_insensitive_semantics() const {
+        return case_insensitive_semantics;
+    }
 
-       // DQ (11/28/2010): Added support to set/unset case sensitivity in symbol table handling.
-          bool get_case_insensitive_semantics() const
-             {
-               return case_insensitive_semantics;
-             }
+    void delete_elements();
 
-          void delete_elements();
+    ~rose_hash_multimap() {
+        delete_elements();
+        parent = nullptr;
+    }
 
-         ~rose_hash_multimap()
-             {
-               delete_elements();
+    // Friend class declarations to get direct access to data member for the AST file IO
+    friend class AST_FILE_IO;
+    friend class SgSymbolTableStorageClass;
+    friend class EasyStorage<rose_hash_multimap*>;
+};
 
-            // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
-               parent = NULL;
-             }
-
-     // JH (01/01/2006) friend class declarations to get direct access to data member for the ast file IO
-        friend class AST_FILE_IO;
-        friend class SgSymbolTableStorageClass;
-        friend class EasyStorage<rose_hash_multimap*>;
-   };
-
-
-std::ostream & operator<< (std::ostream& os, const rose_hash_multimap::iterator& rhm_it);
+std::ostream& operator<< (std::ostream& os, const rose_hash_multimap::iterator& rhm_it);
 
 HEADER_SYMBOL_TABLE_PREDECLARATION_END
 
-
 HEADER_SYMBOL_TABLE_START
 
-       // AJ (10/21/2004): Added support STL based implementation of hash table.
-       // I have replaced the p_table in the SgSymbolTable from a SgSymbolHashMultimap
-       // to the STL hash_multimap<SgName,SgSymbol*,..>. The hash function for SgName
-       // uses the native STL hash function for char* . The methods of SgSymbolTable
-       // were adjusted (where necessary) to accomodate the STL hash_multimap table.
-       // What we have now is the old interaface of SgSymbolTable working with STL
-       // hash_multimap AND the STL interaface through the hash_multimap table.
+    typedef rose_hash_multimap BaseHashType;
+    typedef BaseHashType::iterator hash_iterator;
 
-       // DQ (1/30/2007): Added many member functions back into ROSE, now that we both
-       // better appriciate why they are required and we are overhaling the symbol
-       // table interface generally.
-       // Comment from 9/7/2006):
-       // Many member functions were removed because they are (with few exceptions,
-       // where they have been recently restored) infreqently used and too
-       // much funcionality to support robustly.  Now that we use STL internally
-       // and we make the STL hash map available, users have all possible access.
+    SgSymbolTable(); // Default constructor
 
-       // typedefs to STL container used internally
-          typedef rose_hash_multimap BaseHashType;
-          typedef BaseHashType::iterator hash_iterator;
+    //! Added to support scopes that have more symbols (e.g. SgGlobal, and the function type table)
+    SgSymbolTable(int sz);
 
-       // Default constructor (builds the hash table using a default size: 17 typically)
-          SgSymbolTable();
+    // General function used to build AST
+    void insert(const SgName& name, SgSymbol* sp);
 
-       //! Added to support scopes that have more symbols (e.g. SgGlobal, and the function type table)
-          SgSymbolTable(int sz);
-
-       // Destructors are automatically generated by ROSETTA and so should not be explicitly represented
-       // ~SgSymbolTable();
-
-       // General function used to build AST
-          void insert ( const SgName & name, SgSymbol *sp );
-
-       // DQ (11/27/2010): Changing the return type to "bool"
-       // DQ (1/31/2007): Deprecated (is not well named and should return bool)
-       // int  find   ( const SgName & name, SgSymbol *sp, bool case_insensitive = false ) ROSE_DEPRECATED_FUNCTION;
-          bool find   ( const SgName & name, SgSymbol *sp ) ROSE_DEPRECATED_FUNCTION;
-
-       // DQ (1/31/2007): New functions that will replace the deprecated find() member function
-       // Note that this is log n in complexity
-          bool exists ( const SgName &, SgSymbol *sp ) const; //! Complexity O(log n), checks for existence of symbol before matching against names.
+    bool find(const SgName& name, SgSymbol* sp) ROSE_DEPRECATED_FUNCTION;
+    bool exists(const SgName&, SgSymbol* sp) const; //! Complexity O(log n), checks for existence of symbol before matching against names.
 
        // DQ (1/31/2007): This is log n in complexity
           bool exists ( const SgName & name) const;               //! Complexity O(log n)
@@ -7082,7 +7031,7 @@ HEADER_UNPARSE_INFO_START
 
           SgName get_array_index_list();
 
-          void set_array_index_list(SgExpression *e, SgUnparse_Info finfo);
+          void set_array_index_list(SgExpression* e, SgUnparse_Info finfo);
           void unset_array_index_list();
 
        // Support for processing of recursive references to structure tags within the data
@@ -7105,21 +7054,13 @@ HEADER_UNPARSE_INFO_START
        */
        // static bool forceDefaultConstructorToTriggerError;
 
-       // DQ (9/6/2004): Support for list of scopes required to qualify names (e.g. types, data members, member functions, etc.)
-       // SgSymbolPtrList & get_listOfScopeSymbols();
-       // void set_listOfScopeSymbols ( const SgSymbolPtrList & l );
-
-       // DQ (1/31/2006): moved static bool forceDefaultConstructorToTriggerError to be built by ROSETTA
           static bool get_forceDefaultConstructorToTriggerError();
           static void set_forceDefaultConstructorToTriggerError( bool forceDefaultConstructorToTriggerError);
 
-       // FMZ (5/8/2008) Added to support to generate fortran XX.rose_mod file for a module
-       // the code will based on fortran unparser code
           bool outputFortranModFile() const;
           void set_outputFortranModFile();
           void unset_outputFortranModFile();
 
-       // driscoll6 (6/6/2011) Mutators for p_nestingLevel
           void inc_nestingLevel();
           void dec_nestingLevel();
 
@@ -7140,11 +7081,7 @@ HEADER_UNPARSE_INFO_END
 
 
 HEADER_UNPARSE_POSTDECLARATION_START
-//! extern declarations used by the unparser (a default object for many to reference)
-// extern SgUnparse_Info SgNO_UNPARSE_INFO;
 
-// support function declarations for unparsing
-//extern void printSgVariant ( std::ostream& os, int x );
 extern std::string getSgVariant ( int x);
 
 HEADER_UNPARSE_POSTDECLARATION_END
@@ -7152,10 +7089,6 @@ HEADER_UNPARSE_POSTDECLARATION_END
 
 HEADER_TEMPLATE_PARAMETER_START
      public:
-
-       // DQ (8/10/2013): We need to unify how to reference the enum values between template parameters and template arguments.
-       // enum SgTemplateArgument::template_argument_enum;
-       // typedef SgTemplateArgument::template_argument_enum template_parameter_enum;
 
       /*! Different uses of a template parameter */
           enum template_parameter_enum
@@ -7395,10 +7328,7 @@ rose_hash_multimap::delete_elements()
 size_t
 hash_Name::operator()(const SgName & name) const
    {
-  // CH (4/8/2010): Use boost::unordered instead
-  // return hasher(name.str());
-
-     ROSE_ASSERT(hash_multimap != NULL);
+     ASSERT_not_null(hash_multimap);
 
   // DQ (8/15/2025): Tracking the number of times this function is called...
      AstPerformance::numberOfCallsToHashOperator++;
@@ -7416,9 +7346,6 @@ hash_Name::operator()(const SgName & name) const
         }
        else
         {
-       // DQ (8/14/2025): Since we are using a C++ string now, we don't want to convert this
-       // to a C stype string, just to have it be converted back into a C++ string later.
-       // return hasher(name.str());
           return hasher(name.getString());
         }
    }
@@ -7492,7 +7419,7 @@ std::ostream & operator<< (std::ostream& os, const rose_hash_multimap::iterator&
 }
 
 SgName
-SgSymbolTable::get_name( const SgNode* node) const
+SgSymbolTable::get_name(const SgNode* node) const
    {
   // DQ (2/20/2007): This function is used to get the name for the different types of declarations used to build symbols.
 
@@ -8085,7 +8012,7 @@ SgSymbolTable::find( const SgInitializedName* initializedName) {
 }
 
 SgSymbol*
-SgSymbolTable::find( const SgFunctionType* functionType)
+SgSymbolTable::find(const SgFunctionType* functionType)
    {
      ROSE_ASSERT(p_table != NULL);
      ROSE_ASSERT(functionType != NULL);
@@ -8110,12 +8037,11 @@ SgSymbolTable::find( const SgFunctionType* functionType)
           p_iterator++;
         }
 
-  // DQ (2/13/2007): Fixed bug that returns a valid pointer even when there was no match to the input statement!
-     return NULL;
+     return nullptr;
    }
 
 SgSymbol*
-SgSymbolTable::find( const SgStatement* statement)
+SgSymbolTable::find(const SgStatement* statement)
    {
      ROSE_ASSERT(p_table != NULL);
      ROSE_ASSERT(statement != NULL);
@@ -8267,39 +8193,35 @@ SgSymbolTable::find(const SgName & nm, SgSymbol *sp)
    }
 
 SgAliasSymbol*
-SgSymbolTable::find_aliased_symbol(const SgName & nm, SgSymbol *sp)
+SgSymbolTable::find_aliased_symbol(const SgName& nm, SgSymbol* sp)
    {
   // DQ (5/19/2013): This function finds the symbol for which the alias is sp, not the symbol to be returned being sp.
-     ROSE_ASSERT(p_table != NULL);
-     ROSE_ASSERT(sp != NULL);
+     ASSERT_not_null(p_table);
+     ASSERT_not_null(sp);
 
      p_iterator = p_table->find(nm);
 
-     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
-        {
-          p_name    = nm;
-          p_no_name = false;
+     while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm)) {
+         p_name    = nm;
+         p_no_name = false;
 
-          ROSE_ASSERT(p_iterator->second != NULL);
+         ASSERT_not_null(p_iterator->second);
 
-          SgAliasSymbol* aliasSymbol = isSgAliasSymbol(p_iterator->second);
-          if ( (aliasSymbol != NULL) && (aliasSymbol->get_alias() == sp) )
-             {
-               return aliasSymbol;
-             }
+         SgAliasSymbol* aliasSymbol = isSgAliasSymbol(p_iterator->second);
+         if ((aliasSymbol != nullptr) && (aliasSymbol->get_alias() == sp)) {
+             return aliasSymbol;
+         }
+         p_iterator++;
+     }
 
-          p_iterator++;
-        }
-
-     return NULL;
+     return nullptr;
    }
 
 bool
-SgSymbolTable::exists ( const SgName & nm ) const
-   {
-     ASSERT_not_null(p_table);
-     return p_table->find(nm) != p_table->end();
-   }
+SgSymbolTable::exists(const SgName& nm) const {
+    ASSERT_not_null(p_table);
+    return p_table->find(nm) != p_table->end();
+}
 
 bool
 SgSymbolTable::exists ( const SgSymbol *sp ) const
@@ -8491,14 +8413,10 @@ SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(SgTemplateArgum
      return hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrArguments<SgTemplateArgument>(templateArgumentsList,symbol);
    }
 
-// DQ (8/10/2013): Base template for specializations specific to template arguments and template parameters.
-template <class T> std::vector<T*> getTemplateParametersOrArgumentsList(SgSymbol* symbol)
-   {
-  // DQ (7/14/2025): Adding timers to support Matt's tool.
-  // TimingPerformance timer1 ("getTemplateParametersOrArgumentsList: whole function:");
-
-     return std::vector<T*>();
-   }
+// Base template for specializations specific to template arguments and template parameters.
+template <class T> std::vector<T*> getTemplateParametersOrArgumentsList(SgSymbol* /*symbol*/) {
+    return std::vector<T*>();
+}
 
 template <>
 std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplateArgument>(SgSymbol* symbol)
@@ -10918,7 +10836,6 @@ SgInitializedName::search_for_symbol_from_symbol_table() const
      return symbol;
    }
 
-// DQ (10/13/2014): Adding a default constructor for compatability with what was previously the API before the newer aterm support.
 SgInitializedName::SgInitializedName() ROSE_DEPRECATED_FUNCTION
    : p_name(""),
      p_microsoft_uuid_string(""),
@@ -10934,6 +10851,7 @@ SgInitializedName::SgInitializedName() ROSE_DEPRECATED_FUNCTION
      p_excess_specifier(SgInitializedName::e_excess_specifier_none),
      p_register_name_string(),
      p_flags(e_flags_none),
+     p_constant_or_type_argument_for_Alignas_keyword(nullptr),
      p_gnu_attribute_modifierVector(e_last_gnu_variable_attribute,false),
      p_gnu_attribute_initialization_priority(0),
      p_gnu_attribute_named_weak_reference(""),
@@ -10944,7 +10862,6 @@ SgInitializedName::SgInitializedName() ROSE_DEPRECATED_FUNCTION
      p_gnu_attribute_visability(SgDeclarationModifier::e_unknown_visibility),
      p_name_qualification_length(0),
      p_name_qualification_length_for_type(0),
-     p_constant_or_type_argument_for_Alignas_keyword(NULL),
      p_auto_decltype(NULL)
    {
   // This constructor has been added to support the previous API, I would like to depricate it.
@@ -11056,25 +10973,16 @@ SgInitializedName::post_construction_initialization()
 
 #if BEFORE_MERGE_BOOLEAN_FLAGS
   // FMZ added for coarray
-  // DQ (10/26/2010): These were not properly initialized.
      p_isCoArray              = false;
-     // p_requiresGlobalNameQualificationOnType(false),
      p_shapeDeferred          = false;
      p_initializationDeferred = false;
      p_protected_declaration  = false;
-     // p_type_elaboration_required = false;
-     // p_global_qualification_required = false;
      p_type_elaboration_required_for_type = false;
      p_global_qualification_required_for_type = false;
      p_hasArrayTypeWithEmptyBracketSyntax = false;
      p_using_C11_Alignas_keyword = false;
      p_using_auto_keyword = false;
      p_using_device_keyword = false;
-     // p_is_braced_initialized = false;
-     // p_using_assignment_copy_constructor_syntax = false;
-     // p_needs_definitions = false;
-     // p_is_parameter_pack = false;
-     // p_is_pack_element = false;
 #endif /*BEFORE_MERGE_BOOLEAN_FLAGS*/
 
      p_flags = e_flags_none; /*all false (default)*/
@@ -11082,8 +10990,8 @@ SgInitializedName::post_construction_initialization()
   // DQ (2/5/2014): I just noticed that the initialization of these were missing.
      p_name_qualification_length_for_type = 0;
 
-  // DQ (7/27/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
-     p_constant_or_type_argument_for_Alignas_keyword = NULL;
+  // C11 "_Alignas" keyword (alternative alignment specification).
+     p_constant_or_type_argument_for_Alignas_keyword = nullptr;
 
   // DQ (8/2/2014): Adding support for C++11 auto keyword.
      p_auto_decltype = NULL;
@@ -11114,6 +11022,7 @@ SgInitializedName::SgInitializedName (
      p_excess_specifier(SgInitializedName::e_excess_specifier_none),
      p_register_name_string(),
      p_flags(e_flags_none),
+     p_constant_or_type_argument_for_Alignas_keyword(nullptr),
      p_gnu_attribute_modifierVector(e_last_gnu_variable_attribute,false),
      p_gnu_attribute_initialization_priority(0),
      p_gnu_attribute_named_weak_reference(""),
@@ -11124,7 +11033,6 @@ SgInitializedName::SgInitializedName (
      p_gnu_attribute_visability(SgDeclarationModifier::e_unknown_visibility),
      p_name_qualification_length(0),
      p_name_qualification_length_for_type(0),
-     p_constant_or_type_argument_for_Alignas_keyword(NULL),
      p_auto_decltype(NULL)
    {
      post_construction_initialization();
@@ -11145,9 +11053,10 @@ SgInitializedName::SgInitializedName(
      p_scope(scope),
      p_preinitialization(e_unknown_preinitialization),
      p_register_name_code(SgInitializedName::e_invalid_register),
-     p_flags(e_flags_none),
      p_excess_specifier(SgInitializedName::e_excess_specifier_none),
      p_register_name_string(),
+     p_flags(e_flags_none),
+     p_constant_or_type_argument_for_Alignas_keyword(nullptr),
      p_gnu_attribute_modifierVector(e_last_gnu_variable_attribute,false),
      p_gnu_attribute_initialization_priority(0),
      p_gnu_attribute_named_weak_reference(""),
@@ -11158,7 +11067,6 @@ SgInitializedName::SgInitializedName(
      p_gnu_attribute_visability(SgDeclarationModifier::e_unknown_visibility),
      p_name_qualification_length(0),
      p_name_qualification_length_for_type(0),
-     p_constant_or_type_argument_for_Alignas_keyword(NULL),
      p_auto_decltype(NULL)
    {
      p_startOfConstruct = fileInfo;
@@ -11171,60 +11079,32 @@ SgInitializedName::SgInitializedName(const SgInitializedName& ptr)
      p_typeptr        = ptr.p_typeptr;
      p_initptr        = ptr.p_initptr;
 
-  // DQ (12/17/2006): Added semantics that constructors (which are structural) should set the parents of their inputs.
-     if (p_initptr != NULL)
-        {
+     if (p_initptr != nullptr) {
           mprintf ("In SgInitializedName constructor: resetting parent of valid initializer (p_initptr = %p) (likely sharing violation in copy constructor) \n",p_initptr);
           p_initptr->set_parent(this);
-        }
-
-  // p_prev_itemptr   = ptr.p_prev_itemptr;
+     }
      p_is_initializer = ptr.p_is_initializer;
      p_declptr        = ptr.p_declptr;
-  // p_itemptr        = ptr.p_itemptr;
 
-  // DQ (1/18/2006): Avoid reusing Sg_File_Info objects
-  // p_fileInfo       = ptr.p_fileInfo;
-  // p_file_info      = (ptr.p_file_info != NULL) ? new Sg_File_Info(*ptr.p_file_info) : NULL;
-
-  // DQ (12/17/2006): See if we can enforce this!
-  // p_startOfConstruct = (ptr.p_startOfConstruct != NULL) ? new Sg_File_Info(*ptr.p_startOfConstruct) : NULL;
-     assert(ptr.p_startOfConstruct != NULL);
+     ASSERT_not_null(ptr.p_startOfConstruct);
      p_startOfConstruct = new Sg_File_Info(*ptr.p_startOfConstruct);
-     assert(p_startOfConstruct != NULL);
+     ASSERT_not_null(p_startOfConstruct);
 
-  // DQ (12/17/2006): Fixup the parent of the new or borrowed Sg_File_Info object.
      p_startOfConstruct->set_parent(this);
 
-  // DQ (11/19/2004): Added to support explicit scopes for variables within variable declarations.
-     p_scope          = ptr.p_scope;
-
-  // DQ (3/1/2005): Added to avoid valgrind warning about uninitialized use
+     p_scope = ptr.p_scope;
      p_preinitialization = ptr.p_preinitialization;
 
-  // DQ (4/28/2004): Added storage modifier support (replacing the old interface)
-     assert (ptr.p_storageModifier != NULL);
-     p_storageModifier = new SgStorageModifier ( *(ptr.p_storageModifier) );
-     assert (p_storageModifier != NULL);
+     ASSERT_not_null(ptr.p_storageModifier);
+     p_storageModifier = new SgStorageModifier(*(ptr.p_storageModifier));
+     ASSERT_not_null(p_storageModifier);
 
-  // DQ (6/20/2006): Set the parent of the SgStorageModifier
      p_storageModifier->set_parent(this);
+     p_attributeMechanism = nullptr;
 
-  // DQ (4/10/2006): Removed in favor of implementation at SgNode using
-  // a pointer and the interface represented directly at the SgNode
-  // DQ (1/17/2006): Moved attribute mechanism to specific IR nodes
-     p_attributeMechanism = NULL;
-
-  // DQ (7/31/2006): Added support for asm declarations on variables (using GNU register codes)
      p_register_name_code = SgInitializedName::e_invalid_register;
-
-  // DQ (8/9/2006): Added support for asm declarations on variables (using strings)
-  // Note: don't copy the register string (I think this is best, but it is debatable)
      p_register_name_string = "";
 
-  // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
-
-  // DQ (1/3/2009): Added support for GNU variable attribues
      p_gnu_attribute_modifierVector          = ptr.p_gnu_attribute_modifierVector;
      p_gnu_attribute_initialization_priority = ptr.p_gnu_attribute_initialization_priority;
      p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
@@ -11247,36 +11127,21 @@ SgInitializedName::SgInitializedName(const SgInitializedName& ptr)
      p_requiresGlobalNameQualificationOnType = ptr.p_requiresGlobalNameQualificationOnType;
 #endif
 
-  // DQ (2/5/2014): I just noticed that the initialization of these were missing.
      p_name_qualification_length_for_type     = ptr.p_name_qualification_length_for_type;
-
-
-  // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
-
-  // DQ (7/27/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
-
-  // DQ (8/2/2014): Adding support for C++11 auto keyword.
-
-  // DQ (1/24/2016): Adding support to mark this to use the __device__ keyword.
    }
 
 SgInitializedName&
 SgInitializedName::operator= (const SgInitializedName& ptr)
-   {
+{
      ASSERT_this();
 
-  /* check they are not the same name */
-     if (this != &ptr)
-        {
+     if (this != &ptr) {
           p_name = ptr.p_name;
+          p_typeptr = ptr.p_typeptr;
+          p_initptr = ptr.p_initptr;
 
-          p_typeptr        = ptr.p_typeptr;
-          p_initptr        = ptr.p_initptr;
-
-       // DQ (12/17/2006): Added semantics that constructors (which are structural) should set the parents of their inputs.
           if (p_initptr != NULL)
              {
-            // DQ (12/22/2006): Interestingly, the inliner is dependent upon this working this way!  We should maybe look into this later.
                p_initptr->set_parent(this);
                assert(p_initptr->get_parent() != NULL);
              }
@@ -11284,36 +11149,21 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
           p_is_initializer = ptr.p_is_initializer;
           p_declptr        = ptr.p_declptr;
 
-       // DQ (6/23/2006): Added assertion to detect errors
           assert(ptr.p_startOfConstruct != NULL);
           p_startOfConstruct = new Sg_File_Info(*ptr.p_startOfConstruct);
-          assert(p_startOfConstruct != NULL);
-
-       // DQ (12/17/2006): Fixup the parent of the new or borrowed Sg_File_Info object.
+          ASSERT_not_null(p_startOfConstruct);
           p_startOfConstruct->set_parent(this);
 
-       // DQ (11/19/2004): Added to support explicit scopes for variables within variable declarations.
-          p_scope          = ptr.p_scope;
-
-       // DQ (3/1/2005): Added to avoid valgrind warning about uninitialized use
+          p_scope = ptr.p_scope;
           p_preinitialization = ptr.p_preinitialization;
 
-          assert (p_storageModifier != NULL);
+          ASSERT_not_null(p_storageModifier);
           *p_storageModifier = *(ptr.p_storageModifier);
 
-       // DQ (4/10/2006): Removed in favor of implementation at SgNode using
-       // a pointer and the interface represented directly at the SgNode
-       // DQ (1/17/2006): Moved attribute mechanism to specific IR nodes
-          p_attributeMechanism = NULL;
-
-       // DQ (7/31/2006): Added support for asm declarations on variables
+          p_attributeMechanism = nullptr;
           p_register_name_code = ptr.p_register_name_code;
-
-       // DQ (7/31/2006): Added support for asm declarations on variables
           p_register_name_string = ptr.p_register_name_string;
 
-
-       // DQ (1/3/2009): Added support for GNU variable attribues
           p_gnu_attribute_modifierVector          = ptr.p_gnu_attribute_modifierVector;
           p_gnu_attribute_initialization_priority = ptr.p_gnu_attribute_initialization_priority;
           p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
@@ -13645,40 +13495,30 @@ Sg_File_Info::set_isPartOfTransformation( bool isPartOfTransformation )
           unsetTransformation();
    }
 
-// DQ (5/24/2005): This function is impemented using the newer classification mechanism
 bool
-Sg_File_Info::get_isPartOfTransformation()
-   {
-     assert (this != NULL);
-  // return p_isPartOfTransformation;
-     return isTransformation();
-   }
+Sg_File_Info::get_isPartOfTransformation() {
+    ASSERT_this();
+    return isTransformation();
+}
 
 void
-Sg_File_Info::register_node(SgLocatedNode* node)
-   {} /* register interest */
+Sg_File_Info::register_node(SgLocatedNode* /*node*/) { } /* register interest */
 
 void
-Sg_File_Info::deregister_node(SgLocatedNode* node)
-   {}
+Sg_File_Info::deregister_node(SgLocatedNode* /*node*/) { }
 
-// functions added by Dan Quinlan (suggested by Gary Lee)
 void
-Sg_File_Info::set_col( int n )
-   {
-     assert (this != NULL);
-     p_col = n;
-     assert (p_col >= 0);
-   }
+Sg_File_Info::set_col(int n) {
+    ASSERT_this();
+    p_col = n;
+    ASSERT_require(p_col >= 0);
+}
 
 bool
-Sg_File_Info::hasPositionInSource() const
-   {
-     ASSERT_this();
-     bool result = ( ! ( isTransformation() || isCompilerGenerated() || isOutputInCodeGeneration() ) );
-
-     return result;
-   }
+Sg_File_Info::hasPositionInSource() const {
+    ASSERT_this();
+    return (! (isTransformation() || isCompilerGenerated() || isOutputInCodeGeneration()));
+}
 
 bool
 Sg_File_Info::isSameFile(SgFile* file) const
@@ -14174,14 +14014,10 @@ SgFile::get_outputLanguageOptionName ( SgFile::languageOption_enum lang )
      return s;
    }
 
-int SgFile::buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine )
-   {
-     mprintf ("Base class of virtual function, SgFile::buildAST(), called by mistake! \n");
-     ROSE_ASSERT(false);
-
-  // tps (12/11/2009): Windows error : needs a return value
-     return 0;
-   }
+int SgFile::buildAST(std::vector<std::string> /*argv*/, std::vector<std::string> /*inputCommandLine*/) {
+    ASSERT_require2(false, "Base class of virtual function, SgFile::buildAST(), called by mistake!\n");
+    return 0;
+}
 
 Sg_File_Info*
 SgFile::get_file_info() const
@@ -17715,7 +17551,7 @@ SgUnparse_Info::get_array_index_list()
 { return p_array_index_list; }
 
 void
-SgUnparse_Info::set_array_index_list(SgExpression* e, SgUnparse_Info /*finfo*/) {
+SgUnparse_Info::set_array_index_list(SgExpression* /*e*/, SgUnparse_Info /*finfo*/) {
     ASSERT_require2(false, "ERROR: not implemented in SAGE3!\n");
 }
 
@@ -19323,13 +19159,11 @@ SOURCE_GRAPH_END
 SOURCE_DIRECTED_GRAPH_EDGE_START
 
 
-SgDirectedGraphEdge::SgDirectedGraphEdge(std::string label, std::string type, int n, SgGraphNode* from, SgGraphNode* to)
-
-   {
+SgDirectedGraphEdge::SgDirectedGraphEdge(std::string label, std::string /*type*/, int /*n*/, SgGraphNode* from, SgGraphNode* to) {
     p_name = label;
     p_node_A = from;
     p_node_B=to;
-   }
+}
 
 SOURCE_DIRECTED_GRAPH_EDGE_END
 
@@ -19339,18 +19173,16 @@ SOURCE_INCIDENCE_UNDIRECTED_GRAPH_END
 SOURCE_INCIDENCE_DIRECTED_GRAPH_START
 
 void
-SgIncidenceDirectedGraph::post_construction_initialization()
-   {
-     assert(this != NULL);
-
-   }
+SgIncidenceDirectedGraph::post_construction_initialization() {
+    ASSERT_this();
+}
 
 bool
 SgIncidenceDirectedGraph::checkIfGraphEdgeExists(SgGraphNode* src) {
-  const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
-  rose_graph_integer_edge_hash_multimap::const_iterator it = edges.find(src->get_index());
+    const rose_graph_integer_edge_hash_multimap& edges = get_node_index_to_edge_multimap_edgesOut();
+    rose_graph_integer_edge_hash_multimap::const_iterator it = edges.find(src->get_index());
 
-  return (it != edges.end());
+    return (it != edges.end());
 }
 
 std::set <SgGraphEdge*>
@@ -19362,10 +19194,9 @@ SgIncidenceDirectedGraph::getEdge(SgGraphNode* src) {
     edges.equal_range(src->get_index());
   it1 = iter.first;
   it2 = iter.second;
-  for (;it1!=it2; ++it1) {
-    //    SgGraphNode* source = it1->first;
-    SgGraphEdge* edge = isSgGraphEdge(it1->second);
-    medges.insert(edge);
+  for (; it1 != it2; ++it1) {
+      SgGraphEdge* edge = isSgGraphEdge(it1->second);
+      medges.insert(edge);
   }
   return medges;
 }
