@@ -1345,11 +1345,11 @@ SEARCHENGINE           = YES
 # full text search. The disadvantages are that it is more difficult to setup
 # and does not have live searching capabilities.
 
-SERVER_BASED_SEARCH    = YES
+SERVER_BASED_SEARCH    = NO
 
-# The following needs doxygen 1.8.3 or later. [Matzke 2015-09-14]
-EXTERNAL_SEARCH = YES
-SEARCHENGINE_URL = http://rosecompiler.org/cgi-bin/doxysearch.cgi
+# The following needs doxygen 1.8.3 or later & SERVER_BASED_SEARCH set to yes. [Matzke 2015-09-14]
+#EXTERNAL_SEARCH = YES
+#SEARCHENGINE_URL = http://rosecompiler.org/cgi-bin/doxysearch.cgi
 
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output
