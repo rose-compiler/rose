@@ -2814,6 +2814,20 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
         SgInitializedName *p1 = isSgInitializedName(first);
         SgInitializedName *p2 = isSgInitializedName(second);
         assert (p1 != 0 && p2 != 0); 
+        SgVariableDeclaration* q1 = isSgVariableDeclaration(p1->get_declaration());
+        SgVariableDeclaration* q2 = isSgVariableDeclaration(p2->get_declaration());
+        if (q1 != 0 && q2 != 0) { 
+          if (q1->get_declarationModifier().get_storageModifier().isExtern() !=
+            q2->get_declarationModifier().get_storageModifier().isExtern()) {
+            DebugDiff([&_first,&_second](){ return "AST different attribute extern : " + AstToString(_first) + " vs " + AstToString(_second); });
+            return false;
+          }
+          if (q1->get_declarationModifier().get_storageModifier().isStatic() !=
+            q2->get_declarationModifier().get_storageModifier().isStatic()) {
+            DebugDiff([&_first,&_second](){ return "AST different attribute static : " + AstToString(_first) + " vs " + AstToString(_second); });
+            return false;
+          }
+        }
         if (std::string(p1->get_name().str()) != std::string(p2->get_name().str())) {
             DebugDiff([&_first,&_second](){ return "AST different  name: " + AstToString(_first) + " vs " + AstToString(_second); });
             return false;
@@ -2841,6 +2855,9 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
       if (!AstIdentical(base1, base2, call_on_diff)) {
          return false;
       }
+      if (p1->get_declaration()->get_declarationModifier().isFinal() !=
+          p2->get_declaration()->get_declarationModifier().isFinal())
+         return false;
       // The rest will be handled by the IsBlock check below.
       break;
    }
@@ -2850,7 +2867,29 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
       return  p1->get_baseClassModifier()->get_modifier() == p2->get_baseClassModifier()->get_modifier() &&
               std::string(p1->get_base_class()->get_name().str()) == std::string(p2->get_base_class()->get_name().str());
     } 
-  default: break;
+  case V_SgMemberFunctionDeclaration:
+  case V_SgFunctionDeclaration: {
+      SgFunctionDeclaration* decl1 = isSgFunctionDeclaration(first), *decl2 = isSgFunctionDeclaration(second);
+      assert (decl1 != 0 && decl2 != 0); 
+      bool v1 = decl1->get_functionModifier().isVirtual();
+      bool v2 = decl2->get_functionModifier().isVirtual();
+      DebugDiff([v1,v2](){ return "function attribute virtual: " + std::string(v1?"true":"false") + " vs " + std::string(v2?"true":"false"); });
+      if (v1 != v2)  { return false; }
+      v1 = decl1->get_functionModifier().isMarkedDelete();
+      v2 = decl2->get_functionModifier().isMarkedDelete();
+      DebugDiff([v1,v2](){ return "function attribute delete: " + std::string(v1?"true":"false") + " vs " + std::string(v2?"true":"false"); });
+      if (v1 != v2)  { return false; }
+      v1 = decl1->get_declarationModifier().isFinal();
+      v2 = decl2->get_declarationModifier().isFinal();
+      DebugDiff([v1,v2](){ return "function attribute final: " + std::string(v1?"true":"false") + " vs " + std::string(v2?"true":"false"); });
+      if (v1 != v2)  { return false; }
+      v1 = decl1->get_functionModifier().isMarkedDefault();
+      v2 = decl2->get_functionModifier().isMarkedDefault(); 
+      DebugDiff([v1,v2](){ return "function attribute default: " + std::string(v1?"true":"false") + " vs " + std::string(v2?"true":"false"); });
+      if (v1 != v2)  { return false; }
+      break;
+     }
+   default: break;
   }
   if (IsFunctionCall(_first, &f1, &params1, &args1, &paramtypes1, &returntype1) && 
        IsFunctionCall(_second, &f2, &params2, &args2, &paramtypes2, &returntype2)) {
