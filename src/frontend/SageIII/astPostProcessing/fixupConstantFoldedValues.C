@@ -31,7 +31,9 @@
 /// deletes \p node and all owned subtrees
 /// \param node     the node to be deleted
 /// \param safeMode if set, node types that could lead to dangling pointers
-///                 in constantFolding mode are not deleted.
+///                 are not deleted in constant folding.
+/// \todo safeMode only patches over the underlying cause, where nodes
+///       that continue being referenced are deleted.
 /// \details
 ///   More info on the dangling pointer issue is described under Issue #907.
 static void deleteExpressionAndOriginalExpressionTree(SgNode * node, bool safeMode = false) {
@@ -228,7 +230,7 @@ void removeConstantFoldedValue(SgProject* /*project*/) {
 
   std::map<SgNode *, SgNode *> replace_map;
   std::unordered_set<SgExpression *> delete_set;
-
+  
   delete_set.insert(cet.disconnected.begin(), cet.disconnected.end());
   delete_set.insert(cet.orphans.begin(), cet.orphans.end());
 
@@ -260,8 +262,8 @@ void removeConstantFoldedValue(SgProject* /*project*/) {
       }
 
       // Mark all intermediaries to be deleted
-      if (folded->get_originalExpressionTree() != NULL) {
-        delete_set.insert(folded->get_originalExpressionTree());
+      if (SgExpression* foldedOrig = folded->get_originalExpressionTree()) {
+        delete_set.insert(foldedOrig);
         folded->set_originalExpressionTree(NULL);
       }
 
@@ -271,8 +273,9 @@ void removeConstantFoldedValue(SgProject* /*project*/) {
         child->set_parent(folded->get_parent()); // prevent replacement from creating self loop if child is direct descendant of folded
 
         replace_map[folded] = child;
+        
         delete_set.insert(folded);
-      } else {
+      } else if (!isSgTypeTraitBuiltinOperator(child)) {
         delete_set.insert(child);
       }
     }
@@ -364,7 +367,7 @@ void preserveConstantFoldedValue(SgProject* /*project*/) {
           delete_set.insert(tmp2);
           tmp2 = get_parent_if_folded_in(tmp2);
         }
-      } else {
+      } else if (!isSgTypeTraitBuiltinOperator(child)) {
         delete_set.insert(child);
       }
     }
@@ -397,11 +400,11 @@ void preserveConstantFoldedValue(SgProject* /*project*/) {
 struct RemoveOriginalExpressionTrees : public ROSE_VisitTraversal {
   void visit (SgNode* node) {
     if (SgExpression * exp = isSgExpression(node)) {
-      // deleting SgTypeTraitBuiltinOperator may leave dangling pointers,
-      //   thus they are temporarily not deleted.
       if (SgExpression * oet = exp->get_originalExpressionTree()) {
-        exp->set_originalExpressionTree(nullptr);
-        deleteExpressionAndOriginalExpressionTree(oet, true);
+        exp->set_originalExpressionTree(nullptr);        
+        // deleting SgTypeTraitBuiltinOperator may leave dangling pointers,
+        //   thus they are temporarily not deleted.
+        deleteExpressionAndOriginalExpressionTree(oet, true /*keep SgTypeTraitBuiltinOperator*/);
       }
     }
   }
@@ -409,7 +412,7 @@ struct RemoveOriginalExpressionTrees : public ROSE_VisitTraversal {
 
 //! This removes the original expression tree from value expressions where it has been constant folded by EDG.
 void resetConstantFoldedValues( SgNode* node ) {
-   SgProject* const                       proj = isSgProject(node);
+   SgProject* const                       proj   = isSgProject(node);
    SgProject::constant_folding_enum const choice = proj ? proj->get_frontendConstantFolding()
                                                         : SgProject::e_folded_values_only;
 
