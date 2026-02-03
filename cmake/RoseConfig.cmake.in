@@ -198,7 +198,10 @@ if(Rose_ZLIB_FOUND)
   find_dependency(ZLIB)
 endif()
 
-find_package(flatbuffers CONFIG REQUIRED)
+set(Rose_FLATBUFFERS_FOUND @ROSE_ENABLE_FLATBUFFERS@)
+if(Rose_FLATBUFFERS_FOUND)
+  find_package(flatbuffers CONFIG REQUIRED)
+endif()
 
 # Import the ROSE targets
 # This brings in Rose::rose and all its properties
