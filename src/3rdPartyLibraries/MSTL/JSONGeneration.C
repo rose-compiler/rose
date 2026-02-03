@@ -2,6 +2,7 @@
 #include "roseInternal.h"
 
 #include "JSONGeneration.h"
+#include "ROSE_UNUSED.h"
 
 #include <iostream>
 #include <fstream>
@@ -19,6 +20,8 @@ void JSONGeneration::json_finalize() {
 }
 
 void JSONGeneration::handle_node(SgNode *node, JSONInheritedAttribute inheritedValue) {
+    ROSE_UNUSED(node);
+    ROSE_UNUSED(inheritedValue);
 }
 
 void JSONGeneration::generate(std::string filename, SgNode *node) {
