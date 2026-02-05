@@ -226,6 +226,9 @@ Clang-Mac:
     tags:
         - workpool:mac
 
+Memory-Poisoning:
+    extends: .develop-base
+
 #jobs for nightly merging and status testing --------------------------------------------------------------------------------------------------------------------
 .status-base:
     rules:
