@@ -20540,6 +20540,8 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 void
 SageInterface::deleteAST ( SgNode* n )
    {
+       using DeletedStatementContainer = std::unordered_set<SgStatement*>;
+
 //Tan, August/25/2010:       //Re-implement DeleteAST function
 
         //Use MemoryPoolTraversal to count the number of references to a certain symbol
@@ -20547,248 +20549,85 @@ SageInterface::deleteAST ( SgNode* n )
 
         class ClassicVisitor : public ROSE_VisitorPattern
         {
-                private:
-                int SgVariableSymbol_count;
-                int SgFunctionSymbol_count;
-                int SgClassDeclaration_count;
-                int SgTypedefSymbol_count;
-                int SgMemFuncSymbol_count;
-                int SgTemplateSymbol_count;
-                int SgEnumFieldSymbol_count;
+            private:
+                int SgVariableSymbol_count = 0;
+                int SgFunctionSymbol_count = 0;
+                int SgClassDeclaration_count = 0;
+                int SgTypedefSymbol_count = 0;
+                int SgMemFuncSymbol_count = 0;
+                int SgTemplateSymbol_count = 0;
+                int SgEnumFieldSymbol_count = 0;
 
-                SgVariableSymbol* SgVariableSymbolPtr;
-                SgFunctionSymbol* SgFunctionSymbolPtr;
-                SgClassSymbol * SgClassSymbolPtr;
-                SgTypedefSymbol * SgTypedefPtr;
-                SgEnumFieldSymbol * SgEnumFieldSymbolPtr;
-                SgMemberFunctionSymbol * SgMemFuncSymbolPtr;
-                SgTemplateSymbol * SgTemplateSymbolPtr;
-                SgClassDeclaration * class_defining;
-                SgTemplateDeclaration * template_defining;
-                SgMemberFunctionDeclaration * memFunc;
-                SgTypedefDeclaration * typedef_defining;
-                SgFunctionDeclaration * function_decl;
-                SgTemplateInstantiationDecl * templateInstantiate_defining;
+                SgVariableSymbol* SgVariableSymbolPtr = nullptr;
+                SgFunctionSymbol* SgFunctionSymbolPtr = nullptr;
+                SgClassSymbol * SgClassSymbolPtr = nullptr;
+                SgTypedefSymbol * SgTypedefPtr = nullptr;
+                SgEnumFieldSymbol * SgEnumFieldSymbolPtr = nullptr;
+                SgMemberFunctionSymbol * SgMemFuncSymbolPtr = nullptr;
+                SgTemplateSymbol * SgTemplateSymbolPtr = nullptr;
+                SgClassDeclaration * class_defining = nullptr;
+                SgTemplateDeclaration * template_defining = nullptr;
+                SgMemberFunctionDeclaration * memFunc = nullptr;
+                SgTypedefDeclaration * typedef_defining = nullptr;
+                SgFunctionDeclaration * function_decl = nullptr;
+                SgTemplateInstantiationDecl * templateInstantiate_defining = nullptr;
+                DeletedStatementContainer& deletedStatements;
 
-                public:
-                ClassicVisitor(SgVariableSymbol* symbol){
-                        SgVariableSymbol_count = 0;
-                        SgVariableSymbolPtr = symbol;
-                        SgFunctionSymbolPtr =NULL;
-                        SgClassSymbolPtr =NULL;
-                        SgTypedefPtr = NULL;
-                        SgMemFuncSymbolPtr =NULL;
-                        class_defining = NULL;
-                        memFunc =NULL;
-                        typedef_defining =NULL;
-                        function_decl = NULL;
-                        SgTemplateSymbolPtr = NULL;
-                        template_defining = NULL;
-                        SgEnumFieldSymbolPtr = NULL;
-                        templateInstantiate_defining =NULL;
-                }
-
-                ClassicVisitor(SgFunctionSymbol* symbol){
-                        SgFunctionSymbol_count = 0;
-                        SgFunctionSymbolPtr = symbol;
-
-                     // DQ (5/2/2013): Added to fix test2013_141.C.
-                        SgMemFuncSymbol_count =0;
-
-                        SgVariableSymbolPtr = NULL;
-                        SgClassSymbolPtr =NULL;
-                        SgTypedefPtr = NULL;
-                        SgMemFuncSymbolPtr =NULL;
-                        class_defining = NULL;
-                        memFunc =NULL;
-                        typedef_defining =NULL;
-                        function_decl = NULL;
-                        SgTemplateSymbolPtr = NULL;
-                        template_defining = NULL;
-                        SgEnumFieldSymbolPtr = NULL;
-                        templateInstantiate_defining =NULL;
-                }
-
-                ClassicVisitor(SgClassSymbol* symbol){
-                        SgClassDeclaration_count = 0;
-                        SgClassSymbolPtr = symbol;
-                        SgFunctionSymbolPtr = NULL;
-                        SgVariableSymbolPtr = NULL;
-                        SgTypedefPtr = NULL;
-                        SgMemFuncSymbolPtr =NULL;
-                        class_defining = NULL;
-                        memFunc =NULL;
-                        typedef_defining =NULL;
-                        function_decl = NULL;
-                        SgTemplateSymbolPtr = NULL;
-                        template_defining = NULL;
-                        SgEnumFieldSymbolPtr = NULL;
-                        templateInstantiate_defining =NULL;
-                }
-
-                ClassicVisitor(SgTypedefSymbol* symbol){
-                        SgTypedefSymbol_count =0;
-                        SgTypedefPtr = symbol;
-                        SgClassSymbolPtr = NULL;
-                        SgFunctionSymbolPtr = NULL;
-                        SgVariableSymbolPtr = NULL;
-                        SgMemFuncSymbolPtr =NULL;
-                        class_defining = NULL;
-                        memFunc =NULL;
-                        typedef_defining =NULL;
-                        function_decl = NULL;
-                        SgTemplateSymbolPtr = NULL;
-                        template_defining = NULL;
-                        SgEnumFieldSymbolPtr = NULL;
-                        templateInstantiate_defining =NULL;
-                }
-
-                ClassicVisitor(SgMemberFunctionSymbol* symbol){
-                        SgMemFuncSymbolPtr = symbol;
-                        SgMemFuncSymbol_count =0;
-                        SgTypedefPtr = NULL;
-                        SgClassSymbolPtr = NULL;
-                        SgFunctionSymbolPtr = NULL;
-                        SgVariableSymbolPtr = NULL;
-                        class_defining = NULL;
-                        memFunc =NULL;
-                        typedef_defining =NULL;
-                        function_decl = NULL;
-                        SgTemplateSymbolPtr = NULL;
-                        template_defining = NULL;
-                        SgEnumFieldSymbolPtr = NULL;
-                        templateInstantiate_defining =NULL;
-                }
-
-                ClassicVisitor(SgTemplateSymbol* symbol){
-                        SgTemplateSymbolPtr = symbol;
-                        SgTemplateSymbol_count =0;
-                        SgMemFuncSymbolPtr = NULL;
-                        SgTypedefPtr = NULL;
-                        SgClassSymbolPtr = NULL;
-                        SgFunctionSymbolPtr = NULL;
-                        SgVariableSymbolPtr = NULL;
-                        class_defining = NULL;
-                        memFunc =NULL;
-                        typedef_defining =NULL;
-                        function_decl = NULL;
-                        template_defining = NULL;
-                        SgEnumFieldSymbolPtr = NULL;
-                        templateInstantiate_defining =NULL;
-                }
-
-                ClassicVisitor(SgEnumFieldSymbol* symbol){
-                        SgEnumFieldSymbolPtr = symbol;
-                        SgEnumFieldSymbol_count =0;
-                        SgTemplateSymbolPtr = NULL;
-                        SgMemFuncSymbolPtr = NULL;
-                        SgTypedefPtr = NULL;
-                        SgClassSymbolPtr = NULL;
-                        SgFunctionSymbolPtr = NULL;
-                        SgVariableSymbolPtr = NULL;
-                        class_defining = NULL;
-                        memFunc =NULL;
-                        typedef_defining =NULL;
-                        function_decl = NULL;
-                        template_defining = NULL;
-                        templateInstantiate_defining =NULL;
-                }
+                void markForDeletion(SgStatement* n) { deletedStatements.insert(n); }
 
 
-                ClassicVisitor(SgClassDeclaration* node){
-                        class_defining = node;
-                        SgMemFuncSymbolPtr = NULL;
-                        SgTypedefPtr = NULL;
-                        SgClassSymbolPtr = NULL;
-                        SgFunctionSymbolPtr = NULL;
-                        SgVariableSymbolPtr = NULL;
-                        memFunc =NULL;
-                        typedef_defining =NULL;
-                        function_decl = NULL;
-                        SgTemplateSymbolPtr = NULL;
-                        template_defining = NULL;
-                        SgEnumFieldSymbolPtr = NULL;
-                        templateInstantiate_defining =NULL;
-                }
+            public:
+                ClassicVisitor(SgVariableSymbol* symbol, DeletedStatementContainer& deletedStmt)
+                : SgVariableSymbolPtr(symbol), deletedStatements(deletedStmt)
+                {}
 
-                ClassicVisitor(SgTemplateDeclaration* node){
-                        template_defining = node;
-                        class_defining = NULL;
-                        SgMemFuncSymbolPtr = NULL;
-                        SgTypedefPtr = NULL;
-                        SgClassSymbolPtr = NULL;
-                        SgFunctionSymbolPtr = NULL;
-                        SgVariableSymbolPtr = NULL;
-                        memFunc =NULL;
-                        typedef_defining =NULL;
-                        function_decl = NULL;
-                        SgTemplateSymbolPtr = NULL;
-                        SgEnumFieldSymbolPtr = NULL;
-                        templateInstantiate_defining =NULL;
-                }
-                ClassicVisitor(SgFunctionDeclaration* node){
-                        function_decl =node;
-                        class_defining = NULL;
-                        SgMemFuncSymbolPtr = NULL;
-                        SgTypedefPtr = NULL;
-                        SgClassSymbolPtr = NULL;
-                        SgFunctionSymbolPtr = NULL;
-                        SgVariableSymbolPtr = NULL;
-                        memFunc =NULL;
-                        typedef_defining =NULL;
-                        SgTemplateSymbolPtr = NULL;
-                        template_defining = NULL;
-                        SgEnumFieldSymbolPtr = NULL;
-                        templateInstantiate_defining =NULL;
-                }
+                ClassicVisitor(SgFunctionSymbol* symbol, DeletedStatementContainer& deletedStmt)
+                : SgFunctionSymbolPtr(symbol), deletedStatements(deletedStmt)
+                {}
 
-                ClassicVisitor(SgMemberFunctionDeclaration* node){
-                        memFunc = node;
-                        function_decl =NULL;
-                        class_defining = NULL;
-                        SgMemFuncSymbolPtr = NULL;
-                        SgTypedefPtr = NULL;
-                        SgClassSymbolPtr = NULL;
-                        SgFunctionSymbolPtr = NULL;
-                        SgVariableSymbolPtr = NULL;
-                        typedef_defining =NULL;
-                        SgTemplateSymbolPtr = NULL;
-                        template_defining = NULL;
-                        SgEnumFieldSymbolPtr = NULL;
-                        templateInstantiate_defining =NULL;
-                }
+                ClassicVisitor(SgClassSymbol* symbol, DeletedStatementContainer& deletedStmt)
+                : SgClassSymbolPtr(symbol), deletedStatements(deletedStmt)
+                {}
 
-                ClassicVisitor(SgTypedefDeclaration* node){
-                        typedef_defining = node;
-                        memFunc = NULL;
-                        function_decl =NULL;
-                        class_defining = NULL;
-                        SgMemFuncSymbolPtr = NULL;
-                        SgTypedefPtr = NULL;
-                        SgClassSymbolPtr = NULL;
-                        SgFunctionSymbolPtr = NULL;
-                        SgVariableSymbolPtr = NULL;
-                        SgTemplateSymbolPtr = NULL;
-                        template_defining = NULL;
-                        SgEnumFieldSymbolPtr = NULL;
-                        templateInstantiate_defining =NULL;
-                }
+                ClassicVisitor(SgTypedefSymbol* symbol, DeletedStatementContainer& deletedStmt)
+                : SgTypedefPtr(symbol), deletedStatements(deletedStmt)
+                {}
 
-                ClassicVisitor(SgTemplateInstantiationDecl* node){
-                        templateInstantiate_defining =node;
-                        typedef_defining = NULL;
-                        memFunc = NULL;
-                        function_decl =NULL;
-                        class_defining = NULL;
-                        SgMemFuncSymbolPtr = NULL;
-                        SgTypedefPtr = NULL;
-                        SgClassSymbolPtr = NULL;
-                        SgFunctionSymbolPtr = NULL;
-                        SgVariableSymbolPtr = NULL;
-                        SgTemplateSymbolPtr = NULL;
-                        template_defining = NULL;
-                        SgEnumFieldSymbolPtr = NULL;
-                }
+                ClassicVisitor(SgMemberFunctionSymbol* symbol, DeletedStatementContainer& deletedStmt)
+                : SgMemFuncSymbolPtr(symbol), deletedStatements(deletedStmt)
+                {}
+
+                ClassicVisitor(SgTemplateSymbol* symbol, DeletedStatementContainer& deletedStmt)
+                : SgTemplateSymbolPtr(symbol), deletedStatements(deletedStmt)
+                {}
+
+                ClassicVisitor(SgEnumFieldSymbol* symbol, DeletedStatementContainer& deletedStmt)
+                : SgEnumFieldSymbolPtr(symbol), deletedStatements(deletedStmt)
+                {}
+
+                ClassicVisitor(SgClassDeclaration* decl, DeletedStatementContainer& deletedStmt)
+                : class_defining(decl), deletedStatements(deletedStmt)
+                {}
+
+                ClassicVisitor(SgTemplateDeclaration* decl, DeletedStatementContainer& deletedStmt)
+                : template_defining(decl), deletedStatements(deletedStmt)
+                {}
+
+                ClassicVisitor(SgFunctionDeclaration* decl, DeletedStatementContainer& deletedStmt)
+                : function_decl(decl), deletedStatements(deletedStmt)
+                {}
+
+                ClassicVisitor(SgMemberFunctionDeclaration* decl, DeletedStatementContainer& deletedStmt)
+                : memFunc(decl), deletedStatements(deletedStmt)
+                {}
+
+                ClassicVisitor(SgTypedefDeclaration* decl, DeletedStatementContainer& deletedStmt)
+                : typedef_defining(decl), deletedStatements(deletedStmt)
+                {}
+
+                ClassicVisitor(SgTemplateInstantiationDecl* decl, DeletedStatementContainer& deletedStmt)
+                : templateInstantiate_defining(decl), deletedStatements(deletedStmt)
+                {}
 
 
         // SgVariableSymbol and SgEnumFieldSymbol
@@ -20851,7 +20690,8 @@ SageInterface::deleteAST ( SgNode* n )
                                 if(node->get_symbol_from_symbol_table() == NULL){
                                         SgDeclarationStatement * define = ((SgDeclarationStatement*)node)->get_definingDeclaration();
                                         SgDeclarationStatement * first_nondefine = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
-                                        if(node!=function_decl && (define==function_decl || first_nondefine==function_decl)) delete node;
+                                        if(node!=function_decl && (define==function_decl || first_nondefine==function_decl))
+                                          markForDeletion(node);
                                 }
                         }
 #endif
@@ -20922,7 +20762,7 @@ SageInterface::deleteAST ( SgNode* n )
                                         SgDeclarationStatement * class_decl = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
                                         SgDeclarationStatement * class_decl1 = ((SgDeclarationStatement*)node)->get_definingDeclaration();
                                         if((class_decl==class_defining||class_decl1==class_defining) && node!=class_defining )
-                                                delete node;
+                                                markForDeletion(node);
                                 }
                         }
                 }
@@ -20955,7 +20795,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                                         }
                                                                         printf("SgTemplateArg in Memory Pool traversal\n");
                                                                 }*/
-                                                                delete node;
+                                                                markForDeletion(node);
                                                                 //printf("SgTemplateInstantiationDecl in Memory Pool traversal\n");
                                                         }
                                                 }
@@ -20990,7 +20830,7 @@ SageInterface::deleteAST ( SgNode* n )
                         if(memFunc !=NULL){
                                 SgMemberFunctionDeclaration * func= (SgMemberFunctionDeclaration*) (node->get_parent());
                                 if(func == memFunc){
-                                        delete node;
+                                        markForDeletion(node);
                                 }
                         }
                 }
@@ -21046,7 +20886,7 @@ SageInterface::deleteAST ( SgNode* n )
                         if(typedef_defining!=NULL){
                                 SgDeclarationStatement * typedef_define = ((SgDeclarationStatement*)node)->get_definingDeclaration();
                                 if(typedef_define == typedef_defining && node != typedef_defining ) {
-                                        delete node;
+                                        markForDeletion(node);
                                 }
                         }
                 }
@@ -21077,7 +20917,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                         SgDeclarationStatement * template_decl = ((SgDeclarationStatement*)node)->get_firstNondefiningDeclaration();
                                                         SgDeclarationStatement * template_decl1 = ((SgDeclarationStatement*)node)->get_definingDeclaration();
                                                         if((template_decl==template_defining||template_decl1==template_defining) && node!=template_defining) {
-                                                                delete node;
+                                                                markForDeletion(node);
 
                                                         }
                                                 }
@@ -21087,7 +20927,6 @@ SageInterface::deleteAST ( SgNode* n )
                 }
 
                 int get_num_Template_pointers(){return SgTemplateSymbol_count;}
-
         };
 
 
@@ -21134,7 +20973,7 @@ SageInterface::deleteAST ( SgNode* n )
                                         SgDeclarationStatement* var_def;
                                         var_def =  ((SgInitializedName *)node)->get_definition();
                                         if(isSgVariableDefinition(var_def) !=NULL){
-                                                delete var_def;
+                                                markForDeletion(var_def);
                                                 //printf("A SgVariableDefinition was deleted\n");
                                         }
 
@@ -21145,7 +20984,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                 {
                                                         SgSymbol* symbol = ((SgInitializedName *)node)->get_symbol_from_symbol_table();
                                                         if(isSgVariableSymbol(symbol) !=NULL){
-                                                                ClassicVisitor visitor((SgVariableSymbol*)symbol);
+                                                                ClassicVisitor visitor((SgVariableSymbol*)symbol, deletedStatements);
                                                                 traverseMemoryPoolVisitorPattern(visitor);
                                                                 if(visitor.get_num_variable_pointers()==1){ //only one reference to this symbol => safe to delete
                                                                 ((SgInitializedName*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21155,7 +20994,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                         }
 
                                                         if(isSgEnumFieldSymbol(symbol) !=NULL){
-                                                                ClassicVisitor visitor((SgEnumFieldSymbol*)symbol);
+                                                                ClassicVisitor visitor((SgEnumFieldSymbol*)symbol, deletedStatements);
                                                                 traverseMemoryPoolVisitorPattern(visitor);
                                                                 if(visitor.get_num_EnumField_pointers()==1){
                                                                         ((SgInitializedName*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21170,7 +21009,7 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgVarRefExp(node) !=NULL){
                                                 SgVariableSymbol *symbol = ((SgVarRefExp*)node)->get_symbol();
-                                                ClassicVisitor visitor(symbol);
+                                                ClassicVisitor visitor(symbol, deletedStatements);
                                                 traverseMemoryPoolVisitorPattern(visitor);
                                                 if(visitor.get_num_variable_pointers()==1){ //only one reference to this symbol => safe to delete
                                                         //((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21190,14 +21029,14 @@ SageInterface::deleteAST ( SgNode* n )
                                          if (funcDecl->get_scope() != NULL) {
                                             if (funcDecl->get_scope()->get_symbol_table() != NULL) {
                                                SgSymbol* symbol = ((SgFunctionDeclaration*)node)->get_symbol_from_symbol_table();
-                                               ClassicVisitor visitor((SgFunctionSymbol *)symbol);
+                                               ClassicVisitor visitor((SgFunctionSymbol *)symbol, deletedStatements);
                                                traverseMemoryPoolVisitorPattern(visitor);
                                                if (visitor.get_num_Function_pointers()==1) { //only one reference to this FunctionSymbol => safe to delete
                                                   ((SgFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
                                                   delete symbol;
                                                 //printf("A SgFunctionSymbol was deleted\n");
                                                }
-                                               ClassicVisitor visitor1((SgFunctionDeclaration *)node);
+                                               ClassicVisitor visitor1((SgFunctionDeclaration *)node, deletedStatements);
                                                traverseMemoryPoolVisitorPattern(visitor1);
                                             }
                                          }
@@ -21213,7 +21052,7 @@ SageInterface::deleteAST ( SgNode* n )
                                    printf ("In DeleteAST::visit(): functionRefExp->get_symbol_i() = %p = %s \n",functionRefExp->get_symbol_i(),functionRefExp->get_symbol_i()->class_name().c_str());
 #endif
                                                 SgFunctionSymbol *symbol = ((SgFunctionRefExp*)node)->get_symbol_i();
-                                                ClassicVisitor visitor(symbol);
+                                                ClassicVisitor visitor(symbol, deletedStatements);
                                                 traverseMemoryPoolVisitorPattern(visitor);
                                                 if(visitor.get_num_Function_pointers()==1)
                                                 {
@@ -21227,7 +21066,7 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgUserDefinedBinaryOp(node) !=NULL){
                                         SgFunctionSymbol *symbol = ((SgUserDefinedBinaryOp*)node)->get_symbol();
-                                        ClassicVisitor visitor(symbol);
+                                        ClassicVisitor visitor(symbol, deletedStatements);
                                         traverseMemoryPoolVisitorPattern(visitor);
                                         if(visitor.get_num_Function_pointers()==1){ //only one reference to this FunctionSymbol => safe to delete
                                                 ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21246,7 +21085,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                 {
                                                         SgSymbol* symbol = ((SgTypedefDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgTypedefSymbol(symbol)){
-                                                                ClassicVisitor visitor((SgTypedefSymbol*) symbol);
+                                                                ClassicVisitor visitor((SgTypedefSymbol*) symbol, deletedStatements);
                                                                 traverseMemoryPoolVisitorPattern(visitor);
                                                                 if(visitor.get_num_Typedef_pointers()==1){ //only one reference to this SgTypedefSymbol  => safe to delete
                                                                         ((SgTypedefDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21258,7 +21097,7 @@ SageInterface::deleteAST ( SgNode* n )
                                         }
 
                                         if(node == isSgTypedefDeclaration(node)->get_definingDeclaration()){
-                                                ClassicVisitor visitor1((SgTypedefDeclaration*) node);
+                                                ClassicVisitor visitor1((SgTypedefDeclaration*) node, deletedStatements);
                                                 traverseMemoryPoolVisitorPattern(visitor1);
                                         }
                                 }
@@ -21357,7 +21196,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                 {
                                                         SgSymbol* symbol = ((SgClassDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgClassSymbol(symbol) !=NULL){
-                                                                ClassicVisitor visitor((SgClassSymbol*)symbol);
+                                                                ClassicVisitor visitor((SgClassSymbol*)symbol, deletedStatements);
                                                                 traverseMemoryPoolVisitorPattern(visitor);
                                                                 if(visitor.get_num_Class_pointers()==1){ //only one reference to this symbol => safe to delete
                                                                         ((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21368,7 +21207,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                 }
                                         }
 
-                                        ClassicVisitor visitor((SgClassDeclaration*) node );
+                                        ClassicVisitor visitor((SgClassDeclaration*) node, deletedStatements );
                                         traverseMemoryPoolVisitorPattern(visitor);
 
                                         SgClassType* type= ((SgClassDeclaration*)node)->get_type();
@@ -21380,7 +21219,7 @@ SageInterface::deleteAST ( SgNode* n )
 
                                 if(isSgThisExp(node) !=NULL){
                                         SgSymbol* symbol = ((SgThisExp*)node)->get_class_symbol();
-                                        ClassicVisitor visitor((SgClassSymbol*)symbol);
+                                        ClassicVisitor visitor((SgClassSymbol*)symbol, deletedStatements);
                                         traverseMemoryPoolVisitorPattern(visitor);
                                         if(visitor.get_num_Class_pointers()==1){ //only one reference to this symbol => safe to delete
                                                 ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21394,7 +21233,7 @@ SageInterface::deleteAST ( SgNode* n )
                                         SgSymbol* symbol = ((SgClassNameRefExp*)node)->get_symbol();
                                         if(isSgClassSymbol(symbol) !=NULL)
                                         {
-                                                ClassicVisitor visitor((SgClassSymbol*)symbol);
+                                                ClassicVisitor visitor((SgClassSymbol*)symbol, deletedStatements);
                                                 traverseMemoryPoolVisitorPattern(visitor);
                                                 if(visitor.get_num_Class_pointers()==1){ //only one reference to this symbol => safe to delete
                                                         ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21415,7 +21254,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                 {
                                                         SgSymbol* symbol = ((SgMemberFunctionDeclaration*)node)->get_symbol_from_symbol_table();
                                                         if(isSgMemberFunctionSymbol(symbol)){
-                                                                ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol);
+                                                                ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol, deletedStatements);
                                                                 traverseMemoryPoolVisitorPattern(visitor);
                                                                 if(visitor.get_num_memFunc_pointers()==1){
                                                                         ((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21425,7 +21264,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                         }
                                                 }
                                         }
-                                        ClassicVisitor visitor((SgMemberFunctionDeclaration*) node);
+                                        ClassicVisitor visitor((SgMemberFunctionDeclaration*) node, deletedStatements);
                                         traverseMemoryPoolVisitorPattern(visitor);
 
                                 }
@@ -21433,7 +21272,7 @@ SageInterface::deleteAST ( SgNode* n )
 #if 0
                                 if(isSgMemberFunctionRefExp(node) !=NULL){
                                         SgMemberFunctionSymbol* symbol = ((SgMemberFunctionRefExp*)node)->get_symbol_i();
-                                        ClassicVisitor visitor(symbol);
+                                        ClassicVisitor visitor(symbol, deletedStatements);
                                         traverseMemoryPoolVisitorPattern(visitor);
                                         if(visitor.get_num_memFunc_pointers()==1){ //only one reference to this symbol => safe to delete
                                                 ((SgSymbol*)symbol)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21497,7 +21336,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                 {
                                                         SgSymbol* symbol = ((SgTemplateInstantiationMemberFunctionDecl*)node)->get_symbol_from_symbol_table();
                                                         if(isSgMemberFunctionSymbol(symbol)){
-                                                                ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol);
+                                                                ClassicVisitor visitor((SgMemberFunctionSymbol*)symbol, deletedStatements);
                                                                 traverseMemoryPoolVisitorPattern(visitor);
                                                                 if(visitor.get_num_memFunc_pointers()==1){
                                                                         ((SgMemberFunctionDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21507,7 +21346,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                         }
                                                 }
                                         }
-                                        ClassicVisitor visitor((SgMemberFunctionDeclaration*) node);
+                                        ClassicVisitor visitor((SgMemberFunctionDeclaration*) node, deletedStatements);
                                         traverseMemoryPoolVisitorPattern(visitor);
                                 }
 
@@ -21516,7 +21355,7 @@ SageInterface::deleteAST ( SgNode* n )
                                              if(((SgTemplateDeclaration*)node)->get_scope()->get_symbol_table()!=NULL)
                                                 {
                                                         SgSymbol* symbol = ((SgTemplateDeclaration*)node)->get_symbol_from_symbol_table();
-                                                        ClassicVisitor visitor((SgTemplateSymbol*)symbol);
+                                                        ClassicVisitor visitor((SgTemplateSymbol*)symbol, deletedStatements);
                                                         traverseMemoryPoolVisitorPattern(visitor);
                                                         if(visitor.get_num_Template_pointers()==1){
                                                                         ((SgTemplateDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21526,7 +21365,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                 }
                                         }
                                         //if(isSgTemplateDeclaration(node) == ((SgTemplateDeclaration*)node)->get_firstNondefiningDeclaration()){
-                                                ClassicVisitor visitor1((SgTemplateDeclaration*) node );
+                                                ClassicVisitor visitor1((SgTemplateDeclaration*) node, deletedStatements);
                                                 traverseMemoryPoolVisitorPattern(visitor1);
                                         //}
 
@@ -21569,7 +21408,7 @@ SageInterface::deleteAST ( SgNode* n )
                                                 {
                                                         SgSymbol* symbol = ((SgTemplateInstantiationDecl*)node)->get_symbol_from_symbol_table();
                                                         if(isSgClassSymbol(symbol)){
-                                                                ClassicVisitor visitor((SgClassSymbol*)symbol);
+                                                                ClassicVisitor visitor((SgClassSymbol*)symbol, deletedStatements);
                                                                 traverseMemoryPoolVisitorPattern(visitor);
                                                                 if(visitor.get_num_Class_pointers()==1){
                                                                         ((SgClassDeclaration*)node)->get_scope()->get_symbol_table()->remove(symbol);
@@ -21594,27 +21433,64 @@ SageInterface::deleteAST ( SgNode* n )
                                         }
                                         printf("SgTemplateInstantiationDecl in normal traversal\n");
 
-                                        ClassicVisitor visitor((SgTemplateInstantiationDecl*) node);
+                                        ClassicVisitor visitor((SgTemplateInstantiationDecl*) node, deletedStatements);
                                         traverseMemoryPoolVisitorPattern(visitor);
                                 }
 
 #endif
 #if 0
-                        printf ("Deleting node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
+                          printf ("Deleting node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
 #endif
                      // Normal nodes  will be removed in a post-order way
-                        delete node;
+                          if (SgStatement* stmt = isSgStatement(node))
+                            markForDeletion(stmt);
+                          else
+                            delete node;
 #if 0
-                        printf ("After delete node: node = %p = %s \n",node,node->class_name().c_str());
+                          printf ("After delete node: node = %p = %s \n",node,node->class_name().c_str());
 #endif
                         }
+
+                        void cleanUpMacrosThenDeleteStatements(SgSourceFile* file)
+                        {
+                          if (file)
+                          {
+                            std::map<SgStatement*,MacroExpansion*>& macroMap = file->get_macroExpansionMap();
+
+                            for (SgStatement* deletedStmt : deletedStatements)
+                            {
+                              auto pos = macroMap.find(deletedStmt);
+                              if (pos == macroMap.end()) continue;
+
+                              ASSERT_not_null(pos->second);
+                              std::vector<SgStatement*>& vec = pos->second->associatedStatementVector;
+                              auto const vecLim = vec.end();
+
+                              vec.erase(std::remove(vec.begin(), vecLim, deletedStmt), vecLim);
+
+                              macroMap.erase(pos);
+                            }
+                          }
+
+                          for (SgStatement* deletedStmt : deletedStatements)
+                            delete deletedStmt;
+                        }
+
+                        void markForDeletion(SgStatement* n) { deletedStatements.insert(n); }
+
+                  // Delete statements from macros referencing them.
+                    private:
+                        DeletedStatementContainer deletedStatements;
                 };
 
 
-          DeleteAST deleteTree;
+          // query source file before anything is deleted
+          SgSourceFile* const sourceFile = getEnclosingSourceFile(n);
+          DeleteAST           deleteTree;
 
           // Deletion must happen in post-order to avoid traversal of (visiting) deleted IR nodes
           deleteTree.traverse(n,postorder);
+          deleteTree.cleanUpMacrosThenDeleteStatements(sourceFile);
 
 #if 0
      printf ("Leaving SageInterface::deleteAST(): n = %p = %s \n",n,n->class_name().c_str());
