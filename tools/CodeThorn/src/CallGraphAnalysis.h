@@ -23,11 +23,19 @@ namespace CodeThorn
       addressTaken   = (1 << 1),
       virtualCall    = (1 << 2),
       overrider      = (1 << 3),
-      //~ resolvePointerCalls   = (1 << 3),
       defaultValue   = normalCall | addressTaken | virtualCall | overrider,
     };
 
-    Property kind;
+    /// tests if this has property \p prop.
+    bool hasProperty(Property prop) const;
+
+    /// returns the assocaited call expression.
+    /// \note this is the raw call in the AST, the callee (target) may not be
+    ///       the immediate lhs.
+    ExpressionKeyType call() const;
+
+    ExpressionKeyType expr;
+    Property          kind;
   };
 
   inline
@@ -45,7 +53,7 @@ namespace CodeThorn
   }
 
   using CGVertex  = FunctionKeyType;
-  using CGEdge    = CallEdge::Property;
+  using CGEdge    = CallEdge;
   using CallGraph = Sawyer::Container::Graph<CGVertex, CGEdge, CGVertex>;
 
   using CallDataSequence         = std::vector<CallData>;

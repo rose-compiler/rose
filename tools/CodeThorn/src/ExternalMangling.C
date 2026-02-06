@@ -829,6 +829,26 @@ namespace
     return functionName(n, n.get_name());
   }
 
+  /// tests if \p name designates a proper C++ operator or if \p name is a mere
+  ///   function name starting with the character sequence operator.
+  bool isProperCxxOperator(std::string name)
+  {
+    static const std::string operkey = "operator";
+
+    // First, check if the name starts with "operator"
+    if (!boost::starts_with(name, operkey))
+      return false;
+
+    // Check the character following "operator"
+    int ch = name[operkey.size()];
+
+    // Check if the character following "operator" is a valid
+    //   character in a C++ identifier.
+    // \todo does not consider C++ unicode characters
+    return (!isalnum(ch) && ch != '_');
+  }
+
+
   std::string ExternalMangler::functionName(const SgFunctionDeclaration& n, std::string name)
   {
     if (si::is_Fortran_language())
@@ -840,7 +860,7 @@ namespace
     if (special.isDestructor())
       return mglMemFuncDtor;
 
-    const bool  isOperator = special.isOperator() || boost::starts_with(name, "operator");
+    const bool  isOperator = special.isOperator() || isProperCxxOperator(name);
 
     if (isOperator)
     {
@@ -949,8 +969,10 @@ namespace
 
       if (mangled.size() == 0)
       {
-        msgError() << "mangled.size() == 0, " << name << std::endl;
-        throw std::runtime_error{"unable to mangle " + name};
+        msgError() << "unable to mangle operator: " << name
+                   << std::endl;
+
+        mangled = name;
       }
 
       return mangled;

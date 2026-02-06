@@ -204,10 +204,8 @@ namespace
       res["source"] = uniqueId(*e.source());
       res["target"] = uniqueId(*e.target());
 
-      if ((e.value() & progrep::CallEdge::overrider) == progrep::CallEdge::overrider)
-      {
+      if (e.value().hasProperty(progrep::CallEdge::overrider))
         res["override"] = true;
-      }
 
       return res;
     }

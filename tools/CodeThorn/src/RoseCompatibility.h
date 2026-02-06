@@ -63,9 +63,22 @@ struct CallData : CallDataBase
 
   /// if the call can be resolved, the return value contains a valid FunctionKeyType
   Optional<FunctionKeyType> callee()      const { return std::get<0>(*this); }
+
   ExpressionKeyType         calleeExpr()  const { return std::get<1>(*this); }
+
+  /// tests if the call is tied to a type (i.e., class)
+  /// \return  true, for all member functions
+  ///          false, otherwise
   Optional<ClassKeyType>    typeBound()   const { return std::get<2>(*this); }
+
+  /// returns the representation of call. If empty (=ExpressionKeyType{} or nullptr)
+  ///   the function was found as address taken, but not as call.
   ExpressionKeyType         call()        const { return std::get<3>(*this); }
+
+  /// tests if this is a virtual call
+  /// \return true, iff this is a virtual call
+  ///         false, otherwise (incl. when the target is a virtual function,
+  ///                that is not dynamically bound.)
   bool                      virtualCall() const { return std::get<4>(*this); }
 };
 
@@ -96,6 +109,8 @@ struct SourceLocation : SourceLocationBase
   std::uint32_t limitLine() const { return std::get<3>(*this); }
   std::uint32_t limitCol()  const { return std::get<4>(*this); }
 };
+
+std::ostream& operator<<(std::ostream& os, const SourceLocation& loc);
 
 
 using SpecialMemberFunctionBase = std::tuple<FunctionKeyType, std::int8_t, bool, bool, bool>;
@@ -329,11 +344,14 @@ class RoseCompatibilityBridge
 
 
     /// returns all callees (if known)
-    /// \param fn the function for which the result shall be computed
+    /// \param  root, the subtree for which the result shall be computed
     /// \return a set of functions called by \p fn
     /// \{
     std::vector<CallData>
-    functionRelations(FunctionKeyType fn) const;
+    functionRelations(FunctionKeyType root) const;
+
+    std::vector<CallData>
+    functionRelations(ExpressionKeyType root) const;
     ///}
 
     /// returns a predicate testing if a function has name \p name.

@@ -2437,13 +2437,28 @@ namespace
 
     return sg::dispatch(CallDataFinder{}, fndef);
   }
+
+  std::vector<CallData>
+  functionRelations_internal(const SgExpression* exp)
+  {
+    if (exp == nullptr) return {};
+
+    return sg::dispatch(CallDataFinder{}, exp);
+  }
 }
 
 std::vector<CallData>
-RoseCompatibilityBridge::functionRelations(FunctionKeyType fn) const
+RoseCompatibilityBridge::functionRelations(FunctionKeyType root) const
 {
-  return functionRelations_internal(fn);
+  return functionRelations_internal(root);
 }
+
+std::vector<CallData>
+RoseCompatibilityBridge::functionRelations(ExpressionKeyType root) const
+{
+  return functionRelations_internal(root);
+}
+
 
 }
 
@@ -2739,6 +2754,7 @@ RoseCompatibilityBridge::allFunctionKeys(ASTRootType n, FunctionPredicate pred) 
          };
 
   unorderedTraversal0(collectFunctionKeys, n);
+
   return std::vector<FunctionKeyType>(fnkeys.begin(), fnkeys.end());
 }
 
@@ -2819,5 +2835,20 @@ bool SpecialMemberFunction::isMoveCtor()    const { return (kind() & mctor)   ==
 bool SpecialMemberFunction::isDestructor()  const { return (kind() & dtor)    == dtor; }
 bool SpecialMemberFunction::isCopyAssign()  const { return (kind() & cassign) == cassign; }
 bool SpecialMemberFunction::isMoveAssign()  const { return (kind() & massign) == massign; }
+
+std::ostream&
+operator<<(std::ostream& os, const SourceLocation& loc)
+{
+  os << loc.file() << '@' << loc.startLine() << ':' << loc.startCol();
+
+  bool const printLimit = (  (loc.startLine() != loc.limitLine())
+                          || (loc.startCol()  != loc.limitCol())
+                          );
+
+  if (printLimit)
+    os << loc.file() << '-' << loc.limitLine() << ':' << loc.limitCol();
+
+  return os;
+}
 
 }

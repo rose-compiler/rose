@@ -19,6 +19,7 @@ namespace
   {
       void insert( ct::CallGraph::ConstVertexIterator src,
                    ct::FunctionKeyType tgtkey,
+                   ct::ExpressionKeyType call,
                    ct::CallEdge::Property kind
                  );
 
@@ -41,9 +42,7 @@ namespace
             if (!isCall) // address taken
               addressTknElems.push_back(call);
             else
-            {
-              insert(srcpos, tgtkey, virtualCall ? ct::CallEdge::virtualCall : ct::CallEdge::normalCall);
-            }
+              insert(srcpos, tgtkey, call.call(), virtualCall ? ct::CallEdge::virtualCall : ct::CallEdge::normalCall);
 
             // if the address was taken from a virtual function,
             //   we also store it in the virtual call container.
@@ -78,14 +77,15 @@ namespace
 
   void InsertEdges::insert( ct::CallGraph::ConstVertexIterator src,
                             ct::FunctionKeyType                tgtkey,
+                            ct::ExpressionKeyType              call,
                             ct::CallEdge::Property             kind
                           )
   {
     ct::CallGraph::ConstVertexIterator tgt = g->findVertexKey(tgtkey);
 
-    if (g->isValidVertex(tgt)) // normal taken
+    if (g->isValidVertex(tgt)) // normally taken
     {
-      g->insertEdge(src, tgt, kind);
+      g->insertEdge(src, tgt, ct::CallEdge{call, kind});
       return;
     }
 
@@ -112,7 +112,7 @@ namespace
         if (call.virtualCall())
           kind = kind | ct::CallEdge::Property::virtualCall;
 
-        insert(srcpos, tgtkey, kind);
+        insert(srcpos, tgtkey, call.call(), kind);
       }
     }
   }
@@ -137,16 +137,13 @@ namespace
       {
         ASSERT_require(cd.callee());
 
-        try
-        {
-          const ct::VirtualFunctionDesc& vfunc  = vfa.at(*cd.callee());
+        auto pos = vfa.find(*cd.callee());
+        if (pos == vfa.end()) continue;
 
-          for (ct::OverrideDesc overrider : vfunc.overriders())
-            insert(srcpos, overrider.function(), ct::CallEdge::overrider);
-        }
-        catch (...) // \todo test explicitly if a class has a vtable
-        {
-        }
+        const ct::VirtualFunctionDesc& vfunc  = pos->second;
+
+        for (ct::OverrideDesc overrider : vfunc.overriders())
+          insert(srcpos, overrider.function(), cd.call(), ct::CallEdge::overrider);
       }
     }
   }
@@ -259,6 +256,11 @@ namespace
 
 namespace CodeThorn
 {
+  // CallEdge impl
+  bool CallEdge::hasProperty(Property prop) const { return kind & prop == prop; }
+  ExpressionKeyType CallEdge::call() const { return expr; }
+  // CallEdge end
+
   std::tuple<CallGraph, FunctionCallDataSequence>
   generateCallGraphFromAST(ASTRootType n, const VirtualFunctionAnalysis* vfa, bool withAddrTaken)
   {
@@ -270,5 +272,4 @@ namespace CodeThorn
   {
     return generateCallGraph(CompatibilityBridge{}.allFunctionKeysFromMemoryPool(), vfa, withAddrTaken);
   }
-
 } // namespace CodeThorn
