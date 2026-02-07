@@ -164,6 +164,10 @@ EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE)
 
 	@if [ -r "$(EDGBIN_NAME).tar.gz" ]; then								\
 	    echo "EDG binary tarball appears to have been downloaded already: $(EDGBIN_NAME).tar.gz";		\
+	elif [ -r "$(top_srcdir)/src/frontend/CxxFrontend/$(EDGBIN_NAME).tar.gz" ]; then			\
+	    echo "EDG binary tarball found in source tree: $(EDGBIN_NAME).tar.gz";				\
+	    echo "Copying from source tree to build directory...";						\
+	    cp "$(top_srcdir)/src/frontend/CxxFrontend/$(EDGBIN_NAME).tar.gz" .;				\
 	else													\
 	    $(MAKE) check-network || exit 1;									\
 	    echo "Downloading EDG binary tarball: $(EDGBIN_NAME).tar.gz";					\
