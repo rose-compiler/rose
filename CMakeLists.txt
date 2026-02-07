@@ -793,17 +793,42 @@ if(NOT have_EDG_source AND NOT ENABLE_CLANG_FRONTEND)
   if(ENABLE_C)
     set(BINARY_EDG 1)
     if(NOT WIN32)
-      message(FATAL_ERROR "EDG binary download not yet supported, please use EDG git submodule if in ROSE team, otherwise use autotools")
-      message(STATUS "EDG - downloading EDG-${EDG_VERSION} binary tar file")
-      if(EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG.tar.gz")
-        execute_process(COMMAND "tar" "-zxvf" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG")
+      # Check for EDG binaries in the source tree first (they're included in the weekly branch)
+      # EDG binaries are named like: roseBinaryEDG-6-5-x86_64-pc-linux-gnu-gnu-9-5.0.11.145.381.tar.gz
+      string(REPLACE "." "-" EDG_VERSION_DASH "${EDG_VERSION}")
+      
+      # Detect GCC major version
+      execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_FULL_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+      string(REGEX MATCH "^([0-9]+)" GCC_MAJOR_VERSION "${GCC_FULL_VERSION}")
+      
+      # Build the expected tarball pattern
+      set(EDG_TARBALL_PATTERN "roseBinaryEDG-${EDG_VERSION_DASH}-x86_64-pc-linux-gnu-gnu-${GCC_MAJOR_VERSION}-*.tar.gz")
+      set(EDG_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend")
+      
+      # Search for matching EDG tarball in source tree
+      file(GLOB EDG_TARBALLS "${EDG_SOURCE_DIR}/${EDG_TARBALL_PATTERN}")
+      
+      if(EDG_TARBALLS)
+        # Use the first matching tarball
+        list(GET EDG_TARBALLS 0 EDG_TARBALL_PATH)
+        get_filename_component(EDG_TARBALL_NAME "${EDG_TARBALL_PATH}" NAME)
+        message(STATUS "EDG - found binary tarball in source tree: ${EDG_TARBALL_NAME}")
+        
+        # Set up to copy and extract at build time
+        set(EDG_BUILD_DIR "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend")
+        set(EDG_USE_SOURCE_TREE_BINARY TRUE CACHE INTERNAL "Use EDG binary from source tree")
+        set(EDG_SOURCE_TARBALL "${EDG_TARBALL_PATH}" CACHE INTERNAL "Path to EDG binary tarball")
       else()
-      # no need to display this message after the file has been downloaded
-      if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
-        message(WARNING "At build time, CMake will attempt to download a required library tarball.\n"
-                        "Please note that EDG binary tarballs are available for only certain configurations.")
-      endif()
-      include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
+        message(STATUS "EDG - no matching binary found in source tree for GCC ${GCC_MAJOR_VERSION}")
+        message(STATUS "EDG - looking for pattern: ${EDG_TARBALL_PATTERN}")
+        message(STATUS "EDG - available tarballs:")
+        file(GLOB ALL_EDG_TARBALLS "${EDG_SOURCE_DIR}/roseBinaryEDG-*.tar.gz")
+        foreach(tarball ${ALL_EDG_TARBALLS})
+          get_filename_component(tarball_name "${tarball}" NAME)
+          message(STATUS "       ${tarball_name}")
+        endforeach()
+        message(FATAL_ERROR "No compatible EDG binary found for GCC ${GCC_MAJOR_VERSION}. "
+                           "Please use a supported GCC version (7-12) or use autotools build.")
       endif()
     endif()
   endif()
@@ -813,7 +838,12 @@ set(edg_lib EDG) # the compiled library, the downloaded library, or the dummy li
 if(have_EDG_source)
   message(STATUS "EDG - will compile EDG-${EDG_VERSION} source code")
 elseif(BINARY_EDG)
-  message(STATUS "EDG - will use EDG-${EDG_VERSION} binary release (download)")
+  if(EDG_USE_SOURCE_TREE_BINARY)
+    message(STATUS "EDG - will use EDG-${EDG_VERSION} binary from source tree")
+    # Include will be deferred until after rosetta_generated target is defined
+  else()
+    message(STATUS "EDG - will use EDG-${EDG_VERSION} binary release (download)")
+  endif()
 else()
   message(STATUS "EDG - not needed; using a nearly empty dummy library")
 endif()

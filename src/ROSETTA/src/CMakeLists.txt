@@ -177,3 +177,8 @@ add_custom_command(
 
 # a custom target depending on generated rosetta source and header files to trigger the building process
 add_custom_target(rosetta_generated ALL DEPENDS ${ROSETTA_HEADERS} ${ROSETTA_SRC} ${STORAGECLASSES_SRC})
+
+# Include EDG binary extraction if using source tree EDG binaries
+if(EDG_USE_SOURCE_TREE_BINARY)
+  include(${PROJECT_SOURCE_DIR}/cmake/UseLocalEDGBinary.cmake)
+endif()
