@@ -2759,6 +2759,22 @@ IsBlock( const AstNodePtr& _n, std::string* blockname, AstNodeList* _stmts)
   return true;
 }
 
+bool DeclarationAttributesIdentical(SgDeclarationStatement*  q1, SgDeclarationStatement* q2) {
+  if (q1 == 0 || q2 == 0) return q1 == q2;
+
+  if (q1->get_declarationModifier().get_storageModifier().isExtern() !=
+    q2->get_declarationModifier().get_storageModifier().isExtern()) {
+    DebugDiff([q1,q2](){ return "AST different attribute extern : " + AstInterface::AstToString(q1) + " vs " + AstInterface::AstToString(q2); });
+    return false;
+  }
+  if (q1->get_declarationModifier().get_storageModifier().isStatic() !=
+    q2->get_declarationModifier().get_storageModifier().isStatic()) {
+    DebugDiff([q1,q2](){ return "AST different attribute static : " + AstInterface::AstToString(q1) + " vs " + AstInterface::AstToString(q2); });
+    return false;
+  }
+  return true;
+}
+
 bool AstInterface:: AstIdentical(const AstNodeType& _first, const AstNodeType& _second, 
                    std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff)
 {
@@ -2814,29 +2830,27 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
         SgInitializedName *p1 = isSgInitializedName(first);
         SgInitializedName *p2 = isSgInitializedName(second);
         assert (p1 != 0 && p2 != 0); 
-        SgVariableDeclaration* q1 = isSgVariableDeclaration(p1->get_declaration());
-        SgVariableDeclaration* q2 = isSgVariableDeclaration(p2->get_declaration());
-        if (q1 != 0 && q2 != 0) { 
-          if (q1->get_declarationModifier().get_storageModifier().isExtern() !=
-            q2->get_declarationModifier().get_storageModifier().isExtern()) {
-            DebugDiff([&_first,&_second](){ return "AST different attribute extern : " + AstToString(_first) + " vs " + AstToString(_second); });
-            return false;
-          }
-          if (q1->get_declarationModifier().get_storageModifier().isStatic() !=
-            q2->get_declarationModifier().get_storageModifier().isStatic()) {
-            DebugDiff([&_first,&_second](){ return "AST different attribute static : " + AstToString(_first) + " vs " + AstToString(_second); });
-            return false;
-          }
+        if (!DeclarationAttributesIdentical(p1->get_declaration(), p2->get_declaration())) {
+             return false;
         }
         if (std::string(p1->get_name().str()) != std::string(p2->get_name().str())) {
             DebugDiff([&_first,&_second](){ return "AST different  name: " + AstToString(_first) + " vs " + AstToString(_second); });
             return false;
         }
-        if (AstIdentical(AstNodeType(p1->get_type()), AstNodeType(p2->get_type()))) {
-            return true;
+        if (!AstIdentical(AstNodeType(p1->get_type()), AstNodeType(p2->get_type()), call_on_diff_type)) {
+            DebugDiff([&_first,&_second](){ return "AST different  type: " + AstToString(_first) + " vs " + AstToString(_second); });
+            return false;
         }
-        DebugDiff([&_first,&_second](){ return "AST different  type: " + AstToString(_first) + " vs " + AstToString(_second); });
-        return false;
+        if (!AstIdentical(AstNodePtr(p1->get_initializer()), AstNodePtr(p2->get_initializer()), call_on_diff, call_on_diff_type)) {
+            DebugDiff([&_first,&_second](){ return "AST different  initializer: " + AstToString(_first) + " vs " + AstToString(_second); });
+           return false;
+        }
+        return true;
+      }
+  case V_SgVariableDeclaration: {
+        auto* p1 = isSgVariableDeclaration(first), *p2 = isSgVariableDeclaration(second);
+        if (!DeclarationAttributesIdentical(p1,p2)) return false;
+        return AstIdentical<SgInitializedNamePtrList,AstNodePtr>(p1->get_variables(), p2->get_variables(), call_on_diff);
      }
   case V_SgVarRefExp: { 
       SgVarRefExp* v1 = isSgVarRefExp(first);
