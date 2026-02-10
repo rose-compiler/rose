@@ -101,8 +101,10 @@ Partitioner::instanceFromRbaFile(const boost::filesystem::path &name, Serializat
 
     Partitioner::Ptr partitioner = archive->loadPartitioner();
 
+#if ROSE_ENABLE_BOOST_SERIALIZATION
     while (archive->objectType() == Serialization::AST)
         archive->loadAst();
+#endif
 
     info <<"; took " <<timer << "\n";
     return partitioner;
@@ -119,10 +121,12 @@ Partitioner::saveAsRbaFile(const boost::filesystem::path &name, Serialization::F
 
     archive->savePartitioner(sharedFromThis());
 
+#if ROSE_ENABLE_BOOST_SERIALIZATION
     if (SgProject *project = SageInterface::getProject()) {
         for (SgBinaryComposite *file: SageInterface::querySubTree<SgBinaryComposite>(project))
             archive->saveAst(file);
     }
+#endif
 
     info <<"; took " <<timer <<"\n";
 }

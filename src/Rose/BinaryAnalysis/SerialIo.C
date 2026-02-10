@@ -59,7 +59,6 @@ SerialIo_initDiagnostics() {
         SerialIo::mlog.comment("reading/writing serialized analysis states");
     }
 }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SerialIo
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,6 +232,7 @@ SerialOutput::savePartitioner(const Partitioner2::Partitioner::ConstPtr& partiti
     return;
 }
 
+#if ROSE_ENABLE_BOOST_SERIALIZATION
 void
 SerialOutput::saveAstHelper(SgNode* ast) {
     if (ast) {
@@ -259,6 +259,7 @@ void
 SerialOutput::saveAst(SgBinaryComposite* ast) {
     saveAstHelper(ast);
 }
+#endif
 
 void
 SerialOutput::close() {
@@ -422,10 +423,12 @@ SerialInput::loadPartitioner() {
     return p;
 }
 
+#if ROSE_ENABLE_BOOST_SERIALIZATION
 SgNode*
 SerialInput::loadAst() {
     return loadObject<SgNode*>(Serialization::AST);
 }
+#endif
 
 void
 SerialInput::close() {

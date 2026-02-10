@@ -1025,18 +1025,26 @@ computeInsnHistogram(const InstructionProvider &insns, const MemoryMap::Ptr &map
 
 void
 saveInsnHistogram(const InsnHistogram &histogram, const boost::filesystem::path &fileName) {
+#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
+    throw Rose::Exception("This configuration does not support state serialization");
+#else
     auto io = SerialOutput::instance();
     io->format(Serialization::XML);
     io->open(fileName);
     io->saveObject(Serialization::USER_DEFINED, histogram);
+#endif
 }
 
 InsnHistogram
 loadInsnHistogram(const boost::filesystem::path &fileName) {
+#ifndef ROSE_ENABLE_BOOST_SERIALIZATION
+    throw Rose::Exception("This configuration does not support state serialization");
+#else
     auto io = SerialInput::instance();
     io->format(Serialization::XML);
     io->open(fileName);
     return io->loadObject<InsnHistogram>(Serialization::USER_DEFINED);
+#endif
 }
 
 std::vector<InsnHistogram>
