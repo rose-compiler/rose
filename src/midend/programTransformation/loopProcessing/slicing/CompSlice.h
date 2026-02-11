@@ -87,7 +87,7 @@ class CompSlice
       UpdateStmtIterator( LoopTreeNode *root)
          : ConstStmtIterator( root) { Attach(); }
       UpdateStmtIterator( const UpdateStmtIterator& that) 
-        : ConstStmtIterator( that) {  Attach(); }
+        : ConstStmtIterator( that), LoopTreeObserver() {  Attach(); }
       ~UpdateStmtIterator() { Detach(); }
       void Reset()
         { Detach(); ConstStmtIterator::Reset(); Attach(); }

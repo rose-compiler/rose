@@ -9,7 +9,7 @@
 #include <CommandOptions.h>
 #include <stdexcept>
 #include "OperatorAnnotation.h"
-
+#include "ROSE_FALLTHROUGH.h"
 
 #include "AstTraversal.h"
 #include "astPostProcessing.h"
@@ -158,7 +158,7 @@ AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
 
 
 //! Get a unique string name for a type, similar to qualified names in C++
-std::string GetFunctionSignature( const AstNodePtr& f, const std::string& fname, const AstInterface::AstTypeList& plist)
+std::string GetFunctionSignature( const AstNodePtr& /* f */, const std::string& fname, const AstInterface::AstTypeList& plist)
 {
   std::stringstream fname_stream;
   fname_stream << fname;
@@ -2014,6 +2014,7 @@ IsVarRef( SgNode* exp, SgType** vartype, std::string* varname,
        if (has_ptr_deref != 0 && !isSgThisExp(isSgBinaryOp(exp)->get_lhs_operand())) {
           *has_ptr_deref = true;
        }
+       ROSE_FALLTHROUGH;
     case V_SgDotExp:
      {
        const SgBinaryOp *exp1 = isSgBinaryOp(exp);
@@ -2458,6 +2459,7 @@ IsMemoryAccess( const AstNodePtr& _s)
         break;
      }
    }
+   ROSE_FALLTHROUGH;
   default:
     { // Function call returning C++ reference type is a memory access
      AstNodeTypeImpl t;

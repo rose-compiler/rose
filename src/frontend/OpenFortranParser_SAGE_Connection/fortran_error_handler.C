@@ -22,7 +22,7 @@
  * TODO: we need to make this function more general
  **/
 void 
-fortran_error_handler(int signum)
+fortran_error_handler(int /* signum */)
 {
   // get the current filename 
   std::string sFilename = getCurrentFilename();

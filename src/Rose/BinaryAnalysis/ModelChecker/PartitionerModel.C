@@ -1781,7 +1781,6 @@ SemanticCallbacks::findLinkedFunction(const P2::Function::Ptr &func) {
         const SgAsmGenericHeader *hdr = headers && !headers->get_headers().empty() ? headers->get_headers()[0] : nullptr;
         const auto symtab = hdr ? as<SgAsmElfSymbolSection>(hdr->get_sectionByName(".dynsym")) : nullptr;
         const SgAsmElfSymbolList *symbols = symtab ? symtab->get_symbols() : nullptr;
-        bool found = false;
         if (symbols) {
             for (const SgAsmElfSymbol *symbol: symbols->get_symbols()) {
                 if (symbol && symbol->get_name() && symbol->get_name()->get_string() == baseName &&

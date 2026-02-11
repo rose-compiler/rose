@@ -153,7 +153,7 @@ public:
     ///////////////////////////////////////////////////////////////////////////
 
     template <typename ContextT, typename TokenT, typename ContainerT>
-    bool expanding_object_like_macro(ContextT const& ctx, TokenT const& macro, 
+    bool expanding_object_like_macro(ContextT const& /* ctx */, TokenT const& macro, 
         ContainerT const& definition, TokenT const& macrocall)
     {
         attributeListMap->expanding_object_like_macro(macro, definition, macrocall);

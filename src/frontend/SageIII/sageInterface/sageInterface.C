@@ -14600,9 +14600,9 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
      //
      //
      // if targetStmt's parent is SgCaseOptionStmt, 
-    if (SgCaseOptionStmt * case_opt_stmt = isSgCaseOptionStmt(parent)) 
+    if (/* SgCaseOptionStmt * case_opt_stmt = */ isSgCaseOptionStmt(parent))
     {
-      if (SgVariableDeclaration* var_stmt = isSgVariableDeclaration(newStmt))
+      if (/* SgVariableDeclaration* var_stmt = */ isSgVariableDeclaration(newStmt))
       {
         cerr<<"Error: you cannot insert a variable declaration stmt inside a case option statement without enclosing brances in between."<<endl;
         cerr<<"parent of target is a case option stmt:"<<parent <<endl; 

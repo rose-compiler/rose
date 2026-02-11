@@ -319,7 +319,7 @@ class ClusterDependences {
             auto c = cluster_map[e.first_entry()];
             if (c == "") continue; // TODO: Not supposed to happen.
             if (connectivity.find(c) == connectivity.end()) 
-               connectivity[c] == 0;
+               connectivity[c] = 0;
             else 
                connectivity[c] ++;
           }  
@@ -327,7 +327,7 @@ class ClusterDependences {
             auto c = cluster_map[e.second_entry()];
             if (c == "") continue; // TODO: not supposed to happen.
             if (connectivity.find(c) == connectivity.end()) 
-               connectivity[c] == 0;
+               connectivity[c] = 0;
             else 
                connectivity[c] ++;
           }  
@@ -354,7 +354,7 @@ class ClusterDependences {
       } // while
     };
  public:
-    std::string edge_to_string (const std::string& s, std::ostream& output) {
+    std::string edge_to_string (const std::string& s, std::ostream& /* output */) {
        std::string color = "black";
        if (s == "modify") color = "red";
        else if (s == "read") color = "green";

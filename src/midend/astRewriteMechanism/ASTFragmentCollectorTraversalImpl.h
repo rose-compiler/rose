@@ -588,6 +588,16 @@ evaluateSynthesizedAttribute (
             // NOTE: FALL THROUGH OF CASE!!!
              }
 
+          // PL (2/11/2026): We explicitly use the fallthrough attributes here instead of
+          // ROSE_FALLTHROUGH because the ROSE_FALLTHROUGH.h header is not available at all times
+          // when this header is included. In other words, some tests fail when trying to include
+          // this header because the ROSE_FALLTHROUGH.h header is not found.
+#if __cplusplus >= 201703L
+             [[fallthrough]];
+#elif defined __GNUC__
+             [[gnu::fallthrough]];
+#endif
+
           case V_SgFunctionDefinition:
           case V_SgFunctionDeclaration:
           case V_SgExprStatement:

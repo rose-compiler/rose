@@ -68,6 +68,7 @@ HighLevelRewrite::SynthesizedAttribute::
 
 HighLevelRewrite::SynthesizedAttribute::
 SynthesizedAttribute ( const SynthesizedAttribute & X )
+     : HighLevelInterfaceNodeCollection()
    {
   // Deep copy semantics
      ((SynthesizedAttribute*) this)->operator= (X);

@@ -9,6 +9,7 @@
 #include "sageBuilder.h"
 #include "OmpAttribute.h"
 #include "ompAstConstruction.h"
+#include "ROSE_FALLTHROUGH.h"
 //void processOpenMP(SgSourceFile* sageFilePtr);
 
 //Liao, 10/27/2008: parsing OpenMP pragma here
@@ -77,7 +78,7 @@ static bool copyStartFileInfo (SgNode* src, SgNode* dest, OmpAttribute* oa)
 }
 // Liao 3/11/2013, special function to copy end file info of the original SgPragma or Fortran comments (src) to OpenMP node (dest)
 // If the OpenMP node is a body statement, we have to use the body's end file info as the node's end file info.
-static bool copyEndFileInfo (SgNode* src, SgNode* dest, OmpAttribute* oa)
+static bool copyEndFileInfo (SgNode* src, SgNode* dest, OmpAttribute* /* oa */)
 {
   bool result = false;
   ROSE_ASSERT (src && dest);
@@ -1718,6 +1719,7 @@ namespace OmpSupport
             }
         // We should not add break; here. The intention is to fall through
           }
+          ROSE_FALLTHROUGH;
         case e_private:
         case e_firstprivate:
         case e_lastprivate:
