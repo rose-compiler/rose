@@ -33,16 +33,6 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Template guard
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-constexpr bool enable_boost_serialization =
-#if ROSE_ENABLE_BOOST_SERIALIZATION
-  true;
-#else
-  false;
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SerialIo
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -335,7 +325,7 @@ class SerialOutput: public SerialIo {
      * specified AST node to null and thus may interfere with threads that reading this part of the AST.  It is unsafe
      * to invoke this method while other threads are modifying this part of the AST since AST modification is not thread
      * safe. */
-#if ROSE_ENABLE_BOOST_SERIALIZATION
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     void saveAst(SgAsmNode*);
     void saveAst(SgBinaryComposite*);
 #endif
@@ -344,7 +334,7 @@ class SerialOutput: public SerialIo {
     // The saveAstHelper is what actually gets called for the functions above. It doesn't descriminate between nodes
     // that support serialization and those that don't, which is why it's private. Use only the public functions because
     // they'll give you a nice compiler error if you try to save an Ast node type that isn't supported.
-#if ROSE_ENABLE_BOOST_SERIALIZATION
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     void saveAstHelper(SgNode*);
 #endif
 
@@ -483,7 +473,7 @@ class SerialInput: public SerialIo {
      *
      * Throws an @ref Exception if no file is attached to this I/O object or if the next object to be read from the
      * input is not an AST, or if any other errors occur while reading the AST. */
-#if ROSE_ENABLE_BOOST_SERIALIZATION
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
     SgNode* loadAst();
 #endif
 
