@@ -232,7 +232,7 @@ SerialOutput::savePartitioner(const Partitioner2::Partitioner::ConstPtr& partiti
     return;
 }
 
-#if ROSE_ENABLE_BOOST_SERIALIZATION
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 void
 SerialOutput::saveAstHelper(SgNode* ast) {
     if (ast) {
@@ -423,7 +423,7 @@ SerialInput::loadPartitioner() {
     return p;
 }
 
-#if ROSE_ENABLE_BOOST_SERIALIZATION
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 SgNode*
 SerialInput::loadAst() {
     return loadObject<SgNode*>(Serialization::AST);
