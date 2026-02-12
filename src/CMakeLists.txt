@@ -749,6 +749,27 @@ endforeach()
 set(rose_LIB_SRC_FILES dummyCppFileForLibrose.C)
 
 ########################################################################################################################
+# Link precompiled EDG binary library when not compiling EDG from source
+########################################################################################################################
+# When using a precompiled EDG binary (BINARY_EDG=1), we need to create an IMPORTED library
+# target and link it into librose.so. The EDG tarball is extracted by the extract_EDG_binary
+# custom target that runs after rosetta_generated.
+if(BINARY_EDG AND NOT have_EDG_source)
+  set(EDG_LIBRARY_PATH "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs/libroseEDG.a")
+  
+  # Create an IMPORTED static library for the precompiled EDG
+  add_library(roseEDG_precompiled STATIC IMPORTED GLOBAL)
+  set_target_properties(roseEDG_precompiled PROPERTIES
+    IMPORTED_LOCATION "${EDG_LIBRARY_PATH}"
+  )
+  
+  # The library will be available after extract_EDG_binary runs
+  # Mark that we have a precompiled EDG library to link
+  set(HAVE_PRECOMPILED_EDG TRUE)
+  message(STATUS "EDG - will link precompiled library: ${EDG_LIBRARY_PATH}")
+endif()
+
+########################################################################################################################
 # The ROSE library itself (librose.so, librose.a, librose.dll)
 ########################################################################################################################
 add_library(ROSE_DLL SHARED ${rose_LIB_SRCS})
@@ -924,6 +945,20 @@ target_link_libraries(ROSE_DLL
     # Note: Threads moved to PUBLIC above
     ${_rose_system_libraries}
 )
+
+# Link precompiled EDG library if using binary distribution
+if(HAVE_PRECOMPILED_EDG)
+  # Make sure ROSE_DLL depends on extract_EDG_binary to ensure library exists before linking
+  add_dependencies(ROSE_DLL extract_EDG_binary)
+  target_link_libraries(ROSE_DLL PRIVATE roseEDG_precompiled)
+  message(STATUS "EDG - added roseEDG_precompiled to ROSE_DLL link libraries")
+endif()
+
+# Link quadmath library if FLOAT128 support is enabled (required by EDG)
+if(SUPPORT_FLOAT128)
+  target_link_libraries(ROSE_DLL PRIVATE quadmath)
+  message(STATUS "Added quadmath library for FLOAT128 support")
+endif()
 
 # Explicitly add -pthread flag for both compilation and linking
 # This is necessary even when CMAKE_THREAD_LIBS_INIT is empty (threading in libc)

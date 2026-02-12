@@ -1,0 +1,107 @@
+name: CMake Build CI
+
+on:
+  push:
+    branches: [ weekly ]
+  pull_request:
+    branches: [ weekly ]
+
+jobs:
+  cmake-build-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      # No submodules - EDG is proprietary. We use pre-built EDG binaries
+      # from src/frontend/CxxFrontend/roseBinaryEDG-*.tar.gz instead.
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential gcc-11 g++-11 gfortran-11 \
+          flex bison \
+          libboost-all-dev libxml2-dev libreadline-dev \
+          zlib1g-dev libsqlite3-dev libpq-dev libyaml-dev \
+          libgmp-dev libmpc-dev libmpfr-dev \
+          wget curl
+        # Set GCC 11 as default (EDG binaries require GCC 7-12)
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 110
+        sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-11 110
+
+    - name: Install CMake (latest from Kitware)
+      run: |
+        CODENAME=$(lsb_release -cs)
+        wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | \
+          gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+        echo "deb https://apt.kitware.com/ubuntu/ $CODENAME main" | \
+          sudo tee /etc/apt/sources.list.d/kitware.list
+        sudo apt-get update
+        sudo apt-get install -y cmake || {
+          echo "Kitware install failed, using system CMake"
+        }
+        cmake --version
+
+    - name: Check environment
+      run: |
+        echo "=== Build Environment ==="
+        gcc --version | head -1
+        g++ --version | head -1
+        cmake --version | head -1
+    
+    - name: Verify EDG binaries in source tree
+      run: |
+        echo "Checking for EDG binaries..."
+        ls -lh src/frontend/CxxFrontend/roseBinaryEDG-*.tar.gz
+        GCC_MAJOR=$(gcc -dumpversion | cut -d. -f1)
+        echo "GCC major version: $GCC_MAJOR"
+        ls src/frontend/CxxFrontend/roseBinaryEDG-*-gnu-${GCC_MAJOR}-*.tar.gz \
+          && echo "✅ Matching EDG binary found for GCC $GCC_MAJOR" \
+          || echo "⚠️ No matching EDG binary for GCC $GCC_MAJOR"
+    
+    - name: Configure with CMake
+      run: |
+        mkdir -p cmake-build rose-install
+        cd cmake-build
+        cmake .. \
+          -DCMAKE_INSTALL_PREFIX=$PWD/../rose-install \
+          -DENABLE_C=ON \
+          -DENABLE_TESTS=OFF \
+          -DCMAKE_BUILD_TYPE=Release
+    
+    - name: Build ROSE
+      run: |
+        cd cmake-build
+        make -j$(nproc)
+    
+    - name: Verify librose.so
+      run: |
+        LIBROSE=$(find cmake-build -name 'librose.so*' -type f | head -1)
+        if [ -n "$LIBROSE" ]; then
+          echo "✅ librose.so built successfully"
+          ls -lh cmake-build/lib/librose* 2>/dev/null
+          file "$LIBROSE"
+        else
+          echo "❌ librose.so not found"
+          exit 1
+        fi
+    
+    - name: Install ROSE
+      run: |
+        cd cmake-build
+        make install
+        ls -lh ../rose-install/lib/librose*
+    
+    - name: Build summary
+      if: always()
+      run: |
+        echo "=== Build Summary ==="
+        echo "CMake: $(cmake --version | head -1)"
+        echo "GCC: $(gcc --version | head -1)"
+        echo "Build dir: $(du -sh cmake-build 2>/dev/null | cut -f1)"
+        LIBROSE=$(find cmake-build -name 'librose.so*' -type f | head -1)
+        [ -n "$LIBROSE" ] && echo "✅ librose.so: $(ls -lh $LIBROSE | awk '{print $5}')" || echo "❌ librose.so: NOT FOUND"
+        INSTALLED=$(find rose-install -name 'librose.so*' -type f 2>/dev/null | head -1)
+        [ -n "$INSTALLED" ] && echo "✅ Installed: $(ls -lh $INSTALLED | awk '{print $5}')" || echo "❌ Installed: NOT FOUND"
