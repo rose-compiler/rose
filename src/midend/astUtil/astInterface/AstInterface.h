@@ -227,17 +227,17 @@ public:
   //! different only if the function returns true.
   static bool AstIdentical(const AstNodePtr& first, const AstNodePtr& second, 
                            std::function<bool(const AstNodePtr& first, const AstNodePtr& second)>* call_on_diff = 0,
-                   std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff_type = 0);
+                           std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff_type = 0);
   //! Check whether the two given AST types are identical syntax trees.
   //! If call_on_diff is given, it is invoked on each pair of different AST nodes, and the pair are treated 
   //! different only if the function returns true.
-  static bool AstIdentical(const AstNodeType& first, const AstNodeType& second, 
-                           std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff = 0);
+  static bool AstTypeIdentical(const AstNodeType& first, const AstNodeType& second, 
+                           std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff_type = 0);
   //! Check whether the two given lists are identical syntax trees.
   //! If call_on_diff is given, it is invoked on each pair of different AST nodes, and the pair are treated 
   //! different only if the function returns true.
   template <class List, class Node>
-  static bool AstIdentical(const List& first, const List& second, 
+  static bool AstListIdentical(const List& first, const List& second, 
                            std::function<bool(const Node& first, const Node& second)>* call_on_diff = 0) {
     if (first.size() != second.size()) {
        return false;

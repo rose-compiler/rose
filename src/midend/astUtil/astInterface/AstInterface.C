@@ -2774,13 +2774,37 @@ bool DeclarationAttributesIdentical(SgDeclarationStatement*  q1, SgDeclarationSt
     DebugDiff([q1,q2](){ return "AST different attribute static : " + AstInterface::AstToString(q1) + " vs " + AstInterface::AstToString(q2); });
     return false;
   }
+  if (q1->get_declarationModifier().get_storageModifier().isMutable() !=
+    q2->get_declarationModifier().get_storageModifier().isMutable()) {
+    DebugDiff([q1,q2](){ return "AST different attribute mutable : " + AstInterface::AstToString(q1) + " vs " + AstInterface::AstToString(q2); });
+    return false;
+  }
+  if (q1->get_declarationModifier().get_storageModifier().isRegister() !=
+      q2->get_declarationModifier().get_storageModifier().isRegister()) { 
+    DebugDiff([q1,q2](){ return "AST different attribute is register : " + AstInterface::AstToString(q1) + " vs " + AstInterface::AstToString(q2); });
+    return false;
+  }
+
+   auto* p1 = isSgVariableDeclaration(q1), *p2 = isSgVariableDeclaration(q2);
+   if (p1 != 0 && p2 != 0) {
+      if (p1->get_is_constexpr() != p2->get_is_constexpr())  {
+          DebugDiff([p1,p2](){ return "AST different attribute constexpr : " + AstInterface::AstToString(p1) + " vs " + AstInterface::AstToString(p2); });
+          return false;
+      }
+      if (p1->get_is_thread_local() != p2->get_is_thread_local())  {
+          DebugDiff([p1,p2](){ return "AST different attribute thread_local : " + AstInterface::AstToString(p1) + " vs " + AstInterface::AstToString(p2); });
+          return false;
+       }
+  }
+
   return true;
 }
 
-bool AstInterface:: AstIdentical(const AstNodeType& _first, const AstNodeType& _second, 
+bool AstInterface:: AstTypeIdentical(const AstNodeType& _first, const AstNodeType& _second, 
                    std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff)
 {
   if (_first == _second) { return true; }
+  DebugDiff([&_first,&_second](){ return "Checking AST Type Identical:" + GetTypeName(_first) + " vs " + GetTypeName(_second); });
   SgType* first = AstNodeTypeImpl(_first).get_ptr(), *second = AstNodeTypeImpl(_second).get_ptr(); 
   if (first == 0 || second == 0) {
      DebugDiff([](){ return "AST different: one of them is null."; });
@@ -2839,7 +2863,7 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
             DebugDiff([&_first,&_second](){ return "AST different  name: " + AstToString(_first) + " vs " + AstToString(_second); });
             return false;
         }
-        if (!AstIdentical(AstNodeType(p1->get_type()), AstNodeType(p2->get_type()), call_on_diff_type)) {
+        if (!AstTypeIdentical(AstNodeType(p1->get_type()), AstNodeType(p2->get_type()), call_on_diff_type)) {
             DebugDiff([&_first,&_second](){ return "AST different  type: " + AstToString(_first) + " vs " + AstToString(_second); });
             return false;
         }
@@ -2847,12 +2871,23 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
             DebugDiff([&_first,&_second](){ return "AST different  initializer: " + AstToString(_first) + " vs " + AstToString(_second); });
            return false;
         }
+        SgVariableDefinition* d1 = isSgVariableDefinition(p1->get_declptr());
+        SgVariableDefinition* d2 = isSgVariableDefinition(p2->get_declptr());
+        if (d1 != 0 && d2 != 0) {
+            SgExpression* b1 = d1->get_bitfield(), *b2 = d2->get_bitfield();
+             if (b1 != 0 && b2 != 0 && !AstIdentical(b1,b2,call_on_diff, call_on_diff_type)) {
+                 return false;
+             }
+             if (!DeclarationAttributesIdentical(d1->get_declaration(), d2->get_declaration())) {
+                  return false;
+             }
+        }
         return true;
-      }
+    }
   case V_SgVariableDeclaration: {
-        auto* p1 = isSgVariableDeclaration(first), *p2 = isSgVariableDeclaration(second);
-        if (!DeclarationAttributesIdentical(p1,p2)) return false;
-        return AstIdentical<SgInitializedNamePtrList,AstNodePtr>(p1->get_variables(), p2->get_variables(), call_on_diff);
+       auto* p1 = isSgVariableDeclaration(first), *p2 = isSgVariableDeclaration(second);
+       if (!DeclarationAttributesIdentical(p1,p2)) return false;
+       return AstListIdentical<SgInitializedNamePtrList,AstNodePtr>(p1->get_variables(), p2->get_variables(), call_on_diff);
      }
   case V_SgVarRefExp: { 
       SgVarRefExp* v1 = isSgVarRefExp(first);
@@ -2868,7 +2903,7 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
       assert (p1 != 0 && p2 != 0); 
       const auto& base1 = p1->get_inheritances();
       const auto& base2 = p2->get_inheritances();
-      if (!AstIdentical(base1, base2, call_on_diff)) {
+      if (!AstListIdentical(base1, base2, call_on_diff)) {
          return false;
       }
       if (p1->get_declaration()->get_declarationModifier().isFinal() !=
@@ -2887,6 +2922,11 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
   case V_SgFunctionDeclaration: {
       SgFunctionDeclaration* decl1 = isSgFunctionDeclaration(first), *decl2 = isSgFunctionDeclaration(second);
       assert (decl1 != 0 && decl2 != 0); 
+      if (!DeclarationAttributesIdentical(decl1,decl2)) return false;
+      if (decl1->get_is_constexpr() != decl2->get_is_constexpr())  {
+          DebugDiff([decl1,decl2](){ return "AST different attribute constexpr : " + AstInterface::AstToString(decl1) + " vs " + AstInterface::AstToString(decl2); });
+          return false;
+      }
       bool v1 = decl1->get_functionModifier().isVirtual();
       bool v2 = decl2->get_functionModifier().isVirtual();
       DebugDiff([v1,v2](){ return "function attribute virtual: " + std::string(v1?"true":"false") + " vs " + std::string(v2?"true":"false"); });
@@ -2903,33 +2943,35 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
       v2 = decl2->get_functionModifier().isMarkedDefault(); 
       DebugDiff([v1,v2](){ return "function attribute default: " + std::string(v1?"true":"false") + " vs " + std::string(v2?"true":"false"); });
       if (v1 != v2)  { return false; }
+      v1 = decl1->get_functionModifier().isInline();
+      v2 = decl2->get_functionModifier().isInline(); 
+      DebugDiff([v1,v2](){ return "function attribute inline: " + std::string(v1?"true":"false") + " vs " + std::string(v2?"true":"false"); });
+      if (v1 != v2)  { return false; }
       break;
      }
    default: break;
   }
-  if (IsFunctionCall(_first, &f1, &params1, &args1, &paramtypes1, &returntype1) && 
-       IsFunctionCall(_second, &f2, &params2, &args2, &paramtypes2, &returntype2)) {
+  if (IsFunctionCall(_first, &f1, &params1, &args1, 0, &returntype1) && 
+       IsFunctionCall(_second, &f2, &params2, &args2, 0, &returntype2)) {
      return AstIdentical(f1, f2, call_on_diff, call_on_diff_type) &&
-             AstIdentical<AstNodeList, AstNodePtr>(params1, params2, call_on_diff) &&
-             AstIdentical<AstNodeList, AstNodePtr>(args1, args2, call_on_diff) &&
+             AstListIdentical<AstNodeList, AstNodePtr>(params1, params2, call_on_diff) &&
+             AstListIdentical<AstNodeList, AstNodePtr>(args1, args2, call_on_diff) &&
              AstIdentical(body1, body2, call_on_diff, call_on_diff_type) &&
-             AstIdentical<AstTypeList, AstNodeType>(paramtypes1, paramtypes2, call_on_diff_type) &&
-             AstIdentical(returntype1, returntype2, call_on_diff_type);
+             AstTypeIdentical(returntype1, returntype2, call_on_diff_type);
   }
-  if ((IsFunctionDefinition(first, &name1, &params1, &args1, &body1, &paramtypes1, &returntype1) &&
-      IsFunctionDefinition(_second,&name2, &params2, &args2, &body2, &paramtypes2, &returntype2))) {
+  if ((IsFunctionDefinition(first, &name1, &params1, &args1, &body1, 0, &returntype1) &&
+      IsFunctionDefinition(_second,&name2, &params2, &args2, &body2, 0, &returntype2))) {
       if (name1 != name2 &&   (call_on_diff == 0 || (*call_on_diff)(_first, _second))) {
          DebugDiff([&_first,&_second](){ return "AST different function name: " + AstToString(_first) + " vs " + AstToString(_second); });
          return false;
       }
-      return AstIdentical<AstNodeList, AstNodePtr>(params1, params2, call_on_diff) &&
-             AstIdentical<AstNodeList, AstNodePtr>(args1, args2, call_on_diff) &&
+      return AstListIdentical<AstNodeList, AstNodePtr>(params1, params2, call_on_diff) &&
+             AstListIdentical<AstNodeList, AstNodePtr>(args1, args2, call_on_diff) &&
              AstIdentical(body1, body2, call_on_diff) &&
-             AstIdentical<AstTypeList, AstNodeType>(paramtypes1, paramtypes2, call_on_diff_type) &&
-             AstIdentical(returntype1, returntype2, call_on_diff_type); 
+             AstTypeIdentical(returntype1, returntype2, call_on_diff_type); 
   }
   if (IsBlock(_first, 0, &args1) && IsBlock(_second, 0, &args2)) {
-     return AstIdentical<AstNodeList,AstNodePtr>(args1, args2, call_on_diff);
+     return AstListIdentical<AstNodeList,AstNodePtr>(args1, args2, call_on_diff);
   }
   { AstNodePtr exp1, exp2;
     if ( (IsExprStmt(_first, &exp1) && IsExprStmt(_second, &exp2)) ||
