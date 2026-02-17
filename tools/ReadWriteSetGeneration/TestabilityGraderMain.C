@@ -180,7 +180,7 @@ void countTypes(const ReadWriteSets::FunctionReadWriteRecord& thisFuncRecord, st
 }
 
 void writeTypesFile(std::ofstream& typesFile, std::vector<std::unordered_map<std::string, int> >& typeCount) {
-  for(int ii = 0; ii < typeCount.size(); ++ii) {
+  for(decltype(typeCount.size()) ii = 0; ii < typeCount.size(); ++ii) {
     typesFile << " -------------------" << ReadWriteSets::varTypeToString((ReadWriteSets::VarType)ii) << "------------------------------- " << std::endl;
     for (const auto& pair : typeCount[ii]) {
       typesFile << pair.first << " : " << pair.second << std::endl;

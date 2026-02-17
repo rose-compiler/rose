@@ -2118,7 +2118,7 @@ The 2nd run is only necessary when there is a unsupported, non-bottom scope node
 TODO: this function is not ready for use. Under development. 2015-11-05
 */
 void  collectFinalAndMiddleTargetScopes (SgVariableDeclaration* decl, Scope_Node* scope_tree, 
-               std::vector <SgScopeStatement *> &final_target_scopes, std::queue<Scope_Node* >& source_scope_trees,  bool debug)
+               std::vector <SgScopeStatement *> &final_target_scopes, std::queue<Scope_Node* >& /* source_scope_trees */,  bool debug)
 {
   // single node scope tree, it is already the bottom, move to the final target scope 
   // if it is different from the original decl scope && is supported

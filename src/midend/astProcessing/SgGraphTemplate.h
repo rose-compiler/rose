@@ -29,7 +29,7 @@ std::pair<std::vector<SgGraphNode*>, std::vector<SgDirectedGraphEdge*> > getAllN
 std::map<VertexID, SgGraphNode*> getGraphNode;
 std::map<SgGraphNode*, VertexID> VSlink;
 
-myGraph* instantiateGraph(SgIncidenceDirectedGraph*& g, StaticCFG::InterproceduralCFG& cfg, SgNode* pstart) {
+myGraph* instantiateGraph(SgIncidenceDirectedGraph*& g, StaticCFG::InterproceduralCFG& cfg, SgNode* /* pstart */) {
     //SgNode* prestart = cfg.getEntry();
     //cfg.buildFullCFG();
     CFGNode startN = cfg.getEntry();

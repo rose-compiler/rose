@@ -135,7 +135,7 @@ LoopTreeLoopNode( const AstNodePtr& l) : LoopTreeNode(), orig(l), info(l)
 }
 
 LoopTreeLoopNode::LoopTreeLoopNode( const LoopTreeLoopNode& that)
-        : LoopTreeObserver(), LoopTreeNode(that), orig(that.orig), info(that.info)
+        : LoopTreeNode(that), LoopTreeObserver(), orig(that.orig), info(that.info)
 {
   AttachObserver(*this);
 }

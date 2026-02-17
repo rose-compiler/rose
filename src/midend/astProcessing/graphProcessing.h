@@ -633,7 +633,9 @@ int tg = getTarget(oeds[j], g);
                     }
                     if (good) {
                        newpath.insert(newpath.end(), pq.begin(), pq.end());
+                       #ifdef _OPENMP
                        #pragma omp critical
+                       #endif
                        {
                        npts.push_back(newpath);
                        }
@@ -642,7 +644,9 @@ int tg = getTarget(oeds[j], g);
             }
             else {
                 std::vector<int> ppq = pq;// zipPath(pq, g, pq.front(), pq.back());
+                #ifdef _OPENMP
                 #pragma omp critical
+                #endif
                 {
                 finnpts.push_back(ppq);
                 }
@@ -802,7 +806,9 @@ uTraversePath(int begin, int /*end*/, CFG*& g, bool loop, std::map<int, std::vec
          
                // #pragma omp parallel
                // {
+                #ifdef _OPENMP
                 #pragma omp parallel for schedule(guided) 
+                #endif
                 for (unsigned int qqq = 0; qqq < paths.size(); qqq++) {
   //             std::cout << "pathcheck" << std::endl;
                 //int pathevals = 0;
@@ -998,14 +1004,18 @@ uTraversePath(int begin, int /*end*/, CFG*& g, bool loop, std::map<int, std::vec
                        for (std::vector<std::vector<int> >::iterator box = boxpaths.begin(); box != boxpaths.end(); box++) {
                        std::vector<Vertex> verts;
                        getVertexPath((*box), g, verts);
+                       #ifdef _OPENMP
                        #pragma omp critical
+                       #endif
                        { 
                        analyzePath(verts);
                        }
                        }
                        }
                        else {
+                       #ifdef _OPENMP
                        #pragma omp critical
+                       #endif
                        {
                        loopPaths.insert(boxpaths.begin(), boxpaths.end());;
                        }

@@ -161,7 +161,7 @@ Traversal::evaluateInheritedAttribute ( SgNode* astNode, InheritedAttribute inhe
 
 
 SynthesizedAttribute
-Traversal::evaluateSynthesizedAttribute ( SgNode* astNode, InheritedAttribute inheritedAttribute, SynthesizedAttributesList childAttributes )
+Traversal::evaluateSynthesizedAttribute ( SgNode* astNode, InheritedAttribute /* inheritedAttribute */, SynthesizedAttributesList /* childAttributes */ )
    {
      SynthesizedAttribute localResult;
 

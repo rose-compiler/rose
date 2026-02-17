@@ -18,6 +18,7 @@
 
 #include <rose_strtoull.h> // rose
 #include <stringify.h>     // rose
+#include <ROSE_UNUSED.h>
 
 #include <Sawyer/BitVector.h>
 #include <Sawyer/CommandLine.h>
@@ -1026,6 +1027,8 @@ computeInsnHistogram(const InstructionProvider &insns, const MemoryMap::Ptr &map
 void
 saveInsnHistogram(const InsnHistogram &histogram, const boost::filesystem::path &fileName) {
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
+    ROSE_UNUSED(histogram);
+    ROSE_UNUSED(fileName);
     throw Rose::Exception("This configuration does not support state serialization");
 #else
     auto io = SerialOutput::instance();
@@ -1038,6 +1041,7 @@ saveInsnHistogram(const InsnHistogram &histogram, const boost::filesystem::path 
 InsnHistogram
 loadInsnHistogram(const boost::filesystem::path &fileName) {
 #ifndef ROSE_ENABLE_BOOST_SERIALIZATION
+    ROSE_UNUSED(fileName);
     throw Rose::Exception("This configuration does not support state serialization");
 #else
     auto io = SerialInput::instance();

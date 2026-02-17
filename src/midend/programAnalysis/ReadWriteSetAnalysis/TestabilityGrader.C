@@ -13,7 +13,7 @@
  **/
 void TestabilityGrader::mergeFileIntoCache(const std::unordered_set<ReadWriteSets::FunctionReadWriteRecord, ReadWriteSets::FunctionReadWriteRecord_hash>& inSet) {
   for (auto& thisRecord : inSet) {
-    std::unordered_set<ReadWriteSets::FunctionReadWriteRecord, ReadWriteSets::FunctionReadWriteRecord_hash>::iterator isInCache = startCache.find(thisRecord);
+    // std::unordered_set<ReadWriteSets::FunctionReadWriteRecord, ReadWriteSets::FunctionReadWriteRecord_hash>::iterator isInCache = startCache.find(thisRecord);
     // a Function already exists in the cache, attempt to merge the
     // two functions.  (This happens with functions defined in .h
     // files a lot.)
