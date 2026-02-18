@@ -18,12 +18,24 @@ SgAsmDwarfEnumerationType::set_body(SgAsmDwarfConstructList* const& x) {
     set_isModified(true);
 }
 
+bool const&
+SgAsmDwarfEnumerationType::get_is_enum_class() const {
+    return p_is_enum_class;
+}
+
+void
+SgAsmDwarfEnumerationType::set_is_enum_class(bool const& x) {
+    this->p_is_enum_class = x;
+    set_isModified(true);
+}
+
 SgAsmDwarfEnumerationType::~SgAsmDwarfEnumerationType() {
     destructorHelper();
 }
 
 SgAsmDwarfEnumerationType::SgAsmDwarfEnumerationType()
-    : p_body(NULL) {}
+    : p_body(NULL)
+    , p_is_enum_class(false) {}
 
 // The association between constructor arguments and their classes:
 //    property=nesting_level    class=SgAsmDwarfConstruct
@@ -33,11 +45,13 @@ SgAsmDwarfEnumerationType::SgAsmDwarfEnumerationType(int const& nesting_level,
                                                      uint64_t const& offset,
                                                      uint64_t const& overall_offset)
     : SgAsmDwarfConstruct(nesting_level, offset, overall_offset)
-    , p_body(NULL) {}
+    , p_body(NULL)
+    , p_is_enum_class(false) {}
 
 void
 SgAsmDwarfEnumerationType::initializeProperties() {
     p_body = NULL;
+    p_is_enum_class = false;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

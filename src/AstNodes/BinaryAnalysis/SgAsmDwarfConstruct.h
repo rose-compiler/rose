@@ -15,14 +15,29 @@ public:
     [[using Rosebud: rosetta]]
     std::string name;
 
-    // This is a data member that can be filled in via a separate analysis (we would have to read the line information before
-    // hand).
+    // This is a data member that can be filled in via a separate analysis
+    // (we would have to read the line information before hand).
     [[using Rosebud: rosetta]]
     SgAsmDwarfLine* source_position = nullptr;
 
     // [Robb Matzke 2023-03-22]: SgNode already has an attributeMechanism
     // [[using Rosebud: rosetta]]
     // AstAttributeMechanism* attributeMechanism = nullptr;
+
+ // DQ (11/20/2025): We want to store the source positons of all kinds of declarations,
+ // and all kids of constructs that have source position in the dwarf sections, but we
+ // can't use SgAsmDwarfLine because those are postions that have addresses associated
+ // with instructions. so a better design is to store these explicitly, making them
+ // easy to set from the print_attribute() function. The SgAsmDwarfLine* source_position
+ // above is there for the purpose of being able to be filled in via a seperate analysis.
+    [[using Rosebud: rosetta]]  
+    int decl_file_id = -1;  
+      
+    [[using Rosebud: rosetta]]  
+    int decl_line = -1;  
+      
+    [[using Rosebud: rosetta]]  
+    int decl_column = -1;  
 
 public:
     /** Factory pattern to build IR nodes based on the tag. */

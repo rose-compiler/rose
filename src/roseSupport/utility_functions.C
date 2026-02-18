@@ -35,7 +35,9 @@
 #   include <dlib/revision.h>
 #endif
 #ifdef ROSE_HAVE_LIBDWARF
-#   include <libdwarf.h> // the one from the libdwarf package, not the libelf package which also installs a "dwarf.h"
+// DQ (11/14/2025): Fixed after discussion with Pei-Hung (Robb was using an older version of dwarf (without this additional subdirectory)).
+// #   include <libdwarf.h> // the one from the libdwarf package, not the libelf package which also installs a "dwarf.h"
+#   include <libdwarf-2/libdwarf.h>
 #endif
 #ifdef ROSE_HAVE_LIBGCRYPT
 #   include <gcrypt.h>

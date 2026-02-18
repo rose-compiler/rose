@@ -30,12 +30,23 @@ public:
     [[using Rosebud: rosetta]]
     uint64_t offset_length = 0;
 
+ // DQ (11/21/2025): Added support for Dwarf 4.
+    [[using Rosebud: rosetta]]  
+    std::string type_signature;
+
+ // DQ (11/21/2025): Added support for Dwarf 4.
+    [[using Rosebud: rosetta]]  
+    std::string comp_dir;
+
+ // DQ (11/21/2025): Added support for Dwarf 4.
     [[using Rosebud: rosetta, traverse]]
     SgAsmDwarfLineList* line_info = nullptr;
 
+ // DQ (11/21/2025): Added support for Dwarf 4.
     [[using Rosebud: rosetta, traverse]]
     SgAsmDwarfConstructList* language_constructs = nullptr;
 
+ // DQ (11/21/2025): Added support for Dwarf 4.
     [[using Rosebud: rosetta, traverse]]
     SgAsmDwarfMacroList* macro_info = nullptr;
 

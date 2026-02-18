@@ -321,6 +321,18 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // DQ (11/22/2025): Added case to support Ada
+          case V_SgFloat128Val:
+             {
+               const SgFloat128Val* floatValueExpression = isSgFloat128Val(this);
+               ASSERT_not_null(floatValueExpression);
+               long double numericValue = floatValueExpression->get_value();
+            // printf ("numericValue of constant folded expression = %f \n",numericValue);
+               snprintf (buffer,max_buffer_size,"%Lf",numericValue);
+               s = buffer;
+               break;
+             }
+
        // DQ (10/4/2010): Added case
           case V_SgEnumVal:
              {
@@ -411,7 +423,9 @@ SgValueExp::get_constant_folded_value_as_string() const
           default:
              {
                printf ("Error SgValueExp::get_constant_folded_value_as_string(): case of value = %s not handled \n",this->class_name().c_str());
-               ROSE_ABORT();
+            // ROSE_ABORT();
+               ROSE_ASSERT(false);
+            // exit(1);
              }
         }
 

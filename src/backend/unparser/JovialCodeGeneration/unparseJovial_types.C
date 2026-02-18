@@ -49,6 +49,14 @@ UnparseJovial::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgPointerType:      unparseJovialType(isSgPointerType(type), info);     break;
           case V_SgTypedefType:      unparseJovialType(isSgTypedefType(type), info);     break;
 
+       // DQ (11/17/2025): Added support for SgTypeUnknown (used in the unit-testing tool)
+          case V_SgTypeUnknown:
+             {
+               if (!info.isTypeSecondPart())
+                    curprint ( get_type_name(type) + " ");
+               break;
+             }
+
           default:
                cout << "UnparseJovial::unparseType for type " << type->class_name()
                     << " is unimplemented." << endl;

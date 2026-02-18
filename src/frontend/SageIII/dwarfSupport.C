@@ -24,138 +24,217 @@ SgAsmDwarfConstruct*
 SgAsmDwarfConstruct::createDwarfConstruct(int tag, int nesting_level, uint64_t offset, uint64_t overall_offset) {
 #ifdef ROSE_HAVE_LIBDWARF
     using namespace Rose::BinaryAnalysis::Dwarf;
+
+#define DEBUG_DWARF_CONSTRUCT 0
+
+ // DQ (11/19/2025): Modified function to have a single return.
+    SgAsmDwarfConstruct* result = NULL;
+
     switch (tag) {
         case DW_TAG_array_type:
-            return new SgAsmDwarfArrayType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfArrayType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_class_type:
-            return new SgAsmDwarfClassType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfClassType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_entry_point:
-            return new SgAsmDwarfEntryPoint(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfEntryPoint(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_enumeration_type:
-            return new SgAsmDwarfEnumerationType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfEnumerationType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_formal_parameter:
-            return new SgAsmDwarfFormalParameter(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfFormalParameter(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_imported_declaration:
-            return new SgAsmDwarfImportedDeclaration(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfImportedDeclaration(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_label:
-            return new SgAsmDwarfLabel(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfLabel(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_lexical_block:
-            return new SgAsmDwarfLexicalBlock(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfLexicalBlock(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_member:
-            return new SgAsmDwarfMember(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfMember(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_pointer_type:
-            return new SgAsmDwarfPointerType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfPointerType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_reference_type:
-            return new SgAsmDwarfReferenceType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfReferenceType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_compile_unit:
-            return new SgAsmDwarfCompilationUnit(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfCompilationUnit(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_string_type:
-            return new SgAsmDwarfStringType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfStringType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_structure_type:
-            return new SgAsmDwarfStructureType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfStructureType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_subroutine_type:
-            return new SgAsmDwarfSubroutineType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfSubroutineType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_typedef:
-            return new SgAsmDwarfTypedef(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfTypedef(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_union_type:
-            return new SgAsmDwarfUnionType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfUnionType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_unspecified_parameters:
-            return new SgAsmDwarfUnspecifiedParameters(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfUnspecifiedParameters(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_variant:
-            return new SgAsmDwarfVariant(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfVariant(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_common_block:
-            return new SgAsmDwarfCommonBlock(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfCommonBlock(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_common_inclusion:
-            return new SgAsmDwarfCommonInclusion(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfCommonInclusion(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_inheritance:
-            return new SgAsmDwarfInheritance(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfInheritance(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_inlined_subroutine:
-            return new SgAsmDwarfInlinedSubroutine(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfInlinedSubroutine(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_module:
-            return new SgAsmDwarfModule(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfModule(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_ptr_to_member_type:
-            return new SgAsmDwarfPtrToMemberType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfPtrToMemberType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_set_type:
-            return new SgAsmDwarfSetType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfSetType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_subrange_type:
-            return new SgAsmDwarfSubrangeType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfSubrangeType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_with_stmt:
-            return new SgAsmDwarfWithStmt(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfWithStmt(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_access_declaration:
-            return new SgAsmDwarfAccessDeclaration(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfAccessDeclaration(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_base_type:
-            return new SgAsmDwarfBaseType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfBaseType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_catch_block:
-            return new SgAsmDwarfCatchBlock(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfCatchBlock(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_const_type:
-            return new SgAsmDwarfConstType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfConstType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_constant:
-            return new SgAsmDwarfConstant(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfConstant(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_enumerator:
-            return new SgAsmDwarfEnumerator(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfEnumerator(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_file_type:
-            return new SgAsmDwarfFileType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfFileType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_friend:
-            return new SgAsmDwarfFriend(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfFriend(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_namelist:
-            return new SgAsmDwarfNamelist(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfNamelist(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_namelist_item:
-            return new SgAsmDwarfNamelistItem(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfNamelistItem(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_packed_type:
-            return new SgAsmDwarfPackedType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfPackedType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_subprogram:
-            return new SgAsmDwarfSubprogram(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfSubprogram(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_template_type_parameter:
-            return new SgAsmDwarfTemplateTypeParameter(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfTemplateTypeParameter(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_template_value_parameter:
-            return new SgAsmDwarfTemplateValueParameter(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfTemplateValueParameter(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_thrown_type:
-            return new SgAsmDwarfThrownType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfThrownType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_try_block:
-            return new SgAsmDwarfTryBlock(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfTryBlock(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_variant_part:
-            return new SgAsmDwarfVariantPart(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfVariantPart(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_variable:
-            return new SgAsmDwarfVariable(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfVariable(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_volatile_type:
-            return new SgAsmDwarfVolatileType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfVolatileType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_dwarf_procedure:
-            return new SgAsmDwarfDwarfProcedure(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfDwarfProcedure(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_restrict_type:
-            return new SgAsmDwarfRestrictType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfRestrictType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_interface_type:
-            return new SgAsmDwarfInterfaceType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfInterfaceType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_namespace:
-            return new SgAsmDwarfNamespace(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfNamespace(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_imported_module:
-            return new SgAsmDwarfImportedModule(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfImportedModule(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_unspecified_type:
-            return new SgAsmDwarfUnspecifiedType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfUnspecifiedType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_partial_unit:
-            return new SgAsmDwarfPartialUnit(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfPartialUnit(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_imported_unit:
-            return new SgAsmDwarfImportedUnit(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfImportedUnit(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_mutable_type:
-            return new SgAsmDwarfMutableType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfMutableType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_condition:
-            return new SgAsmDwarfCondition(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfCondition(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_shared_type:
-            return new SgAsmDwarfSharedType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfSharedType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_format_label:
-            return new SgAsmDwarfFormatLabel(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfFormatLabel(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_function_template:
-            return new SgAsmDwarfFunctionTemplate(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfFunctionTemplate(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_upc_shared_type:
-            return new SgAsmDwarfUpcSharedType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfUpcSharedType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_upc_strict_type:
-            return new SgAsmDwarfUpcStrictType(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfUpcStrictType(nesting_level,offset, overall_offset);
+            break;
         case DW_TAG_upc_relaxed_type:
-            return new  SgAsmDwarfUpcRelaxedType(nesting_level,offset, overall_offset);
+            result = new  SgAsmDwarfUpcRelaxedType(nesting_level,offset, overall_offset);
+            break;
+
         default: {
             // Use AsmDwarfVariant as a default dwarf construct (we might want a SgAsmDwarfUnknownConstruct also).
-            return new SgAsmDwarfUnknownConstruct(nesting_level,offset, overall_offset);
+            result = new SgAsmDwarfUnknownConstruct(nesting_level,offset, overall_offset);
+            break;
         }
     }
+
+    ROSE_ASSERT(result != NULL);
+
+#if DEBUG_DWARF_CONSTRUCT
+    printf ("############ In createDwarfConstruct(tag == %d): result = %p = %s ############ \n",tag,result,result->class_name().c_str());
+#endif
+
+    return result;
 #else
     ROSE_UNUSED(tag);
     ROSE_UNUSED(nesting_level);
@@ -264,40 +343,141 @@ SgAsmDwarfLineList::sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePos
     return returnAddress;
 }
 
+#if 1
+
+// DQ (11/28/2025): This is the more efficent ROSE version of the support for source position from addresses.
 FileIdLineColumnFilePosition
-SgAsmDwarfLineList::addressToSourceCode ( uint64_t address ) {
-    // Set to default value
-    FileIdLineColumnFilePosition sourcePosition(0,std::pair<int,int>(0,0));
+SgAsmDwarfLineList::addressToSourceCode ( uint64_t address )
+   {
+  // Set to default values
+     FileIdLineColumnFilePosition sourcePosition(0,std::pair<int,int>(0,0));
 
-    std::pair<uint64_t,uint64_t> validInstructionRange = instructionRange();
-    if ( (address < validInstructionRange.first) || (address > validInstructionRange.second) ) {
-        // printf ("Address out of range: address = 0x%lx  range (0x%lx, 0x%lx) \n",address,validInstructionRange.first,validInstructionRange.second);
+     std::pair<uint64_t,uint64_t> validInstructionRange = instructionRange();
+     if ( (address < validInstructionRange.first) || (address > validInstructionRange.second) )
+        {
+       // printf ("Address out of range: address = 0x%lx  range (0x%lx, 0x%lx) \n",address,validInstructionRange.first,validInstructionRange.second);
 
-        // Set to error value
-        sourcePosition = FileIdLineColumnFilePosition(-1,std::pair<int,int>(-1,-1));
-    } else {
-        DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
-        SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
+       // Set to error value
+          sourcePosition = FileIdLineColumnFilePosition(-1,std::pair<int,int>(-1,-1));
+        }
+       else
+        {
+          DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
+          SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
 
-        SgInstructionAddressSourcePositionMapPtrList::iterator lowerBound = instruction_source_code_map.lower_bound(address);
+          SgInstructionAddressSourcePositionMapPtrList::iterator lowerBound = instruction_source_code_map.lower_bound(address);
 
-        // Set the the lower bound found in the map
-        sourcePosition = lowerBound->second;
+       // Set the the lower bound found in the map
+          sourcePosition = lowerBound->second;
 
 #if 0
-        int file_id = sourcePosition.first;
-        int line    = sourcePosition.second.first;
-        int column  = sourcePosition.second.second;
-        string filename = Sg_File_Info::getFilenameFromID(file_id);
+          int file_id = sourcePosition.first;
+          int line    = sourcePosition.second.first;
+          int column  = sourcePosition.second.second;
+          string filename = Sg_File_Info::getFilenameFromID(file_id);
 
-        // printf ("address = 0x%lx maps to source position (file = %d = %s, line = %d, column = %d) \n",address,file_id,filename.c_str(),line,column);
+       // printf ("address = 0x%lx maps to source position (file = %d = %s, line = %d, column = %d) \n",address,file_id,filename.c_str(),line,column);
 #endif
-    }
+        }
 
-    // return FileIdLineColumnFilePosition(-1,std::pair<int,int>(-1,-1));
-    return sourcePosition;
-}
+  // return FileIdLineColumnFilePosition(-1,std::pair<int,int>(-1,-1));
+     return sourcePosition;
+   }
 
+#else
+
+// DQ (11/28/2025): Alternative implementation accessing libdwarf support directly for
+// converting an address to source code position.  This might be a better idea
+// than implementing the support in ROSE specific data structures, however the
+// previous ROSE design might be faster. Since after the update to Dwarf 4, the ROSE
+// version now works fine, we will use the more computationally efficent ROSE version.
+// This can be a backup bersion, however we would ahve to take step to support
+// Dwarf_Debug and Dwarf_Die (saving references to them in read_dwarf() and extending
+// their lifetimes; there are a few optional approaches here).
+
+FileIdLineColumnFilePosition
+SgAsmDwarfLineList::addressToSourceCode(uint64_t address)
+   {
+  // Default error value
+     FileIdLineColumnFilePosition sourcePosition(-1, std::pair<int,int>(-1,-1));
+
+#ifdef ROSE_HAVE_LIBDWARF  
+  // Get the DWARF debug handle from the compilation unit  
+  // Note: You'll need to pass or store the Dwarf_Debug handle  
+     Dwarf_Debug dbg = /* get from context */;  
+     Dwarf_Die cu_die = /* get compilation unit DIE */;  
+     Dwarf_Error error;
+
+  // Get the line context for this compilation unit
+     Dwarf_Unsigned version = 0;
+     Dwarf_Small tableCount = 0;
+     Dwarf_Line_Context lineContext;
+     int res = dwarf_srclines_b(cu_die, &version, &tableCount, &lineContext, &error);
+     if (res != DW_DLV_OK)
+        {
+          return sourcePosition;
+        }
+
+  // Get all lines from the line context
+     Dwarf_Line *lines = nullptr;
+     Dwarf_Signed lineCount = 0;
+     res = dwarf_srclines_from_linecontext(lineContext, &lines, &lineCount, &error);
+     if (res != DW_DLV_OK)
+        {
+          dwarf_srclines_dealloc_b(lineContext);
+          return sourcePosition;
+        }
+
+  // Binary search or linear search for the address  
+     Dwarf_Addr bestAddr = 0;
+     int bestIndex = -1;
+
+     for (Dwarf_Signed i = 0; i < lineCount; ++i)
+        {
+          Dwarf_Addr lineAddr = 0;
+          if (dwarf_lineaddr(lines[i], &lineAddr, &error) == DW_DLV_OK)
+             {
+            // Find the line with address <= target address
+               if (lineAddr <= address && lineAddr >= bestAddr)
+                  {
+                    bestAddr = lineAddr;
+                    bestIndex = i;
+                 }
+             }
+        }
+
+     if (bestIndex >= 0)
+        {
+       // Extract file name and convert to file ID
+          char *fileName = nullptr;
+          if (dwarf_linesrc(lines[bestIndex], &fileName, &error) == DW_DLV_OK)
+             {
+               int fileId = Sg_File_Info::addFilenameToMap(fileName);
+               sourcePosition.first = fileId;
+             }
+
+       // Extract line number
+          Dwarf_Unsigned lineNumber = 0;
+          if (dwarf_lineno(lines[bestIndex], &lineNumber, &error) == DW_DLV_OK)
+             {
+               sourcePosition.second.first = lineNumber;
+             }
+
+       // Extract column number
+          Dwarf_Unsigned columnNumber = 0;
+          if (dwarf_lineoff_b(lines[bestIndex], &columnNumber, &error) == DW_DLV_OK)
+            {
+              sourcePosition.second.second = columnNumber;
+            }
+        }
+
+     dwarf_srclines_dealloc_b(lineContext);
+#endif
+
+     return sourcePosition;  
+   }
+
+#endif
 
 void
 SgAsmDwarfLineList::display( const std::string & label ) { // blame 8e7b5bd1d0

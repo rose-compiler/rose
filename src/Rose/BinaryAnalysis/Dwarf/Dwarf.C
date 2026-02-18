@@ -27,7 +27,10 @@
 
 #ifdef ROSE_HAVE_LIBDWARF
 #include <dwarf.h>
-#include <libdwarf.h>
+
+// DQ (11/14/2025): Fixed after discussion with Pei-Hung (Robb was using an older version of dwarf (without this additional subdirectory)).
+// #include <libdwarf.h>
+#include <libdwarf-2/libdwarf.h>
 #endif
 
 using namespace Rose::Diagnostics;
@@ -120,19 +123,38 @@ throwError(Dwarf_Debug, const std::string &mesg, int /*dwarf_code*/, Dwarf_Error
 // For any other result, do nothing but return the result.
 //
 template<typename T>
-static int presentOr(const int result,
-                     const char *name, T &save, const T dflt, const Dwarf_Debug debug, const Dwarf_Error error) {
-    switch (result) {
-        case DW_DLV_ERROR:
-            throwError(debug, name, DW_DLV_ERROR, error);
-            ASSERT_not_reachable("throwError should not have returned");
+static int presentOr(const int result, const char *name, T &save, const T dflt, const Dwarf_Debug debug, const Dwarf_Error error)
+   {
+     switch (result)
+        {
+          case DW_DLV_ERROR:
+              throwError(debug, name, DW_DLV_ERROR, error);
+              ASSERT_not_reachable("throwError should not have returned");
+           // DQ (11/19/2025): I don't think we need this break statement, but it makes me feel more comfortable.
+              break;
 
-        case DW_DLV_NO_ENTRY:
-            save = dflt;
-            break;
-    }
-    return result;
-}
+          case DW_DLV_NO_ENTRY:
+#if 1
+              printf ("In presentOr(): save = dflt \n");
+              std::cout << " --- dflt = " << dflt;
+#endif
+              save = dflt;
+              break;
+
+          case DW_DLV_OK:
+           // We expect that all entries will be result == DW_DLV_OK.
+              break;
+
+       // DQ (11/19/2025): Added default statement
+          default:
+             {
+               printf ("In presentOr(): default reached (result = %d) \n",result);
+               break;
+             }
+        }
+
+     return result;
+   }
 
 char *
 makename(char *s) {
@@ -422,6 +444,13 @@ get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char **sr
                     case DW_AT_ordering:
                     case DW_AT_byte_size:
                     case DW_AT_bit_offset:
+                      
+                 // DQ (11/20/2025): Added support for Dwarf 4 attribute type (shared implmentation with DW_AT_bit_offset).
+                 // In SgAsmDwarfMember.h we need to add a new data member class:  
+                 //    [[using Rosebud: rosetta]]  
+                 //    uint64_t data_bit_offset = 0;
+                    case DW_AT_data_bit_offset:
+
                     case DW_AT_bit_size:
                     case DW_AT_inline:
                     case DW_AT_language:
@@ -532,6 +561,7 @@ get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char **sr
                 }
             }
             break;
+
         case DW_FORM_sdata:
             wres = dwarf_formsdata(attrib, &tempsd, &rose_dwarf_error);
             if (wres == DW_DLV_OK) {
@@ -543,6 +573,7 @@ get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char **sr
                 throwError(dbg, "Cannot get formsdata..", wres, rose_dwarf_error);
             }
             break;
+
         case DW_FORM_udata:
             wres = dwarf_formudata(attrib, &tempud, &rose_dwarf_error);
             if (wres == DW_DLV_OK) {
@@ -554,6 +585,7 @@ get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char **sr
                 throwError(dbg, "Cannot get formudata....", wres, rose_dwarf_error);
             }
             break;
+
         case DW_FORM_string:
         case DW_FORM_strp:
             wres = dwarf_formstring(attrib, &temps, &rose_dwarf_error);
@@ -588,15 +620,85 @@ get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char **sr
                used here in this attr. */
             ASSERT_not_reachable("dquinlan 2008-11-10");
 
+#if 1
+       // More complete support for Dwarf 4 standard (in preperation for Dwarf 5 support later).
+          case DW_FORM_sec_offset:
+             {
+               Dwarf_Off off = 0;
+               bres = dwarf_global_formref(attrib, &off, &rose_dwarf_error);
+               if (bres == DW_DLV_OK)
+                  {
+                    snprintf(small_buf, sizeof(small_buf), "<section offset %llu>", (unsigned long long)off);  
+                    *esbp += small_buf;  
+                  }
+                 else
+                  {
+                    throwError(dbg, "DW_FORM_sec_offset form with no offset?!", bres, rose_dwarf_error);  
+                  }
+               break;
+             }
+  
+          case DW_FORM_exprloc:
+             {
+               fres = dwarf_formblock(attrib, &tempb, &rose_dwarf_error);
+               if (fres == DW_DLV_OK)
+                  {
+                    for (i = 0; i < (int)tempb->bl_len; i++)
+                       {
+                         snprintf(small_buf, sizeof(small_buf), "%02x", *(i + (unsigned char *)tempb->bl_data));  
+                         *esbp += small_buf;  
+                       }
+
+                    dwarf_dealloc(dbg, tempb, DW_DLA_BLOCK);
+                  }
+                 else
+                  {
+                    throwError(dbg, "DW_FORM_exprloc cannot get expression block\n", fres, rose_dwarf_error);  
+                  }
+               break;  
+             }
+  
+          case DW_FORM_flag_present:
+             {
+               snprintf(small_buf, sizeof(small_buf), "yes(1)");  
+               *esbp += small_buf;  
+               break;
+             }
+  
+          case DW_FORM_ref_sig8:
+             {
+               Dwarf_Sig8 sig8;  
+               bres = dwarf_formsig8(attrib, &sig8, &rose_dwarf_error);  
+               if (bres == DW_DLV_OK)
+                  {
+                    snprintf(small_buf, sizeof(small_buf), "<type signature 0x%02x%02x%02x%02x%02x%02x%02x%02x>",  
+                             sig8.signature[0], sig8.signature[1], sig8.signature[2], sig8.signature[3],  
+                             sig8.signature[4], sig8.signature[5], sig8.signature[6], sig8.signature[7]);  
+                    *esbp += small_buf;  
+                  }
+                 else
+                  {  
+                    throwError(dbg, "DW_FORM_ref_sig8 form with no signature?!", bres, rose_dwarf_error);  
+                  }
+               break;  
+             }
+#else
+     // DQ (11/20/2025): This was the incomplete support for Dwarf 4.
         case DW_FORM_sec_offset:
         case DW_FORM_exprloc:
         case DW_FORM_flag_present:
         case DW_FORM_ref_sig8:
             /* all of these are DWARF4 related and currently unsupported. */
             break;
+#endif
+
         default:
-            // Failure to parse a DWARF construct must not be a non-recoverable error. [Robb P Matzke 2017-05-16]
-            mlog[ERROR] <<"dwarf_whatform_unexpected value\n";
+         // Failure to parse a DWARF construct must not be a non-recoverable error. [Robb P Matzke 2017-05-16]
+         // DQ (1/30/2026): Added more information about what cases we might be missing.
+         // mlog[ERROR] <<"dwarf_whatform_unexpected value\n";
+            mlog[ERROR] <<"dwarf_whatform_unexpected value: " << theform << " ("
+                        << stringify::Rose::BinaryAnalysis::Dwarf::DWARF_FORM(theform) << ")\n";  
+
             break;
     }
     if (verbose && direct_form && direct_form == DW_FORM_indirect) {
@@ -605,57 +707,912 @@ get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char **sr
     }
 }
 
-void
-print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute attr_in,bool print_information,char **srcfiles,
-                Dwarf_Signed cnt, SgAsmDwarfConstruct* asmDwarfConstruct) {
-    Dwarf_Attribute attrib = 0;
-    Dwarf_Unsigned  uval = 0;
-    std::string          atname;
-    std::string          valname;
-    int             tres = 0;
-    Dwarf_Half      tag = 0;
 
-    // Added C++ string support to replace C style string support
-    std::string esb_base;
+static void  
+get_location_list(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Attribute attrib, std::string* esb_base)
+   {
+  // DQ (11/28/2025): Added support for saving the formatted location information in the esb_base string.
 
-    atname = get_AT_name(dbg, attr);
+     Dwarf_Half theform;  
+     int fres;  
+     Dwarf_Error error = nullptr;  
 
-    // Set the name in the SgAsmDwarfConstruct (base class)
-    // asmDwarfConstruct->set_name(atname);
-
-    /* the following gets the real attribute, even in the face of an
-       incorrect doubling, or worse, of attributes */
-    attrib = attr_in;
-
-    /* do not get attr via dwarf_attr: if there are (erroneously)
-       multiple of an attr in a DIE, dwarf_attr will not get the
-       second, erroneous one and dwarfdump will print the first one
-       multiple times. Oops. */
-
-    tres = dwarf_tag(die, &tag, &rose_dwarf_error);
-    if (tres == DW_DLV_ERROR) {
-        tag = 0;
-    } else {
-        if (tres == DW_DLV_NO_ENTRY) {
-            tag = 0;
-        } else {
-            /* ok */
+  // Get the form of the attribute  
+     fres = dwarf_whatform(attrib, &theform, &error);  
+     if (fres == DW_DLV_ERROR)
+        {
+          throwError(dbg, "dwarf_whatform in get_location_list", fres, error);  
+          return;  
         }
-    }
-
-    switch (attr) {
-        case DW_AT_language: {
-            get_small_encoding_integer_and_name(dbg, attrib, &uval,strdup("DW_AT_language"), &valname,get_LANG_name, &rose_dwarf_error);
-
-            // The language is only set in the SgAsmDwarfCompilationUnit IR node.
-            SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
-            ASSERT_not_null(asmDwarfCompilationUnit);
-            asmDwarfCompilationUnit->set_language(valname);
-            break;
+       else
+        {
+          if (fres == DW_DLV_NO_ENTRY)
+             {
+               *esb_base = "<no location>";  
+               return;  
+             }
         }
+      
+  // Handle different forms that contain location information  
+     switch (theform)
+        {
+          case DW_FORM_block1:  
+          case DW_FORM_block2:  
+          case DW_FORM_block4:  
+          case DW_FORM_block:
+       // Handle DWARF4 exprloc form  
+          case DW_FORM_exprloc:
+             {
+            // Location expression (block form)  
+               Dwarf_Block* block = nullptr;  
+               int bres = dwarf_formblock(attrib, &block, &error);  
+               if (bres == DW_DLV_OK)
+                  {
+                    char buf[256];  
+                    snprintf(buf, sizeof(buf), "<location expression: %d bytes>", (int)block->bl_len);  
+                    *esb_base = buf;  
+                    dwarf_dealloc(dbg, block, DW_DLA_BLOCK);  
+                  }
+                 else
+                  {
+                    if (bres == DW_DLV_ERROR)
+                       {
+                         throwError(dbg, "dwarf_formblock in get_location_list", bres, error);  
+                       }
+                      else
+                       {
+                         *esb_base = "<empty location>";  
+                       }  
+                  }
+
+               break;  
+             }  
+          
+          case DW_FORM_data4:  
+          case DW_FORM_data8:
+#if 1
+#if 1
+          case DW_FORM_sec_offset:  
+             {
+#if 0
+            // Add debugging before calling dwarf_formudata
+               printf("DEBUG: Processing location form %d (DW_FORM_data4=%d, DW_FORM_data8=%d, DW_FORM_sec_offset=%d)\n",   
+                    theform, DW_FORM_data4, DW_FORM_data8, DW_FORM_sec_offset);  
+#endif
+            // DQ (1/26/2026): Added special handeling for DW_FORM_sec_offset.
+            // Special handling for DW_FORM_sec_offset which may not be supported  
+               if (theform == DW_FORM_sec_offset)
+                  {  
+                 // Skip or handle differently - this form may not be supported by libdwarf  
+                    *esb_base = "<location sec_offset: unsupported>";  
+                    break;  
+                  }  
+      
+            // Original handling for data4/data8  
+               Dwarf_Unsigned offset;    
+               int ores = dwarf_formudata(attrib, &offset, &error);    
+               if (ores == DW_DLV_OK)
+                  {  
+                    char buf[256];    
+                    snprintf(buf, sizeof(buf), "<location list offset: 0x%llx>", (unsigned long long)offset);    
+                    *esb_base = buf;    
+                  }
+                 else
+                  {  
+                    *esb_base = "<location parsing failed>";  
+                  }  
+               break;    
+             }
+#else
+#error "DEAD CODE"
+        case DW_FORM_sec_offset:  
+             {  
+            // Add debugging before calling dwarf_formudata  
+               printf("DEBUG: Processing location form %d (DW_FORM_data4=%d, DW_FORM_data8=%d, DW_FORM_sec_offset=%d)\n",   
+                    theform, DW_FORM_data4, DW_FORM_data8, DW_FORM_sec_offset);  
+      
+               Dwarf_Unsigned offset;    
+               int ores = dwarf_formudata(attrib, &offset, &error);    
+      
+               if (ores == DW_DLV_OK)  
+                  {  
+                    char buf[256];    
+                    snprintf(buf, sizeof(buf), "<location list offset: 0x%llx>", (unsigned long long)offset);    
+                    *esb_base = buf;    
+                  }  
+                 else  
+                  {  
+                    if (ores == DW_DLV_ERROR)  
+                       {  
+                      // Enhanced error reporting  
+                         Dwarf_Unsigned err = dwarf_errno(error);  
+                         printf("ERROR: dwarf_formudata failed with error %llu: %s\n",(unsigned long long)err, dwarf_errmsg(error));  
+                         printf("ERROR: Attribute form was %d, but dwarf_formudata failed\n", theform);  
+              
+                      // Try alternative extraction methods  
+                         printf("DEBUG: Trying dwarf_formsdata as fallback...\n");  
+                         Dwarf_Signed sval;  
+                         int sres = dwarf_formsdata(attrib, &sval, &error);  
+                         if (sres == DW_DLV_OK)
+                            {  
+                              printf("SUCCESS: dwarf_formsdata worked, value = %lld\n", (long long)sval);  
+                              char buf[256];    
+                              snprintf(buf, sizeof(buf), "<location list offset (signed): 0x%llx>",(unsigned long long)sval);  
+                              *esb_base = buf;  
+                            }
+                           else
+                            {  
+                              printf("1st case of: dwarf_formudata in get_location_list \n");  
+                              throwError(dbg, "dwarf_formudata in get_location_list", ores, error);    
+                            }  
+                       }  
+                      else  
+                       {    
+                         *esb_base = "<empty location>";    
+                       }  
+                  }  
+               break;    
+             }
+#endif
+#else
+             
+#error "DEAD CODE"
+
+       // DQ (1/26/2026): Original (failing) code.
+          case DW_FORM_sec_offset:
+             {
+            // Location list (offset form)  
+               Dwarf_Unsigned offset;  
+               int ores = dwarf_formudata(attrib, &offset, &error);  
+               if (ores == DW_DLV_OK)
+                  {
+                    char buf[256];  
+                    snprintf(buf, sizeof(buf), "<location list offset: 0x%llx>", (unsigned long long)offset);  
+                    *esb_base = buf;  
+                  }
+                 else
+                  {
+                    if (ores == DW_DLV_ERROR)
+                       {
+                         printf ("1st case of: dwarf_formudata in get_location_list \n");
+                         throwError(dbg, "dwarf_formudata in get_location_list", ores, error);  
+                       }
+                      else
+                       {  
+                         *esb_base = "<empty location>";  
+                       }
+                  }
+
+               break;  
+             }
+          
+          default:
+             {
+            // Other forms - try generic extraction  
+               char buf[256];  
+               snprintf(buf, sizeof(buf), "<location form: %d>", theform);  
+               *esb_base = buf;  
+               break;  
+             }
+#endif
+        }
+   }
+
 
 #if 0
-            // DQ: Initially, let's limit the number of dependent functions required to make some progress and generating IR nodes from Dwarf.
+static void    
+get_location_list(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Attribute attrib, std::string* esb_base) {    
+    Dwarf_Half theform;    
+    int fres;    
+    Dwarf_Error error = nullptr;    
+        
+    // Get the form of the attribute    
+    fres = dwarf_whatform(attrib, &theform, &error);    
+    if (fres == DW_DLV_ERROR) {    
+        throwError(dbg, "dwarf_whatform in get_location_list", fres, error);    
+        return;    
+    } else if (fres == DW_DLV_NO_ENTRY) {    
+        *esb_base = "<no location>";    
+        return;    
+    }    
+        
+    // Handle different forms that contain location information    
+    switch (theform) {    
+        case DW_FORM_block1:    
+        case DW_FORM_block2:    
+        case DW_FORM_block4:    
+        case DW_FORM_block:    
+        case DW_FORM_exprloc: {  // Handle DWARF4 exprloc form  
+            // Location expression (block form)    
+            Dwarf_Block* block = nullptr;    
+            int bres = dwarf_formblock(attrib, &block, &error);    
+            if (bres == DW_DLV_OK) {    
+                char buf[256];    
+                snprintf(buf, sizeof(buf), "<location expression: %d bytes>", (int)block->bl_len);    
+                *esb_base = buf;    
+                dwarf_dealloc(dbg, block, DW_DLA_BLOCK);    
+            } else if (bres == DW_DLV_ERROR) {    
+                throwError(dbg, "dwarf_formblock in get_location_list", bres, error);    
+            } else {    
+                *esb_base = "<empty location>";    
+            }    
+            break;    
+        }    
+            
+        case DW_FORM_data4:    
+        case DW_FORM_data8:    
+        case DW_FORM_sec_offset: {    
+            // Location list (offset form)    
+            Dwarf_Unsigned offset;    
+            int ores = dwarf_formudata(attrib, &offset, &error);    
+            if (ores == DW_DLV_OK) {    
+                char buf[256];    
+                snprintf(buf, sizeof(buf), "<location list offset: 0x%llx>", (unsigned long long)offset);    
+                *esb_base = buf;    
+            } else if (ores == DW_DLV_ERROR) {
+                printf ("2nd case of: dwarf_formudata in get_location_list \n");
+                throwError(dbg, "dwarf_formudata in get_location_list", ores, error);    
+            } else {    
+                *esb_base = "<empty location>";    
+            }    
+            break;    
+        }  
+  
+        case DW_FORM_flag_present: {  
+            // DWARF4 flag present form - implicit true value  
+            *esb_base = "<location flag present>";  
+            break;  
+        }  
+  
+        case DW_FORM_addr: {  
+            // Direct address form  
+            Dwarf_Addr addr;  
+            int ares = dwarf_formaddr(attrib, &addr, &error);  
+            if (ares == DW_DLV_OK) {  
+                char buf[256];  
+                snprintf(buf, sizeof(buf), "<location address: 0x%llx>", (unsigned long long)addr);  
+                *esb_base = buf;  
+            } else if (ares == DW_DLV_ERROR) {  
+                throwError(dbg, "dwarf_formaddr in get_location_list", ares, error);  
+            } else {  
+                *esb_base = "<empty location>";  
+            }  
+            break;  
+        }  
+            
+        default: {    
+            // Other forms - report what we found    
+            char buf[256];    
+            snprintf(buf, sizeof(buf), "<location form: %d>", theform);    
+            *esb_base = buf;    
+            break;    
+        }    
+    }    
+}
+#endif
+
+  
+void
+print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute attr_in,bool print_information,char **srcfiles,
+                Dwarf_Signed cnt, SgAsmDwarfConstruct* asmDwarfConstruct)
+   {
+     Dwarf_Attribute attrib = 0;
+     Dwarf_Unsigned  uval   = 0;
+     std::string     atname;
+     std::string     valname;
+     int             tres   = 0;
+     Dwarf_Half      tag    = 0;
+
+  // Added C++ string support to replace C style string support
+     std::string esb_base;
+
+#define DEBUG_PRINT_ATTRIBUTE 0
+
+     atname = get_AT_name(dbg, attr);
+
+     ROSE_ASSERT(asmDwarfConstruct != NULL);
+
+#if 0
+     printf ("In (DWARF SUPPORT) print_attribute(): asmDwarfConstruct = %p = %s atname = %s \n",
+          asmDwarfConstruct,asmDwarfConstruct->class_name().c_str(),atname.c_str());
+#endif
+
+  // Set the name in the SgAsmDwarfConstruct (base class)
+  // asmDwarfConstruct->set_name(atname);
+
+  /* the following gets the real attribute, even in the face of an
+     incorrect doubling, or worse, of attributes */
+     attrib = attr_in;
+
+  /* do not get attr via dwarf_attr: if there are (erroneously)
+     multiple of an attr in a DIE, dwarf_attr will not get the
+     second, erroneous one and dwarfdump will print the first one
+     multiple times. Oops. */
+
+     tres = dwarf_tag(die, &tag, &rose_dwarf_error);
+     if (tres == DW_DLV_ERROR)
+        {
+          tag = 0;
+        }
+       else
+        {
+          if (tres == DW_DLV_NO_ENTRY)
+             {
+               tag = 0;
+             }
+            else
+             {
+            /* ok */
+             }
+        }
+
+     switch (attr)
+        {
+       /* In src/AstNodes/BinaryAnalysis/SgAsmDwarfVariable.h:  
+          class SgAsmDwarfVariable: public SgAsmDwarfConstruct 
+             {
+               public:  
+                    [[using Rosebud: rosetta]]  
+                    int decl_file_id = -1;  
+      
+                    [[using Rosebud: rosetta]]  
+                    int decl_line = -1;  
+      
+                    [[using Rosebud: rosetta]]  
+                    int decl_column = -1;  
+             };
+         */
+             
+       // DQ (11/20/2025): Add support for declarations using Dwarf 4 support.
+          case DW_AT_decl_file:
+             {
+               Dwarf_Unsigned file_id = 0;  
+               int wres = get_small_encoding_integer_and_name(dbg, attrib, &file_id,  
+                                                   strdup("DW_AT_decl_file"),  
+                                                   nullptr, (encoding_type_func)0,  
+                                                   &rose_dwarf_error);  
+               if (wres == DW_DLV_OK)
+                  {
+#if DEBUG_PRINT_ATTRIBUTE
+                    printf ("case DW_AT_decl_file: Calling asmDwarfConstruct->set_decl_file_id(file_id): file_id = %d \n",file_id);
+#endif
+                    asmDwarfConstruct->set_decl_file_id(file_id);
+                  }
+               break;  
+             }
+  
+       // DQ (11/20/2025): Add support for declarations using Dwarf 4 support.
+          case DW_AT_decl_line:
+             {
+               Dwarf_Unsigned line_num = 0;  
+               int wres = get_small_encoding_integer_and_name(dbg, attrib, &line_num,  
+                                                   strdup("DW_AT_decl_line"),  
+                                                   nullptr, (encoding_type_func)0,  
+                                                   &rose_dwarf_error);  
+               if (wres == DW_DLV_OK)
+                  {
+#if DEBUG_PRINT_ATTRIBUTE
+                    printf ("case DW_AT_decl_line: Calling asmDwarfConstruct->set_decl_line(line_num): line_num = %d \n",line_num);
+#endif
+                    asmDwarfConstruct->set_decl_line(line_num);  
+                  }
+               break;  
+             }
+  
+       // DQ (11/20/2025): Add support for declarations using Dwarf 4 support.
+          case DW_AT_decl_column:
+             {
+               Dwarf_Unsigned col_num = 0;  
+               int wres = get_small_encoding_integer_and_name(dbg, attrib, &col_num,  
+                                                   strdup("DW_AT_decl_column"),  
+                                                   nullptr, (encoding_type_func)0,  
+                                                   &rose_dwarf_error);  
+               if (wres == DW_DLV_OK)
+                  {
+#if DEBUG_PRINT_ATTRIBUTE
+                    printf ("case DW_AT_decl_column: Calling asmDwarfConstruct->set_decl_column(col_num): col_num = %d \n",col_num);
+#endif
+                    asmDwarfConstruct->set_decl_column(col_num);  
+                  }
+               break;  
+             }
+
+          case DW_AT_language:
+             {
+               get_small_encoding_integer_and_name(dbg, attrib, &uval,strdup("DW_AT_language"), &valname,get_LANG_name, &rose_dwarf_error);
+
+            // The language is only set in the SgAsmDwarfCompilationUnit IR node.
+               SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
+               ASSERT_not_null(asmDwarfCompilationUnit);
+#if DEBUG_PRINT_ATTRIBUTE
+               printf ("case DW_AT_language: Calling asmDwarfCompilationUnit->set_language(): valname = %s \n",valname.c_str());
+#endif
+               asmDwarfCompilationUnit->set_language(valname);
+               break;
+             }
+             
+       // DQ (11/20/2025): Moved this from where it was evaluated outside of the switch statement.
+          case DW_AT_name:
+             {
+               get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
+
+               valname = esb_base;
+#if DEBUG_PRINT_ATTRIBUTE
+               printf ("case DW_AT_name: Calling asmDwarfConstruct->set_name(valname): valname = %s \n",valname.c_str());
+#endif
+               asmDwarfConstruct->set_name(valname);
+               break;
+             }
+
+       // DQ (11/20/2025): Adding more Dwarf 4 support.
+          case DW_AT_producer:
+             {
+               char* producer_str = nullptr;  
+               int wres = dwarf_formstring(attrib, &producer_str, &rose_dwarf_error);  
+               if (wres == DW_DLV_OK)
+                  {
+                    valname = std::string(producer_str);  
+          
+                 // Set it directly in the compilation unit  
+                    SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);  
+                    if (asmDwarfCompilationUnit)
+                       {
+#if DEBUG_PRINT_ATTRIBUTE
+                         printf ("case DW_AT_producer: Calling asmDwarfCompilationUnit->set_producer(): valname = %s \n",valname.c_str());
+#endif
+                         asmDwarfCompilationUnit->set_producer(valname);  
+                       }
+                  }
+                 else
+                  {
+                    if (wres == DW_DLV_ERROR)
+                       {
+                         throwError(dbg, "Cannot get DW_AT_producer string", wres, rose_dwarf_error);  
+                       }
+                  }
+
+            // DW_DLV_NO_ENTRY is not an error, just means no producer info  
+               break;  
+             }
+
+       // DQ (11/20/2025): Adding more Dwarf 4 support.
+       // DQ (11/20/2025): Our ROSE IR node for SgAsmDwarfCompilationUnit does not have a data member for this field, so this case is handled
+       // by the default case and supported through an attribute (ROSE attributes, which are implemented on top of Sawyer attributes, as I
+       // understand it). 
+       // DQ (11/20/2025): Note that this case can likely be combined with the case DW_AT_producer (except that the error would be different).
+          case DW_AT_comp_dir:
+             {
+            /* Need to add this data member to: src/AstNodes/BinaryAnalysis/SgAsmDwarfCompilationUnit.h
+                  [[using Rosebud: rosetta]]  
+                  std::string comp_dir;
+             */
+            // This attribute holds the directory name where the compiler was called from to compile the source code.
+               char* comp_dir_str = nullptr;  
+               int wres = dwarf_formstring(attrib, &comp_dir_str, &rose_dwarf_error);  
+               if (wres == DW_DLV_OK)
+                  {
+                    valname = std::string(comp_dir_str);  
+          
+                 // Set it directly in the compilation unit  
+                    SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);  
+                    if (asmDwarfCompilationUnit)
+                       {
+                         asmDwarfCompilationUnit->set_comp_dir(valname);  
+                       }
+                  }
+                 else
+                  {
+                    if (wres == DW_DLV_ERROR)
+                       {
+                         throwError(dbg, "Cannot get DW_AT_comp_dir string", wres, rose_dwarf_error);  
+                       }
+                  }
+
+            // DW_DLV_NO_ENTRY is not an error, just means no comp_dir info  
+               break;  
+             }
+
+       // DQ (11/20/2025): Adding more Dwarf 4 support.
+          case DW_AT_low_pc:
+             {
+               Dwarf_Addr addr = 0;  
+               int wres = dwarf_formaddr(attrib, &addr, &rose_dwarf_error);  
+               if (wres == DW_DLV_OK)
+                  {
+                 // Set it directly in the compilation unit  
+                    SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);  
+                    if (asmDwarfCompilationUnit)
+                       {
+#if DEBUG_PRINT_ATTRIBUTE
+                         printf ("case DW_AT_low_pc: Calling asmDwarfConstruct->set_name(valname): addr = %p \n",addr);
+#endif
+                         asmDwarfCompilationUnit->set_low_pc(addr);  
+                       }
+                  }
+                 else
+                  {
+                    if (wres == DW_DLV_ERROR)
+                       {
+                         throwError(dbg, "Cannot get DW_AT_low_pc address", wres, rose_dwarf_error);  
+                       }
+                  }
+            // DW_DLV_NO_ENTRY is not an error, just means no low_pc info  
+               break;  
+             }
+
+       // DQ (11/20/2025): Adding more Dwarf 4 support.
+          case DW_AT_high_pc:
+             {
+               Dwarf_Half theform;  
+               int rv = dwarf_whatform(attrib, &theform, &rose_dwarf_error);  
+               if (rv == DW_DLV_OK)
+                  {
+                    uint64_t hipc = 0;  
+                    if (theform == DW_FORM_addr)
+                       {
+                      // DWARF3 and earlier: absolute address  
+                         Dwarf_Addr addr = 0;  
+                         int wres = dwarf_formaddr(attrib, &addr, &rose_dwarf_error);  
+                         if (wres == DW_DLV_OK)
+                            {
+                              hipc = addr;  
+                            }
+                       }
+                      else
+                       {
+                      // DWARF4+: offset from low_pc  
+                         Dwarf_Unsigned offset = 0;  
+                         int wres = dwarf_formudata(attrib, &offset, &rose_dwarf_error);  
+                         if (wres == DW_DLV_OK)
+                            {
+                              hipc = offset; // Store as-is; consumer adds to low_pc  
+                            }
+                       }
+          
+                    SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);  
+                    if (asmDwarfCompilationUnit)
+                       {
+#if DEBUG_PRINT_ATTRIBUTE
+                         printf ("case DW_AT_high_pc: Calling asmDwarfConstruct->set_name(valname): hipc = %uz \n",hipc);
+#endif
+                         asmDwarfCompilationUnit->set_hi_pc(hipc);  
+                       }
+                  }  
+               break;
+             }
+
+       // DQ (11/20/2025): Adding more Dwarf 4 support.
+          case DW_AT_signature: // - Type signature for type units
+             {
+            /* For DW_AT_signature - Add to SgAsmDwarfCompilationUnit
+
+               Looking at the compilation unit class definition, you should add:<link to Repo rose-compiler/rose-full: src/AstNodes/BinaryAnalysis/SgAsmDwarfCompilationUnit.h:7-44/>
+
+               [[using Rosebud: rosetta]]  
+               std::string type_signature;
+
+               This field would store the 8-byte type signature as a hex string (e.g., "0x0123456789abcdef"). 
+               The DW_AT_signature attribute appears in type units (DWARF 4 feature) to uniquely identify 
+               type definitions that can be shared across compilation units.<link to Repo rose-compiler/rose-full: src/Rose/BinaryAnalysis/Dwarf/Dwarf.C:1109-1118/>
+            */
+#if 0
+               Dwarf_Sig8 sig8;  
+               int wres = dwarf_formsig8(attrib, &sig8, &rose_dwarf_error);  
+               if (wres == DW_DLV_OK)
+                  {
+                 // Format the 8-byte signature as a hex string  
+                    char sig_buf[100];  
+                    snprintf(sig_buf, sizeof(sig_buf),"0x%02x%02x%02x%02x%02x%02x%02x%02x",sig8.signature[0], sig8.signature[1],   
+                             sig8.signature[2], sig8.signature[3], sig8.signature[4], sig8.signature[5], sig8.signature[6], sig8.signature[7]);  
+                    valname = std::string(sig_buf);  
+          
+#if DEBUG_PRINT_ATTRIBUTE
+                    printf ("case DW_AT_signature: data member not in asmDwarfCompilationUnit: valname = %s \n",valname.c_str());
+#endif
+                 // Store as Sawyer attribute for now  
+                 // (You could add a dedicated field to SgAsmDwarfCompilationUnit if needed)  
+                    const std::string attrName = stringify::Rose::BinaryAnalysis::Dwarf::DWARF_AT(attr);  
+                    Sawyer::Attribute::Id attrId = Sawyer::Attribute::declareMaybe(attrName);  
+                    asmDwarfConstruct->attributes().setAttribute(attrId, valname);  
+                  }
+                 else
+                  {
+                    if (wres == DW_DLV_ERROR)
+                       {
+                         throwError(dbg, "Cannot get DW_AT_signature", wres, rose_dwarf_error);  
+                       }
+                  }
+#else
+               Dwarf_Sig8 sig8;  
+               int wres = dwarf_formsig8(attrib, &sig8, &rose_dwarf_error);  
+               if (wres == DW_DLV_OK)
+                  {
+                 // Format the 8-byte signature as a hex string  
+                    char sig_buf[100];  
+                    snprintf(sig_buf, sizeof(sig_buf), "0x%02x%02x%02x%02x%02x%02x%02x%02x",  
+                         sig8.signature[0], sig8.signature[1], sig8.signature[2], sig8.signature[3],  
+                         sig8.signature[4], sig8.signature[5], sig8.signature[6], sig8.signature[7]);  
+                    valname = std::string(sig_buf);  
+          
+                 // Set it directly in the compilation unit  
+                    SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);  
+                    if (asmDwarfCompilationUnit)
+                       {
+                         asmDwarfCompilationUnit->set_type_signature(valname);  
+                       }
+                  }
+                 else
+                  {
+                    if (wres == DW_DLV_ERROR)
+                       {
+                         throwError(dbg, "Cannot get DW_AT_signature", wres, rose_dwarf_error);  
+                       }
+                  }
+#endif
+            // DW_DLV_NO_ENTRY is not an error
+               break;
+             }
+
+       // DQ (11/20/2025): Adding more Dwarf 4 support.
+          case DW_AT_main_subprogram: // - Indicates the main entry point
+             {
+            /* For DW_AT_main_subprogram - Add to SgAsmDwarfSubprogram
+               Looking at the subprogram class definition, you should add:<link to Repo rose-compiler/rose-full: generated/src/frontend/SageIII/SgAsmDwarfSubprogram.h:34-128/>
+
+                  [[using Rosebud: rosetta]]  
+                  bool is_main_subprogram = false;
+
+               This boolean field would indicate whether this function is the program's main entry point. 
+               The DW_AT_main_subprogram attribute is attached to DW_TAG_subprogram DIEs (Debug Information Entries), 
+               which are represented by SgAsmDwarfSubprogram in ROSE's IR.<link to Repo rose-compiler/rose-full: src/frontend/SageIII/dwarfSupport.C:106-107/>
+             */
+            // Use this version once we add the data member above.
+               Dwarf_Bool is_main = false;  
+               int wres = dwarf_formflag(attrib, &is_main, &rose_dwarf_error);  
+               if (wres == DW_DLV_OK)
+                  {
+                 // Set it directly in the subprogram  
+                    SgAsmDwarfSubprogram* subprogram = isSgAsmDwarfSubprogram(asmDwarfConstruct);  
+                    if (subprogram)
+                       {
+                         subprogram->set_is_main_subprogram(is_main);  
+                       }
+                  }
+                 else
+                  {
+                    if (wres == DW_DLV_ERROR)
+                       {
+                         throwError(dbg, "Cannot get DW_AT_main_subprogram flag", wres, rose_dwarf_error);  
+                       }
+                  }
+
+            // DW_DLV_NO_ENTRY is not an error  
+               break;
+             }
+
+       // DQ (11/20/2025): Adding more Dwarf 4 support.
+       // If we add the data member: data_bit_offset, in SgAsmDwarfMember, then we need to use this code to set it (save this step for later).
+          case DW_AT_data_bit_offset: // - Bit offset for data members
+             {
+            /* 
+            // In src/AstNodes/BinaryAnalysis/SgAsmDwarfMember.h:  
+               class SgAsmDwarfMember: public SgAsmDwarfConstruct 
+                  {  
+                    public:
+                         [[using Rosebud: rosetta]]  
+                         uint64_t data_bit_offset = 0;  
+                  };
+             */
+               Dwarf_Unsigned offset_val = 0;
+               int wres = get_small_encoding_integer_and_name(dbg, attrib, &offset_val,
+                                                   strdup("DW_AT_data_bit_offset"),
+                                                   nullptr,
+                                                   (encoding_type_func)0,
+                                                   &rose_dwarf_error);
+               if (wres == DW_DLV_OK)
+                  {
+                 // Cast to the appropriate DWARF construct type  
+                    SgAsmDwarfMember* member = isSgAsmDwarfMember(asmDwarfConstruct);  
+                    if (member)
+                       {
+                         member->set_data_bit_offset(offset_val);  
+                       }
+                  }
+                 else
+                  {
+                    if (wres == DW_DLV_ERROR)
+                       {
+                         throwError(dbg, "Cannot get DW_AT_data_bit_offset", wres, rose_dwarf_error);  
+                       }
+                  }
+               
+            // DW_DLV_NO_ENTRY is not an error  
+               break;
+             }
+
+       // DQ (11/20/2025): Adding more Dwarf 4 support.
+          case DW_AT_const_expr: // - Indicates a constant expression
+             {
+            /* To support this with a data member (instead of attribute) we need to add:
+               In src/AstNodes/BinaryAnalysis/SgAsmDwarfVariable.h:  
+               class SgAsmDwarfVariable: public SgAsmDwarfConstruct 
+                  {
+                    public:  
+                         [[using Rosebud: rosetta]]  
+                         bool is_const_expr = false;  
+                  };
+               and
+               In src/AstNodes/BinaryAnalysis/SgAsmDwarfSubprogram.h:  
+               class SgAsmDwarfSubprogram: public SgAsmDwarfConstruct 
+                  {
+                    public:  
+                         [[using Rosebud: rosetta, traverse]]  
+                         SgAsmDwarfConstructList* body = NULL;  
+      
+                         [[using Rosebud: rosetta]]  
+                         bool is_const_expr = false;  // Add this field  
+  
+                    public:  
+                         SgAsmDwarfConstructList* get_children() override;  
+                  };
+              */
+            // Use this version once we add the data member above.
+               Dwarf_Bool is_const_expr = false;  
+               int wres = dwarf_formflag(attrib, &is_const_expr, &rose_dwarf_error);  
+               if (wres == DW_DLV_OK)
+                  {
+                 // Try to set it on a variable  
+                    SgAsmDwarfVariable* variable = isSgAsmDwarfVariable(asmDwarfConstruct);  
+                    if (variable)
+                       {
+                         variable->set_is_const_expr(is_const_expr);  
+                       }
+          
+                 // Or try to set it on a subprogram  
+                    SgAsmDwarfSubprogram* subprogram = isSgAsmDwarfSubprogram(asmDwarfConstruct);  
+                    if (subprogram)
+                       {
+                         subprogram->set_is_const_expr(is_const_expr);
+                       }
+                  }
+                 else
+                  {
+                    if (wres == DW_DLV_ERROR)
+                       {
+                         throwError(dbg, "Cannot get DW_AT_const_expr flag", wres, rose_dwarf_error);  
+                       }
+                  }
+
+            // DW_DLV_NO_ENTRY is not an error  
+               break;
+             }
+
+       // DQ (11/20/2025): Adding more Dwarf 4 support.
+          case DW_AT_enum_class: // - Indicates a C++11 enum class
+             {
+            /* To support using a data member we need to add:
+               In src/AstNodes/BinaryAnalysis/SgAsmDwarfEnumerationType.h:  
+               class SgAsmDwarfEnumerationType: public SgAsmDwarfConstruct 
+                  {
+                    public:  
+                         [[using Rosebud: rosetta, traverse]]  
+                         SgAsmDwarfConstructList* body = NULL;  
+      
+                         [[using Rosebud: rosetta]]  
+                         bool is_enum_class = false;  // Add this field  
+
+                    public:  
+                         SgAsmDwarfConstructList* get_children() override;  
+                  };
+             */
+            // Use this version once we add the data member above.
+               Dwarf_Bool is_enum_class = false;  
+               int wres = dwarf_formflag(attrib, &is_enum_class, &rose_dwarf_error);  
+               if (wres == DW_DLV_OK)
+                  {
+                 // Set it directly in the enumeration type  
+                    SgAsmDwarfEnumerationType* enumType = isSgAsmDwarfEnumerationType(asmDwarfConstruct);  
+                    if (enumType)
+                       {
+                         enumType->set_is_enum_class(is_enum_class);  
+                       }
+                 }
+                else
+                  {
+                   if (wres == DW_DLV_ERROR)
+                      {
+                        throwError(dbg, "Cannot get DW_AT_enum_class flag", wres, rose_dwarf_error);  
+                      }
+                 }
+
+            // DW_DLV_NO_ENTRY is not an error  
+               break;
+             }
+
+       // DQ (11/20/2025): Adding more Dwarf 4 support.
+          case DW_AT_linkage_name: // - Mangled name for linking
+             {
+            /*
+               In src/AstNodes/BinaryAnalysis/SgAsmDwarfSubprogram.h:  
+                  [[using Rosebud: rosetta]]  
+                  std::string linkage_name;
+
+               In src/AstNodes/BinaryAnalysis/SgAsmDwarfVariable.h:  
+                  [[using Rosebud: rosetta]]  
+                  std::string linkage_name;
+             */
+            // Use this version once we add the data member above.
+               char* linkage_name_str = nullptr;
+               int wres = dwarf_formstring(attrib, &linkage_name_str, &rose_dwarf_error);
+               if (wres == DW_DLV_OK)
+                  {
+                    valname = std::string(linkage_name_str);
+
+                 // Try to set it on a subprogram
+                    SgAsmDwarfSubprogram* subprogram = isSgAsmDwarfSubprogram(asmDwarfConstruct);
+                    if (subprogram)
+                       {
+#if DEBUG_PRINT_ATTRIBUTE
+                         printf ("case DW_AT_linkage_name: data member not in SgAsmDwarfSubprogram: valname = %s \n",valname.c_str());
+#endif
+                         subprogram->set_linkage_name(valname);
+                       }
+
+                 // Or try to set it on a variable
+                    SgAsmDwarfVariable* variable = isSgAsmDwarfVariable(asmDwarfConstruct);
+                    if (variable)
+                       {
+#if DEBUG_PRINT_ATTRIBUTE
+                         printf ("case DW_AT_linkage_name: data member not in SgAsmDwarfVariable: valname = %s \n",valname.c_str());
+#endif
+                         variable->set_linkage_name(valname);
+                       }
+                  }
+                 else
+                  {
+                    if (wres == DW_DLV_ERROR)
+                       {
+                         throwError(dbg, "Cannot get DW_AT_linkage_name string", wres, rose_dwarf_error);  
+                       }
+                  }
+
+            // DW_DLV_NO_ENTRY is not an error
+               break;
+             }
+
+          case DW_AT_location:
+             {
+#if DEBUG_PRINT_ATTRIBUTE
+               printf ("Found a case DW_AT_location \n");
+#endif
+            // Get variable name first  
+               Dwarf_Attribute name_attr;  
+               std::string var_name = "<unnamed>";  
+               if (dwarf_attr(die, DW_AT_name, &name_attr, &rose_dwarf_error) == DW_DLV_OK)
+                  {
+                    char* name = NULL;
+                    if (dwarf_formstring(name_attr, &name, &rose_dwarf_error) == DW_DLV_OK)
+                       {
+                         var_name = name;  
+                       }
+                    dwarf_dealloc(dbg, name_attr, DW_DLA_ATTR);
+
+#if DEBUG_PRINT_ATTRIBUTE
+                    printf ("In case DW_AT_location: var_name = %s \n",var_name.c_str());
+#endif
+                  }
+ 
+               get_location_list(dbg, die, attrib, &esb_base);
+               valname = esb_base;
+
+#if DEBUG_PRINT_ATTRIBUTE
+               printf ("valname = %s \n",valname.c_str());
+#endif
+               break;
+             }
+
+#if 0
+       // DQ: Initially, let's limit the number of dependent functions required to make some progress and generating IR nodes from Dwarf.
 
         case DW_AT_accessibility:
             get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_accessibility",&valname, get_ACCESS_name,&rose_dwarf_error);
@@ -816,122 +1773,191 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute
             valname = esb_base;
         }
 #endif
+
         default:
+          {
+         // DQ (11/21/2025): Design issue:
+         // Note that it is a design point to process dwarf attributes that we have not handled above
+         // through this default statement.  The idea is to process specific attributes that we are
+         // supporting directly outside of this default statement, but allow attributes that we are
+         // not supporting directly to be processed through this default.  By supporting attributes
+         // to be handled through the default we can handle newer versions of dwarf more easily.
+         // There are also a hundred or more attributres, so this allows us to at least partially
+         // handle them.  It used to be that we supported all attributes through this default statement,
+         // this was changed so that we could support specific attributes directly and data members
+         // have been been added to some of the dwarf IR nodes so that they can be set directly.
+         // This makes the use of this default statement (and attributes) a backup plan to
+         // provide robustness (completeness).
+
             esb_base = "";
             get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
 
-            /* add the attribute as an AST attribute on the asmDwarfConstruct that we're
-               working on */
+         // add the attribute as an AST attribute on the asmDwarfConstruct that we're working on.            
             const std::string attrName = stringify::Rose::BinaryAnalysis::Dwarf::DWARF_AT(attr);
+
+#if DEBUG_PRINT_ATTRIBUTE
+            printf ("Adding a Sawyer::Attribute: attrName = %s \n",attrName.c_str());
+#endif
             Sawyer::Attribute::Id attrId = Sawyer::Attribute::declareMaybe(attrName);
             asmDwarfConstruct->attributes().setAttribute(attrId, esb_base);
 
             valname = esb_base;
             break;
+          }
     }
 
-    // Set the name in the base clas only when the input attribute is DW_AT_name.
-    if (attr == DW_AT_name) {
-        asmDwarfConstruct->set_name(valname);
-    }
+#if DEBUG_PRINT_ATTRIBUTE && 0
+     printf ("Leaving (DWARF SUPPORT) print_attribute() \n");
+#endif
+   }
 
-}
 
 /* print info about die */
 SgAsmDwarfConstruct*
 build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool print_information, char **srcfiles,
-                                       Dwarf_Signed cnt /* , SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit */) {
-    Dwarf_Signed i;
-    Dwarf_Off offset, overall_offset;
-    std::string tagname;
-    Dwarf_Half tag;
-    Dwarf_Signed atcnt;
-    Dwarf_Attribute *atlist;
-    int tres;
-    int ores;
-    int atres;
+                                       Dwarf_Signed cnt /* , SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit */)
+   {
+  // Dwarf_Signed i;
+     Dwarf_Off offset, overall_offset;
+     std::string tagname;
+     Dwarf_Half tag;
+     Dwarf_Signed atcnt;
+     Dwarf_Attribute *atlist;
+     int tres;
+     int ores;
+     int atres;
 
-    tres = dwarf_tag(die, &tag, &rose_dwarf_error);
-    if (tres != DW_DLV_OK) {
-        throwError(dbg, "accessing tag of die!", tres, rose_dwarf_error);
-    }
+#if 0
+     printf ("In build_dwarf_IR_node_from_print_one_die() \n");
+#endif
 
-    tagname = get_TAG_name(dbg, tag);
+     tres = dwarf_tag(die, &tag, &rose_dwarf_error);
+     if (tres != DW_DLV_OK)
+        {
+          throwError(dbg, "accessing tag of die!", tres, rose_dwarf_error);
+        }
 
-    ores = dwarf_dieoffset(die, &overall_offset, &rose_dwarf_error);
-    if (ores != DW_DLV_OK) {
-        throwError(dbg, "dwarf_dieoffset", ores, rose_dwarf_error);
-    }
+     tagname = get_TAG_name(dbg, tag);
 
-    ores = dwarf_die_CU_offset(die, &offset, &rose_dwarf_error);
-    if (ores != DW_DLV_OK) {
-        throwError(dbg, "dwarf_die_CU_offset", ores, rose_dwarf_error);
-    }
+     ores = dwarf_dieoffset(die, &overall_offset, &rose_dwarf_error);
+     if (ores != DW_DLV_OK)
+        {
+          throwError(dbg, "dwarf_dieoffset", ores, rose_dwarf_error);
+        }
 
-    if (print_information) {
-        if (indent_level == 0) {
+     ores = dwarf_die_CU_offset(die, &offset, &rose_dwarf_error);
+     if (ores != DW_DLV_OK)
+        {
+          throwError(dbg, "dwarf_die_CU_offset", ores, rose_dwarf_error);
+        }
+
+     if (print_information)
+        {
+          if (indent_level == 0)
+             {
             // Initialize the information in the SgAsmDwarfCompilationUnit IR node
-
-        } else {
-            if (local_symbols_already_began == false && indent_level == 1) {
-                local_symbols_already_began = true;
-            }
+             }
+            else
+             {
+               if (local_symbols_already_began == false && indent_level == 1)
+                  {
+                    local_symbols_already_began = true;
+                  }
+             }
         }
 
-    }
-
-    atres = dwarf_attrlist(die, &atlist, &atcnt, &rose_dwarf_error);
-    if (atres == DW_DLV_ERROR) {
-        throwError(dbg, "dwarf_attrlist", atres, rose_dwarf_error);
-    } else {
-        if (atres == DW_DLV_NO_ENTRY) {
+     atres = dwarf_attrlist(die, &atlist, &atcnt, &rose_dwarf_error);
+     if (atres == DW_DLV_ERROR)
+        {
+          throwError(dbg, "dwarf_attrlist", atres, rose_dwarf_error);
+        }
+       else
+        {
+          if (atres == DW_DLV_NO_ENTRY)
+             {
             /* indicates there are no attrs.  It is not an error. */
-            atcnt = 0;
+               atcnt = 0;
+             }
         }
-    }
 
-    if (indent_level == 0) {
+     if (indent_level == 0)
+        {
         // This is the CU header
-    } else {
-        // These are local symbols
-    }
-
-    // Build the ROSE dwarf construct IR node (use a factory design to build the appropriate IR nodes
-
-    // This will cause all Dwarf IR nodes to be properly represented in the AST.
-    SgAsmDwarfConstruct* asmDwarfConstruct = SgAsmDwarfConstruct::createDwarfConstruct( tag, indent_level, offset, overall_offset );
-
-    // Setup attribute specific fields in the different kinds of Dwarf nodes
-    for (i = 0; i < atcnt; i++) {
-        Dwarf_Half attr;
-        int ares;
-
-        ares = dwarf_whatattr(atlist[i], &attr, &rose_dwarf_error);
-        if (ares == DW_DLV_OK) {
-            if (asmDwarfConstruct != NULL) {
-                print_attribute(dbg, die, attr, atlist[i], print_information, srcfiles, cnt, asmDwarfConstruct);
-            }
-
-            if (indent_level == 0) {
-                // This is the CU header
-            } else {
-                // These are local symbols
-            }
-        } else {
-            throwError(dbg, "dwarf_whatattr entry missing", ares, rose_dwarf_error);
         }
-    }
+       else
+        {
+       // These are local symbols
+        }
 
-    for (i = 0; i < atcnt; i++) {
-        dwarf_dealloc(dbg, atlist[i], DW_DLA_ATTR);
-    }
+  // Build the ROSE dwarf construct IR node (use a factory design to build the appropriate IR nodes
 
-    if (atres == DW_DLV_OK) {
-        dwarf_dealloc(dbg, atlist, DW_DLA_LIST);
-    }
+  // This will cause all Dwarf IR nodes to be properly represented in the AST.
+     SgAsmDwarfConstruct* asmDwarfConstruct = SgAsmDwarfConstruct::createDwarfConstruct( tag, indent_level, offset, overall_offset );
 
-    return asmDwarfConstruct;
-}
+#if 0
+  // DQ (11/14/2025): we need to set the source positions of each dwarf construct.
+     printf ("In build_dwarf_IR_node_from_print_one_die(): asmDwarfConstruct = %p = %s asmDwarfConstruct->get_name() = %s \n",asmDwarfConstruct,asmDwarfConstruct->class_name().c_str(),asmDwarfConstruct->get_name().c_str());
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+#if 0
+     printf ("Looping over the attribute specific fields: atcnt = %d \n",atcnt);
+#endif
+
+  // Setup attribute specific fields in the different kinds of Dwarf nodes
+     for (Dwarf_Signed i = 0; i < atcnt; i++)
+        {
+          Dwarf_Half attr;
+          int ares;
+
+          ares = dwarf_whatattr(atlist[i], &attr, &rose_dwarf_error);
+          if (ares == DW_DLV_OK)
+             {
+               if (asmDwarfConstruct != NULL)
+                  {
+                    print_attribute(dbg, die, attr, atlist[i], print_information, srcfiles, cnt, asmDwarfConstruct);
+                  }
+
+               if (indent_level == 0)
+                  {
+                 // This is the CU header
+                  }
+                 else
+                  {
+                 // These are local symbols
+                  }
+             }
+            else
+             {
+               throwError(dbg, "dwarf_whatattr entry missing", ares, rose_dwarf_error);
+             }
+        }
+
+     for (Dwarf_Signed i = 0; i < atcnt; i++)
+        {
+          dwarf_dealloc(dbg, atlist[i], DW_DLA_ATTR);
+        }
+
+     if (atres == DW_DLV_OK)
+        {
+          dwarf_dealloc(dbg, atlist, DW_DLA_LIST);
+        }
+
+#if 0
+     printf ("Leaving build_dwarf_IR_node_from_print_one_die() \n");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     exit(0);
+#endif
+
+     return asmDwarfConstruct;
+   }
 
 
 
@@ -958,15 +1984,56 @@ buildDwarfIrNodeFromDieAndChildren(Dwarf_Debug dbg, Dwarf_Die in_die_in, char **
 
         /* here to pre-descent processing of the die */
         astDwarfConstruct = build_dwarf_IR_node_from_print_one_die(dbg, in_die, isInfo, srcfiles, cnt /* , asmDwarfCompilationUnit */ );
-
+#if 0
+     // DQ (11/14/2025): we need to set the source positions of each dwarf construct.
+        printf ("We need to set the source_position in the astDwarfConstruct \n");
+#endif
         if (parentDwarfConstruct != NULL && astDwarfConstruct != NULL) {
             // When this work we know that we have the child support for Dwarf IR nodes in place (in all the right places).
             // According to Kewen Meng at uoregon.edu, this assertion fails when the input specimen is compiled with "gcc
             // -O1" (input and gcc version were unspecified by user), but works if -O1 is removed, or if C++ compiler
             // (vendor and version unspecified by user) is used with optimization flag (flag unspecified by user). [Robb
             // Matzke 2016-09-29]
+
+         // printf ("In buildDwarfIrNodeFromDieAndChildren(): calling get_children() test 1: on parentDwarfConstruct = %s \n",parentDwarfConstruct->class_name().c_str());
+
+         // DQ (1/30/2026): We don't want to call get_children() from the SgAsmDwarfUnknownConstruct because it outputs
+         // an annoying warning about get_children() not being defined for the base class, and returns NULL.
+         // DQ (1/26/2026): This can be NULL in the case of -O1 level optimization.
+         // ASSERT_not_null(parentDwarfConstruct->get_children());
+            if (isSgAsmDwarfUnknownConstruct(parentDwarfConstruct) != NULL || parentDwarfConstruct->get_children() == NULL)
+               {
+              // Create a new children list for the parent  
+                 SgAsmDwarfConstructList* childrenList = new SgAsmDwarfConstructList();  
+
+              // parentDwarfConstruct->set_children(childrenList);
+              // parentDwarfConstruct->set_body(childrenList);
+                 if (SgAsmDwarfNamespace* ns = isSgAsmDwarfNamespace(parentDwarfConstruct)) {  
+                      ns->set_body(new SgAsmDwarfConstructList());  
+                    } else if (SgAsmDwarfSubprogram* subprog = isSgAsmDwarfSubprogram(parentDwarfConstruct)) {  
+                      subprog->set_body(new SgAsmDwarfConstructList());  
+                    } else if (SgAsmDwarfLexicalBlock* block = isSgAsmDwarfLexicalBlock(parentDwarfConstruct)) {  
+                      block->set_body(new SgAsmDwarfConstructList());  
+                    } else if (SgAsmDwarfCompilationUnit* cu = isSgAsmDwarfCompilationUnit(parentDwarfConstruct)) {
+                      cu->set_language_constructs(new SgAsmDwarfConstructList());  
+                    } else if (isSgAsmDwarfUnknownConstruct(parentDwarfConstruct)) {  
+                   // Unknown constructs don't have children - skip adding  
+                      return astDwarfConstruct;  
+                    }
+                   else 
+                    {
+                      printf ("Error: must include more derived types so that we can set the body parentDwarfConstruct = %p = %s \n",parentDwarfConstruct,parentDwarfConstruct->class_name().c_str());
+                      ROSE_ASSERT(false);
+                    }
+               }
+
+         // printf ("In buildDwarfIrNodeFromDieAndChildren(): calling get_children() test 2: on parentDwarfConstruct = %s \n",parentDwarfConstruct->class_name().c_str());
             ASSERT_not_null(parentDwarfConstruct->get_children());
+            
+         // printf ("In buildDwarfIrNodeFromDieAndChildren(): calling get_children() test 3: on parentDwarfConstruct = %s \n",parentDwarfConstruct->class_name().c_str());
             parentDwarfConstruct->get_children()->get_list().push_back(astDwarfConstruct);
+            
+         // printf ("In buildDwarfIrNodeFromDieAndChildren(): calling get_children() test 4: on parentDwarfConstruct = %s \n",parentDwarfConstruct->class_name().c_str());
             astDwarfConstruct->set_parent(parentDwarfConstruct->get_children());
         }
 
@@ -1028,161 +2095,542 @@ buildDwarfIrNodeFromDieAndChildren(Dwarf_Debug dbg, Dwarf_Die in_die_in, char **
 }
 
 static void
-buildDwarfLineNumbersThisCu(Dwarf_Debug debug, Dwarf_Die cuDie, SgAsmDwarfCompilationUnit *asmDwarfCompilationUnit) {
-    ASSERT_not_null(asmDwarfCompilationUnit);
+buildDwarfLineNumbersThisCu(Dwarf_Debug debug, Dwarf_Die cuDie, SgAsmDwarfCompilationUnit *asmDwarfCompilationUnit)
+   {
+     ASSERT_not_null(asmDwarfCompilationUnit);
 
-    // Attach an empty line list to the compilation unit.
-    ASSERT_require(!asmDwarfCompilationUnit->get_line_info());
-    auto asmDwarfLineList = new SgAsmDwarfLineList();
-    asmDwarfCompilationUnit->set_line_info(asmDwarfLineList);
-    asmDwarfLineList->set_parent(asmDwarfCompilationUnit);
+  // Note that the line numbers computed here are those associated with instructions
+  // in the binary, not declarations or types from the source code (which are copied
+  // into the SgAsmDwarfConstruct directly).
 
-    // Get the line context
-    Dwarf_Unsigned version = 0;
-    Dwarf_Small tableCount = 0;
-    Dwarf_Line_Context lineContext;
-    Dwarf_Error error;
-    presentOr(dwarf_srclines_b(cuDie, &version, &tableCount, &lineContext, &error),
-              "dwarf_srclines_b", tableCount, Dwarf_Small(0), debug, error);
+#define DEBUG_LINE_NUMBERS 0
 
-    // Get all the lines for the line context
-    Dwarf_Line *lines = nullptr;
-    Dwarf_Signed lineCount = 0;
-    presentOr(dwarf_srclines_from_linecontext(lineContext, &lines, &lineCount, &error),
+#if DEBUG_LINE_NUMBERS
+     printf ("In buildDwarfLineNumbersThisCu() \n");
+#endif
+
+  // Attach an empty line list to the compilation unit.
+     ASSERT_require(!asmDwarfCompilationUnit->get_line_info());
+     auto asmDwarfLineList = new SgAsmDwarfLineList();
+     asmDwarfCompilationUnit->set_line_info(asmDwarfLineList);
+     asmDwarfLineList->set_parent(asmDwarfCompilationUnit);
+
+  // Get the line context
+     Dwarf_Unsigned version = 0;
+     Dwarf_Small tableCount = 0;
+     Dwarf_Line_Context lineContext;
+     Dwarf_Error error;
+     presentOr(dwarf_srclines_b(cuDie, &version, &tableCount, &lineContext, &error),
+               "dwarf_srclines_b", tableCount, Dwarf_Small(0), debug, error);
+
+  // Get all the lines for the line context
+     Dwarf_Line *lines = nullptr;
+     Dwarf_Signed lineCount = 0;
+     presentOr(dwarf_srclines_from_linecontext(lineContext, &lines, &lineCount, &error),
               "dwarf_srclines_from_linecontext", lineCount, Dwarf_Signed(0), debug, error);
 
-    // Build the SgAsmDwarfLine objects and attach them to the AST
-    for (Dwarf_Signed i = 0; i < lineCount; ++i) {
-        // Address
-        Dwarf_Addr addr = 0;
-        presentOr(dwarf_lineaddr(lines[i], &addr, &error),
-                  "dwarf_lineaddr", addr, Dwarf_Addr(0), debug, error);
+#if DEBUG_LINE_NUMBERS
+     printf ("After presentOr(): lineCount = %d \n",(int)lineCount);
+#endif
 
-        // File name
-        int fileNameId = -1;
+  // Build the SgAsmDwarfLine objects and attach them to the AST
+     for (Dwarf_Signed i = 0; i < lineCount; ++i)
         {
-            char *fileName = nullptr;                   // docs say "Do not dealloc or free the string."
-            presentOr(dwarf_linesrc(lines[i], &fileName, &error),
-                      "dwarf_linesrc", fileName, (char*)"<unknown>", debug, error);
-            fileNameId = Sg_File_Info::addFilenameToMap(fileName);
+       // Address
+          Dwarf_Addr addr = 0;
+          presentOr(dwarf_lineaddr(lines[i], &addr, &error),
+                    "dwarf_lineaddr", addr, Dwarf_Addr(0), debug, error);
+
+       // File name
+          int fileNameId = -1;
+             {
+               char *fileName = nullptr;  // docs say "Do not dealloc or free the string."
+               presentOr(dwarf_linesrc(lines[i], &fileName, &error),
+                         "dwarf_linesrc", fileName, (char*)"<unknown>", debug, error);
+               fileNameId = Sg_File_Info::addFilenameToMap(fileName);
+             }
+
+       // Line number
+          Dwarf_Unsigned lineNumber = 0;
+          presentOr(dwarf_lineno(lines[i], &lineNumber, &error),
+                    "dwarf_lineno", lineNumber, Dwarf_Unsigned(0), debug, error);
+
+       // Column number
+          Dwarf_Unsigned columnNumber = 0;
+          presentOr(dwarf_lineoff_b(lines[i], &columnNumber, &error),
+                    "dwarf_lineoff_b", columnNumber, Dwarf_Unsigned(0), debug, error);
+#if DEBUG_LINE_NUMBERS
+          printf ("Calling SgAsmDwarfLine(): i = %d addr = %p fileNameId = %d, lineNumber = %d columnNumber = %d \n",i,addr,fileNameId,lineNumber,columnNumber);
+#endif
+       // Create the AST node for the Dwarf line and link it into the AST
+          auto asmDwarfLine = new SgAsmDwarfLine(addr, fileNameId, lineNumber, columnNumber);
+          asmDwarfLineList->get_line_list().push_back(asmDwarfLine);
+          asmDwarfLine->set_parent(asmDwarfLineList);
         }
 
-        // Line number
-        Dwarf_Unsigned lineNumber = 0;
-        presentOr(dwarf_lineno(lines[i], &lineNumber, &error),
-                  "dwarf_lineno", lineNumber, Dwarf_Unsigned(0), debug, error);
+     dwarf_srclines_dealloc_b(lineContext);
 
-        // Column number
-        Dwarf_Unsigned columnNumber = 0;
-        presentOr(dwarf_lineoff_b(lines[i], &columnNumber, &error),
-                  "dwarf_lineoff_b", columnNumber, Dwarf_Unsigned(0), debug, error);
+     asmDwarfLineList->buildInstructionAddressSourcePositionMaps(asmDwarfCompilationUnit);
 
-        // Create the AST node for the Dwarf line and link it into the AST
-        auto asmDwarfLine = new SgAsmDwarfLine(addr, fileNameId, lineNumber, columnNumber);
-        asmDwarfLineList->get_line_list().push_back(asmDwarfLine);
-        asmDwarfLine->set_parent(asmDwarfLineList);
-    }
+     if (SgProject::get_verbose() > 0)
+        {
+          asmDwarfLineList->display("Inside of buildDwarfLineNumbersThisCu()");
+        }
 
-    dwarf_srclines_dealloc_b(lineContext);
+#if DEBUG_LINE_NUMBERS
+     printf ("Leaving buildDwarfLineNumbersThisCu() \n");
+#endif
 
-    asmDwarfLineList->buildInstructionAddressSourcePositionMaps(asmDwarfCompilationUnit);
+#if 0
+     printf ("Exiting as at test! \n");
+     exit(0);
+#endif
+   }
 
-    if (SgProject::get_verbose() > 0)
-        asmDwarfLineList->display("Inside of buildDwarfLineNumbersThisCu()");
-}
+#if 1
+// DQ (11/24/2025): New version of code not using the Saywer attributes, now that we store
+// source position more directly into the SgAsmDwarfConstruct.
+static void
+linkDwarfConstructsToSourcePositions(SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit)
+   {
+     ASSERT_not_null(asmDwarfCompilationUnit);
+
+#define DEBUG_SOURCE_POSITION 0
+
+#if DEBUG_SOURCE_POSITION
+     printf("In linkDwarfConstructsToSourcePositions(): TOP \n");
+#endif
+
+     SgAsmDwarfLineList* lineList = asmDwarfCompilationUnit->get_line_info();
+
+     if (lineList == NULL)
+        {
+          printf("WARNING: In linkDwarfConstructsToSourcePositions(): lineList: (asmDwarfCompilationUnit->get_line_info()) == NULL (premature return) \n");
+          return;
+        }
+
+  // Traverse all DWARF constructs in the compilation unit    
+     class ConstructVisitor : public AstSimpleProcessing
+        {  
+          public:  
+               SgAsmDwarfCompilationUnit* compilationUnit;  // Store the CU  
+  
+               ConstructVisitor(SgAsmDwarfCompilationUnit* cu) : compilationUnit(cu) {}  
+    
+               void visit(SgNode* node) override
+                  {
+#if DEBUG_SOURCE_POSITION
+                    printf("In ConstructVisitor::visit(): node = %p name = %s \n", node, node->class_name().c_str());
+#endif
+                    if (SgAsmDwarfConstruct* construct = isSgAsmDwarfConstruct(node))
+                       {
+                      // Get source location directly from the construct's fields  
+                         int declFile   = construct->get_decl_file_id();
+                         int declLine   = construct->get_decl_line();
+                         int declColumn = construct->get_decl_column();
+                         
+                         ROSE_ASSERT(construct != NULL);  
+                         std::string name = construct->get_name();
+
+                      // DQ (11/24/2025): These dwarf nodes will not have a source position, I think.
+                         SgAsmDwarfPointerType* asmDwarfPointerType = isSgAsmDwarfPointerType(construct);
+                         SgAsmDwarfBaseType*   asmDwarfBaseType   = isSgAsmDwarfBaseType(construct);
+                         if (asmDwarfPointerType == NULL && asmDwarfBaseType == NULL)
+                            {
+#if DEBUG_SOURCE_POSITION
+                              printf("In ConstructVisitor::visit(): node = %p = %s name = %s declFile = %d declLine = %d declColumn = %d \n",  
+                                      node, node->class_name().c_str(), name.c_str(), declFile, declLine, declColumn);
+#endif
+
+                           // If we have valid source location information, find the corresponding SgAsmDwarfLine    
+                              if (declFile >= 0 && declLine > 0)
+                                 {  
+#if DEBUG_SOURCE_POSITION
+                                   printf("compilationUnit = %p \n", compilationUnit);  
+#endif  
+                                   if (compilationUnit && compilationUnit->get_line_info())
+                                      {  
+                                        SgAsmDwarfLineList* lineList = compilationUnit->get_line_info();  
+
+                                     // Search through the line list for a matching entry  
+                                        const SgAsmDwarfLinePtrList& lines = lineList->get_line_list();  
+                                        for (SgAsmDwarfLine* line : lines)
+                                           {
+#if DEBUG_SOURCE_POSITION
+                                             printf("In for loop: line = %p declFile = %d line->get_file_id() = %d line->get_line() = %d declLine = %d \n",  
+                                                  line, declFile, line->get_file_id(), line->get_line(), declLine);  
+#endif
+                                             if (line->get_file_id() == declFile && line->get_line() == declLine)
+                                                {  
+#if DEBUG_SOURCE_POSITION
+                                                  printf("(declColumn < 0 || line->get_column() == declColumn) \n");  
+                                                  printf("declColumn = %d line->get_column() = %d \n", declColumn, line->get_column());  
+#endif
+                                               // Optionally check column if it matters    
+                                                  if (declColumn < 0 || line->get_column() == declColumn)
+                                                     {
+#if DEBUG_SOURCE_POSITION
+                                                       printf("Calling construct->set_source_position() \n");
+#endif
+                                                       construct->set_source_position(line);    
+                                                       break;    
+                                                     }
+                                                    else
+                                                     {
+#if DEBUG_SOURCE_POSITION
+                                                       printf("!(declColumn < 0 || line->get_column() == declColumn) \n");
+#endif
+                                                     }
+                                                }
+                                               else
+                                                {
+#if DEBUG_SOURCE_POSITION
+                                                  printf("!(line->get_file_id() == declFile && line->get_line() == declLine) \n");
+#endif
+                                                }  
+                                           }    
+                                      }
+                                     else
+                                      {
+#if DEBUG_SOURCE_POSITION
+                                        printf("!(compilationUnit && compilationUnit->get_line_info()) \n");
+#endif
+                                      }
+                                 }
+                            }
+                       }
+                  }
+        };
+  
+     ConstructVisitor visitor(asmDwarfCompilationUnit);  
+
+#if DEBUG_SOURCE_POSITION
+     printf("In linkDwarfConstructsToSourcePositions(): Calling traversal \n");  
+#endif
+
+     visitor.traverse(asmDwarfCompilationUnit, preorder);
+
+#if DEBUG_SOURCE_POSITION
+     printf("Leaving linkDwarfConstructsToSourcePositions(): BOTTOM \n");  
+#endif  
+   }
+  
+#else
+
+#error "DEAD CODE!"
+
+static void  
+linkDwarfConstructsToSourcePositions(SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit)
+   {  
+     ASSERT_not_null(asmDwarfCompilationUnit);  
+
+#if 1
+     printf ("In linkDwarfConstructsToSourcePositions(): TOP \n");
+#endif
+
+     SgAsmDwarfLineList* lineList = asmDwarfCompilationUnit->get_line_info();
+     
+     if (lineList == NULL)
+        {
+          printf ("WARNING: In linkDwarfConstructsToSourcePositions(): lineList: (asmDwarfCompilationUnit->get_line_info()) == NULL (premature return) \n");
+          return;
+        }
+
+  // Traverse all DWARF constructs in the compilation unit  
+     class ConstructVisitor : public AstSimpleProcessing
+        {
+          public:
+            // SgAsmDwarfLineList* lineList;
+               SgAsmDwarfCompilationUnit* compilationUnit;  // Store the CU
+
+               ConstructVisitor(SgAsmDwarfCompilationUnit* cu) : compilationUnit(cu) {}
+      
+               void visit(SgNode* node) override
+                  {
+#if 1
+                    printf ("In ConstructVisitor::visit(): node = %p name = %s \n",node,node->class_name().c_str());
+#endif
+                    if (SgAsmDwarfConstruct* construct = isSgAsmDwarfConstruct(node))
+                       {
+                      // Extract source location from DWARF attributes
+                      // The attributes are stored using Sawyer's attribute mechanism
+                         int declFile   = -1;
+                         int declLine   = -1;
+                         int declColumn = -1;
+
+                      // Try to get DW_AT_decl_file attribute
+                         Sawyer::Attribute::Id declFileId = Sawyer::Attribute::declareMaybe("DW_AT_decl_file");
+                         if (construct->attributes().attributeExists(declFileId))
+                            {
+                              std::string fileStr = construct->attributes().getAttribute<std::string>(declFileId);
+                              declFile = std::stoi(fileStr);
+                            }
+
+                      // Try to get DW_AT_decl_line attribute
+                         Sawyer::Attribute::Id declLineId = Sawyer::Attribute::declareMaybe("DW_AT_decl_line");
+                         if (construct->attributes().attributeExists(declLineId))
+                            {
+                              std::string lineStr = construct->attributes().getAttribute<std::string>(declLineId);
+                              declLine = std::stoi(lineStr);
+                            }
+
+                      // Try to get DW_AT_decl_column attribute
+                         Sawyer::Attribute::Id declColumnId = Sawyer::Attribute::declareMaybe("DW_AT_decl_column");
+                         if (construct->attributes().attributeExists(declColumnId))
+                            {
+                              std::string colStr = construct->attributes().getAttribute<std::string>(declColumnId);
+                              declColumn = std::stoi(colStr);
+                            }
+#if 1
+                         ROSE_ASSERT(construct != NULL);
+                         std::string name = construct->get_name();
+                         printf ("In ConstructVisitor::visit(): node = %p = %s name = %s declFile = %d declLine = %d declColumn = %d \n",node,node->class_name().c_str(),name.c_str(),declFile,declLine,declColumn);
+#endif
+                      // If we have valid source location information, find the corresponding SgAsmDwarfLine  
+                         if (declFile > 0 && declLine > 0)
+                            {
+                           // Get the line list from the compilation unit  
+                           // SgAsmDwarfCompilationUnit* cu = SageInterface::getEnclosingNode<SgAsmDwarfCompilationUnit>(construct);
+                           // SgAsmDwarfCompilationUnit* cu = compilationUnit;
+                           // ROSE_ASSERT(cu != NULL);
+#if 0
+                              if (compilationUnit && compilationUnit->get_line_info())
+                                 {  
+                                   SgAsmDwarfLineList* lineList = compilationUnit->get_line_info();  
+                                // ... rest of your code  
+                                 }
+#endif
+                           // printf ("cu = %p \n",cu);
+                              printf ("compilationUnit = %p \n",compilationUnit);
+
+                           // if (cu && cu->get_line_info())
+                           // if (cu && cu->get_line_info() != NULL)
+                              if (compilationUnit && compilationUnit->get_line_info())
+                                 {
+                                // SgAsmDwarfLineList* lineList = cu->get_line_info();
+                                   SgAsmDwarfLineList* lineList = compilationUnit->get_line_info();
+
+                                // Search through the line list for a matching entry
+                                   const SgAsmDwarfLinePtrList & lines = lineList->get_line_list();
+                                   for (SgAsmDwarfLine* line : lines)
+                                      {
+                                        printf ("In for loop: line = %p declFile = %d line->get_line() = %d declLine = %d \n",line,declFile,line->get_line(),declLine);
+
+                                        if (line->get_file_id() == declFile && line->get_line() == declLine)
+                                           {
+                                             printf ("(declColumn < 0 || line->get_column() == declColumn) \n");
+
+                                             printf ("declColumn = %d line->get_column() = %d \n",declColumn,line->get_column());
+
+                                          // Optionally check column if it matters  
+                                             if (declColumn < 0 || line->get_column() == declColumn)
+                                                {  
+                                                  printf ("Calling construct->set_source_position() \n");
+
+                                                  construct->set_source_position(line);  
+                                                  break;  
+                                                }
+                                               else
+                                                {
+                                                  printf ("!(declColumn < 0 || line->get_column() == declColumn) \n");
+                                                }
+                                           }
+                                          else
+                                           {
+                                             printf ("!(line->get_file_id() == declFile && line->get_line() == declLine) \n");
+                                           }
+                                      }  
+                                 }
+                                else
+                                 {
+                                   printf ("!(compilationUnit && compilationUnit->get_line_info()) \n");
+                                 }
+                            }
+#if 0
+                      // DQ (11/19/2025): Exiting as a test.
+                         if (isSgAsmDwarfVariable(construct) != NULL)
+                            {
+                              printf ("Found a SgAsmDwarfVariable, exiting as a test! \n");
+                              exit(0);
+                            }
+#endif
+                       }
+
+                  }
+        };
+
+     ConstructVisitor visitor(asmDwarfCompilationUnit);
+  // visitor.lineList = lineList;
+#if 1
+     printf ("In linkDwarfConstructsToSourcePositions(): Calling traversal \n");
+#endif
+     visitor.traverse(asmDwarfCompilationUnit, preorder);
+#if 1
+     printf ("Leaving linkDwarfConstructsToSourcePositions(): BOTTOM \n");
+#endif
+   }
+#endif
 
 // Process each compilation unit in ".debug_info".
 static void
-buildDwarfIrNodes(Dwarf_Debug dbg, SgAsmGenericFile* file, const Dwarf_Bool isInfo) {
-    ASSERT_require(file->get_dwarf_info() == nullptr);
-    SgAsmDwarfCompilationUnitList* asmDwarfCompilationUnitList = new SgAsmDwarfCompilationUnitList();
-    file->set_dwarfInfo(asmDwarfCompilationUnitList);
-    asmDwarfCompilationUnitList->set_parent(file);
+buildDwarfIrNodes(Dwarf_Debug dbg, SgAsmGenericFile* file, const Dwarf_Bool isInfo)
+   {
 
-    /* Loop until it fails.  */
-    Dwarf_Unsigned cu_header_length = 0;
-    Dwarf_Half version_stamp = 0;
-    Dwarf_Unsigned abbrev_offset = 0;
-    Dwarf_Half address_size = 0;
-    Dwarf_Half length_size = 0;
-    Dwarf_Half extension_size = 0;
-    Dwarf_Sig8 type_signature;
-    memset(&type_signature, 0, sizeof type_signature);
-    Dwarf_Unsigned type_offset = 0;
-    Dwarf_Unsigned next_cu_header_offset = 0;
-    Dwarf_Half header_cu_type = 0;
-    Dwarf_Error error = 0;
-    int nres = DW_DLV_OK;
-    while ((nres = dwarf_next_cu_header_d(dbg, isInfo, &cu_header_length, &version_stamp, &abbrev_offset, &address_size,
+#define DEBUG_DWARF_IR_NODES 0
+
+     ASSERT_require(file->get_dwarf_info() == nullptr);
+     SgAsmDwarfCompilationUnitList* asmDwarfCompilationUnitList = new SgAsmDwarfCompilationUnitList();
+     file->set_dwarfInfo(asmDwarfCompilationUnitList);
+     asmDwarfCompilationUnitList->set_parent(file);
+
+  /* Loop until it fails.  */
+     Dwarf_Unsigned cu_header_length = 0;
+     Dwarf_Half version_stamp = 0;
+     Dwarf_Unsigned abbrev_offset = 0;
+     Dwarf_Half address_size = 0;
+     Dwarf_Half length_size = 0;
+     Dwarf_Half extension_size = 0;
+     Dwarf_Sig8 type_signature;
+     memset(&type_signature, 0, sizeof type_signature);
+     Dwarf_Unsigned type_offset = 0;
+     Dwarf_Unsigned next_cu_header_offset = 0;
+     Dwarf_Half header_cu_type = 0;
+     Dwarf_Error error = 0;
+     int nres = DW_DLV_OK;
+
+#if DEBUG_DWARF_IR_NODES
+     printf ("In buildDwarfIrNodes(): process a single compilation unit in .debug_info \n");
+#endif
+
+     while ((nres = dwarf_next_cu_header_d(dbg, isInfo, &cu_header_length, &version_stamp, &abbrev_offset, &address_size,
                                           &length_size, &extension_size, &type_signature, &type_offset, &next_cu_header_offset,
-                                          &header_cu_type, &error)) == DW_DLV_OK) {
-        /* process a single compilation unit in .debug_info. */
-        Dwarf_Die cu_die = nullptr;
-        const int sres = dwarf_siblingof_b(dbg, nullptr, isInfo, &cu_die, &error);
-        switch (sres) {
-            case DW_DLV_OK: {
-                Dwarf_Signed cnt = 0;
-                char **srcfiles = 0;
+                                          &header_cu_type, &error)) == DW_DLV_OK)
+        {
+#if DEBUG_DWARF_IR_NODES
+          printf ("In buildDwarfIrNodes(): in while loop: process a single compilation unit in .debug_info \n");
+#endif 
+       /* process a single compilation unit in .debug_info. */
+          Dwarf_Die cu_die = nullptr;
+          const int sres = dwarf_siblingof_b(dbg, nullptr, isInfo, &cu_die, &error);
+          switch (sres)
+             {
+               case DW_DLV_OK:
+                  {
+                    Dwarf_Signed cnt = 0;
+                    char **srcfiles  = 0;
 
-                // We need to call this function so that we can generate filenames to support the line number mapping below.  The call
-                // to dwarf_srcfiles fails if the compilation unit `cu_die` does not have associated source file information, or if an
-                // out-of-memory condition was encountered.
-                const int srcf = dwarf_srcfiles(cu_die, &srcfiles, &cnt, &error);
-                if (srcf != DW_DLV_OK) {
-                    mlog[WARN] <<"dwarf_srcfiles call failed\n";
-                    srcfiles = nullptr;
-                    cnt = 0;
-                }
+                 // We need to call this function so that we can generate filenames to support the line number mapping below.  The call
+                 // to dwarf_srcfiles fails if the compilation unit `cu_die` does not have associated source file information, or if an
+                 // out-of-memory condition was encountered.
+                    const int srcf = dwarf_srcfiles(cu_die, &srcfiles, &cnt, &error);
+                    if (srcf != DW_DLV_OK)
+                       {
+                         mlog[WARN] <<"dwarf_srcfiles call failed\n";
+                         srcfiles = nullptr;
+                         cnt = 0;
+                       }
 
-                // This function call will traverse the list of child debug info entries and
-                // within this function we will generate the IR nodes specific to Dwarf. This
-                // should define an course view of the AST which can be used to relate the binary
-                // to the source code.
-                SgAsmDwarfConstruct* asmDwarfConstruct =
-                    buildDwarfIrNodeFromDieAndChildren(dbg, cu_die, srcfiles, cnt, nullptr, isInfo);
-                ASSERT_not_null(asmDwarfConstruct);
+#if DEBUG_DWARF_IR_NODES
+                    printf ("Calling buildDwarfIrNodeFromDieAndChildren() \n");
+#endif
+                 // This function call will traverse the list of child debug info entries and
+                 // within this function we will generate the IR nodes specific to Dwarf. This
+                 // should define an course view of the AST which can be used to relate the binary
+                 // to the source code.
+                    SgAsmDwarfConstruct* asmDwarfConstruct = buildDwarfIrNodeFromDieAndChildren(dbg, cu_die, srcfiles, cnt, nullptr, isInfo);
+                    ASSERT_not_null(asmDwarfConstruct);
 
-                // Handle the case of many Dwarf Compile Units
-                SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
-                ASSERT_not_null(asmDwarfCompilationUnit);
+                 // Handle the case of many Dwarf Compile Units
+                    SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
+                    ASSERT_not_null(asmDwarfCompilationUnit);
 
-                asmDwarfCompilationUnitList->get_cu_list().push_back(asmDwarfCompilationUnit);
-                asmDwarfCompilationUnit->set_parent(asmDwarfCompilationUnitList);
+                    asmDwarfCompilationUnitList->get_cu_list().push_back(asmDwarfCompilationUnit);
+                    asmDwarfCompilationUnit->set_parent(asmDwarfCompilationUnitList);
 
-                if (srcf == DW_DLV_OK) {
-                    for (int si = 0; si < cnt; ++si) {
-                        dwarf_dealloc(dbg, srcfiles[si], DW_DLA_STRING);
-                    }
-                    dwarf_dealloc(dbg, srcfiles, DW_DLA_LIST);
-                }
+#if DEBUG_DWARF_IR_NODES
+                    printf ("DONE: Calling buildDwarfIrNodeFromDieAndChildren() \n");
+#endif
+                    if (srcf == DW_DLV_OK)
+                       {
+                         for (int si = 0; si < cnt; ++si)
+                            {
+                              dwarf_dealloc(dbg, srcfiles[si], DW_DLA_STRING);
+                            }
+                         dwarf_dealloc(dbg, srcfiles, DW_DLA_LIST);
+                       }
 
-                bool line_flag = true;
+                    bool line_flag = true;
 
-                if (line_flag) {
-                    buildDwarfLineNumbersThisCu(dbg, cu_die, asmDwarfCompilationUnit);
-                } else {
-                    mlog[INFO] << "Skipping line number <--> instruction address mapping information\n";
-                }
+                    if (line_flag)
+                       {
+#if DEBUG_DWARF_IR_NODES
+                         printf ("Calling buildDwarfLineNumbersThisCu() \n");
+#endif                    
+                         buildDwarfLineNumbersThisCu(dbg, cu_die, asmDwarfCompilationUnit);
 
-                dwarf_dealloc(dbg, cu_die, DW_DLA_DIE);
-                break;
-            }
-            case DW_DLV_NO_ENTRY:
-                break;
+#if DEBUG_DWARF_IR_NODES
+                         printf ("After call to buildDwarfLineNumbersThisCu() \n");
+#endif
+                         linkDwarfConstructsToSourcePositions(asmDwarfCompilationUnit);
 
-            default:
-                throwError(dbg, "Regetting cu_die", sres, error);
+#if DEBUG_DWARF_IR_NODES
+                         printf ("DONE: After call to linkDwarfConstructsToSourcePositions() \n");
+#endif
+                       }
+                      else
+                       {
+                         mlog[INFO] << "Skipping line number <--> instruction address mapping information\n";
+
+#if DEBUG_DWARF_IR_NODES
+                      // DQ (11/14/20254): Output a message about this for debugging.
+                         printf ("Skipping the line number <--> instruction address mapping information\n");
+#endif
+                       }
+
+#if DEBUG_DWARF_IR_NODES
+                    printf ("Calling dwarf_dealloc() \n");
+#endif
+                    dwarf_dealloc(dbg, cu_die, DW_DLA_DIE);
+
+#if DEBUG_DWARF_IR_NODES
+                    printf ("DONE: Calling dwarf_dealloc() \n");
+#endif
+                    break;
+                  }
+
+               case DW_DLV_NO_ENTRY:
+                    break;
+
+            // DQ (11/19/2025): Added the only other case for a return result for dwarf_siblingof_b().
+               case DW_DLV_ERROR:
+                 // An error occurred during the operation
+#if DEBUG_DWARF_IR_NODES
+                    printf ("DW_DLV_ERROR reached in switch in buildDwarfIrNodes() \n");
+#endif
+                    throwError(dbg, "Regetting cu_die", sres, error);
+                    break;
+
+               default:
+#if DEBUG_DWARF_IR_NODES
+                    printf ("default reached in switch in buildDwarfIrNodes() \n");
+#endif
+                    throwError(dbg, "Regetting cu_die", sres, error);
+             }
+
+          cu_offset = next_cu_header_offset;
         }
 
-        cu_offset = next_cu_header_offset;
-    }
+     if (nres == DW_DLV_ERROR)
+        {
+          std::string errmsg = dwarf_errmsg(error);
+          Dwarf_Unsigned myerr = dwarf_errno(error);
+          mlog[FATAL] << "DWARF error : " << errmsg << " (" << (unsigned long)myerr << ")\n";
+        }
 
-    if (nres == DW_DLV_ERROR) {
-        std::string errmsg = dwarf_errmsg(error);
-        Dwarf_Unsigned myerr = dwarf_errno(error);
-        mlog[FATAL] << "DWARF error : " << errmsg << " (" << (unsigned long)myerr << ")\n";
-    }
-}
+#if DEBUG_DWARF_IR_NODES
+     printf ("Leaving buildDwarfIrNodes(): process a single compilation unit in .debug_info \n");
+#endif 
+   }
 
 
 // DQ (11/10/2008):
@@ -1322,57 +2770,82 @@ commentOutEvertythingButDwarf (SgNode* node) {
 }
 
 void
-readDwarf(SgAsmGenericFile *file) {
-    ASSERT_not_null(file);
-    const int fileDescriptor = file->get_fd();
-    Dwarf_Debug debug;
-    Dwarf_Error error;
-    const Dwarf_Bool isInfo = true;
+readDwarf(SgAsmGenericFile *file)
+   {
 
-    // DQ (3/13/2009): This function gets a lot of surrounding debugging information because it is the first dwarf function call and
-    // is a special problem in the compatability between Intel Pin and ROSE over the use of Dwarf.
-    const int dwarfInitStatus = dwarf_init_b(fileDescriptor, DW_GROUPNUMBER_ANY, nullptr, nullptr, &debug, &error);
-    if (dwarfInitStatus == DW_DLV_OK) {
-        // Dwarf information in a specimen is attached to the specimen's file as a whole.  It is not attached to an interpretation
-        // since the relationship between SgAsmGenericFile and SgAsmInterpretation is many-to-many.
-        buildDwarfIrNodes(debug, file, isInfo);
+#define DEBUG_READ_DWARF 0
 
-        const int dwarfFinishStatus = dwarf_finish(debug);
-        ASSERT_always_require(dwarfFinishStatus == DW_DLV_OK);
-    } else {
-        // This might be a PE file (or just non-ELF)
-        if (SgProject::get_verbose() > 0) {
-            mlog[INFO] << "No dwarf debug sections found\n";
+     ASSERT_not_null(file);
+     const int fileDescriptor = file->get_fd();
+     Dwarf_Debug debug;
+     Dwarf_Error error;
+     const Dwarf_Bool isInfo = true;
+
+  // DQ (3/13/2009): This function gets a lot of surrounding debugging information because it is the first dwarf function call and
+  // is a special problem in the compatability between Intel Pin and ROSE over the use of Dwarf.
+     const int dwarfInitStatus = dwarf_init_b(fileDescriptor, DW_GROUPNUMBER_ANY, nullptr, nullptr, &debug, &error);
+     if (dwarfInitStatus == DW_DLV_OK)
+        {
+#if 1
+       // DQ (11/20/2025): This is the original code, not completely supporting Dwarf 4.
+#if DEBUG_READ_DWARF
+          printf ("Only processing the .debug_info section and not processing Dwarf specfic .debug_types section \n");
+#endif
+       // Dwarf information in a specimen is attached to the specimen's file as a whole.  It is not attached to an interpretation
+       // since the relationship between SgAsmGenericFile and SgAsmInterpretation is many-to-many.
+          buildDwarfIrNodes(debug, file, isInfo);
+#else
+       // DQ (11/20/2025): This is the new code, it supports a Dwarf 4 section called ".debug_types".
+       // Process .debug_info section (standard compilation units)  
+          buildDwarfIrNodes(debug, file, /*isInfo=*/true);  
+      
+       // Process .debug_types section (DWARF 4 type units)  
+          buildDwarfIrNodes(debug, file, /*isInfo=*/false);  
+#endif
+
+          const int dwarfFinishStatus = dwarf_finish(debug);
+          ASSERT_always_require(dwarfFinishStatus == DW_DLV_OK);
         }
-    }
-
-    // DQ (11/10/2008): Added support to permit symbols to be removed from the DOT graph generation.  This makes the DOT files
-    // easier to manage since there can be thousands of symbols.  This also makes it easer to debug the ROSE dwarf AST.
-    if (SgBinaryComposite* binary = SageInterface::getEnclosingNode<SgBinaryComposite>(file)) {
-        // This is used to reduce the size of the DOT file to simplify debugging Dwarf stuff.
-        if (binary->get_visualize_executable_file_format_skip_symbols()) {
-            mlog[DEBUG] <<"calling commentOutSymbolsFromDotGraph() for visualization of binary file format withouth symbols\n";
-            commentOutSymbolsFromDotGraph(file);
+       else
+        {
+       // This might be a PE file (or just non-ELF)
+          if (SgProject::get_verbose() > 0)
+             {
+               mlog[INFO] << "No dwarf debug sections found\n";
+             }
         }
 
-        // Nothing but dwarf!
-        if (binary->get_visualize_dwarf_only()) {
-            mlog[DEBUG] <<"calling commentOutEvertythingButDwarf() for visualization of Dwarf)\n";
-            commentOutEvertythingButDwarf(file);
+  // DQ (11/10/2008): Added support to permit symbols to be removed from the DOT graph generation.  This makes the DOT files
+  // easier to manage since there can be thousands of symbols.  This also makes it easer to debug the ROSE dwarf AST.
+     if (SgBinaryComposite* binary = SageInterface::getEnclosingNode<SgBinaryComposite>(file))
+        {
+       // This is used to reduce the size of the DOT file to simplify debugging Dwarf stuff.
+          if (binary->get_visualize_executable_file_format_skip_symbols())
+             {
+               mlog[DEBUG] <<"calling commentOutSymbolsFromDotGraph() for visualization of binary file format withouth symbols\n";
+               commentOutSymbolsFromDotGraph(file);
+             }
+
+       // Nothing but dwarf!
+          if (binary->get_visualize_dwarf_only())
+             {
+               mlog[DEBUG] <<"calling commentOutEvertythingButDwarf() for visualization of Dwarf)\n";
+               commentOutEvertythingButDwarf(file);
+             }
         }
-    }
-}
+   }
 #endif // ROSE_HAVE_LIBDWARF
 
 void
-parse(SgAsmGenericFile *file) {
+parse(SgAsmGenericFile *file)
+   {
 #ifdef ROSE_HAVE_LIBDWARF
-    return readDwarf(file);
+     return readDwarf(file);
 #else
-    ROSE_UNUSED(file);
-    mlog[INFO] <<"DWARF parsing is not enabled in this ROSE configuration\n";
+     ROSE_UNUSED(file);
+     mlog[INFO] <<"DWARF parsing is not enabled in this ROSE configuration\n";
 #endif
-}
+   }
 
 } // namespace
 } // namespace

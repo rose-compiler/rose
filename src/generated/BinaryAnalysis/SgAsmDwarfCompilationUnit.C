@@ -95,6 +95,28 @@ SgAsmDwarfCompilationUnit::set_offset_length(uint64_t const& x) {
     set_isModified(true);
 }
 
+std::string const&
+SgAsmDwarfCompilationUnit::get_type_signature() const {
+    return p_type_signature;
+}
+
+void
+SgAsmDwarfCompilationUnit::set_type_signature(std::string const& x) {
+    this->p_type_signature = x;
+    set_isModified(true);
+}
+
+std::string const&
+SgAsmDwarfCompilationUnit::get_comp_dir() const {
+    return p_comp_dir;
+}
+
+void
+SgAsmDwarfCompilationUnit::set_comp_dir(std::string const& x) {
+    this->p_comp_dir = x;
+    set_isModified(true);
+}
+
 SgAsmDwarfLineList* const&
 SgAsmDwarfCompilationUnit::get_line_info() const {
     return p_line_info;
