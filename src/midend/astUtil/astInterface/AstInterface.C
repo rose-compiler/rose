@@ -1847,8 +1847,10 @@ IsSameVarRef( const AstNodePtr& _n1, const AstNodePtr& _n2)
    AstNodePtrImpl n1(_n1), n2(_n2);
    std::string name1, name2;
    AstNodePtr scope1, scope2;
-   if (IsVarRef(n1, 0,&name1, 0, 0, /*use_global_unique_name=*/true) && IsVarRef(n2, 0, &name2, 0, 0, /*use_global_unique_name=*/true))
+   if (IsVarRef(n1, 0,&name1, 0, 0, /*use_global_unique_name=*/true) && IsVarRef(n2, 0, &name2, 0, 0, /*use_global_unique_name=*/true)) {
+      DebugDiff([name1,name2](){ return "SameVarRef name: " + name1 + " vs " + name2; });
        return name1 == name2;
+   }
    return false;
 }
 
@@ -2762,8 +2764,19 @@ IsBlock( const AstNodePtr& _n, std::string* blockname, AstNodeList* _stmts)
 }
 
 bool DeclarationAttributesIdentical(SgDeclarationStatement*  q1, SgDeclarationStatement* q2) {
-  if (q1 == 0 || q2 == 0) return q1 == q2;
-
+  if (q1 == 0 || q2 == 0) {
+     DebugDiff([q1,q2](){ return "AST different attribute checking : at least one of the declaration is null."; });
+     return q1 == q2;
+  }
+  if (q1->get_definingDeclaration() != 0 || q2->get_definingDeclaration() != 0) {
+     q1 = q1->get_definingDeclaration();
+     q2 = q2->get_definingDeclaration();
+     if (q1 == 0 || q2 == 0) {
+       DebugDiff([q1,q2](){ return "AST different attribute checking : only one of the definining declaration is null. Returnning identical"; });
+       return true;
+     }
+  }
+  DebugDiff([q1,q2](){ return "AST checking different attribute: " + AstInterface::AstToString(q1) + " vs " + AstInterface::AstToString(q2); });
   if (q1->get_declarationModifier().get_storageModifier().isExtern() !=
     q2->get_declarationModifier().get_storageModifier().isExtern()) {
     DebugDiff([q1,q2](){ return "AST different attribute extern : " + AstInterface::AstToString(q1) + " vs " + AstInterface::AstToString(q2); });
@@ -2889,14 +2902,6 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
        if (!DeclarationAttributesIdentical(p1,p2)) return false;
        return AstListIdentical<SgInitializedNamePtrList,AstNodePtr>(p1->get_variables(), p2->get_variables(), call_on_diff);
      }
-  case V_SgVarRefExp: { 
-      SgVarRefExp* v1 = isSgVarRefExp(first);
-      assert (v1 != 0); 
-      if (IsSameVarRef(first,second)) {
-          return true;
-       }
-       return false;
-     }
   case V_SgClassDefinition: {
       SgClassDefinition* p1 = isSgClassDefinition(first);
       SgClassDefinition* p2 = isSgClassDefinition(second);
@@ -2950,6 +2955,9 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
       break;
      }
    default: break;
+  }
+  if (IsVarRef(first)) {
+     return IsSameVarRef(first,second);
   }
   if (IsFunctionCall(_first, &f1, &params1, &args1, 0, &returntype1) && 
        IsFunctionCall(_second, &f2, &params2, &args2, 0, &returntype2)) {
