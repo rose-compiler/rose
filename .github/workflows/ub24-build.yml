@@ -1,0 +1,90 @@
+name: Ubuntu 24 build
+
+on:
+  push:
+    branches: [ weekly ]
+  pull_request:
+    branches: [ weekly ]
+  workflow_dispatch:
+
+jobs:
+  autotools-build-test:
+    runs-on: ubuntu-24.04
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential gcc-12 g++-12 gfortran-12 \
+          automake flex bison byacc diffutils \
+          libboost-all-dev libltdl-dev libtool libxml2-dev \
+          zlib1g-dev libsqlite3-dev libpq-dev \
+          libgmp-dev libmpc-dev libmpfr-dev \
+          libxml2-dev libzstd-dev \
+          tar wget curl
+        # Set GCC 12 as default (EDG binaries require GCC 7-12)
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 110
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 110
+        sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-12 110
+
+    - name: Check environment
+      run: |
+        echo "=== Build Environment ==="
+        gcc --version | head -1
+        g++ --version | head -1
+        autoconf --version | head -1
+    
+    - name: Configure with Autoconf
+      run: |
+        export ROSE_SOURCE=$(pwd)
+        mkdir -p build_tree install_tree
+        ./build
+        cd build_tree
+        ${ROSE_SOURCE}/configure \
+          --prefix=${ROSE_SOURCE}/install_tree \
+          --enable-languages=c,c++,binaries \
+          --with-ROSE_LONG_MAKE_CHECK_RULE=yes \
+          --with-boost=/usr \
+          --with-boost-libdir=/usr/lib/x86_64-linux-gnu/ \
+          --verbose
+    
+    - name: Build ROSE
+      run: |
+        cd build_tree
+        make core -j$(nproc)
+    
+    - name: Verify librose.so was built
+      run: |
+        LIBROSE=$(find build_tree -name 'librose.so*' -type f | head -1)
+        if [ -n "$LIBROSE" ]; then
+          echo "librose.so built successfully"
+          file "$LIBROSE"
+        else
+          echo "librose.so not found"
+          exit 1
+        fi
+    
+    - name: Install ROSE
+      run: |
+        cd build_tree
+        make install-core -j$(nproc)
+
+    - name: Run Core Tests
+      run: |
+        cd build_tree
+        make check-core
+    
+    - name: Build summary
+      if: always()
+      run: |
+        echo "=== Build Summary ==="
+        echo "GCC: $(gcc --version | head -1)"
+        echo "Build dir: $(du -sh build_tree 2>/dev/null | cut -f1)"
+        LIBROSE=$(find build_tree -name 'librose.so*' -type f | head -1)
+        [ -n "$LIBROSE" ] && echo "librose.so: $(ls -lh $LIBROSE | awk '{print $5}')" || echo "librose.so: NOT FOUND"
+        INSTALLED=$(find install_tree -name 'librose.so*' -type f 2>/dev/null | head -1)
+        [ -n "$INSTALLED" ] && echo "Installed: $(ls -lh $INSTALLED | awk '{print $5}')" || echo "Installed librose.so: NOT FOUND"
