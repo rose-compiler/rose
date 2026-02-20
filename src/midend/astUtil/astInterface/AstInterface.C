@@ -2797,6 +2797,11 @@ bool DeclarationAttributesIdentical(SgDeclarationStatement*  q1, SgDeclarationSt
     DebugDiff([q1,q2](){ return "AST different attribute is register : " + AstInterface::AstToString(q1) + " vs " + AstInterface::AstToString(q2); });
     return false;
   }
+  if (q1->get_declarationModifier().get_accessModifier().isPrivate() !=
+      q2->get_declarationModifier().get_accessModifier().isPrivate()) { 
+    DebugDiff([q1,q2](){ return "AST different attribute access modifier: " + AstInterface::AstToString(q1) + " vs " + AstInterface::AstToString(q2); });
+    return false;
+  }
 
    auto* p1 = isSgVariableDeclaration(q1), *p2 = isSgVariableDeclaration(q2);
    if (p1 != 0 && p2 != 0) {
@@ -2809,6 +2814,7 @@ bool DeclarationAttributesIdentical(SgDeclarationStatement*  q1, SgDeclarationSt
           return false;
        }
   }
+
 
   return true;
 }
@@ -2921,6 +2927,7 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
       SgBaseClass* p1 = isSgBaseClass(first);
       SgBaseClass* p2 = isSgBaseClass(second);
       return  p1->get_baseClassModifier()->get_modifier() == p2->get_baseClassModifier()->get_modifier() &&
+              p1->get_baseClassModifier()->get_accessModifier() == p2->get_baseClassModifier()->get_accessModifier() &&
               std::string(p1->get_base_class()->get_name().str()) == std::string(p2->get_base_class()->get_name().str());
     } 
   case V_SgMemberFunctionDeclaration:
@@ -2951,6 +2958,10 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
       v1 = decl1->get_functionModifier().isInline();
       v2 = decl2->get_functionModifier().isInline(); 
       DebugDiff([v1,v2](){ return "function attribute inline: " + std::string(v1?"true":"false") + " vs " + std::string(v2?"true":"false"); });
+      if (v1 != v2)  { return false; }
+      v1 = decl1->get_functionModifier().isGnuAttributeNoThrow();
+      v2 = decl2->get_functionModifier().isGnuAttributeNoThrow(); 
+      DebugDiff([v1,v2](){ return "function attribute no_throw: " + std::string(v1?"true":"false") + " vs " + std::string(v2?"true":"false"); });
       if (v1 != v2)  { return false; }
       break;
      }
