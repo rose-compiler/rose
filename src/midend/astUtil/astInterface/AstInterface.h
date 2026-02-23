@@ -239,17 +239,15 @@ public:
   template <class List, class Node>
   static bool AstListIdentical(const List& first, const List& second, 
                            std::function<bool(const Node& first, const Node& second)>* call_on_diff = 0) {
-    if (first.size() != second.size()) {
-       return false;
-    }
-    for (typename List::const_iterator p1 = first.begin(), p2 = second.begin();
-         p1 != first.end(); p1++, p2++) {
+    
+    typename List::const_iterator p1 = first.begin(), p2 = second.begin();
+    for (; p1 != first.end() && p2 != second.end(); p1++, p2++) {
        Node cur1 = *p1, cur2 = *p2;
        if (!AstIdentical(cur1, cur2, call_on_diff)) {
          return false;
        }
     }
-    return true;
+    return p1 == first.end() && p2 == second.end();
   }
   AstNodePtr CreateBlock( const AstNodePtr& orig = AST_NULL) ;
   /* if flatter_s == true, always flatten s if it is a block*/
