@@ -217,7 +217,7 @@ SgAsmJvmFileHeader::unparse(std::ostream &f) const
 
   count = f.tellp();
   auto data = gf->get_data();
-  if (count != data.size()) {
+  if (static_cast<decltype(data.size())>(count) != data.size()) {
     mlog[WARN] << "unparse didn't complete: count==" << count << " data_size==" << data.size() << "\n";
   }
   bytes = reinterpret_cast<const char*>(&(data.pool()[count]));

@@ -343,7 +343,7 @@ void Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      SgAggregateInitializer * aggr_init = isSgAggregateInitializer(expr);
      ASSERT_not_null(aggr_init);
 
-     bool compiler_generated = aggr_init->get_startOfConstruct()->isCompilerGenerated();
+  // bool compiler_generated = aggr_init->get_startOfConstruct()->isCompilerGenerated();
 #if DEBUG__unparseAggrInit
      printf("Enter Unparse_ExprStmt::unparseAggrInit():\n");
      printf("  aggr_init = %p = %s\n", aggr_init, aggr_init->class_name().c_str());
@@ -437,7 +437,7 @@ void Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      printf ("  list.size() = %zu \n",list.size());
 #endif
 
-     size_t last_index = list.size() - 1;
+  // size_t last_index = list.size() - 1;
      for (size_t index = 0; index < list.size(); index++)
         {
           if (index > 0) {

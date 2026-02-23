@@ -450,7 +450,7 @@ NOTES:
       b: then path.extension() == class (TODO:windows runs JVM too)
   4. If positional argument "gov.llnl.T13_Overload" is classname
      a: then look for class in classpath: what if "gov/llnl/T13_Overload.class" exists?
-     b: what if gov/llnl/T13_Overload.class" exists in path, i.e. not in a jar file?
+     b: what if "gov/llnl/T13_Overload.class" exists in path, i.e. not in a jar file?
         - change "gov.llnl.T13_Overload" to "gov/llnl/T13_Overload.class" and look
         - this likely should happen before this call because ::loadClassFile should have been discovered?
 #endif

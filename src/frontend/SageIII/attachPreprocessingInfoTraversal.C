@@ -3982,6 +3982,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #endif
                               previousLocatedNode = locatedNode;
                             }
+                         break;
                        }
 
                  // DQ (3/30/2021): Adding to support comments after statements which contain SgBasicBlock nodes.
@@ -3995,6 +3996,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #endif
                               previousLocatedNode = locatedNode;
                             }
+                         break;
                        }
 
                  // DQ (3/30/2021): Adding to support comments after statements which contain SgBasicBlock nodes.
@@ -4006,6 +4008,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          printf ("Handle the case of SgFortranDo (which contains a SgBasicBlock) \n");
 #endif
                          previousLocatedNode = locatedNode;
+                         break;
                        }
 
                     default:

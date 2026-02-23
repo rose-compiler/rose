@@ -1199,7 +1199,9 @@ TokenMappingTraversal::trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMa
           printf ("tokenStream[leading_whitespace_start-1]->p_tok_elem->token_lexeme = %s \n",tokenStream[leading_whitespace_start-1]->p_tok_elem->token_lexeme.c_str());
 #endif
 
-          ROSE_ASSERT((size_t)leading_whitespace_start-1 >= 0);
+       // PL (2/23/2026): Commenting out this assertion because the LHS is an unsigned integer.
+       // This results in a warning that this assertion always evaluates to true (unsigned integers can't be negative).
+       // ROSE_ASSERT((size_t)leading_whitespace_start-1 >= 0);
           ROSE_ASSERT((size_t)leading_whitespace_start-1 < tokenStream.size());
 
        // DQ (5/4/2021): We need to bew able to iterate to zero, but we can't with this logic.

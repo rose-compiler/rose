@@ -303,7 +303,7 @@ bool InterfaceChecker::compare_decl(SgFunctionDeclaration* f_func_dec, SgFunctio
       SgType* c_return_type = c_func_dec->get_orig_return_type();
 
       if (f_return_type == c_return_type) {
-         for (int i = 0; i < f_name_list.size(); i++) {
+         for (size_t i = 0; i < f_name_list.size(); i++) {
             if (compare_types(f_name_list[i], c_name_list[i])) {
                matches = true;
             }

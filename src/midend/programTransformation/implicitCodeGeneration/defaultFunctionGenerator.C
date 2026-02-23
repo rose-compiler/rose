@@ -10,6 +10,8 @@
 #include "astPostProcessing.h"
 #include "unparser.h"
 
+#include "ROSE_UNUSED.h"
+
 // driscoll6 (01/29/2011) defaultFunctionGenerator prints a lot of debug info when run.
 // Use this to suppress it.
 #define DEBUG_DEFAULT_FUNCTION_GENERATOR SgProject::get_verbose() >= 3
@@ -2292,6 +2294,7 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
      //     SgMemberFunctionType * func_type = new SgFunctionType(func_return_type,false);
      // PP (9/16/25): move orig_return type into declaration
      // was: func_type->set_orig_return_type(func_return_type); //unparser will complain otherwise,reason?
+     ROSE_UNUSED(func_return_type);
 
      if (isSgTemplateInstantiationDefn(parentClassDef1))
         {

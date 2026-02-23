@@ -214,7 +214,7 @@ static void need_assign_and_initializer_unparsed(
                    
       if (might_need_assign_op && inside_for_init_stmt && ctor_init->get_need_name() && ctor_init->get_is_explicit_cast()) {
         need_assign_op = true;
-      } else if (might_need_assign_op && ( ctor_init->get_need_name() && ctor_init->get_is_explicit_cast() ) || use_copy_ctor_syntax) {
+      } else if ( ( might_need_assign_op && ( ctor_init->get_need_name() && ctor_init->get_is_explicit_cast() ) ) || use_copy_ctor_syntax) {
         bool suppressAssignmentSyntax = ( ctor_args_empty && !ctor_init->get_is_explicit_cast() ) ||
                                         ctor_init->get_is_braced_initialized();
         if (!suppressAssignmentSyntax) need_assign_op = true;

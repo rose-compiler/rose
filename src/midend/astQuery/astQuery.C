@@ -30,6 +30,7 @@ VariantVector::VariantVector ( const VariantT & X )
 }
 
 VariantVector::VariantVector ( const VariantVector & X )
+  : vector<VariantT>()
 {
   // printf ("Top of AstQuery<AstQuerySynthesizedAttributeType>::VariantVector copy constructor \n");
   // printVariantVector(*this);

@@ -257,7 +257,7 @@ namespace
 namespace CodeThorn
 {
   // CallEdge impl
-  bool CallEdge::hasProperty(Property prop) const { return kind & prop == prop; }
+  bool CallEdge::hasProperty(Property prop) const { return (kind & prop) == prop; }
   ExpressionKeyType CallEdge::call() const { return expr; }
   // CallEdge end
 

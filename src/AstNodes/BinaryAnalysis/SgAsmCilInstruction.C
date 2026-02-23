@@ -7,6 +7,12 @@
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 
+// PL (2/23/2026): This function is unused, we want to mark it as such so it doesn't emit a warning.
+#if __cplusplus >= 201703L
+[[maybe_unused]]
+#elif defined(__GNUC__)
+__attribute__((unused))
+#endif
 // Temporary enumeration of all possibilities
 static bool isValidCilInstruction()
 {
