@@ -18,6 +18,8 @@ static const char
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/format.hpp>
+#include <boost/iostreams/device/file_descriptor.hpp>
+#include <boost/iostreams/stream.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <assert.h>
@@ -33,8 +35,6 @@ static const char
 #include <iostream>
 #include <regex>
 #include <string>
-
-#include <ext/stdio_filebuf.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -290,8 +290,8 @@ int main(int argc, char *argv[]) {
     const int serverFd = createListenerSocket(ctx.settings);
     while (true) {
         const int clientFd = acceptConnection(serverFd);
-        __gnu_cxx::stdio_filebuf<char> filebuf(clientFd, std::ios::out);
-        std::ostream client(&filebuf);
+        boost::iostreams::file_descriptor_sink sink(clientFd, boost::iostreams::never_close_handle);
+        boost::iostreams::stream<boost::iostreams::file_descriptor_sink> client(sink);
 
         greeting(client);
 

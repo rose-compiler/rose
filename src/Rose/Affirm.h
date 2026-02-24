@@ -2,6 +2,7 @@
 #define ROSE_Affirm_H
 
 #include <Rose/Exception.h>
+#include <string>
 
 namespace Rose {
 

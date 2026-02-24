@@ -669,7 +669,7 @@ protected:
                 bool wasUnbound = !param.isBound;
                 for (size_t idx: param.indexes) {
                     try {
-                        bindLow(idx, value);
+                        bindLowDispatch(idx, value);
                     } catch (const Exception &e) {
                         if (param.indexes.size() > 1)
                             state(Statement::DEAD); // might be only partly bound now
@@ -783,7 +783,38 @@ protected:
     // Get the value of a particular column of the current row.
     virtual Optional<std::string> getString(size_t idx) = 0;
     virtual Optional<std::vector<std::uint8_t>> getBlob(size_t idx) = 0;
-};
+
+private:
+    void bindLowDispatch(size_t idx, bool value) {
+        bindLow(idx, value ? 1 : 0);
+    }
+
+    // signed integral -> int64_t
+    template<class T>
+    typename std::enable_if<std::is_integral<T>::value &&
+                            std::is_signed<T>::value &&
+                           !std::is_same<T, bool>::value, void>::type
+    bindLowDispatch(size_t idx, T value) {
+        bindLow(idx, static_cast<int64_t>(value));
+    }
+
+    // unsigned integral -> size_t
+    template<class T>
+    typename std::enable_if<std::is_integral<T>::value &&
+                            std::is_unsigned<T>::value &&
+                           !std::is_same<T, bool>::value, void>::type
+    bindLowDispatch(size_t idx, T value) {
+        bindLow(idx, static_cast<size_t>(value));
+    }
+
+    // non-integral -> forward (e.g., double)
+    template<class T>
+    typename std::enable_if<!std::is_integral<T>::value, void>::type
+    bindLowDispatch(size_t idx, const T &value) {
+        bindLow(idx, value);
+    }
+
+}; // class StatementBase
 
 template<typename T>
 inline Optional<T>

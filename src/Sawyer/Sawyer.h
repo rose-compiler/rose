@@ -415,6 +415,7 @@ SAWYER_EXPORT std::string thisExecutablePath();
     #include <boost/serialization/access.hpp>
     #include <boost/serialization/nvp.hpp>
     #include <boost/serialization/split_member.hpp>
+    #include <boost/serialization/vector.hpp>
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
