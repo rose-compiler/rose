@@ -18,6 +18,7 @@
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
 #include <string>
+#include <type_traits>
 #include <vector>
 #include <cstdint>
 
@@ -705,6 +706,58 @@ protected:
     virtual void bindLow(size_t idx, Nothing) = 0;
     virtual void bindLow(size_t idx, const std::vector<uint8_t> &data) = 0;
 
+private:
+    // bindLowDispatch routes calls to bindLow() in a platform independent way
+    void bindLowDispatch(size_t idx, int v)            { bindLow(idx, v); }
+    void bindLowDispatch(size_t idx, int64_t v)        { bindLow(idx, v); }
+    void bindLowDispatch(size_t idx, size_t v)         { bindLow(idx, v); }
+    void bindLowDispatch(size_t idx, double v)         { bindLow(idx, v); }
+    void bindLowDispatch(size_t idx, const std::string &v) { bindLow(idx, v); }
+    void bindLowDispatch(size_t idx, const char *v)    { bindLow(idx, v); }
+    void bindLowDispatch(size_t idx, Nothing v)        { bindLow(idx, v); }
+    void bindLowDispatch(size_t idx, const std::vector<uint8_t> &v) { bindLow(idx, v); }
+
+    // long overload enabled only when distinct from int64_t
+    template <bool Enable = !std::is_same<long, int64_t>::value>
+    typename std::enable_if<Enable, void>::type
+    bindLowDispatch(size_t idx, long v) {
+        bindLow(idx, static_cast<int64_t>(v));
+    }
+
+    // unsigned long overload enabled only when distinct from size_t
+    template <bool Enable = !std::is_same<unsigned long, size_t>::value>
+    typename std::enable_if<Enable, void>::type
+    bindLowDispatch(size_t idx, unsigned long v) {
+        bindLow(idx, static_cast<size_t>(v));
+    }
+
+    template<class T>
+    typename std::enable_if<
+        std::is_integral<T>::value &&
+        !std::is_same<T, int>::value &&
+        !std::is_same<T, long>::value &&
+        !std::is_same<T, unsigned long>::value &&
+        !std::is_same<T, int64_t>::value &&
+        !std::is_same<T, size_t>::value &&
+        !std::is_same<T, bool>::value,
+      void>::type
+    bindLowDispatch(size_t idx, T v) {
+        if (std::is_signed<T>::value) {
+            bindLow(idx, static_cast<int64_t>(v));
+        }
+        else {
+            bindLow(idx, static_cast<size_t>(v));
+        }
+    }
+
+    // for type safety across platforms, explicitly handle bool
+    void bindLowDispatch(size_t idx, bool v) {
+        bindLow(idx, v ? 1 : 0);
+    }
+
+    static_assert(sizeof(long) <= sizeof(int64_t), "unexpected ABI: long wider than int64_t");
+
+protected:
     Iterator makeIterator() {
         return Iterator(shared_from_this());
     }
@@ -783,38 +836,7 @@ protected:
     // Get the value of a particular column of the current row.
     virtual Optional<std::string> getString(size_t idx) = 0;
     virtual Optional<std::vector<std::uint8_t>> getBlob(size_t idx) = 0;
-
-private:
-    void bindLowDispatch(size_t idx, bool value) {
-        bindLow(idx, value ? 1 : 0);
-    }
-
-    // signed integral -> int64_t
-    template<class T>
-    typename std::enable_if<std::is_integral<T>::value &&
-                            std::is_signed<T>::value &&
-                           !std::is_same<T, bool>::value, void>::type
-    bindLowDispatch(size_t idx, T value) {
-        bindLow(idx, static_cast<int64_t>(value));
-    }
-
-    // unsigned integral -> size_t
-    template<class T>
-    typename std::enable_if<std::is_integral<T>::value &&
-                            std::is_unsigned<T>::value &&
-                           !std::is_same<T, bool>::value, void>::type
-    bindLowDispatch(size_t idx, T value) {
-        bindLow(idx, static_cast<size_t>(value));
-    }
-
-    // non-integral -> forward (e.g., double)
-    template<class T>
-    typename std::enable_if<!std::is_integral<T>::value, void>::type
-    bindLowDispatch(size_t idx, const T &value) {
-        bindLow(idx, value);
-    }
-
-}; // class StatementBase
+};
 
 template<typename T>
 inline Optional<T>
