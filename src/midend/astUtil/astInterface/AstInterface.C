@@ -2827,13 +2827,12 @@ bool AstInterface:: AstTypeIdentical(const AstNodeType& _first, const AstNodeTyp
                    std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff)
 {
   if (_first == _second) { return true; }
-  DebugDiff([&_first,&_second](){ return "Checking AST Type Identical:" + GetTypeName(_first) + " vs " + GetTypeName(_second); });
   SgType* first = AstNodeTypeImpl(_first).get_ptr(), *second = AstNodeTypeImpl(_second).get_ptr(); 
+  DebugDiff([&first,&second](){ return "Checking AST Type Identical:" + first->class_name() + "::" + first->unparseToString() + " vs " + second->class_name() + "::" + second->unparseToString(); });
   if (first == 0 || second == 0) {
      DebugDiff([](){ return "AST different: one of them is null."; });
      return false;
   }
-  DebugDiff([&_first,&_second](){ return "Checking Type Identical:" + GetTypeName(_first) + " vs " + GetTypeName(_second); });
   if (first->variantT() != second->variantT()) { 
       if (call_on_diff != 0 && !(*call_on_diff)(_first, _second)) {
          DebugDiff([&_first,&_second](){ return "AST considered the same with variant due to caller intervention: " + GetTypeName(_first) + " vs " + GetTypeName(_second); });
@@ -2842,9 +2841,18 @@ bool AstInterface:: AstTypeIdentical(const AstNodeType& _first, const AstNodeTyp
       DebugDiff([&_first,&_second](){ return "AST different variant: " + GetTypeName(_first) + " vs " + GetTypeName(_second); });
       return false;
   }
-  if (first->unparseToString() == second->unparseToString()) {
-    DebugDiff([](){ return "Ast Type is equivalent."; });
-    return true;
+  switch (first->variantT()) {
+   case V_SgEnumType: {
+        SgEnumType* t1 = isSgEnumType(first), *t2 = isSgEnumType(second);
+        std::string n1 = std::string(t1->get_name().str()), n2 = std::string(t2->get_name().str());
+        return (n1 == n2 || (n1.find("anonymous_0x") < n1.size() && n2.find("anonymous_0x") < n2.size()))
+               && AstIdentical(t1->get_declaration(), t2->get_declaration());
+     }
+   default:
+      if (first->unparseToString() == second->unparseToString()) {
+        DebugDiff([](){ return "Ast Type is equivalent."; });
+        return true;
+      }
   }
   if (call_on_diff != 0 && !(*call_on_diff)(_first, _second)) {
          DebugDiff([&_first,&_second](){ return "AST considered the same with variant due to caller intervention"; });
