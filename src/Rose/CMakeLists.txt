@@ -59,5 +59,7 @@ install(FILES
   SourceLocation.h
   StringUtility.h
   Yaml.h
+  FlowGraphInterface.h
+  SawyerGraphConnection.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose)

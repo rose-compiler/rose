@@ -616,6 +616,8 @@ nobase_pkginclude_HEADERS=								\
 	Rose/StringUtility/SplitJoin.h							\
 	Rose/StringUtility/StringToNumber.h						\
 	Rose/Traits.h									\
+	Rose/FlowGraphInterface.h								\
+	Rose/SawyerGraphConnection.h                                                    \
 	Rose/Traits/Describe.h								\
 	Rose/Traits/describe/declarations.h						\
 	Rose/Traits/describe/fields.h							\
