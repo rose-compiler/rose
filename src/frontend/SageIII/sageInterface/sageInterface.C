@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 #include "markLhsValues.h"
 #include "fixupNames.h"
@@ -6,14 +5,11 @@
 #include <Sawyer/Message.h>
 
 #include "AstJSONGeneration.h"
-
 #include "SgNodeHelper.h" //Markus's helper functions
 
 #include "Rose/AST/Utility.h"
-
 #include "sageInterface.h"
 #include "Combinatorics.h"
-
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #include "replaceExpressionWithStatement.h"
@@ -21,19 +17,11 @@
 #include "constantFolding.h"
 #endif
 
-// DQ (10/14/2006): Added supporting help functions. tps commented out since it caused no compilation errors
-//#include "rewrite.h"
-
-// Liao 1/24/2008 : need access to scope stack sometimes
 #include "sageBuilder.h"
-
-// DQ (3/14/2017): Try to comment this out since it is not tested (used in get_C_array_dimensions(),
-// from midend/programTransformation/ompLowering/omp_lowering.cpp, but not tested).
 #include "sageGeneric.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 // For reusing some code from Qing's loop optimizer
-// Liao, 2/26/2009
 #include "AstInterface_ROSE.h"
 #include "LoopTransformInterface.h"
 
@@ -160,10 +148,6 @@ void
 SageInterface::deleteAllNodes()
    {
   // This function uses a memory pool traversal specific to the SgFile IR nodes
-
-  // We need to use this function to get all of the SgNodes.
-  // template <typename NodeType> std::vector<NodeType*> getSgNodeListFromMemoryPool()
-
      class MyTraversal : public ROSE_VisitTraversal
         {
           public:
@@ -188,21 +172,12 @@ SageInterface::deleteAllNodes()
            virtual ~MyTraversal() {}
         };
 
-  // For debugging, recode the number of IR nodes before we delete the AST.
-     size_t numberOfNodes_before = numberOfNodes();
-
+  // For debugging, record the number of IR nodes before we delete the AST.
+     size_t numberOfNodes_before{numberOfNodes()};
      MyTraversal my_traversal;
-
-  // We need to visit all of the IR nodes, not just those of a specific class in ROSE.
-  // NodeType::traverseMemoryPoolNodes(my_traversal);
      my_traversal.traverseMemoryPool();
 
-  // return my_traversal.resultlist;
-
-
-  // vector<SgNode*> nodeList = getSgNodeListFromMemoryPool<SgNode>();
-     vector<SgNode*> & nodeList = my_traversal.resultlist;
-
+     vector<SgNode*>& nodeList = my_traversal.resultlist;
      printf ("In SageInterface::deleteAllNodes(): get list of SgNode: nodeList.size() = %zu \n",nodeList.size());
 
      vector<SgNode*>::iterator i = nodeList.begin();
@@ -294,41 +269,19 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
   // existing set based on if a set defined by the key (firstNondefiningDeclaration) is present.
      ASSERT_not_null(decl);
 
-#if 0
-     printf ("TOP of SageInterface::DeclarationSets::addDeclaration(): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
-#endif
-
      SgDeclarationStatement* firstNondefiningDeclaration = decl->get_firstNondefiningDeclaration();
 
      if (firstNondefiningDeclaration == nullptr)
         {
        // It appears that some loop transformations (pass3.C) don't set the firstNondefiningDeclaration.
-#if 0
-          printf ("WARNING: SageInterface::DeclarationSets::addDeclaration(): firstNondefiningDeclaration == NULL: decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
-#endif
           return;
         }
      ASSERT_not_null(firstNondefiningDeclaration);
 
      if (decl == firstNondefiningDeclaration)
         {
-#if 0
-          if (isSgTypedefDeclaration(decl) != nullptr)
-             {
-               printf ("TOP of SageInterface::DeclarationSets::addDeclaration(): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
-             }
-#endif
           if (declarationMap.find(firstNondefiningDeclaration) == declarationMap.end())
              {
-#if 0
-               printf ("In SageInterface::DeclarationSets::addDeclaration(): Add a set for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
-#endif
-#if 0
-               if (isSgTypedefDeclaration(decl) != nullptr)
-                  {
-                    printf ("In SageInterface::DeclarationSets::addDeclaration(): Add a set for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
-                  }
-#endif
             // Add a new set.
                declarationMap[decl] = new set<SgDeclarationStatement*>();
 
@@ -342,23 +295,11 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
              {
                if (declarationMap[firstNondefiningDeclaration]->find(decl) == declarationMap[firstNondefiningDeclaration]->end())
                   {
-#if 0
-                    printf ("In SageInterface::DeclarationSets::addDeclaration(): Add the declaration to the existing set: decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
-#endif
-#if 0
-                    if (isSgTypedefDeclaration(decl) != nullptr)
-                       {
-                         printf ("In SageInterface::DeclarationSets::addDeclaration(): Add the declaration to the existing set: decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
-                       }
-#endif
                  // Add a declaration to an existing set.
                     declarationMap[firstNondefiningDeclaration]->insert(decl);
                   }
                  else
                   {
-#if 0
-                    printf ("WARNING: SageInterface::DeclarationSets::addDeclaration(): A set already exists for decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
-#endif
                  // DQ (4/5/2014): The case of SgFunctionParameterList fails only for boost examples (e.g. test2014_240.C).
                  // Problem uses are associated with SgTemplateInstantiationFunctionDecl IR nodes.
                     bool ignore_error = (isSgFunctionParameterList(decl) != nullptr);
@@ -404,29 +345,17 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                  // Add a declaration to an existing set.
                     declarationMap[firstNondefiningDeclaration]->insert(decl);
                   }
-                 else
-                  {
-#if 0
-                    printf ("This declaration is already in the set (skip adding it twice): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
-#endif
-                  }
              }
             else
              {
             // In this case the defining declaration might be the only declaration to be traversed and
             // so a set has not been built yet.
-#if 0
-               printf ("In SageInterface::DeclarationSets::addDeclaration(): Adding set and declaration for the firstNondefiningDeclaration = %p = %s = %s \n",
-                    firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),get_name(firstNondefiningDeclaration).c_str());
-#endif
 
             // DQ (4/5/2014): Just build the set and don't insert the firstNondefiningDeclaration.
             // If we were to do so then it would be an error to use the insert it later.
             // Note recursive call.
-            // addDeclaration(firstNondefiningDeclaration);
                declarationMap[firstNondefiningDeclaration] = new set<SgDeclarationStatement*>();
-
-               ROSE_ASSERT (declarationMap.find(firstNondefiningDeclaration) != declarationMap.end());
+               ASSERT_require(declarationMap.find(firstNondefiningDeclaration) != declarationMap.end());
 
             // DQ (4/5/2014): We have to insert this since it is different from the firstNondefiningDeclaration.
             // Add the declaration to the existing set.
@@ -440,10 +369,6 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
 #endif
              }
         }
-
-#if 0
-     printf ("Leaving SageInterface::DeclarationSets::addDeclaration(): decl = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
-#endif
    }
 
 const std::set<SgDeclarationStatement*>*
@@ -599,9 +524,6 @@ string getVariantName ( VariantT v )
 
   // This code is far simpler (if the function is static)
 
-  // DQ (4/8/2004): Modified code to use new global list of sage
-  // class names (simpler this way)
-  // return string(SgTreeTraversal<int,int>::get_variantName(v));
      extern const char* roseGlobalVariantNameList[];
      return string(roseGlobalVariantNameList[v]);
    }
@@ -625,7 +547,6 @@ SageInterface::hasTemplateSyntax( const SgName & name )
           usingTemplateSyntax = false;
         }
 
-  // return (name.getString().find('<') == string::npos);
      return usingTemplateSyntax;
    }
 
@@ -761,17 +682,14 @@ SageInterface::enclosingNamespaceScope( SgDeclarationStatement* declaration )
   // these details.  If the declaration is not in a namespace as computed
   // in the chain of scopes then this function returns nullptr.
 
-     ROSE_ASSERT(declaration != NULL);
+     ASSERT_not_null(declaration);
      SgScopeStatement* tempScope = declaration->get_scope();
 
   // Loop back to the first namespace or stop at global scope (stop on either a namespace or the global scope)
      while ( isSgNamespaceDefinitionStatement(tempScope) == nullptr && isSgGlobal(tempScope) == nullptr )
         {
           tempScope = tempScope->get_scope();
-          ROSE_ASSERT(tempScope != NULL);
-#if 0
-          printf ("Iterating back through scopes: tempScope = %p = %s = %s \n",tempScope,tempScope->class_name().c_str(),SageInterface::get_name(tempScope).c_str());
-#endif
+          ASSERT_not_null(tempScope);
         }
 
      SgNamespaceDefinitionStatement* namespaceScope = isSgNamespaceDefinitionStatement(tempScope);
