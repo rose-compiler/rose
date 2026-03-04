@@ -4098,6 +4098,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           case e_cxx20_standard:
           case e_cxx23_standard:
           case e_cxx26_standard: {
+            if (get_sourceFileUsesCppFileExtension() == false) {
+               printf ("WARNING: C source file name specified with explicit selection of a C++ dialect (-rose:Cxx or -std=c++)\n");
+               set_Cxx_only(true);
+               Rose::is_Cxx_language = true;
+               Rose::is_C_language = false;
+            }
             break; // NOP
           }
           case e_upcxx_standard: {
