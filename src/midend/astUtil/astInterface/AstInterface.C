@@ -2768,15 +2768,15 @@ IsBlock( const AstNodePtr& _n, std::string* blockname, AstNodeList* _stmts)
 }
 
 bool DeclarationAttributesIdentical(SgDeclarationStatement*  q1, SgDeclarationStatement* q2) {
-  if (q1 == 0 || q2 == 0) {
-     DebugDiff([q1,q2](){ return "AST attribute checking : at least one of the declaration is null."; });
+  if (q1 == nullptr || q2 == nullptr) {
+     DebugDiff([](){ return "AST attribute checking : at least one of the declaration is null."; });
      return q1 == q2;
   }
   if (q1->get_definingDeclaration() != 0 || q2->get_definingDeclaration() != 0) {
      q1 = q1->get_definingDeclaration();
      q2 = q2->get_definingDeclaration();
-     if (q1 == 0 || q2 == 0) {
-       DebugDiff([q1,q2](){ return "AST different attribute checking : only one of the definining declaration is null. Returnning identical"; });
+     if (q1 == nullptr || q2 == nullptr) {
+       DebugDiff([](){ return "AST different attribute checking : only one of the definining declaration is null. Returnning identical"; });
        return true;
      }
   }
@@ -2855,7 +2855,7 @@ bool AstInterface:: AstTypeIdentical(const AstNodeType& _first, const AstNodeTyp
       }
   }
   if (call_on_diff != 0 && !(*call_on_diff)(_first, _second)) {
-         DebugDiff([&_first,&_second](){ return "AST considered the same with variant due to caller intervention"; });
+         DebugDiff([](){ return "AST considered the same with variant due to caller intervention"; });
          return true;
   }
   DebugDiff([](){ return "Ast Type is not equivalent."; });
