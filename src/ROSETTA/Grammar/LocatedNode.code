@@ -1,41 +1,34 @@
 HEADER_START
-     public:
+  public:
+    const std::string& getFilenameString() const;
 
-       // DQ (8/20/2004): Make this deprecated since we should remove this (or should we?)
-       // If we want to preserve it we should make it a member function of SgNode?
-       // Function added by DQ (7/22/2001)
-          const std::string & getFilenameString() const;
+  protected:
+    void post_construction_initialization() override;
 
-     protected:
-        void post_construction_initialization() override;
+  private:
+    $CLASSNAME(const $CLASSNAME& X); /* until we know what to do with it */
 
-     private:
-          $CLASSNAME( const $CLASSNAME & X ); /* until we know what to do with it */
+  public:
+    // [MK] Member function to
+    // ! attach PreprocessingInfo object to the node. It can only prepend or append the info. to the existing list of preprocessing info.
+    void addToAttachedPreprocessingInfo(PreprocessingInfo* prepInfoPtr, PreprocessingInfo::RelativePositionType locationInList=PreprocessingInfo::after);
 
-     public:
-       // [MK] Member function to
-       // ! attach PreprocessingInfo object to the node. It can only prepend or append the info. to the existing list of preprocessing info.
-          void addToAttachedPreprocessingInfo( PreprocessingInfo *prepInfoPtr, PreprocessingInfo::RelativePositionType locationInList = PreprocessingInfo::after );
+    //! Insert prepInfo After (or before if last parameter is false) an anchor info ptr  in the list of preprocessing info attached to the current node. This is useful to insert things in the middle.
+    void insertToAttachedPreprocessingInfo(PreprocessingInfo* prepInfoPtr, PreprocessingInfo* anchorInfoPtr, bool insertAfter=true);
 
-        // Liao 1/27/2015
-        //! Insert prepInfo After (or before if last parameter is false) an anchor info ptr  in the list of preprocessing info attached to the current node. This is useful to insert things in the middle.
-          void insertToAttachedPreprocessingInfo( PreprocessingInfo *prepInfoPtr, PreprocessingInfo* anchorInfoPtr, bool insertAfter = true);
-
-       // DQ (2/6/2003):
-       /*! \brief Interface function to implement original SAGE interface to
-                  SgFile_Info objects.
+    /*! \brief Interface function to implement original SAGE interface to SgFile_Info objects.
 
           This function is added explicitly to provide the older interface to the file_info
           pointer which has been removed and replaced with two Sg_File_Info pointers to mark the
           start and end of the located node object (previously we only stored the starting location).
           This function still returns the starting location of the construct.
-        */
-          virtual Sg_File_Info* get_file_info() const override;
+     */
+    virtual Sg_File_Info* get_file_info() const override;
 
-      //! Access function calls set_startingConstruct(Sg_File_Info*) member function
-          virtual void set_file_info(Sg_File_Info* X);
+    //! Access function calls set_startingConstruct(Sg_File_Info*) member function
+    virtual void set_file_info(Sg_File_Info* X);
 
-      /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as compiler generated.
+    /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as compiler generated.
 
           Since the flag for isCompilerGenerated is stored in the Sg_File_Info, and because there
           are up to three of these for the source position information to be comprehensive, this
@@ -43,20 +36,19 @@ HEADER_START
           they are not set uniformally.
 
           \internal This function marks the Sg_File_Info objects that must already be present.
-       */
-          void setCompilerGenerated ();
-          void unsetCompilerGenerated ();
+     */
+    void setCompilerGenerated();
+    void unsetCompilerGenerated();
 
-       // DQ (7/5/2014): Added interface function to simplify code.
-      /*! \brief Simple test for if this is a compiler generated node.
+    /*! \brief Simple test for if this is a compiler generated node.
 
           This is a simpler interface to check the settings of this associated flag in the multiple Sg_File_Info objects.
 
           \internal This function also checks the consistancy of the setting in the different Sg_File_Info objects.
-       */
-          bool isCompilerGenerated () const;
+     */
+    bool isCompilerGenerated() const;
 
-      /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as a transformation.
+    /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as a transformation.
 
           Since the flag for isTransformation is stored in the Sg_File_Info, and because there
           are up to three of these for the source position information to be comprehensive, this
@@ -64,20 +56,19 @@ HEADER_START
           they are not set uniformally.
 
           \internal This function marks the Sg_File_Info objects that must already be present.
-       */
-          void setTransformation ();
-          void unsetTransformation ();
+     */
+    void setTransformation();
+    void unsetTransformation();
 
-       // DQ (12/4/2014): Added interface function to simplify code.
-      /*! \brief Simple test for if this is a part of a transformation.
+    /*! \brief Simple test for if this is a part of a transformation.
 
           This is a simpler interface to check the settings of this associated flag in the multiple Sg_File_Info objects.
 
           \internal This function also checks the consistancy of the setting in the different Sg_File_Info objects.
-       */
-          bool isTransformation () const;
+     */
+    bool isTransformation() const;
 
-      /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as front-end specific (generated by the front-end to support a specific backend compiler; e.g. GNU gcc and g++).
+    /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as front-end specific (generated by the front-end to support a specific backend compiler; e.g. GNU gcc and g++).
 
           Since the flag for isFrontendSpecific is stored in the Sg_File_Info, and because there
           are up to three of these for the source position information to be comprehensive, this
@@ -85,20 +76,19 @@ HEADER_START
           they are not set uniformally.
 
           \internal This function marks the Sg_File_Info objects that must already be present.
-       */
-          void setFrontendSpecific ();
-          void unsetFrontendSpecific ();
+     */
+    void setFrontendSpecific();
+    void unsetFrontendSpecific();
 
-       // DQ (12/21/2019): Added interface function to simplify code.
-      /*! \brief Simple test for if this is a frontend specific IR node.
+    /*! \brief Simple test for if this is a frontend specific IR node.
 
           This is a simpler interface to check the settings of this associated flag in the multiple Sg_File_Info objects.
 
           \internal This function also checks the consistancy of the setting in the different Sg_File_Info objects.
-       */
-          bool isFrontendSpecific () const;
+     */
+    bool isFrontendSpecific() const;
 
-      /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as shared.
+    /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as shared.
 
           Since the flag for isShared is stored in the Sg_File_Info, and because there
           are up to three of these for the source position information to be comprehensive, this
@@ -106,20 +96,19 @@ HEADER_START
           they are not set uniformally.
 
           \internal This function marks the Sg_File_Info objects that must already be present.
-       */
-          void setShared();
-          void unsetShared();
+     */
+    void setShared();
+    void unsetShared();
 
-       // DQ (12/21/2019): Added interface function to simplify code.
-      /*! \brief Simple test for if this is a shared IR node.
+    /*! \brief Simple test for if this is a shared IR node.
 
           This is a simpler interface to check the settings of this associated flag in the multiple Sg_File_Info objects.
 
           \internal This function also checks the consistancy of the setting in the different Sg_File_Info objects.
-       */
-          bool isShared () const;
+     */
+    bool isShared() const;
 
-      /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as to when the information was unavilable in the front-end (even if it typically is there are special cases).
+    /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as to when the information was unavilable in the front-end (even if it typically is there are special cases).
 
           Since the flag for isSourcePositionUnavailableInFrontend is stored in the Sg_File_Info, and because there
           are up to three of these for the source position information to be comprehensive, this
@@ -127,11 +116,11 @@ HEADER_START
           they are not set uniformally.
 
           \internal This function marks the Sg_File_Info objects that must already be present.
-       */
-          void setSourcePositionUnavailableInFrontend();
-          void unsetSourcePositionUnavailableInFrontend();
+     */
+    void setSourcePositionUnavailableInFrontend();
+    void unsetSourcePositionUnavailableInFrontend();
 
-      /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as to when the information was unavilable in the front-end (even if it typically is there are special cases).
+    /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as to when the information was unavilable in the front-end (even if it typically is there are special cases).
 
           Since the flag for isOutputInCodeGeneration is stored in the Sg_File_Info, and because there
           are up to three of these for the source position information to be comprehensive, this
@@ -139,14 +128,13 @@ HEADER_START
           they are not set uniformally.
 
           \internal This function marks the Sg_File_Info objects that must already be present.
-       */
-          void setOutputInCodeGeneration();
-          void unsetOutputInCodeGeneration();
+     */
+    void setOutputInCodeGeneration();
+    void unsetOutputInCodeGeneration();
 
-       // DQ (9/3/2021): Adding for the interface defined at the SgLocatedNode level.
-          bool isOutputInCodeGeneration() const;
+    bool isOutputInCodeGeneration() const;
 
-      /*! \brief Allow IR nodes (mostly SgLocatedNode) to be queried for there physical file ID.
+    /*! \brief Allow IR nodes (mostly SgLocatedNode) to be queried for there physical file ID.
 
           Since the value for the physical_file_id is stored in the Sg_File_Info, and because there
           are up to three of these for the source position information to be comprehensive, this
@@ -154,424 +142,381 @@ HEADER_START
           they are not set uniformally.
 
           \internal This function marks the Sg_File_Info objects that must already be present.
-       */
-          int get_physical_file_id();
+     */
+    int get_physical_file_id();
 
 #if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const override;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const override;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const override;
+    virtual void fixupCopy_scopes(SgNode* copy, SgCopyHelp& help) const override;
+    virtual void fixupCopy_symbols(SgNode* copy, SgCopyHelp& help) const override;
+    virtual void fixupCopy_references(SgNode* copy, SgCopyHelp& help) const override;
 #else
-       // DQ (11/1/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
-          virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+    virtual void fixupCopy(SgNode* copy, SgCopyHelp& help) const;
 #endif
 
-      /*! \brief Computes the number of nodes in the defined subtree of the AST.
+  public:
 
-          This function is used as a basis for steps in AST isomophism tests.
-       */
-       // PC (7/9/2009): This function is not defined.
-       // size_t numberOfNodesInSubtree();
-
-     public:
-
-// #ifndef ROSE_USE_SWIG_SUPPORT
 #ifndef SWIG
-       // [MK] Member function to access attached preprocessing info
-          AttachedPreprocessingInfoType*& getAttachedPreprocessingInfo(void);
+    AttachedPreprocessingInfoType* & getAttachedPreprocessingInfo();
 #endif
-
-       // DQ (4/10/2006): This is replaced by a better interface for attributes.
-       // DQ (1/2/2006): Added attribute mechanism to SgLocatedNode
-       // AstAttributeMechanism & attribute();
-
-       // DQ (12/30/2009): This is moved to be a member function instead of a local inlined
-       // function in global scope.  This implementation better supports the optional use
-       // of smaller separate files generated by ROSETTA. The name is changed to both be
-       // more clear and match the naming convention in ROSE.
-       // inline Sg_File_Info* New_File_Info( SgLocatedNode *p)
-       // Sg_File_Info* New_File_Info( SgLocatedNode *p);
-          Sg_File_Info* generateMatchingFileInfo();
+    Sg_File_Info* generateMatchingFileInfo();
 
 HEADER_END
 
 HEADER_TOKEN_START
-// DQ (3/24/2007): These are added from Rama's
-// work on the lexical analysis of Fortran.  There will
-// be similar values for C and C++ (and Python at some point).
 
-// DQ (3/24/2007): We should put this in a namespace or rename it.
-struct token_element
-   {
-     std::string token_lexeme;
-     int token_id;
-   };
+struct token_element {
+    std::string token_lexeme;
+    int token_id;
+};
 
-// DQ (4/14/2007): New enum values are language specific to clarity.
-// The "index + language_specific_offset" permits IR node enum values
-// that will be grouped appropriately.
-// DQ (3/24/2007): first versions of tokens using "ROSE_" prefix was judged overdone.
-// Language specific enum values for Fortran 2003 tokens
-// enum ROSE_Fortran_Identifiers
-enum ROSE_Fortran_Keywords
-   {
-      FORTRAN_ABSTRACT = 0 + 0,
-      FORTRAN_ACCESS = 1 + 0,
-      FORTRAN_ACTION = 2 + 0,
-      FORTRAN_ALLOCATE = 3 + 0,
-      FORTRAN_ALLOCATABLE = 4 + 0,
-      FORTRAN_ASSIGN = 5 + 0,
-      FORTRAN_ASSOCIATE = 6 + 0,
-      FORTRAN_ASYNCHRONOUS = 7 + 0,
-      FORTRAN_BACKSPACE = 8 + 0,
-      FORTRAN_BIND = 9 + 0,
-      FORTRAN_BLANK = 10 + 0,
-      FORTRAN_BLOCK_DATA = 11 + 0,
-      FORTRAN_CALL = 12 + 0,
-      FORTRAN_CHARACTER = 13 + 0,
-      FORTRAN_CLASS = 14 + 0,
-      FORTRAN_CLOSE = 15 + 0,
-      FORTRAN_CONTINUE = 16 + 0,
-      FORTRAN_CYCLE = 17 + 0,
-      FORTRAN_CASE = 18 + 0,
-      FORTRAN_COMMON = 19 + 0,
-      FORTRAN_COMPLEX = 20 + 0,
-      FORTRAN_CONTAINS = 21 + 0,
-      FORTRAN_DEALLOCATE = 22 + 0,
-      FORTRAN_DATA = 23 + 0,
-      FORTRAN_DEFERRED = 24 + 0,
-      FORTRAN_DELIM = 25 + 0,
-      FORTRAN_DIMENSION = 26 + 0,
-      FORTRAN_DO = 27 + 0,
-      FORTRAN_DT = 28 + 0,
-      FORTRAN_DOUBLEPRECISION = 29 + 0,
-      FORTRAN_ENCODING = 30 + 0,
-      FORTRAN_END_CASE = 31 + 0,
-      FORTRAN_ENDDO = 32 + 0,
-      FORTRAN_END_FILE = 33 + 0,
-      FORTRAN_END_ENUM = 34 + 0,
-      FORTRAN_END_INTERFACE = 35 + 0,
-      FORTRAN_END_TYPE = 36 + 0,
-      FORTRAN_ERR = 37 + 0,
-      FORTRAN_ERRMSG = 38 + 0,
-      FORTRAN_EXIT = 39 + 0,
-      FORTRAN_ELSE = 40 + 0,
-      FORTRAN_ELSEWHERE = 41 + 0,
-      FORTRAN_ELSEIF = 42 + 0,
-      FORTRAN_ENDIF = 43 + 0,
-      FORTRAN_ENTRY = 44 + 0,
-      FORTRAN_END = 45 + 0,
-      FORTRAN_ENUM = 46 + 0,
-      FORTRAN_ENUMERATOR = 47 + 0,
-      FORTRAN_EQUIVALENCE = 48 + 0,
-      FORTRAN_EXTERNAL = 49 + 0,
-      FORTRAN_EXTENDS = 50 + 0,
-      FORTRAN_FILE = 51 + 0,
-      FORTRAN_FINAL = 52 + 0,
-      FORTRAN_FMT = 53 + 0,
-      FORTRAN_FORALL = 54 + 0,
-      FORTRAN_FORM = 55 + 0,
-      FORTRAN_FORMATTED = 56 + 0,
-      FORTRAN_FORMAT = 57 + 0,
-      FORTRAN_FLUSH = 58 + 0,
-      FORTRAN_FUNCTION = 59 + 0,
-      FORTRAN_GENERIC = 60 + 0,
-      FORTRAN_GOTO = 61 + 0,
-      FORTRAN_ID = 62 + 0,
-      FORTRAN_IF = 63 + 0,
-      FORTRAN_INQUIRE = 64 + 0,
-      FORTRAN_INTEGER = 65 + 0,
-      FORTRAN_IOMSG = 66 + 0,
-      FORTRAN_IOSTAT = 67 + 0,
-      FORTRAN_IMPLICIT = 68 + 0,
-      FORTRAN_IMPLICIT_NONE = 69 + 0,
-      FORTRAN_IMPORT = 70 + 0,
-      FORTRAN_INTERFACE = 71 + 0,
-      FORTRAN_INTENT = 72 + 0,
-      FORTRAN_INTRINSIC = 73 + 0,
-      FORTRAN_LEN = 74 + 0,
-      FORTRAN_LOGICAL = 75 + 0,
-      FORTRAN_KIND = 76 + 0,
-      FORTRAN_MODULE_PROC = 77 + 0,
-      FORTRAN_MODULE = 78 + 0,
-      FORTRAN_NON_INTRINSIC = 79 + 0,
-      FORTRAN_NON_OVERRIDABLE = 80 + 0,
-      FORTRAN_NULL = 81 + 0,
-      FORTRAN_NULLIFY = 82 + 0,
-      FORTRAN_NAMELIST = 83 + 0,
-      FORTRAN_NML = 84 + 0,
-      FORTRAN_NONE = 85 + 0,
-      FORTRAN_NOPASS = 86 + 0,
-      FORTRAN_ONLY = 87 + 0,
-      FORTRAN_OPEN = 88 + 0,
-      FORTRAN_OPTIONAL = 89 + 0,
-      FORTRAN_PARAMETER = 90 + 0,
-      FORTRAN_PASS = 91 + 0,
-      FORTRAN_PAUSE = 92 + 0,
-      FORTRAN_POINTER = 93 + 0,
-      FORTRAN_PRINT = 94 + 0,
-      FORTRAN_PRIVATE = 95 + 0,
-      FORTRAN_PROCEDURE = 96 + 0,
-      FORTRAN_PROGRAM = 97 + 0,
-      FORTRAN_PROTECTED = 98 + 0,
-      FORTRAN_READ = 99 + 0,
-      FORTRAN_REAL = 100 + 0,
-      FORTRAN_RETURN = 101 + 0,
-      FORTRAN_REWIND = 102 + 0,
-      FORTRAN_ROUND = 103 + 0,
-      FORTRAN_SELECTCASE = 104 + 0,
-      FORTRAN_SELECTTYPE = 105 + 0,
-      FORTRAN_SEQUENCE = 106 + 0,
-      FORTRAN_SAVE = 107 + 0,
-      FORTRAN_SIGN = 108 + 0,
-      FORTRAN_SIZE = 109 + 0,
-      FORTRAN_SOURCE = 110 + 0,
-      FORTRAN_STAT = 111 + 0,
-      FORTRAN_STOP = 112 + 0,
-      FORTRAN_SUBROUTINE = 113 + 0,
-      FORTRAN_TARGET = 114 + 0,
-      FORTRAN_THEN = 115 + 0,
-      FORTRAN_DERIVED_DECL = 116 + 0,
-      FORTRAN_TYPEIS = 117 + 0,
-      FORTRAN_UNFORMATTED = 118 + 0,
-      FORTRAN_UNIT = 119 + 0,
-      FORTRAN_USE = 120 + 0,
-      FORTRAN_VALUE = 121 + 0,
-      FORTRAN_VOLATILE = 122 + 0,
-      FORTRAN_WAIT = 123 + 0,
-      FORTRAN_WHERE = 124 + 0,
-      FORTRAN_WRITE = 125 + 0,
+// Language specific enum values for Fortran tokens
+enum ROSE_Fortran_Keywords {
+    FORTRAN_ABSTRACT = 0 + 0,
+    FORTRAN_ACCESS = 1 + 0,
+    FORTRAN_ACTION = 2 + 0,
+    FORTRAN_ALLOCATE = 3 + 0,
+    FORTRAN_ALLOCATABLE = 4 + 0,
+    FORTRAN_ASSIGN = 5 + 0,
+    FORTRAN_ASSOCIATE = 6 + 0,
+    FORTRAN_ASYNCHRONOUS = 7 + 0,
+    FORTRAN_BACKSPACE = 8 + 0,
+    FORTRAN_BIND = 9 + 0,
+    FORTRAN_BLANK = 10 + 0,
+    FORTRAN_BLOCK_DATA = 11 + 0,
+    FORTRAN_CALL = 12 + 0,
+    FORTRAN_CHARACTER = 13 + 0,
+    FORTRAN_CLASS = 14 + 0,
+    FORTRAN_CLOSE = 15 + 0,
+    FORTRAN_CONTINUE = 16 + 0,
+    FORTRAN_CYCLE = 17 + 0,
+    FORTRAN_CASE = 18 + 0,
+    FORTRAN_COMMON = 19 + 0,
+    FORTRAN_COMPLEX = 20 + 0,
+    FORTRAN_CONTAINS = 21 + 0,
+    FORTRAN_DEALLOCATE = 22 + 0,
+    FORTRAN_DATA = 23 + 0,
+    FORTRAN_DEFERRED = 24 + 0,
+    FORTRAN_DELIM = 25 + 0,
+    FORTRAN_DIMENSION = 26 + 0,
+    FORTRAN_DO = 27 + 0,
+    FORTRAN_DT = 28 + 0,
+    FORTRAN_DOUBLEPRECISION = 29 + 0,
+    FORTRAN_ENCODING = 30 + 0,
+    FORTRAN_END_CASE = 31 + 0,
+    FORTRAN_ENDDO = 32 + 0,
+    FORTRAN_END_FILE = 33 + 0,
+    FORTRAN_END_ENUM = 34 + 0,
+    FORTRAN_END_INTERFACE = 35 + 0,
+    FORTRAN_END_TYPE = 36 + 0,
+    FORTRAN_ERR = 37 + 0,
+    FORTRAN_ERRMSG = 38 + 0,
+    FORTRAN_EXIT = 39 + 0,
+    FORTRAN_ELSE = 40 + 0,
+    FORTRAN_ELSEWHERE = 41 + 0,
+    FORTRAN_ELSEIF = 42 + 0,
+    FORTRAN_ENDIF = 43 + 0,
+    FORTRAN_ENTRY = 44 + 0,
+    FORTRAN_END = 45 + 0,
+    FORTRAN_ENUM = 46 + 0,
+    FORTRAN_ENUMERATOR = 47 + 0,
+    FORTRAN_EQUIVALENCE = 48 + 0,
+    FORTRAN_EXTERNAL = 49 + 0,
+    FORTRAN_EXTENDS = 50 + 0,
+    FORTRAN_FILE = 51 + 0,
+    FORTRAN_FINAL = 52 + 0,
+    FORTRAN_FMT = 53 + 0,
+    FORTRAN_FORALL = 54 + 0,
+    FORTRAN_FORM = 55 + 0,
+    FORTRAN_FORMATTED = 56 + 0,
+    FORTRAN_FORMAT = 57 + 0,
+    FORTRAN_FLUSH = 58 + 0,
+    FORTRAN_FUNCTION = 59 + 0,
+    FORTRAN_GENERIC = 60 + 0,
+    FORTRAN_GOTO = 61 + 0,
+    FORTRAN_ID = 62 + 0,
+    FORTRAN_IF = 63 + 0,
+    FORTRAN_INQUIRE = 64 + 0,
+    FORTRAN_INTEGER = 65 + 0,
+    FORTRAN_IOMSG = 66 + 0,
+    FORTRAN_IOSTAT = 67 + 0,
+    FORTRAN_IMPLICIT = 68 + 0,
+    FORTRAN_IMPLICIT_NONE = 69 + 0,
+    FORTRAN_IMPORT = 70 + 0,
+    FORTRAN_INTERFACE = 71 + 0,
+    FORTRAN_INTENT = 72 + 0,
+    FORTRAN_INTRINSIC = 73 + 0,
+    FORTRAN_LEN = 74 + 0,
+    FORTRAN_LOGICAL = 75 + 0,
+    FORTRAN_KIND = 76 + 0,
+    FORTRAN_MODULE_PROC = 77 + 0,
+    FORTRAN_MODULE = 78 + 0,
+    FORTRAN_NON_INTRINSIC = 79 + 0,
+    FORTRAN_NON_OVERRIDABLE = 80 + 0,
+    FORTRAN_NULL = 81 + 0,
+    FORTRAN_NULLIFY = 82 + 0,
+    FORTRAN_NAMELIST = 83 + 0,
+    FORTRAN_NML = 84 + 0,
+    FORTRAN_NONE = 85 + 0,
+    FORTRAN_NOPASS = 86 + 0,
+    FORTRAN_ONLY = 87 + 0,
+    FORTRAN_OPEN = 88 + 0,
+    FORTRAN_OPTIONAL = 89 + 0,
+    FORTRAN_PARAMETER = 90 + 0,
+    FORTRAN_PASS = 91 + 0,
+    FORTRAN_PAUSE = 92 + 0,
+    FORTRAN_POINTER = 93 + 0,
+    FORTRAN_PRINT = 94 + 0,
+    FORTRAN_PRIVATE = 95 + 0,
+    FORTRAN_PROCEDURE = 96 + 0,
+    FORTRAN_PROGRAM = 97 + 0,
+    FORTRAN_PROTECTED = 98 + 0,
+    FORTRAN_READ = 99 + 0,
+    FORTRAN_REAL = 100 + 0,
+    FORTRAN_RETURN = 101 + 0,
+    FORTRAN_REWIND = 102 + 0,
+    FORTRAN_ROUND = 103 + 0,
+    FORTRAN_SELECTCASE = 104 + 0,
+    FORTRAN_SELECTTYPE = 105 + 0,
+    FORTRAN_SEQUENCE = 106 + 0,
+    FORTRAN_SAVE = 107 + 0,
+    FORTRAN_SIGN = 108 + 0,
+    FORTRAN_SIZE = 109 + 0,
+    FORTRAN_SOURCE = 110 + 0,
+    FORTRAN_STAT = 111 + 0,
+    FORTRAN_STOP = 112 + 0,
+    FORTRAN_SUBROUTINE = 113 + 0,
+    FORTRAN_TARGET = 114 + 0,
+    FORTRAN_THEN = 115 + 0,
+    FORTRAN_DERIVED_DECL = 116 + 0,
+    FORTRAN_TYPEIS = 117 + 0,
+    FORTRAN_UNFORMATTED = 118 + 0,
+    FORTRAN_UNIT = 119 + 0,
+    FORTRAN_USE = 120 + 0,
+    FORTRAN_VALUE = 121 + 0,
+    FORTRAN_VOLATILE = 122 + 0,
+    FORTRAN_WAIT = 123 + 0,
+    FORTRAN_WHERE = 124 + 0,
+    FORTRAN_WRITE = 125 + 0,
 
-   // DQ (11/27/2013): Added missing entries.
-      FORTRAN_END_PROGRAM = 126 + 0,
-      FORTRAN_END_FUNCTION = 127 + 0,
-      FORTRAN_END_SUBROUTINE = 128 + 0,
-      FORTRAN_END_MODULE = 129 + 0,
-      FORTRAN_END_BLOCK_DATA = 130 + 0,
-      FORTRAN_SUBMODULE = 131 + 0,
-      FORTRAN_END_SUBMODULE = 132 + 0,
-      FORTRAN_DOUBLE_COMPLEX = 133 + 0,
-      FORTRAN_TYPE = 134 + 0,
-      FORTRAN_ABSTRACT_INTERFACE = 135 + 0,
-      FORTRAN_ERROR_STOP = 136 + 0,
-      FORTRAN_CONTIGUOUS = 137 + 0,
-      FORTRAN_PUBLIC = 138 + 0,
+    FORTRAN_END_PROGRAM = 126 + 0,
+    FORTRAN_END_FUNCTION = 127 + 0,
+    FORTRAN_END_SUBROUTINE = 128 + 0,
+    FORTRAN_END_MODULE = 129 + 0,
+    FORTRAN_END_BLOCK_DATA = 130 + 0,
+    FORTRAN_SUBMODULE = 131 + 0,
+    FORTRAN_END_SUBMODULE = 132 + 0,
+    FORTRAN_DOUBLE_COMPLEX = 133 + 0,
+    FORTRAN_TYPE = 134 + 0,
+    FORTRAN_ABSTRACT_INTERFACE = 135 + 0,
+    FORTRAN_ERROR_STOP = 136 + 0,
+    FORTRAN_CONTIGUOUS = 137 + 0,
+    FORTRAN_PUBLIC = 138 + 0,
 
-   // Function prefix keywords (Module keyword created above)
-      FORTRAN_ELEMENTAL = 139 + 0,
-      FORTRAN_IMPURE = 140 + 0,
-      FORTRAN_PURE = 141 + 0,
-      FORTRAN_RECURSIVE = 142 + 0,
+    FORTRAN_ELEMENTAL = 139 + 0,
+    FORTRAN_IMPURE = 140 + 0,
+    FORTRAN_PURE = 141 + 0,
+    FORTRAN_RECURSIVE = 142 + 0,
 
-   // IntentSpec keywords (these are combined keywords, perhaps should be done differently)
-      FORTRAN_INTENT_IN = 143 + 0,
-      FORTRAN_INTENT_OUT = 144 + 0,
-      FORTRAN_INTENT_INOUT = 145 + 0,
+    FORTRAN_INTENT_IN = 143 + 0,
+    FORTRAN_INTENT_OUT = 144 + 0,
+    FORTRAN_INTENT_INOUT = 145 + 0,
 
-      FORTRAN_ASSIGNMENT = 146 + 0,
-      FORTRAN_OPERATOR = 147 + 0,
+    FORTRAN_ASSIGNMENT = 146 + 0,
+    FORTRAN_OPERATOR = 147 + 0,
 
-      FORTRAN_READ_FORMATTED = 148 + 0,
-      FORTRAN_READ_UNFORMATTED = 149 + 0,
-      FORTRAN_WRITE_FORMATTED = 150 + 0,
-      FORTRAN_WRITE_UNFORMATTED = 151 + 0,
+    FORTRAN_READ_FORMATTED = 148 + 0,
+    FORTRAN_READ_UNFORMATTED = 149 + 0,
+    FORTRAN_WRITE_FORMATTED = 150 + 0,
+    FORTRAN_WRITE_UNFORMATTED = 151 + 0,
 
-      FORTRAN_UNKNOWN = 152 + 0
-   };
+    FORTRAN_UNKNOWN = 152 + 0
+};
 
 // Language specific enum values for C and C++ tokens
-enum ROSE_C_CXX_keywords
-   {
-      C_CXX_ASM = 0 + 500,
-      C_CXX_AUTO = 1 + 500,
-      C_CXX_BOOL = 2 + 500,
-      C_CXX_BREAK = 3 + 500,
-      C_CXX_CASE = 4 + 500,
-      C_CXX_CATCH = 5 + 500,
-      C_CXX_CHAR = 6 + 500,
-      C_CXX_CLASS = 7 + 500,
-      C_CXX_CONST = 8 + 500,
-      C_CXX_CONSTCAST = 9 + 500,
-      C_CXX_CONTINUE = 10 + 500,
-      C_CXX_DEFAULT = 11 + 500,
-      C_CXX_DEFINED = 12 + 500,
-      C_CXX_DELETE = 13 + 500,
-      C_CXX_DO = 14 + 500,
-      C_CXX_DOUBLE = 15 + 500,
-      C_CXX_DYNAMICCAST = 16 + 500,
-      C_CXX_ELSE = 17 + 500,
-      C_CXX_ENUM = 18 + 500,
-      C_CXX_EXPLICIT = 19 + 500,
-      C_CXX_EXPORT = 20 + 500,
-      C_CXX_EXTERN = 21 + 500,
-      C_CXX_FALSE = 22 + 500,
-      C_CXX_FLOAT = 23 + 500,
-      C_CXX_FOR = 24 + 500,
-      C_CXX_FRIEND = 25 + 500,
-      C_CXX_GOTO = 26 + 500,
-      C_CXX_IF = 27 + 500,
-      C_CXX_INLINE = 28 + 500,
-      C_CXX_INT = 29 + 500,
-      C_CXX_LONG = 30 + 500,
-      C_CXX_MUTABLE = 31 + 500,
-      C_CXX_NAMESPACE = 32 + 500,
-      C_CXX_NEW = 33 + 500,
-      C_CXX_OPERATOR = 34 + 500,
-      C_CXX_PRIVATE = 35 + 500,
-      C_CXX_PROTECTED = 36 + 500,
-      C_CXX_PUBLIC = 37 + 500,
-      C_CXX_REGISTER = 38 + 500,
-      C_CXX_REINTERPRETCAST = 39 + 500,
-      C_CXX_RETURN = 40 + 500,
-      C_CXX_SHORT = 41 + 500,
-      C_CXX_SIGNED = 42 + 500,
-      C_CXX_SIZEOF = 43 + 500,
-      C_CXX_STATIC = 44 + 500,
-      C_CXX_STATICCAST = 45 + 500,
-      C_CXX_STRUCT = 46 + 500,
-      C_CXX_SWITCH = 47 + 500,
-      C_CXX_TEMPLATE = 48 + 500,
-      C_CXX_THIS = 49 + 500,
-      C_CXX_THROW = 50 + 500,
-      C_CXX_TRY = 51 + 500,
-      C_CXX_TRUE = 52 + 500,
-      C_CXX_TYPEDEF = 53 + 500,
-      C_CXX_TYPEID = 54 + 500,
-      C_CXX_TYPENAME = 55 + 500,
-      C_CXX_UNION = 56 + 500,
-      C_CXX_UNSIGNED = 57 + 500,
-      C_CXX_USING = 58 + 500,
-      C_CXX_VIRTUAL = 59 + 500,
-      C_CXX_VOID = 60 + 500,
-      C_CXX_VOLATILE = 61 + 500,
-      C_CXX_WCHART = 62 + 500,
-      C_CXX_WHILE = 63 + 500
-   };
+enum ROSE_C_CXX_keywords {
+    C_CXX_ASM = 0 + 500,
+    C_CXX_AUTO = 1 + 500,
+    C_CXX_BOOL = 2 + 500,
+    C_CXX_BREAK = 3 + 500,
+    C_CXX_CASE = 4 + 500,
+    C_CXX_CATCH = 5 + 500,
+    C_CXX_CHAR = 6 + 500,
+    C_CXX_CLASS = 7 + 500,
+    C_CXX_CONST = 8 + 500,
+    C_CXX_CONSTCAST = 9 + 500,
+    C_CXX_CONTINUE = 10 + 500,
+    C_CXX_DEFAULT = 11 + 500,
+    C_CXX_DEFINED = 12 + 500,
+    C_CXX_DELETE = 13 + 500,
+    C_CXX_DO = 14 + 500,
+    C_CXX_DOUBLE = 15 + 500,
+    C_CXX_DYNAMICCAST = 16 + 500,
+    C_CXX_ELSE = 17 + 500,
+    C_CXX_ENUM = 18 + 500,
+    C_CXX_EXPLICIT = 19 + 500,
+    C_CXX_EXPORT = 20 + 500,
+    C_CXX_EXTERN = 21 + 500,
+    C_CXX_FALSE = 22 + 500,
+    C_CXX_FLOAT = 23 + 500,
+    C_CXX_FOR = 24 + 500,
+    C_CXX_FRIEND = 25 + 500,
+    C_CXX_GOTO = 26 + 500,
+    C_CXX_IF = 27 + 500,
+    C_CXX_INLINE = 28 + 500,
+    C_CXX_INT = 29 + 500,
+    C_CXX_LONG = 30 + 500,
+    C_CXX_MUTABLE = 31 + 500,
+    C_CXX_NAMESPACE = 32 + 500,
+    C_CXX_NEW = 33 + 500,
+    C_CXX_OPERATOR = 34 + 500,
+    C_CXX_PRIVATE = 35 + 500,
+    C_CXX_PROTECTED = 36 + 500,
+    C_CXX_PUBLIC = 37 + 500,
+    C_CXX_REGISTER = 38 + 500,
+    C_CXX_REINTERPRETCAST = 39 + 500,
+    C_CXX_RETURN = 40 + 500,
+    C_CXX_SHORT = 41 + 500,
+    C_CXX_SIGNED = 42 + 500,
+    C_CXX_SIZEOF = 43 + 500,
+    C_CXX_STATIC = 44 + 500,
+    C_CXX_STATICCAST = 45 + 500,
+    C_CXX_STRUCT = 46 + 500,
+    C_CXX_SWITCH = 47 + 500,
+    C_CXX_TEMPLATE = 48 + 500,
+    C_CXX_THIS = 49 + 500,
+    C_CXX_THROW = 50 + 500,
+    C_CXX_TRY = 51 + 500,
+    C_CXX_TRUE = 52 + 500,
+    C_CXX_TYPEDEF = 53 + 500,
+    C_CXX_TYPEID = 54 + 500,
+    C_CXX_TYPENAME = 55 + 500,
+    C_CXX_UNION = 56 + 500,
+    C_CXX_UNSIGNED = 57 + 500,
+    C_CXX_USING = 58 + 500,
+    C_CXX_VIRTUAL = 59 + 500,
+    C_CXX_VOID = 60 + 500,
+    C_CXX_VOLATILE = 61 + 500,
+    C_CXX_WCHART = 62 + 500,
+    C_CXX_WHILE = 63 + 500
+};
 
 // Language specific token enums for Fortran intrinsic operators
-enum ROSE_Fortran_Operators
-   {
-      FORTRAN_INTRINSIC_PLUS = 0 + 10000,
-      FORTRAN_INTRINSIC_MINUS = 1 + 10000,
-      FORTRAN_INTRINSIC_POWER = 2 + 10000,
-      FORTRAN_INTRINSIC_CONCAT = 3 + 10000,
-      FORTRAN_INTRINSIC_TIMES = 4 + 10000,
-      FORTRAN_INTRINSIC_DIVIDE = 5 + 10000,
-      FORTRAN_INTRINSIC_AND = 6 + 10000,
-      FORTRAN_INTRINSIC_OR = 7 + 10000,
-      FORTRAN_INTRINSIC_EQV = 8 + 10000,
-      FORTRAN_INTRINSIC_NEQV = 9 + 10000,
-      FORTRAN_INTRINSIC_EQ = 10 + 10000,
-      FORTRAN_INTRINSIC_NE = 11 + 10000,
-      FORTRAN_INTRINSIC_GE = 12 + 10000,
-      FORTRAN_INTRINSIC_LE = 13 + 10000,
-      FORTRAN_INTRINSIC_LT = 14 + 10000,
-      FORTRAN_INTRINSIC_GT = 15 + 10000,
-      FORTRAN_INTRINSIC_NOT = 16 + 10000,
-      FORTRAN_INTRINSIC_OLDEQ = 17 + 10000,
-      FORTRAN_INTRINSIC_OLDNE = 18 + 10000,
-      FORTRAN_INTRINSIC_OLDGE = 19 + 10000,
-      FORTRAN_INTRINSIC_OLDLE = 20 + 10000,
-      FORTRAN_INTRINSIC_OLDLT = 21 + 10000,
-      FORTRAN_INTRINSIC_OLDGT = 22 + 10000
-   };
+enum ROSE_Fortran_Operators {
+    FORTRAN_INTRINSIC_PLUS = 0 + 10000,
+    FORTRAN_INTRINSIC_MINUS = 1 + 10000,
+    FORTRAN_INTRINSIC_POWER = 2 + 10000,
+    FORTRAN_INTRINSIC_CONCAT = 3 + 10000,
+    FORTRAN_INTRINSIC_TIMES = 4 + 10000,
+    FORTRAN_INTRINSIC_DIVIDE = 5 + 10000,
+    FORTRAN_INTRINSIC_AND = 6 + 10000,
+    FORTRAN_INTRINSIC_OR = 7 + 10000,
+    FORTRAN_INTRINSIC_EQV = 8 + 10000,
+    FORTRAN_INTRINSIC_NEQV = 9 + 10000,
+    FORTRAN_INTRINSIC_EQ = 10 + 10000,
+    FORTRAN_INTRINSIC_NE = 11 + 10000,
+    FORTRAN_INTRINSIC_GE = 12 + 10000,
+    FORTRAN_INTRINSIC_LE = 13 + 10000,
+    FORTRAN_INTRINSIC_LT = 14 + 10000,
+    FORTRAN_INTRINSIC_GT = 15 + 10000,
+    FORTRAN_INTRINSIC_NOT = 16 + 10000,
+    FORTRAN_INTRINSIC_OLDEQ = 17 + 10000,
+    FORTRAN_INTRINSIC_OLDNE = 18 + 10000,
+    FORTRAN_INTRINSIC_OLDGE = 19 + 10000,
+    FORTRAN_INTRINSIC_OLDLE = 20 + 10000,
+    FORTRAN_INTRINSIC_OLDLT = 21 + 10000,
+    FORTRAN_INTRINSIC_OLDGT = 22 + 10000
+};
 
-enum ROSE_C_CXX_Operators
-   {
-      C_CXX_AND = 0 + 50000,
-      C_CXX_ANDAND = 1 + 50000,
-      C_CXX_ASSIGN = 2 + 50000,
-      C_CXX_ANDASSIGN = 3 + 50000,
-      C_CXX_OR = 4 + 50000,
-      C_CXX_ORASSIGN = 5 + 50000,
-      C_CXX_XOR = 6 + 50000,
-      C_CXX_XORASSIGN = 7 + 50000,
-      C_CXX_COMMA = 8 + 50000,
-      C_CXX_COLON = 9 + 50000,
-      C_CXX_DIVIDE = 10 + 50000,
-      C_CXX_DIVIDEASSIGN = 11 + 50000,
-      C_CXX_DOT = 12 + 50000,
-      C_CXX_DOTSTAR = 13 + 50000,
-      C_CXX_ELLIPSIS = 14 + 50000,
-      C_CXX_EQUAL = 15 + 50000,
-      C_CXX_GREATER = 16 + 50000,
-      C_CXX_GREATEREQUAL = 17 + 50000,
-      C_CXX_LEFTBRACE = 18 + 50000,
-      C_CXX_LESS = 19 + 50000,
-      C_CXX_LESSEQUAL = 20 + 50000,
-      C_CXX_LEFTPAREN = 21 + 50000,
-      C_CXX_LEFTBRACKET = 22 + 50000,
-      C_CXX_MINUS = 23 + 50000,
-      C_CXX_MINUSASSIGN = 24 + 50000,
-      C_CXX_MINUSMINUS = 25 + 50000,
-      C_CXX_PERCENT = 26 + 50000,
-      C_CXX_PERCENTASSIGN = 27 + 50000,
-      C_CXX_NOT = 28 + 50000,
-      C_CXX_NOTEQUAL = 29 + 50000,
-      C_CXX_OROR = 30 + 50000,
-      C_CXX_PLUS = 31 + 50000,
-      C_CXX_PLUSASSIGN = 32 + 50000,
-      C_CXX_PLUSPLUS = 33 + 50000,
-      C_CXX_ARROW = 34 + 50000,
-      C_CXX_ARROWSTAR = 35 + 50000,
-      C_CXX_QUESTION_MARK = 36 + 50000,
-      C_CXX_RIGHTBRACE = 37 + 50000,
-      C_CXX_RIGHTPAREN = 38 + 50000,
-      C_CXX_RIGHTBRACKET = 39 + 50000,
-      C_CXX_COLON_COLON = 40 + 50000,
-      C_CXX_SEMICOLON = 41 + 50000,
-      C_CXX_SHIFTLEFT = 42 + 50000,
-      C_CXX_SHIFTLEFTASSIGN = 43 + 50000,
-      C_CXX_SHIFTRIGHT = 44 + 50000,
-      C_CXX_SHIFTRIGHTASSIGN = 45 + 50000,
-      C_CXX_STAR = 46 + 50000,
-      C_CXX_COMPL = 47 + 50000,
-      C_CXX_STARASSIGN = 48 + 50000,
-      C_CXX_POUND_POUND = 49 + 50000,
-      C_CXX_POUND = 50 + 50000,
-      C_CXX_AND_ALT = 51 + 50000,
-      C_CXX_ANDASSIGN_ALT = 52 + 50000,
-      C_CXX_OR_ALT = 53 + 50000,
-      C_CXX_ORASSIGN_ALT = 54 + 50000,
-      C_CXX_XOR_ALT = 55 + 50000,
-      C_CXX_XORASSIGN_ALT = 56 + 50000,
-      C_CXX_LEFTBRACE_ALT = 57 + 50000,
-      C_CXX_LEFTBRACKET_ALT = 58 + 50000,
-      C_CXX_NOT_ALT = 59 + 50000,
-      C_CXX_NOTEQUAL_ALT = 60 + 50000,
-      C_CXX_RIGHTBRACE_ALT = 61 + 50000,
-      C_CXX_RIGHTBRACKET_ALT = 62 + 50000,
-      C_CXX_COMPL_ALT = 63 + 50000,
-      C_CXX_POUND_POUND_ALT = 64 + 50000,
-      C_CXX_POUND_ALT = 65 + 50000,
-      C_CXX_OR_TRIGRAPH = 66 + 50000,
-      C_CXX_XOR_TRIGRAPH = 67 + 50000,
-      C_CXX_LEFTBRACE_TRIGRAPH = 68 + 50000,
-      C_CXX_LEFTBRACKET_TRIGRAPH = 69 + 50000,
-      C_CXX_RIGHTBRACE_TRIGRAPH = 70 + 50000,
-      C_CXX_RIGHTBRACKET_TRIGRAPH = 71 + 50000,
-      C_CXX_COMPL_TRIGRAPH = 72 + 50000,
-      C_CXX_POUND_POUND_TRIGRAPH = 73 + 50000,
-      C_CXX_POUND_TRIGRAPH = 74 + 50000
-   };
+enum ROSE_C_CXX_Operators {
+    C_CXX_AND = 0 + 50000,
+    C_CXX_ANDAND = 1 + 50000,
+    C_CXX_ASSIGN = 2 + 50000,
+    C_CXX_ANDASSIGN = 3 + 50000,
+    C_CXX_OR = 4 + 50000,
+    C_CXX_ORASSIGN = 5 + 50000,
+    C_CXX_XOR = 6 + 50000,
+    C_CXX_XORASSIGN = 7 + 50000,
+    C_CXX_COMMA = 8 + 50000,
+    C_CXX_COLON = 9 + 50000,
+    C_CXX_DIVIDE = 10 + 50000,
+    C_CXX_DIVIDEASSIGN = 11 + 50000,
+    C_CXX_DOT = 12 + 50000,
+    C_CXX_DOTSTAR = 13 + 50000,
+    C_CXX_ELLIPSIS = 14 + 50000,
+    C_CXX_EQUAL = 15 + 50000,
+    C_CXX_GREATER = 16 + 50000,
+    C_CXX_GREATEREQUAL = 17 + 50000,
+    C_CXX_LEFTBRACE = 18 + 50000,
+    C_CXX_LESS = 19 + 50000,
+    C_CXX_LESSEQUAL = 20 + 50000,
+    C_CXX_LEFTPAREN = 21 + 50000,
+    C_CXX_LEFTBRACKET = 22 + 50000,
+    C_CXX_MINUS = 23 + 50000,
+    C_CXX_MINUSASSIGN = 24 + 50000,
+    C_CXX_MINUSMINUS = 25 + 50000,
+    C_CXX_PERCENT = 26 + 50000,
+    C_CXX_PERCENTASSIGN = 27 + 50000,
+    C_CXX_NOT = 28 + 50000,
+    C_CXX_NOTEQUAL = 29 + 50000,
+    C_CXX_OROR = 30 + 50000,
+    C_CXX_PLUS = 31 + 50000,
+    C_CXX_PLUSASSIGN = 32 + 50000,
+    C_CXX_PLUSPLUS = 33 + 50000,
+    C_CXX_ARROW = 34 + 50000,
+    C_CXX_ARROWSTAR = 35 + 50000,
+    C_CXX_QUESTION_MARK = 36 + 50000,
+    C_CXX_RIGHTBRACE = 37 + 50000,
+    C_CXX_RIGHTPAREN = 38 + 50000,
+    C_CXX_RIGHTBRACKET = 39 + 50000,
+    C_CXX_COLON_COLON = 40 + 50000,
+    C_CXX_SEMICOLON = 41 + 50000,
+    C_CXX_SHIFTLEFT = 42 + 50000,
+    C_CXX_SHIFTLEFTASSIGN = 43 + 50000,
+    C_CXX_SHIFTRIGHT = 44 + 50000,
+    C_CXX_SHIFTRIGHTASSIGN = 45 + 50000,
+    C_CXX_STAR = 46 + 50000,
+    C_CXX_COMPL = 47 + 50000,
+    C_CXX_STARASSIGN = 48 + 50000,
+    C_CXX_POUND_POUND = 49 + 50000,
+    C_CXX_POUND = 50 + 50000,
+    C_CXX_AND_ALT = 51 + 50000,
+    C_CXX_ANDASSIGN_ALT = 52 + 50000,
+    C_CXX_OR_ALT = 53 + 50000,
+    C_CXX_ORASSIGN_ALT = 54 + 50000,
+    C_CXX_XOR_ALT = 55 + 50000,
+    C_CXX_XORASSIGN_ALT = 56 + 50000,
+    C_CXX_LEFTBRACE_ALT = 57 + 50000,
+    C_CXX_LEFTBRACKET_ALT = 58 + 50000,
+    C_CXX_NOT_ALT = 59 + 50000,
+    C_CXX_NOTEQUAL_ALT = 60 + 50000,
+    C_CXX_RIGHTBRACE_ALT = 61 + 50000,
+    C_CXX_RIGHTBRACKET_ALT = 62 + 50000,
+    C_CXX_COMPL_ALT = 63 + 50000,
+    C_CXX_POUND_POUND_ALT = 64 + 50000,
+    C_CXX_POUND_ALT = 65 + 50000,
+    C_CXX_OR_TRIGRAPH = 66 + 50000,
+    C_CXX_XOR_TRIGRAPH = 67 + 50000,
+    C_CXX_LEFTBRACE_TRIGRAPH = 68 + 50000,
+    C_CXX_LEFTBRACKET_TRIGRAPH = 69 + 50000,
+    C_CXX_RIGHTBRACE_TRIGRAPH = 70 + 50000,
+    C_CXX_RIGHTBRACKET_TRIGRAPH = 71 + 50000,
+    C_CXX_COMPL_TRIGRAPH = 72 + 50000,
+    C_CXX_POUND_POUND_TRIGRAPH = 73 + 50000,
+    C_CXX_POUND_TRIGRAPH = 74 + 50000
+};
 
 // Fortran specific additional token classifications
-enum ROSE_Fortran_Additional_Info
-   {
-      FORTRAN_COMMENTS = 0 + 100000,
-      FORTRAN_STRING_LITERALS = 1 + 100000,
-      FORTRAN_IDENTIFIER = 2 + 100000,
-      FORTRAN_UNIDENTIFIED_TOKEN = 3 + 100000,
-      FORTRAN_ERROR = 4 + 100000
-   };
+enum ROSE_Fortran_Additional_Info {
+    FORTRAN_COMMENTS = 0 + 100000,
+    FORTRAN_STRING_LITERALS = 1 + 100000,
+    FORTRAN_IDENTIFIER = 2 + 100000,
+    FORTRAN_UNIDENTIFIED_TOKEN = 3 + 100000,
+    FORTRAN_ERROR = 4 + 100000
+};
 
-     public:
-       // DQ (4/14/2007): Modified to make this a const array
-          static const token_element ROSE_Fortran_keyword_map[127];
-
-       // DQ (11/20/2015): Added function to detect CR to support unparsing of whitespace defined up to an including only the first CR.
-          bool isCarriageReturn() const;
+  public:
+    static const token_element ROSE_Fortran_keyword_map[127];
+    bool isCarriageReturn() const;
 
 HEADER_TOKEN_END
 
@@ -581,7 +526,7 @@ HEADER_LOCATED_NODE_SUPPORT_END
 
 HEADER_RENAME_PAIR_START
 
-          bool isRename() const;
+    bool isRename() const;
 
 HEADER_RENAME_PAIR_END
 
@@ -613,61 +558,61 @@ HEADER_LAMBDA_CAPTURE_LIST_END
 // Support for ADA Constraints
 
 HEADER_ADA_TYPE_CONSTRAINT_START
-          SgAdaTypeConstraint (const SgAdaTypeConstraint& X);
-          SgAdaTypeConstraint& operator= (const SgAdaTypeConstraint& X);
-          virtual std::string displayString() const { ASSERT_not_reachable("PP 2020-04-02"); return std::string(); };
+    SgAdaTypeConstraint(const SgAdaTypeConstraint& X);
+    SgAdaTypeConstraint& operator= (const SgAdaTypeConstraint& X);
+    virtual std::string displayString() const {
+        ASSERT_not_reachable("PP 2020-04-02");
+        return std::string();
+    };
 HEADER_ADA_TYPE_CONSTRAINT_END
 
 HEADER_ADA_RANGE_CONSTRAINT_START
-  void post_construction_initialization() override;
-  std::string displayString() const override;
-  void display ( std::string label ) const;
-  friend std::ostream & operator<< ( std::ostream& os, const SgAdaRangeConstraint& c);
-  //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+    void post_construction_initialization() override;
+    std::string displayString() const override;
+    void display(std::string label) const;
+    friend std::ostream& operator<< (std::ostream& os, const SgAdaRangeConstraint& c);
+    //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 HEADER_ADA_RANGE_CONSTRAINT_END
 
 HEADER_ADA_INDEX_CONSTRAINT_START
-  void post_construction_initialization() override;
-  std::string displayString() const override;
-  void display ( std::string label ) const;
-  friend std::ostream & operator<< ( std::ostream& os, const SgAdaIndexConstraint& c);
-  //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+    void post_construction_initialization() override;
+    std::string displayString() const override;
+    void display(std::string label) const;
+    friend std::ostream& operator<< (std::ostream& os, const SgAdaIndexConstraint& c);
+    //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 HEADER_ADA_INDEX_CONSTRAINT_END
 
 HEADER_ADA_DIGITS_CONSTRAINT_START
-  void post_construction_initialization() override;
-  std::string displayString() const override;
-  void display ( std::string label ) const;
-  friend std::ostream & operator<< ( std::ostream& os, const SgAdaDigitsConstraint& c);
-  //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+    void post_construction_initialization() override;
+    std::string displayString() const override;
+    void display(std::string label) const;
+    friend std::ostream& operator<< (std::ostream& os, const SgAdaDigitsConstraint& c);
+    //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 HEADER_ADA_DIGITS_CONSTRAINT_END
 
 HEADER_ADA_DELTA_CONSTRAINT_START
-  void post_construction_initialization() override;
-  std::string displayString() const override;
-  void display ( std::string label ) const;
-  friend std::ostream & operator<< ( std::ostream& os, const SgAdaDeltaConstraint& c);
-  //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+    void post_construction_initialization() override;
+    std::string displayString() const override;
+    void display(std::string label) const;
+    friend std::ostream& operator<< (std::ostream& os, const SgAdaDeltaConstraint& c);
+    //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 HEADER_ADA_DELTA_CONSTRAINT_END
 
-
 HEADER_ADA_NULL_CONSTRAINT_START
-  void post_construction_initialization() override;
-  std::string displayString() const override;
-  void display ( std::string label ) const;
-  friend std::ostream & operator<< ( std::ostream& os, const SgAdaNullConstraint& c);
-  //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+    void post_construction_initialization() override;
+    std::string displayString() const override;
+    void display(std::string label) const;
+    friend std::ostream& operator<< (std::ostream& os, const SgAdaNullConstraint& c);
+    //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 HEADER_ADA_NULL_CONSTRAINT_END
 
-
 HEADER_ADA_DISCRIMINANT_CONSTRAINT_START
-  void post_construction_initialization() override;
-  std::string displayString() const override;
-  void display ( std::string label ) const;
-  friend std::ostream & operator<< ( std::ostream& os, const SgAdaIndexConstraint& c);
-  //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+    void post_construction_initialization() override;
+    std::string displayString() const override;
+    void display(std::string label) const;
+    friend std::ostream& operator<< (std::ostream& os, const SgAdaIndexConstraint& c);
+    //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 HEADER_ADA_DISCRIMINANT_CONSTRAINT_END
-
 
 
 
@@ -680,623 +625,420 @@ HEADER_ADA_DISCRIMINANT_CONSTRAINT_END
 SOURCE_START
 
 const std::string &
-SgLocatedNode::getFilenameString() const
-   {
-  // Function added by DQ (2/2/2007) to replace deprecated function const char* SgLocatedNode::getFileName()
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     return get_startOfConstruct()->get_filenameString();
-   }
+SgLocatedNode::getFilenameString() const {
+    ASSERT_not_null(get_startOfConstruct());
+    return get_startOfConstruct()->get_filenameString();
+}
 
 Sg_File_Info*
-SgLocatedNode::get_file_info() const
-   {
-  // DQ (11/8/2006):
-  // At this level in the hierarchy of AST IR nodes we want the get_file_info()
-  // member function to be mapped to the get_startOfConstruct() member function.
-  // For SgExpression IR nodes we will map it to the get_operatorPosition()
-  // member function.
-     return get_startOfConstruct();
-   }
+SgLocatedNode::get_file_info() const {
+    // At this level in the hierarchy of AST IR nodes we want the get_file_info()
+    // member function to be mapped to the get_startOfConstruct() member function.
+    // For SgExpression IR nodes we will map it to the get_operatorPosition()
+    // member function.
+    return get_startOfConstruct();
+}
 
 void
-SgLocatedNode::set_file_info( Sg_File_Info* fileInfo )
-   {
-  // DQ (5.14.2006): Allow input to be NULL so that we can safely reset the Sg_File_Info pointer.
-  // ROSE_ASSERT (fileInfo != NULL);
-     set_startOfConstruct(fileInfo);
+SgLocatedNode::set_file_info(Sg_File_Info* fileInfo) {
+    set_startOfConstruct(fileInfo);
 #ifndef REMOVE_SET_PARENT_FUNCTION
-     fileInfo->set_parent(this);
+    fileInfo->set_parent(this);
 #endif
-   }
+}
 
 void
-SgLocatedNode::post_construction_initialization()
-   {
-  // JJW 10-26-2007 ensure that this object is not on the stack
-     preventConstructionOnStack(this);
+SgLocatedNode::post_construction_initialization() {
+    preventConstructionOnStack(this);
+    p_attachedPreprocessingInfoPtr = nullptr;
 
-  // Make sure that the pointer to the data structure storing the
-  // attached PreprocessingInfo objects is NULL
-     p_attachedPreprocessingInfoPtr = NULL;
+    if (p_startOfConstruct != nullptr) {
+        p_startOfConstruct->set_parent(this);
+    }
 
-  // DQ (12/17/2006): Added semantics to set the parent of any avaliable Sg_File_Info objects.
-     if (p_startOfConstruct != NULL)
-        {
-          p_startOfConstruct->set_parent(this);
-        }
+    if (p_endOfConstruct != nullptr) {
+        p_endOfConstruct->set_parent(this);
+    }
+}
 
-  // DQ (12/17/2006): Added semantics to set the parent of any avaliable Sg_File_Info objects.
-     if (p_endOfConstruct != NULL)
-        {
-          p_endOfConstruct->set_parent(this);
-        }
-   }
-
-// DQ (12/22/2006): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
-SgLocatedNode::setCompilerGenerated ()
-   {
-  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
-     ROSE_ASSERT(this != NULL);
+SgLocatedNode::setCompilerGenerated() {
+    ASSERT_this();
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    get_startOfConstruct()->setCompilerGenerated();
+    get_endOfConstruct()->setCompilerGenerated();
 
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     get_startOfConstruct()->setCompilerGenerated();
-     get_endOfConstruct()->setCompilerGenerated();
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        expression->get_operatorPosition()->setCompilerGenerated();
+    }
+}
 
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          expression->get_operatorPosition()->setCompilerGenerated();
-        }
-   }
-
-// DQ (12/22/2006): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
-SgLocatedNode::unsetCompilerGenerated()
-   {
-  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
-     ROSE_ASSERT(this != NULL);
+SgLocatedNode::unsetCompilerGenerated() {
+    ASSERT_this();
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    get_startOfConstruct()->unsetCompilerGenerated();
+    get_endOfConstruct()->unsetCompilerGenerated();
 
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     get_startOfConstruct()->unsetCompilerGenerated();
-     get_endOfConstruct()->unsetCompilerGenerated();
-
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
-          expression->get_operatorPosition()->unsetCompilerGenerated();
-        }
-   }
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        ASSERT_not_null(expression->get_operatorPosition());
+        expression->get_operatorPosition()->unsetCompilerGenerated();
+    }
+}
 
 bool
-SgLocatedNode::isCompilerGenerated () const
-   {
-  // DQ (7/5/2014): Added function to define a simple API.
+SgLocatedNode::isCompilerGenerated() const {
+    ASSERT_this();
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    bool result = get_startOfConstruct()->isCompilerGenerated();
 
-  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
-     ROSE_ASSERT(this != NULL);
-
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-
-     bool result = get_startOfConstruct()->isCompilerGenerated();
-     // ROSE_ASSERT(result == get_endOfConstruct()->isCompilerGenerated()); // FIXME fails on SgInitializedName = ::std::_Vector_base < Real_t , allocator< Real_t > >::_M_impl
-
-     const SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          if (result != expression->get_operatorPosition()->isCompilerGenerated()) {
-            printf ("[SgLocatedNode::isCompilerGenerated] FATAL: expression->get_operatorPosition() does not match get_startOfConstruct().\n");
-          }
-          ROSE_ASSERT(result == expression->get_operatorPosition()->isCompilerGenerated());
+    const SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        if (result != expression->get_operatorPosition()->isCompilerGenerated()) {
+            printf("[SgLocatedNode::isCompilerGenerated] FATAL: expression->get_operatorPosition() does not match get_startOfConstruct().\n");
         }
+        ASSERT_require(result == expression->get_operatorPosition()->isCompilerGenerated());
+    }
 
-     return result;
-   }
+    return result;
+}
 
-
-// DQ (4/14/2015): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
-SgLocatedNode::setTransformation ()
-   {
-  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
-     ROSE_ASSERT(this != NULL);
+SgLocatedNode::setTransformation() {
+    ASSERT_this();
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    get_startOfConstruct()->setTransformation();
+    get_endOfConstruct()->setTransformation();
 
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     get_startOfConstruct()->setTransformation();
-     get_endOfConstruct()->setTransformation();
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        expression->get_operatorPosition()->setTransformation();
+    }
+}
 
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          expression->get_operatorPosition()->setTransformation();
-        }
-   }
-
-// DQ (4/14/2015): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
-SgLocatedNode::unsetTransformation()
-   {
-  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
-     ROSE_ASSERT(this != NULL);
+SgLocatedNode::unsetTransformation() {
+    ASSERT_this();
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    get_startOfConstruct()->unsetTransformation();
+    get_endOfConstruct()->unsetTransformation();
 
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     get_startOfConstruct()->unsetTransformation();
-     get_endOfConstruct()->unsetTransformation();
-
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
-          expression->get_operatorPosition()->unsetTransformation();
-        }
-   }
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        ASSERT_not_null(expression->get_operatorPosition());
+        expression->get_operatorPosition()->unsetTransformation();
+    }
+}
 
 bool
-SgLocatedNode::isTransformation () const
-   {
-  // DQ (12/4/2014): Added function to define a simple API.
+SgLocatedNode::isTransformation() const {
+    ASSERT_this();
+    ASSERT_not_null(get_startOfConstruct());
+    bool result = get_startOfConstruct()->isTransformation();
 
-  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
-     ROSE_ASSERT(this != NULL);
+    if (get_endOfConstruct() != nullptr) {
+        ASSERT_require(result == get_endOfConstruct()->isTransformation());
+    }
+    else {
+        printf("WARNING: In SgLocatedNode::isTransformation(): this = %p = %s testing: get_endOfConstruct() != NULL (failed) \n",this,this->class_name().c_str());
+    }
 
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-
-     bool result = get_startOfConstruct()->isTransformation();
-
-  // DQ (4/6/2015): Allow this to work even when the endOfConstruct is not yet set (required for inlining).
-  // ROSE_ASSERT(get_endOfConstruct() != NULL);
-     if (get_endOfConstruct() != NULL)
-        {
-          ROSE_ASSERT(result == get_endOfConstruct()->isTransformation());
+    const SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        if (result != expression->get_operatorPosition()->isTransformation()) {
+            printf("Warning: this = %p = %s result != expression->get_operatorPosition()->isTransformation() \n",this,this->class_name().c_str());
+            printf("   --- Suggest calling the set transformation on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
         }
-       else
-        {
-          printf ("WARNING: In SgLocatedNode::isTransformation(): this = %p = %s testing: get_endOfConstruct() != NULL (failed) \n",this,this->class_name().c_str());
-        }
+    }
 
-     const SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-#if 0
-          printf ("NOTE: this = %p = %s testing: result != expression->get_operatorPosition()->isTransformation() \n",this,this->class_name().c_str());
-#endif
-          if (result != expression->get_operatorPosition()->isTransformation())
-             {
-               printf ("Warning: this = %p = %s result != expression->get_operatorPosition()->isTransformation() \n",this,this->class_name().c_str());
-               printf ("   --- Suggest calling the set transformation on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
-             }
-       // DQ (12/13/2018): This is difficult to enforce and causes an error in the outlining tests for Fortran in roseTests/astOutliningTests.
-       // When we eliminate the alternative interface to set this in each Sg_FileInfo object then it will be easier to enforce. So for now
-       // just issue the warning.
-       // ROSE_ASSERT(result == expression->get_operatorPosition()->isTransformation());
-        }
+    return result;
+}
 
-     return result;
-   }
-
-
-// DQ (12/21/2019): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
-SgLocatedNode::setShared ()
-   {
-  // DQ (12/21/2019): Detect if this is called from a NULL pointer.
-     ROSE_ASSERT(this != NULL);
+SgLocatedNode::setShared() {
+    ASSERT_this();
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    get_startOfConstruct()->setShared();
+    get_endOfConstruct()->setShared();
 
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     get_startOfConstruct()->setShared();
-     get_endOfConstruct()->setShared();
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        expression->get_operatorPosition()->setShared();
+    }
+}
 
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          expression->get_operatorPosition()->setShared();
-        }
-   }
-
-// DQ (12/21/2019): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
-SgLocatedNode::unsetShared()
-   {
-  // DQ (12/21/2019): Detect if this is called from a NULL pointer.
-     ROSE_ASSERT(this != NULL);
+SgLocatedNode::unsetShared() {
+    ASSERT_this();
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    get_startOfConstruct()->unsetShared();
+    get_endOfConstruct()->unsetShared();
 
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     get_startOfConstruct()->unsetShared();
-     get_endOfConstruct()->unsetShared();
-
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
-          expression->get_operatorPosition()->unsetShared();
-        }
-   }
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        ASSERT_not_null(expression->get_operatorPosition());
+        expression->get_operatorPosition()->unsetShared();
+    }
+}
 
 bool
-SgLocatedNode::isShared () const
-   {
-  // DQ (12/21/2019): Added function to define a simple API.
+SgLocatedNode::isShared() const {
+    ASSERT_this();
+    ASSERT_not_null(get_startOfConstruct());
+    bool result = get_startOfConstruct()->isShared();
 
-  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
-     ROSE_ASSERT(this != NULL);
+    if (get_endOfConstruct() != nullptr) {
+        ASSERT_require(result == get_endOfConstruct()->isShared());
+    }
+    else {
+        printf("WARNING: In SgLocatedNode::isShared(): this = %p = %s testing: get_endOfConstruct() != NULL (failed) \n",this,this->class_name().c_str());
+    }
 
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-
-     bool result = get_startOfConstruct()->isShared();
-
-  // DQ (4/6/2015): Allow this to work even when the endOfConstruct is not yet set (required for inlining).
-  // ROSE_ASSERT(get_endOfConstruct() != NULL);
-     if (get_endOfConstruct() != NULL)
-        {
-          ROSE_ASSERT(result == get_endOfConstruct()->isShared());
+    const SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        if (result != expression->get_operatorPosition()->isShared()) {
+            printf("Warning: this = %p = %s result != expression->get_operatorPosition()->isShared() \n",this,this->class_name().c_str());
+            printf("   --- Suggest calling the set shared on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
         }
-       else
-        {
-          printf ("WARNING: In SgLocatedNode::isShared(): this = %p = %s testing: get_endOfConstruct() != NULL (failed) \n",this,this->class_name().c_str());
-        }
+    }
 
-     const SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-#if 0
-          printf ("NOTE: this = %p = %s testing: result != expression->get_operatorPosition()->isShared() \n",this,this->class_name().c_str());
-#endif
-          if (result != expression->get_operatorPosition()->isShared())
-             {
-               printf ("Warning: this = %p = %s result != expression->get_operatorPosition()->isShared() \n",this,this->class_name().c_str());
-               printf ("   --- Suggest calling the set shared on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
-             }
-       // DQ (12/13/2018): This is difficult to enforce and causes an error in the outlining tests for Fortran in roseTests/astOutliningTests.
-       // When we eliminate the alternative interface to set this in each Sg_FileInfo object then it will be easier to enforce. So for now
-       // just issue the warning.
-       // ROSE_ASSERT(result == expression->get_operatorPosition()->isShared());
-        }
+    return result;
+}
 
-     return result;
-   }
-
-
-// DQ (12/22/2006): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
-SgLocatedNode::setFrontendSpecific ()
-   {
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     get_startOfConstruct()->setFrontendSpecific();
-     get_endOfConstruct()->setFrontendSpecific();
+SgLocatedNode::setFrontendSpecific() {
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    get_startOfConstruct()->setFrontendSpecific();
+    get_endOfConstruct()->setFrontendSpecific();
 
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          expression->get_operatorPosition()->setFrontendSpecific();
-        }
-   }
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        expression->get_operatorPosition()->setFrontendSpecific();
+    }
+}
 
-// DQ (12/22/2006): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
-SgLocatedNode::unsetFrontendSpecific()
-   {
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     get_startOfConstruct()->unsetFrontendSpecific();
-     get_endOfConstruct()->unsetFrontendSpecific();
+SgLocatedNode::unsetFrontendSpecific() {
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    get_startOfConstruct()->unsetFrontendSpecific();
+    get_endOfConstruct()->unsetFrontendSpecific();
 
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
-          expression->get_operatorPosition()->unsetFrontendSpecific();
-        }
-   }
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        ASSERT_not_null(expression->get_operatorPosition());
+        expression->get_operatorPosition()->unsetFrontendSpecific();
+    }
+}
 
 bool
-SgLocatedNode::isFrontendSpecific () const
-   {
-  // DQ (12/21/2019): Added function to define a simple API.
+SgLocatedNode::isFrontendSpecific() const {
+    ASSERT_this();
+    ASSERT_not_null(get_startOfConstruct());
+    bool result = get_startOfConstruct()->isFrontendSpecific();
 
-  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
-     ROSE_ASSERT(this != NULL);
+    if (get_endOfConstruct() != nullptr) {
+        ASSERT_require(result == get_endOfConstruct()->isFrontendSpecific());
+    }
+    else {
+        printf("WARNING: In SgLocatedNode::isFrontendSpecific(): this = %p = %s testing: get_endOfConstruct() != NULL (failed) \n",this,this->class_name().c_str());
+    }
 
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-
-     bool result = get_startOfConstruct()->isFrontendSpecific();
-
-  // DQ (4/6/2015): Allow this to work even when the endOfConstruct is not yet set (required for inlining).
-  // ROSE_ASSERT(get_endOfConstruct() != NULL);
-     if (get_endOfConstruct() != NULL)
-        {
-          ROSE_ASSERT(result == get_endOfConstruct()->isFrontendSpecific());
+    const SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        if (result != expression->get_operatorPosition()->isFrontendSpecific()) {
+            printf("Warning: this = %p = %s result != expression->get_operatorPosition()->isFrontendSpecific() \n",this,this->class_name().c_str());
+            printf("   --- Suggest calling the set shared on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
         }
-       else
-        {
-          printf ("WARNING: In SgLocatedNode::isFrontendSpecific(): this = %p = %s testing: get_endOfConstruct() != NULL (failed) \n",this,this->class_name().c_str());
-        }
+    }
 
-     const SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-#if 0
-          printf ("NOTE: this = %p = %s testing: result != expression->get_operatorPosition()->isFrontendSpecific() \n",this,this->class_name().c_str());
-#endif
-          if (result != expression->get_operatorPosition()->isFrontendSpecific())
-             {
-               printf ("Warning: this = %p = %s result != expression->get_operatorPosition()->isFrontendSpecific() \n",this,this->class_name().c_str());
-               printf ("   --- Suggest calling the set shared on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
-             }
-       // DQ (12/13/2018): This is difficult to enforce and causes an error in the outlining tests for Fortran in roseTests/astOutliningTests.
-       // When we eliminate the alternative interface to set this in each Sg_FileInfo object then it will be easier to enforce. So for now
-       // just issue the warning.
-       // ROSE_ASSERT(result == expression->get_operatorPosition()->isFrontendSpecific());
-        }
+    return result;
+}
 
-     return result;
-   }
-
-
-
-// DQ (12/22/2006): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
-SgLocatedNode::setSourcePositionUnavailableInFrontend ()
-   {
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     get_startOfConstruct()->setSourcePositionUnavailableInFrontend();
-     get_endOfConstruct()->setSourcePositionUnavailableInFrontend();
+SgLocatedNode::setSourcePositionUnavailableInFrontend() {
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    get_startOfConstruct()->setSourcePositionUnavailableInFrontend();
+    get_endOfConstruct()->setSourcePositionUnavailableInFrontend();
 
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          expression->get_operatorPosition()->setSourcePositionUnavailableInFrontend();
-        }
-   }
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        expression->get_operatorPosition()->setSourcePositionUnavailableInFrontend();
+    }
+}
 
-// DQ (12/22/2006): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
-SgLocatedNode::unsetSourcePositionUnavailableInFrontend()
-   {
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     get_startOfConstruct()->unsetSourcePositionUnavailableInFrontend();
-     get_endOfConstruct()->unsetSourcePositionUnavailableInFrontend();
+SgLocatedNode::unsetSourcePositionUnavailableInFrontend() {
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    get_startOfConstruct()->unsetSourcePositionUnavailableInFrontend();
+    get_endOfConstruct()->unsetSourcePositionUnavailableInFrontend();
 
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
-          expression->get_operatorPosition()->unsetSourcePositionUnavailableInFrontend();
-        }
-   }
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        ASSERT_not_null(expression->get_operatorPosition());
+        expression->get_operatorPosition()->unsetSourcePositionUnavailableInFrontend();
+    }
+}
 
-// DQ (12/22/2006): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
-SgLocatedNode::setOutputInCodeGeneration ()
-   {
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     get_startOfConstruct()->setOutputInCodeGeneration();
-     get_endOfConstruct()->setOutputInCodeGeneration();
+SgLocatedNode::setOutputInCodeGeneration() {
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    get_startOfConstruct()->setOutputInCodeGeneration();
+    get_endOfConstruct()->setOutputInCodeGeneration();
 
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          expression->get_operatorPosition()->setOutputInCodeGeneration();
-        }
-   }
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        expression->get_operatorPosition()->setOutputInCodeGeneration();
+    }
+}
 
-// DQ (12/22/2006): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
-SgLocatedNode::unsetOutputInCodeGeneration()
-   {
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     get_startOfConstruct()->unsetOutputInCodeGeneration();
-     get_endOfConstruct()->unsetOutputInCodeGeneration();
+SgLocatedNode::unsetOutputInCodeGeneration() {
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    get_startOfConstruct()->unsetOutputInCodeGeneration();
+    get_endOfConstruct()->unsetOutputInCodeGeneration();
 
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
-          expression->get_operatorPosition()->unsetOutputInCodeGeneration();
-        }
-   }
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        ASSERT_not_null(expression->get_operatorPosition());
+        expression->get_operatorPosition()->unsetOutputInCodeGeneration();
+    }
+}
 
-  // DQ (9/3/2021): Adding for the interface defined at the SgLocatedNode level.
 bool
-SgLocatedNode::isOutputInCodeGeneration () const
-   {
-     bool return_value = false;
+SgLocatedNode::isOutputInCodeGeneration() const {
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
 
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
+    bool return_value = false;
+    return_value = return_value || get_startOfConstruct()->isOutputInCodeGeneration();
+    ASSERT_require(return_value == get_endOfConstruct()->isOutputInCodeGeneration());
 
-     return_value = return_value || get_startOfConstruct()->isOutputInCodeGeneration();
-     ROSE_ASSERT(return_value == get_endOfConstruct()->isOutputInCodeGeneration());
+    const SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        ASSERT_require(return_value == expression->get_operatorPosition()->isOutputInCodeGeneration());
+    }
 
-     const SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          ROSE_ASSERT(return_value == expression->get_operatorPosition()->isOutputInCodeGeneration());
-        }
+    return return_value;
+}
 
-     return return_value;
-   }
-
-
-// DQ (10/25/20018): These function are part of a move to lift the interface for
-// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 int
-SgLocatedNode::get_physical_file_id()
-   {
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
-     ROSE_ASSERT(get_startOfConstruct()->get_physical_file_id() == get_endOfConstruct()->get_physical_file_id());
+SgLocatedNode::get_physical_file_id() {
+    ASSERT_not_null(get_startOfConstruct());
+    ASSERT_not_null(get_endOfConstruct());
+    ASSERT_require(get_startOfConstruct()->get_physical_file_id() == get_endOfConstruct()->get_physical_file_id());
 
-     SgExpression* expression = isSgExpression(this);
-     if (expression != NULL && expression->get_operatorPosition() != NULL)
-        {
-          expression->get_operatorPosition()->setOutputInCodeGeneration();
-          ROSE_ASSERT(expression->get_operatorPosition()->get_physical_file_id() == get_endOfConstruct()->get_physical_file_id());
-        }
+    SgExpression* expression = isSgExpression(this);
+    if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
+        expression->get_operatorPosition()->setOutputInCodeGeneration();
+        ASSERT_require(expression->get_operatorPosition()->get_physical_file_id() == get_endOfConstruct()->get_physical_file_id());
+    }
 
-  // Return any one of these since they are all checked to be equal.
-     return get_startOfConstruct()->get_physical_file_id();
-   }
+    return get_startOfConstruct()->get_physical_file_id();
+}
 
-// [MK] Member function to attach PreprocessingInfo object to the node
 void
 SgLocatedNode::addToAttachedPreprocessingInfo(
-     PreprocessingInfo *prepInfoPtr,
-     PreprocessingInfo::RelativePositionType locationInList )
-   {
-  // DQ (11/23/2008): Is this comment still true?  Is there something to fix here?
-  // There are places in ROSE where the comments is added before the statement
-  // though most commonly the comment is added after the statement.  So I think that
-  // this interface is required adn that it need not be fixed.
+         PreprocessingInfo* prepInfoPtr,
+         PreprocessingInfo::RelativePositionType locationInList) {
+    ASSERT_not_null(prepInfoPtr);
+    ASSERT_require(dynamic_cast<SgTypedefSeq*>(this) == nullptr);
 
-  // DQ (9/19/2003)
-  // This function takes a PreprocessingInfo::RelativePositionType type parameter which
-  // makes no since because it is used only to determine if the new comment/directive is
-  // added to the front or back of the current list of comments/directives.  It does not
-  // change the value of the PreprocessingInfo::RelativePositionType field in the
-  // PreprocessingInfo object that it takes for the other parameter (nor should it).
-  // This function was poorly desinged in the first place and needs to be fixed!!!
+    // PP (5/19/23): In Ada the catch sequence is introduced with a keyword "exception".
+    //               The keyword can have preprocessor info attached.
+    //               Since Asis does not break out the location of the exception keyword
+    //               it is mostly a guess if the preprocessor directive applies to the
+    //               whole sequence or just the first handler.
+    //               Having a pass that matches endif with if (unimplemented) could
+    //               remedy this problem to some extent.
+    ASSERT_require(SageInterface::is_Ada_language() || (isSgCatchStatementSeq(this) == nullptr));
 
-     ROSE_ASSERT(prepInfoPtr != NULL);
+    // These should not be used but are are least handled in the unparser (if not debugged)
+    ASSERT_require(dynamic_cast<SgCtorInitializerList*>(this) == nullptr);
 
-  // Nodes that should not have comments attached (since they are not unparsed)
+    SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(this);
+    if (functionParameterList != nullptr) {
+        ASSERT_not_null(get_startOfConstruct());
+        ASSERT_not_null(get_endOfConstruct());
+    }
 
-  // DQ (1/28/2013): Now that we correctly handle the source position for SgForInitStatement,
-  // I think we can allow CPP directives and comments to be attached to this IR node (failed
-  // for Zsh: params.c).  Now tested using test2013_48.C, though comments not output precisely.
+    // Create data structure for storing the attached PreprocessingInfo objects, if necessary
+    if (p_attachedPreprocessingInfoPtr == nullptr) {
+        p_attachedPreprocessingInfoPtr = new AttachedPreprocessingInfoType;
+        ASSERT_not_null(p_attachedPreprocessingInfoPtr);
+    }
 
-     ROSE_ASSERT (dynamic_cast<SgTypedefSeq*>(this) == NULL);
+    // Add the current PreprocessingInfo object
+    switch (locationInList) {
+      case PreprocessingInfo::defaultValue:
+      case PreprocessingInfo::undef:
+          printf("Error: defaultValue or undef value found in switch statement \n");
+          ASSERT_require(false);
+          break;
+      case PreprocessingInfo::before:
+          p_attachedPreprocessingInfoPtr->insert(p_attachedPreprocessingInfoPtr->begin(),prepInfoPtr);
+          break;
+      case PreprocessingInfo::end_of:
+      case PreprocessingInfo::after:
+          // (9/10/2003) DQ: Force new comments to be attached closest to the target statement
+          p_attachedPreprocessingInfoPtr->push_back(prepInfoPtr);
+          break;
+      default:
+          printf("Error: default found in switch statement \n");
+          ASSERT_require(false);
+    }
+}
 
-  // PP (5/19/23): In Ada the catch sequence is introduced with a keyword "exception".
-  //               The keyword can have preprocessor info attached.
-  //               Since Asis does not break out the location of the exception keyword
-  //               it is mostly a guess if the preprocessor directive applies to the
-  //               whole sequence or just the first handler.
-  //               Having a pass that matches endif with if (unimplemented) could
-  //               remedy this problem to some extent.
-     ROSE_ASSERT (SageInterface::is_Ada_language() || (isSgCatchStatementSeq(this) == nullptr));
-
-  // These should not be used but are are least handled in the unparser (if not debugged)
-     ROSE_ASSERT (dynamic_cast<SgCtorInitializerList*>(this) == NULL);
-
-     SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(this);
-     if (functionParameterList != NULL)
-        {
-          ROSE_ASSERT(get_startOfConstruct() != NULL);
-          ROSE_ASSERT(get_endOfConstruct() != NULL);
-        }
-
-  // Create data structure for storing the attached PreprocessingInfo objects, if necessary
-     if (p_attachedPreprocessingInfoPtr == NULL)
-        {
-          p_attachedPreprocessingInfoPtr = new AttachedPreprocessingInfoType;
-          ROSE_ASSERT(p_attachedPreprocessingInfoPtr != NULL);
-        }
-
-  // Add the current PreprocessingInfo object
-     switch (locationInList)
-        {
-          case PreprocessingInfo::defaultValue:
-          case PreprocessingInfo::undef:
-               printf ("Error: defaultValue or undef value found in switch statement \n");
-               ROSE_ASSERT(false);
-               break;
-
-          case PreprocessingInfo::before:
-             {
-               p_attachedPreprocessingInfoPtr->insert(p_attachedPreprocessingInfoPtr->begin(),prepInfoPtr);
-               break;
-             }
-
-          case PreprocessingInfo::end_of:
-          case PreprocessingInfo::after:
-             {
-            // (9/10/2003) DQ: Force new comments to be attached closest to the target statement
-               p_attachedPreprocessingInfoPtr->push_back(prepInfoPtr);
-               break;
-             }
-
-          default:
-               printf ("Error: default found in switch statement \n");
-               ROSE_ASSERT(false);
-        }
-   }
-
-
-// Liao 1/27/2015
 // Insert prepInfo right after (or before) an existing anchor info in the preprocessing info list
 void
 SgLocatedNode::insertToAttachedPreprocessingInfo(
-     PreprocessingInfo *prepInfoPtr,
-     PreprocessingInfo *anchorInfoPtr,
-     bool insertAfter /*= true*/
-     )
-   {
-     ROSE_ASSERT(prepInfoPtr != NULL);
-     ROSE_ASSERT(anchorInfoPtr != NULL);
-    // This function assumes the list already exists
-     ROSE_ASSERT (p_attachedPreprocessingInfoPtr != NULL);
+         PreprocessingInfo *prepInfoPtr,
+         PreprocessingInfo *anchorInfoPtr,
+         bool insertAfter /*= true*/) {
+    ASSERT_not_null(prepInfoPtr);
+    ASSERT_not_null(anchorInfoPtr);
+    ASSERT_not_null(p_attachedPreprocessingInfoPtr);
 
-    AttachedPreprocessingInfoType::iterator anchor_iter = find(
-                  p_attachedPreprocessingInfoPtr->begin(), p_attachedPreprocessingInfoPtr->end(), anchorInfoPtr);
+    AttachedPreprocessingInfoType::iterator
+    anchor_iter = find(p_attachedPreprocessingInfoPtr->begin(), p_attachedPreprocessingInfoPtr->end(), anchorInfoPtr);
 
-     if (insertAfter )
-             p_attachedPreprocessingInfoPtr->insert(anchor_iter+1,prepInfoPtr);
-      else
-             p_attachedPreprocessingInfoPtr->insert(anchor_iter, prepInfoPtr);
-  }
+    if (insertAfter) {
+        p_attachedPreprocessingInfoPtr->insert(anchor_iter+1,prepInfoPtr);
+    }
+    else {
+        p_attachedPreprocessingInfoPtr->insert(anchor_iter, prepInfoPtr);
+    }
+}
 
-
-// [MK] Member function to return attached PreprocessingInfo objects
-AttachedPreprocessingInfoType*&
-SgLocatedNode::getAttachedPreprocessingInfo(void)
-   {
-     return p_attachedPreprocessingInfoPtr;
-   }
+AttachedPreprocessingInfoType* &
+SgLocatedNode::getAttachedPreprocessingInfo() {
+    return p_attachedPreprocessingInfoPtr;
+}
 
 Sg_File_Info*
-SgLocatedNode::generateMatchingFileInfo()
-   {
-  // DQ (12/30/2009): Added this function to remove previous global function in large
-  // ROSETTA generated file so that we could support smaller ROSETTA generated files.
+SgLocatedNode::generateMatchingFileInfo() {
+    ASSERT_not_null(get_startOfConstruct());
+    Sg_File_Info* returnFileInfo = new Sg_File_Info(*(get_startOfConstruct()));
+    ASSERT_not_null(returnFileInfo);
 
-  // DQ (11/20/2004): Modified to provide more accurate information, use the
-  // copy constructor instead of the constructor that takes a file name.
-
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     Sg_File_Info* returnFileInfo = new Sg_File_Info(*(get_startOfConstruct()));
-     ROSE_ASSERT(returnFileInfo != NULL);
-
-     return returnFileInfo;
-   }
+    return returnFileInfo;
+}
 
 SOURCE_END
-
-
 
 SOURCE_TOKEN_START
 /*
@@ -1309,146 +1051,141 @@ A later pass can coalese these two identifers into one token
 Look at the the coalese tokens phase
 */
 
-// DQ (4/14/2007): Modified to use new enum values
-// DQ (3/24/2007): I would like to make this a const array (double check with Rama).
-const SgToken::token_element SgToken::ROSE_Fortran_keyword_map[127] =
-   {
-      {"abstract",             SgToken::FORTRAN_ABSTRACT},
-      {"access",               SgToken::FORTRAN_ACCESS},
-      {"action",               SgToken::FORTRAN_ACTION},
-      {"abstractinterface",    SgToken::FORTRAN_INTERFACE},           /*   GFORTRAN/G95 equivalent is ST_INTERFACE       */
-      {"allocate",             SgToken::FORTRAN_ALLOCATE},            /*   GFORTRAN/G95 equivalent is ST_ALLOCATE        */
-      {"allocatable",          SgToken::FORTRAN_ALLOCATABLE},         /*   GFORTRAN/G95 equivalent is ST_ALLOCATABLE     */
-      {"assign",               SgToken::FORTRAN_ASSIGN},              /*   GFORTRAN/G95 equivalent is ST_ASSIGN          */
-      {"associate",            SgToken::FORTRAN_ASSOCIATE},
-      {"asynchronous",         SgToken::FORTRAN_ASYNCHRONOUS},        /*   GFORTRAN/G95 equivalent is ST_ASYNCHRONOUS    */
-      {"backspace",            SgToken::FORTRAN_BACKSPACE},           /*   GFORTRAN/G95 equivalent is ST_BACKSPACE       */
-      {"bind",                 SgToken::FORTRAN_BIND},                /*   GFORTRAN/G95 equivalent is ST_BIND            */
-      {"blank",                SgToken::FORTRAN_BLANK},
-      {"blockdata",            SgToken::FORTRAN_BLOCK_DATA},          /*   GFORTRAN/G95 equivalent is ST_BLOCK_DATA      */
-      {"call",                 SgToken::FORTRAN_CALL},                /*   GFORTRAN/G95 equivalent is ST_CALL            */
-      {"character",            SgToken::FORTRAN_CHARACTER},
-      {"class",                SgToken::FORTRAN_CLASS},
-      {"close",                SgToken::FORTRAN_CLOSE},               /*   GFORTRAN/G95 equivalent is ST_CLOSE           */
-      {"continue",             SgToken::FORTRAN_CONTINUE},            /*   GFORTRAN/G95 equivalent is ST_CONTINUE        */
-      {"cycle",                SgToken::FORTRAN_CYCLE},               /*   GFORTRAN/G95 equivalent is ST_CYCLE           */
-      {"case",                 SgToken::FORTRAN_CASE},                /*   GFORTRAN/G95 equivalent is ST_CASE            */
-      {"common",               SgToken::FORTRAN_COMMON},              /*   GFORTRAN/G95 equivalent is ST_COMMON          */
-      {"complex",              SgToken::FORTRAN_COMPLEX},
-      {"contains",             SgToken::FORTRAN_CONTAINS},            /*   GFORTRAN/G95 equivalent is ST_CONTAINS        */
-      {"deallocate",           SgToken::FORTRAN_DEALLOCATE},          /*   GFORTRAN/G95 equivalent is ST_DEALLOCATE      */
-      {"data",                 SgToken::FORTRAN_DATA},                /*   GFORTRAN/G95 equivalent is ST_DATA            */
-      {"deferred",             SgToken::FORTRAN_DEFERRED},
-      {"delim",                SgToken::FORTRAN_DELIM},
-      {"dimension",            SgToken::FORTRAN_DIMENSION},           /*   GFORTRAN/G95 equivalent is ST_DIMENSION       */
-      {"do",                   SgToken::FORTRAN_DO},
-      {"dt",                   SgToken::FORTRAN_DT},
-      {"doubleprecision",      SgToken::FORTRAN_DOUBLEPRECISION},
-      {"encoding",             SgToken::FORTRAN_ENCODING},            /*   GFORTRAN/G95 equivalent is ST_END_FILE        */
-      {"endcase",              SgToken::FORTRAN_END_CASE},            /*   GFORTRAN/G95 equivalent is ST_END_FILE        */
-      {"enddo",                SgToken::FORTRAN_ENDDO},               /*   GFORTRAN/G95 equivalent is ST_END_FILE        */
-      {"endfile",              SgToken::FORTRAN_END_FILE},            /*   GFORTRAN/G95 equivalent is ST_END_FILE        */
-      {"endenum",              SgToken::FORTRAN_END_ENUM},
-      {"endinterface",         SgToken::FORTRAN_END_INTERFACE},
-      {"endtype",              SgToken::FORTRAN_END_TYPE},
-      {"err",                  SgToken::FORTRAN_ERR},
-      {"errmsg",               SgToken::FORTRAN_ERRMSG},
-      {"exit",                 SgToken::FORTRAN_EXIT},                /*   GFORTRAN/G95 equivalent is ST_EXIT            */
-      {"else",                 SgToken::FORTRAN_ELSE},                /*   GFORTRAN/G95 equivalent is ST_ELSE            */
-      {"elsewhere",            SgToken::FORTRAN_ELSEWHERE},           /*   GFORTRAN/G95 equivalent is ST_ELSEWHERE       */
-      {"elseif",               SgToken::FORTRAN_ELSEIF},              /*   GFORTRAN/G95 equivalent is ST_ELSEIF          */
-      {"endif",                SgToken::FORTRAN_ENDIF},
-      {"entry% ",              SgToken::FORTRAN_ENTRY},               /*   GFORTRAN/G95 equivalent is ST_ENTRY           */
-      {"end",                  SgToken::FORTRAN_END},
-      {"enum",                 SgToken::FORTRAN_ENUM},                /*   GFORTRAN/G95 equivalent is ST_ENUM            */
-      {"enumerator",           SgToken::FORTRAN_ENUMERATOR},          /*   GFORTRAN/G95 equivalent is ST_ENUMERATOR      */
-      {"equivalence",          SgToken::FORTRAN_EQUIVALENCE},         /*   GFORTRAN/G95 equivalent is ST_EQUIVALENCE     */
-      {"external",             SgToken::FORTRAN_EXTERNAL},            /*   GFORTRAN/G95 equivalent is ST_EXTERNAL        */
-      {"extends",              SgToken::FORTRAN_EXTENDS},
-      {"file",                 SgToken::FORTRAN_FILE},
-      {"final",                SgToken::FORTRAN_FINAL},               /*   GFORTRAN/G95 equivalent is ST_FORALL          */
-      {"fmt",                  SgToken::FORTRAN_FMT},                 /*   GFORTRAN/G95 equivalent is ST_FORALL          */
-      {"forall",               SgToken::FORTRAN_FORALL},              /*   GFORTRAN/G95 equivalent is ST_FORALL          */
-      {"form",                 SgToken::FORTRAN_FORM},
-      {"formatted",            SgToken::FORTRAN_FORMATTED},
-      {"format",               SgToken::FORTRAN_FORMAT},              /*   GFORTRAN/G95 equivalent is ST_FORMAT          */
-      {"flush",                SgToken::FORTRAN_FLUSH},               /*   GFORTRAN/G95 equivalent is ST_FLUSH           */
-      {"function",             SgToken::FORTRAN_FUNCTION},
-      {"generic",              SgToken::FORTRAN_GENERIC},             /*   GFORTRAN/G95 equivalent is ST_GOTO            */
-      {"goto",                 SgToken::FORTRAN_GOTO},                /*   GFORTRAN/G95 equivalent is ST_GOTO            */
-      {"id",                   SgToken::FORTRAN_ID},                  /*   GFORTRAN/G95 equivalent is ST_IF,             */
-      {"if",                   SgToken::FORTRAN_IF},                  /*   GFORTRAN/G95 equivalent is ST_IF,             */
-      {"inquire",              SgToken::FORTRAN_INQUIRE},             /*   GFORTRAN/G95 equivalent is ST_INQUIRE         */
-      {"integer",              SgToken::FORTRAN_INTEGER},             /*   GFORTRAN/G95 equivalent is ST_INQUIRE         */
-      {"iomsg",                SgToken::FORTRAN_IOMSG},
-      {"iostat",               SgToken::FORTRAN_IOSTAT},
-      {"implicit",             SgToken::FORTRAN_IMPLICIT},            /*   GFORTRAN/G95 equivalent is ST_IMPLICIT        */
-      {"implicitnone",         SgToken::FORTRAN_IMPLICIT_NONE},       /*   GFORTRAN/G95 equivalent is ST_IMPLICIT_NONE   */
-      {"import",               SgToken::FORTRAN_IMPORT},              /*   GFORTRAN/G95 equivalent is ST_IMPORT          */
-      {"interface",            SgToken::FORTRAN_INTERFACE},           /*   GFORTRAN/G95 equivalent is ST_INTERFACE       */
-      {"intent",               SgToken::FORTRAN_INTENT},              /*   GFORTRAN/G95 equivalent is ST_INTENT          */
-      {"intrinsic",            SgToken::FORTRAN_INTRINSIC},           /*   GFORTRAN/G95 equivalent is ST_INTRINSIC       */
-      {"len",                  SgToken::FORTRAN_LEN},
-      {"logical",              SgToken::FORTRAN_LOGICAL},
-      {"kind",                 SgToken::FORTRAN_KIND},
-      {"moduleprocedure",      SgToken::FORTRAN_MODULE_PROC},         /*   GFORTRAN/G95 equivalent is ST_E_MODULE_PROC   */
-      {"module",               SgToken::FORTRAN_MODULE},              /*   GFORTRAN/G95 equivalent is ST_MODULE          */
-      {"non_intrinsic",        SgToken::FORTRAN_NON_INTRINSIC},       /*   GFORTRAN/G95 equivalent is ST_NULLIFY         */
-      {"non_overridable",      SgToken::FORTRAN_NON_OVERRIDABLE},     /*   GFORTRAN/G95 equivalent is ST_NULLIFY         */
-      {"null",                 SgToken::FORTRAN_NULL},
-      {"nullify",              SgToken::FORTRAN_NULLIFY},             /*   GFORTRAN/G95 equivalent is ST_NULLIFY         */
-      {"namelist",             SgToken::FORTRAN_NAMELIST},            /*   GFORTRAN/G95 equivalent is ST_NAMELIST        */
-      {"nml",                  SgToken::FORTRAN_NML},
-      {"none",                 SgToken::FORTRAN_NONE},                /*   GFORTRAN/G95 equivalent is ST_NONE            */
-      {"nopass",               SgToken::FORTRAN_NOPASS},
-      {"only",                 SgToken::FORTRAN_ONLY},                /*   GFORTRAN/G95 equivalent is ST_OPEN            */
-      {"open",                 SgToken::FORTRAN_OPEN},                /*   GFORTRAN/G95 equivalent is ST_OPEN            */
-      {"optional",             SgToken::FORTRAN_OPTIONAL},            /*   GFORTRAN/G95 equivalent is ST_OPTIONAL        */
-      {"parameter",            SgToken::FORTRAN_PARAMETER},           /*   GFORTRAN/G95 equivalent is ST_PARAMETER       */
-      {"pass",                 SgToken::FORTRAN_PASS},
-      {"pause",                SgToken::FORTRAN_PAUSE},               /*   GFORTRAN/G95 equivalent is ST_PAUSE           */
-      {"pointer",              SgToken::FORTRAN_POINTER},             /*   GFORTRAN/G95 equivalent is ST_POINTER         */
-      {"print",                SgToken::FORTRAN_PRINT},               /*   GFORTRAN/G95 equivalent is ST_PRINT           */
-      {"private",              SgToken::FORTRAN_PRIVATE},             /*   GFORTRAN/G95 equivalent is ST_PRINT           */
-      {"procedure",            SgToken::FORTRAN_PROCEDURE},           /*   GFORTRAN/G95 equivalent is ST_DATA_DECL       */
-      {"program",              SgToken::FORTRAN_PROGRAM},             /*   GFORTRAN/G95 equivalent is ST_PROGRAM         */
-      {"protected",            SgToken::FORTRAN_PROTECTED},           /*   GFORTRAN/G95 equivalent is ST_DATA_DECL       */
-      {"read",                 SgToken::FORTRAN_READ},                /*   GFORTRAN/G95 equivalent is ST_READ            */
-      {"real",                 SgToken::FORTRAN_REAL},
-      {"return",               SgToken::FORTRAN_RETURN},              /*   GFORTRAN/G95 equivalent is ST_RETURN          */
-      {"rewind",               SgToken::FORTRAN_REWIND},              /*   GFORTRAN/G95 equivalent is ST_REWIND          */
-      {"round",                SgToken::FORTRAN_ROUND},
-      {"selectcase",           SgToken::FORTRAN_SELECTCASE},
-      {"selecttype",           SgToken::FORTRAN_SELECTTYPE},
-      {"sequence",             SgToken::FORTRAN_SEQUENCE},            /*   GFORTRAN/G95 equivalent is ST_SEQUENCE        */
-      {"save",                 SgToken::FORTRAN_SAVE},                /*   GFORTRAN/G95 equivalent is ST_SAVE            */
-      {"sign",                 SgToken::FORTRAN_SIGN},
-      {"size",                 SgToken::FORTRAN_SIZE},
-      {"source",               SgToken::FORTRAN_SOURCE},              /*   GFORTRAN/G95 equivalent is ST_SAVE            */
-      {"stat",                 SgToken::FORTRAN_STAT},
-      {"stop",                 SgToken::FORTRAN_STOP},                /*   GFORTRAN/G95 equivalent is ST_STOP            */
-      {"subroutine",           SgToken::FORTRAN_SUBROUTINE},
-      {"target",               SgToken::FORTRAN_TARGET},              /*   GFORTRAN/G95 equivalent is ST_TARGET          */
-      {"then",                 SgToken::FORTRAN_THEN},
-      {"type",                 SgToken::FORTRAN_DERIVED_DECL},        /*   GFORTRAN/G95 equivalent is ST_DERIVED_DECL    */
-      {"typeis",               SgToken::FORTRAN_TYPEIS},
-      {"unformatted",          SgToken::FORTRAN_UNFORMATTED},
-      {"unit",                 SgToken::FORTRAN_UNIT},
-      {"use",                  SgToken::FORTRAN_USE},                 /*   GFORTRAN/G95 equivalent is ST_USE             */
-      {"value",                SgToken::FORTRAN_VALUE},               /*   GFORTRAN/G95 equivalent is ST_VALUE           */
-      {"volatile",             SgToken::FORTRAN_VOLATILE},            /*   GFORTRAN/G95 equivalent is ST_VOLATILE        */
-      {"wait",                 SgToken::FORTRAN_WAIT},                /*   GFORTRAN/G95 equivalent is ST_WAIT            */
-      {"where",                SgToken::FORTRAN_WHERE},               /*   GFORTRAN/G95 equivalent is ST_WHERE,          */
-      {"write",                SgToken::FORTRAN_WRITE}                /*   GFORTRAN/G95 equivalent is ST_WRITE           */
-   };
-
+const SgToken::token_element SgToken::ROSE_Fortran_keyword_map[127] = {
+    {"abstract",             SgToken::FORTRAN_ABSTRACT},
+    {"access",               SgToken::FORTRAN_ACCESS},
+    {"action",               SgToken::FORTRAN_ACTION},
+    {"abstractinterface",    SgToken::FORTRAN_INTERFACE},           /*   GFORTRAN/G95 equivalent is ST_INTERFACE       */
+    {"allocate",             SgToken::FORTRAN_ALLOCATE},            /*   GFORTRAN/G95 equivalent is ST_ALLOCATE        */
+    {"allocatable",          SgToken::FORTRAN_ALLOCATABLE},         /*   GFORTRAN/G95 equivalent is ST_ALLOCATABLE     */
+    {"assign",               SgToken::FORTRAN_ASSIGN},              /*   GFORTRAN/G95 equivalent is ST_ASSIGN          */
+    {"associate",            SgToken::FORTRAN_ASSOCIATE},
+    {"asynchronous",         SgToken::FORTRAN_ASYNCHRONOUS},        /*   GFORTRAN/G95 equivalent is ST_ASYNCHRONOUS    */
+    {"backspace",            SgToken::FORTRAN_BACKSPACE},           /*   GFORTRAN/G95 equivalent is ST_BACKSPACE       */
+    {"bind",                 SgToken::FORTRAN_BIND},                /*   GFORTRAN/G95 equivalent is ST_BIND            */
+    {"blank",                SgToken::FORTRAN_BLANK},
+    {"blockdata",            SgToken::FORTRAN_BLOCK_DATA},          /*   GFORTRAN/G95 equivalent is ST_BLOCK_DATA      */
+    {"call",                 SgToken::FORTRAN_CALL},                /*   GFORTRAN/G95 equivalent is ST_CALL            */
+    {"character",            SgToken::FORTRAN_CHARACTER},
+    {"class",                SgToken::FORTRAN_CLASS},
+    {"close",                SgToken::FORTRAN_CLOSE},               /*   GFORTRAN/G95 equivalent is ST_CLOSE           */
+    {"continue",             SgToken::FORTRAN_CONTINUE},            /*   GFORTRAN/G95 equivalent is ST_CONTINUE        */
+    {"cycle",                SgToken::FORTRAN_CYCLE},               /*   GFORTRAN/G95 equivalent is ST_CYCLE           */
+    {"case",                 SgToken::FORTRAN_CASE},                /*   GFORTRAN/G95 equivalent is ST_CASE            */
+    {"common",               SgToken::FORTRAN_COMMON},              /*   GFORTRAN/G95 equivalent is ST_COMMON          */
+    {"complex",              SgToken::FORTRAN_COMPLEX},
+    {"contains",             SgToken::FORTRAN_CONTAINS},            /*   GFORTRAN/G95 equivalent is ST_CONTAINS        */
+    {"deallocate",           SgToken::FORTRAN_DEALLOCATE},          /*   GFORTRAN/G95 equivalent is ST_DEALLOCATE      */
+    {"data",                 SgToken::FORTRAN_DATA},                /*   GFORTRAN/G95 equivalent is ST_DATA            */
+    {"deferred",             SgToken::FORTRAN_DEFERRED},
+    {"delim",                SgToken::FORTRAN_DELIM},
+    {"dimension",            SgToken::FORTRAN_DIMENSION},           /*   GFORTRAN/G95 equivalent is ST_DIMENSION       */
+    {"do",                   SgToken::FORTRAN_DO},
+    {"dt",                   SgToken::FORTRAN_DT},
+    {"doubleprecision",      SgToken::FORTRAN_DOUBLEPRECISION},
+    {"encoding",             SgToken::FORTRAN_ENCODING},            /*   GFORTRAN/G95 equivalent is ST_END_FILE        */
+    {"endcase",              SgToken::FORTRAN_END_CASE},            /*   GFORTRAN/G95 equivalent is ST_END_FILE        */
+    {"enddo",                SgToken::FORTRAN_ENDDO},               /*   GFORTRAN/G95 equivalent is ST_END_FILE        */
+    {"endfile",              SgToken::FORTRAN_END_FILE},            /*   GFORTRAN/G95 equivalent is ST_END_FILE        */
+    {"endenum",              SgToken::FORTRAN_END_ENUM},
+    {"endinterface",         SgToken::FORTRAN_END_INTERFACE},
+    {"endtype",              SgToken::FORTRAN_END_TYPE},
+    {"err",                  SgToken::FORTRAN_ERR},
+    {"errmsg",               SgToken::FORTRAN_ERRMSG},
+    {"exit",                 SgToken::FORTRAN_EXIT},                /*   GFORTRAN/G95 equivalent is ST_EXIT            */
+    {"else",                 SgToken::FORTRAN_ELSE},                /*   GFORTRAN/G95 equivalent is ST_ELSE            */
+    {"elsewhere",            SgToken::FORTRAN_ELSEWHERE},           /*   GFORTRAN/G95 equivalent is ST_ELSEWHERE       */
+    {"elseif",               SgToken::FORTRAN_ELSEIF},              /*   GFORTRAN/G95 equivalent is ST_ELSEIF          */
+    {"endif",                SgToken::FORTRAN_ENDIF},
+    {"entry% ",              SgToken::FORTRAN_ENTRY},               /*   GFORTRAN/G95 equivalent is ST_ENTRY           */
+    {"end",                  SgToken::FORTRAN_END},
+    {"enum",                 SgToken::FORTRAN_ENUM},                /*   GFORTRAN/G95 equivalent is ST_ENUM            */
+    {"enumerator",           SgToken::FORTRAN_ENUMERATOR},          /*   GFORTRAN/G95 equivalent is ST_ENUMERATOR      */
+    {"equivalence",          SgToken::FORTRAN_EQUIVALENCE},         /*   GFORTRAN/G95 equivalent is ST_EQUIVALENCE     */
+    {"external",             SgToken::FORTRAN_EXTERNAL},            /*   GFORTRAN/G95 equivalent is ST_EXTERNAL        */
+    {"extends",              SgToken::FORTRAN_EXTENDS},
+    {"file",                 SgToken::FORTRAN_FILE},
+    {"final",                SgToken::FORTRAN_FINAL},               /*   GFORTRAN/G95 equivalent is ST_FORALL          */
+    {"fmt",                  SgToken::FORTRAN_FMT},                 /*   GFORTRAN/G95 equivalent is ST_FORALL          */
+    {"forall",               SgToken::FORTRAN_FORALL},              /*   GFORTRAN/G95 equivalent is ST_FORALL          */
+    {"form",                 SgToken::FORTRAN_FORM},
+    {"formatted",            SgToken::FORTRAN_FORMATTED},
+    {"format",               SgToken::FORTRAN_FORMAT},              /*   GFORTRAN/G95 equivalent is ST_FORMAT          */
+    {"flush",                SgToken::FORTRAN_FLUSH},               /*   GFORTRAN/G95 equivalent is ST_FLUSH           */
+    {"function",             SgToken::FORTRAN_FUNCTION},
+    {"generic",              SgToken::FORTRAN_GENERIC},             /*   GFORTRAN/G95 equivalent is ST_GOTO            */
+    {"goto",                 SgToken::FORTRAN_GOTO},                /*   GFORTRAN/G95 equivalent is ST_GOTO            */
+    {"id",                   SgToken::FORTRAN_ID},                  /*   GFORTRAN/G95 equivalent is ST_IF,             */
+    {"if",                   SgToken::FORTRAN_IF},                  /*   GFORTRAN/G95 equivalent is ST_IF,             */
+    {"inquire",              SgToken::FORTRAN_INQUIRE},             /*   GFORTRAN/G95 equivalent is ST_INQUIRE         */
+    {"integer",              SgToken::FORTRAN_INTEGER},             /*   GFORTRAN/G95 equivalent is ST_INQUIRE         */
+    {"iomsg",                SgToken::FORTRAN_IOMSG},
+    {"iostat",               SgToken::FORTRAN_IOSTAT},
+    {"implicit",             SgToken::FORTRAN_IMPLICIT},            /*   GFORTRAN/G95 equivalent is ST_IMPLICIT        */
+    {"implicitnone",         SgToken::FORTRAN_IMPLICIT_NONE},       /*   GFORTRAN/G95 equivalent is ST_IMPLICIT_NONE   */
+    {"import",               SgToken::FORTRAN_IMPORT},              /*   GFORTRAN/G95 equivalent is ST_IMPORT          */
+    {"interface",            SgToken::FORTRAN_INTERFACE},           /*   GFORTRAN/G95 equivalent is ST_INTERFACE       */
+    {"intent",               SgToken::FORTRAN_INTENT},              /*   GFORTRAN/G95 equivalent is ST_INTENT          */
+    {"intrinsic",            SgToken::FORTRAN_INTRINSIC},           /*   GFORTRAN/G95 equivalent is ST_INTRINSIC       */
+    {"len",                  SgToken::FORTRAN_LEN},
+    {"logical",              SgToken::FORTRAN_LOGICAL},
+    {"kind",                 SgToken::FORTRAN_KIND},
+    {"moduleprocedure",      SgToken::FORTRAN_MODULE_PROC},         /*   GFORTRAN/G95 equivalent is ST_E_MODULE_PROC   */
+    {"module",               SgToken::FORTRAN_MODULE},              /*   GFORTRAN/G95 equivalent is ST_MODULE          */
+    {"non_intrinsic",        SgToken::FORTRAN_NON_INTRINSIC},       /*   GFORTRAN/G95 equivalent is ST_NULLIFY         */
+    {"non_overridable",      SgToken::FORTRAN_NON_OVERRIDABLE},     /*   GFORTRAN/G95 equivalent is ST_NULLIFY         */
+    {"null",                 SgToken::FORTRAN_NULL},
+    {"nullify",              SgToken::FORTRAN_NULLIFY},             /*   GFORTRAN/G95 equivalent is ST_NULLIFY         */
+    {"namelist",             SgToken::FORTRAN_NAMELIST},            /*   GFORTRAN/G95 equivalent is ST_NAMELIST        */
+    {"nml",                  SgToken::FORTRAN_NML},
+    {"none",                 SgToken::FORTRAN_NONE},                /*   GFORTRAN/G95 equivalent is ST_NONE            */
+    {"nopass",               SgToken::FORTRAN_NOPASS},
+    {"only",                 SgToken::FORTRAN_ONLY},                /*   GFORTRAN/G95 equivalent is ST_OPEN            */
+    {"open",                 SgToken::FORTRAN_OPEN},                /*   GFORTRAN/G95 equivalent is ST_OPEN            */
+    {"optional",             SgToken::FORTRAN_OPTIONAL},            /*   GFORTRAN/G95 equivalent is ST_OPTIONAL        */
+    {"parameter",            SgToken::FORTRAN_PARAMETER},           /*   GFORTRAN/G95 equivalent is ST_PARAMETER       */
+    {"pass",                 SgToken::FORTRAN_PASS},
+    {"pause",                SgToken::FORTRAN_PAUSE},               /*   GFORTRAN/G95 equivalent is ST_PAUSE           */
+    {"pointer",              SgToken::FORTRAN_POINTER},             /*   GFORTRAN/G95 equivalent is ST_POINTER         */
+    {"print",                SgToken::FORTRAN_PRINT},               /*   GFORTRAN/G95 equivalent is ST_PRINT           */
+    {"private",              SgToken::FORTRAN_PRIVATE},             /*   GFORTRAN/G95 equivalent is ST_PRINT           */
+    {"procedure",            SgToken::FORTRAN_PROCEDURE},           /*   GFORTRAN/G95 equivalent is ST_DATA_DECL       */
+    {"program",              SgToken::FORTRAN_PROGRAM},             /*   GFORTRAN/G95 equivalent is ST_PROGRAM         */
+    {"protected",            SgToken::FORTRAN_PROTECTED},           /*   GFORTRAN/G95 equivalent is ST_DATA_DECL       */
+    {"read",                 SgToken::FORTRAN_READ},                /*   GFORTRAN/G95 equivalent is ST_READ            */
+    {"real",                 SgToken::FORTRAN_REAL},
+    {"return",               SgToken::FORTRAN_RETURN},              /*   GFORTRAN/G95 equivalent is ST_RETURN          */
+    {"rewind",               SgToken::FORTRAN_REWIND},              /*   GFORTRAN/G95 equivalent is ST_REWIND          */
+    {"round",                SgToken::FORTRAN_ROUND},
+    {"selectcase",           SgToken::FORTRAN_SELECTCASE},
+    {"selecttype",           SgToken::FORTRAN_SELECTTYPE},
+    {"sequence",             SgToken::FORTRAN_SEQUENCE},            /*   GFORTRAN/G95 equivalent is ST_SEQUENCE        */
+    {"save",                 SgToken::FORTRAN_SAVE},                /*   GFORTRAN/G95 equivalent is ST_SAVE            */
+    {"sign",                 SgToken::FORTRAN_SIGN},
+    {"size",                 SgToken::FORTRAN_SIZE},
+    {"source",               SgToken::FORTRAN_SOURCE},              /*   GFORTRAN/G95 equivalent is ST_SAVE            */
+    {"stat",                 SgToken::FORTRAN_STAT},
+    {"stop",                 SgToken::FORTRAN_STOP},                /*   GFORTRAN/G95 equivalent is ST_STOP            */
+    {"subroutine",           SgToken::FORTRAN_SUBROUTINE},
+    {"target",               SgToken::FORTRAN_TARGET},              /*   GFORTRAN/G95 equivalent is ST_TARGET          */
+    {"then",                 SgToken::FORTRAN_THEN},
+    {"type",                 SgToken::FORTRAN_DERIVED_DECL},        /*   GFORTRAN/G95 equivalent is ST_DERIVED_DECL    */
+    {"typeis",               SgToken::FORTRAN_TYPEIS},
+    {"unformatted",          SgToken::FORTRAN_UNFORMATTED},
+    {"unit",                 SgToken::FORTRAN_UNIT},
+    {"use",                  SgToken::FORTRAN_USE},                 /*   GFORTRAN/G95 equivalent is ST_USE             */
+    {"value",                SgToken::FORTRAN_VALUE},               /*   GFORTRAN/G95 equivalent is ST_VALUE           */
+    {"volatile",             SgToken::FORTRAN_VOLATILE},            /*   GFORTRAN/G95 equivalent is ST_VOLATILE        */
+    {"wait",                 SgToken::FORTRAN_WAIT},                /*   GFORTRAN/G95 equivalent is ST_WAIT            */
+    {"where",                SgToken::FORTRAN_WHERE},               /*   GFORTRAN/G95 equivalent is ST_WHERE,          */
+    {"write",                SgToken::FORTRAN_WRITE}                /*   GFORTRAN/G95 equivalent is ST_WRITE           */
+};
 
 bool
-SgToken::isCarriageReturn() const
-   {
-  // DQ (11/20/2015): Added function to detect CR to support unparsing of whitespace defined up to an including only the first CR.
-     return (get_lexeme_string() == "\n");
-   }
+SgToken::isCarriageReturn() const {
+    // DQ (11/20/2015): Added function to detect CR to support unparsing of whitespace defined up to an including only the first CR.
+    return (get_lexeme_string() == "\n");
+}
 
 SOURCE_TOKEN_END
 
@@ -1458,31 +1195,25 @@ SOURCE_LOCATED_NODE_SUPPORT_END
 SOURCE_RENAME_PAIR_START
 
 bool
-SgRenamePair::isRename() const
-   {
-  // This a treated as a valid renaming if the names are different.
-     return (p_local_name != p_use_name);
-   }
+SgRenamePair::isRename() const {
+    // This a treated as a valid renaming if the names are different.
+    return (p_local_name != p_use_name);
+}
 
 SOURCE_RENAME_PAIR_END
 
 SOURCE_INTERFACE_BODY_START
-
 SOURCE_INTERFACE_BODY_END
 
 SOURCE_HEADER_FILE_BODY_START
-
 SOURCE_HEADER_FILE_BODY_END
-
 
 SOURCE_JAVA_MEMBER_VALUE_PAIR_START
 SOURCE_JAVA_MEMBER_VALUE_PAIR_END
 
-
 SOURCE_LAMBDA_CAPTURE_START
 // DQ (9/3/2014): Adding support for C++11 lambda expresions.
 SOURCE_LAMBDA_CAPTURE_END
-
 
 SOURCE_LAMBDA_CAPTURE_LIST_START
 // DQ (9/3/2014): Adding support for C++11 lambda expresions.
@@ -1490,193 +1221,174 @@ SOURCE_LAMBDA_CAPTURE_LIST_END
 
 SOURCE_ADA_TYPE_CONSTRAINT_START
 
-SgAdaTypeConstraint::SgAdaTypeConstraint ( const SgAdaTypeConstraint & X )
-   : SgLocatedNodeSupport()
-   {
-     /* see comment in SgModifier */
-   }
+SgAdaTypeConstraint::SgAdaTypeConstraint(const SgAdaTypeConstraint& /*X*/)
+  : SgLocatedNodeSupport() {
+    /* see comment in SgModifier */
+}
 
 SgAdaTypeConstraint&
-SgAdaTypeConstraint::operator= ( const SgAdaTypeConstraint& X )
-   {
-     return *this;
-   }
+SgAdaTypeConstraint::operator= (const SgAdaTypeConstraint& /*X*/) {
+    return *this;
+}
 
 SOURCE_ADA_TYPE_CONSTRAINT_END
 
 SOURCE_ADA_RANGE_CONSTRAINT_START
-void SgAdaRangeConstraint::post_construction_initialization() {};
+void SgAdaRangeConstraint::post_construction_initialization() {
+};
 
-std::string SgAdaRangeConstraint::displayString() const
-{
-  SgExpression* rng = get_range();
-  ASSERT_not_null(rng);
+std::string SgAdaRangeConstraint::displayString() const {
+    SgExpression* rng = get_range();
+    ASSERT_not_null(rng);
 
-  std::stringstream out;
+    std::stringstream out;
+    // out << "$ada$range$" << rng->unparseToString();
+    out << "$ada$rngc$" << this;
 
-  // out << "$ada$range$" << rng->unparseToString();
-  out << "$ada$rngc$" << this;
-  return out.str();
+    return out.str();
 }
 
-void SgAdaRangeConstraint::display ( std::string label ) const
-{
-  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-  mprintf ("%s \n",displayString().c_str());
+void SgAdaRangeConstraint::display(std::string label) const {
+    mprintf("In $CLASSNAME::display(%s) \n",label.c_str());
+    mprintf("%s \n",displayString().c_str());
 }
 
-
-std::ostream & operator<< ( std::ostream& os, const SgAdaRangeConstraint& c)
-{
-  return os << c.displayString();
+std::ostream & operator<< (std::ostream& os, const SgAdaRangeConstraint& c) {
+    return os << c.displayString();
 }
 
 SOURCE_ADA_RANGE_CONSTRAINT_END
 
 SOURCE_ADA_INDEX_CONSTRAINT_START
-void SgAdaIndexConstraint::post_construction_initialization() {};
+void SgAdaIndexConstraint::post_construction_initialization() {
+};
 
-std::string SgAdaIndexConstraint::displayString() const
-{
-  std::stringstream out;
+std::string SgAdaIndexConstraint::displayString() const {
+    std::stringstream out;
 
-  //out << "$ada$idxc(";
-  //for (const SgExpression* exp : get_indexRanges())
-  //{
-  //  out << exp->unparseToString() << ',';
-  //}
-  //out << ')';
+    //out << "$ada$idxc(";
+    //for (const SgExpression* exp : get_indexRanges())
+    //{
+    //  out << exp->unparseToString() << ',';
+    //}
+    //out << ')';
 
-  // PP(10/27/22) use address in defense against SageBuilder's
-  //              mangled name based type sharing.
-  out << "$ada$idxc" << this;
-  return out.str();
+    // PP(10/27/22) use address in defense against SageBuilder's
+    //              mangled name based type sharing.
+    out << "$ada$idxc" << this;
+
+    return out.str();
 }
 
-void SgAdaIndexConstraint::display ( std::string label ) const
-{
-  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-  mprintf ("%s \n",displayString().c_str());
+void SgAdaIndexConstraint::display(std::string label) const {
+    mprintf("In $CLASSNAME::display(%s) \n",label.c_str());
+    mprintf("%s \n",displayString().c_str());
 }
 
-
-std::ostream & operator<< ( std::ostream& os, const SgAdaIndexConstraint& c)
-{
-  return os << c.displayString();
+std::ostream & operator<< (std::ostream& os, const SgAdaIndexConstraint& c) {
+    return os << c.displayString();
 }
 
 SOURCE_ADA_INDEX_CONSTRAINT_END
 
 SOURCE_ADA_DIGITS_CONSTRAINT_START
-void SgAdaDigitsConstraint::post_construction_initialization() {};
+void SgAdaDigitsConstraint::post_construction_initialization() {
+};
 
-std::string SgAdaDigitsConstraint::displayString() const
-{
-  SgExpression*        exp = get_digits();
-  SgAdaTypeConstraint* sub = get_subConstraint();
-  ASSERT_not_null(exp);
+std::string SgAdaDigitsConstraint::displayString() const {
+    SgExpression* exp = get_digits();
+    SgAdaTypeConstraint* sub = get_subConstraint();
+    ASSERT_not_null(exp);
 
-  std::stringstream out;
+    std::stringstream out;
+    out << "ada$digc$" << exp->unparseToString()
+        << (sub ? sub->displayString() : "");
 
-  out << "ada$digc$" << exp->unparseToString()
-      << (sub ? sub->displayString() : "");
-
-  return out.str();
+    return out.str();
 }
 
-void SgAdaDigitsConstraint::display ( std::string label ) const
-{
-  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-  mprintf ("%s \n",displayString().c_str());
+void SgAdaDigitsConstraint::display(std::string label) const {
+    mprintf("In $CLASSNAME::display(%s) \n",label.c_str());
+    mprintf("%s \n",displayString().c_str());
 }
 
-std::ostream & operator<< ( std::ostream& os, const SgAdaDigitsConstraint& c)
-{
-  return os << c.displayString();
+std::ostream & operator<< (std::ostream& os, const SgAdaDigitsConstraint& c) {
+    return os << c.displayString();
 }
 
 SOURCE_ADA_DIGITS_CONSTRAINT_END
 
 SOURCE_ADA_DELTA_CONSTRAINT_START
-void SgAdaDeltaConstraint::post_construction_initialization() {};
+void SgAdaDeltaConstraint::post_construction_initialization() {
+};
 
-std::string SgAdaDeltaConstraint::displayString() const
-{
-  SgExpression*        exp = get_delta();
-  SgAdaTypeConstraint* sub = get_subConstraint();
-  ASSERT_not_null(exp);
+std::string SgAdaDeltaConstraint::displayString() const {
+    SgExpression* exp = get_delta();
+    SgAdaTypeConstraint* sub = get_subConstraint();
+    ASSERT_not_null(exp);
 
-  std::stringstream out;
+    std::stringstream out;
+    out << "$ada$delc$" << exp->unparseToString()
+        << (sub ? sub->displayString() : "");
 
-  out << "$ada$delc$" << exp->unparseToString()
-      << (sub ? sub->displayString() : "");
-
-  return out.str();
+    return out.str();
 }
 
-void SgAdaDeltaConstraint::display ( std::string label ) const
-{
-  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-  mprintf ("%s \n",displayString().c_str());
+void SgAdaDeltaConstraint::display(std::string label) const {
+    mprintf("In $CLASSNAME::display(%s) \n",label.c_str());
+    mprintf("%s \n",displayString().c_str());
 }
 
-std::ostream & operator<< ( std::ostream& os, const SgAdaDeltaConstraint& c)
-{
-  return os << c.displayString();
+std::ostream & operator<< (std::ostream& os, const SgAdaDeltaConstraint& c) {
+    return os << c.displayString();
 }
 
 SOURCE_ADA_DELTA_CONSTRAINT_END
 
-
-
 SOURCE_ADA_NULL_CONSTRAINT_START
-void SgAdaNullConstraint::post_construction_initialization() {};
 
-std::string SgAdaNullConstraint::displayString() const
-{
-  return "$ada$noc";
+void SgAdaNullConstraint::post_construction_initialization() {
+};
+
+std::string SgAdaNullConstraint::displayString() const {
+    return "$ada$noc";
 }
 
-void SgAdaNullConstraint::display ( std::string label ) const
-{
-  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-  mprintf ("%s \n",displayString().c_str());
+void SgAdaNullConstraint::display(std::string label) const {
+    mprintf("In $CLASSNAME::display(%s) \n",label.c_str());
+    mprintf("%s \n",displayString().c_str());
 }
 
-std::ostream & operator<< ( std::ostream& os, const SgAdaNullConstraint& c)
-{
-  return os << c.displayString();
+std::ostream & operator<< (std::ostream& os, const SgAdaNullConstraint& c) {
+    return os << c.displayString();
 }
 
 SOURCE_ADA_NULL_CONSTRAINT_END
 
-
 SOURCE_ADA_DISCRIMINANT_CONSTRAINT_START
-void SgAdaDiscriminantConstraint::post_construction_initialization() {};
 
-std::string SgAdaDiscriminantConstraint::displayString() const
-{
-  std::stringstream out;
+void SgAdaDiscriminantConstraint::post_construction_initialization() {
+};
 
-  out << "$ada$discr(";
-  for (const SgExpression* exp : get_discriminants())
-    out << exp->unparseToString() << ',';
+std::string SgAdaDiscriminantConstraint::displayString() const {
+    std::stringstream out;
+    out << "$ada$discr(";
 
-  out << ')';
+    for (const SgExpression* exp : get_discriminants()) {
+        out << exp->unparseToString() << ',';
+    }
+    out << ')';
 
-  return out.str();
+    return out.str();
 }
 
-void SgAdaDiscriminantConstraint::display ( std::string label ) const
-{
-  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
-  mprintf ("%s \n",displayString().c_str());
+void SgAdaDiscriminantConstraint::display(std::string label) const {
+    mprintf("In $CLASSNAME::display(%s) \n",label.c_str());
+    mprintf("%s \n",displayString().c_str());
 }
 
-
-std::ostream & operator<< ( std::ostream& os, const SgAdaDiscriminantConstraint& c)
-{
-  return os << c.displayString();
+std::ostream & operator<< (std::ostream& os, const SgAdaDiscriminantConstraint& c) {
+    return os << c.displayString();
 }
 
 SOURCE_ADA_DISCRIMINANT_CONSTRAINT_END
