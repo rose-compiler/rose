@@ -77,14 +77,14 @@ leadingBytes(const uint8_t *buf, size_t bufsize) {
     std::string retval;
     static const size_t nBytesToShow = 8;
     char s[8];
-    for (size_t i=0; i<nBytesToShow; ++i) {
-        if (i>=bufsize) {
+    for (size_t i = 0; i < nBytesToShow; ++i) {
+        if (i >= bufsize) {
             retval += "   ";
         } else if (isgraph(buf[i])) {
-            sprintf(s, "  %c", buf[i]);
+            snprintf(s, sizeof(s), "  %c", buf[i]);
             retval += s;
         } else {
-            sprintf(s, " %02x", (unsigned)buf[i]);
+            snprintf(s, sizeof(s), " %02x", (unsigned)buf[i]);
             retval += s;
         }
     }
