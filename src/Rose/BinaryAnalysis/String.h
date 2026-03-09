@@ -182,6 +182,18 @@ public:
     Exception(const std::string &s): Rose::Exception(s) {}
 };
 
+// Filter potential strings by exact matches, substring matches, and regex matches.
+class StringFilter {
+  private:
+    std::unordered_set<std::string> _exact_strings;
+    std::unordered_set<std::string> _substrings;
+    std::unordered_set<std::string> _regexes;
+
+  public:
+    void add_string(const std::string& str, const bool& is_substring);
+    bool match(const std::string& str);
+};
+
 /** Decoder state. Negative values are reserved.
  *
  *  A decoder must follow these rules when transitioning from one state to another:
@@ -843,6 +855,8 @@ public:
          *  If set, then only the longest detected strings are kept.  The algorithm sorts all detected strings by decreasing
          *  length, then removes any string whose memory addresses overlap with any prior string in the list. */
         bool keepingOnlyLongest;
+
+        Sawyer::Optional<StringFilter> filter;
 
         Settings(): minLength(5), maxLength(-1), maxOverlap(8), keepingOnlyLongest(true) {}
     };

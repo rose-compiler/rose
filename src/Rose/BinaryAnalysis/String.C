@@ -17,6 +17,9 @@
 
 #include <Sawyer/ProgressBar.h>
 
+#include <string>
+#include <codecvt>
+
 using namespace Rose::Diagnostics;
 
 namespace Rose {
@@ -42,6 +45,65 @@ initDiagnostics(void) {
 bool
 isDone(State st) {
     return st == FINAL_STATE || st == COMPLETED_STATE;
+}
+
+// StringFilter
+
+void
+StringFilter::add_string(const std::string& str, const bool& is_substring) {
+    if (boost::starts_with(str, "/") && boost::ends_with(str, "/") && str.size() > 2) {
+        const auto key = str.substr(1, str.size() - 2);
+        _regexes.insert(key);
+    } else if (boost::starts_with(str, "/") && boost::ends_with(str, "/i") && str.size() > 3) {
+        const auto key = str.substr(1, str.size() - 3);
+        _regexes.insert(key);
+    } else {
+        is_substring ? _substrings.insert(str) : _exact_strings.insert(str);
+    }
+}
+
+std::string
+build_regexes(const std::unordered_set<std::string>& strs) {
+    std::stringstream ss;
+    // std::string first = *strs.begin();
+    // ss << "(" << first << ")";
+
+    bool done_first = false;
+
+    for (const auto& s : strs) {
+        if (done_first) {
+            ss << "|(" << s << ")";
+        } else {
+            done_first = true;
+            ss << "(" << s << ")";
+        }
+    }
+
+    return ss.str();
+}
+
+bool
+StringFilter::match(const std::string& str) {
+    if (_exact_strings.count(str))
+        return true;
+
+    for (const auto& ss : _substrings) {
+        if (boost::contains(str, ss))
+            return true;
+    }
+
+    static Sawyer::Optional<boost::regex> str_regex;
+
+    if (_regexes.size() > 0) {
+        if (!str_regex)
+            str_regex = boost::regex(
+              build_regexes(_regexes),
+              boost::regex::ECMAScript | boost::regex::icase | boost::regex::optimize | boost::regex::nosubs
+            );
+        return boost::regex_search(str, *str_regex);
+    }
+
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -766,16 +828,17 @@ StringFinder::insertUncommonEncoders(ByteOrder::Endianness) {
     return *this;
 }
 
-struct Finding {
+class Finding {
+  public:
     StringEncodingScheme::Ptr encoder;
-    Address startVa;
-    Address nBytes;
-    Finding()
-        : startVa(0), nBytes(0) {}
-    Finding(const StringEncodingScheme::Ptr &enc, Address va)
-        : encoder(enc->clone()), startVa(va), nBytes(0) {
+    Address                   startVa;
+    Address                   nBytes;
+    Finding() : startVa(0), nBytes(0) {}
+    Finding(const StringEncodingScheme::Ptr& enc, Address va) : encoder(enc->clone()), startVa(va), nBytes(0) {
         encoder->reset();
     }
+
+    EncodedString str() const { return EncodedString(encoder, AddressInterval::baseSize(startVa, nBytes)); }
 };
 
 static bool
@@ -804,12 +867,13 @@ class StringSearcher {
     size_t maxOverlap_;                                 // allow one encoder to match overlapping strings?
     Sawyer::Optional<Address> anchored_;                // are strings anchored to starting address?
     Sawyer::ProgressBar<size_t> progress_;
+    Sawyer::Optional<StringFilter> filter_;
 public:
     StringSearcher(const std::vector<StringEncodingScheme::Ptr> &encoders,
                    size_t minLength, size_t maxLength, bool discardCodePoints, size_t maxOverlap,
-                   size_t nBytesToCheck)
+                   size_t nBytesToCheck, Sawyer::Optional<StringFilter> filter)
         : protoEncoders_(encoders), bufferVa_(0), minLength_(minLength), maxLength_(maxLength),
-          discardCodePoints_(discardCodePoints), maxOverlap_(maxOverlap), progress_(mlog[MARCH], "scanned bytes") {
+          discardCodePoints_(discardCodePoints), maxOverlap_(maxOverlap), progress_(mlog[MARCH], "scanned bytes"), filter_{filter} {
         findings_.resize(encoders.size());
         progress_.value(0, nBytesToCheck);
         progress_.suffix(" addresses");
@@ -818,8 +882,17 @@ public:
     // anchor the search to a particular address
     void anchor(Address startVa) { anchored_ = startVa; }
 
+    // filter using a StringFilter
+    void filter(StringFilter filter) { filter_ = filter; }
+
     // obtain the final results
     const std::vector<Finding>& results() const { return results_; }
+
+    // add a new result
+    void add_result(const Finding& finding) { 
+        if (!filter_ || filter_->match(std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(finding.str().wide())))
+            results_.push_back(finding); 
+    }
 
     // search for strings
     bool operator()(const MemoryMap::Super &map, const AddressInterval &interval) {
@@ -831,7 +904,7 @@ public:
                     if (findings_[i][j].encoder->state() == COMPLETED_STATE &&
                         findings_[i][j].encoder->length() >= minLength_ &&
                         findings_[i][j].encoder->length() <= maxLength_) {
-                        results_.push_back(findings_[i][j]);
+                        add_result(findings_[i][j]);
                     }
                 }
                 findings_[i].clear();
@@ -881,7 +954,7 @@ public:
                         } else if (FINAL_STATE == st) {
                             if (findings_[i][j].encoder->length() >= minLength_ &&
                                 findings_[i][j].encoder->length() <= maxLength_) {
-                                results_.push_back(findings_[i][j]);
+                                add_result(findings_[i][j]);
                             }
                             findings_[i][j].encoder = StringEncodingScheme::Ptr();
                         } else if (COMPLETED_STATE == st &&
@@ -889,7 +962,7 @@ public:
                                    findings_[i][j].encoder->length() <= maxLength_) {
                             Finding fcopy = findings_[i][j];
                             fcopy.encoder = fcopy.encoder->clone();
-                            results_.push_back(fcopy);
+                            add_result(fcopy);
                         }
                     }
                     findings_[i].erase(std::remove_if(findings_[i].begin(), findings_[i].end(), hasNullEncoder),
@@ -916,13 +989,13 @@ StringFinder::find(const MemoryMap::ConstConstraints &constraints, Sawyer::Conta
         nBytesToCheck += node.key().size();
 
     StringSearcher stringFinder(encoders_, settings_.minLength, settings_.maxLength, discardingCodePoints_,
-                                settings_.maxOverlap, nBytesToCheck);
+                                settings_.maxOverlap, nBytesToCheck, settings_.filter);
     if (constraints.isAnchored())
         stringFinder.anchor(constraints.anchored().least());
     constraints.traverse(stringFinder, flags);
 
     for (const Finding &finding: stringFinder.results())
-        strings_.push_back(EncodedString(finding.encoder, AddressInterval::baseSize(finding.startVa, finding.nBytes)));
+        strings_.push_back(finding.str());
 
     if (settings_.keepingOnlyLongest) {
         AddressIntervalSet stringAddresses;
