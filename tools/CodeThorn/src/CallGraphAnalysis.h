@@ -29,12 +29,16 @@ namespace CodeThorn
     /// tests if this has property \p prop.
     bool hasProperty(Property prop) const;
 
-    /// returns the assocaited call expression.
+    /// returns the associated call expression.
     /// \note this is the raw call in the AST, the callee (target) may not be
     ///       the immediate lhs.
     ExpressionKeyType call() const;
 
-    ExpressionKeyType expr;
+    /// the expression referring to the function
+    ExpressionKeyType func() const;
+
+    ExpressionKeyType callExpr;
+    ExpressionKeyType funcExpr;
     Property          kind;
   };
 

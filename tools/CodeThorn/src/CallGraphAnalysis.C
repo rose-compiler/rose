@@ -20,8 +20,15 @@ namespace
       void insert( ct::CallGraph::ConstVertexIterator src,
                    ct::FunctionKeyType tgtkey,
                    ct::ExpressionKeyType call,
+                   ct::ExpressionKeyType fnref,
                    ct::CallEdge::Property kind
                  );
+
+      ct::CallEdge::Property
+      virtualCallProperty(bool virtualCall)
+      {
+        return virtualCall ? ct::CallEdge::virtualCall : ct::CallEdge::normalCall;
+      }
 
       void operator()(ct::FunctionKeyType src)
       {
@@ -42,7 +49,7 @@ namespace
             if (!isCall) // address taken
               addressTknElems.push_back(call);
             else
-              insert(srcpos, tgtkey, call.call(), virtualCall ? ct::CallEdge::virtualCall : ct::CallEdge::normalCall);
+              insert(srcpos, tgtkey, call.call(), call.calleeExpr(), virtualCallProperty(virtualCall));
 
             // if the address was taken from a virtual function,
             //   we also store it in the virtual call container.
@@ -78,6 +85,7 @@ namespace
   void InsertEdges::insert( ct::CallGraph::ConstVertexIterator src,
                             ct::FunctionKeyType                tgtkey,
                             ct::ExpressionKeyType              call,
+                            ct::ExpressionKeyType              fnref,
                             ct::CallEdge::Property             kind
                           )
   {
@@ -85,7 +93,7 @@ namespace
 
     if (g->isValidVertex(tgt)) // normally taken
     {
-      g->insertEdge(src, tgt, ct::CallEdge{call, kind});
+      g->insertEdge(src, tgt, ct::CallEdge{call, fnref, kind});
       return;
     }
 
@@ -112,7 +120,7 @@ namespace
         if (call.virtualCall())
           kind = kind | ct::CallEdge::Property::virtualCall;
 
-        insert(srcpos, tgtkey, call.call(), kind);
+        insert(srcpos, tgtkey, call.call(), call.calleeExpr(), kind);
       }
     }
   }
@@ -143,7 +151,7 @@ namespace
         const ct::VirtualFunctionDesc& vfunc  = pos->second;
 
         for (ct::OverrideDesc overrider : vfunc.overriders())
-          insert(srcpos, overrider.function(), cd.call(), ct::CallEdge::overrider);
+          insert(srcpos, overrider.function(), cd.call(), cd.calleeExpr(), ct::CallEdge::overrider);
       }
     }
   }
@@ -258,7 +266,8 @@ namespace CodeThorn
 {
   // CallEdge impl
   bool CallEdge::hasProperty(Property prop) const { return (kind & prop) == prop; }
-  ExpressionKeyType CallEdge::call() const { return expr; }
+  ExpressionKeyType CallEdge::call() const { return callExpr; }
+  ExpressionKeyType CallEdge::func() const { return funcExpr; }
   // CallEdge end
 
   std::tuple<CallGraph, FunctionCallDataSequence>
