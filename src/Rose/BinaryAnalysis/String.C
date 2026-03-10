@@ -3,6 +3,9 @@
 
 #include <Rose/BinaryAnalysis/String.h>
 
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/regex.hpp>
+
 #include <Rose/StringUtility/Diagnostics.h>
 #include <Rose/StringUtility/Escape.h>
 #include <Rose/StringUtility/NumberToString.h>
@@ -47,60 +50,80 @@ isDone(State st) {
     return st == FINAL_STATE || st == COMPLETED_STATE;
 }
 
-// StringFilter
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      StringFilter
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-StringFilter::add_string(const std::string& str, const bool& is_substring) {
+StringFilter::addString(const std::string& str, bool isSubstring) {
     if (boost::starts_with(str, "/") && boost::ends_with(str, "/") && str.size() > 2) {
-        const auto key = str.substr(1, str.size() - 2);
-        _regexes.insert(key);
-    } else if (boost::starts_with(str, "/") && boost::ends_with(str, "/i") && str.size() > 3) {
-        const auto key = str.substr(1, str.size() - 3);
-        _regexes.insert(key);
+        const std::string pattern = str.substr(1, str.size() - 2);
+
+        // Validate regex pattern immediately
+        try {
+            boost::regex test(pattern, boost::regex::ECMAScript | boost::regex::icase);
+            regexPatterns_.insert(pattern);
+            regexNeedsUpdate_ = true;
+        } catch (const boost::regex_error& e) {
+            throw Exception("invalid regex pattern '" + pattern + "': " + e.what());
+        }
     } else {
-        is_substring ? _substrings.insert(str) : _exact_strings.insert(str);
+        isSubstring ? substrings_.insert(str) : exactStrings_.insert(str);
     }
 }
 
+/** Build a combined regex pattern from multiple patterns.
+ *
+ *  Combines multiple regex patterns into a single pattern using alternation (|).
+ *  Each pattern is wrapped in parentheses for grouping.
+ *
+ *  Example: {"foo", "bar"} -> "(foo)|(bar)"
+ *
+ *  @param patterns Set of regex patterns to combine
+ *  @return Combined regex pattern string */
 std::string
-build_regexes(const std::unordered_set<std::string>& strs) {
+buildRegexes(const std::unordered_set<std::string>& patterns) {
     std::stringstream ss;
-    // std::string first = *strs.begin();
-    // ss << "(" << first << ")";
+    bool              first = true;
 
-    bool done_first = false;
-
-    for (const auto& s : strs) {
-        if (done_first) {
-            ss << "|(" << s << ")";
-        } else {
-            done_first = true;
-            ss << "(" << s << ")";
-        }
+    for (const auto& pattern : patterns) {
+        if (!first)
+            ss << "|";
+        ss << "(" << pattern << ")";
+        first = false;
     }
 
     return ss.str();
 }
 
+void
+StringFilter::updateRegex() const {
+    if (regexNeedsUpdate_ && !regexPatterns_.empty()) {
+        compiledRegex_ = boost::regex(
+          buildRegexes(regexPatterns_),
+          boost::regex::ECMAScript | boost::regex::icase | boost::regex::optimize | boost::regex::nosubs
+        );
+        regexNeedsUpdate_ = false;
+    }
+}
+
 bool
-StringFilter::match(const std::string& str) {
-    if (_exact_strings.count(str))
+StringFilter::match(const std::string& str) const {
+    // Check exact matches
+    if (exactStrings_.count(str))
         return true;
 
-    for (const auto& ss : _substrings) {
-        if (boost::contains(str, ss))
+    // Check substring matches
+    for (const auto& substring : substrings_) {
+        if (boost::contains(str, substring))
             return true;
     }
 
-    static Sawyer::Optional<boost::regex> str_regex;
-
-    if (_regexes.size() > 0) {
-        if (!str_regex)
-            str_regex = boost::regex(
-              build_regexes(_regexes),
-              boost::regex::ECMAScript | boost::regex::icase | boost::regex::optimize | boost::regex::nosubs
-            );
-        return boost::regex_search(str, *str_regex);
+    // Check regex matches
+    if (!regexPatterns_.empty()) {
+        updateRegex();
+        if (compiledRegex_ && boost::regex_search(str, *compiledRegex_))
+            return true;
     }
 
     return false;
@@ -889,9 +912,9 @@ public:
     const std::vector<Finding>& results() const { return results_; }
 
     // add a new result
-    void add_result(const Finding& finding) { 
-        if (!filter_ || filter_->match(std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(finding.str().wide())))
-            results_.push_back(finding); 
+    void add_result(const Finding& finding) {
+        if (!filter_ || filter_->match(finding.str().narrow()))
+            results_.push_back(finding);
     }
 
     // search for strings
