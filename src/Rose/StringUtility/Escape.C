@@ -220,7 +220,53 @@ yamlEscape(const std::string &s) {
 
 std::string
 jsonEscape(const std::string &s) {
-    return cEscape(s);
+    // Properly escape strings for JSON per RFC 8259
+    // JSON supports UTF-8 natively, so only escape:
+    // 1. JSON special characters: " \ / (optional)
+    // 2. Control characters: \b \f \n \r \t
+    // 3. Other control chars (0x00-0x1F): use \uXXXX format
+    // 4. Keep UTF-8 multi-byte sequences (0x80-0xFF) as-is
+
+    std::string result;
+    for (unsigned char ch : s) {
+        switch (ch) {
+            case '"':
+                result += "\\\"";
+                break;
+            case '\\':
+                result += "\\\\";
+                break;
+            case '\b':
+                result += "\\b";
+                break;
+            case '\f':
+                result += "\\f";
+                break;
+            case '\n':
+                result += "\\n";
+                break;
+            case '\r':
+                result += "\\r";
+                break;
+            case '\t':
+                result += "\\t";
+                break;
+            default:
+                // Only escape control characters (0x00-0x1F)
+                // Keep all other bytes as-is (including UTF-8 multi-byte sequences 0x80-0xFF)
+                if (ch < 0x20) {
+                    // Use \uXXXX format for control characters (JSON spec)
+                    char buf[7];
+                    snprintf(buf, sizeof(buf), "\\u%04x", ch);
+                    result += buf;
+                } else {
+                    // Keep UTF-8 bytes as-is (JSON supports UTF-8 natively per RFC 8259)
+                    result += ch;
+                }
+                break;
+        }
+    }
+    return result;
 }
 
 std::string
