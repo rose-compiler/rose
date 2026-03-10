@@ -579,7 +579,7 @@ ShowVersion::instance(const std::string &versionString) {
 
 SAWYER_EXPORT void
 ShowVersion::operator()(const ParserResult&) {
-    std::cerr <<versionString_ <<"\n";
+    std::cout <<versionString_ <<"\n";
 }
 
 SAWYER_EXPORT
