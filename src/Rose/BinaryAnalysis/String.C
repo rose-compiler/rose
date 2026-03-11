@@ -51,24 +51,50 @@ isDone(State st) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      FilterSpecification
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+FilterSpecification::FilterSpecification(Type type, const std::string& pattern) :
+  type_(type), pattern_(pattern), caseSensitivity_(CaseSensitivity::INSENSITIVE) {
+    // Stub implementation - no validation yet
+}
+
+FilterSpecification::FilterSpecification(const std::string& pattern, CaseSensitivity caseSensitivity) :
+  type_(Type::REGEX), pattern_(pattern), caseSensitivity_(caseSensitivity) {
+    // Validate regex pattern immediately
+    try {
+        boost::regex::flag_type flags = boost::regex::ECMAScript;
+        if (caseSensitivity == CaseSensitivity::INSENSITIVE) {
+            flags |= boost::regex::icase;
+        }
+        boost::regex test(pattern, flags);
+    } catch (const boost::regex_error& e) {
+        throw Exception("invalid regex pattern '" + pattern + "': " + e.what());
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      StringFilter
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-StringFilter::addString(const std::string& str, bool isSubstring) {
-    if (boost::starts_with(str, "/") && boost::ends_with(str, "/") && str.size() > 2) {
-        const std::string pattern = str.substr(1, str.size() - 2);
-
-        // Validate regex pattern immediately
-        try {
-            boost::regex test(pattern, boost::regex::ECMAScript | boost::regex::icase);
-            regexPatterns_.insert(pattern);
-            regexNeedsUpdate_ = true;
-        } catch (const boost::regex_error& e) {
-            throw Exception("invalid regex pattern '" + pattern + "': " + e.what());
+StringFilter::addFilter(const FilterSpecification& spec) {
+    switch (spec.type()) {
+    case FilterSpecification::Type::EXACT_MATCH:
+        exactStrings_.insert(spec.pattern());
+        break;
+    case FilterSpecification::Type::SUBSTRING:
+        substrings_.insert(spec.pattern());
+        break;
+    case FilterSpecification::Type::REGEX:
+        // Stub: No validation yet, just insert into appropriate set
+        if (spec.isCaseSensitive()) {
+            regexPatternsCaseSensitive_.insert(spec.pattern());
+        } else {
+            regexPatternsCaseInsensitive_.insert(spec.pattern());
         }
-    } else {
-        isSubstring ? substrings_.insert(str) : exactStrings_.insert(str);
+        regexNeedsUpdate_ = true;
+        break;
     }
 }
 
@@ -98,13 +124,31 @@ buildRegexes(const std::unordered_set<std::string>& patterns) {
 
 void
 StringFilter::updateRegex() const {
-    if (regexNeedsUpdate_ && !regexPatterns_.empty()) {
-        compiledRegex_ = boost::regex(
-          buildRegexes(regexPatterns_),
+    if (!regexNeedsUpdate_) {
+        return;
+    }
+
+    // Compile case-insensitive patterns with icase flag
+    if (!regexPatternsCaseInsensitive_.empty()) {
+        compiledRegexCaseInsensitive_ = boost::regex(
+          buildRegexes(regexPatternsCaseInsensitive_),
           boost::regex::ECMAScript | boost::regex::icase | boost::regex::optimize | boost::regex::nosubs
         );
-        regexNeedsUpdate_ = false;
+    } else {
+        compiledRegexCaseInsensitive_.reset();
     }
+
+    // Compile case-sensitive patterns without icase flag
+    if (!regexPatternsCaseSensitive_.empty()) {
+        compiledRegexCaseSensitive_ = boost::regex(
+          buildRegexes(regexPatternsCaseSensitive_),
+          boost::regex::ECMAScript | boost::regex::optimize | boost::regex::nosubs
+        );
+    } else {
+        compiledRegexCaseSensitive_.reset();
+    }
+
+    regexNeedsUpdate_ = false;
 }
 
 bool
@@ -120,9 +164,13 @@ StringFilter::match(const std::string& str) const {
     }
 
     // Check regex matches
-    if (!regexPatterns_.empty()) {
+    if (!regexPatternsCaseSensitive_.empty() || !regexPatternsCaseInsensitive_.empty()) {
         updateRegex();
-        if (compiledRegex_ && boost::regex_search(str, *compiledRegex_))
+
+        if (compiledRegexCaseInsensitive_ && boost::regex_search(str, *compiledRegexCaseInsensitive_))
+            return true;
+
+        if (compiledRegexCaseSensitive_ && boost::regex_search(str, *compiledRegexCaseSensitive_))
             return true;
     }
 
@@ -892,15 +940,17 @@ class StringSearcher {
     Sawyer::ProgressBar<size_t> progress_;
     Sawyer::Optional<StringFilter> filter_;
 public:
-    StringSearcher(const std::vector<StringEncodingScheme::Ptr> &encoders,
-                   size_t minLength, size_t maxLength, bool discardCodePoints, size_t maxOverlap,
-                   size_t nBytesToCheck, Sawyer::Optional<StringFilter> filter)
-        : protoEncoders_(encoders), bufferVa_(0), minLength_(minLength), maxLength_(maxLength),
-          discardCodePoints_(discardCodePoints), maxOverlap_(maxOverlap), progress_(mlog[MARCH], "scanned bytes"), filter_{filter} {
-        findings_.resize(encoders.size());
-        progress_.value(0, nBytesToCheck);
-        progress_.suffix(" addresses");
-    }
+  StringSearcher(
+    const std::vector<StringEncodingScheme::Ptr>& encoders, size_t minLength, size_t maxLength, bool discardCodePoints,
+    size_t maxOverlap, size_t nBytesToCheck, Sawyer::Optional<StringFilter> filter
+  ) :
+    protoEncoders_(encoders), bufferVa_(0), minLength_(minLength), maxLength_(maxLength),
+    discardCodePoints_(discardCodePoints), maxOverlap_(maxOverlap), progress_(mlog[MARCH], "scanned bytes"),
+    filter_(filter) {
+      findings_.resize(encoders.size());
+      progress_.value(0, nBytesToCheck);
+      progress_.suffix(" addresses");
+  }
 
     // anchor the search to a particular address
     void anchor(Address startVa) { anchored_ = startVa; }

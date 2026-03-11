@@ -189,34 +189,183 @@ class Exception: public Rose::Exception {
     Exception(const std::string& s) : Rose::Exception(s) {}
 };
 
+/** Specification for a single filter criterion.
+ *
+ *  FilterSpecification provides a type-safe way to specify string matching criteria for use with StringFilter.
+ *  Each specification defines one of three types of matching: exact match, substring match, or regular expression
+ * match. For regular expressions, case sensitivity must be explicitly specified.
+ *
+ *  **Design Intent:**
+ *  All filter semantics are explicit at construction. Users state the filter type and, for regex filters, the case
+ *  sensitivity.
+ *
+ *  **Thread Safety:**
+ *  FilterSpecification objects are immutable after construction and thus thread-safe for concurrent read access.
+ *
+ *  **Usage Examples:**
+ *  @code
+ *  using FSType = FilterSpecification::Type;
+ *  using FSCase = FilterSpecification::CaseSensitivity;
+ *
+ *  // Exact match - will only match the exact string "error"
+ *  FilterSpecification exact(FSType::EXACT_MATCH, "error");
+ *
+ *  // Substring match - will match any string containing "lib"
+ *  FilterSpecification substring(FSType::SUBSTRING, "lib");
+ *
+ *  // Case-sensitive regex - matches "Error" but not "error" or "ERROR"
+ *  FilterSpecification caseSensitive("Error", FSCase::SENSITIVE);
+ *
+ *  // Case-insensitive regex - matches "error", "Error", "ERROR", etc.
+ *  FilterSpecification caseInsensitive("error", FSCase::INSENSITIVE);
+ *
+ *  // Complex regex pattern with case sensitivity
+ *  FilterSpecification pattern("^ERR[0-9]+:", FSCase::SENSITIVE);
+ *  @endcode
+ *
+ *  @see StringFilter */
+class ROSE_DLL_API FilterSpecification {
+  public:
+    /** Type of filter specification */
+    enum class Type {
+        EXACT_MATCH, /**< Exact string match (case-sensitive) */
+        SUBSTRING,   /**< Substring match (case-sensitive) */
+        REGEX        /**< Regular expression match */
+    };
+
+    /** Regex case sensitivity mode */
+    enum class CaseSensitivity {
+        SENSITIVE,  /**< Case-sensitive matching */
+        INSENSITIVE /**< Case-insensitive matching */
+    };
+
+  private:
+    Type            type_;
+    std::string     pattern_;
+    CaseSensitivity caseSensitivity_;
+
+  public:
+    /** Constructor for exact match or substring filter.
+     *
+     *  Creates a filter specification for exact string matching or substring matching.
+     *  Exact match requires the entire string to match exactly (case-sensitive).
+     *  Substring match succeeds if the pattern appears anywhere in the string (case-sensitive).
+     *
+     *  @param type Must be Type::EXACT_MATCH or Type::SUBSTRING
+     *  @param pattern The string pattern to match */
+    FilterSpecification(Type type, const std::string& pattern);
+
+    /** Constructor for regex filter with explicit case sensitivity.
+     *
+     *  Creates a filter specification for regular expression matching.
+     *  The pattern is interpreted as a boost::regex pattern using ECMAScript syntax.
+     *  Case sensitivity must be explicitly specified.
+     *
+     *  @param pattern The regular expression pattern (ECMAScript syntax)
+     *  @param caseSensitivity Whether to match case-sensitively or case-insensitively */
+    FilterSpecification(const std::string& pattern, CaseSensitivity caseSensitivity);
+
+    /** Property: Type of filter. */
+    Type type() const { return type_; }
+
+    /** Property: Pattern string. */
+    const std::string& pattern() const { return pattern_; }
+
+    /** Property: Case sensitivity (only meaningful for REGEX type). */
+    CaseSensitivity caseSensitivity() const { return caseSensitivity_; }
+
+    /** Returns true if this is a case-sensitive regex filter. */
+    bool isCaseSensitive() const { return caseSensitivity_ == CaseSensitivity::SENSITIVE; }
+};
+
 /** Filter strings by exact matches, substring matches, and regex matches.
  *
- *  The StringFilter provides three types of filtering:
- *  @li Exact match: String must exactly match the filter string
- *  @li Substring match: String must contain the filter string
- *  @li Regex match: String must match the regex pattern
+ *  StringFilter provides flexible string filtering with three types of matching criteria:
  *
- *  Regex patterns are specified with `/pattern/` syntax. All regex matching is case-insensitive.
+ *  @li **Exact match**: String must exactly match the filter string (case-sensitive)
+ *  @li **Substring match**: String must contain the filter substring anywhere (case-sensitive)
+ *  @li **Regex match**: String must match a regular expression pattern (with explicit case sensitivity)
  *
- *  Thread-safety: Not thread-safe. Each thread should use its own instance. */
+ *  Filters are specified using FilterSpecification objects which provide type-safe construction
+ *  with explicit semantics. Multiple filters can be added to the same StringFilter instance,
+ *  and a string matches if it satisfies **any** filter (OR logic).
+ *
+ *  **Regex Support:**
+ *  Regular expressions use boost::regex with ECMAScript syntax. For regex filters, case sensitivity
+ *  must be explicitly specified via FilterSpecification::CaseSensitivity. Both case-sensitive and
+ *  case-insensitive regex patterns can coexist in the same StringFilter instance, allowing mixed
+ *  matching strategies.
+ *
+ *  **Performance:**
+ *  Regex patterns are compiled lazily on first match() call and cached for subsequent matches.
+ *  Case-sensitive and case-insensitive patterns are compiled into separate regex objects for
+ *  efficient matching.
+ *
+ *  **Thread Safety:**
+ *  Not thread-safe. Each thread should use its own StringFilter instance.
+ *
+ *  **Usage Examples:**
+ *  @code
+ *  using FSType = FilterSpecification::Type;
+ *  using FSCase = FilterSpecification::CaseSensitivity;
+ *
+ *  // Create a filter with multiple criteria
+ *  StringFilter filter;
+ *
+ *  // Add exact match for specific strings
+ *  filter.addFilter(FilterSpecification(FSType::EXACT_MATCH, "error"));
+ *  filter.addFilter(FilterSpecification(FSType::EXACT_MATCH, "warning"));
+ *
+ *  // Add substring match for library names
+ *  filter.addFilter(FilterSpecification(FSType::SUBSTRING, "libc"));
+ *
+ *  // Add case-insensitive regex for error codes (matches "ERR", "err", "Err", etc.)
+ *  filter.addFilter(FilterSpecification("err[0-9]+", FSCase::INSENSITIVE));
+ *
+ *  // Add case-sensitive regex for specific uppercase acronyms
+ *  filter.addFilter(FilterSpecification("^[A-Z]{2,}$", FSCase::SENSITIVE));
+ *
+ *  // Test strings against the filter
+ *  assert(filter.match("error"));        // true - exact match
+ *  assert(filter.match("libc.so.6"));    // true - substring match
+ *  assert(filter.match("ERR404"));       // true - case-insensitive regex
+ *  assert(filter.match("err500"));       // true - case-insensitive regex
+ *  assert(filter.match("HTTP"));         // true - case-sensitive regex
+ *  assert(filter.match("http"));         // false - case-sensitive regex requires uppercase
+ *  assert(filter.match("unrelated"));    // false - no matches
+ *
+ *  // Use with StringFinder
+ *  StringFinder finder;
+ *  finder.settings().filter = filter;
+ *  finder.find(map.require(MemoryMap::READABLE));
+ *
+ *  for (const EncodedString& str : finder.strings()) {
+ *      // Process only strings that match the filter
+ *  }
+ *  @endcode
+ *
+ *  @see FilterSpecification */
 class ROSE_DLL_API StringFilter {
   private:
     std::unordered_set<std::string> exactStrings_;
     std::unordered_set<std::string> substrings_;
-    std::unordered_set<std::string> regexPatterns_;
+    std::unordered_set<std::string> regexPatternsCaseSensitive_;
+    std::unordered_set<std::string> regexPatternsCaseInsensitive_;
 
-    mutable Sawyer::Optional<boost::regex> compiledRegex_;
+    mutable Sawyer::Optional<boost::regex> compiledRegexCaseSensitive_;
+    mutable Sawyer::Optional<boost::regex> compiledRegexCaseInsensitive_;
     mutable bool                           regexNeedsUpdate_ = true;
 
     void updateRegex() const;
 
   public:
-    /** Add a string filter.
+    /** Add a filter specification.
      *
-     * @param str The string or regex pattern to filter on. Regex patterns must be wrapped in forward slashes (e.g.,
-     * "/pattern/").
-     * @param isSubstring If true, matches substrings; if false, matches exact strings or regex patterns. */
-    void addString(const std::string& str, bool isSubstring);
+     *  Adds a filter criterion to this StringFilter. The filter can be an exact match,
+     *  substring match, or regex match with explicit case sensitivity.
+     *
+     * @param spec The filter specification to add */
+    void addFilter(const FilterSpecification& spec);
 
     /** Test if a string matches any filter.
      *
