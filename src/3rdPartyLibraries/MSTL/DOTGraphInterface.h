@@ -86,7 +86,7 @@ class DOTGraphInterface
 		// these do not necessarily have to be implemented
 
 		//! query the subgraph ID of a node
-		virtual int getVertexSubgraphId(VertexType &v) {
+                virtual int getVertexSubgraphId(VertexType & /*v*/) {
 			// assume there are no subgraphs
 			return -1;
 		}
@@ -102,13 +102,13 @@ class DOTGraphInterface
 		}
 		
 		//! get the label of an edge
-		virtual std::string getEdgeLabel(EdgeType &e) { 
+                virtual std::string getEdgeLabel(EdgeType& /*e*/) {
 			// the default is no edge label
 			return std::string(""); 
 		}
 
 		//! get the direction of an edge
-		virtual EdgeDirection getEdgeDirection(EdgeType &e) { 
+                virtual EdgeDirection getEdgeDirection(EdgeType& /*e*/) {
 			// normally its from the source to target
 			return target; 
 		}
