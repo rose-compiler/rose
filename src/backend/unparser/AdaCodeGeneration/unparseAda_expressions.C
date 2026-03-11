@@ -127,8 +127,9 @@ namespace
 
   struct AdaExprUnparser
   {
+/*
     static constexpr bool SUPPRESS_SCOPE_QUAL = false; // no scope qual on selectors
-
+*/
     AdaExprUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp, bool = false)
     : unparser(unp), info(inf), os(outp) // , ctxRequiresScopeQualification(requiresScopeQual)
     {}

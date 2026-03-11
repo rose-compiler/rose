@@ -54,6 +54,7 @@ Unparse_Ada::unparseAdaFile(SgSourceFile* sourcefile, SgUnparse_Info& info)
 
 namespace
 {
+/*
   inline
   auto logTrace() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::TRACE])
   {
@@ -83,6 +84,7 @@ namespace
   {
     return Rose::Diagnostics::mlog[Sawyer::Message::FATAL];
   }
+*/
 
   /// returns m[key] iff \ref key is in \ref m
   ///                otherwise \ref defaultVal
