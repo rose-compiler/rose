@@ -2444,7 +2444,7 @@ IsMemoryFree( const AstNodePtr& s, AstNodeType* exptype, AstNodePtr* variable)
 }
 
 bool AstInterface::
-IsMemoryAccess( const AstNodePtr& _s)
+IsMemoryAccess( const AstNodePtr& _s, AstNodeList* subrefs)
 {  
   if (_s.is_unknown())
     return true;
@@ -2458,6 +2458,22 @@ IsMemoryAccess( const AstNodePtr& _s)
   case V_SgPntrArrRefExp:
   case V_SgPointerDerefExp:
      break;
+  case V_SgCommaOpExp: {
+     auto* e1 = isSgCommaOpExp(s)->get_lhs_operand(), *e2 = isSgCommaOpExp(s)->get_rhs_operand();
+     if (IsMemoryAccess(e1) && IsMemoryAccess(e2)) {
+        if (subrefs != 0) { subrefs->push_back(e1); subrefs->push_back(e2); }
+        return true;
+     }
+     return false;
+    }
+  case V_SgConditionalExp: {
+     auto* e1 = isSgConditionalExp(s)->get_true_exp(), *e2 = isSgConditionalExp(s)->get_false_exp();
+     if (IsMemoryAccess(e1) && IsMemoryAccess(e2)) {
+        if (subrefs != 0) { subrefs->push_back(e1); subrefs->push_back(e2); }
+        return true;
+     }
+     return false;
+    }
   case V_SgDotExp:
   case V_SgArrowExp:
    {

@@ -81,40 +81,46 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
       return true;
     };
     auto save_memory_ref = [&alias_map, &collect, &ast, do_annot, &body, add_to_dep_analysis] (AstNodePtr ref, AstNodePtr details, OperatorSideEffect what) {
-      if (!ref.is_unknown() && !AstInterface::IsMemoryAccess(ref)) {
+      bool done_annot = false;
+      AstNodeList  subrefs;
+      if (!ref.is_unknown() && !AstInterface::IsMemoryAccess(ref, &subrefs)) {
           DebugAstUtil([&ref](){ return "Do not save non-memory-access ref:" + AstInterface::AstToString(ref); });
           return false;
       }
-      AstNodePtr array;
-      AstNodeList  sub;
-      bool is_unknown_ref = false;
-      // No need to check local ref if annotation is not needed. 
-      bool is_local_ref = (do_annot)? AstInterface::IsLocalRef(ref, body, &is_unknown_ref) : true; 
-      if (AstInterface::IsArrayAccess(ref, &array, &sub)) {
-         ref = array;
-         is_local_ref = false;
-         DebugAstUtil([&ref](){ return "Finding array reference:" + AstInterface::AstToString(ref); });
+      if (subrefs.empty()) {
+         subrefs.push_back(ref);
       }
-      auto ref_aliased = alias_map.find(AstInterface::GetVariableSignature(ref));
-      if (ref_aliased != alias_map.end()) {
-         ref = AstNodePtr((*ref_aliased).second);
-         is_local_ref = false;
-         DebugAstUtil([&ref](){ return "Finding aliased reference:" + AstInterface::AstToString(ref); });
-      } else {
-         if (is_unknown_ref) {
-            ref.set_is_unknown_reference();
-         }
+      for (auto& ref : subrefs) {
+        AstNodePtr array;
+        bool is_unknown_ref = false;
+        // No need to check local ref if annotation is not needed. 
+        bool is_local_ref = (do_annot)? AstInterface::IsLocalRef(ref, body, &is_unknown_ref) : true; 
+        if (AstInterface::IsArrayAccess(ref, &array)) {
+           ref = array;
+           is_local_ref = false;
+           DebugAstUtil([&ref](){ return "Finding array reference:" + AstInterface::AstToString(ref); });
+        }
+        auto ref_aliased = alias_map.find(AstInterface::GetVariableSignature(ref));
+        if (ref_aliased != alias_map.end()) {
+           ref = AstNodePtr((*ref_aliased).second);
+           is_local_ref = false;
+           DebugAstUtil([&ref](){ return "Finding aliased reference:" + AstInterface::AstToString(ref); });
+        } else {
+           if (is_unknown_ref) {
+              ref.set_is_unknown_reference();
+           }
+        }
+        if (collect != 0) (*collect)(ref, details, what);
+        if (do_annot && (ref.is_unknown() || is_unknown_ref || !is_local_ref)) {
+           DebugAstUtil([&ref](){ return "save annotation:" + AstInterface::AstToString(ref); });
+           if (add_to_dep_analysis != 0) {
+              add_to_dep_analysis->SaveOperatorSideEffect(ast, ref, what, details.get_ptr()); 
+           } 
+           AddOperatorSideEffectAnnotation(ast, ref, what);
+           done_annot = true; /* done annotations */
+        }
       }
-      if (collect != 0) (*collect)(ref, details, what);
-      if (do_annot && (ref.is_unknown() || is_unknown_ref || !is_local_ref)) {
-         DebugAstUtil([&ref](){ return "save annotation:" + AstInterface::AstToString(ref); });
-         if (add_to_dep_analysis != 0) {
-            add_to_dep_analysis->SaveOperatorSideEffect(ast, ref, what, details.get_ptr()); 
-         } 
-         AddOperatorSideEffectAnnotation(ast, ref, what);
-         return true; /* done annotations */
-      }
-      return false; /* did not do annotation */
+      return done_annot; /* done annotation? */
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_mod = [&done_annot_mod,&save_memory_ref] (AstNodePtr first, AstNodePtr second) { 
        if (save_memory_ref(first, second, OperatorSideEffect::Modify)) { 
