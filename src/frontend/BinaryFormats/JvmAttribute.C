@@ -18,6 +18,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
 {
   uint16_t attribute_name_index;
   uint32_t attribute_length;
+  bool ignoreWarning{false};
 
   Jvm::read_value(pool, attribute_name_index, /*advance_offset*/false);
   std::string name = pool->get_utf8_string(attribute_name_index);
@@ -41,6 +42,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmEnclosingMethod(parent);
   }
   else if (name == "Synthetic") { // 4.7.8
+    // The Synthetic attribte may be tested by tests/nonsmoke/specimens/java/SyntheticAttribute.class
+    // However, testing is not complete
+    mlog[WARN] << "SgAsmJvmAttribute::instance(): need further testing of this attribute ATTR_SyntheticAttribute\n";
     return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_Synthetic);
   }
   else if (name == "Signature") { // 4.7.9
@@ -59,6 +63,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmLocalVariableTable(parent);
   }
   else if (name == "Deprecated") { // 4.7.15
+    // Deprecated attribute found in rose-tests/nonsmoke/specimens/java/bouncycastle.cert.X509CertificateHolder.class
     return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_Deprecated);
   }
   else if (name == "RuntimeVisibleAnnotations") { // 4.7.16
@@ -89,8 +94,8 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmIndexTableAttr(parent, SgAsmJvmIndexTableAttr::ATTR_ModulePackages);
   }
   else if (name == "ModuleMainClass") { // 4.7.27
-    //TODO
-    ASSERT_require2(false, "Need testing for attribute ModuleMainClass\n");
+    mlog[WARN] << "SgAsmJvmAttribute::instance(): need testing for this attribute ATTR_ModuleMainClass\n";
+    ASSERT_require2(ignoreWarning, "Need testing for attribute ATTR_ModuleMainClass\n");
     return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_ModuleMainClass);
   }
   else if (name == "NestHost") { // 4.7.28
@@ -98,6 +103,11 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   }
   else if (name == "NestMembers") { // 4.7.29
     return new SgAsmJvmIndexTableAttr(parent, SgAsmJvmIndexTableAttr::ATTR_NestMembers);
+  }
+  else if (name == "Record") { // 4.7.30
+    //TODO
+    // Not implemented yet, but don't abort, found in rose-tests/nonsmoke/specimens/java/GrapeIvy.class
+    ignoreWarning = true;
   }
   else if (name == "PermittedSubclasses") { // 4.7.31
     return new SgAsmJvmIndexTableAttr(parent, SgAsmJvmIndexTableAttr::ATTR_PermittedSubclasses);
@@ -107,9 +117,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   Jvm::read_value(pool, attribute_name_index);
   Jvm::read_value(pool, attribute_length);
 
-  mlog[FATAL] << "--- attribute name: " << name << " ---\n"
-              << "SgAsmJvmAttribute::instance(): skipping attribute of length " << attribute_length << "\n";
-  ASSERT_require2(false, "Missing attribute\n");
+  mlog[WARN] << "--- attribute name: " << name << " ---\n"
+             << "SgAsmJvmAttribute::instance(): skipping attribute of length " << attribute_length << "\n";
+  ASSERT_require2(ignoreWarning, "Missing attribute, aborting ...\n");
 
   SgAsmGenericHeader* header{pool->get_header()};
   ASSERT_not_null(header);
@@ -198,11 +208,15 @@ SgAsmJvmIndexedAttr* SgAsmJvmIndexedAttr::parse(SgAsmJvmConstantPool* pool)
   // Ensure that we have a specialized type by this point
   unsigned type = get_attribute_type();
   ASSERT_require2(type != SgAsmJvmIndexedAttr::ATTR_NONE, "SgAsmJvmIndexedAttr::attribute_type is not set\n");
-  if (p_attribute_length == 0) {
-    // no index for this attribute
+  if (type == SgAsmJvmIndexedAttr::ATTR_Deprecated || type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
+    // There is no index for this attribute type
+    if (type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
+      std::cerr << "--> WARNING: parsing untested attribute type " << get_attribute_type() << ":index:" << get_index() << "\n";
+    }
     return this;
   }
   Jvm::read_value(pool, p_index);
+
   return this;
 }
 
@@ -213,10 +227,14 @@ void SgAsmJvmIndexedAttr::unparse(std::ostream &os) const
   // Ensure that we have a specialized type by this point
   unsigned type = get_attribute_type();
   ASSERT_require2(type != SgAsmJvmIndexedAttr::ATTR_NONE, "SgAsmJvmIndexedAttr::attribute_type is not set\n");
-  if (p_attribute_length == 0) {
-    // no index for this attribute
+  if (type == SgAsmJvmIndexedAttr::ATTR_Deprecated || type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
+    // There is no index for this attribute type
+    if (type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
+      std::cerr << "--> WARNING: unparsing untested attribute type " << get_attribute_type() << ":index:" << get_index() << "\n";
+    }
     return;
   }
+
   Jvm::writeValue(os, get_index());
 }
 
