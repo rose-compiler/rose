@@ -223,22 +223,21 @@ public:
   //! statements if true.
   static bool IsBlock( const AstNodePtr& exp, std::string* blockname = 0, AstNodeList* stmts = 0);
   //! Check whether the two given AST are identical syntax trees.
-  //! If call_on_diff is given, it is invoked on each pair of different AST nodes, and the pair are treated 
+  //! If call_on_diff is given, it is invoked on each pair of different names, and the pair are treated 
   //! different only if the function returns true.
   static bool AstIdentical(const AstNodePtr& first, const AstNodePtr& second, 
-                           std::function<bool(const AstNodePtr& first, const AstNodePtr& second)>* call_on_diff = 0,
-                           std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff_type = 0);
+                           std::function<bool(const std::string&, const std::string&)>* call_on_diff = 0);
   //! Check whether the two given AST types are identical syntax trees.
-  //! If call_on_diff is given, it is invoked on each pair of different AST nodes, and the pair are treated 
+  //! If call_on_diff is given, it is invoked on each pair of different names and the pair are treated 
   //! different only if the function returns true.
   static bool AstTypeIdentical(const AstNodeType& first, const AstNodeType& second, 
-                           std::function<bool(const AstNodeType& first, const AstNodeType& second)>* call_on_diff_type = 0);
+                           std::function<bool(const std::string&, const std::string&)>* call_on_diff = 0);
   //! Check whether the two given lists are identical syntax trees.
-  //! If call_on_diff is given, it is invoked on each pair of different AST nodes, and the pair are treated 
+  //! If call_on_diff is given, it is invoked on each pair of different names, and the pair are treated 
   //! different only if the function returns true.
   template <class List, class Node>
   static bool AstListIdentical(const List& first, const List& second, 
-                           std::function<bool(const Node& first, const Node& second)>* call_on_diff = 0) {
+                           std::function<bool(const std::string&, const std::string&)>* call_on_diff = 0) {
     
     typename List::const_iterator p1 = first.begin(), p2 = second.begin();
     for (; p1 != first.end() && p2 != second.end(); p1++, p2++) {
@@ -357,7 +356,8 @@ public:
 
   static std::string GetVarName( const AstNodePtr& exp, bool use_global_unique_name = false);
 
-  static bool IsSameVarRef( const AstNodePtr& v1, const AstNodePtr& v2);
+  static bool IsSameVarRef( const AstNodePtr& v1, const AstNodePtr& v2,
+                   std::function<bool(const std::string&, const std::string&)>* call_on_diff = 0);
 
   /*QY: by default variable declarations are merely saved to be inserted later*/
   std::string NewVar (const AstNodeType& t, const std::string& name = "", 

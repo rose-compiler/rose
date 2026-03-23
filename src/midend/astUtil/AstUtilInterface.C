@@ -162,9 +162,12 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
       if (collect != 0) return (*collect)(op, init, OperatorSideEffect::Allocate);
       return true;
     };
-    std::function<bool(AstNodePtr, AstNodePtr)> save_free = [&collect] (AstNodePtr var, AstNodePtr init) {
+    std::function<bool(AstNodePtr, AstNodePtr)> save_free = [&collect,&save_mod] (AstNodePtr var, AstNodePtr init) {
       DebugAstUtil([&var](){ return "save free:" + AstInterface::AstToString(var); });
-      if (collect != 0) (*collect)(var, init, OperatorSideEffect::Free);
+      if (collect != 0) { 
+           (*collect)(var, init, OperatorSideEffect::Free);
+      }
+      save_mod(var, init); // a free is also a modify.
       return true;
     };
     collect_operator.set_modify_collect(save_mod);
