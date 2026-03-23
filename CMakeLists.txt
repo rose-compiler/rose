@@ -1227,13 +1227,12 @@ else()
   set(use_rose_in_build_tree_var, FALSE)
 endif()
 
-# ROSE_ALLOC_MEMSET. Equivalent to --with-alloc-memset in autoconf
+# ROSE_ALLOC_MEMSET
 set(ROSE_ALLOC_MEMSET "0" CACHE STRING "Memory pool protection (memory is set on memory pool operation): 0 -> none, 1 -> command-line (NIY), 2 -> zeroed new/delete, 3 -> aggressive (diff. value for each mempool operation)")
 # Make sure ROSE_ALLOC_MEMSET is valid
 if(NOT (ROSE_ALLOC_MEMSET GREATER_EQUAL 0 AND ROSE_ALLOC_MEMSET LESS_EQUAL 3))
     message(FATAL_ERROR "ROSE_ALLOC_MEMSET must be between 0 and 3. Current value: ${ROSE_ALLOC_MEMSET}")
 endif()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DROSE_ALLOC_MEMSET=${ROSE_ALLOC_MEMSET}")
 
 ########################################################################################################################
 # Alt Back-end compilers -- set alt rose_config.h variables

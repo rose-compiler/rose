@@ -128,35 +128,38 @@
 /* Build ROSE to support the Binary Analysis */
 #cmakedefine ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
-/* Build ROSE to support the Cuda langauge */
+/* Build ROSE to support the Cuda language */
 #cmakedefine ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
 
-/* Build ROSE to support the C++ langauge */
+/* Build ROSE to support the C++ language */
 #cmakedefine ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 
-/* Build ROSE to support the C langauge */
+/* Build ROSE to support the C language */
 #cmakedefine ROSE_BUILD_C_LANGUAGE_SUPPORT
 
 /* Build ROSE to support the C preprocessor. */
 #cmakedefine ROSE_BUILD_CPP_LANGUAGE_SUPPORT
 
-/* Build ROSE to support the Fortran langauge */
+/* Build ROSE to support the Fortran language */
 #cmakedefine ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
-/* Build ROSE to support the Java langauge */
+/* Build ROSE to support the Java language */
 #cmakedefine ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
-/* Build ROSE to support the OpenCL langauge */
+/* Build ROSE to support the OpenCL language */
 #cmakedefine ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT
 
-/* Build ROSE to support the PHP langauge */
+/* Build ROSE to support the PHP language */
 #cmakedefine ROSE_BUILD_PHP_LANGUAGE_SUPPORT
 
-/* Build ROSE to support the Python langauge */
+/* Build ROSE to support the Python language */
 #cmakedefine ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
 
 /* Support for an advanced uniform warning level for ROSE development */
 #cmakedefine ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT
+
+/* Memory pool protection, can be 0-3 */
+#define ROSE_ALLOC_MEMSET @ROSE_ALLOC_MEMSET@
 
 #cmakedefine ROSE_SUPPORT_GNU_EXTENSIONS
 #cmakedefine ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
