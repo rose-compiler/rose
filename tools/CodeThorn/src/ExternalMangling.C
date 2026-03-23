@@ -17,9 +17,14 @@
 #include <boost/range/adaptors.hpp>
 #include <boost/range/numeric.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/functional/hash.hpp>
 
 #include "CodeThornLib.h"
 #include "RoseCompatibility.h"
+
+#define WITH_CUSTOM_LINKAGE_HANDLER 0 // the code is not yet ready
+
+
 // #include "stringcompress.hpp"
 
 //~ #include <boost/range/algorithm_ext/for_each.hpp>
@@ -210,16 +215,6 @@ namespace
   constexpr const char* const mglSimpleSep                = "_";
   constexpr const char* const mglExtendedSep              = "_sep_";
 
-  constexpr const char* const mglItaniumCxx               = "_Z";
-  constexpr const char* const mglItaniumEmptyPrefix       = "";
-  constexpr const char* const mglItaniumStd               = "St";
-  constexpr const char* const mglItaniumNested            = "N";
-  constexpr const char* const mglItaniumNestedDelim       = "E";
-  constexpr const char* const mglItaniumRoseExt           = "_R";
-
-  constexpr bool              ITANIUM_ABI                 = false;
-
-
   template <class Seq>
   void append(std::string& s, const Seq& seq) { s.append(seq.begin(), seq.end()); }
 
@@ -248,9 +243,6 @@ namespace
   template<typename First, typename... Rest>
   void joinNames_(std::string& os, First&& first, Rest&&... rest)
   {
-    if (ITANIUM_ABI)
-      os.append(std::to_string(first.size()));
-
     os.append(first);
 
     joinNames_(os, rest...);
@@ -269,18 +261,23 @@ namespace
     return si::getEnclosingScope(const_cast<SgNode*>(&n));
   }
 
+  template <class SageDeclaration>
+  const SageDeclaration&
+  definingDeclarationIfAvailable(const SageDeclaration& dcl)
+  {
+    SgDeclarationStatement* defdcl = dcl.get_definingDeclaration();
+
+    if (defdcl == nullptr)
+      return dcl;
+
+    ASSERT_require(dcl.variantT() == defdcl->variantT());
+    return static_cast<const SageDeclaration&>(*defdcl);
+  }
+
   std::string replaceFirst(std::string s, const std::string& pat, const std::string& rep)
   {
     boost::algorithm::replace_first(s, pat, rep);
     return s;
-  }
-
-  std::string externalName(const SgNode& n, bool uniqMain = false, bool returnType = true, bool ptrToArr = false);
-
-  template <class... Args>
-  std::string externalName(sg::NotNull<const SgNode> n, Args&&... args)
-  {
-    return externalName(*n, std::forward<Args>(args)...);
   }
 
   std::string todo(const char* knd, const SgNode& n)
@@ -310,38 +307,193 @@ namespace
     return anonymousTypedef_(dcl);
   }
 
-  using SubstitutionMapBase = std::unordered_map<const SgNode*, std::size_t>;
+#if WITH_CUSTOM_LINKAGE_HANDLER
+  using StaticSuffixFn = std::function<std::string()>;
 
-  struct SubstitutionMap : private SubstitutionMapBase
+  StaticSuffixFn noStaticSuffix()
   {
-    using base = SubstitutionMapBase;
-    using base::base;
+    return []() -> std::string { return {}; };
+  }
 
-    using base::insert;
+  StaticSuffixFn noStaticSuffixWarning()
+  {
+    return
+        []() -> std::string
+        {
+          msgWarn() << "mangling node with internal/static linkage w/o location context"
+                    << std::endl;
+          return {};
+        };
+  }
+#endif /* WITH_CUSTOM_LINKAGE_HANDLER */
+
+  std::string
+  mangleFilename(ct::StringView filename)
+  {
+    std::string res;
+
+    res.reserve(filename.size());
+
+    auto replCh = [](char c) -> char
+                  {
+                    if ((c == '/') | (c == '\\') | (c == '.'))
+                      c = '_';
+
+                    return c;
+                  };
+
+    std::transform(filename.begin(), filename.end(), std::back_inserter(res), replCh);
+    return res;
+  }
+
+  std::string
+  internalLinkageFromFile(const SgLocatedNode& n)
+  {
+    sg::NotNull<const Sg_File_Info> fi = n.get_file_info();
+    std::string                     linkageCandidate = fi->get_filenameString();
+
+    if (linkageCandidate == "NULL_FILE")
+    {
+      if (const SgDeclarationStatement* dcl = isSgDeclarationStatement(&n))
+      {
+        // PP: For any declaration with internal linkage, a defining declaration
+        //     should be available..
+        if (const SgDeclarationStatement* defdcl = dcl->get_definingDeclaration())
+          return internalLinkageFromFile(*defdcl);
+      }
+    }
+
+    if (linkageCandidate.size() == 0)
+      return internalLinkageFromFile(SG_DEREF(isSgLocatedNode(n.get_parent())));
+
+    if (linkageCandidate != "NULL_FILE") // \pp todo revise
+      return mangleFilename(linkageCandidate);
+
+    msgWarn() << "mangling node with internal linkage w/o usable location info: " << n.class_name()
+              << std::endl;
+    return {};
+  }
+
+
+#if WITH_CUSTOM_LINKAGE_HANDLER
+  StaticSuffixFn
+  staticSuffixFromLocation(const SgLocatedNode& n)
+  {
+    return [&n]() -> std::string { return internalLinkageFromFile(n); };
+  }
+#endif /* WITH_CUSTOM_LINKAGE_HANDLER */
+
+  struct ExternalManglingContext
+  {
+    enum Arguments : bool
+    {
+      WITH_UNIQUE_MAIN     = true,
+      NO_UNIQUE_MAIN       = !WITH_UNIQUE_MAIN,
+      DEFAULT_UNIQUE_MAIN  = NO_UNIQUE_MAIN,
+
+      WITH_RETURN_TYPE     = true,
+      NO_RETURN_TYPE       = !WITH_RETURN_TYPE,
+      DEFAULT_RETURN_TYPE  = WITH_RETURN_TYPE,
+
+      ARRAY_TO_PTR         = true,
+      NO_ARRAY_TO_PTR      = !ARRAY_TO_PTR,
+      DEFAULT_ARRAY_TO_PTR = NO_ARRAY_TO_PTR,
+    };
+
+    ExternalManglingContext inclReturnType(bool b = DEFAULT_RETURN_TYPE) const;
+    ExternalManglingContext arrayDecay(bool b = DEFAULT_ARRAY_TO_PTR) const;
+    ExternalManglingContext resetTypeFlags() const;
+
+#if WITH_CUSTOM_LINKAGE_HANDLER
+    ExternalManglingContext localLinkageSuffix(StaticSuffixFn fn = noStaticSuffixWarning()) const;
+#endif /* WITH_CUSTOM_LINKAGE_HANDLER */
+
+    bool           makeMainUnique     = DEFAULT_UNIQUE_MAIN;
+    bool           withReturnType     = DEFAULT_RETURN_TYPE;
+    bool           arrayAsPointerType = DEFAULT_ARRAY_TO_PTR;
+
+#if WITH_CUSTOM_LINKAGE_HANDLER
+    StaticSuffixFn internalLinkageGen = noStaticSuffixWarning();
+#endif /* WITH_CUSTOM_LINKAGE_HANDLER */
   };
 
+  ExternalManglingContext
+  ExternalManglingContext::inclReturnType(bool b) const
+  {
+    ExternalManglingContext cpy(*this);
+
+    cpy.withReturnType = b;
+    return cpy;
+  }
+
+  ExternalManglingContext
+  ExternalManglingContext::arrayDecay(bool b) const
+  {
+    ExternalManglingContext cpy(*this);
+
+    cpy.arrayAsPointerType = b;
+    return cpy;
+  }
+
+  ExternalManglingContext
+  ExternalManglingContext::resetTypeFlags() const
+  {
+    ExternalManglingContext cpy(*this);
+
+    cpy.withReturnType     = DEFAULT_RETURN_TYPE;
+    cpy.arrayAsPointerType = DEFAULT_ARRAY_TO_PTR;
+
+    return cpy;
+  }
+
+#if WITH_CUSTOM_LINKAGE_HANDLER
+  ExternalManglingContext
+  ExternalManglingContext::localLinkageSuffix(StaticSuffixFn fn) const
+  {
+    ExternalManglingContext cpy(*this);
+
+    cpy.internalLinkageGen = fn;
+    return cpy;
+  }
+
+  template<typename T, typename... U>
+  std::size_t addressOf(std::function<T(U...)> f)
+  {
+    using fnPtrType = T(*)(U...);
+
+    fnPtrType* fnPointer = f.template target<fnPtrType>();
+
+    return reinterpret_cast<std::size_t>(*fnPointer);
+  }
+#endif /*WITH_CUSTOM_LINKAGE_HANDLER*/
+
+  bool
+  operator==(const ExternalManglingContext& lhs, const ExternalManglingContext& rhs)
+  {
+    return (  (lhs.makeMainUnique == rhs.makeMainUnique)
+           && (lhs.withReturnType == rhs.withReturnType)
+           && (lhs.arrayAsPointerType == rhs.arrayAsPointerType)
+#if WITH_CUSTOM_LINKAGE_HANDLER
+           && (addressOf(lhs.internalLinkageGen) == addressOf(rhs.internalLinkageGen))
+#endif /*WITH_CUSTOM_LINKAGE_HANDLER*/
+           );
+  }
+
+
+  std::string externalName(const SgNode& n, ExternalManglingContext ctx = {});
+
+  std::string externalName(sg::NotNull<const SgNode> n, ExternalManglingContext ctx = {})
+  {
+    return externalName(*n, std::move(ctx));
+  }
 
   struct ExternalMangler : sg::DispatchHandler<std::string>
   {
-      enum Arguments : bool
-      {
-        WITH_UNIQUE_MAIN    = true,
-        NO_UNQIUE_MAIN      = !WITH_UNIQUE_MAIN,
-
-        WITH_RETURN_TYPE    = true,
-        NO_RETURN_TYPE      = !WITH_RETURN_TYPE,
-
-        ARRAY_TO_POINTER    = true,
-        NO_ARRAY_TO_POINTER = !ARRAY_TO_POINTER
-      };
+      using Ctx = ExternalManglingContext;
 
       explicit
-      ExternalMangler(bool uniqueMain, bool useReturnType, bool arrayToPointer)
-      : Base(),
-        makeMainUnique(uniqueMain),
-        withReturnType(useReturnType),
-        arrayAsPointerType(arrayToPointer),
-        internalLinkageID()
+      ExternalMangler(Ctx context)
+      : Base(), ctx(std::move(context))
       {}
 
       //
@@ -377,10 +529,12 @@ namespace
       //~ std::string mangleModifier(const SgTypeModifier&);
       //~ std::string mangleModifier(const SgConstVolatileModifier&);
 
-      std::string mangleType(const SgType&, bool withReturn = WITH_RETURN_TYPE, bool pointerToArray = NO_ARRAY_TO_POINTER);
-      std::string mangleType(sg::NotNull<const SgType> n, bool withReturn = WITH_RETURN_TYPE, bool pointerToArray = NO_ARRAY_TO_POINTER)
+      // bool withReturn = Ctx::WITH_RETURN_TYPE, bool pointerToArray = Ctx::NO_ARRAY_TO_PTR
+
+      std::string mangleType(const SgType&, ExternalManglingContext ctx);
+      std::string mangleType(sg::NotNull<const SgType> n, ExternalManglingContext ctx)
       {
-        return mangleType(*n, withReturn, pointerToArray);
+        return mangleType(*n, std::move(ctx));
       }
 
       std::string mangleReturnType(const SgType&);
@@ -393,7 +547,7 @@ namespace
       std::string mangleTypeRange(ForwardIterator beg, ForwardIterator lim);
 
       template <class Sequence>
-      std::string mangleNodeSequence(Sequence&& rng, const char* listsep = mglSimpleSep, bool arrayToPointer = NO_ARRAY_TO_POINTER);
+      std::string mangleNodeSequence(Sequence&& rng, const char* listsep = mglSimpleSep, bool arrayToPointer = Ctx::NO_ARRAY_TO_PTR);
 
       std::string mangleTypeRange(const std::vector<SgType*>& vec);
 
@@ -418,7 +572,7 @@ namespace
         return {};
       }
 
-      std::string mangleInternalLinkageIfAnonymous(const SgNamespaceDeclarationStatement&);
+      std::string mangleInternalLinkageIfAnonymous(const SgDeclarationStatement& n, const std::string& name);
 
       std::string mangleInitializedName(const SgInitializedName&);
       std::string mangleInitializedName(sg::NotNull<const SgInitializedName> n)
@@ -449,7 +603,7 @@ namespace
       std::string functionName(const SgFunctionDeclaration& n);
       std::string functionName(const SgFunctionDeclaration& n, std::string name);
       std::string simpleName(std::string n, const char* caller = "");
-      std::string simpleName(const char* prefix, std::string n, const char* caller = "");
+      // std::string simpleName(const char* prefix, std::string n, const char* caller = "");
 
 
       //
@@ -505,7 +659,7 @@ namespace
       {
         ASSERT_require(n.get_type_kind() == nullptr);
         res = join( mglComplex
-                  , mangleType(n.get_base_type())
+                  , mangleType(n.get_base_type(), ctx.resetTypeFlags())
                   );
       }
 
@@ -513,24 +667,34 @@ namespace
       void handle(const SgTypeNullptr&)           { res = mglNullptr; }
       // void handle(const SgTypeUnknown&)           { res = mglUnknownType; /*todo*/}
 
-      void handle(const SgDeclType& n)            { res = mangleType(n.get_base_type()); }
+      void handle(const SgDeclType& n)            { res = mangleType(n.get_base_type(), ctx.resetTypeFlags()); }
 
       void handle(const SgTypedefType& n)
       {
         sg::NotNull<const SgType> baseTy = n.get_base_type();
-        bool                      typedefsAnonymousDecl = false;
+
+        // since anonymous types in a typedef context get a name, we can use
+        //   that name to resolve typenames to anonymous types in this context.
+        // Note, this differs from the Itanium name mangling scheme where the typedef
+        //   name is transferred to anonymous type.
+        if (false)
+        {
+          bool                      typedefsAnonymousDecl = false;
 
 
-        // for a anonymous class/union/enum declared in a typedef
-        //   use the typedef name.
-        if (const SgClassType* baseClassTy = isSgClassType(baseTy))
-          typedefsAnonymousDecl = anonymousTypedef(isSgClassDeclaration(baseClassTy->get_declaration()));
-        else if (const SgEnumType* baseEnumTy = isSgEnumType(baseTy))
-          typedefsAnonymousDecl = anonymousTypedef(isSgEnumDeclaration(baseEnumTy->get_declaration()));
+          // for a anonymous class/union/enum declared in a typedef
+          //   use the typedef name.
+          if (const SgClassType* baseClassTy = isSgClassType(baseTy))
+            typedefsAnonymousDecl = anonymousTypedef(isSgClassDeclaration(baseClassTy->get_declaration()));
+          else if (const SgEnumType* baseEnumTy = isSgEnumType(baseTy))
+            typedefsAnonymousDecl = anonymousTypedef(isSgEnumDeclaration(baseEnumTy->get_declaration()));
 
-        res = typedefsAnonymousDecl ? mangleDeclaration(n.get_declaration())
-                                    : mangleType(n.get_base_type(), WITH_RETURN_TYPE, arrayAsPointerType);
+          res = typedefsAnonymousDecl ? mangleDeclaration(n.get_declaration())
+                                      : mangleType(n.get_base_type(), ctx.inclReturnType(Ctx::WITH_RETURN_TYPE));
+          return;
+        }
 
+        res = mangleType(*baseTy, ctx.inclReturnType(Ctx::WITH_RETURN_TYPE));
       }
 
       void handle(const SgTypeDefault& n)
@@ -552,7 +716,7 @@ namespace
       void handle(const SgPointerMemberType& n)
       {
         res = replaceFirst( mangleBase(n), mglPointerType,
-                            join(mglPointerMemberType, mangleType(n.get_class_type()))
+                            join(mglPointerMemberType, mangleType(n.get_class_type(), ctx.resetTypeFlags()))
                           );
       }
 
@@ -565,7 +729,7 @@ namespace
 
         res = join( mglFunctionType
                   , mangleReturnType(n.get_return_type()) // return types are not part of the C function name mangling
-                  , mangleNodeSequence(parmTypeList, mglSimpleSep, ARRAY_TO_POINTER)
+                  , mangleNodeSequence(parmTypeList, mglSimpleSep, Ctx::ARRAY_TO_PTR)
                   , mglFunctionTypeDelim
                   );
       }
@@ -575,7 +739,7 @@ namespace
         std::string functionTypeName = mangleBase(n);
 
         res = join( mglMemberFunctionType
-                  , mangleType(n.get_class_type())
+                  , mangleType(n.get_class_type(), ctx.resetTypeFlags())
                   , mangleMemberFunctionQualifiers(n)
                   , functionTypeName
                   );
@@ -605,7 +769,7 @@ namespace
           if (upc_mod.isUPC_Relaxed()) res += mglModifierUpcRelaxed;
         }
 
-        res += mangleType(n.get_base_type(), WITH_RETURN_TYPE, arrayAsPointerType);
+        res += mangleType(n.get_base_type(), ctx.inclReturnType(Ctx::WITH_RETURN_TYPE));
       }
 
       void handle(const SgNamedType& n) { res = mangleDeclaration(n.get_declaration()); }
@@ -618,7 +782,7 @@ namespace
         switch (n.get_argumentType())
         {
           case SgTemplateArgument::type_argument:
-            res = mangleType(n.get_type());
+            res = mangleType(n.get_type(), ctx.resetTypeFlags());
             break;
 
           case SgTemplateArgument::nontype_argument:
@@ -660,12 +824,7 @@ namespace
         res = todo("scp:", n);
       }
 
-      void handle(const SgGlobal&)
-      {
-        if (ITANIUM_ABI)
-          res = mglItaniumCxx;
-      }
-
+      void handle(const SgGlobal&)                      {}
       void handle(const SgBasicBlock& n)                { res = mangleEnclosingScope(n); }
 
       // scopes with declarations
@@ -702,7 +861,7 @@ namespace
       void handle(const SgNamespaceDeclarationStatement& n)
       {
         res = join( scopeQualifiedName(n)
-                  , mangleInternalLinkageIfAnonymous(n)
+                  , mangleInternalLinkageIfAnonymous(n, n.get_name())
                   );
       }
 
@@ -723,7 +882,7 @@ namespace
                   , mglTemplateArgs
                   , mangleNodeSequence(n.get_templateArguments(), mglExtendedSep)
                   , mglTemplateArgsDelim
-                  , mangleType(n.get_type(), NO_RETURN_TYPE)
+                  , mangleType(n.get_type(), ctx.inclReturnType(Ctx::NO_RETURN_TYPE).arrayDecay())
                   , mangleInternalLinkageIfStatic(n)
                   );
       }
@@ -735,7 +894,7 @@ namespace
                   , mglTemplateArgs
                   , mangleNodeSequence(n.get_templateArguments(), mglExtendedSep)
                   , mglTemplateArgsDelim
-                  , mangleType(n.get_type(), NO_RETURN_TYPE)
+                  , mangleType(n.get_type(), ctx.inclReturnType(Ctx::NO_RETURN_TYPE).arrayDecay())
                   );
       }
 
@@ -761,10 +920,7 @@ namespace
       }
 
     private:
-      bool        makeMainUnique;
-      bool        withReturnType;
-      bool        arrayAsPointerType;
-      std::string internalLinkageID;
+      ExternalManglingContext ctx;
   };
 
   std::string ExternalMangler::simpleName(std::string name, const char* dbg)
@@ -774,12 +930,9 @@ namespace
 
     return name;
   }
-
+/*
   std::string ExternalMangler::simpleName(const char* prefix, std::string name, const char* dbg)
   {
-    if (!ITANIUM_ABI)
-      return simpleName(name, dbg);
-
     std::string mangled;
 
     mangled.append(prefix);
@@ -788,6 +941,7 @@ namespace
 
     return mangled;
   }
+*/
 
   bool isMainFunction(const SgFunctionDeclaration& n)
   {
@@ -963,7 +1117,7 @@ namespace
                       );
       else if (special.isConversion())
         mangled = join( mglFuncOperatorConv
-                      , mangleType(SG_DEREF(n.get_type()).get_return_type())
+                      , mangleType(SG_DEREF(n.get_type()).get_return_type(), ctx.resetTypeFlags())
                       , mglFuncOperatorConvDelim
                       );
 
@@ -979,16 +1133,13 @@ namespace
     }
 
 
-    if (makeMainUnique && isMainFunction(n))
+    if (ctx.makeMainUnique && isMainFunction(n))
     {
       return join( name
                  , mglSimpleSep
                  , mangleInternalLinkage(n)
                  );
     }
-
-    if (name.find("operator") != std::string::npos)
-      msgError() << "mangling:" << name << std::endl;
 
     return name;
   }
@@ -1007,11 +1158,10 @@ namespace
   {
     std::string operator()(const SgNode* n) const
     {
-      return externalName(n, uniqueName, ExternalMangler::WITH_RETURN_TYPE, arrayToPointer);
+      return externalName(n, ctx);
     }
 
-    bool uniqueName;
-    bool arrayToPointer;
+    ExternalManglingContext ctx;
   };
 
   struct ConcatStrings
@@ -1031,16 +1181,18 @@ namespace
   };
 
   template <class Sequence>
-  std::string ExternalMangler::mangleNodeSequence(Sequence&& seq, const char* sep, bool arrayToPointer)
+  std::string
+  ExternalMangler::mangleNodeSequence(Sequence&& seq, const char* sep, bool arrayToPointer)
   {
-    return boost::accumulate( seq | adapt::transformed(MangleNode{makeMainUnique, arrayToPointer}),
+    return boost::accumulate( seq | adapt::transformed(MangleNode{ctx.resetTypeFlags().arrayDecay(arrayToPointer)}),
                               std::string{},
                               ConcatStrings{sep}
                             );
   }
 
   template <class ForwardIterator>
-  std::string ExternalMangler::mangleTypeRange(ForwardIterator beg, ForwardIterator lim)
+  std::string
+  ExternalMangler::mangleTypeRange(ForwardIterator beg, ForwardIterator lim)
   {
     return mangleNodeSequence(boost::make_iterator_range(beg, lim));
   }
@@ -1053,44 +1205,31 @@ namespace
     return ""; // boost::accumulate(typeList, std::string{}, ConcatStrings{});
   }
 */
+  // ExternalManglingContext{ctx.makeMainUnique, withReturnType, pointerToArray}
 
-  std::string ExternalMangler::mangleType(const SgType& n, bool withReturnType, bool pointerToArray)
+  std::string
+  ExternalMangler::mangleType(const SgType& n, ExternalManglingContext ctx)
   {
-    return externalName(n, makeMainUnique, withReturnType, pointerToArray);
+    return externalName(n, std::move(ctx));
   }
 
-  std::string ExternalMangler::mangleReturnType(const SgType& n)
+  std::string
+  ExternalMangler::mangleReturnType(const SgType& n)
   {
-    if (!withReturnType)
+    if (!ctx.withReturnType)
       return {};
 
-    return mangleType(n);
+    return mangleType(n, ctx.resetTypeFlags());
   }
 
-  std::string ExternalMangler::mangleDeclaration(const SgDeclarationStatement& n)
+  std::string
+  ExternalMangler::mangleDeclaration(const SgDeclarationStatement& n)
   {
-    return externalName(n, makeMainUnique);
+    return externalName(n, ExternalManglingContext{ctx.makeMainUnique});
   }
 
-  std::string mangleFilename(ct::StringView filename)
-  {
-    std::string res;
-
-    res.reserve(filename.size());
-
-    auto replCh = [](char c) -> char
-                  {
-                    if ((c == '/') | (c == '\\') | (c == '.'))
-                      c = '_';
-
-                    return c;
-                  };
-
-    std::transform(filename.begin(), filename.end(), std::back_inserter(res), replCh);
-    return res;
-  }
-
-  std::string mangleLocation(ct::SourceLocation loc, const char* prefix)
+  std::string
+  mangleLocation(ct::SourceLocation loc, const char* prefix)
   {
     return join( prefix
                , mangleFilename(loc.file())
@@ -1101,40 +1240,18 @@ namespace
                );
   }
 
-  std::string ExternalMangler::mangleInternalLinkage(const SgLocatedNode& n)
+  std::string
+  ExternalMangler::mangleInternalLinkage(const SgLocatedNode& n)
   {
-    if (internalLinkageID.size() == 0)
-    {
-      sg::NotNull<const Sg_File_Info> fi = n.get_file_info();
-      std::string                     linkageCandidate = fi->get_filenameString();
-
-      if (linkageCandidate == "NULL_FILE")
-      {
-        if (const SgDeclarationStatement* dcl = isSgDeclarationStatement(&n))
-        {
-          if (const SgDeclarationStatement* defdcl = dcl->get_definingDeclaration())
-          {
-            return mangleInternalLinkage(*defdcl);
-          }
-        }
-      }
-
-      if (linkageCandidate.size() == 0)
-        return mangleInternalLinkage(SG_DEREF(isSgLocatedNode(n.get_parent())));
-
-      if (linkageCandidate != "NULL_FILE") // \pp todo revise
-        internalLinkageID = mangleFilename(linkageCandidate);
-    }
-
-    if (ITANIUM_ABI)
-      return join( mglItaniumRoseExt
-                 , internalLinkageID
-                 );
-
-    return internalLinkageID;
+#if WITH_CUSTOM_LINKAGE_HANDLER
+    return ctx.internalLinkageGen();
+#else
+    return internalLinkageFromFile(n);
+#endif /*WITH_CUSTOM_LINKAGE_HANDLER*/
   }
 
-  std::string ExternalMangler::mangleInternalLinkageIfStatic(const SgDeclarationStatement& n)
+  std::string
+  ExternalMangler::mangleInternalLinkageIfStatic(const SgDeclarationStatement& n)
   {
     if (si::isStatic(const_cast<SgDeclarationStatement*>(&n)))
       return mangleInternalLinkage(n);
@@ -1142,32 +1259,37 @@ namespace
     return {};
   }
 
-  std::string ExternalMangler::mangleInternalLinkageIfAnonymous(const SgNamespaceDeclarationStatement& n)
+  std::string
+  ExternalMangler::mangleInternalLinkageIfAnonymous(const SgDeclarationStatement& n, const std::string& name)
   {
-    if (n.get_name().get_length() == 0)
+    if (name.size() == 0)
       return mangleInternalLinkage(n);
 
     return {};
   }
 
-  std::string ExternalMangler::mangleInitializedName(const SgInitializedName& n)
+  std::string
+  ExternalMangler::mangleInitializedName(const SgInitializedName& n)
   {
-    return externalName(n, makeMainUnique);
+    return externalName(n, ExternalManglingContext{ctx.makeMainUnique});
   }
 
-  std::string ExternalMangler::mangleScope(const SgScopeStatement& n)
+  std::string
+  ExternalMangler::mangleScope(const SgScopeStatement& n)
   {
-    return externalName(n, makeMainUnique);
+    return externalName(n, ExternalManglingContext{ctx.makeMainUnique});
   }
 
-  std::string ExternalMangler::mangleEnclosingScope(const SgScopeStatement& n)
+  std::string
+  ExternalMangler::mangleEnclosingScope(const SgScopeStatement& n)
   {
-    return externalName(enclosingScope(n), makeMainUnique);
+    return externalName(enclosingScope(n), ExternalManglingContext{ctx.makeMainUnique});
   }
 
-  std::string ExternalMangler::mangleParentNode(const SgNode& n)
+  std::string
+  ExternalMangler::mangleParentNode(const SgNode& n)
   {
-    return externalName(n.get_parent(), makeMainUnique);
+    return externalName(n.get_parent(), ExternalManglingContext{ctx.makeMainUnique});
   }
 
 
@@ -1208,7 +1330,8 @@ namespace
     // SG_UNEXPECTED_NODE(*idx);
   }
 
-  std::string ExternalMangler::mangleMemberFunctionQualifiers(const SgMemberFunctionType& n)
+  std::string
+  ExternalMangler::mangleMemberFunctionQualifiers(const SgMemberFunctionType& n)
   {
     std::stringstream mangled;
 
@@ -1222,40 +1345,121 @@ namespace
   }
 
 
-  std::string ExternalMangler::mangleIndirection(const char* prefix, const char* suffix, const SgType* baseTy)
+  std::string
+  ExternalMangler::mangleIndirection(const char* prefix, const char* suffix, const SgType* baseTy)
   {
-    std::string tyName = mangleType(baseTy);
+    std::string tyName = mangleType(baseTy, ctx.resetTypeFlags());
 
     if (tyName.empty()) tyName = mglAnonymousTypeName;
 
     return join(prefix, tyName, suffix);
   }
 
-  void ExternalMangler::handle(const SgArrayType& n)
+  void
+  ExternalMangler::handle(const SgArrayType& n)
   {
-    if (arrayAsPointerType)
+    if (ctx.arrayAsPointerType)
     {
       res = mangleIndirection(mglPointerType, mglPointerTypeDelim, n.get_base_type());
       return;
     }
 
     res = join( mglArrayType
-              , mangleType(n.get_base_type())
+              , mangleType(n.get_base_type(), ctx.resetTypeFlags())
               , mglArrayIndex
               , mangleArrayIndexExpressionOpt(n.get_is_variable_length_array(), n.get_index())
               , mglArrayTypeDelim
               );
   }
 
-  std::string handleAnonymousName(const SgDeclarationStatement& n, std::string name)
+
+  /// Combines two hashes \p lhs and \p rhs
+  /// \param  lhs one hash value
+  /// \param  rhs another hash value
+  /// \result the combined hash value
+  /// \details
+  ///    uses boost::hash_combine, though other [better?] ways
+  ///    exist: https://stackoverflow.com/a/50978188
+  std::uint64_t
+  hashCombine(std::uint64_t lhs, std::uint64_t rhs)
+  {
+    boost::hash_combine(lhs, rhs);
+    return lhs;
+  }
+
+  /// Computes a hash value based on the elements of a declaration's \p n elements.
+  /// \param  n the declaration
+  /// \result a hash value for \p n over \p n's elements.
+  /// \details
+  ///    Elements are defined as components of a declaration.
+  ///    e.g., enumerators are the elements of an enum.
+  /// \note
+  ///    The hash computed for a declaration is a stand-in for the missing name
+  ///    in an anonymous declaration.
+  ///    The computed hash should be stable against some source code modification,
+  ///    hence, the file location is not considered suitable. Instead, we compute a hash over
+  ///    elements. The computed hash does not include all elements (e.g., initializers)
+  ///    to make the hash survive some modification the declaration's body, similar to
+  ///    how a class body can be modified without changing its name.
+  /// \{
+  std::uint64_t
+  hashContent(const SgEnumDeclaration& n)
+  {
+    const SgEnumDeclaration& dcl = definingDeclarationIfAvailable(n);
+    std::hash<std::string>   hasher;
+    const SgType* const      baseType = dcl.get_field_type();
+    std::uint64_t const      initHash = baseType ? hasher(externalName(*baseType)) : 0;
+
+    auto elemHasher =
+        [](std::uint64_t acc, sg::NotNull<const SgInitializedName> enumerator) -> std::uint64_t
+        {
+          std::hash<std::string> hashGen;
+
+          return hashCombine(acc, hashGen(externalName(*enumerator)));
+        };
+
+    return boost::accumulate(dcl.get_enumerators(), initHash, elemHasher);
+  }
+
+  std::uint64_t
+  hashContent(const SgClassDeclaration& n)
+  {
+    const SgClassDeclaration&            dcl = definingDeclarationIfAvailable(n);
+    sg::NotNull<const SgClassDefinition> clsdef = dcl.get_definition();
+
+    auto elemHasher =
+        [](std::uint64_t acc, sg::NotNull<const SgDeclarationStatement> member) -> std::uint64_t
+        {
+          std::hash<std::string> hashGen;
+
+          return hashCombine(acc, hashGen(externalName(*member)));
+        };
+
+    // PP: More elements could be included...
+    return boost::accumulate(clsdef->get_members(), 0, elemHasher);
+  }
+  /// \}
+
+
+  template <class SageDeclarationStatement>
+  std::string handleAnonymousName(const SageDeclarationStatement& n, std::string name)
   {
     if (name.rfind("__anonymous_0x", 0) == std::string::npos)
       return name;
 
-    ct::RoseCompatibilityBridge compat;
-    ct::SourceLocation          loc = compat.location(&n, true /*resolve instantiation*/);
+    // mangle anonymous enums or classes as their typedef name.
+    if (SgTypedefDeclaration* tdef = isSgTypedefDeclaration(n.get_parent()))
+      name = externalName(*tdef);
+    else
+    {
+      msgWarn() << "mangling anonymous declaration " << n.class_name()
+                << "\n  parent: " << (n.get_parent() ? n.get_parent()->class_name() : std::string{"null"})
+                << std::endl;
+      // \todo similarly we could pull the name from variable (and parameter) declarations...
+      name = Rose::Combinatorics::toBase62String(hashContent(n));
+    }
 
-    return mangleLocation(loc, mglAnonymousTypeName);
+    return join(mglAnonymousTypeName, name);
   }
 
   void ExternalMangler::handle(const SgEnumDeclaration& n)
@@ -1291,13 +1495,12 @@ namespace
   {
     std::string             name  = n.get_name();
     const SgScopeStatement* scope = n.get_scope();
-    const bool              isCxxStd = (name == "std") && isSgGlobal(scope);
 
-    if (ITANIUM_ABI & isCxxStd)
-      return mglItaniumStd;
+    if (name.size() == 0)
+      name = mangleInternalLinkageIfAnonymous(n, name);
 
     return join( mangleScope(scope)
-               , simpleName(mglItaniumEmptyPrefix, name, "nsp")
+               , simpleName(name, "nsp")
                );
   }
 
@@ -1323,7 +1526,7 @@ namespace
       return simpleName(functionName(n), "fn2");
 
     return join( joinNames(mangleScope(n.get_scope()), linkage, simpleName(functionName(n), "fun"))
-               , mangleType(n.get_type(), NO_RETURN_TYPE)
+               , mangleType(n.get_type(), ctx.inclReturnType(Ctx::NO_RETURN_TYPE))
                );
   }
 
@@ -1359,9 +1562,9 @@ namespace
       //   void foo(int j); // i and j designate the same variable
       // \endcode
       const SgInitializedNamePtrList& parms = parmlst->get_args();
-      auto const                      beg = parms.begin();
-      std::size_t                     num = std::distance(beg, std::find(beg, parms.end(), &n));
-      sg::NotNull<const SgNode>       root = parmlst->get_parent();
+      auto const                      beg   = parms.begin();
+      std::size_t                     num   = std::distance(beg, std::find(beg, parms.end(), &n));
+      sg::NotNull<const SgNode>       root  = parmlst->get_parent();
 
       name = join(mglParameterIdx, std::to_string(num));
     }
@@ -1384,16 +1587,22 @@ namespace
                );
   }
 
-  using MangledNameHashKey = std::tuple<const SgNode*, bool, bool, bool>;
+  using MangledNameHashKey = std::tuple<const SgNode*, ExternalManglingContext>;
 
   struct MangledNameHashKeyFn : public std::unary_function<MangledNameHashKey, std::size_t>
   {
     std::size_t operator()(const MangledNameHashKey& key) const
     {
-      return ( std::hash<const void*>{}(std::get<0>(key))
-             ^ (std::hash<bool>{}(std::get<1>(key)) << 2)
-             ^ (std::hash<bool>{}(std::get<2>(key)) << 1)
-             ^ (std::hash<bool>{}(std::get<3>(key)) << 0)
+      std::size_t hashval = std::hash<const void*>{}(std::get<0>(key));
+
+#if WITH_CUSTOM_LINKAGE_HANDLER
+      hashval = hashCombine(hashval, std::hash<std::size_t>{}(addressOf(std::get<1>(key).internalLinkageGen)));
+#endif /*WITH_CUSTOM_LINKAGE_HANDLER*/
+
+      return ( hashval
+             ^ (std::hash<bool>{}(std::get<1>(key).makeMainUnique) << 2)
+             ^ (std::hash<bool>{}(std::get<1>(key).withReturnType) << 1)
+             ^ (std::hash<bool>{}(std::get<1>(key).arrayAsPointerType) << 0)
              );
     }
   };
@@ -1405,14 +1614,12 @@ namespace
   MangledNameHash                           alreadyMangledShort;
   MangledNameHash                           alreadyMangledLong;
 
-
-
-  std::string externalName(const SgNode& n, bool uniqMain, bool returnType, bool ptrToArr)
+  std::string externalName(const SgNode& n, ExternalManglingContext ctx)
   {
-    std::string& cached = alreadyMangledLong[{&n, uniqMain, returnType, ptrToArr}];
+    std::string& cached = alreadyMangledLong[{&n, ctx}];
 
     if (cached.size() == 0)
-      cached = sg::dispatch(ExternalMangler{uniqMain, returnType, ptrToArr}, &n);
+      cached = sg::dispatch(ExternalMangler{std::move(ctx)}, &n);
 
     return cached;
   }
@@ -1481,16 +1688,14 @@ NameShortener hashNames()
 
 const std::string& _mangle( const SgNode& n,
                             NameShortener shorten,
-                            bool withUniqueMain = false,
-                            bool withReturnType = ExternalMangler::WITH_RETURN_TYPE,
-                            bool withPointerToArrayDecay = ExternalMangler::NO_ARRAY_TO_POINTER
+                            ExternalManglingContext ctx = {}
                           )
 {
-  std::string& cached = alreadyMangledShort[{&n, withUniqueMain, withReturnType, withPointerToArrayDecay}];
+  std::string& cached = alreadyMangledShort[{&n, ctx}];
 
   if (cached.size() == 0)
   {
-    cached = shorten(externalName(n, withUniqueMain, withReturnType, withPointerToArrayDecay));
+    cached = shorten(externalName(n, ctx));
 /*
     if (cached.size() == 0)
     {
@@ -1517,7 +1722,7 @@ const std::string& mangle(const SgDeclarationStatement& n, NameShortener shorten
   if (unableToMangle)
     throw std::runtime_error{std::string{"unable to mangle type: "} + n.class_name()};
 
-  return _mangle(n, std::move(shorten), withUniqueMain);
+  return _mangle(n, std::move(shorten), ExternalManglingContext{withUniqueMain});
 }
 
 const std::string& mangle(const SgDeclarationStatement* n, NameShortener shorten, bool withUniqueMain)
@@ -1529,7 +1734,10 @@ const std::string& mangle(const SgDeclarationStatement* n, NameShortener shorten
 
 const std::string& mangle(const SgType& n, NameShortener shorten, bool withReturnType, bool withArrayToPointerDecay)
 {
-  return _mangle(n, std::move(shorten), false/*no unique main*/, withReturnType, withArrayToPointerDecay);
+  return _mangle( n,
+                  std::move(shorten),
+                  ExternalManglingContext{false/*no unique main*/, withReturnType, withArrayToPointerDecay}
+                );
 }
 
 const std::string& mangle(const SgType* n, NameShortener shorten, bool withReturnType, bool withArrayToPointerDecay)
