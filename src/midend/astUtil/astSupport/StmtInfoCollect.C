@@ -115,7 +115,17 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
         }
       }
    }
-
+   if (fa.IsAliasingDecl( s, &vars, &args)) {
+      AstInterface::AstNodeList::const_iterator pv = vars.begin();
+      AstInterface::AstNodeList::const_iterator pa = args.begin();
+      while (pv != vars.end()) {
+         AstNodePtr ast = *pv;
+         AstNodePtr read_ast = *pa;
+         AppendAliasDecl( fa, ast, read_ast);
+         ++pv;
+         ++pa;
+      }
+   }
    if (fa.IsAssignment(s, &lhs, &rhs, /*read_lhs*/&additional)) {
        DebugLocalInfoCollect([](){return "Is assignment"; });
        ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
@@ -141,7 +151,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
           default: break;
          }
    }
-   else if (fa.IsVariableDecl( s, &vars, &args) || (additional=fa.IsAliasingDecl( s, &vars, &args))) {
+   else if (fa.IsVariableDecl( s, &vars, &args)) {
       DebugLocalInfoCollect([](){ return "Is variable declaration."; });
       AstInterface::AstNodeList::const_iterator pv = vars.begin();
       AstInterface::AstNodeList::const_iterator pa = args.begin();
@@ -152,11 +162,7 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
          if (read_ast != 0) {
             operator()(fa, read_ast);
          }
-         if (!additional) {
-            AppendVariableDecl( fa, ast, read_ast);
-         } else {
-            AppendAliasDecl( fa, ast, read_ast);
-         }
+         AppendVariableDecl( fa, ast, read_ast);
          ++pv;
          ++pa;
       }

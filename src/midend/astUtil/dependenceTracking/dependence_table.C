@@ -467,10 +467,16 @@ bool DependenceTable::
        // QY: Do not save side effect details in annotation as we currently don't use it.
        //attr = AstUtilInterface::GetVariableSignature(details);
   }
-  DependenceEntry e(AstUtilInterface::GetVariableSignature(op), AstUtilInterface::GetVariableSignature(varref), 
-                                    AstUtilInterface::OperatorSideEffectName(relation), attr); 
+  const auto& op_sig = AstUtilInterface::GetVariableSignature(op);
+  const auto& rel_sig = AstUtilInterface::OperatorSideEffectName(relation);
+  DependenceEntry e(op_sig, AstUtilInterface::GetVariableSignature(varref), rel_sig, attr);
   Log.push("saving dependence: " + e.to_string());
   SaveDependence(e);
+  if (varref.is_unknown()) {
+      DependenceEntry e1(op_sig, "_UNKNOWN_", rel_sig, attr);
+      Log.push("saving dependence: " + e1.to_string());
+      SaveDependence(e1);
+  }
   return true;
 }
 

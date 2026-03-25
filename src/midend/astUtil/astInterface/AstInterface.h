@@ -43,7 +43,15 @@ class AstNodePtr {
   ~AstNodePtr() {}
   bool is_sage_ast() const { return nodetype_ == SpecialAstType::SG_AST; }
   bool is_null() const { return nodetype_ == SpecialAstType::NULL_AST; }
-  bool is_unknown() const { return nodetype_ ==  SpecialAstType::UNKNOWN_AST; }
+  bool is_unknown() const { switch (nodetype_) {
+                              case SpecialAstType::UNKNOWN_AST:
+                              case SpecialAstType::UNKNOWN_FUNCTION_CALL:
+                              case SpecialAstType::UNKNOWN_PTR_REF:
+                                   return true;
+                              default:
+                                  return false;
+                             }
+                          }
   bool is_unknown_function_call() const { return nodetype_ ==  SpecialAstType::UNKNOWN_FUNCTION_CALL; }
   bool is_unknown_reference() const { return nodetype_ ==  SpecialAstType::UNKNOWN_PTR_REF; }
   void set_is_unknown_function_call() { nodetype_ = SpecialAstType::UNKNOWN_FUNCTION_CALL; }
@@ -339,7 +347,7 @@ public:
   static AstNodeType GetExpressionType( const AstNodePtr& s);
 
   bool IsConstInt( const AstNodePtr& exp, int* value = 0) ;
-  AstNodePtr CreateConstInt( int val)  ;
+  static AstNodePtr CreateConstInt( int val)  ;
 
   //!Check whether $exp$ is a constant value of type int, float, string, etc.
   static bool IsConstant( const AstNodePtr& exp, std::string* valtype=0, std::string* value = 0) ;

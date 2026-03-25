@@ -259,12 +259,13 @@ void AstUtilInterface::AddOperatorSideEffectAnnotation(
   }
   if (desc != 0 && !var.is_null()) {
      if (var.is_unknown() || var.is_unknown_reference() || var.is_unknown_function_call()) {
+       DebugAstUtil([](){ return "Setting UNKNOWN.\n"; });
        desc->set_has_unknown(true);  
      } 
      std::string varname = GetVariableSignature(var);
      SymbolicValDescriptor val_desc(SymbolicValGenerator::GetSymbolicVal(fa, var), varname);
      desc->push_back(val_desc);
-     DebugAstUtil([&relation, &val_desc](){ return "Done adding operator annotation: " + OperatorSideEffectName(relation) + ":" + "annotation is : " + val_desc.toString(); });
+     DebugAstUtil([&relation, desc](){ return "Done adding operator annotation: " + OperatorSideEffectName(relation) + ":" + "annotation is : " + desc->ToString(); });
   }
 } 
 
