@@ -74,6 +74,8 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 // DQ (9/26/2018): Added so that we can call the display function for TokenStreamSequenceToNodeMapping (for debugging).
 #include "tokenStreamMapping.h"
 
+#include <ROSE_UNUSED.h>
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace Rose;
@@ -228,6 +230,7 @@ AttachPreprocessingInfoTreeTraversalInheritedAttrribute::AttachPreprocessingInfo
 void
 AttachPreprocessingInfoTreeTrav::handleBracedScopes(SgLocatedNode* previousLocatedNode, SgStatement* bracedScope,int lineOfClosingBrace, bool reset_start_index, ROSEAttributesList *currentListOfAttributes)
    {
+     ROSE_UNUSED(reset_start_index);
   // DQ (2/16/2021): This function supports iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber().
   // It seperates the case where comments and CPP directives are put in the scope or attached to the bottom of the previous statement.
 
@@ -1693,6 +1696,8 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
 
   // DQ (5/1/2020): This is now a data member.
   // ROSEAttributesList* currentListOfAttributes = NULL;
+
+     ROSE_UNUSED(currentFileNameId);
 
 #if 0
      printf ("In AttachPreprocessingInfoTreeTrav::getListOfAttributes() currentFileNameId = %d file = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());

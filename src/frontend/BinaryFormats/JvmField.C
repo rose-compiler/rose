@@ -51,7 +51,7 @@ void SgAsmJvmField::unparse(std::ostream& os) const
   p_attribute_table->unparse(os);
 }
 
-void SgAsmJvmField::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmField::dump(FILE*f, const char*, ssize_t) const
 {
   fprintf(f, "SgAsmJvmField::dump::%d:%d:%d\n", p_access_flags, p_name_index, p_descriptor_index);
 }

@@ -50,7 +50,7 @@ void SgAsmJvmMethod::unparse(std::ostream& os) const
   p_attribute_table->unparse(os);
 }
 
-void SgAsmJvmMethod::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmMethod::dump(FILE*f, const char* prefix, ssize_t) const
 {
   fprintf(f, "%s:%d:%d:%d\n", prefix, p_access_flags, p_name_index, p_descriptor_index);
 }

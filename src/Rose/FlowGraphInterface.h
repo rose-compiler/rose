@@ -80,8 +80,8 @@ class FlowGraphAccessInterface{
 
    // Returns edges connected to the given node filtered by the given traversal support.
   // If the requested traversal is not supported, return a pair of empty iterators.
-  virtual EdgeCollection getEdgesFrom(const NodeIterator& p, EdgePredicate = noFilter<EdgeIterator>()) const { assert("Error: outgoing edge traversal not supported!"); return EdgeCollection(); }
-  virtual EdgeCollection getEdgesTo(const NodeIterator& p, EdgePredicate = noFilter<EdgeIterator>()) const { assert("Error: incomng edge traversal not supported!"); return EdgeCollection(); }
+  virtual EdgeCollection getEdgesFrom(const NodeIterator&, EdgePredicate = noFilter<EdgeIterator>()) const { assert("Error: outgoing edge traversal not supported!"); return EdgeCollection(); }
+  virtual EdgeCollection getEdgesTo(const NodeIterator&, EdgePredicate = noFilter<EdgeIterator>()) const { assert("Error: incomng edge traversal not supported!"); return EdgeCollection(); }
 
   virtual enum MutationSupportOption allowMutationDuringTraversal() const { return MutationSupportOption::None; }
   virtual TraversalSupportOption getTraversalSupport() const { return TraversalSupportOption(); }

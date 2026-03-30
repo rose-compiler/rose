@@ -481,6 +481,8 @@ SgAsmDwarfLineList::addressToSourceCode(uint64_t address)
 
 void
 SgAsmDwarfLineList::display( const std::string & label ) { // blame 8e7b5bd1d0
+    ROSE_UNUSED(label);
+
     // Note that once the maps are setup NULL is an acceptable value (perhaps it should be the default parameter!)
     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
 

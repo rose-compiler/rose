@@ -90,7 +90,7 @@ SgAsmCliHeader* SgAsmCliHeader::parse()
   return this;
 }
 
-void SgAsmCliHeader::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmCliHeader::dump(FILE*f, const char* prefix, ssize_t) const
 {
   fprintf(f, "%s:\n", prefix);
   fprintf(f, "   name: %s\n", get_name()->get_string().c_str());

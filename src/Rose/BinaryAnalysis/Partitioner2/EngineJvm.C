@@ -32,6 +32,7 @@
 
 #include <Sawyer/FileSystem.h>
 #include <boost/filesystem.hpp>
+#include <ROSE_UNUSED.h>
 
 constexpr bool DEBUG_WITH_DUMP = false;
 
@@ -1136,7 +1137,9 @@ EngineJvm::buildAst(const std::vector<std::string> &fileNames) {
 
   // Create graphviz DOT file
   jvmClass->digraph();
-#endif // IMPLEMENT... (maybe not)
+#else // IMPLEMENT... (maybe not)
+  ROSE_UNUSED(fileNames);
+#endif
 
   return nullptr;
 }

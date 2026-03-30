@@ -3,6 +3,7 @@
 //
 
 #include "checkFortranInterfaces.h"
+#include <ROSE_UNUSED.h>
 
 #define PRINT_TRAVERSAL 0
 
@@ -451,11 +452,13 @@ InheritedAttribute Traversal::evaluateInheritedAttribute(SgNode* astNode, Inheri
 }
 
 
-SynthesizedAttribute Traversal::evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttribute inheritedAttribute, SynthesizedAttributesList childAttributes)
+SynthesizedAttribute Traversal::evaluateSynthesizedAttribute(SgNode* astNode, InheritedAttribute, SynthesizedAttributesList)
 {
    SynthesizedAttribute localResult;
 #if PRINT_TRAVERSAL
    std::cout << "SynthesizedAttribute(): astNode = " << astNode << " = " << astNode->class_name() << std::endl;
+#else
+   ROSE_UNUSED(astNode);
 #endif
 
    return localResult;

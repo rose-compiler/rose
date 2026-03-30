@@ -6,6 +6,7 @@
  */
 
 #include "VisitorContext.h"
+#include <ROSE_UNUSED.h>
 
 VisitorContext::VisitorContext(unsigned int nb_children__) : nb_children(nb_children__) {
 }
@@ -27,6 +28,8 @@ ForVisitorContext::ForVisitorContext(unsigned int nb_init__, bool has_cond__, un
  // nb_init(nb_init__),
  // nb_incr(nb_incr__)
 {
+    ROSE_UNUSED(nb_init__);
+    ROSE_UNUSED(nb_incr__);
 }
 
 ForVisitorContext::~ForVisitorContext() {
