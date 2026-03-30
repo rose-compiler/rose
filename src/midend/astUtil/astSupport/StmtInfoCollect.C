@@ -192,12 +192,18 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
    } 
      // Jim Leek 2023/02/07  Added IsSgAddressOfOp because I want it
      // to behave the same as a memory access, although it isn't one exactly
-    else if ( fa.IsMemoryAccess(s) || fa.IsAddressOfOp(s)) {
+    else if ( fa.IsMemoryAccess(s, &vars) || fa.IsAddressOfOp(s)) {
         DebugLocalInfoCollect([&s](){ return " append read set " + AstInterface::AstToString(s); });
         if (!fa.IsSameVarRef(s, fa.GetParent(s))) { /*QY: skip s if it refers to the same thing as parent*/
           ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
           if (mp == 0 || mp->find(s) == mp->end() || (*mp)[s].readlhs) {
-              AppendReadLoc(fa, s);
+              if (!vars.empty()) {
+                 for (const auto& v : vars) {
+                   AppendReadLoc(fa, v);
+                 }
+              }
+              else
+                 AppendReadLoc(fa, s);
           }
         }
         AstNodeList arglist;

@@ -81,7 +81,7 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
       if (collect != 0) (*collect)(first, second, OperatorSideEffect::Alias);
       return true;
     };
-    auto save_memory_ref = [&alias_map, &collect, &ast, &body, add_to_dep_analysis] (AstNodePtr ref, AstNodePtr details, OperatorSideEffect what) {
+    auto save_memory_ref = [&alias_map, &is_function, &collect, &ast, &body, add_to_dep_analysis] (AstNodePtr ref, AstNodePtr details, OperatorSideEffect what) {
       bool done_annot = false;
       AstNodeList  subrefs;
       if (!ref.is_unknown() && !AstInterface::IsMemoryAccess(ref, &subrefs)) {
@@ -112,7 +112,7 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
            }
         }
         if (collect != 0) (*collect)(ref, details, what);
-        if (ref.is_unknown() || !is_local_ref) {
+        if (is_function && (ref.is_unknown() || !is_local_ref)) {
            DebugAstUtil([&ref](){ return "save non-local:" + AstInterface::AstToString(ref); });
            if (add_to_dep_analysis != 0) {
               add_to_dep_analysis->SaveOperatorSideEffect(ast, ref, what, details.get_ptr()); 
@@ -143,8 +143,8 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
       if (collect != 0) return (*collect)(first, second, OperatorSideEffect::Kill);
       return true;
     };
-    std::function<bool(AstNodePtr, AstNodePtr)> save_call = [&collect,&ast, &done_annot_call, &done_annot_mod, &done_annot_read, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
-      if (!AstInterface::IsLocalRef(first, body)) {
+    std::function<bool(AstNodePtr, AstNodePtr)> save_call = [&collect,&ast, &is_function, &done_annot_call, &done_annot_mod, &done_annot_read, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
+      if (is_function && !AstInterface::IsLocalRef(first, body)) {
          done_annot_call = true;
          if (add_to_dep_analysis != 0) {
             add_to_dep_analysis->SaveOperatorSideEffect(ast, GetVariableSignature(first), OperatorSideEffect::Call, second.get_ptr()); 

@@ -1590,7 +1590,7 @@ IsAssignment( SgNode* s, SgNode** lhs, SgNode** rhs, bool *readlhs)
         const SgNode* parent = s->get_parent();
         if (parent != 0 && parent->variantT() == V_SgCtorInitializerList) {
            // Treat constructor member variable initialization as assignment.
-          if (rhs != 0) *rhs = isSgInitializedName(s)->get_initializer(); 
+          if (rhs != 0) *rhs = isSgInitializedName(s)->get_initializer();
           if (lhs != 0) *lhs = s;
           return true;
         } 
@@ -1671,13 +1671,8 @@ IsAliasingDecl( const AstNodePtr& _s, AstList* vars, AstList* aliases)
       case V_SgPointerType:
       case V_SgReferenceType: {
          SgExpression* def = var->get_initializer();
-         if (def != 0 && def->variantT() == V_SgAssignInitializer){
-           def = isSgAssignInitializer(def)->get_operand();
-           if (def->variantT() == V_SgAddressOfOp) {
-              def = isSgAddressOfOp(def)->get_operand();
-           }
+         if (def != 0 && IsMemoryAccess(def, aliases)) {
            if (vars != 0) vars->push_back(var);
-           if (aliases != 0) aliases->push_back(def);
            return true;
          }
         }
@@ -2481,14 +2476,22 @@ IsMemoryAccess( const AstNodePtr& _s, AstNodeList* subrefs)
     return true;
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   if (s == 0) return false;
-  if (IsVarRef(_s) || IsArrayAccess(_s)) return true;
+  if (IsVarRef(_s) || IsArrayAccess(_s)) {
+     if (subrefs != 0) subrefs->push_back(s); 
+     return true;
+  }
   switch (s->variantT()) {
+  case V_SgConstructorInitializer: return false;
+  case V_SgAssignInitializer:
+      return IsMemoryAccess(isSgAssignInitializer(s)->get_operand(), subrefs);
+  case V_SgAddressOfOp:
   case V_SgCastExp:
-  case V_SgConstructorInitializer:
-     return false;
+      return IsMemoryAccess(isSgUnaryOp(s)->get_operand(), subrefs);
   case V_SgPntrArrRefExp:
-  case V_SgPointerDerefExp:
-     break;
+  case V_SgPointerDerefExp: {
+        if (subrefs != 0) { subrefs->push_back(s); }
+        return true;
+     }
   case V_SgCommaOpExp: {
      auto* e1 = isSgCommaOpExp(s)->get_lhs_operand(), *e2 = isSgCommaOpExp(s)->get_rhs_operand();
      if (IsMemoryAccess(e1) && IsMemoryAccess(e2)) {
@@ -2509,7 +2512,8 @@ IsMemoryAccess( const AstNodePtr& _s, AstNodeList* subrefs)
   case V_SgArrowExp:
    {
      if (isSgBinaryOp(s)->get_rhs_operand()->variantT() == V_SgVarRefExp) {
-        break;
+        if (subrefs != 0) { subrefs->push_back(s); }
+        return true;
      }
    }
    ROSE_FALLTHROUGH;
@@ -2524,13 +2528,14 @@ IsMemoryAccess( const AstNodePtr& _s, AstNodeList* subrefs)
        assert(base_type!=0);
        while (isSgTypedefType(base_type))
            base_type = isSgTypedefType(base_type)->get_base_type();
-       if (base_type->variantT() == V_SgReferenceType)
-          break;
+       if (base_type->variantT() == V_SgReferenceType) {
+         if (subrefs != 0) { subrefs->push_back(s); }
+         return true;
+       }
      }
      return false;
     }
   } // end switch
-  return true;
 }
 
 //! Check if _s is an array access.
@@ -2545,17 +2550,6 @@ IsArrayAccess( const AstNodePtr& _s, AstNodePtr* array, AstList* index)
         s = dot->get_lhs_operand();
   }
   switch (s->variantT()) {
-  case V_SgPointerDerefExp: 
-      if (index != 0 || array != 0) {
-         SgPointerDerefExp *ref = isSgPointerDerefExp(s); 
-         if (array != 0) {
-            *array = ref->get_operand();
-         }
-         if (index != 0) {
-            (*index).push_back(CreateConstInt(0));
-         }
-      }
-      return true;
   case V_SgPntrArrRefExp:
       if (index != 0 || array != 0) {
         SgNode* n = s;
@@ -4868,12 +4862,6 @@ bool AstInterface::IsLocalRef(const AstNodePtr& ref, const AstNodePtr& scope, bo
    DebugScope([&ref,&scope](){ return "IsLocalRef invoked: var is " + AstInterface::AstToString(ref) + "; scope is " + AstToString(scope); });
    AstNodePtr cur_scope;
    if (!AstInterface::IsVarRef(ref, 0, 0, &cur_scope, 0, false, has_ptr_deref)) {
-      switch (ref->variantT()) {
-         case V_SgCastExp: 
-             DebugScope([&ref](){ return "reference is local:" + AstToString(ref); });
-             return true;
-         default: break;
-      }
       return false;
    }  
    std::string cur_scope_name;
