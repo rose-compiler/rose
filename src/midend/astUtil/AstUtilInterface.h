@@ -13,13 +13,16 @@ namespace AstUtilInterface{
 
    class WholeProgramDependenceAnalysis;
    enum OperatorSideEffect {
-     Modify, Read, Kill, Alias, Call, Decl, Allocate, Free, Parameter, Return
+     Modify, Read, Kill, Alias, Call, CallUnknown, ModifyUnknown, ReadUnknown, Decl, Allocate, Free, Parameter, Return
    };
    inline std::string OperatorSideEffectName(OperatorSideEffect what) {
      switch (what) {
       case OperatorSideEffect::Modify: return "modify";
       case OperatorSideEffect::Read: return "read";
       case OperatorSideEffect::Kill: return "kill";
+      case OperatorSideEffect::CallUnknown: return "call_unknown";
+      case OperatorSideEffect::ModifyUnknown: return "call_unknown";
+      case OperatorSideEffect::ReadUnknown: return "call_unknown";
       case OperatorSideEffect::Call: return "call";
       case OperatorSideEffect::Parameter: return "parameter";
       case OperatorSideEffect::Return: return "return";

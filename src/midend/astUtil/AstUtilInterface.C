@@ -12,6 +12,7 @@ DebugLog DebugAstUtil("-debugastutil");
 
 namespace AstUtilInterface {
 
+static bool do_annot = false;
 
 class VariableSignatureDictionary {
 private:
@@ -50,8 +51,8 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
     OperatorSideEffectAnnotation* funcAnnot=OperatorSideEffectAnnotation::get_inst();
     assert(funcAnnot != 0);
     DebugAstUtil([&ast](){ return "ComputeAstSideEffect: " + AstInterface::AstToString(ast); });
-    // Should we add annotation? (do_annot)? Have we added any annotation? (done_annot)
-    bool do_annot = false, done_annot_mod=false, done_annot_read = false, done_annot_call=0;
+    // Should we add annotation? Have we added any annotation? (done_annot)
+    bool is_function = false, done_annot_mod=false, done_annot_read = false, done_annot_call=false;
     AstInterface::AstNodePtr body;
     AstInterface::AstNodeList ast_params;
     AstInterface::AstTypeList ast_param_types;
@@ -60,6 +61,7 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
       // Add empty annotations for this function. Details of the side effects will be added later
       // while the body of the function is being analyzed.
       DebugAstUtil([&ast](){ return "Saving side effects for :" + AstInterface::AstToString(ast) + "\n"; });
+      is_function = true;
       if (add_to_dep_analysis != 0) {
          add_to_dep_analysis->ClearOperatorSideEffect(ast);
          assert(ast_params.size() == ast_param_types.size());
@@ -69,7 +71,6 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
             pt++;
          }
       }
-      do_annot = true;
     }
 
     StmtSideEffectCollect collect_operator(fa, funcAnnot);
@@ -80,7 +81,7 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
       if (collect != 0) (*collect)(first, second, OperatorSideEffect::Alias);
       return true;
     };
-    auto save_memory_ref = [&alias_map, &collect, &ast, do_annot, &body, add_to_dep_analysis] (AstNodePtr ref, AstNodePtr details, OperatorSideEffect what) {
+    auto save_memory_ref = [&alias_map, &collect, &ast, &body, add_to_dep_analysis] (AstNodePtr ref, AstNodePtr details, OperatorSideEffect what) {
       bool done_annot = false;
       AstNodeList  subrefs;
       if (!ref.is_unknown() && !AstInterface::IsMemoryAccess(ref, &subrefs)) {
@@ -94,7 +95,7 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
         AstNodePtr array;
         bool is_unknown_ref = false;
         // No need to check local ref if annotation is not needed. 
-        bool is_local_ref = (do_annot)? AstInterface::IsLocalRef(ref, body, &is_unknown_ref) : true; 
+        bool is_local_ref = AstInterface::IsLocalRef(ref, body, &is_unknown_ref);
         if (AstInterface::IsArrayAccess(ref, &array)) {
            ref = array;
            is_local_ref = false;
@@ -111,12 +112,14 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
            }
         }
         if (collect != 0) (*collect)(ref, details, what);
-        if (do_annot && (ref.is_unknown() || is_unknown_ref || !is_local_ref)) {
-           DebugAstUtil([&ref](){ return "save annotation:" + AstInterface::AstToString(ref); });
+        if (ref.is_unknown() || !is_local_ref) {
+           DebugAstUtil([&ref](){ return "save non-local:" + AstInterface::AstToString(ref); });
            if (add_to_dep_analysis != 0) {
               add_to_dep_analysis->SaveOperatorSideEffect(ast, ref, what, details.get_ptr()); 
            } 
-           AddOperatorSideEffectAnnotation(ast, ref, what);
+           if (do_annot) {
+              AddOperatorSideEffectAnnotation(ast, ref, what);
+           }
            done_annot = true; /* done annotations */
         }
       }
@@ -140,13 +143,26 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
       if (collect != 0) return (*collect)(first, second, OperatorSideEffect::Kill);
       return true;
     };
-    std::function<bool(AstNodePtr, AstNodePtr)> save_call = [&collect,&ast, do_annot, &done_annot_call, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
-      if (do_annot && (first.is_unknown() || !AstInterface::IsLocalRef(first, body)) ){
+    std::function<bool(AstNodePtr, AstNodePtr)> save_call = [&collect,&ast, &done_annot_call, &done_annot_mod, &done_annot_read, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
+      if (!AstInterface::IsLocalRef(first, body)) {
          done_annot_call = true;
          if (add_to_dep_analysis != 0) {
             add_to_dep_analysis->SaveOperatorSideEffect(ast, GetVariableSignature(first), OperatorSideEffect::Call, second.get_ptr()); 
          } 
-         AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Call);
+         if (do_annot) {
+            AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::Call);
+         }
+         if (first.is_unknown()) {
+            done_annot_call = true;
+            done_annot_mod = true;
+            done_annot_read = true;
+            if (add_to_dep_analysis != 0)  {
+               add_to_dep_analysis->SaveOperatorSideEffect(ast, GetVariableSignature(first), OperatorSideEffect::CallUnknown, second.get_ptr()); 
+            }
+            if (do_annot) {
+               AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::CallUnknown);
+            }
+         }
       }
       DebugAstUtil([&first](){ return "save call:" + AstInterface::AstToString(first); });
       if (collect != 0)  (*collect)(first, second, OperatorSideEffect::Call);
@@ -181,24 +197,27 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
     collect_operator.set_allocate_collect(save_allocate);
     collect_operator.set_free_collect(save_free);
     collect_operator(ast);
+    if (is_function) {
     // Add empty annot if no annotations have been inserted.
-    if (do_annot) {
-       if (!done_annot_mod) {
+      if (!done_annot_mod) {
           if (add_to_dep_analysis != 0)
             add_to_dep_analysis->SaveOperatorSideEffect(ast, AST_NULL, OperatorSideEffect::Modify, 0) ;
-         AddOperatorSideEffectAnnotation(ast, AST_NULL, OperatorSideEffect::Modify);
-        }
-        if (!done_annot_read) {
+         if (do_annot)
+            AddOperatorSideEffectAnnotation(ast, AST_NULL, OperatorSideEffect::Modify);
+      }
+      if (!done_annot_read) {
           if (add_to_dep_analysis != 0)
             add_to_dep_analysis->SaveOperatorSideEffect(ast, AST_NULL, OperatorSideEffect::Read, 0) ;
-         AddOperatorSideEffectAnnotation(ast, AST_NULL, OperatorSideEffect::Read);
-        }
-        if (!done_annot_call) {
+          if (do_annot)
+            AddOperatorSideEffectAnnotation(ast, AST_NULL, OperatorSideEffect::Read);
+      }
+      if (!done_annot_call) {
           if (add_to_dep_analysis != 0)
              add_to_dep_analysis->SaveOperatorSideEffect(ast, AST_NULL, OperatorSideEffect::Call, 0) ;
-          AddOperatorSideEffectAnnotation(ast, AST_NULL, OperatorSideEffect::Call);
-        }
-    } 
+          if (do_annot)
+             AddOperatorSideEffectAnnotation(ast, AST_NULL, OperatorSideEffect::Call);
+      } 
+   }
 }
 
 void AstUtilInterface::ReadAnnotations(std::istream& input, DependenceTable* use_dep_analysis) {
@@ -223,6 +242,7 @@ void AstUtilInterface::OutputOperatorSideEffectAnnotations(std::ostream& output,
 void AstUtilInterface::RegisterOperatorSideEffectAnnotation() {
   OperatorSideEffectAnnotation* funcAnnot=OperatorSideEffectAnnotation::get_inst();
   funcAnnot->register_annot();
+//  do_annot = true;
 };
 
 void AstUtilInterface::AddOperatorSideEffectAnnotation(

@@ -375,7 +375,6 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
  if (funcanal == 0 || !funcanal->get_read(fa, fc, &read))  {
       readunknown = true;
       DebugLocalInfoCollect([&fc](){ return "no interprecedural read info for : " + AstInterface::AstToString(fc) + "adding function call arguments."; });
-      AppendReadLoc(fa, AST_UNKNOWN);
       callee.set_is_unknown_function_call();
   }
   CollectModRefWrap mod(fa, funcanal, curstmt, readcollect, modcollect);
@@ -383,7 +382,6 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
       DebugLocalInfoCollect([&fc](){ return "no interprecedural mod info for : " + AstInterface::AstToString(fc); });
       AppendFuncCallWrite(fa, fc);
       modunknown = true;
-      AppendModLoc(fa, AST_UNKNOWN);
       callee.set_is_unknown_function_call();
   }
   if (callcollect != 0) {

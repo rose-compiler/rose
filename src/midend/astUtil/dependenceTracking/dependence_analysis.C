@@ -80,12 +80,6 @@ void WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* r
   AstNodePtr body;
   if (AstInterface::IsFunctionDefinition(input, &function_name, &params, 0, &body, 0, 0,/*use_global_name*/true) && body != 0) {
     Log.push("Computing dependences for " + input->unparseToString());
-    for (const auto& p : params) {
-        DebugSaveDep([&p](){return "saving for function parameter:" + AstInterface::AstToString(p); });
-        if (!annot_table.SaveOperatorSideEffect(input, p, AstUtilInterface::OperatorSideEffect::Parameter, 0)) {
-           DebugSaveDep([](){return "Did not save dependene" ; });
-        }
-     }
     std::function<bool(const AstNodePtr&, const AstNodePtr&, AstUtilInterface::OperatorSideEffect)> save_dep = 
         [this,input,body,&DebugSaveDep] (const AstNodePtr& first, const AstNodePtr& second, AstUtilInterface::OperatorSideEffect relation) {
         DebugSaveDep([&relation](){return "saving for:" + AstUtilInterface::OperatorSideEffectName(relation); });

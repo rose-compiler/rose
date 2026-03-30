@@ -4855,7 +4855,7 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
 }
 
 bool AstInterface::IsLocalRef(const AstNodePtr& ref, const AstNodePtr& scope, bool* has_ptr_deref) {
-   if (ref == AST_UNKNOWN) { return false; }
+   if (ref.is_unknown()) { return false; }
    if (ref == AST_NULL) { return true; }
    if (ref.get_ptr() == 0) { return false; }
 
