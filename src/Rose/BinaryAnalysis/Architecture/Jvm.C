@@ -3,6 +3,9 @@
 #include <Rose/BinaryAnalysis/Architecture/Jvm.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsJvm.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherJvm.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesJvm.h>
 #include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 #include <stringify.h>                                  // ROSE
 
@@ -33,8 +36,23 @@ RegisterDictionary::Ptr
 Jvm::registerDictionary() const {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-    if (!registerDictionary_.isCached())
-        registerDictionary_ = RegisterDictionary::instance(name());
+    if (!registerDictionary_.isCached()) {
+        auto regs = RegisterDictionary::instance(name());
+
+        // Special purpose registers
+        regs->insert("gp", jvm_regclass_spr, 0, 0, 4); // global pointer
+        regs->insert("pc", jvm_regclass_spr, 1, 0, 4); // program counter
+        regs->insert("sp", jvm_regclass_spr, 2, 0, 4); // stack pointer
+        regs->insert("fp", jvm_regclass_spr, 3, 0, 4); // stack frame pointer
+
+        // Special registers
+        regs->instructionPointerRegister("pc");
+        regs->stackPointerRegister("sp");
+        regs->stackFrameRegister("fp");
+
+        registerDictionary_ = regs;
+    }
+
     return registerDictionary_.get();
 }
 
@@ -162,8 +180,10 @@ Jvm::instructionDescription(const SgAsmInstruction *insn_) const {
         case JvmInstructionKind::dup_x1:  return "Duplicate the top operand stack value and insert two values down";
         case JvmInstructionKind::dup_x2:  return "Duplicate the top operand stack value and insert two or three values down";
         case JvmInstructionKind::dup2:    return "Duplicate the top one or two operand stack values";
-        case JvmInstructionKind::dup2_x1: return "Duplicate the top one or two operand stack values and insert two or three values down";
-        case JvmInstructionKind::dup2_x2: return "Duplicate the top one or two operand stack values and insert two, three, or four values down";
+        case JvmInstructionKind::dup2_x1:
+          return "Duplicate the top one or two operand stack values and insert two or three values down";
+        case JvmInstructionKind::dup2_x2:
+          return "Duplicate the top one or two operand stack values and insert two, three, or four values down";
         case JvmInstructionKind::swap: return "Swap the top two operand stack values";
         case JvmInstructionKind::iadd: return "Add int";
         case JvmInstructionKind::ladd: return "Add long";
@@ -598,6 +618,11 @@ Jvm::newInstructionDecoder() const {
 Unparser::Base::Ptr
 Jvm::newUnparser() const {
     return Unparser::Jvm::instance(shared_from_this());
+}
+
+InstructionSemantics::BaseSemantics::Dispatcher::Ptr
+Jvm::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) const {
+    return InstructionSemantics::DispatcherJvm::instance(shared_from_this(), ops);
 }
 
 } // namespace

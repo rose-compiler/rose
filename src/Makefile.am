@@ -424,6 +424,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/DispatcherCil.h                        \
+	Rose/BinaryAnalysis/InstructionSemantics/DispatcherJvm.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/DispatcherMips.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h			\

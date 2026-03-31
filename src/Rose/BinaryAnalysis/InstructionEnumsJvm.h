@@ -12,6 +12,11 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
+// JVM major register numbers.
+enum JvmRegisterClass {
+    jvm_regclass_spr, // Special purpose registers. Minors are 0..3.
+};
+
 // The Java Virtual Machine (JVM) instruction set Chapter 6 [1]
 //
 // Format of JVM instruction opcode (kind) description
