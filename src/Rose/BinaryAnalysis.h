@@ -19,6 +19,7 @@
 #include <Rose/BinaryAnalysis/ByteCode.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
+#include <Rose/BinaryAnalysis/CilStringFinder.h>
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 #include <Rose/BinaryAnalysis/Concolic.h>
 #include <Rose/BinaryAnalysis/ConcreteLocation.h>

@@ -25,6 +25,7 @@ add_library(roseBinaryAnalysis OBJECT
   BinaryLoaderElfObj.C
   BinaryLoaderPe.C
   ByteOrder.C
+  CilStringFinder.C
   CodeInserter.C
   ConcreteLocation.C
   ControlFlow.C
@@ -99,6 +100,7 @@ install(FILES
   ByteCode.h
   ByteOrder.h
   CallingConvention.h
+  CilStringFinder.h
   CodeInserter.h
   Concolic.h
   ConcreteLocation.h
