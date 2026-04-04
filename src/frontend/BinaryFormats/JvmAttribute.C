@@ -42,9 +42,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
     return new SgAsmJvmEnclosingMethod(parent);
   }
   else if (name == "Synthetic") { // 4.7.8
-    // The Synthetic attribte may be tested by tests/nonsmoke/specimens/java/SyntheticAttribute.class
-    // However, testing is not complete
-    mlog[WARN] << "SgAsmJvmAttribute::instance(): need further testing of this attribute ATTR_SyntheticAttribute\n";
+    // Synthetic attribute found in rose-tests/nonsmoke/specimens/java/apache.commons.collections.bag.AbstractMapBag.class
     return new SgAsmJvmIndexedAttr(parent, SgAsmJvmIndexedAttr::ATTR_Synthetic);
   }
   else if (name == "Signature") { // 4.7.9
@@ -201,46 +199,37 @@ SgAsmJvmIndexedAttr::SgAsmJvmIndexedAttr(SgAsmJvmAttributeTable* table, unsigned
   set_attribute_type(type);
 }
 
-SgAsmJvmIndexedAttr* SgAsmJvmIndexedAttr::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
+SgAsmJvmIndexedAttr* SgAsmJvmIndexedAttr::parse(SgAsmJvmConstantPool* pool) {
+    SgAsmJvmAttribute::parse(pool);
 
-  // Ensure that we have a specialized type by this point
-  unsigned type = get_attribute_type();
-  ASSERT_require2(type != SgAsmJvmIndexedAttr::ATTR_NONE, "SgAsmJvmIndexedAttr::attribute_type is not set\n");
-  if (type == SgAsmJvmIndexedAttr::ATTR_Deprecated || type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
-    // There is no index for this attribute type
-    if (type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
-      std::cerr << "--> WARNING: parsing untested attribute type " << get_attribute_type() << ":index:" << get_index() << "\n";
+    // Ensure that we have a specialized type by this point
+    unsigned type = get_attribute_type();
+    ASSERT_require2(type != SgAsmJvmIndexedAttr::ATTR_NONE, "SgAsmJvmIndexedAttr::attribute_type is not set\n");
+    if (type == SgAsmJvmIndexedAttr::ATTR_Deprecated || type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
+        // There is no index for this attribute type
+        return this;
     }
+    Jvm::read_value(pool, p_index);
+
     return this;
-  }
-  Jvm::read_value(pool, p_index);
-
-  return this;
 }
 
-void SgAsmJvmIndexedAttr::unparse(std::ostream &os) const
-{
-  SgAsmJvmAttribute::unparse(os);
+void SgAsmJvmIndexedAttr::unparse(std::ostream &os) const {
+    SgAsmJvmAttribute::unparse(os);
 
-  // Ensure that we have a specialized type by this point
-  unsigned type = get_attribute_type();
-  ASSERT_require2(type != SgAsmJvmIndexedAttr::ATTR_NONE, "SgAsmJvmIndexedAttr::attribute_type is not set\n");
-  if (type == SgAsmJvmIndexedAttr::ATTR_Deprecated || type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
-    // There is no index for this attribute type
-    if (type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
-      std::cerr << "--> WARNING: unparsing untested attribute type " << get_attribute_type() << ":index:" << get_index() << "\n";
+    // Ensure that we have a specialized type by this point
+    unsigned type = get_attribute_type();
+    ASSERT_require2(type != SgAsmJvmIndexedAttr::ATTR_NONE, "SgAsmJvmIndexedAttr::attribute_type is not set\n");
+    if (type == SgAsmJvmIndexedAttr::ATTR_Deprecated || type== SgAsmJvmIndexedAttr::ATTR_Synthetic) {
+        // There is no index for this attribute type
+        return;
     }
-    return;
-  }
 
-  Jvm::writeValue(os, get_index());
+    Jvm::writeValue(os, get_index());
 }
 
-void SgAsmJvmIndexedAttr::dump(FILE*, const char*, ssize_t) const
-{
-  mlog[WARN] << "SgAsmJvmIndexedAttr::dump() not implemented yet\n";
+void SgAsmJvmIndexedAttr::dump(FILE*, const char*, ssize_t) const {
+    mlog[WARN] << "SgAsmJvmIndexedAttr::dump() not implemented yet\n";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
