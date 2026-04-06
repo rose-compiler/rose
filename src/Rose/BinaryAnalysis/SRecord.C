@@ -587,7 +587,7 @@ SRecord::toString() const {
             s += (boost::format("%|02X|") % size).str();
 
             const Address addrMask = BitOps::lowMask<Address>(8 * addressNBytes(type_));
-            if (BitOps::signExtend(addr_ & addrMask, 8*addressNBytes(type_)) != addr_) {
+            if (addr_ & addrMask != addr_) {
                 throw Exception("S-Record address " + StringUtility::addrToString(addr_) +
                                 " needs more than " + StringUtility::numberToString(addressNBytes(type_)) + " bytes");
             }
