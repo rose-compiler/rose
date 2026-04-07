@@ -440,7 +440,7 @@ SRecord::createSegments(const std::vector<SRecord> &srecs, const MemoryMap::Ptr 
     for (const AddressInterval &interval: srecAddrs.intervals()) {
         const Address begin = alignDown(interval.least(), alignment);
         const Address end = alignUp(interval.greatest() + 1, alignment);
-        ASSERT_require(begin < end);
+        ASSERT_require(begin < end || end == 0);
         alignedAddresses |= AddressInterval::hull(begin, end-1);
     }
 
@@ -587,7 +587,7 @@ SRecord::toString() const {
             s += (boost::format("%|02X|") % size).str();
 
             const Address addrMask = BitOps::lowMask<Address>(8 * addressNBytes(type_));
-            if (addr_ & addrMask != addr_) {
+            if ((addr_ & addrMask) != addr_) {
                 throw Exception("S-Record address " + StringUtility::addrToString(addr_) +
                                 " needs more than " + StringUtility::numberToString(addressNBytes(type_)) + " bytes");
             }
