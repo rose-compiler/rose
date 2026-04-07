@@ -211,7 +211,7 @@ public:
      *  returns false. */
     static bool baseSizeOverflows(T base, T size) {
         // Warning: This only works when T is unsigned since signed integer overflow is undefined behavior in C++.
-        return base + size < base;
+        return base + size < base && base + size != 0;
     }
 
     /** Returns lower limit. */
