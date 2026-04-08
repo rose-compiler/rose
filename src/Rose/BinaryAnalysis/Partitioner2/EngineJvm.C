@@ -218,6 +218,11 @@ EngineJvm::jvmSwitches(JvmSettings &settings) {
                                      "This doesn't affect the loading of classes from system libraries, which may be ignored. "
                                      "Default behavior is to load classes lazily, as needed.");
 
+    CommandLine::insertBooleanSwitch(sg, "load-all-jars", settings.loadAllJars,
+                                     "Load all jar files encountered while processing JVM files. "
+                                     "This doesn't affect the loading of jar files from system libraries, which may be ignored. "
+                                     "Default behavior is to load jar files lazily, as needed.");
+
     sg.insert(Switch("classpath")
               .argument("classpath", listParser(anyParser(settings.classPath), ":"))
               .explosiveLists(true)
@@ -277,7 +282,10 @@ EngineJvm::parseContainers(const std::vector<std::string> &specimen) {
         // Prune away things we don't recognize as Java files.
         std::vector<fs::path> classFiles{};
         for (const std::string &s: specimen) {
-            if (ModulesJvm::isJavaJarFile(s)) {
+            if (ModulesJvm::isJavaWarFile(s)) {
+                loadWarFile(s);
+            }
+            else if (ModulesJvm::isJavaJarFile(s)) {
                 loadJarFile(s);
             }
             else if (ModulesJvm::isJavaClassFile(s)) {
@@ -373,22 +381,75 @@ EngineJvm::pathToClass(const std::string &fqcn) {
     return classFilePath;
 }
 
-// Load jar file by opening its contents
+// Load war file by opening its contents, assumed to be in the file system
+bool
+EngineJvm::loadWarFile(const std::string &filename) {
+    if (!CommandlineProcessing::isJavaWarFile(filename)) {
+        return false;
+    }
+    SAWYER_MESG(mlog[TRACE]) << "loading war file " << filename <<"\n";
+
+    auto gfWar = new SgAsmGenericFile{};
+    gfWar->parse(filename); /* this loads war file into memory, does no reading of file */
+
+    // Unzip war file but do not decompress any contents
+    auto zipWar = new ModulesJvm::Zipper(gfWar);
+
+    // Load files contained in the war file
+    for (auto file : zipWar->files()) {
+        if (settings().engineJvm.loadAllJars && CommandlineProcessing::isJavaJarFile(file.filename())) {
+            loadJarFile(file.filename(), zipWar);
+        }
+        else if (settings().engineJvm.loadAllClasses && CommandlineProcessing::isJavaClassFile(file.filename())) {
+            ASSERT_require2(false, "UNIMPLEMENTED: found a class file in a war file\n");
+        }
+    }
+
+    return true;
+}
+
+bool
+EngineJvm::loadJarFile(const std::string &filename, ModulesJvm::Zipper* zip) {
+    if (!CommandlineProcessing::isJavaJarFile(filename)) {
+        return false;
+    }
+    SAWYER_MESG(mlog[TRACE]) << "loading jar file " << filename <<"\n";
+
+    // Decode the file found in the zipper contents
+    size_t nbytes{0};
+    unsigned char* bytes = zip->decode(filename, nbytes);
+    ASSERT_require2(nbytes >= 4, "A jar file found in a zip file has insufficient bytes\n");
+
+    // Check jar content for magic 0xCAFEBABE
+    bool magic = (bytes[0] == 'P' && bytes[1] == 'K' && bytes[2] == 0x03 && bytes[3] == 0x04);
+    if (!magic) {
+        throw std::runtime_error("magic number incorrect for jar file contents");
+    }
+
+    /* Make jar file contents available but don't decompress contents */
+    auto gf = new SgAsmGenericFile{};
+    gf->set_name(filename);
+    gf->set_data(SgFileContentList(bytes, nbytes));
+
+    jars_.push_back(new ModulesJvm::Zipper(gf));
+
+    return true;
+}
+
 bool
 EngineJvm::loadJarFile(const std::string &filename) {
-  if (!CommandlineProcessing::isJavaJarFile(filename)) {
-    return false;
-  }
-  SAWYER_MESG(mlog[TRACE]) << "loading jar file " << filename <<"\n";
+    if (!CommandlineProcessing::isJavaJarFile(filename)) {
+        return false;
+    }
+    SAWYER_MESG(mlog[TRACE]) << "loading jar file " << filename <<"\n";
 
-  auto gf = new SgAsmGenericFile{};
-  gf->parse(filename); /* this loads jar file into memory, does no reading of file */
+    /* Make jar file contents available but don't decompress contents */
+    auto gf = new SgAsmGenericFile{};
+    gf->parse(filename); /* this loads jar file into memory, does no reading of file */
 
-  // Unzip jar file but do not decompress contents
-  auto zip = new ModulesJvm::Zipper(gf);
-  jars_.push_back(zip);
+    jars_.push_back(new ModulesJvm::Zipper(gf));
 
-  return true;
+    return true;
 }
 
 // Load class and super classes
@@ -418,9 +479,6 @@ EngineJvm::loadClass(uint16_t classIndex, SgAsmJvmConstantPool* pool, SgAsmGener
 
 Address
 EngineJvm::loadClassFile(fs::path path, SgAsmGenericFileList* fileList, Address baseVa) {
-    size_t nbytes{0};
-    unsigned char* classBytes{nullptr};
-
 #if 0
    // Temporary NOTES for fs::path usage
    std::cout << "Root Name: " << p.root_name() << "\n";
@@ -444,7 +502,7 @@ a. linux returns "" for root_name()
 b. stem() is same for both, e.g., filename() without extension
 
 NOTES:
-  1. --load-all-classes: load all from jars on command line
+  1. --load-all-classes: load all classes from encountered jar files
   2. If path.root_directory() then path.extension() == class
   3. If path.root_directory() is "/"
       a: then path/file must exist
@@ -456,6 +514,9 @@ NOTES:
         - this likely should happen before this call because ::loadClassFile should have been discovered?
 #endif
 
+    size_t nbytes{0};
+    unsigned char* bytes{nullptr};
+
     // Drop the extension, hopefully ".class"
     auto p{path.parent_path() / path.stem()};
     std::string className = p.string();
@@ -465,24 +526,25 @@ NOTES:
         return baseVa;
     }
 
-    // Look for the class in a jar file
+    // Look for the class in the collection of jar files, if it is not in the file system
     if (!fs::exists(path)) {
         for (ModulesJvm::Zipper* zip : jars_) {
-            classBytes = zip->decode(path.string(), nbytes);
-            if (classBytes) {
-                // Check class content for magic 0xCAFEBABE
-                ASSERT_require(nbytes >= 4);
-                bool magic = (classBytes[0] == 0xCA && classBytes[1] == 0xFE &&
-                              classBytes[2] == 0xBA && classBytes[3] == 0xBE);
-                if (!magic) {
-                  delete classBytes; classBytes = nullptr;
-                  throw std::runtime_error("magic number incorrect for class file contents");
-                }
-                break;
+            if (!zip->present(path.string())) continue;
+
+            bytes = zip->decode(path.string(), nbytes);
+            ASSERT_require2(nbytes > 4, "A class file found in a zip file has insufficient bytes\n");
+
+            // Check class content for magic 0xCAFEBABE
+            bool magic = (bytes[0] == 0xCA && bytes[1] == 0xFE &&
+                          bytes[2] == 0xBA && bytes[3] == 0xBE);
+            if (!magic) {
+                delete bytes; bytes = nullptr;
+                throw std::runtime_error("magic number incorrect for class file contents");
             }
+            break;
         }
-        if (!classBytes) {
-            // class not in the file system nor found in a jar file
+        if (nbytes < 4) {
+            // class not found in a jar file
             return baseVa;
         }
     }
@@ -490,9 +552,9 @@ NOTES:
     auto gf = new SgAsmGenericFile{};
 
     // Complete initialization of gf
-    if (classBytes) {
+    if (bytes != nullptr) {
         gf->set_name(path.string());
-        gf->set_data(SgFileContentList(classBytes, nbytes));
+        gf->set_data(SgFileContentList(bytes, nbytes));
     }
     else {
         // Load file by parsing from file system
@@ -685,32 +747,39 @@ EngineJvm::roseFrontendReplacement(const std::vector<fs::path> &paths) {
 // TODO: try to remove this initialization
 //       Perhaps SgFile::doSetupForConstructor(argv, project); // (but we are post constructor!)
     jvmComposite->set_sourceFileNameWithPath(fs::absolute(paths[0]).string()); // best we can do
-    jvmComposite->set_sourceFileNameWithoutPath(paths[0].filename().string());                // best we can do
-    jvmComposite->initializeSourcePosition(paths[0].string());                                // best we can do
+    jvmComposite->set_sourceFileNameWithoutPath(paths[0].filename().string()); // best we can do
+    jvmComposite->initializeSourcePosition(paths[0].string());                 // best we can do
     jvmComposite->set_originalCommandLineArgumentList(std::vector<std::string>(1, paths[0].string())); // best we can do
     ASSERT_not_null(jvmComposite->get_file_info());
 
     // Load class files starting at this virtual address
     Address baseVa = 0;
 
-    // Loop over all paths, loading jar files and classes
+    // Loop over all paths, loading war, jar files and classes
     for (auto path : paths) {
-        if (ModulesJvm::isJavaJarFile(path)) {
+        if (ModulesJvm::isJavaWarFile(path)) {
+            // Load war file found in the file system and all contained jar files, if requested
+            loadWarFile(path.string());
+        }
+        else if (ModulesJvm::isJavaJarFile(path)) {
+            // Load jar file found in the file system
             loadJarFile(path.string());
+        }
+        else if (ModulesJvm::isJavaClassFile(path)) {
+            // Attempt to load class from file system
+            baseVa = loadClassFile(path, fileList, baseVa);
+        }
+    }
 
-            // Load all classes from the new jar file if requested
-            if (settings().engineJvm.loadAllClasses) {
-                auto zip = jars_.back();
-                for (auto file : zip->files()) {
-                    if (CommandlineProcessing::isJavaClassFile(file.filename())) {
-                        loadClassFile(file.filename(), fileList, baseVa);
-                    }
+    // Load all classes from encountered jar files, if requested
+    if (settings().engineJvm.loadAllClasses) {
+        for (auto zip : jars_) {
+            for (auto file : zip->files()) {
+                if (CommandlineProcessing::isJavaClassFile(file.filename())) {
+//TODO::add zip as a parameter to loadClassFile so faster to find
+                    loadClassFile(file.filename(), fileList, baseVa);
                 }
             }
-        }
-        else {
-            // Attempt to load class from file system or jar
-            baseVa = loadClassFile(path, fileList, baseVa);
         }
     }
 
@@ -991,6 +1060,7 @@ EngineJvm::discoverBasicBlocks(const PartitionerPtr& partitioner, const ByteCode
 //TODO:: remove this method
 SgAsmBlock*
 EngineJvm::buildAst(const std::vector<std::string> &fileNames) {
+    ROSE_UNUSED(fileNames);
 #ifdef IMPLEMENT_BUILD_AST
   using std::cout;
   using namespace ModulesJvm;
@@ -1137,9 +1207,7 @@ EngineJvm::buildAst(const std::vector<std::string> &fileNames) {
 
   // Create graphviz DOT file
   jvmClass->digraph();
-#else // IMPLEMENT... (maybe not)
-  ROSE_UNUSED(fileNames);
-#endif
+#endif // IMPLEMENT_BUILD_AST (or maybe not)
 
   return nullptr;
 }
@@ -1172,44 +1240,66 @@ namespace ModulesJvm {
 
 /** Returns true if named file exists and is a Java class file */
 bool isJavaClassFile(const fs::path &file) {
-  if (!fs::exists(file)) {
-      return false; // file doesn't exist
-  }
-
-  MemoryMap::Ptr map = MemoryMap::instance();
-  if (0 == map->insertFile(file.string(), 0)) {
-    return false; // file cannot be mmap'd
-  }
-
-  uint8_t magic[4];
-  if (4 == map->at(0).limit(4).read(magic).size()) {
-    if (magic[0] == 0xCA && magic[1] == 0xFE && magic[2] == 0xBA && magic[3] == 0xBE) {
-      // 0xCAFEBABE
-      return true;
+    if (!fs::exists(file) || file.extension() != ".class") {
+        return false;
     }
-  }
-  return false;
+
+    MemoryMap::Ptr map = MemoryMap::instance();
+    if (0 == map->insertFile(file.string(), 0)) {
+        return false; // file cannot be mmap'd
+    }
+
+    uint8_t magic[4];
+    if (4 == map->at(0).limit(4).read(magic).size()) {
+        // All JVM files have magic number, 0xCAFEBABE
+        if (magic[0] == 0xCA && magic[1] == 0xFE && magic[2] == 0xBA && magic[3] == 0xBE) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /** Returns true if named file exists and is a Java jar file */
 bool isJavaJarFile(const fs::path &file) {
-  if (!fs::exists(file)) {
-    return false; // file doesn't exist
-  }
-
-  MemoryMap::Ptr map = MemoryMap::instance();
-  if (0 == map->insertFile(file.string(), 0)) {
-    return false; // file cannot be mmap'd
-  }
-
-  uint8_t magic[4];
-  if (4 == map->at(0).limit(4).read(magic).size()) {
-    if (magic[0] == 'P' && magic[1] == 'K' && magic[2] == 0x03 && magic[3] == 0x04) {
-      return true;
+    if (!fs::exists(file) || file.extension() != ".jar") {
+        return false;
     }
-  }
-  return false;
-}  
+
+    // Check file for magic number, 0xCAFEBABE
+    MemoryMap::Ptr map = MemoryMap::instance();
+    if (0 == map->insertFile(file.string(), 0)) {
+        return false; // file cannot be mmap'd
+    }
+
+    uint8_t magic[4];
+    if (4 == map->at(0).limit(4).read(magic).size()) {
+        if (magic[0] == 'P' && magic[1] == 'K' && magic[2] == 0x03 && magic[3] == 0x04) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** Returns true if named file exists and is a Java war file */
+bool isJavaWarFile(const fs::path &file) {
+    if (!fs::exists(file) || file.extension() != ".war") {
+        return false;
+    }
+
+    // Check file for magic number, 0xCAFEBABE
+    MemoryMap::Ptr map = MemoryMap::instance();
+    if (0 == map->insertFile(file.string(), 0)) {
+        return false; // file cannot be mmap'd
+    }
+
+    uint8_t magic[4];
+    if (4 == map->at(0).limit(4).read(magic).size()) {
+        if (magic[0] == 'P' && magic[1] == 'K' && magic[2] == 0x03 && magic[3] == 0x04) {
+            return true;
+        }
+    }
+    return false;
+}
 
 /** Searchs the classpath setting for the path to a fully qualified class name */
 fs::path pathToClassFile(const std::string &fqcn, const std::vector<std::string> &classpath) {

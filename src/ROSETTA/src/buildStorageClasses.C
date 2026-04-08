@@ -109,24 +109,22 @@ Grammar::buildStringForStorageClassSource ( AstNodeClass & node )
  * calling the method above and replacing all the $CLASSNAME, etc.
  */
 void
-Grammar::buildStorageClassSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
-   {
-     string sourceFileInsertionSeparator = "MEMBER_FUNCTION_DEFINITIONS";
-     string fileName = "../Grammar/grammarStorageClassDefinitionMacros.macro";
-     StringUtility::FileWithLineNumbers sourceFileTemplate = Grammar::readFileWithPos (fileName);
-     StringUtility::FileWithLineNumbers sourceBeforeInsertion = Grammar::buildHeaderStringBeforeMarker(sourceFileInsertionSeparator, fileName);
-     StringUtility::FileWithLineNumbers sourceAfterInsertion = Grammar::buildHeaderStringAfterMarker(sourceFileInsertionSeparator, fileName);
-  // Edit the $CLASSNAME
-     StringUtility::FileWithLineNumbers editedStringMiddle(1, StringUtility::StringWithLineNumber(buildStringForStorageClassSource(node), "" /* "<buildStringForStorageClassSource " + node.getToken().getName() + ">" */, 1));
-  // Place the constructor at the top of the node specific code for this element of grammar
-     StringUtility::FileWithLineNumbers editedSourceFileString = sourceBeforeInsertion + editedStringMiddle + sourceAfterInsertion;
-  // Now apply the edit/subsitution specified within the grammar (by the user)
-     editedSourceFileString = editSubstitution (node,editedSourceFileString);
+Grammar::buildStorageClassSourceFiles(AstNodeClass& node, StringUtility::FileWithLineNumbers& outputFile) {
+    string sourceFileInsertionSeparator = "MEMBER_FUNCTION_DEFINITIONS";
+    string fileName = "../Grammar/grammarStorageClassDefinitionMacros.macro";
+    StringUtility::FileWithLineNumbers sourceFileTemplate = Grammar::readFileWithPos (fileName);
+    StringUtility::FileWithLineNumbers sourceBeforeInsertion = Grammar::buildHeaderStringBeforeMarker(sourceFileInsertionSeparator, fileName);
+    StringUtility::FileWithLineNumbers sourceAfterInsertion = Grammar::buildHeaderStringAfterMarker(sourceFileInsertionSeparator, fileName);
+    // Edit the $CLASSNAME
+    StringUtility::FileWithLineNumbers editedStringMiddle(1, StringUtility::StringWithLineNumber(buildStringForStorageClassSource(node), "" /* "<buildStringForStorageClassSource " + node.getToken().getName() + ">" */, 1));
+    // Place the constructor at the top of the node specific code for this element of grammar
+    StringUtility::FileWithLineNumbers editedSourceFileString = sourceBeforeInsertion + editedStringMiddle + sourceAfterInsertion;
+    // Now apply the edit/subsitution specified within the grammar (by the user)
+    editedSourceFileString = editSubstitution (node,editedSourceFileString);
 
-     outputFile += editedSourceFileString;
-     DO_ON_CHILDREN(node, buildStorageClassSourceFiles);
-   }
-
+    outputFile += editedSourceFileString;
+    DO_ON_CHILDREN(node, buildStorageClassSourceFiles);
+}
 
 //#########################################################################################################
 /* JH (11/07/2005): build the source IR node constructors that take its corresponding StorageClass type
@@ -238,14 +236,13 @@ Grammar::buildAccessFunctionSources(AstNodeClass & node)
  * that takes its corresponding StorageClass (AstSpecificDataManagingClassStorageClass)
  */
 std::string
-Grammar::generateStaticDataConstructorSource(AstNodeClass & node)
-   {
-     std::string functionSource = node.buildStaticDataConstructorSource();
-     string temp = functionSource;
-     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
-     DO_ON_CHILDREN_TO_STRING(node, functionSource, generateStaticDataConstructorSource);
-     return functionSource;
-   }
+Grammar::generateStaticDataConstructorSource(AstNodeClass& node) {
+    std::string functionSource = node.buildStaticDataConstructorSource();
+    string temp = functionSource;
+    functionSource = GrammarString::copyEdit(temp, "$CLASSNAME", node.name);
+    DO_ON_CHILDREN_TO_STRING(node, functionSource, generateStaticDataConstructorSource);
+    return functionSource;
+}
 
 //#########################################################################################################
 /* JH (11/24/2005): Method that builds the code for the method
@@ -294,14 +291,13 @@ Grammar::generateStaticDataArrangeEasyStorageInOnePoolSource(AstNodeClass & node
  * deleteStaticDataOfEasyStorageClasses of AstSpecificDataManagingClassStorageClass
  */
 std::string
-Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource(AstNodeClass & node)
-   {
-     std::string functionSource = node.buildStaticDataDeleteEasyStorageMemoryPoolSource();
-     string temp = functionSource;
-     functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
-     DO_ON_CHILDREN_TO_STRING(node, functionSource, Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource);
-     return functionSource;
-   }
+Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource(AstNodeClass& node) {
+    std::string functionSource = node.buildStaticDataDeleteEasyStorageMemoryPoolSource();
+    string temp = functionSource;
+    functionSource = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
+    DO_ON_CHILDREN_TO_STRING(node, functionSource, Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource);
+    return functionSource;
+}
 
 //#########################################################################################################
 /* JH (11/24/2005): Method that builds the code for the method pickOutIRNodeData of the

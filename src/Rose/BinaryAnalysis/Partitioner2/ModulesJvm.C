@@ -5755,7 +5755,13 @@ using namespace Rose::Diagnostics;
 
 /** Temporary utility function to dump warning messages */
 void warn(const std::string &msg) {
-  std::cerr << "[WARN]: " << msg << "\n";
+//TODO::Understand filename length too large
+//TODO::Understand ignoring extra field data
+//TODO::See if [WARM] occurs for .class or .jar files
+    ROSE_UNUSED(msg);
+#if 0
+    std::cerr << "[WARN]: " << msg << "\n";
+#endif
 }
 
 // FileStat class
@@ -5763,6 +5769,8 @@ void warn(const std::string &msg) {
 FileStat::FileStat(const uint8_t* buf, size_t &offset, uint32_t fileIndex)
   : fileIndex_{fileIndex}
 {
+  ROSE_UNUSED(fileIndex_);
+
   uint32_t n{0};
   bool ok{true};
   const uint8_t* p{buf+offset};
@@ -5823,27 +5831,27 @@ FileStat::FileStat(const uint8_t* buf, size_t &offset, uint32_t fileIndex)
 
 std::string
 FileStat::filename() const {
-  return std::string{filename_};
+    return std::string{filename_};
 }
 
 size_t
 FileStat::compressedSize() const {
-  return compSize_;
+    return compSize_;
 }
 
 size_t
 FileStat::uncompressedSize() const {
-  return uncompSize_;
+    return uncompSize_;
 }
 
 size_t
 FileStat::offset() const {
-  return localHeaderOfs_;
+    return localHeaderOfs_;
 }
 
 uint32_t
 FileStat::centralHeaderSize() const {
-  return MZ_ZIP_CENTRAL_DIR_HEADER_SIZE + fileNameLength_ + extraFieldLength_ + commentLength_;
+    return MZ_ZIP_CENTRAL_DIR_HEADER_SIZE + fileNameLength_ + extraFieldLength_ + commentLength_;
 }
 
 
@@ -5851,42 +5859,37 @@ FileStat::centralHeaderSize() const {
 //---------------------
 uint32_t
 Zipper::ZipEnd::numFiles() const {
-  return numFilesTotal_;
+    return numFilesTotal_;
 }
 
 size_t
 Zipper::ZipEnd::cdirOffset() const {
-  return offsetCD_;
+    return offsetCD_;
 }
 
-Zipper::ZipEnd::ZipEnd(const SgFileContentList &buf)
-{
-  size_t off{buf.size() - 1};
+Zipper::ZipEnd::ZipEnd(const SgFileContentList &buf) {
+    size_t off{buf.size() - 1};
 
-  // search backwards from end of file to start of end of central directory record
-  for (; off >= 3; off--) {
-    if (buf[off-3] == 'P' &&
-        buf[off-2] == 'K' &&
-        buf[off-1] == '\x05' &&
-        buf[off] == '\x06')
-      {
-          off += 1;
-          diskNumber_      = leToHost(*reinterpret_cast<const uint16_t*>(&buf[off]));  off += 2;
-          diskNumberStart_ = leToHost(*reinterpret_cast<const uint16_t*>(&buf[off]));  off += 2;
-          numFiles_        = leToHost(*reinterpret_cast<const uint16_t*>(&buf[off]));  off += 2;
-          numFilesTotal_   = leToHost(*reinterpret_cast<const uint16_t*>(&buf[off]));  off += 2;
-          sizeCD_          = leToHost(*reinterpret_cast<const uint32_t*>(&buf[off]));  off += 4;
-          offsetCD_        = leToHost(*reinterpret_cast<const uint32_t*>(&buf[off]));  off += 4;
-          lenComment_      = leToHost(*reinterpret_cast<const uint16_t*>(&buf[off]));  off += 2;
-          // followed by comment (ignored for now, but flag for possible attack, jar file comment?)
-          break;
-      }
-  }
-  if (off == 3) {
-    throw std::runtime_error("didn't find end of central directory signature");
-  }
-  if (diskNumber_ != 0 && diskNumberStart_ != 0) warn("disk numbers are not zero");
-  if (numFiles_ != numFilesTotal_) warn("number disk files are not the same");
+    // search backwards from end of file to start of end of central directory record
+    for (; off >= 3; off--) {
+        if (buf[off-3] == 'P' && buf[off-2] == 'K' && buf[off-1] == '\x05' && buf[off] == '\x06') {
+            off += 1;
+            diskNumber_      = leToHost(*reinterpret_cast<const uint16_t*>(&buf[off]));  off += 2;
+            diskNumberStart_ = leToHost(*reinterpret_cast<const uint16_t*>(&buf[off]));  off += 2;
+            numFiles_        = leToHost(*reinterpret_cast<const uint16_t*>(&buf[off]));  off += 2;
+            numFilesTotal_   = leToHost(*reinterpret_cast<const uint16_t*>(&buf[off]));  off += 2;
+            sizeCD_          = leToHost(*reinterpret_cast<const uint32_t*>(&buf[off]));  off += 4;
+            offsetCD_        = leToHost(*reinterpret_cast<const uint32_t*>(&buf[off]));  off += 4;
+            lenComment_      = leToHost(*reinterpret_cast<const uint16_t*>(&buf[off]));  off += 2;
+            // followed by comment (ignored for now, but flag for possible attack, jar file comment?)
+            break;
+        }
+    }
+    if (off == 3) {
+        throw std::runtime_error("didn't find end of central directory signature");
+    }
+    if (diskNumber_ != 0 && diskNumberStart_ != 0) warn("disk numbers are not zero");
+    if (numFiles_ != numFilesTotal_) warn("number disk files are not the same");
 }
 
 
@@ -5894,48 +5897,54 @@ Zipper::ZipEnd::ZipEnd(const SgFileContentList &buf)
 //--------------------------
 size_t
 Zipper::LocalHeader::localHeaderSize() const {
-  return MZ_ZIP_LOCAL_DIR_HEADER_SIZE + fileNameLength_ + extraFieldLength_;
+    return MZ_ZIP_LOCAL_DIR_HEADER_SIZE + fileNameLength_ + extraFieldLength_;
 }
 
 Zipper::LocalHeader::LocalHeader(const uint8_t* buf, size_t offset) {
-  uint32_t n{0};
-  bool ok{true};
-  const uint8_t* p{buf+offset};
+    uint32_t n{0};
+    bool ok{true};
+    const uint8_t* p{buf+offset};
 
-  // signature
-  if (p[0] != 'P' || p[1] != 'K' || p[2] != '\03' || p[3] != '\04') ok = false;
-  if (!ok) warn("Bad local header signature");
+    // signature
+    if (p[0] != 'P' || p[1] != 'K' || p[2] != '\03' || p[3] != '\04') ok = false;
+    if (!ok) warn("Bad local header signature");
 
-  version_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_VERSION_NEEDED_OFS));
+    version_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_VERSION_NEEDED_OFS));
 
-  bitFlag_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_BIT_FLAG_OFS));
-  method_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_METHOD_OFS));
+    bitFlag_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_BIT_FLAG_OFS));
+    method_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_METHOD_OFS));
 
-  //TODO: convert time to something meaningful
-  time_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_FILE_TIME_OFS));
-  date_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_FILE_DATE_OFS));
+    //TODO: convert time to something meaningful
+    time_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_FILE_TIME_OFS));
+    date_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_FILE_DATE_OFS));
 
-  crc32_ = leToHost(*reinterpret_cast<const uint32_t*>(p + MZ_ZIP_LDH_CRC32_OFS));
-  compSize_ = leToHost(*reinterpret_cast<const uint32_t*>(p + MZ_ZIP_LDH_COMPRESSED_SIZE_OFS));
-  uncompSize_ = leToHost(*reinterpret_cast<const uint32_t*>(p + MZ_ZIP_LDH_DECOMPRESSED_SIZE_OFS));
+    crc32_ = leToHost(*reinterpret_cast<const uint32_t*>(p + MZ_ZIP_LDH_CRC32_OFS));
+    compSize_ = leToHost(*reinterpret_cast<const uint32_t*>(p + MZ_ZIP_LDH_COMPRESSED_SIZE_OFS));
+    uncompSize_ = leToHost(*reinterpret_cast<const uint32_t*>(p + MZ_ZIP_LDH_DECOMPRESSED_SIZE_OFS));
 
-  // variable length fields
-  fileNameLength_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_FILENAME_LEN_OFS));
-  extraFieldLength_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_EXTRA_LEN_OFS));
+    // variable length fields
+    fileNameLength_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_FILENAME_LEN_OFS));
+    extraFieldLength_ = leToHost(*reinterpret_cast<const uint16_t*>(p + MZ_ZIP_LDH_EXTRA_LEN_OFS));
 
-  // Copy as much of the filename and comment as possible.
-  n = (fileNameLength_ < MZ_ZIP_MAX_ARCHIVE_FILENAME_SIZE)
-    ?  fileNameLength_ : MZ_ZIP_MAX_ARCHIVE_FILENAME_SIZE - 1;
-  memcpy(filename_, p + MZ_ZIP_LOCAL_DIR_HEADER_SIZE, n);
-  filename_[n] = '\0';
+    // Copy as much of the filename and comment as possible.
+    n = (fileNameLength_ < MZ_ZIP_MAX_ARCHIVE_FILENAME_SIZE)
+      ?  fileNameLength_ : MZ_ZIP_MAX_ARCHIVE_FILENAME_SIZE - 1;
+    memcpy(filename_, p + MZ_ZIP_LOCAL_DIR_HEADER_SIZE, n);
+    filename_[n] = '\0';
 
-  // report warnings
-  if (fileNameLength_ >= MZ_ZIP_MAX_ARCHIVE_FILENAME_SIZE) warn("filename length too large, was truncated");
-  if (extraFieldLength_ > 0) warn("ignoring extra field data");
+    // report warnings
+    if (fileNameLength_ >= MZ_ZIP_MAX_ARCHIVE_FILENAME_SIZE) warn("filename length too large, was truncated");
+    if (extraFieldLength_ > 0) warn("ignoring extra field data");
 }
 
 // Zipper class
 //--------------------------
+
+/** The file name of the container */
+std::string
+Zipper::filename() const {
+    return gf_->get_name();
+}
 
 /** Listing of file names in the container */
 const std::vector<FileStat> &
@@ -5946,93 +5955,90 @@ Zipper::files() const {
 /** Return uncompressed file size for file/class with given name */
 size_t
 Zipper::fileSize(const std::string &name) const {
-  uint64_t destLen{0};
+    uint64_t destLen{0};
 
-  for (auto stat : files_) {
-    if (name.compare(stat.filename()) == 0) {
-      destLen = stat.uncompressedSize();
-      break;
+    for (auto stat : files_) {
+        if (name.compare(stat.filename()) == 0) {
+            destLen = stat.uncompressedSize();
+            break;
+        }
     }
-  }
-
-  return destLen;
+    return destLen;
 }
 
 size_t
 Zipper::offset(const char* file) const {
-  auto itr = offsetMap_.find(file);
-  if (itr != offsetMap_.end()) {
-    return itr->second;
-  }
-  else {
-    warn("offset for file not found");
-  }
-  return static_cast<size_t>(-1);
+    auto itr = offsetMap_.find(file);
+    if (itr != offsetMap_.end()) {
+        return itr->second;
+    }
+    else {
+        warn("offset for file not found");
+    }
+    return static_cast<size_t>(-1);
 }
 
 bool
 Zipper::present(const std::string &name) const {
-  auto itr = offsetMap_.find(name.c_str());
-  if (itr != offsetMap_.end()) {
-    return true;
-  }
-  return false;
+    auto itr = offsetMap_.find(name.c_str());
+    if (itr != offsetMap_.end()) {
+        return true;
+    }
+    return false;
 }
 
-uint8_t*
+unsigned char*
 Zipper::decode(const std::string &name, size_t &nbytes) {
-  unsigned char* uncompBuf{nullptr};
-  nbytes = 0;
+    unsigned char* bytes{nullptr};
+    int status{0};
+    nbytes = 0;
 
-  // Can't decode the class if not in the jar/zipped file
-  if (!present(name)) return nullptr;
+    // Can't decode the class if not in the jar/zipped file
+    if (!present(name)) return nullptr;
 
-  for (const FileStat &stat : files_) {
-    if (stat.filename() != name) continue;
+    for (const FileStat &stat : files_) {
+        if (stat.filename() != name) continue;
 
-    size_t compSize{stat.compressedSize()};
-    size_t uncompSize{stat.uncompressedSize()};
-    size_t gfBufOffset{stat.offset() + MZ_ZIP_LOCAL_DIR_HEADER_SIZE + stat.filename().size()};
+        size_t compSize{stat.compressedSize()};
+        size_t uncompSize{stat.uncompressedSize()};
+        size_t gfBufOffset{stat.offset() + MZ_ZIP_LOCAL_DIR_HEADER_SIZE + stat.filename().size()};
+        nbytes = uncompSize;
 
-    // Initialize decompressor/inflator
-    tinfl_decompressor decompressor{};
-    tinfl_init(&decompressor);
+        // Initialize decompressor/inflator
+        tinfl_decompressor decompressor{};
+        tinfl_init(&decompressor);
 
-    // gf has p_data with mapped buffer and nbytes size from SgAsmGenericFile::parse
-    // Contents of jar file
-    uint8_t* gfBuf = gf_->content().pool();
+        // Contents of the jar/zipped file container
+        uint8_t* gfBuf = gf_->content().pool();
 
-    // users will delete, not free (see SgAsmGenericFile::parse())
-    uncompBuf = new unsigned char[uncompSize];
-    nbytes = uncompSize;
+        // Decoded file contents, users will delete, not free (see SgAsmGenericFile::parse())
+        bytes = new unsigned char[nbytes];
 
-    // TODO: flags copied from lldg: need something more "real"
-    int flags = 4; // WHERE_FROM
+        // TODO: flags copied from lldg: need something more "real"
+        int flags = 4; // WHERE_FROM
 
-    int status = tinfl_decompress(&decompressor, gfBuf + gfBufOffset, &compSize, uncompBuf, uncompBuf, &uncompSize, flags);
-    if (status != 0) warn("decode/decompress status not zero");
-    break;
-  }
+        status = tinfl_decompress(&decompressor, gfBuf + gfBufOffset, &compSize, bytes, bytes, &nbytes, flags);
+        break;
+    }
+    if (status != 0) warn("decode/decompress status from Zipper::decode not zero");
 
-  if (!uncompBuf) {
-    throw std::runtime_error("could not allocate memory for binary file \"" + StringUtility::cEscape(name) + "\"");
-  }
-  return uncompBuf;
+    return bytes;
 }
 
-Zipper::Zipper(SgAsmGenericFile* gf) : gf_{gf}
-{
-  // Find the central director record
-  ZipEnd end{gf->content()};
+Zipper::Zipper(SgAsmGenericFile* gf) : gf_{gf} {
+    ASSERT_require2(gf != nullptr, "Zipper requires non-null SgAsmGenericFile*\n");
 
-  // create mapping of files to local offsets from central director records
-  size_t offset{end.cdirOffset()};
-  for (uint32_t i{0}; i < end.numFiles(); i++) {
-    // offset is modified for next record on return from FileStat constructor
-    FileStat stat{gf->content().pool(), offset, i};
-    offsetMap_[stat.filename()] = stat.offset();
-    files_.push_back(stat);
-  }
+    // Find the central director record
+    ZipEnd end{gf->content()};
+
+    // create mapping of files to local offsets from central director records
+    size_t offset{end.cdirOffset()};
+    for (uint32_t i{0}; i < end.numFiles(); i++) {
+        // offset is modified for next record on return from FileStat constructor
+        FileStat stat{gf->content().pool(), offset, i};
+        offsetMap_[stat.filename()] = stat.offset();
+        files_.push_back(stat);
+    }
 }
 
 } // namespace ModulesJvm

@@ -171,85 +171,99 @@ private:
 
 
 struct Zipper {
+    explicit Zipper(SgAsmGenericFile* gf);
 
-  explicit Zipper(SgAsmGenericFile* gf);
+    /** The file name of the container */
+    std::string filename() const;
 
-  /** Listing of file names in the container */
-  const std::vector<FileStat> & files() const;
+    /** Listing of file names in the container */
+    const std::vector<FileStat> & files() const;
 
-  bool present(const std::string &name) const;
-  size_t fileSize(const std::string &name) const;
-  size_t offset(const char* file) const;
+    bool present(const std::string &name) const;
 
-  uint8_t* decode(const std::string &name, size_t &nbytes);
+    /** Return uncompressed file size for file with the given name */
+    size_t fileSize(const std::string &name) const;
+
+    size_t offset(const char* file) const;
+
+    /** Decode the contents of a file in this zipped container.
+     *
+     * This function performs a simple string comparison and does not access
+     * the filesystem. The comparison is case-sensitive.
+     *
+     * @param name File name to decode.
+     * @param nbytes Number of bytes decoded.
+     * @return pointer to buffer of characters decoded.
+     */
+    unsigned char* decode(const std::string &name, size_t &nbytes);
 
 // TODO: probably need the following?
 // std::map<std::string,uint8_t*> classMap_/classDictionary/classes;
 #if 0
-  const uint8_t* data() const {
-    return buffer_.data();
-  }
+    const uint8_t* data() const {
+        return buffer_.data();
+    }
 #endif
     
-  // delete constructors
-  Zipper() = delete;
-  Zipper(const Zipper &) = delete;
-  Zipper &operator=(const Zipper&) = delete;
-
- private:
-  SgAsmGenericFile* gf_;
-  std::vector<uint8_t> buffer_;
-  std::vector<FileStat> files_;
-  std::map<std::string,size_t> offsetMap_;
-
-  // End of central directory (CD) record
-  struct ZipEnd {
-    explicit ZipEnd(const SgFileContentList &buf);
-
-    uint32_t numFiles() const;
-    size_t cdirOffset() const;
+    // delete constructors
+    Zipper() = delete;
+    Zipper(const Zipper &) = delete;
+    Zipper &operator=(const Zipper&) = delete;
 
   private:
-    uint16_t diskNumber_; // number of this disk
-    uint16_t diskNumberStart_; // number of disk on which CD record starts
-    uint16_t numFiles_; // number of CD entries on this disk
-    uint16_t numFilesTotal_; // number of total CD entries
-    uint32_t sizeCD_; // size of the CD in bytes
-    uint32_t offsetCD_; // offset of the start of the CD
-    uint16_t lenComment_; // length of the comment (followed by the comment)
+    SgAsmGenericFile* gf_;
+    std::vector<uint8_t> buffer_;
+    std::vector<FileStat> files_;
+    std::map<std::string,size_t> offsetMap_;
 
-    // delete constructors
-    ZipEnd() = delete;
-    ZipEnd(const ZipEnd &) = delete;
-    ZipEnd &operator=(const ZipEnd &) = delete;
+    // End of central directory (CD) record
+    struct ZipEnd {
+        explicit ZipEnd(const SgFileContentList &buf);
 
-  }; // ZipEnd
+        uint32_t numFiles() const;
+        size_t cdirOffset() const;
 
-  struct LocalHeader {
-    size_t localHeaderSize() const;
+      private:
+        uint16_t diskNumber_; // number of this disk
+        uint16_t diskNumberStart_; // number of disk on which CD record starts
+        uint16_t numFiles_; // number of CD entries on this disk
+        uint16_t numFilesTotal_; // number of total CD entries
+        uint32_t sizeCD_; // size of the CD in bytes
+        uint32_t offsetCD_; // offset of the start of the CD
+        uint16_t lenComment_; // length of the comment (followed by the comment)
 
-    explicit LocalHeader(const uint8_t* buf, size_t offset);
+        // delete constructors
+        ZipEnd() = delete;
+        ZipEnd(const ZipEnd &) = delete;
+        ZipEnd &operator=(const ZipEnd &) = delete;
 
-  private:
-    uint16_t version_;
-    uint16_t bitFlag_;
-    uint16_t method_; // compression method
-    // time_t time_; // TODO
-    uint16_t time_;
-    uint16_t date_;
-    uint32_t crc32_;
-    uint64_t compSize_;
-    uint64_t uncompSize_;
-    uint16_t fileNameLength_;
-    uint16_t extraFieldLength_;
-    char filename_[MZ_ZIP_MAX_ARCHIVE_FILENAME_SIZE];
+    }; // ZipEnd
 
-    // delete constructors
-    LocalHeader() = delete;
-    LocalHeader(const LocalHeader&) = delete;
-    LocalHeader& operator=(const LocalHeader&) = delete;
+    struct LocalHeader {
+        size_t localHeaderSize() const;
 
-  }; // LocalHeader
+        explicit LocalHeader(const uint8_t* buf, size_t offset);
+
+      private:
+        uint16_t version_;
+        uint16_t bitFlag_;
+        uint16_t method_; // compression method
+        // time_t time_; // TODO
+        uint16_t time_;
+        uint16_t date_;
+        uint32_t crc32_;
+        uint64_t compSize_;
+        uint64_t uncompSize_;
+        uint16_t fileNameLength_;
+        uint16_t extraFieldLength_;
+        char filename_[MZ_ZIP_MAX_ARCHIVE_FILENAME_SIZE];
+
+        // delete constructors
+        LocalHeader() = delete;
+        LocalHeader(const LocalHeader&) = delete;
+        LocalHeader& operator=(const LocalHeader&) = delete;
+
+    }; // LocalHeader
 
 }; // Zipper
 

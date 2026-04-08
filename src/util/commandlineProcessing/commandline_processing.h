@@ -133,12 +133,63 @@ namespace CommandlineProcessing
        // TV (05/17/2010) Support for OpenCL
           ROSE_UTIL_API bool isOpenCLFileNameSuffix ( const std::string & suffix );
 
-       // DQ (10/11/2010): Adding Java support.
-       // Modified API to use C++17 std::filesystem for portability [Rasmussen 2022.02.05]
-          ROSE_UTIL_API bool isJavaFile(const std::string &fileName);
-          ROSE_UTIL_API bool isJavaClassFile(const std::string &fileName);
-          ROSE_UTIL_API bool isJavaJarFile(const std::string &fileName);
-          ROSE_UTIL_API bool isJavaJvmFile(const std::string &fileName);
+          /**
+           * @brief Determine whether a filename ends with the ".java" extension.
+           *
+           * The check is performed on the string as provided and does not verify
+           * that the file exists.
+           *
+           * @param filename File name or path to examine.
+           * @return true if the name ends with ".java", false otherwise.
+           */
+          ROSE_UTIL_API bool isJavaFile(const std::string &filename);
+
+          /**
+           * @brief Determine whether a filename ends with the ".class" extension.
+           *
+           * The check is performed on the string as provided and does not verify
+           * that the file exists.
+           *
+           * @param filename File name or path to examine.
+           * @return true if the name ends with ".class", false otherwise.
+           */
+          ROSE_UTIL_API bool isJavaClassFile(const std::string &filename);
+
+          /**
+           * @brief Determine whether a filename ends with the ".jar" extension.
+           *
+           * The check is performed on the string as provided and does not verify
+           * that the file exists.
+           *
+           * @param filename File name or path to examine.
+           * @return true if the name ends with ".jar", false otherwise.
+           */
+          ROSE_UTIL_API bool isJavaJarFile(const std::string &filename);
+
+          /**
+           * @brief Determine whether a filename ends with the ".war" extension.
+           *
+           * The check is performed on the string as provided and does not verify
+           * that the file exists.
+           *
+           * @param filename File name or path to examine.
+           * @return true if the name ends with ".war", false otherwise.
+           */
+          ROSE_UTIL_API bool isJavaWarFile(const std::string &filename);
+
+          /**
+           * @brief Determine whether a filename ends with a Jvm file extension.
+           *
+           * Valid Jvm file extensions are: ".class", ".jar", or ".war".
+           *
+           * The check is performed on the string as provided to determine if
+           * filename has a Jvm file extension and does not verify that the
+           * file exists.
+           *
+           * @param filename File name or path to examine.
+           * @return true if the name ends with a Jvm file extension, false otherwise.
+           */
+          ROSE_UTIL_API bool isJavaJvmFile(const std::string &filename);
 
           ROSE_UTIL_API void initSourceFileSuffixList();
           static Rose_STL_Container<std::string> validSourceFileSuffixes;

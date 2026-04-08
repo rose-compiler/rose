@@ -24,9 +24,6 @@
 # include <time.h>
 #endif
 
-
-// DQ (12/31/2005): This is allowed in C files where it can not
-// effect the users application (just not in header files).
 using namespace std;
 using namespace Rose;
 
@@ -304,9 +301,6 @@ bool
 CommandlineProcessing::isSourceFilename(const std::string& name, bool isAdaProject)
 {
     initSourceFileSuffixList();
-
- // Move to using a consistent mechanism for determining source file names
- // using CommandlineProcessing [Rasmussen 2024.04.19]
 
  // Replace boost::filesystem with std::filesystem in C++17
     string suffix = boost::filesystem::path(name).extension().string();
@@ -791,35 +785,45 @@ CommandlineProcessing::isOpenCLFileNameSuffix ( const std::string & suffix )
    }
 
 bool
-CommandlineProcessing::isJavaFile(const std::string &fileName) {
- // Replace boost::filesystem with std::filesystem in C++17
-    if (boost::filesystem::path(fileName).extension() == ".java") {
+CommandlineProcessing::isJavaFile(const std::string &filename) {
+    // Replace boost::filesystem with std::filesystem in C++17
+    if (boost::filesystem::path(filename).extension() == ".java") {
         return true;
     }
     return false;
 }
 
 bool
-CommandlineProcessing::isJavaClassFile(const std::string &fileName) {
- // Replace boost::filesystem with std::filesystem in C++17
-    if (boost::filesystem::path(fileName).extension() == ".class") {
+CommandlineProcessing::isJavaClassFile(const std::string &filename) {
+    // Replace boost::filesystem with std::filesystem in C++17
+    if (boost::filesystem::path(filename).extension() == ".class") {
         return true;
     }
     return false;
 }
 
 bool
-CommandlineProcessing::isJavaJarFile(const std::string &fileName) {
- // Replace boost::filesystem with std::filesystem in C++17
-    if (boost::filesystem::path(fileName).extension() == ".jar") {
+CommandlineProcessing::isJavaJarFile(const std::string &filename) {
+    // Replace boost::filesystem with std::filesystem in C++17
+    if (boost::filesystem::path(filename).extension() == ".jar") {
         return true;
     }
     return false;
 }
 
 bool
-CommandlineProcessing::isJavaJvmFile(const std::string &fileName) {
-    if (isJavaClassFile(fileName) || isJavaJarFile(fileName)) {
+CommandlineProcessing::isJavaWarFile(const std::string &filename) {
+    // Replace boost::filesystem with std::filesystem in C++17
+    if (boost::filesystem::path(filename).extension() == ".war") {
+        return true;
+    }
+    return false;
+}
+
+bool
+CommandlineProcessing::isJavaJvmFile(const std::string &filename) {
+    if (isJavaClassFile(filename) || isJavaJarFile(filename)
+                                  || isJavaWarFile(filename)) {
         return true;
     }
     return false;

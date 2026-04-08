@@ -57,7 +57,7 @@ SgAsmGenericFile::parse(std::string fileName)
         }
     }
 
-    /* Make file contents available through an STL vector without actually reading the file */
+    /* Make file contents available through a SgSharedVector wrapper without actually reading the file */
     p_data = SgFileContentList(mapped, nbytes);
     return this;
 }

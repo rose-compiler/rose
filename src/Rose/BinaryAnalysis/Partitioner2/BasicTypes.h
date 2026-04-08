@@ -731,6 +731,11 @@ struct JvmSettings {
      *  If this property is true all classes in all jar files listed on the command line are loaded. */
     bool loadAllClasses = false;
 
+    /** Setting: load-all-jars.
+     *
+     *  If this property is true all jar files encountered while processing JVM files are loaded. */
+    bool loadAllJars = false;
+
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;

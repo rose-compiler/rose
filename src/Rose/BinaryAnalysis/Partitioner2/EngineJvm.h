@@ -184,6 +184,15 @@ public:
 
     virtual MemoryMapPtr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
 
+    /** Load a war file by opening its contents
+     *
+     *  Stores the location of class and jar files found as offsets into the war file
+     *
+     *  Returns true if war file is loaded
+     *
+     * @{ */
+    bool loadWarFile(const std::string &);
+
     /** Load a jar file by opening its contents
      *
      *  Stores the location of class files found as offsets into the jar file
@@ -192,6 +201,13 @@ public:
      *
      * @{ */
     bool loadJarFile(const std::string &);
+
+    /** Load a jar file from a zipped container by opening its contents
+     *
+     *  Returns true if jar file is loaded
+     *
+     * @{ */
+    bool loadJarFile(const std::string &, ModulesJvm::Zipper* zip);
 
     /** Load a class file by parsing its contents at the given address.
      *
@@ -384,15 +400,18 @@ namespace ModulesJvm {
 
 /** True if named file exists and is a Java class file.
  *
- *  Class files usually have names with a ".class" extension, although this function actually tries to open the file and parse
- *  the file header to make that determination. */
+ *  Class files have a file name with a ".class" extension */
 bool isJavaClassFile(const boost::filesystem::path&);
 
 /** True if named file exists and is a Java jar file.
  *
- *  Jar files usually have names with a ".jar" extension, although this function actually tries to open the file and parse
- *  the file header to make that determination. */
+ *  Jar files have a file name with a ".jar" extension */
 bool isJavaJarFile(const boost::filesystem::path&);
+
+/** True if named file exists and is a Java war file.
+ *
+ *  War files have a file name with a ".war" extension */
+bool isJavaWarFile(const boost::filesystem::path&);
 
 /**
  * @brief Searchs the classpath setting for the path to a fully qualified class name.
