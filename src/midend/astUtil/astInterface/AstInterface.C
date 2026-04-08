@@ -2477,10 +2477,6 @@ IsMemoryAccess( const AstNodePtr& _s, AstNodeList* subrefs)
     return true;
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   if (s == 0) return false;
-  if (IsVarRef(_s) || IsArrayAccess(_s)) {
-     if (subrefs != 0) subrefs->push_back(s); 
-     return true;
-  }
   switch (s->variantT()) {
   case V_SgConstructorInitializer: return false;
   case V_SgAssignInitializer:
@@ -2488,27 +2484,17 @@ IsMemoryAccess( const AstNodePtr& _s, AstNodeList* subrefs)
   case V_SgAddressOfOp:
   case V_SgCastExp:
       return IsMemoryAccess(isSgUnaryOp(s)->get_operand(), subrefs);
-  case V_SgPntrArrRefExp:
-  case V_SgPointerDerefExp: {
-        if (subrefs != 0) { subrefs->push_back(s); }
-        return true;
-     }
   case V_SgCommaOpExp: {
      auto* e1 = isSgCommaOpExp(s)->get_lhs_operand(), *e2 = isSgCommaOpExp(s)->get_rhs_operand();
-     if (IsMemoryAccess(e1) && IsMemoryAccess(e2)) {
-        if (subrefs != 0) { subrefs->push_back(e1); subrefs->push_back(e2); }
-        return true;
-     }
-     return false;
+     return IsMemoryAccess(e1, subrefs) && IsMemoryAccess(e2, subrefs);
     }
   case V_SgConditionalExp: {
      auto* e1 = isSgConditionalExp(s)->get_true_exp(), *e2 = isSgConditionalExp(s)->get_false_exp();
-     if (IsMemoryAccess(e1) && IsMemoryAccess(e2)) {
-        if (subrefs != 0) { subrefs->push_back(e1); subrefs->push_back(e2); }
-        return true;
-     }
-     return false;
+     return IsMemoryAccess(e1, subrefs) && IsMemoryAccess(e2, subrefs);
     }
+  case V_SgPointerDerefExp:
+      if (subrefs != 0) { subrefs->push_back(isSgUnaryOp(s)->get_operand()); }
+      return true;
   case V_SgDotExp:
   case V_SgArrowExp:
    {
@@ -2516,10 +2502,14 @@ IsMemoryAccess( const AstNodePtr& _s, AstNodeList* subrefs)
         if (subrefs != 0) { subrefs->push_back(s); }
         return true;
      }
+     return false;
    }
-   ROSE_FALLTHROUGH;
-  default:
-    { // Function call returning C++ reference type is a memory access
+  default: {
+     if (IsVarRef(_s) || IsArrayAccess(_s)) {
+        if (subrefs != 0) subrefs->push_back(s); 
+        return true;
+     }
+     // Function call returning C++ reference type is a memory access
      AstNodeTypeImpl t;
      if (s->variantT() == V_SgFunctionCallExp && IsExpression(_s,&t))
      {
@@ -2907,7 +2897,7 @@ bool AstInterface:: AstTypeIdentical(const AstNodeType& _first, const AstNodeTyp
   case V_SgModifierType: 
        return AstTypeIdentical(static_cast<SgModifierType*>(first)->get_base_type(), static_cast<SgModifierType*>(second)->get_base_type());
   case V_SgArrayType: 
-       return AstTypeIdentical(static_cast<SgArrayType*>(first)->get_base_type(), static_cast<SgArrayType*>(second)->get_base_type()) && static_cast<SgArrayType*>(first)->get_rank() == static_cast<SgArrayType*>(second)->get_rank();
+       return AstTypeIdentical(static_cast<SgArrayType*>(first)->get_base_type(), static_cast<SgArrayType*>(second)->get_base_type()) && static_cast<SgArrayType*>(first)->get_rank() == static_cast<SgArrayType*>(second)->get_rank() && AstIdentical(static_cast<SgArrayType*>(first)->get_index(), static_cast<SgArrayType*>(second)->get_index());
   default:
       if (first->unparseToString() == second->unparseToString()) {
         DebugDiff([](){ return "Ast Type is equivalent."; });

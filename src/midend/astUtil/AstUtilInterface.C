@@ -102,6 +102,7 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
            DebugAstUtil([&ref](){ return "Finding array reference:" + AstInterface::AstToString(ref); });
         }
         auto ref_aliased = alias_map.find(AstInterface::GetVariableSignature(ref));
+        DebugAstUtil([&ref](){ return "Looking for aliased reference:" + AstInterface::AstToString(ref); });
         if (ref_aliased != alias_map.end()) {
            ref = AstNodePtr((*ref_aliased).second);
            is_local_ref = false;
@@ -110,6 +111,7 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
            if (is_unknown_ref) {
               ref.set_is_unknown_reference();
            }
+           DebugAstUtil([&ref](){ return "Did not find aliased reference:" + AstInterface::AstToString(ref); });
         }
         if (collect != 0) (*collect)(ref, details, what);
         if (is_function && (ref.is_unknown() || !is_local_ref)) {
