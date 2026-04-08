@@ -1877,6 +1877,7 @@ IsSameVarRef( const AstNodePtr& _n1, const AstNodePtr& _n2,
      if (call_on_diff != 0 && !(*call_on_diff)(name1, name2)) {
         name1 = GetVarName(n1, false);
         name2 = GetVarName(n2, false); // use_globa_unique_name=false
+        return name1 == name2 || !(*call_on_diff)(name1, name2);
      }
      DebugDiff([name1,name2](){ return "SameVarRef name: " + name1 + " vs " + name2; });
      return name1 == name2;
@@ -2899,7 +2900,15 @@ bool AstInterface:: AstTypeIdentical(const AstNodeType& _first, const AstNodeTyp
         return (n1 == n2 || (call_on_diff != 0 && !(*call_on_diff)(n1,n2))) 
               && AstIdentical(t1->get_declaration(), t2->get_declaration(), call_on_diff);
      }
-   default:
+  case V_SgPointerType: 
+       return AstTypeIdentical(static_cast<SgPointerType*>(first)->get_base_type(), static_cast<SgPointerType*>(second)->get_base_type());
+  case V_SgReferenceType: 
+       return AstTypeIdentical(static_cast<SgReferenceType*>(first)->get_base_type(), static_cast<SgReferenceType*>(second)->get_base_type());
+  case V_SgModifierType: 
+       return AstTypeIdentical(static_cast<SgModifierType*>(first)->get_base_type(), static_cast<SgModifierType*>(second)->get_base_type());
+  case V_SgArrayType: 
+       return AstTypeIdentical(static_cast<SgArrayType*>(first)->get_base_type(), static_cast<SgArrayType*>(second)->get_base_type()) && static_cast<SgArrayType*>(first)->get_rank() == static_cast<SgArrayType*>(second)->get_rank();
+  default:
       if (first->unparseToString() == second->unparseToString()) {
         DebugDiff([](){ return "Ast Type is equivalent."; });
         return true;
@@ -2916,11 +2925,11 @@ bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _se
   if (first == second) {
     return true;
   }
+  DebugDiff([&_first,&_second](){ return "Checking AST Identical:" + AstToString(_first) + " vs " + AstToString(_second); });
   if (first == 0 || second == 0) {
      DebugDiff([](){ return "AST different: one of them is null."; });
      return false;
   }
-  DebugDiff([&_first,&_second](){ return "Checking AST Identical:" + AstToString(_first) + " vs " + AstToString(_second); });
   if (first->variantT() != second->variantT()) { 
       DebugDiff([&_first,&_second](){ return "AST different variant: " + AstToString(_first) + " vs " + AstToString(_second); });
       return false;
@@ -4788,7 +4797,7 @@ std::string AstInterface:: GetVariableSignature(const AstNodePtr& _variable) {
           return "using_" + isSgUsingDirectiveStatement(variable)->get_namespaceDeclaration()->get_name().getString();
      case V_SgEnumDeclaration: {
           std::string name = isSgEnumDeclaration(variable)->get_name();
-          return "enum_" + (name.empty())? std::string((*isSgEnumDeclaration(variable)->get_enumerators().begin())->get_name()) : name;
+          return "enum_" + (name.empty()? std::string((*isSgEnumDeclaration(variable)->get_enumerators().begin())->get_name()) : name);
        }
      case V_SgTypedefDeclaration:
      case V_SgTemplateTypedefDeclaration:
