@@ -1044,6 +1044,36 @@ if(DEFINED CACHE{ENABLE-POET})
   set(ENABLE_POET ${ENABLE-POET} CACHE BOOL "Enable POET support" FORCE)
 endif()
 
+option(ENABLE_LCOV "Enable creation of *.gcno and *.gcda files for coverage testing" OFF)
+if(ENABLE_LCOV)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    #Add flags to produce *.gcda files when run
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fprofile-arcs -ftest-coverage")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fprofile-arcs -ftest-coverage")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lgcov --coverage")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lgcov --coverage")
+    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -lgcov --coverage")
+    #Create lcov-web-pages target to generate the LCOV HTML
+    add_custom_target(lcov-web-pages)
+    add_custom_command(
+      TARGET lcov-web-pages
+      POST_BUILD
+      COMMAND  ${CMAKE_COMMAND}
+              -DBUILD_DIR=${CMAKE_BINARY_DIR}
+              -DSOURCE_DIR=${CMAKE_SOURCE_DIR}
+              -P ${CMAKE_SOURCE_DIR}/cmake/GenerateLCOVWebPages.cmake
+      VERBATIM
+      DEPENDS rose-compiler
+      COMMENT "Create coverage analysis webpages from *.gcda files in the build tree")
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    message(WARNING "LCOV with Clang backend is NYI")
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    message(FATAL_ERROR "Intel compilers don't support lcov tools")
+  else()
+    message(WARNING "Unrecognized backend compiler ${CMAKE_CXX_COMPILER_ID}, building without lcov.")
+  endif()
+endif()
+
 # We are removing BISON 
 include(FindBison)
 find_bison()
