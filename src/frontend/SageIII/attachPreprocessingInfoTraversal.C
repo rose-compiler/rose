@@ -2480,12 +2480,14 @@ AttachPreprocessingInfoTreeTraversalSynthesizedAttribute
 AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
     SgNode *n,
     AttachPreprocessingInfoTreeTraversalInheritedAttrribute inheritedAttribute,
-    SubTreeSynthesizedAttributes synthiziedAttributeList)
+    SubTreeSynthesizedAttributes /* synthiziedAttributeList */)
    {
   // DQ (11/29/2008): FIXME: Note that this traversal does not use its inheritedAttribute
   // or synthiziedAttributeList attributes, so it could be expressed as a much
   // simpler visit traversal.  We might do that later, if we decide that we REALLY
   // don't require inheritedAttribute or synthiziedAttributeList attributes.
+  //
+  // PL (4/14/2026): We are actually using the inherited attribute now. Keeping this traversal.
 
      AttachPreprocessingInfoTreeTraversalSynthesizedAttribute returnSynthesizeAttribute;
 

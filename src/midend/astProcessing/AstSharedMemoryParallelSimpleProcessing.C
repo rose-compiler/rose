@@ -1,6 +1,7 @@
 // Author: Gergo Barany
 // $Id: AstSharedMemoryParallelSimpleProcessing.C,v 1.1 2008/01/08 02:56:39 dquinlan Exp $
 #include "sage3basic.h"
+#include "rose_config.h"
 
 #ifdef _REENTRANT                                       // Does user want multi-thread support? (e.g., g++ -pthread)
 # ifdef HAVE_PTHREAD_H                                  // Do we have POSIX threads?

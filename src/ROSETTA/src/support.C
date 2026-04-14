@@ -929,10 +929,6 @@ Grammar::setUpSupport ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
-#if !ROSE_MICROSOFT_OS
-// DQ (4/25/2009): Must fix code in sageInterface/sageBuilder.C before we can use the proper BUILD_LIST_ACCESS_FUNCTIONS macro above.
-#warning "This should be using the BUILD_LIST_ACCESS_FUNCTIONS"
-#endif
      File.isBoostSerializable(true);
 
      File.setDataPrototype         ( "int", "verbose", "= 0",
@@ -1664,11 +1660,6 @@ Grammar::setUpSupport ()
   // DQ (9/28/2022): This version of the code fails in src/roseSupport/utility_functions.C
      Project.setDataPrototype("SgStringList","originalCommandLineArgumentList", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#if !ROSE_MICROSOFT_OS
-// DQ (4/25/2009): Must fix code in sageInterface/sageBuilder.C before we can use the proper BUILD_LIST_ACCESS_FUNCTIONS macro above.
-#warning "This should be using the BUILD_LIST_ACCESS_FUNCTIONS"
 #endif
 
      Project.setDataPrototype("int","frontendErrorCode", "= 0",

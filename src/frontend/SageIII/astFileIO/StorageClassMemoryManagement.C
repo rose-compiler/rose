@@ -1,6 +1,7 @@
 #include "rose_config.h"
 #include "AST_FILE_IO.h"
 #include <string.h>
+#include <algorithm>
 #include <ROSE_UNUSED.h>
 
 namespace AST_FILE_IO_MARKER
@@ -265,9 +266,11 @@ void StorageClassMemoryManagement<TYPE> :: arrangeMemoryPoolInOneBlock() {
 #if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
                 ASSERT_not_null(memoryBlockList[i]);
 #endif
-                memcpy(newMemoryBlock + (i*blockSize), memoryBlockList[i], blockSize*sizeof(TYPE));
+                // memcpy(newMemoryBlock + (i*blockSize), memoryBlockList[i], blockSize*sizeof(TYPE));
+                std::copy(memoryBlockList[i], memoryBlockList[i] + blockSize, newMemoryBlock + i*blockSize);
             }
-            memcpy(newMemoryBlock + i*blockSize, memoryBlockList[i], ((filledUpTo-1)%blockSize + 1) * sizeof(TYPE));
+            // memcpy(newMemoryBlock + i*blockSize, memoryBlockList[i], ((filledUpTo-1)%blockSize + 1) * sizeof(TYPE));
+            std::copy(memoryBlockList[i], memoryBlockList[i] + ((filledUpTo-1)%blockSize + 1), newMemoryBlock + i*blockSize);
 
             for (i = 0; i < actualBlock; ++i) {
                 delete [] memoryBlockList[i];

@@ -320,5 +320,11 @@
 /* Define to 1 if you have the <mach/mach_time.h> header file. */
 #cmakedefine HAVE_MACH_MACH_TIME_H @HAVE_MACH_MACH_TIME_H@ 
 
+/* Define to indicate that backend compiler uses "asm" syntax */
+#cmakedefine BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM
+
+/* Define to indicate that backend compiler uses "__asm__" syntax */
+#cmakedefine BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM
+
 // Define to indicate that "rose_config.h" has been included and is polluting the global name space.
 #define CONFIG_ROSE 1

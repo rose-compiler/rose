@@ -1128,6 +1128,9 @@ endif()
 # Whether <sys/personality.h> is present (used by Rose::BinaryAnalysis::Debugger::Linux)
 find_path(ROSE_HAVE_SYS_PERSONALITY_H "sys/personality.h")
 
+# Whether <pthread.h> is present
+find_path(HAVE_PTHREAD_H pthread.h)
+
 set(ASSERTION_BEHAVIOR "exit" CACHE STRING "Default behavior of failed assertions. Can be 'abort', 'exit', or 'throw'.")
 if(ASSERTION_BEHAVIOR STREQUAL "abort")
   add_definitions("-DROSE_ASSERTION_BEHAVIOR=ROSE_ASSERTION_ABORT")
@@ -1212,7 +1215,16 @@ if(ENABLE_C AND NOT ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
       message(STATUS "quadmath is not available or not usable, ROSE_USE_EDG_QUAD_FLOAT set to 0")
     endif()
-  endif() 
+  endif()
+
+  set(COMPILE_TEST_SOURCE "
+  int main() { __asm__(\"\"); return 0; }")
+
+  check_cxx_source_compiles("${COMPILE_TEST_SOURCE}" BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM)
+
+  if(NOT BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM)
+    set(BACKEND_C_COMPILER_SUPPORTS_LONG_STRING_ASM 1)
+  endif()
 endif()
 
 # This is essential to find the right include path from either build or installation tree for a translator
