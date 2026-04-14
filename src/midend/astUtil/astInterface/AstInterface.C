@@ -1676,6 +1676,7 @@ IsAliasingDecl( const AstNodePtr& _s, AstList* vars, AstList* aliases)
            return true;
          }
         }
+        ROSE_FALLTHROUGH;
       default:
          return false;
      }
