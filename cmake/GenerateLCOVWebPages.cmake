@@ -18,7 +18,7 @@ if(NOT rc EQUAL 0)
 endif()
 
 #Remove some directories that we don't want to track
-execute_process(COMMAND "${LCOV_EXECUTABLE}" --extract all-lcov.info "${SOURCE_DIR}/src/*" -o librose-lcov.info RESULT_VARIABLE rc)
+execute_process(COMMAND "${LCOV_EXECUTABLE}" --extract all-lcov.info "${SOURCE_DIR}/src/*" "${BUILD_DIR}/src/*" -o librose-lcov.info RESULT_VARIABLE rc)
 if(NOT rc EQUAL 0)
     message(FATAL_ERROR "lcov source extraction failed with exit code ${rc}")
 endif()
@@ -50,8 +50,10 @@ execute_process(COMMAND "${LCOV_EXECUTABLE}" --remove librose-lcov.info
     "${SOURCE_DIR}/src/frontend/SageIII/astVisualization/*"
     "${SOURCE_DIR}/src/midend/astProcessing/AstProcessing.h"
     "${SOURCE_DIR}/src/frontend/SageIII/sageInterface/sageGeneric.h"
-    "${SOURCE_DIR}/src/3rdPartyLibraries/json*"
+    "${SOURCE_DIR}/src/3rdPartyLibraries/*"
     "${SOURCE_DIR}/src/roseSupport/*"
+    "${BUILD_DIR}/tools/CodeThorn/*"
+    "${BUILD_DIR}/src/3rdPartyLibraries/*"
     -o librose-lcov.info
     RESULT_VARIABLE rc
 )
