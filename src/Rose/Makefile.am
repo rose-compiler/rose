@@ -142,6 +142,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.C			\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/FrameState.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCell.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.C		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellMap.C		\

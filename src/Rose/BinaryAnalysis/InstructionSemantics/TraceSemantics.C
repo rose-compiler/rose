@@ -1466,6 +1466,35 @@ RiscOperators::writeMemory(RegisterDescriptor a, const BaseSemantics::SValue::Pt
     }
 }
 
+BaseSemantics::SValue::Ptr
+RiscOperators::popOperand() {
+    before("popOperand");
+    try {
+        return after(subdomain_->popOperand());
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+void
+RiscOperators::pushOperand(const BaseSemantics::SValue::Ptr &a) {
+    before("pushOperand", a);
+    try {
+        subdomain_->pushOperand(a);
+        after();
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
 } // namespace
 } // namespace
 } // namespace

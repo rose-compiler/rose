@@ -71,11 +71,8 @@ public:
 struct IP_iconst_3: P {
     void p(D /*d*/, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        SValue::Ptr value = ops->number_(3, 32);
-#if 0
-//TODO: need OperandStack, also push/popOperand
-        ops->popOperand(value);
-#endif
+        SValue::Ptr value = ops->number_(32, 3);
+        ops->pushOperand(value);
     }
 };
 
@@ -83,11 +80,8 @@ struct IP_iconst_3: P {
 struct IP_iconst_5: P {
     void p(D /*d*/, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        SValue::Ptr value = ops->number_(5, 32);
-#if 0
-//TODO: need OperandStack, also push/popOperand
+        SValue::Ptr value = ops->number_(32, 5);
         ops->pushOperand(value);
-#endif
     }
 };
 
@@ -95,15 +89,7 @@ struct IP_iconst_5: P {
 struct IP_load: P {
     void p(D /*d*/, Ops /*ops*/, I insn, A args) {
         assert_args(insn, args, 1);
-
-#if 0
-        // TODO: obtain index from args[0] (SgValueExpression, I think)
-        uint8_t index = 5;
-
-        // Read and push variable
-        SValue::Ptr value = ops->readVariable(index);
-        ops->pushOperand(value);
-#endif
+        //TODO: Read variable and push value
     }
 };
 
@@ -111,59 +97,33 @@ struct IP_load: P {
 struct IP_load_0: P {
     void p(D /*d*/, Ops /*ops*/, I insn, A args) {
         assert_args(insn, args, 0);
-        // Read and push variable
-#if 0
-//TODO: need OperandStack, also push/popOperand
-        SValue::Ptr value = ops->readVariable(0);
-        ops->pushOperand(value);
-#endif
+        //TODO: Read variable and push value
     }
 };
 
 // Add int (0x60)
 struct IP_iadd: P {
-    void p(D /*d*/, Ops /*ops*/, I insn, A args) {
+    void p(D /*d*/, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
 
         // Pop operands
-#if 0
-//TODO: need OperandStack, also push/popOperand
         SValue::Ptr value1 = ops->popOperand();
         SValue::Ptr value2 = ops->popOperand();
 
-        // Compute sum
-        SValue::Ptr sum = ops->add(value1, value2);
-#endif
-
-#if 0
-        // Calculate overflow - overflow may occur but no exception is raised
-        SValue::Ptr wideRs = ops->signExtend(d->read(args[1]), nBits + 1);
-        SValue::Ptr wideRt = ops->signExtend(d->read(args[2]), nBits + 1);
-        SValue::Ptr wideSum = ops->add(wideRs, wideRt);
-        SValue::Ptr wideSum32 = ops->extract(wideSum, 32, 33); // bit #32
-        SValue::Ptr wideSum31 = ops->extract(wideSum, 31, 32); // bit #31
-        SValue::Ptr overflow = ops->isNotEqual(wideSum31, wideSum32);
-        SValue::Ptr oldRd = d->read(args[0], nBits);
-        SValue::Ptr result = ops->ite(overflow, oldRd, sum);
-
-        // Side effects (do after everything else)
-        d->write(args[0], result);
-        ops->raiseInterrupt(jvm_signal_exception, jvm_integer_overflow, overflow);
-#endif
+        // Compute sum and push result
+        ops->pushOperand(ops->add(value1, value2));
     }
 };
 
 // Store int into local variable 0 (0x3b)
 struct IP_store_0: P {
-    void p(D /*d*/, Ops /*ops*/, I insn, A args) {
+    void p(D /*d*/, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
 
-        // Pop value from operand stack, then write it to variable array
-#if 0
-//TODO: need OperandStack, also push/popOperand
+        // Pop value from operand stack, then write it to local variables array
         SValue::Ptr value = ops->popOperand();
-        ops->writeVariable(0, value);
-#endif
+
+        //TODO:: write variable to local variables array
     }
 };
 

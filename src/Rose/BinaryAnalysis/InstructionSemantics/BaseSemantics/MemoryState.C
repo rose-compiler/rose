@@ -79,6 +79,17 @@ MemoryState::set_byteOrder(ByteOrder::Endianness bo) {
     byteOrder_ = bo;
 }
 
+void
+MemoryState::pushOperand(const SValuePtr &) {
+    ASSERT_require2(false, "No implementation of base class MemoryState::pushOperand\n");
+}
+
+SValue::Ptr
+MemoryState::popOperand() {
+    ASSERT_require2(false, "No implementation of base class MemoryState::popOperand\n");
+    return {};
+}
+
 } // namespace
 } // namespace
 } // namespace

@@ -871,6 +871,22 @@ public:
      *  This is a lower-level operation than @ref readMemory in that it doesn't cause any side effects in the memory state. In
      *  all other respects, it's similar to @ref readMemory. */
     virtual SValuePtr peekMemory(RegisterDescriptor segreg, const SValuePtr &addr, const SValuePtr &dflt) = 0;
+
+    /** Pushes a value to the Frame Operand Stack.
+     *
+     *  The base implementation simply delegates to the current semantic State, which probably delegates to a frame state,
+     *  but subclasses are welcome to override this behavior at any level.
+     *
+     */
+    virtual void pushOperand(const SValuePtr &value);
+
+    /** Pops a value from the Frame Operand Stack.
+     *
+     *  The base implementation simply delegates to the current semantic State, which probably delegates to a frame state,
+     *  but subclasses are welcome to override this behavior at any level.
+     *
+     */
+    virtual SValuePtr popOperand();
 };
 
 std::ostream& operator<<(std::ostream&, const RiscOperators&);

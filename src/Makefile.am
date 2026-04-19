@@ -406,6 +406,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h		\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/FrameState.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCell.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellMap.h		\

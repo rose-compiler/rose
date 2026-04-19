@@ -40,10 +40,10 @@ Jvm::registerDictionary() const {
         auto regs = RegisterDictionary::instance(name());
 
         // Special purpose registers
-        regs->insert("gp", jvm_regclass_spr, 0, 0, 4); // global pointer
-        regs->insert("pc", jvm_regclass_spr, 1, 0, 4); // program counter
-        regs->insert("sp", jvm_regclass_spr, 2, 0, 4); // stack pointer
-        regs->insert("fp", jvm_regclass_spr, 3, 0, 4); // stack frame pointer
+        regs->insert("gp", jvm_regclass_spr, 0, 0, 32); // global pointer
+        regs->insert("pc", jvm_regclass_spr, 1, 0, 32); // program counter
+        regs->insert("sp", jvm_regclass_spr, 2, 0, 32); // stack pointer
+        regs->insert("fp", jvm_regclass_spr, 3, 0, 32); // stack frame pointer
 
         // Special registers
         regs->instructionPointerRegister("pc");

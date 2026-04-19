@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/FrameState.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCell.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellMap.h>

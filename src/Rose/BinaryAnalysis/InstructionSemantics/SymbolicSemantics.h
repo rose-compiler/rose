@@ -5,6 +5,7 @@
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/FrameState.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellMap.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h>
@@ -43,6 +44,7 @@ namespace InstructionSemantics {
 *    <li>MemoryCell: an address-expression/value-expression pair for memory.</li>
 *    <li>MemoryState: the collection of MemoryCells that form a complete memory state.</li>
 *    <li>RegisterState: the collection of registers that form a complete register state.</li>
+*    <li>FrameState: the collection operands and local variables that form a complete frame state.</li>
 *    <li>State: represents the state of the virtual machine&mdash;its registers and memory.</li>
 *    <li>RiscOperators: the low-level operators called by instruction dispatchers (e.g., DispatcherX86).</li>
 *  </ul>
@@ -374,6 +376,14 @@ public:
 
 typedef BaseSemantics::RegisterStateGeneric RegisterState;
 typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Frame state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef BaseSemantics::FrameState FrameState;
+typedef BaseSemantics::FrameStatePtr FrameStatePtr;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1097,6 +1107,9 @@ public:
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) override;
+
+    virtual BaseSemantics::SValuePtr popOperand() override;
+    virtual void pushOperand(const BaseSemantics::SValuePtr &a) override;
 
 public:
     BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg,

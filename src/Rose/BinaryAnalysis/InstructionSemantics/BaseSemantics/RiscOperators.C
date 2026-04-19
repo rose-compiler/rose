@@ -565,6 +565,18 @@ RiscOperators::peekRegister(RegisterDescriptor reg, const SValue::Ptr &dflt_) {
 }
 
 void
+RiscOperators::pushOperand(const SValue::Ptr &value) {
+    ASSERT_not_null(currentState());
+    currentState()->pushOperand(value);
+}
+
+SValue::Ptr
+RiscOperators::popOperand() {
+    ASSERT_not_null(currentState());
+    return currentState()->popOperand();
+}
+
+void
 RiscOperators::print(std::ostream &stream, const std::string prefix) const {
     Formatter fmt;
     fmt.set_line_prefix(prefix);

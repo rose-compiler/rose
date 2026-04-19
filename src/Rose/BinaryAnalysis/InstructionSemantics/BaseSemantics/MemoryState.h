@@ -167,7 +167,15 @@ public:
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
                              RiscOperators *addrOps, RiscOperators *valOps) = 0;
 
+    /** Push an operand value to a frame.
+     *
+     */
+    virtual void pushOperand(const SValuePtr &value);
 
+    /** Pop an operand value from a frame.
+     *
+     */
+    virtual SValuePtr popOperand();
 };
 
 } // namespace

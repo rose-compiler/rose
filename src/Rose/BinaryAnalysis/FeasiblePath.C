@@ -75,6 +75,12 @@ typedef SymbolicSemantics::RegisterState::Ptr RegisterStatePtr;
 
 // varies with path-finding mode
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      FrameState
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef SymbolicSemantics::FrameState FrameState;
+typedef SymbolicSemantics::FrameState::Ptr FrameStatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      State
@@ -111,7 +117,7 @@ public:
     }
 
     virtual BaseSemantics::State::Ptr create(const BaseSemantics::RegisterState::Ptr &registers,
-                                           const BaseSemantics::MemoryState::Ptr &memory) const override {
+                                             const BaseSemantics::MemoryState::Ptr &memory) const override {
         return instance(registers, memory);
     }
 

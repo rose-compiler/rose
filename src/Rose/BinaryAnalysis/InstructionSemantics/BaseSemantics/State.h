@@ -289,6 +289,32 @@ public:
      *  See also @ref interruptState, which returns a null pointer if the interrupt state is not present. */
     bool hasInterruptState() const;
 
+    /** Property: Frame state.
+     *
+     *  Returns the first address space of type @ref BaseSemantics::FrameState whose purpose is @ref
+     *  BaseSemantics::AddressSpace::Purpose "FRAMES" from this state's list of address spaces. If there is no such address
+     *  space then a null pointer is returned.
+     *
+     *  The frame state contains an operand stack and a local variables array. */
+    FrameStatePtr frameState() const;
+
+    /** Tests whether an frame state is present.
+     *
+     *  A state may have an frame state. This function returns true if and only if the frame state is present.
+     *
+     *  See also @ref frameState, which returns a null pointer if the frame state is not present. */
+    bool hasFrameState() const;
+
+    /** Pop an operand value from the frame.
+     *
+     *  Calls @ref popOperand on the address space returned by @ref frameState, which must be non-null. */
+    virtual SValuePtr popOperand();
+
+    /** Push an operand value to a frame.
+     *
+     *  Calls @ref pushOperand on the address space returned by @ref frameState, which must be non-null. */
+    virtual void pushOperand(const SValuePtr &value);
+
     /** Read a value from a register.
      *
      *  Calls @ref read on the address space returned by @ref registerState, which must be non-null. */

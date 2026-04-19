@@ -6,6 +6,7 @@
 #include <Rose/As.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/AddressSpace.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/FrameState.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterState.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
@@ -114,6 +115,7 @@ State::insertAddressSpace(const AddressSpace::Ptr &space) {
     ASSERT_require(space->purpose() != AddressSpace::Purpose::REGISTERS || as<RegisterState>(space));
     ASSERT_require(space->purpose() != AddressSpace::Purpose::MEMORY || as<MemoryState>(space));
     ASSERT_require(space->purpose() != AddressSpace::Purpose::INTERRUPTS || as<RegisterState>(space));
+    ASSERT_require(space->purpose() != AddressSpace::Purpose::FRAMES || as<FrameState>(space));
 
     addressSpaces_.push_back(space);
 }
@@ -266,6 +268,35 @@ State::interruptState(const RegisterState::Ptr &x) {
 bool
 State::hasInterruptState() const {
     return interruptState() != nullptr;
+}
+
+FrameState::Ptr
+State::frameState() const {
+    for (const AddressSpace::Ptr &space: addressSpaces()) {
+        if (space->purpose() == AddressSpace::Purpose::FRAMES) {
+            if (auto retval = as<FrameState>(space))
+                return retval;
+        }
+    }
+    return {};
+}
+
+bool
+State::hasFrameState() const {
+    return frameState() != nullptr;
+}
+
+SValue::Ptr
+State::popOperand() {
+    ASSERT_not_null(frameState());
+    return frameState()->popOperand();
+}
+
+void
+State::pushOperand(const SValue::Ptr &value) {
+    ASSERT_not_null(value);
+    ASSERT_not_null(frameState());
+    frameState()->pushOperand(value);
 }
 
 SValue::Ptr

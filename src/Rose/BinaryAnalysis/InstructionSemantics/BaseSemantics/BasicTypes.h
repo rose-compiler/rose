@@ -32,6 +32,7 @@ namespace BaseSemantics {
 class AddressSpace;
 class AddressSpaceAddress;
 class Dispatcher;
+class FrameState;
 class Formatter;
 class MemoryCell;
 class MemoryState;
@@ -73,6 +74,9 @@ typedef boost::shared_ptr<State> StatePtr;
 /** Shared-ownership pointer to a cell-based memory state. */
 typedef boost::shared_ptr<class MemoryCellState> MemoryCellStatePtr;
 
+/** Shared-ownership pointer to a frame state. */
+typedef boost::shared_ptr<FrameState> FrameStatePtr;
+
 /** Shared-ownership pointer to a RISC operators object. */
 typedef boost::shared_ptr<RiscOperators> RiscOperatorsPtr;
 
@@ -88,6 +92,7 @@ enum class AddressSpacePurpose {
     REGISTERS,                                          /**< Stores register values indexed by @ref RegisterDescriptor. */
     MEMORY,                                             /**< Stores memory values indexed by address. */
     INTERRUPTS,                                         /**< Stores interrupt states indexed by interrupt. */
+    FRAMES,                                             /**< Stores frame states, which store operands and local variables. */
     USER,                                               /**< User defined address space. */
     UNSPECIFIED                                         /**< Purpose for default-constructed address spaces. */
 };

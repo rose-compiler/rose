@@ -1,0 +1,130 @@
+#ifndef ROSE_BinaryAnalysis_InstructionSemantics_BaseSemantics_FrameState_H
+#define ROSE_BinaryAnalysis_InstructionSemantics_BaseSemantics_FrameState_H
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/AddressSpace.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h>
+
+namespace Rose {
+namespace BinaryAnalysis {
+namespace InstructionSemantics {
+namespace BaseSemantics {
+
+/** Shared-ownership pointer for frame memory state. */
+using FrameStatePtr = boost::shared_ptr<class FrameState>;
+
+/** Purely symbolic memory state.
+ *
+ *  This memory state stores Jvm operands and local variables.
+ */
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Frame State
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Jvm Frames, see section 2.6.
+
+ * A frame is used to store data and partial results, as well as to perform dynamic linking, return values for methods,
+ * and dispatch exceptions.
+
+ * A new frame is created each time a method is invoked. A frame is destroyed when its method invocation completes,
+ * whether that completion is normal or abrupt (it throws an uncaught exception). Frames are allocated from the Java
+ * Virtual Machine stack (§2.5.2) of the thread creating the frame. Each frame has its own array of local variables (§2.6.1),
+ * its own operand stack (§2.6.2), and a reference to the run-time constant pool (§2.5.5) of the class of the current method.
+
+ * A frame may be extended with additional implementation-specific information, such as debugging information.
+
+ * The sizes of the local variable array and the operand stack are determined at compile-time and are supplied along with the
+ * code for the method associated with the frame (§4.7.3). Thus the size of the frame data structure depends only on the
+ * implementation of the Java Virtual Machine, and the memory for these structures can be allocated simultaneously on
+ * method invocation.
+
+ * Only one frame, the frame for the executing method, is active at any point in a given thread of control. This frame is
+ * referred to as the current frame, and its method is known as the current method. The class in which the current method is
+ * defined is the current class. Operations on local variables and the operand stack are typically with reference to the
+ * current frame.
+
+ * A frame ceases to be current if its method invokes another method or if its method completes. When a method is invoked,
+ * a new frame is created and becomes current when control transfers to the new method. On method return, the current frame
+ * passes back the result of its method invocation, if any, to the previous frame. The current frame is then discarded as the
+ * previous frame becomes the current one.
+
+ * Note that a frame created by a thread is local to that thread and cannot be referenced by any other thread.
+ */
+
+/** The set of all frames and their values. FrameState objects are allocated on the heap and reference counted.  The
+ *  BaseSemantics::FrameState is an abstract class that defines the interface.  See the
+ *  Rose::BinaryAnalysis::InstructionSemantics namespace for an overview of how the parts fit together.*/
+class FrameState: public MemoryState {
+public:
+    /** Base type. */
+    using Super = MemoryState;
+
+    /** Shared-ownership pointer. */
+    using Ptr = FrameStatePtr;
+
+private:
+    std::vector<SValuePtr> stack_;
+
+public:
+    ~FrameState();
+
+protected:
+    // All memory states should be heap allocated; use instance(), create(), or clone() instead.
+    explicit FrameState(const SValuePtr &valProtoval);
+
+public:
+    /** Instantiate a new empty frame state on the heap. */
+    static FrameStatePtr instance(const SValuePtr &valProtoval);
+
+public:
+    // documented in base class
+    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const override;
+
+    // documented in base class
+    virtual AddressSpacePtr clone() const override;
+
+    /** Convert pointer to a FrameState pointer.
+     *
+     *  Converts @p x to a FrameStatePtr and asserts that it is non-null. */
+    static FrameStatePtr promote(const AddressSpacePtr&);
+
+public:
+    virtual bool merge(const AddressSpacePtr &other, RiscOperators *addrOps, RiscOperators *valOps) override;
+
+    virtual void clear() override;
+
+    virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
+                                 RiscOperators *addrOps, RiscOperators *valOps) override;
+
+    virtual void writeMemory(const SValuePtr &address, const SValuePtr &value,
+                             RiscOperators *addrOps, RiscOperators *valOps) override;
+
+    virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
+                                 RiscOperators *addrOps, RiscOperators *valOps) override;
+
+    /** Push an operand value to a frame.
+     *
+     */
+    virtual void pushOperand(const SValuePtr &value) override;
+
+    /** Pop an operand value from a frame.
+     *
+     */
+    virtual SValuePtr popOperand() override;
+
+public:
+    virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const override;
+
+    virtual void print(std::ostream&, Formatter&) const override;
+};
+    
+} // namespace
+} // namespace
+} // namespace
+} // namespace
+
+#endif
+#endif

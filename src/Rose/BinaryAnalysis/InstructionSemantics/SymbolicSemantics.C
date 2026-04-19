@@ -1909,6 +1909,18 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
     }
 }
 
+BaseSemantics::SValue::Ptr
+RiscOperators::popOperand() {
+    auto frame = currentState()->frameState();
+    return frame->popOperand();
+}
+
+void
+RiscOperators::pushOperand(const BaseSemantics::SValue::Ptr &a) {
+    auto frame = currentState()->frameState();
+    frame->pushOperand(a);
+}
+
 } // namespace
 } // namespace
 } // namespace

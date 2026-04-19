@@ -4,6 +4,7 @@ add_library(roseBinaryAnalysisInstructionSemanticsBaseSemantics OBJECT
   Dispatcher.C
   Exception.C
   Formatter.C
+  FrameState.C
   MemoryCell.C
   MemoryCellList.C
   MemoryCellMap.C
@@ -26,6 +27,7 @@ install(FILES
   Dispatcher.h
   Exception.h
   Formatter.h
+  FrameState.h
   MemoryCell.h
   MemoryCellList.h
   MemoryCellMap.h

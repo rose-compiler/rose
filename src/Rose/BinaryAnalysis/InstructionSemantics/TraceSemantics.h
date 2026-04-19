@@ -363,6 +363,9 @@ public:
                                                 const BaseSemantics::SValuePtr &dflt) override;
     virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) override;
+
+    virtual BaseSemantics::SValuePtr popOperand() override;
+    virtual void pushOperand(const BaseSemantics::SValue::Ptr &a) override;
 };
 
 } // namespace
