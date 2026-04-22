@@ -91,10 +91,9 @@ class FlowGraphAccessInterface{
 template <class NodeInfo, class EdgeInfo, class NodeIterator, class EdgeIterator>
 class FlowGraphCreateInterface{
   public:
-      // Returning a NodeIterator value instead of const NodeIterator&
       // For correctness, the underlying implementation must ensure the returned NodeIterator object
       // is not invalidated after more nodes are added into the graph via additional calls of addNode.
-      // DONE: add documentation that NodeIterator cannot be invalidated when adding new nodes.
+      // Returning a NodeIterator value instead of const NodeIterator&
      virtual NodeIterator addNode(const NodeInfo& node) = 0;
 
      // It may happen The Edgeterator stays valid only if no additional node or edge is added.

@@ -21,7 +21,7 @@ SUBDIRS =
 CommandLine/LicenseString.h: $(top_srcdir)/LicenseInformation/ROSE_BSD_License.txt
 	mkdir -p CommandLine
 	perl $(top_srcdir)/scripts/to-c-string.pl < $< > $@
-BUILT_SOURCES = CommandLine/LicenseString.h FlowGraphInterface.h SawyerGraphConnection.h
+BUILT_SOURCES = CommandLine/LicenseString.h FlowGraphInterface.h FlowAnalysisInterface.h SawyerGraphConnection.h
 
 # .C files for the ::Rose namespace (see top comment). Please keep this list in alphabetical order.
 AM_CPPFLAGS = $(ROSE_INCLUDES)

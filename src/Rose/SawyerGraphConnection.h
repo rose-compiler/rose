@@ -50,7 +50,7 @@ class SawyerCtrlflowGraph
                                        const EdgeInfo& t) override 
             { return SawyerBase::insertEdge(p1, p2, t); }
    }; 
-}; // ROSE_SawyerGraphConnection_H
+}; // ROSE_FlowGraphInterface
 }; // Rose
 
 #endif

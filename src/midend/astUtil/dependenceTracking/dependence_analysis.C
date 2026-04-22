@@ -7,31 +7,151 @@
 
 #include "CommandOptions.h"
 #include "AstInterface.h"
+#include "OperatorDescriptors.h"
+#include "OperatorAnnotation.h"
+#include "AstUtilInterface.h"
 
 namespace AstUtilInterface {
 
-void WholeProgramDependenceAnalysis::CollectPastResults(std::istream& dep_file, std::istream* annot_file) {
-    Log.push("Collect past results of dependence analysis");
-    main_table.CollectFromFile(dep_file);
-    if (annot_file != 0) {
-      Log.push("Reading existing dependence table as annotations.");
-      AstUtilInterface::RegisterOperatorSideEffectAnnotation();
-      AstUtilInterface::ReadAnnotations(*annot_file, &annot_table);
-      Log.push("Done reading existing whole application dependence table.");
+std::string CollectDependences::local_read_string(std::istream& input_file) {
+    std::string next_string;
+    char c ;
+    while ((input_file >> c).good()) {
+       switch (c) {
+       case '\\':
+          next_string.push_back(c);
+          if (!(input_file >> c).good()) 
+              return next_string;  
+          break; 
+       case '\"': 
+          next_string.push_back(c);
+          while ((input_file >> c).good() && c != '\"') {
+             next_string.push_back(c);
+          }
+          next_string.push_back(c);
+          Log.push("reading quoted string " + next_string);
+          return next_string;
+       case ' ':
+       case '\n':
+       case '\r':
+            if (next_string != "") {
+              // This starts a new token. Return the current one.
+              Log.push("Seeing separator. Finished reading token " + next_string);
+              return next_string;
+            } 
+            // Skip empty space.
+            break;
+       case ':': {
+          // Make sure read double "::" as part of a name.
+          char c1 = input_file.peek();
+          if (c1 == ':') {
+             input_file >> c1;
+             next_string += "::";
+             Log.push("Seeing `::'. continue reading token " + next_string);
+             break;
+          } 
+          // Otherwise, seeing a single ':'
+          [[fallthrough]]; // Explicitly indicates intentional fall-through 
+         }
+       case '[':
+       case ']':
+       case '{':
+       case '}':
+       case ';':
+       case '=':
+            if (next_string != "") {
+              // This starts a new token. Return the current one.
+              input_file.putback(c);
+              Log.push("Seeing separator. Finished reading token " + next_string);
+            } else {
+             // Found a token. Return it.
+             next_string.push_back(c);
+             Log.push("reading separator token " + next_string);
+            }
+            return next_string;
+       default: 
+             next_string.push_back(c);
+             break;
+      }
     }
-    Log.push("Done collecting past results of dependence analysis");
+    Log.push("Return Next token  " + next_string);
+    return next_string;
 }
 
-WholeProgramDependenceAnalysis:: WholeProgramDependenceAnalysis(int argc, const char** argv) : main_table(false), annot_table(true) {
-  std::vector<std::string> argvList(argv, argv + argc);
-  CmdOptions::GetInstance()->SetOptions(argvList);
-  sageProject = new SgProject (argvList);
+void CollectDependences::CollectFromFile(std::istream& input_file, DependenceTable& main_table) {
+    Log.push("Collect past results of dependences");
+    while (input_file.good()) {
+        // Each line starts with the name of a component in the software.
+        std::string dest = local_read_string(input_file);
+        if (dest == "")  break;
+        if (dest == "}" || dest == ";") continue;
+        Log.push("Destination name: " + dest);
+        std::string next_string, source, dep_type, attr;
+        // Read and process all the components that `dest' depends on immediately.
+        while ((next_string = local_read_string(input_file)) != "") {
+             if (next_string == ";") {
+               if (source != "") {
+                  DependenceEntry e(dest, source, dep_type, attr);
+                  main_table.SaveDependence(e);
+                  if (update_annotations_) save_annotation(e);
+                  Log.push( "Saving " + source + "->" + dest + "[" + dep_type + "]");
+               }
+               Log.push("Done reading line\n");
+               break;
+            } else if (next_string == "->") {
+               source = dest;
+               Log.push("Setting source = " + source);
+               dest = local_read_string(input_file); 
+               Log.push("Setting dest = " + dest);
+            } else if (next_string == ":") {
+               source = local_read_string(input_file); 
+               if (source == "[") {
+                  while ((next_string = local_read_string(input_file)) != "]") {
+                    dep_type += next_string;
+                    if (next_string == "") {
+                       Log.fatal("Expecting \"]\" but get " + next_string);
+                    }
+                  }
+                  source = local_read_string(input_file); 
+               }
+               if (source == ";") {
+                  Log.push("Warning: Skipping empty dependence for " + dest +"!");
+                  next_string = ";"; source = "";
+                  break; 
+               } 
+               Log.push("Successfully setting source = " + source);
+            } else if (next_string == "=") {
+               attr = "";
+               while ((next_string = local_read_string(input_file)) != "") {
+                  if (next_string == ";" || next_string == "\n") 
+                      break;
+                  attr += next_string;
+               }
+               if (next_string == ";") {
+                  input_file.putback(';');
+               }
+               Log.push("Setting attr:  " + attr);
+            } else if (next_string == "{") {
+               Log.push("Skipping graph configuration: " + dest + " " + next_string);
+               break;
+            } else {
+               Log.fatal("Unexpected token " + next_string);
+            }
+        }
+        if (next_string != ";" && next_string != "}" && next_string != "{") {
+            Log.fatal("Expecting `;' or `}' but getting " + next_string);
+        } else if (input_file.peek() == EOF) {
+            break;
+        }
+    }
+    Log.push("Done collecting past results of dependences");
 }
 
-void WholeProgramDependenceAnalysis:: ComputeDependences() {
+template <class NodeIterator, class EdgeIterator>
+bool WholeProgramDependenceAnalysis<NodeIterator,EdgeIterator>:: ComputeDependences() {
   Log.push("Compute dependences.");
   if (sageProject == 0) {
-    return;
+    return false;
   }
   int filenum = sageProject->numberOfFiles();
   for (int i = 0; i < filenum; ++i) {
@@ -57,58 +177,24 @@ void WholeProgramDependenceAnalysis:: ComputeDependences() {
       ComputeDependences(func, root);
     }
   }
+  return true;
 }
 
-void WholeProgramDependenceAnalysis:: OutputDependences(std::ostream& output) { 
-  if (CmdOptions::GetInstance()->HasOption("-data")) {
-     main_table.OutputDataDependences(output);
-  } else {
-     main_table.OutputDependences(output); 
-  }
-}
-
-void WholeProgramDependenceAnalysis:: OutputAnnotations(std::ostream& output) { 
-     annot_table.OutputDependences(output);
-}
-
-void WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* root) {
+template <class NodeIterator, class EdgeIterator>
+void WholeProgramDependenceAnalysis<NodeIterator,EdgeIterator>::ComputeDependences(SgNode* input, SgNode* root) {
   DebugLog DebugSaveDep("-debugdep");
   std::string function_name;
   AstInterface::AstNodeList params, children;
   AstNodePtr body;
   if (AstInterface::IsFunctionDefinition(input, &function_name, &params, 0, &body, 0, 0,/*use_global_name*/true) && body != 0) {
     Log.push("Computing dependences for " + input->unparseToString());
-    std::function<bool(const AstNodePtr&, const AstNodePtr&, AstUtilInterface::OperatorSideEffect)> save_dep = 
-        [this,input,body,&DebugSaveDep] (const AstNodePtr& first, const AstNodePtr& second, AstUtilInterface::OperatorSideEffect relation) {
-        DebugSaveDep([&relation](){return "saving for:" + AstUtilInterface::OperatorSideEffectName(relation); });
-        SgNode* details = second.get_ptr();
-        switch (relation) {
-          case AstUtilInterface::OperatorSideEffect::Decl: 
-          case AstUtilInterface::OperatorSideEffect::Free:  {
-               SgType* t = AstInterface::GetExpressionType(first).get_ptr();
-               assert(t != 0);
-               details = t;
-               break;
-          }
-          case AstUtilInterface::OperatorSideEffect::Read:  {
-               // If the detail is the surrounding statment, skip.
-               if (AstInterface::IsStatement(second)) {
-                 details = 0;
-               }
-               break; 
-           }
-          // Do not save kill information.
-          case AstUtilInterface::OperatorSideEffect::Kill: 
-             return true;
-          default: break;
-        }
-        DebugSaveDep([&first,details](){return "saving side effect for:" + AstInterface::AstToString(first) + " = " + AstInterface::AstToString(details); });
-        if (!main_table.SaveOperatorSideEffect(input, first, relation, details)) {
-           DebugSaveDep([](){return "Did not save dependene" ; });
-        } 
+    std::function<bool(const AstNodePtr&, const AstNodePtr&, const AstUtilInterface::OperatorSideEffect&)> save_dep = 
+        [this,input,body,&DebugSaveDep] (const AstNodePtr& first, const AstNodePtr& second, const AstUtilInterface::OperatorSideEffect& relation) {
+        assert(main_table != 0);
+        main_table->addEdge(main_table->addNode(first.get_ptr()), main_table->addNode(second.get_ptr()), relation);
         return true;
       };
-     AstUtilInterface::ComputeAstSideEffects(input, &save_dep, &annot_table);
+     AstUtilInterface::ComputeAstSideEffects(input, &save_dep, annot_table);
   }
   if (AstInterface::IsBlock(input, 0, &children)) {
     for (AstInterface::AstNodeList::const_iterator p = children.begin(); p != children.end(); ++p) {
@@ -117,5 +203,42 @@ void WholeProgramDependenceAnalysis::ComputeDependences(SgNode* input, SgNode* r
     }
   }
 }
+void CollectDependences:: save_annotation(const DependenceEntry& e) {
+     DebugLog DebugSaveDep("-debugdep");
+     DebugSaveDep([&e](){ return "saving annotation: " + e.to_string(); });
+
+    // Save into annotation  if necessary.
+    if (e.type_entry() == "parameter") {
+      OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
+      OperatorSideEffectDescriptor* desc1 = funcAnnot->get_modify_descriptor(e.first_entry(), true);
+      assert(desc1 != 0);
+      desc1->get_param_decl().add_param( /*param type*/ e.attr_entry(),  /* param name*/ e.second_entry());
+      OperatorSideEffectDescriptor* desc2 = funcAnnot->get_read_descriptor(e.first_entry(), true);
+      assert(desc2 != 0);
+      desc2->get_param_decl().add_param( /*param type*/ e.attr_entry(),  /* param name*/ e.second_entry());
+      DebugSaveDep([&e](){ return "Saving parameter " + e.second_entry(); });
+    }
+    else if (e.type_entry() == "modify") {
+      OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
+      OperatorSideEffectDescriptor* desc = funcAnnot->get_modify_descriptor(e.first_entry(), true);
+      assert(desc != 0);
+      DebugSaveDep([&e](){ return "processing " + e.second_entry(); });
+      SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
+      desc->push_back(var);
+      DebugSaveDep([&var](){ return "Saving modify " + var.toString(); });
+    } else if (e.type_entry() == "read") {
+      OperatorSideEffectAnnotation* funcAnnot = OperatorSideEffectAnnotation::get_inst();
+      OperatorSideEffectDescriptor* desc = funcAnnot->get_read_descriptor(e.first_entry(), true);
+      assert(desc != 0);
+      SymbolicVal var = SymbolicValGenerator::GetSymbolicVal(e.second_entry());
+      desc->push_back(var);
+      DebugSaveDep([&var](){ return "Saving read " + var.toString(); });
+    }
+}
+
+
+template class WholeProgramDependenceAnalysis<std::string, DependenceEntry>;
+
 
 };
+

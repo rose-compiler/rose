@@ -11,31 +11,78 @@ class SgNode;
 class SgFunctionDeclaration;
 namespace AstUtilInterface{
 
-   class WholeProgramDependenceAnalysis;
-   enum OperatorSideEffect {
-     Modify, Read, Kill, Alias, Call, CallUnknown, ModifyUnknown, ReadUnknown, Decl, Allocate, Free, Parameter, Return
-   };
-   inline std::string OperatorSideEffectName(OperatorSideEffect what) {
-     switch (what) {
-      case OperatorSideEffect::Modify: return "modify";
-      case OperatorSideEffect::Read: return "read";
-      case OperatorSideEffect::Kill: return "kill";
-      case OperatorSideEffect::CallUnknown: return "call_unknown";
-      case OperatorSideEffect::ModifyUnknown: return "call_unknown";
-      case OperatorSideEffect::ReadUnknown: return "call_unknown";
-      case OperatorSideEffect::Call: return "call";
-      case OperatorSideEffect::Parameter: return "parameter";
-      case OperatorSideEffect::Return: return "return";
-      case OperatorSideEffect::Decl: return "decl";
-      case OperatorSideEffect::Allocate: return "allocate";
-      case OperatorSideEffect::Free: return "free";
-      case OperatorSideEffect::Alias: return "alias";
-      default:
-          std::cerr << "Error: Unexpected enum value:" << what << "\n";
+   template<class NodeIterator, class EdgeIterator> class WholeProgramDependenceAnalysis;
+   class OperatorSideEffect {
+     public:
+     enum class EnumVariant {Modify, Read, Kill, Alias, Call, CallUnknown, ModifyUnknown, ReadUnknown, Decl, Allocate, Free, Parameter, Return, Unexpected};
+     OperatorSideEffect(EnumVariant e, SgNode* details=0) 
+              {  enum_ = e;  details_ = details; }
+
+     const EnumVariant& get_enum() const { return enum_; }
+     SgNode* get_details() const { return details_; } 
+
+     OperatorSideEffect(const std::string& what, const std::string& attr) { 
+       if (attr == "unknown") {  
+          if (what == "modify") { enum_ = EnumVariant::ModifyUnknown; }
+          else if (what == "read") { enum_ = EnumVariant::ReadUnknown; }
+          else if (what == "call") { enum_ = EnumVariant::CallUnknown; }
+          else { std::cerr << "unexpected side effect name for unknown:" << what << "\n"; 
+                 assert(0); }
+       } else if (attr == "kill") { enum_ = EnumVariant::Kill; }
+       else if (attr == "decl") { enum_ = EnumVariant::Decl; }
+       else if (attr == "alias") { enum_ = EnumVariant::Alias; }
+       else if (attr == "allocate") { enum_ = EnumVariant::Allocate; }
+       else if (attr == "free") { enum_ = EnumVariant::Free; }
+       else {
+          assert(attr == ""); 
+          if (what == "modify") { enum_ = EnumVariant::Modify; }
+          else if (what == "read") { enum_ = EnumVariant::Read; }
+          else if (what == "call") { enum_ = EnumVariant::Call; }
+          else if (what == "parameter") { enum_ = EnumVariant::Parameter; }
+          else if (what == "return") { enum_ = EnumVariant::Return; }
+          else { std::cerr << "unexpected side effect name for:" << what << "\n"; assert(0); }
+       }
+     }
+     inline std::string attr_name() const { 
+       switch (enum_) {
+        case EnumVariant::Kill: return "kill";
+        case EnumVariant::CallUnknown: return "unknown";
+        case EnumVariant::ModifyUnknown: return "unknown";
+        case EnumVariant::ReadUnknown: return "unknown";
+        case EnumVariant::Decl: return "decl";
+        case EnumVariant::Alias: return "alias";
+        case EnumVariant::Allocate: return "allocate";
+        case EnumVariant::Free: return "free";
+        default:
+          return "";
+       }
+      }
+     inline std::string relation_name() const {
+       switch (enum_) {
+        case EnumVariant::ModifyUnknown: 
+        case EnumVariant::Kill: 
+        case EnumVariant::Decl: 
+        case EnumVariant::Alias: 
+        case EnumVariant::Allocate: 
+        case EnumVariant::Free: 
+        case EnumVariant::Modify: return "modify";
+        case EnumVariant::ReadUnknown: 
+        case EnumVariant::Read: return "read";
+        case EnumVariant::CallUnknown: 
+        case EnumVariant::Call: return "call";
+        case EnumVariant::Parameter: return "parameter";
+        case EnumVariant::Return: return "return";
+        default:
+          std::cerr << "Error: Unexpected enum value:" << (int)enum_ << "\n";
           assert(false);
           return "";
-     }
-   }
+       }
+      }
+    private:
+      EnumVariant enum_ = EnumVariant::Unexpected; 
+      SgNode* details_ = 0;
+   };
+   
    //! Interface for saving side effects of operations.
    class SaveOperatorSideEffectInterface {
      public:
@@ -43,7 +90,7 @@ namespace AstUtilInterface{
        virtual void ClearOperatorSideEffect(SgNode* op) = 0;
     
        //! The operator op accesses the given memory reference in nature of the given relation.
-       virtual bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& ref, AstUtilInterface::OperatorSideEffect relation, SgNode* details = 0) = 0;
+       virtual bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& ref, const AstUtilInterface::OperatorSideEffect& relation) = 0;
    };
 
    //! A simplified interface, which
@@ -57,11 +104,11 @@ namespace AstUtilInterface{
        virtual void ClearOperatorSideEffect(SgNode* /*op*/) override {}
     
        //! The operator op accesses the given memory reference in nature of the given relation.
-       virtual bool SaveOperatorSideEffect(SgNode* /*op*/, const AstNodePtr& sig, AstUtilInterface::OperatorSideEffect relation, SgNode* /*details*/ = 0) override {
-           switch (relation) {
-               case OperatorSideEffect::Modify: if (writep != 0) writep->push_back(sig); break;
-               case OperatorSideEffect::Read: if (readp != 0) readp->push_back(sig); break;
-               case OperatorSideEffect::Call: if (callp != 0) callp->push_back(sig); break;
+       virtual bool SaveOperatorSideEffect(SgNode* /*op*/, const AstNodePtr& sig, const AstUtilInterface::OperatorSideEffect& relation) override {
+           switch (relation.get_enum()) {
+               case OperatorSideEffect::EnumVariant::Modify: if (writep != 0) writep->push_back(sig); break;
+               case OperatorSideEffect::EnumVariant::Read: if (readp != 0) readp->push_back(sig); break;
+               case OperatorSideEffect::EnumVariant::Call: if (callp != 0) callp->push_back(sig); break;
                default: break;
            }
            return true;
@@ -77,7 +124,7 @@ namespace AstUtilInterface{
    //! member functions are invoked to save a side-effect summary for each operation (function) 
    //! contained inside ast.
     void ComputeAstSideEffects(SgNode* ast, 
-                   std::function<bool(const AstNodePtr&, const AstNodePtr&, OperatorSideEffect)>* collect = 0,
+                   std::function<bool(const AstNodePtr&, const AstNodePtr&, const OperatorSideEffect&)>* collect = 0,
                    SaveOperatorSideEffectInterface* save_side_effect = 0);
 
    //!Collect non-local variables that are read and written within the given ast. This is a wrapper
@@ -107,7 +154,7 @@ namespace AstUtilInterface{
 
     //! Record that op_ast references the given variable with the given relation:
     //! (modify, read, or call). Returns the string representation of the operator and variable.
-    void AddOperatorSideEffectAnnotation(SgNode* op_ast, const AstNodePtr& var, OperatorSideEffect relation);
+    void AddOperatorSideEffectAnnotation(SgNode* op_ast, const AstNodePtr& var, const OperatorSideEffect& relation);
 
     void SetFunctionNameMangling(std::string (*)(const SgFunctionDeclaration*));
 

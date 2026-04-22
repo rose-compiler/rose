@@ -9,6 +9,7 @@
 #include <set>
 #include "CommandOptions.h"
 #include "AstUtilInterface.h"
+#include "Rose/FlowGraphInterface.h"
 
 class SgNode;
 class AstNodePtr;
@@ -35,7 +36,7 @@ class DependenceEntry {
       std::string to_string() const { return first_ + " : " + " [ " + deptype_ + " ] " + second_ + " = " + attr_; }
       bool first_is_function() const { return true; }
       bool second_is_function() const { return type_entry() == "call"; }
-      bool output_data_dependence(std::ostream& output) {
+      bool output_data_dependence(std::ostream& output) const {
           if (attr_entry() != "") {
              output << second_entry() << " : [ " << type_entry() << " ] " << attr_entry() << " ;\n";
              return true;
@@ -47,32 +48,114 @@ class DependenceEntry {
 
 std::ostream& operator << (std::ostream& output, const DependenceEntry& e);
 
-// Read a table that records the dependences among all the components of a software.
-// The syntax for specifying a dependence is x1 : y1 y2 ... ym; which
-// specifies that x1 is dependent on y1, y2, ..., ym, where x1, y1, ..., ym are
-// strings that uniquely identifes each component of the whole program.
-class CollectDependences{
-  protected:
-    virtual void save_dependence(const DependenceEntry& e) = 0;
-    std::string local_read_string(std::istream& input_file);
+//! Stores dependence entries in a table.
+class DependenceTable : public SaveOperatorSideEffectInterface {
   public:
-    DebugLog Log = DebugLog("-debug-dep-table");
-    CollectDependences() {}
-    // Read the system dependence table from an input file.
-    void CollectFromFile(std::istream& input_file);
+    enum Direction {CollectForward, CollectBackward};
+
+    DependenceTable(Direction direction = CollectForward) : direction_(direction) {}
+
+
+    void CollectDependences(const std::function<void(const DependenceEntry&)>& op) {
+      for (auto n : nodes_) {
+        const auto& p = node_map_.find(n);
+        assert(p != node_map_.end());
+        for (const auto& e : (*p).second.edges) {
+           op(e);
+        }
+      }
+    }
+
+    // Output the new dependences into a new file. 
+    void OutputDependences(std::ostream& output) {
+         CollectDependences([&output](const DependenceEntry& e) { output << e << std::endl; });
+    }
+    void OutputDataDependences(std::ostream& output) {
+        CollectDependences([&output](const DependenceEntry& e) { e.output_data_dependence(output); });
+    }
+    void OutputDependencesInGUI(std::ostream& output); 
+    void ClearDependence(const std::string& sig) {
+        auto p = node_map_.find(sig);
+        if (p != node_map_.end()) {
+          auto &p1 = (*p).second;
+          p1.edges.clear();
+        }
+    }
+    bool InsertNode(const std::string sig) {
+       if (node_map_.find(sig) != node_map_.end()) 
+         return false;
+       nodes_.push_back(sig);
+       node_map_.insert({sig, NodeInfo(nodes_.size()-1)});
+       return true;
+    }
+    // Save a dependence entry.
+    virtual bool SaveDependence(const DependenceEntry& e) {
+       InsertNode(e.first_entry());
+       InsertNode(e.second_entry());
+       const auto& p1 = node_map_.find(current_start(e));
+       assert(p1 != node_map_.end());
+       auto& p2 = (*p1).second;
+       for (const auto& e1 : p2.edges) {
+          if (e1 == e) { // Duplicate entry.
+           return false;
+          }
+       }
+       p2.edges.push_back(e);
+       return true;
+    }
+
+    //! Erase existing annotation for the given operator.
+    void ClearOperatorSideEffect(SgNode* op) override; 
+    //
+    //! The operator op accesses the given memory reference in nature of the given relation.
+    bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, const AstUtilInterface::OperatorSideEffect& relation) override; 
+
+  protected:
+    const std::vector<DependenceEntry>& get_dependences(const std::string& sig) {
+       auto p = node_map_.find(sig);
+       assert(p != node_map_.end());
+       return (*p).second.edges; 
+    } 
+
+  protected:
+    // Saves information about each node.
+   struct NodeInfo {
+       // Length of the longest chain.
+       int node_index = -1;
+       std::vector<DependenceEntry> edges;
+       NodeInfo(int _index) : node_index(_index) { assert(node_index >= 0); }
+   };
+   std::string next_start(const DependenceEntry& e) const {
+     return (direction_ == Direction::CollectBackward)? e.first_entry() : e.second_entry();
+   }
+   std::string current_start(const DependenceEntry& e) const {
+     return (direction_ == Direction::CollectBackward)? e.second_entry() : e.first_entry();
+   }
+   std::string current_attr(const DependenceEntry& e) const {
+     return e.attr_entry();
+   }
+   std::string current_type(const DependenceEntry& e) const {
+     return e.type_entry();
+   }
+ private:
+   std::map<std::string, NodeInfo> node_map_;
+   std::vector<std::string> nodes_;
+   Direction direction_;
+    
 };
 
 // Read and collect all the AST components that are tagged by a dependence name
-class SelectDependences : public CollectDependences{
+class SelectDependences : public DependenceTable{
   private:
-    std::vector<DependenceEntry> result;
     std::set<std::string> tag_first_, tag_second_, tag_type_;
   protected:
-    virtual void save_dependence(const DependenceEntry& e) {
+    bool SaveDependence(const DependenceEntry& e) override {
        if ((tag_first_ .empty() || tag_first_.find(e.first_entry()) != tag_first_.end())  && (tag_second_ .empty() || tag_second_.find(e.second_entry()) != tag_second_.end())
    && (tag_type_.empty() || tag_type_.find(e.type_entry())!=tag_type_.end())) {
-          result.push_back(e);
+          DependenceTable::SaveDependence(e);
+          return true;
        }
+       return false;
     }
   public:
     void add_selection(const std::string& _tag_first, const std::string& _tag_second = "", const std::string& _tag_type = "") { 
@@ -86,134 +169,46 @@ class SelectDependences : public CollectDependences{
          tag_type_.insert(_tag_type);
       }
     }
-    // Read the system dependence table from an input file.
-    using CollectDependences::CollectFromFile;
-    
-    const std::vector<DependenceEntry>& get_result() { return result; }
 };
 
 // Store the forward dependences of all software components internally as a map.
-class CollectTransitiveDependences : public CollectDependences {
-  protected:
-    // Read the system dependence table from an input file.
-    virtual void save_dependence(const DependenceEntry& e) override;
+class CollectTransitiveDependences : public DependenceTable{
   public:
-    enum Direction {CollectForward, CollectBackward};
-    CollectTransitiveDependences(Direction direction) : direction_(direction) {}
+    CollectTransitiveDependences(Direction direction) : DependenceTable(direction) {}
     // Collect all the components that depends on input downstream, by transitively
     // traversing the dependence table. The result should be initialized to empty
     // before invocation. The what_to_do parameter, if given, can skip computing some
     // entries by returning false.
-    void Compute(const std::vector<std::string>& input, std::set<std::string>* result = 0, 
-                    const std::function<bool(const DependenceEntry&)>* what_to_do = 0);
-    void Compute(const std::string& input, std::set<std::string>& result,
-                    const std::function<bool(const DependenceEntry&)>* what_to_do = 0);
+    void Compute(const std::vector<std::string>& input, 
+                    const std::function<bool(const DependenceEntry&)>* what_to_do=0,
+                    std::set<std::string>* result = 0); 
+    void Compute(const std::string& input, std::set<std::string>& result, 
+                    const std::function<bool(const DependenceEntry&)>* what_to_do=0);
 
-    void Output(std::ostream& output, std::set<std::string>* select = 0, 
-                     const std::function<bool(const DependenceEntry&)>* what_to_do = 0) {
-       for (const auto& from : saved_sources_) {
-          if (select == 0  || select->find(from) != select->end()) {
-          for (const auto& e2 : dependence_map_[from]) {
-             if (what_to_do == 0 || (*what_to_do)(e2)) {
-                output << e2 << "\n";
-             }
-           }
-          }
-       }
-    }
     // Collect transitive dependences from input, invoke what to do for each entry.
- private:
-   // Store downstream dependences from a component x to all the other components depending on x.
-   std::map<std::string, std::vector<DependenceEntry>> dependence_map_;
-   std::vector<std::string> saved_sources_;
-   std::set<DependenceEntry> already_saved_;
-   Direction direction_;
-
-   std::string next_start(const DependenceEntry& e) const {
-     return (direction_ == Direction::CollectBackward)? e.first_entry() : e.second_entry();
-   }
-   std::string current_start(const DependenceEntry& e) const {
-     return (direction_ == Direction::CollectBackward)? e.second_entry() : e.first_entry();
-   }
-   std::string current_attr(const DependenceEntry& e) const {
-     return e.attr_entry();
-   }
-   std::string current_type(const DependenceEntry& e) const {
-     return e.type_entry();
-   }
 };
 
-//! Stores dependence entries in a table.
-class DependenceTable : public CollectDependences, public SaveOperatorSideEffectInterface {
-  public:
-    DependenceTable(bool update_annotations) 
-      : update_annotations_(update_annotations) {}
 
-    // Output the new dependences into a new file. 
-    void OutputDependences(std::ostream& output);
-    void OutputDependencesInGUI(std::ostream& output);
-    void OutputDataDependences(std::ostream& output);
-    using CollectDependences::CollectFromFile;
-    void ClearDependence(const std::string& sig) {
-        auto p = saved_dependences_relation_.find(sig);
-        if (p != saved_dependences_relation_.end()) {
-          saved_dependences_relation_[sig].clear();
-        }
+
+/* Here implement the portable ROSE analysis interface */
+template <class Node, class Edge>
+class FlowGraphViaDependenceTable : 
+    public Rose::FlowGraphInterface::FlowGraphCreateInterface<Node,Edge, std::string, DependenceEntry>, 
+    public DependenceTable {
+ public:
+   FlowGraphViaDependenceTable() {}
+   virtual std::string addNode(const Node& node) {
+       auto sig = AstUtilInterface::GetVariableSignature(node);
+       DependenceTable::InsertNode(sig);
+       return sig;
     }
-    void SaveDependence(const DependenceEntry& e) {
-       auto p = saved_dependences_relation_.find(e.first_entry());
-       if (p == saved_dependences_relation_.end()) {
-          saved_dependences_sig_.push_back(e.first_entry());
-       }
-       for (const auto& e1 : saved_dependences_relation_[e.first_entry()]) {
-          if (e1 == e) { // Duplicate entry.
-           return;
-          }
-       }
-       saved_dependences_relation_[e.first_entry()].push_back(e);
-       node_map_[e.first_entry()].out_no ++;
-       node_map_[e.second_entry()].in_no ++;
-       int lower_rank = 0;
-       if (node_map_.find(e.second_entry()) == node_map_.end()) {
-           node_map_[e.second_entry()].rank = 0; // no incoming dependence yet.
-       } else {
-            lower_rank = node_map_[e.second_entry()].rank;
-      }
-      int higher_rank = lower_rank + 1;
-      if (node_map_.find(e.first_entry()) == node_map_.end()) {
-         node_map_[e.first_entry()].rank = higher_rank; // one outgoing dependence so far .
-      } else {
-         int current_rank = node_map_[e.first_entry()].rank;
-         if (current_rank < higher_rank) {
-              node_map_[e.first_entry()].rank = higher_rank; // increase existing rank.
-         }
-      }
+   virtual DependenceEntry addEdge(const std::string& p1, const std::string& p2, const Edge& t) {
+      const auto& rel_sig = t.relation_name();
+      const auto& attr = t.attr_name();
+      DependenceEntry e(p1, p2, rel_sig, attr);
+      DependenceTable::SaveDependence(e);
+      return e;
     }
-
-    //! Erase existing annotation for the given operator.
-    void ClearOperatorSideEffect(SgNode* op) override; 
-    //
-    //! The operator op accesses the given memory reference in nature of the given relation.
-    bool SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, AstUtilInterface::OperatorSideEffect relation, SgNode* details = 0) override; 
-
-
-  private:
-    // Whether the internal entries need to be reflected in annotations.
-    bool update_annotations_;
-    // The signatures of all dependence entities.
-    std::vector<std::string> saved_dependences_sig_;
-    std::map<std::string, std::vector<DependenceEntry> > saved_dependences_relation_;
-    // Saves information about each node.
-    struct NodeInfo {
-       // Number of outgoing and incoming edges.
-       int out_no = 0, in_no = 0;
-       // Length of the longest chain.
-       int rank = 0; 
-       NodeInfo() : out_no(0), in_no(0), rank(0) {}
-    };
-    std::map<std::string, NodeInfo> node_map_;
- protected:
-    virtual void save_dependence(const DependenceEntry& e) override; 
 };
 
 }; /* name space SelectiveTesting*/
