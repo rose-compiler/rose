@@ -190,6 +190,10 @@ public:
         }
         return newBuffer;
     }
+
+    std::vector<T> to_vector() const /*override*/ {
+        return std::vector<T>{this->data(), this->data() + this->size()};
+    }
     
     Address available(Address address) const /*override*/ {
         return address >= device_.size() ? Address(0) : (Address(device_.size()) - address) / sizeof(Value);

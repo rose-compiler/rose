@@ -73,6 +73,10 @@ public:
     typename Buffer<A, T>::Ptr copy() const /*override*/ {
         return instance(size_);
     }
+
+    std::vector<T> to_vector() const /*override*/ {
+        return std::vector<T>(size_, T());
+    }
     
     Address available(Address start) const /*override*/ {
         return start < size_ ? size_ - start : 0;

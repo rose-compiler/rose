@@ -136,6 +136,10 @@ public:
         }
         return newBuffer;
     }
+
+    std::vector<T> to_vector() const /*override*/ {
+        return std::vector<T>{values_, values_ + size_};
+    }
     
     Address available(Address start) const /*override*/ {
         return start < size_ ? size_-start : 0;

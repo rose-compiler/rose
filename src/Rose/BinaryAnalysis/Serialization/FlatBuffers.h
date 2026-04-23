@@ -146,10 +146,10 @@ class Deserializer {
     std::unordered_map<Address, Partitioner2::BasicBlock::Ptr> basic_blocks_;
 
     /**
-     * Create a ROSE memory map from a FlatBuffer memory map.
+     * Create a ROSE memory map from a FlatBuffer memory map and a bitwidth for objects in the memory space.
      * This function has no side effects and assumes that the input map is non-null.
      */
-    BinaryAnalysis::MemoryMap::Ptr mmap(const MemoryMap* map) const;
+    BinaryAnalysis::MemoryMap::Ptr mmap(const MemoryMap* map, const size_t& object_width) const;
 
     /**
      * Deserialization factory methods. Each of these methods is responsible for updating deserialization state.

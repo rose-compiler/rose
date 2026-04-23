@@ -472,7 +472,7 @@ Deserializer::verify() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BinaryAnalysis::MemoryMap::Ptr
-Deserializer::mmap(const FB::MemoryMap* map) const {
+Deserializer::mmap(const FB::MemoryMap* map, const size_t& object_width) const {
     auto ba_map = BinaryAnalysis::MemoryMap::instance();
     ba_map->byteOrder(fromFBEndianness(map->endianness()));
 
@@ -481,13 +481,17 @@ Deserializer::mmap(const FB::MemoryMap* map) const {
             continue;
 
         const auto bytes = seg->bytes();
-        auto       buf   = BinaryAnalysis::MemoryMap::StaticBuffer::instance(bytes->data(), bytes->size());
+        auto       buf   = BinaryAnalysis::MemoryMap::AllocatingBuffer::instance(bytes->size());
+
+        buf->write(bytes->data(), 0, bytes->size());
 
         BinaryAnalysis::MemoryMap::Segment ba_seg(
           buf, 0, fromAccessibilityMask(seg->accessibility()), seg->name()->str()
         );
 
-        auto interval = AddressInterval::hull(seg->address(), seg->address() + bytes->size());
+        auto interval = AddressInterval::hull(
+          seg->address(), seg->address() + bytes->size() * object_width
+        );
 
         ba_map->insert(interval, ba_seg);
     }
@@ -563,7 +567,7 @@ Deserializer::load() {
         })
         .orElse(BinaryAnalysis::Architecture::findByName(default_arch))
         .orThrow(Exception("Unknown or missing architecture name: " + arch_name + " (default: " + default_arch + ")"));
-    auto map = mmap(root->memory_map());
+    auto map = mmap(root->memory_map(), arch->bitsPerWord());
 
     // Create a fresh partitioner.
     partitioner_ = P2::Partitioner::instance(arch, map);

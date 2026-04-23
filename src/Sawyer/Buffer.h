@@ -79,6 +79,11 @@ public:
      *  of this operation. */
     virtual Ptr copy() const = 0;
 
+    /** Create a std::vector copy of the data.
+     *
+     *  Returns a std::vector whose contents are the same as the underlying data. */
+    virtual std::vector<Value> to_vector() const = 0;
+
     /** Distance to end of buffer.
      *
      *  The distance in units of the Value type from the specified address (inclusive) to the last element of the buffer
