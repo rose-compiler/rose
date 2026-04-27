@@ -6,8 +6,6 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
  # BP : 11/20/2001, create a directory to store header files which are compiler specific
    compilerName="`basename $BACKEND_CXX_COMPILER`"
 
-   # echo "In GENERATE BACKEND CXX COMPILER SPECIFIC HEADERS: Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
-
    chmod u+x "${srcdir}/config/create_system_headers"
    if test "$ROSE_CXX_HEADERS_DIR" = ""; then
       dnl AC_MSG_NOTICE([ROSE_CXX_HEADERS_DIR not set ...])
@@ -210,10 +208,10 @@ compilerNameCxx="`basename ${BACKEND_CXX_COMPILER}`"
 
 AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
 [
-   compilerName="`basename $BACKEND_C_COMPILER`"
+   compilerName=$(basename "$BACKEND_C_COMPILER")
 
-   # echo "C compilerName = ${compilerName}"
-   # echo "In GENERATE BACKEND C COMPILER SPECIFIC HEADERS: Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
+   AC_MSG_NOTICE([C compilerName = ${compilerName}])
+   AC_MSG_NOTICE([BACKEND_C_COMPILER = ${BACKEND_C_COMPILER}])
 
    chmod u+x "${srcdir}/config/create_system_headers"
 

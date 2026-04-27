@@ -1,7 +1,7 @@
-#!/bin/bash -x
+#!/bin/bash
 
-# This shell script logic is isolated into a seperate shell script because it is a problem to call it from m4 files in autoconf.
+# This shell script logic is isolated into a separate shell script because it is a problem to call it from m4 files in autoconf.
 
-BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`clang --version | grep -Po '(?<=version )[^;]+' | cut -d\. -f2`
-#echo "     (script minor version number: : clang) C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
-echo "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+clang_minor=$(clang --version | sed -n 's/.*version[[:space:]]*[0-9][0-9]*\.\([0-9][0-9]*\)\..*/\1/p' | head -1)
+
+echo "$clang_minor"

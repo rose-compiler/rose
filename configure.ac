@@ -1,10 +1,10 @@
 dnl DQ (1/11/2010): Consider handing configure options as specified at:
 dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 
-dnl The version number in the AC_INIT([ROSE], [0.11.145.420])
-dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.11.145.420])
+dnl The version number in the AC_INIT([ROSE],[0.11.145.420])
+dnl do the replacement here in the configure file because AC_INIT([ROSE],[0.11.145.420])
 dnl shell variable.
-AC_INIT([ROSE], [0.11.145.420])
+AC_INIT([ROSE],[0.11.145.420])
 AC_PREREQ([2.59])
 
 # A new definition to tweak code for Autoconf 
@@ -62,7 +62,7 @@ AC_CONFIG_AUX_DIR([config])
 # AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5])
 AM_INIT_AUTOMAKE([foreign tar-pax 1.11])
 
-AM_CONFIG_HEADER([rose_config.h])
+AC_CONFIG_HEADERS([rose_config.h])
 
 # TOO1 (9/23/2013): Use the builtin verbose mechanism of Automake:
 #

@@ -352,6 +352,11 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
               BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=17
               BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
               BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+          elif test $XCODE_VERSION_MAJOR -eq 21; then
+            # Rasmussen (04/25/2026): Updated results for clang --version 21.0.0
+              BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=21
+              BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+              BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
           else
               AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = "$XCODE_VERSION_MAJOR"])
           fi
@@ -947,11 +952,18 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 # echo "Exiting after test of backend version number support ..."
 # exit 1
 
+# ROSE expects BACKEND_C_COMPILER to be a simple executable name/path,
+# not a command plus flags. Autoconf may append language-standard flags to CC
+# such as "-std=gnu23"; strip those here.
+
+  BACKEND_C_COMPILER=${CC%% *}
+
 # We use the name of the backend C++ compiler to generate a compiler name that will be used
 # elsewhere (CXX_ID might be a better name to use, instead we use basename to strip the path).
 # compilerName=`basename $BACKEND_CXX_COMPILER`
-  C_COMPILER_NAME=`basename $BACKEND_C_COMPILER`
-  COMPILER_NAME=`basename $BACKEND_CXX_COMPILER`
+  C_COMPILER_NAME=$(basename "$BACKEND_C_COMPILER")
+  COMPILER_NAME=$(basename "$BACKEND_CXX_COMPILER")
+
 # echo "default back-end compiler for generated preprocessors will be: $BACKEND_CXX_COMPILER"
 # export BACKEND_CXX_COMPILER
 # AC_DEFINE_UNQUOTED([CXX_COMPILER_NAME],"$BACKEND_CXX_COMPILER",[Name of backend C++ compiler.])
@@ -1077,6 +1089,8 @@ BACKEND_CXX_COMPILER_VERSION="`echo|$BACKEND_CXX_COMPILER -dumpfullversion -dump
 BACKEND_C_COMPILER_VERSION="`echo|$BACKEND_C_COMPILER -dumpfullversion -dumpversion`"
 BACKEND_C_COMPILER_NAME="`basename $BACKEND_C_COMPILER`"
 if test "x$BACKEND_CXX_COMPILER_VERSION" != "x$BACKEND_C_COMPILER_VERSION"; then
+  AC_MSG_NOTICE([the backend C compiler version is "$BACKEND_C_COMPILER_VERSION"])
+  AC_MSG_NOTICE([the backend C++ compiler version is "$BACKEND_CXX_COMPILER_VERSION"])
   AC_MSG_FAILURE([the backend C++ and C compilers must be the same])
 fi
 # TOO (2/16/2011): Detect Thrifty (GCC 3.4.4) compiler

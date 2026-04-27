@@ -1,7 +1,7 @@
-#!/bin/bash -x
+#!/bin/bash
 
-# This shell script logic is isolated into a seperate shell script because it is a problem to call it from m4 files in autoconf.
+# This shell script logic is isolated into a separate shell script because it is a problem to call it from m4 files in autoconf.
 
-BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`clang --version | grep -Po '(?<=version )[^;]+' | cut -d\. -f1`
-# echo "     (script major version number: clang) C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
-echo "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
+clang_major=$(clang --version | sed -n 's/.*version \([0-9][0-9]*\)\..*/\1/p' | head -1)
+
+echo "$clang_major"

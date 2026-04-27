@@ -300,9 +300,12 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
         # This ideally gives us the widest coverage of backend compilers which may only partially support newer language
         # versions.
           if [ ! -s "$tmpFile" ]; then
-              secondaryVersionName=$(echo "${version}_alt" | sed --expression="s/\+/p/g") # Build the other version's variable name
+              secondaryVersionName=${version}_alt
+              secondaryVersionName=${secondaryVersionName//+/p}
               secondaryVersion=${!secondaryVersionName} # Bash indirection to look up the variable by the name stored in $secondaryVersionName
-              "$1" -E -dM -x $tmpLanguage -std=$secondaryVersion /dev/null 2> /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
+
+              "$1" -E -dM -x $tmpLanguage -std=$secondaryVersion /dev/null 2> /dev/null |
+              grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
           fi
 
           if [ $? -ne 0 ]; then
