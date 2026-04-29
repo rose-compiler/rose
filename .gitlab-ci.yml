@@ -229,6 +229,9 @@ Clang-Mac:
 Memory-Poisoning:
     extends: .develop-base
 
+Check-Warnings:
+    extends: .develop-base
+
 #jobs for nightly merging and status testing --------------------------------------------------------------------------------------------------------------------
 .status-base:
     rules:
