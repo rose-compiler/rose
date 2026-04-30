@@ -83,11 +83,7 @@ dnl out to a temporary file and run the Unix file(1) command on it, which is way
 dnl to test for lots of magic numbers.  Used by src/Rose/BinaryAnalyses/Magic.h. [2015-01]
 ROSE_SUPPORT_LIBMAGIC
 
-
-
-
 dnl  Some of the following need to be reevaluated to see whether they're actually used. [Matzke 2015-01-21]
-
 
 # Is the C++ libyaml available? [https://code.google.com/p/yaml-cpp]
 ROSE_SUPPORT_YAMLCPP
@@ -175,7 +171,7 @@ TEST_SMT_SOLVER=""
 AC_ARG_WITH(smt-solver,
 [  --with-smt-solver=PATH       Specify the path to an SMT-LIB compatible SMT solver.  Used only for testing.],
 if test "x$with_smt_solver" = "xcheck" -o "x$with_smt_solver" = "xyes"; then
-  AC_ERROR([--with-smt-solver cannot be auto-detected])
+  AC_MSG_ERROR([--with-smt-solver cannot be auto-detected])
 fi
 if test "x$with_smt_solver" != "xno"; then
   TEST_SMT_SOLVER="$with_smt_solver"

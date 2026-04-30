@@ -22,7 +22,7 @@ AC_DEFUN([ACROSE_ENABLE_ROSEHPCT], [
 
 AC_MSG_CHECKING([whether user wants to build ROSE-HPCT])
 AC_ARG_ENABLE([rosehpct],
-  AC_HELP_STRING([--enable-rosehpct],
+  AS_HELP_STRING([--enable-rosehpct],
     [enable build of the ROSE-HPCT module]),
   [acrose_enable_rosehpct=$enableval],
   [acrose_enable_rosehpct=yes]

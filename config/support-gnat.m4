@@ -22,18 +22,8 @@ else
    gnat_path=$with_gnat
    AC_MSG_NOTICE([GNAT supported in ROSE: gnat path = "$gnat_path"])
 
- # GNAT_SYSTEM_TYPE="`$gnat_path/bin/gnat.system.type`"
- # GNAT_LIBDIR="$gnat_path/$GNAT_SYSTEM_TYPE"
- # GNAT_EXTRA_LIBS="-L$GNAT_LIBDIR -Wl,-rpath,$GNAT_LIBDIR -lrt"
- # AC_CHECK_LIB(gnatc,StartGNAT,[:],[AC_ERROR([Unable to link to GNAT!])],[$GNAT_EXTRA_LIBS])
-
- # GNAT_INCLUDES="-I$gnat_path/include"
    GNAT_INCLUDES="-I$gnat_path"
- # GNAT may includes its own old copy of libstdc++ in its bin directory so we need to override this with the system provided one
- # GNAT_LIBS="-Wl,-rpath,/usr/lib -lgnatc $GNAT_EXTRA_LIBS"
    AC_SUBST(GNAT_INCLUDES)
- # AC_SUBST(GNAT_LIBS)
- # AC_SUBST(GNAT_LIBDIR)
 
    AC_DEFINE([USE_ROSE_GNAT_SUPPORT],1,[Controls use of ROSE support for GNAT ADA frontend Support.])
 fi

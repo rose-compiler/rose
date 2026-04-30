@@ -3,7 +3,7 @@ AC_DEFUN([ROSE_SUPPORT_CAPSTONE],[
 
     dnl Parse configure command-line switches
     AC_ARG_WITH([capstone],
-	        [AC_HELP_STRING([[[[--with-capstone[=PREFIX]]]]], dnl yes, we really need 4 quotes (autoconf 2.6.1)!
+	        [AS_HELP_STRING([[[[--with-capstone[=PREFIX]]]]], dnl yes, we really need 4 quotes (autoconf 2.6.1)!
 		                [Use libcapstone available from http://www.capstone-engine.org for free.])],
 		[capstone=$withval],
 		[capstone=no])

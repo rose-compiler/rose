@@ -5,7 +5,7 @@ AC_DEFUN([ROSE_SUPPORT_I386],[
 	AC_MSG_CHECKING([for i386 support (see --enable-i386)])
 	
 	AC_ARG_ENABLE([i386],
-		      [AC_HELP_STRING([--enable-i386],
+		      [AS_HELP_STRING([--enable-i386],
 				      [If explicitly enabled, the build system will attempt to create 32-bit x86
 				       programs for use as input to ROSE binary support testing and those tests
 				       will be required to pass.  If explicitly disabled, 32-bit x86 support is

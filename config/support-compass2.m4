@@ -28,7 +28,7 @@ AC_DEFUN([ROSE_SUPPORT_COMPASS2],
 
   WANT_COMPASS="no"
   AC_ARG_ENABLE([compass2],
-      AC_HELP_STRING(
+      AS_HELP_STRING(
           [--enable-compass2],
           [build the Compass2 static analysis tool under projects/]
       ),

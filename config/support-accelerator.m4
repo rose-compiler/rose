@@ -72,7 +72,7 @@ then
         AC_DEFINE_UNQUOTED([OPENCL_LIB_DIR], "$with_opencl_lib", [OpenCL libraries directory])
         if test "$with_opencl_inc" == ""
         then
-                 AC_ERROR([Need OpenCL headers directory if the libraries directory are provided])
+                 AC_MSG_ERROR([Need OpenCL headers directory if the libraries directory are provided])
         fi
 fi
 AM_CONDITIONAL(ROSE_HAVE_OPENCL_LIB, test "$with_opencl_lib" != "")

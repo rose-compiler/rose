@@ -6,7 +6,7 @@ AC_DEFUN([ROSE_SUPPORT_EDG], [
     ###############################################################################################################################
 
     AC_ARG_ENABLE([edg-version],
-                  [AC_HELP_STRING([--enable-edg-version=VERSION],
+                  [AS_HELP_STRING([--enable-edg-version=VERSION],
                                   [Specifies the version of EDG to use as the parser for C/C++ when ROSE is configured
                                    to be able to analyze C and C++. Specifying a version number with this switch causes
                                    that version of the EDG library to be used by either compiling it from source code
@@ -71,7 +71,7 @@ AC_DEFUN([ROSE_SUPPORT_EDG], [
     ###############################################################################################################################
 
     AC_ARG_ENABLE([edg-compile],
-                  [AC_HELP_STRING([--enable-edg-compile=maybe|yes|no],
+                  [AS_HELP_STRING([--enable-edg-compile=maybe|yes|no],
 				  [Whether to compile the Edison Design Group (EDG) C/C++ parsing library from source code.
 				   The default, "maybe", means that the library is compiled from source code if the source code
 				   is available (it's proprietary) otherwise the build will attempt to download a precompiled

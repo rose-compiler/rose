@@ -37,7 +37,7 @@ acx_libxml2_libs="${LIBXML2_LIBS}"
 
 dnl First, check for a user-specified root path
 AC_ARG_WITH(libxml2,
-  [AC_HELP_STRING([--with-libxml2=yes|no|<dir>],
+  [AS_HELP_STRING([--with-libxml2=yes|no|<dir>],
     [parse XML using libxml2 installed in <dir>])
   ])
 case $with_libxml2 in

@@ -25,7 +25,7 @@ else
    MAPLE_SYSTEM_TYPE="`$maple_path/bin/maple.system.type`"
    MAPLE_LIBDIR="$maple_path/$MAPLE_SYSTEM_TYPE"
    MAPLE_EXTRA_LIBS="-L$MAPLE_LIBDIR -Wl,-rpath,$MAPLE_LIBDIR -lrt"
-   AC_CHECK_LIB(maplec,StartMaple,[:],[AC_ERROR([Unable to link to Maple!])],[$MAPLE_EXTRA_LIBS])
+   AC_CHECK_LIB(maplec,StartMaple,[:],[AC_MSG_ERROR([Unable to link to Maple!])],[$MAPLE_EXTRA_LIBS])
 
    MAPLE_INCLUDES="-I$maple_path/extern/include"
    # Maple includes its own old copy of libstdc++ in its bin directory so we need to override this with the system provided one
