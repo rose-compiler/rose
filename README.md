@@ -9,25 +9,20 @@ http://www.rosecompiler.org/
 ROSE is not grep, sed, LLVM, or a Perl script. A ROSE Tool uses the ROSE compiler-based infrastructure to parse code into a complete Abstract Syntax Tree (AST). The AST contains all the syntax and semantic information in the original code, and has a rich API supporting sophisticated analysis and transformations. The ROSE Tool queries the AST and reports on and/or changes the AST, then may emit new code from the AST. All ROSE Tools can thus precisely replicate the parsing and semantic analysis behaviour of multiple compiler languages, vendors, and versions. New ROSE Tools can quickly be created by customers or by the ROSE Team. ROSE is open-source, and is portable across a large and expanding range of platforms. ROSE Tools can process large code bases, and the ROSE infrastructure and ROSE Tool collection are continuously upgraded and extended by the LLNL ROSE Team and outside contributors.
 
 # Installation Instructions
-From the source tree run `./build`. Then navigate to your build tree and run configure and make.
+ROSE requires CMake version >= 3.15
+
+Rose supports multiple languages, for this example we will only enable C support.
+
+Assuming an out-of-source build in a directory called "rosebuild"
+
 ```
-../src/configure --prefix=/path/for/ROSE/install \
-                 --enable-languages=c,c++ \
-                 --with-boost=/path/to/boost/install
-make -j${NUM_PROCESSORS}
-make install -j${NUM_PROCESSORS}
-make check -j${NUM_PROCESSORS}
+mkdir rosebuild
+cd rosebuild
+cmake .. -DCMAKE_INSTALL_PREFIX=/path/for/ROSE/install \
+         -DENABLE_C=ON
+make -j${NUM_PROCESSORS} install
 ```
 
-For Ubuntu 18.04, we have experimental support for installating ROSE pre-built binaries packages using apt-get
-```
-sudo apt-get install software-properties-common
-sudo add-apt-repository ppa:rosecompiler/rose-development # Replace rose-development with rose-stable for release version
-sudo apt-get install rose
-sudo apt-get install rose-tools # Optional: Installs ROSE tools in addition to ROSE Core
-```
-
-For full install instructions go to https://github.com/rose-compiler/rose/wiki/How-to-Set-Up-ROSE
 
 # Supported Compilers
 When ROSE is configured with c/c++ support it is required to download an EDG binary. Currently we generate these for GCC 7 through 12. The support for 11 and 12 is in progress, so for fully supported versions use GCC 7 through 10.
@@ -45,3 +40,10 @@ When not using c/c++ support GCC 7 through 13 are supported.
 For more information about ROSE and how to use it visit the github wiki at https://github.com/rose-compiler/rose/wiki
 
 The ROSE API can be found at http://doxygen.rosecompiler.org. The API can also be made locally by going to `cd $ROSE_BUILD/docs/Rose` and running `make doxygen_docs`. The html pages can then be found in `${ROSE_BUILD}/docs/Rose/ROSE_WebPages` and can be easily viewed by pointing your browser at `${ROSE_BUILD}/docs/Rose/ROSE_WebPages`.
+
+
+# License
+This project is licensed under the BSD License - see the LICENSE.md file for details
+SPDX-License-Identifier: BSD-3-Clause
+
+LLNL-CODE-155962
