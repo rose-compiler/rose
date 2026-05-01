@@ -820,20 +820,16 @@ class AttributeListMap {
 
 
        template<typename IteratorT>
-         void attach_line_to_macro_call(std::vector<IteratorT*> vec){
-               }
+       void attach_line_to_macro_call(std::vector<IteratorT*> /*vec*/) {}
 
        template <typename StringT, typename IteratorT>
-               inline StringT
-               as_string(IteratorT it, IteratorT end)
-               {
-                       StringT result;
-                       for (/**/; it != end; ++it)
-                       {
-                               result += (*it).get_value();
-                       }
-                       return result;
-               }
+       inline StringT as_string(IteratorT it, IteratorT end) {
+           StringT result;
+           for (/**/; it != end; ++it) {
+               result += (*it).get_value();
+           }
+           return result;
+       }
 };
 #endif
 

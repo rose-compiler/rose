@@ -10,12 +10,10 @@
 #include <vector>
 #include <string>
 
-struct SgProject;
-
+class SgProject;
 
 namespace Rose {
 namespace BinaryAnalysis {
-
 
 /// A StringFinder class for CIL binaries
 /// \todo integrate with the binary StringFinder
