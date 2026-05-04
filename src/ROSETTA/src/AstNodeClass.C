@@ -129,10 +129,7 @@ bool
 AstNodeClass::isDerivedFrom(const string & s) const 
    {
   // DQ (10/11/2014): This function checks if the input name is a base class of this AstNodeClass.
-
-#if 1
       printf ("In AstNodeClass::isBaseClass(): s = %s this = %p = %s \n",s.c_str(),this,this->getName().c_str());
-#endif
 
      bool returnValue = false;
      AstNodeClass* temp = const_cast<AstNodeClass*>(this);
@@ -143,9 +140,7 @@ AstNodeClass::isDerivedFrom(const string & s) const
 
      if (temp != NULL && temp->getName() == s)
         {
-#if 1
           printf ("Found matching AstNodeClass name: s = %s \n",s.c_str());
-#endif
           returnValue = true;
         }
 
@@ -310,331 +305,232 @@ AstNodeClass::buildConstructorBody ( bool withInitializers )
                     ROSE_ABORT();
              }
        }
-
-  // printf ("In buildConstructorBody() localList: returnString = %s \n",returnString.c_str());
-     ROSE_ASSERT (localExcludeList.size() == 0);
-
-  // printf ("Leaving buildConstructorBody() \n");
+     ASSERT_require(localExcludeList.size() == 0);
 
      return returnString;
    }
 
 string
 AstNodeClass::buildConstructorBodyForEssentialDataMembers() {
-  string returnString;
-  //vector<GrammarString *> localList = getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+    string returnString;
+    vector<GrammarString*> includeList;
+    vector<GrammarString*> excludeList;
 
-  vector<GrammarString *> includeList;
-  vector<GrammarString *> excludeList;
-  // now generate the additions to the lists from the parent node subtree lists
-  associatedGrammar->generateStringListsFromLocalLists ( *this, includeList, excludeList, &AstNodeClass::getMemberDataPrototypeList );
+    // now generate the additions to the lists from the parent node subtree lists
+    associatedGrammar->generateStringListsFromLocalLists(*this, includeList, excludeList, &AstNodeClass::getMemberDataPrototypeList);
 
-  //  for( vector<GrammarString *>::iterator stringListIterator = localList.begin();
-  for( vector<GrammarString *>::iterator stringListIterator = includeList.begin();
-       stringListIterator != includeList.end();
-       stringListIterator++ ) {
-    string variableNameString = (*stringListIterator)->getVariableNameString();
-    if(!associatedGrammar->isFilteredMemberVariable(variableNameString)) {
-      returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
+    for (auto it = includeList.begin(); it != includeList.end(); ++it) {
+        string variableNameString{(*it)->getVariableNameString()};
+        if (!associatedGrammar->isFilteredMemberVariable(variableNameString)) {
+            returnString = returnString + "    p_" + variableNameString + " = " + variableNameString + ";\n";
+        }
     }
-  }
-  return returnString;
+
+    return returnString;
 }
 
+StringUtility::FileWithLineNumbers
+AstNodeClass::buildCopyMemberFunctionHeader() {
+    StringUtility::FileWithLineNumbers returnString;
 
-StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionHeader ()
-   {
-  // DQ (3/25/3006): I put this back in because it had the logic for where the copy function required 
-  // and not required which is required to match the other aspects of the copy mechanism code generation.
-  // DQ (3/24/2006): This function declaration is now generated similar to the rest in Common.code
-  // printf ("This function should no longer be called \n");
-  // ROSE_ASSERT(false);
-
-     StringUtility::FileWithLineNumbers returnString;
-     if (automaticGenerationOfCopyFunction)
-        {
-       // DQ (10/13/2007): Make this the function prototype for the copy mechanism.
-       // This also fixes a bug where the code above was causing more than just the 
-       // prototype to be output in the Cxx_Grammar.h header file.
-
-       // printf ("In AstNodeClass::buildCopyMemberFunctionHeader(): baseName = %s \n",this->baseName.c_str());
-
-       // DQ (3/21/2017): Added support to eliminate override warning in Clang C++11 mode.
-       // returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const;", "" /* "<copy member function>" */, 1));
-          if (baseName == "Node")
-             {
-               returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const;", "" /* "<copy member function>" */, 1));
-             }
-            else
-             {
-               returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const override;", "" /* "<copy member function>" */, 1));
-             }
+    if (automaticGenerationOfCopyFunction) {
+        if (baseName == "Node") {
+            returnString.push_back(StringUtility::StringWithLineNumber("    virtual SgNode* copy(SgCopyHelp& help) const;", "" /* "<copy member function>" */, 1));
         }
-       else
-        {
-       // DQ (10/13/2007): Not clear when or why but this applies to only the SgSymbol IR node!
-          returnString.push_back(StringUtility::StringWithLineNumber("       // copy functions omitted for $CLASSNAME", "" /* "<copy member function>" */, 1));
+        else {
+            returnString.push_back(StringUtility::StringWithLineNumber("    virtual SgNode* copy(SgCopyHelp& help) const override;", "" /* "<copy member function>" */, 1));
         }
+    }
+    else {
+        returnString.push_back(StringUtility::StringWithLineNumber("    // copy functions omitted for $CLASSNAME", "" /* "<copy member function>" */, 1));
+    }
 
-  // printf ("In AstNodeClass::buildCopyMemberFunctionHeader(): returnString = %s \n",returnString);
+    return returnString;
+}
 
-     return returnString;
-   }
+StringUtility::FileWithLineNumbers
+AstNodeClass::buildCopyMemberFunctionSource() {
+    // This function builds the copy member function's body
 
-StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionSource ()
-   {
-  // This function builds the copy member function's body
+    StringUtility::FileWithLineNumbers returnString;
 
-  // printf ("In AstNodeClass::buildCopyMemberFunctionSource(): class name = %s \n",name);
+    if (automaticGenerationOfCopyFunction == true) {
+        string filename{"../Grammar/copyMemberFunction.macro"};
+        StringUtility::FileWithLineNumbers functionTemplateString{Grammar::readFileWithPos(filename)};
+        bool emptyConstructorArg{!generateConstructor() || getBuildDefaultConstructor()};
+        string constructArgCopy, constructArgList, postConstructCopy;
 
-     StringUtility::FileWithLineNumbers returnString;
-     if (automaticGenerationOfCopyFunction == true)
-        {
-          string constructArgCopy = "", constructArgList = "", postConstructCopy = "";
-          string filename     = "../Grammar/copyMemberFunction.macro";
-          StringUtility::FileWithLineNumbers functionTemplateString = Grammar::readFileWithPos (filename);
-          bool emptyConstructorArg = (!generateConstructor()) || getBuildDefaultConstructor ();
+        ASSERT_require(getBuildDefaultConstructor() == false);
 
-       // printf ("Derived Class AstNodeClass name = %s \n",name);
+        for (AstNodeClass* t = this; t != nullptr; t = t->getBaseClass()) {
+            string constructArgCopy1, constructArgList1, postConstructCopy1;
+            vector<GrammarString*> copyList;
 
-       // DQ (9/28/2005): We can't enforce this, but perhaps it is a good goal for ROSETTA.
-          ROSE_ASSERT(getBuildDefaultConstructor() == false);
+            copyList = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST, AstNodeClass::INCLUDE_LIST);
 
-       // DQ (9/28/2005): I think this should be a while loop and not a for 
-       // loop since the terminatation is not easily determined statically.
-          for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
-             {
-               string constructArgCopy1 = "", constructArgList1 = "", postConstructCopy1 = "";
-               vector<GrammarString *> copyList;
-               vector<GrammarString *>::iterator stringListIterator;
+            for (auto it = copyList.begin(); it != copyList.end(); ++it) {
+                GrammarString* data{*it};
+                if (data->getToBeCopied() == NO_COPY_DATA) {
+                    continue;
+                }
 
-            // printf ("Possible base class AstNodeClass name = %s \n",(*t).name);
+                // Have all the code generation be in the lower level function (not mixed up)
+                string varNameString{data->getVariableNameString() + "_copy"};
+                string varDecl{"    " + data->getTypeNameString() + " " + varNameString + ";\n"};
 
-               copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
+                if (!emptyConstructorArg && data->getIsInConstructorParameterList() != NO_CONSTRUCTOR_PARAMETER) {
+                    string comment{"    // Copy constructor parameter data member: " + varNameString + "\n"};
+                    constructArgCopy1 += comment;
 
-               for( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
-                  {
-                    GrammarString *data = *stringListIterator;
-                    if (data->getToBeCopied() == NO_COPY_DATA)
-                       {
-                      // printf ("Skipping the generation of code to copy this data member (class = %s, data member = %s) \n",name,data->variableNameString);
-                         continue;
-                       }
+                    // Code generated to build constructor parameters can't set the "result->xxx"
+                    // data members since the "result" class have not been built (see generated code
+                    // for more examples).
+                    bool buildConstructorArgument{true};
 
-                 // Have all the code generation be in the lower level function (not mixed up)
-                    string varNameString = string(data->getVariableNameString()) + "_copy";
-                    string varDecl = "     " + string(data->getTypeNameString()) + " " + varNameString + "; \n";
+                    constructArgCopy1 += data->buildCopyMemberFunctionSource(buildConstructorArgument);
+                    constructArgList1 += ", " + varNameString;
 
-                    if (!emptyConstructorArg && data->getIsInConstructorParameterList() != NO_CONSTRUCTOR_PARAMETER)
-                       {
-                      // DQ (9/24/2005): Added comments to generated code!
-                         string comment = string("  // Copy constructor parameter data member: ") + varNameString + string("\n");
-                         constructArgCopy1 += comment;
+                    string setParentString = data->buildCopyMemberFunctionSetParentSource();
+                    postConstructCopy += setParentString;
+                }
+                else {
+                    // Code built generated to build constructor parameters can't set the "result->xxx"
+                    // data members since the "result" class have not been built (see generated code
+                    // for more examples).
+                    bool buildConstructorArgument{false};
 
-                      // Code built generated to build constructor parameters can't set the "result->xxx" 
-                      // data members since the "result" class have not been built (see generated code 
-                      // for more examples).
-                         bool buildConstructorArgument = true;
-                         constructArgCopy1 += data->buildCopyMemberFunctionSource( buildConstructorArgument );
-                      // constructArgList1 = constructArgList1 + ", " + varNameString;
+                    switch (data->automaticGenerationOfDataAccessFunctions) {
+                      case NO_ACCESS_FUNCTIONS: {
+                        string localVarNameString{"result->p_" + data->getVariableNameString()};
+                        varNameString = localVarNameString;
 
-                         constructArgList1 += ", " + varNameString;
+                        string comment{"    // Copy non-constructor parameter data member (no access function): " + varNameString + "\n"};
+                        postConstructCopy1 += comment;
+                        postConstructCopy1 += data->buildCopyMemberFunctionSource(buildConstructorArgument);
 
-                      // DQ (9/28/2022): Fixing compiler warning for argument not used.
-                      // string setParentString = data->buildCopyMemberFunctionSetParentSource(varNameString);
-                         string setParentString = data->buildCopyMemberFunctionSetParentSource();
-                         postConstructCopy += setParentString;
-                       }
-                      else
-                       {
-                      // Code built generated to build constructor parameters can't set the "result->xxx" 
-                      // data members since the "result" class have not been built (see generated code 
-                      // for more examples).
-                         bool buildConstructorArgument = false;
+                        string setParentString = data->buildCopyMemberFunctionSetParentSource();
+                        postConstructCopy1 += setParentString;
+                        break;
+                      }
 
-                         switch (data->automaticGenerationOfDataAccessFunctions)
-                            {
-                              case NO_ACCESS_FUNCTIONS:
-                                 {
-                                   string localVarNameString = "result->p_" + string(data->getVariableNameString());
-                                   varNameString = localVarNameString;
+                      case BUILD_LIST_ACCESS_FUNCTIONS: {
+                        string localVarNameString{"result->get_" + data->getVariableNameString() + "()"};
+                        varNameString = localVarNameString;
 
-                                // DQ (9/24/2005): Added comments to generated code!
-                                   string comment = string("  // Copy non-constructor parameter data member (no access function): ") + varNameString + string("\n");
-                                   postConstructCopy1 += comment;
+                        string comment{"    // Copy non-constructor parameter data member (list access function): " + varNameString + "\n"};
+                        postConstructCopy1 += comment;
 
-                                // postConstructCopy1 += varDecl;
-                                   postConstructCopy1 += data->buildCopyMemberFunctionSource(buildConstructorArgument);
-#if 1
-                                // string setParentString = "     " + string(data->getVariableNameString()) + "_copy->set_parent(result);\n";
-                                // DQ (9/28/2022): Fixing compiler warning for argument not used.
-                                // string setParentString = data->buildCopyMemberFunctionSetParentSource(localVarNameString);
-                                   string setParentString = data->buildCopyMemberFunctionSetParentSource();
-                                   postConstructCopy1 += setParentString;
-#endif
-                                   break;
-                                 }
+                        postConstructCopy1 += data->buildCopyMemberFunctionSource(buildConstructorArgument);
+                        string setParentString = data->buildCopyMemberFunctionSetParentSource();
+                        postConstructCopy1 += setParentString;
+                        break;
+                      }
 
-                              case BUILD_LIST_ACCESS_FUNCTIONS:
-                                 {
-                                   string localVarNameString = "result->get_" + string(data->getVariableNameString()) + "()";
-                                   varNameString = localVarNameString;
+                      case BUILD_ACCESS_FUNCTIONS:
+                      case BUILD_FLAG_ACCESS_FUNCTIONS: {
+                        string comment{"  // Copy non-constructor parameter data member (access function): " + varNameString + "\n"};
+                        postConstructCopy1 += comment;
 
-                                // DQ (9/24/2005): Added comments to generated code!
-                                   string comment = string("  // Copy non-constructor parameter data member (list access function): ") + varNameString + string("\n");
-                                   postConstructCopy1 += comment;
+                        postConstructCopy1 += data->buildCopyMemberFunctionSource(buildConstructorArgument);
+                        string setParentString = data->buildCopyMemberFunctionSetParentSource();
+                        postConstructCopy1 += setParentString;
+                        break;
+                      }
 
-                                   postConstructCopy1 += data->buildCopyMemberFunctionSource(buildConstructorArgument);
-#if 1
-                                // string setParentString = "     " + string(data->getVariableNameString()) + "_copy.set_parent(result);\n";
-                                // DQ (9/28/2022): Fixing compiler warning for argument not used.
-                                // string setParentString = data->buildCopyMemberFunctionSetParentSource(localVarNameString);
-                                   string setParentString = data->buildCopyMemberFunctionSetParentSource();
-                                   postConstructCopy1 += setParentString;
-#endif
-                                   break;
-                                 }
+                      default:
+                        ASSERT_require2(false, "Default reached in AstNodeClass::buildCopyMemberFunctionSource\n");
+                    }
+                }
+            }
 
-                              case BUILD_ACCESS_FUNCTIONS:
-                              case BUILD_FLAG_ACCESS_FUNCTIONS:
-                                 {
-
-                                // DQ (9/24/2005): Added comments to generated code!
-                                   string comment = string("  // Copy non-constructor parameter data member (access function): ") + varNameString + string("\n");
-                                   postConstructCopy1 += comment;
-
-                                // postConstructCopy1 += varDecl;
-                                // DQ (10/22/2005): Simpler code
-                                   postConstructCopy1 += data->buildCopyMemberFunctionSource(buildConstructorArgument);
-                                // string setParentString = "     " + string(data->getVariableNameString()) + "_copy.set_parent(result);\n";
-                                // DQ (9/28/2022): Fixing compiler warning for argument not used.
-                                // string setParentString = data->buildCopyMemberFunctionSetParentSource(varNameString);
-                                   string setParentString = data->buildCopyMemberFunctionSetParentSource();
-                                // postConstructCopy = setParentString + postConstructCopy;
-                                   postConstructCopy1 += setParentString;
-                                   break;
-                                 }
-
-                              default:
-                                 {
-                                   printf ("Default reached in AstNodeClass::buildCopyMemberFunctionSource \n");
-                                   ROSE_ABORT();
-                                 }
-                            }
-                       }
-                       }
-
-               constructArgCopy  = constructArgCopy1  + constructArgCopy;
-               constructArgList  = constructArgList1  + constructArgList;
-               postConstructCopy = postConstructCopy1 + postConstructCopy;
-             }
-
-       // Not fond of this approach to fixing up the leading "," in what is generated above.
-          if (constructArgList != "")
-             {
-               constructArgList = constructArgList.c_str() + 1; // get rid of the preceding ','
-             }
-
-       // DQ (10/23/2007): This function should not be called, the SageInterface::rebuildSymbolTable() function is called by the AST fixupCopy member functions.
-       // postConstructCopy += generateCodeForSymbolTableFixup();
-
-       // Put this string on the heap so it can be managed by copyEdit()
-          returnString = functionTemplateString;
-       // DQ (9/28/2005): Migrating to the use of string class everywhere in ROSETTA
-          returnString = StringUtility::copyEdit (returnString,"virtual ", "");
-          returnString = StringUtility::copyEdit (returnString,"$CONSTRUCT_ARG_COPY",constructArgCopy);
-          returnString = StringUtility::copyEdit (returnString,"$CONSTRUCT_ARG_LIST",constructArgList);
-          returnString = StringUtility::copyEdit (returnString,"$POST_CONSTRUCT_COPY",postConstructCopy);
+            constructArgCopy  = constructArgCopy1  + constructArgCopy;
+            constructArgList  = constructArgList1  + constructArgList;
+            postConstructCopy = postConstructCopy1 + postConstructCopy;
         }
 
-     return returnString;
-   }
+        // Not fond of this approach to fixing up the leading "," in what is generated above.
+        if (constructArgList != "") {
+            constructArgList = constructArgList.c_str() + 1; // get rid of the preceding ','
+        }
 
+        returnString = functionTemplateString;
+        returnString = StringUtility::copyEdit(returnString, "virtual ", "");
+        returnString = StringUtility::copyEdit(returnString, "$CONSTRUCT_ARG_COPY", constructArgCopy);
+        returnString = StringUtility::copyEdit(returnString, "$CONSTRUCT_ARG_LIST", constructArgList);
+        returnString = StringUtility::copyEdit(returnString, "$POST_CONSTRUCT_COPY", postConstructCopy);
+    }
 
-void AstNodeClass::setConnectionToLowerLevelGrammar ( AstNodeClass & X )
-   {
-     lowerLevelGramaticalElement = &X;
-     ROSE_ASSERT (lowerLevelGramaticalElement != NULL);
-   }
+    return returnString;
+}
 
-AstNodeClass & AstNodeClass::getConnectionToLowerLevelGrammar ()
-   {
-     ROSE_ASSERT (lowerLevelGramaticalElement != NULL);
-     return *lowerLevelGramaticalElement;
-   }
+void AstNodeClass::setConnectionToLowerLevelGrammar(AstNodeClass& X) {
+    lowerLevelGramaticalElement = &X;
+    ASSERT_not_null(lowerLevelGramaticalElement);
+}
+
+AstNodeClass& AstNodeClass::getConnectionToLowerLevelGrammar() {
+    ASSERT_not_null(lowerLevelGramaticalElement);
+    return *lowerLevelGramaticalElement;
+}
 
 void
-AstNodeClass::show(size_t indent) const
-   {
-     ROSE_ASSERT (this != NULL);
-     if (subclasses.empty()) { // AstNodeClass
-       printf ("%s ",name.c_str());
-     } else { // Nonterminal
-       for (size_t i=0; i < indent; i++) {
-         printf ("..");
-       }
-       for(vector<AstNodeClass*>::const_iterator terminalIterator =
-             subclasses.begin(); 
-           terminalIterator != subclasses.end(); 
-           terminalIterator++) {
-         ROSE_ASSERT((*terminalIterator)!=NULL);
-      // DQ (9/28/2022): Fixing compiler warning for argument not used.
-      // displayName(indent); cout << " -> "; (*terminalIterator)->AstNodeClass::show(); cout << ";" << endl; //MS edge
-         displayName(); cout << " -> "; (*terminalIterator)->AstNodeClass::show(); cout << ";" << endl; //MS edge
-         if ((*terminalIterator)->getCanHaveInstances()) {
-           (*terminalIterator)->show();
-           cout << "[style=bold];" << endl; // Terminals are bold! MS node
-         }
-       }
-     }
-   }
+AstNodeClass::show(size_t indent) const {
+    ASSERT_this();
+    if (subclasses.empty()) { // AstNodeClass
+        printf ("%s ",name.c_str());
+    } else { // Nonterminal
+        for (size_t i=0; i < indent; i++) {
+            printf ("..");
+        }
+        for (auto it = subclasses.begin(); it != subclasses.end(); ++it) {
+            ASSERT_not_null(*it);
+            displayName(); cout << " -> "; (*it)->AstNodeClass::show(); cout << ";" << endl; //MS edge
+            if ((*it)->getCanHaveInstances()) {
+                (*it)->show();
+                cout << "[style=bold];" << endl; // Terminals are bold! MS node
+            }
+        }
+    }
+}
 
-// DQ (9/28/2022): Fixing compiler warning for argument not used.
-// void AstNodeClass::displayName ( int indent ) const
 void
-AstNodeClass::displayName() const
-   {
-     ROSE_ASSERT (this != NULL);
-     printf ("%s ",name.c_str());
-   }
+AstNodeClass::displayName() const {
+    ASSERT_this();
+    printf ("%s ", name.c_str());
+}
 
 void 
-AstNodeClass::setLexeme ( const string& label )
-   {
-     this->lexeme = label;
-   }
+AstNodeClass::setLexeme(const string& label) {
+    this->lexeme = label;
+}
 
 const string&
-AstNodeClass::getLexeme () const
-   {
-     return lexeme;
-   }
+AstNodeClass::getLexeme() const {
+    return lexeme;
+}
 
 void 
-AstNodeClass::setName ( const string& label, const string& tagName )
-   {
-  // baseName is the same as "name" but name will be modified later to 
-  // include the $GRAMMAR_PREFIX_ we need to keep the base around so that 
-  // the $PARANT_GRAMMARS_BASE_ can be applied in connections to lower 
-  // level grammars (e.g. parser's input parameters are elements of the 
-  // parent's grammar.
+AstNodeClass::setName(const string& label, const string& tagName) {
+    // baseName is the same as "name" but name will be modified later to
+    // include the $GRAMMAR_PREFIX_ we need to keep the base around so that
+    // the $PARANT_GRAMMARS_BASE_ can be applied in connections to lower
+    // level grammars (e.g. parser's input parameters are elements of the
+    // parent's grammar.
+    ASSERT_this();
 
-     ROSE_ASSERT (this != NULL);
+    this->baseName = this->name = label;
 
-  // printf ("In AstNodeClass::setName ( label = %s tagName = %s ) \n",
-  //      (label == NULL) ? "NULL" : label,(tagName == NULL) ? "NULL" : tagName);
+    // set the lexeme to match the name
+    setLexeme(name);
 
-     this->baseName = this->name = label;
-
-  // set the lexeme to match the name
-     setLexeme(name);
-
-  // Setup the tag name using the name if the second parameter is NULL
-     if (tagName != "")
-          this->tag = tagName;
-       else
-          this->tag = name + "Tag";
-   }
+    // Setup the tag name using the name if the second parameter is NULL
+    if (tagName != "") {
+        this->tag = tagName;
+    }
+    else {
+        this->tag = name + "Tag";
+    }
+}
 
 void
 AstNodeClass::setGrammar ( Grammar* grammarPointer )
@@ -657,9 +553,6 @@ AstNodeClass::getName () const
    {
      ROSE_ASSERT (this != NULL);
      ROSE_ASSERT (!name.empty());
-#if 0
-     printf ("In AstNodeClass::getName(): name = %s \n",name);
-#endif
      return name;
    }
 
@@ -1000,16 +893,8 @@ AstNodeClass::buildDataAccessFunctions ( const GrammarString & inputMemberData)
              }
         }
 
-  // functionString = GrammarString::copyEdit (functionString,"$SET_PARENT_FUNCTION",setParentFunctionCallString);
      functionString = GrammarString::copyEdit (functionString,"$TEST_DATA_POINTER",setParentFunctionCallString);
 
-#if 0
-  // DQ (8/9/2008): Debugging output of access function for case of BUILD_LIST_ACCESS_FUNCTIONS
-     if (config == BUILD_LIST_ACCESS_FUNCTIONS)
-          printf ("functionString = %s \n",functionString.c_str());
-#endif
-
-  // BP : 10/18/2001, delete unwanted memory
      delete codeString;
      return functionString;
    }
@@ -1360,7 +1245,6 @@ AstNodeClass::consistencyCheck() const
    {
      ROSE_ASSERT (associatedGrammar != NULL);
 
-#if 1
   // local index variable
      int j = 0, k = 0;
 
@@ -1392,7 +1276,6 @@ AstNodeClass::consistencyCheck() const
                     (*it)->consistencyCheck();
                   }
                }
-#endif
 
   // check the subclass list for valid objects
      for( vector<AstNodeClass*>::const_iterator terminalIterator = subclasses.begin(); 
@@ -1444,7 +1327,6 @@ AstNodeClass::checkListOfGrammarStrings(vector<GrammarString *>& checkList)
   return;
 }
 
-// JH (10/28/2005) :
 string
 AstNodeClass::buildPointerInMemoryPoolCheck ()
    {
@@ -1462,8 +1344,6 @@ AstNodeClass::buildPointerInMemoryPoolCheck ()
 
      string classNameString = this-> name;
      string s;
-  // s += "   std::cout << \"------------ checking pointers of " + classNameString + "  -------------------\" << std::endl;\n" ;
-  // s += "   ROSE_ASSERT ( pointer->p_freepointer == AST_FileIO::IS_VALID_POINTER() );\n";
      for (AstNodeClass *t = this; t != NULL; t = t->getBaseClass())
         {
           copyList        = t->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
@@ -1475,17 +1355,16 @@ AstNodeClass::buildPointerInMemoryPoolCheck ()
                int length = varTypeString.size();
                if (varNameString != "freepointer" )
                   {
-                    bool typeIsStarPointer = ( varTypeString.find("*") != std::string::npos) ;
+                    bool typeIsStarPointer = (varTypeString.find("*") != std::string::npos);
+
                     if ( (varTypeString == "$CLASSNAME *" ) || ( ( ( varTypeString.substr(0,15) == "$GRAMMAR_PREFIX" ) || ( varTypeString.substr(0,2) == "Sg" ) ) && typeIsStarPointer ) )
                        {
                          s += "          if ( p_" + varNameString + " != NULL )\n" ;
                          s += "             { \n" ;
                          s += "                 if ( p_" + varNameString + "->get_freepointer() == AST_FileIO::IS_VALID_POINTER() )\n" ;
                          s += "                    { \n" ;
-                         // s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
                          s += "                       if ( p_" + varNameString + "->isInMemoryPool() == false ) \n" ;
                          s += "                         { \n" ;
-                         // s += "                             std::cout << \" p_" + varNameString + " is not in memory pool of \" << p_" + varNameString + "->class_name() << std::endl;\n" ;
                          s += "                             std::cout << \"" + classNameString + " :: \";\n";
                          s += "                             std::cout << \" p_" + varNameString + " is not in memory pool of \"; \n";
                          s += "                             std::cout <<    p_" + varNameString + "->class_name() << std::endl;\n" ;
@@ -1494,15 +1373,13 @@ AstNodeClass::buildPointerInMemoryPoolCheck ()
                          s += "                  else \n" ;
                          s += "                    { \n" ;
                          s += "                       std::cout << \"" + classNameString + " :: \" << std::flush;\n" ;
-                      // s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
                          s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " = \" << p_" + varNameString + " << \" --> \" << std::flush;\n" ;
                          s += "                       std::cout << \" not valid \" << std::endl;\n" ;
-                      // s += "                       ROSE_ASSERT(false); \n" ;
                          s += "                    } \n" ;
                          s += "             } \n" ;
                          s += "\n" ;
                        }
-#if 1
+
                     if (  7 < length && varTypeString.substr( length-7, length) == "PtrList" )
                        {
                          s += "     " + varTypeString + "::iterator i_" + varNameString + " = p_" + varNameString + ".begin() ; \n" ;
@@ -1514,7 +1391,6 @@ AstNodeClass::buildPointerInMemoryPoolCheck ()
                          s += "                    { \n" ;
                          s += "                       if ( (*i_" + varNameString + ")->isInMemoryPool() == false ) \n" ;
                          s += "                         { \n" ;
-                      // s += "                             std::cout << \" p_" + varNameString + " is not in memory pool of \" << p_" + varNameString + "->class_name() << std::endl;\n" ;
                          s += "                             std::cout << \"" + classNameString + " :: \";\n";
                          s += "                             std::cout << \" p_" + varNameString + " ( list of poitners to IR nodes ), entry is not in memory pool of \"; \n";
                          s += "                             std::cout <<    (*i_" + varNameString + ")->class_name() << std::endl;\n" ;
@@ -1525,20 +1401,16 @@ AstNodeClass::buildPointerInMemoryPoolCheck ()
                          s += "                       std::cout << \"" + classNameString + " :: \" << std::flush;\n" ;
                          s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
                          s += "                       std::cout << \" entry not valid \" << std::endl;\n" ;
-                      // s += "                       ROSE_ASSERT(false); \n" ;
                          s += "                    } \n" ;
                          s += "             } \n" ;
-#if 1
                          s += "          else \n" ;
                          s += "             { \n" ;
                          s += "                 std::cout << \"" + varTypeString + " p_" + varNameString + " --> NULL \" << std::endl;\n" ;
                          s += "             } \n" ;
-#endif
                          s += "        }\n";
                          s += "\n" ;
                        }
-#endif
-#if 1
+
                     if (  9 < length && varTypeString.substr( length-9, length) == "PtrVector" )
                        {
                          s += "     " + varTypeString + "::iterator i_" + varNameString + " = p_" + varNameString + ".begin() ; \n" ;
@@ -1550,7 +1422,6 @@ AstNodeClass::buildPointerInMemoryPoolCheck ()
                          s += "                    { \n" ;
                          s += "                       if ( (*i_" + varNameString + ")->isInMemoryPool() == false ) \n" ;
                          s += "                         { \n" ;
-                      // s += "                             std::cout << \" p_" + varNameString + " is not in memory pool of \" << p_" + varNameString + "->class_name() << std::endl;\n" ;
                          s += "                             std::cout << \"" + classNameString + " :: \";\n";
                          s += "                             std::cout << \" p_" + varNameString + " ( list of poitners to IR nodes ), entry is not in memory pool of \"; \n";
                          s += "                             std::cout <<    (*i_" + varNameString + ")->class_name() << std::endl;\n" ;
@@ -1561,20 +1432,16 @@ AstNodeClass::buildPointerInMemoryPoolCheck ()
                          s += "                       std::cout << \"" + classNameString + " :: \" << std::flush;\n" ;
                          s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
                          s += "                       std::cout << \" entry not valid \" << std::endl;\n" ;
-                      // s += "                       ROSE_ASSERT(false); \n" ;
                          s += "                    } \n" ;
                          s += "             } \n" ;
-#if 1
                          s += "          else \n" ;
                          s += "             { \n" ;
                          s += "                 std::cout << \"" + varTypeString + " p_" + varNameString + " --> NULL \" << std::endl;\n" ;
                          s += "             } \n" ;
-#endif
                          s += "        }\n";
                          s += "\n" ;
                        }
-#endif
-#if 1
+
                     if (  10 < length && varTypeString.substr( length-10, length) == "PtrListPtr" )
                        {
                          std::string varTypeStringWithoutPtr = varTypeString.substr(0,varTypeString.size()-3) ;
@@ -1589,7 +1456,6 @@ AstNodeClass::buildPointerInMemoryPoolCheck ()
                          s += "                         { \n" ;
                          s += "                            if ( (*i_" + varNameString + ")->isInMemoryPool() == false ) \n" ;
                          s += "                              { \n" ;
-                      // s += "                                  std::cout << \" p_" + varNameString + " is not in memory pool of \" << p_" + varNameString + "->class_name() << std::endl;\n" ;
                          s += "                                  std::cout << \"" + classNameString + " :: \";\n";
                          s += "                                  std::cout << \" p_" + varNameString + " ( list of poitners to IR nodes ), entry is not in memory pool of \"; \n";
                          s += "                                  std::cout <<    (*i_" + varNameString + ")->class_name() << std::endl;\n" ;
@@ -1600,32 +1466,22 @@ AstNodeClass::buildPointerInMemoryPoolCheck ()
                          s += "                            std::cout << \"" + classNameString + " :: \" << std::flush;\n" ;
                          s += "                            std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
                          s += "                            std::cout << \" entry not valid \" << std::endl;\n" ;
-                      // s += "                            ROSE_ASSERT(false); \n" ;
                          s += "                         } \n" ;
                          s += "                  } \n" ;
-#if 1
                          s += "               else \n" ;
                          s += "                  { \n" ;
                          s += "                      std::cout << \"" + varTypeString + " p_" + varNameString + " --> NULL \" << std::endl;\n" ;
                          s += "                  } \n" ;
-#endif
                          s += "             }\n";
                          s += "        } \n" ;
                          s += "\n" ;
                        }
-#endif
-#if 1
+
                     if (  varTypeString == " rose_hash_multimap*" )
                        {
                          s += "     if ( p_" + varNameString + " != NULL )\n" ;
                          s += "        { \n" ;
-                         // CH (4/8/2010): Use boost::unordered instead
-                         //                      s += "#ifdef _MSCx_VER \n" ;
-                         //s += "          rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator it; \n" ;
-                         //                      s += "#else \n" ;
-                         //s += "          rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator it; \n" ;
                          s += "          rose_hash_multimap::iterator it; \n" ;
-                         //                      s += "#endif \n" ;
                          s += "          for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n" ;
                          s += "             {\n";
                          s += "               if ( it->second != NULL )\n" ;
@@ -1634,7 +1490,6 @@ AstNodeClass::buildPointerInMemoryPoolCheck ()
                          s += "                         { \n" ;
                          s += "                            if ( it->second->isInMemoryPool() == false ) \n" ;
                          s += "                              { \n" ;
-                      // s += "                                  std::cout << \" p_" + varNameString + " is not in memory pool of \" << p_" + varNameString + "->class_name() << std::endl;\n" ;
                          s += "                                  std::cout << \"" + classNameString + " :: \";\n";
                          s += "                                  std::cout << \" p_" + varNameString + " ( rose_hash_multimap, second entries (SgSymbol) ), entry is not in memory pool of \"; \n";
                          s += "                                  std::cout <<    it->second->class_name() << std::endl;\n" ;
@@ -1645,20 +1500,16 @@ AstNodeClass::buildPointerInMemoryPoolCheck ()
                          s += "                            std::cout << \"" + classNameString + " :: \" << std::flush;\n" ;
                          s += "                            std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
                          s += "                            std::cout << \" entry not valid \" << std::endl;\n" ;
-                      // s += "                            ROSE_ASSERT(false); \n" ;
                          s += "                         } \n" ;
                          s += "                  } \n" ;
-#if 1
                          s += "               else \n" ;
                          s += "                  { \n" ;
                          s += "                      std::cout << \"" + varTypeString + " p_" + varNameString + " --> NULL \" << std::endl;\n" ;
                          s += "                  } \n" ;
-#endif
                          s += "             }\n";
                          s += "        } \n" ;
                          s += "\n" ;
                        }
-#endif
                   }
              }
         }
@@ -1688,18 +1539,6 @@ AstNodeClass::buildListIteratorString( string typeName, string variableName, str
            bool typeIsSimpleListOfPointers       = (typeIsPointerToListOfPointers == false) && typeName.find("PtrList") != string::npos;
            bool typeIsList                       = typeIsPointerToList || typeIsSimpleListOfPointers;
            bool typeIsSgNode                     = typeName.find('*') != string::npos;
-
-#if 0
-           printf ("typeName                         = %s \n",typeName.c_str());
-           printf ("variableName                     = %s \n",variableName.c_str());
-           printf ("classNameString                  = %s \n",classNameString.c_str());
-           printf ("typeIsPointerToListOfPointers    = %s \n",typeIsPointerToListOfPointers ? "true" : "false");
-           printf ("typeIsPointerToListOfNonpointers = %s \n",typeIsPointerToListOfNonpointers ? "true" : "false");
-           printf ("typeIsPointerToList              = %s \n",typeIsPointerToList ? "true" : "false");
-           printf ("typeIsSimpleListOfPointers       = %s \n",typeIsSimpleListOfPointers ? "true" : "false");
-           printf ("typeIsList                       = %s \n",typeIsList ? "true" : "false");
-           printf ("typeIsSgNode                     = %s \n",typeIsSgNode ? "true" : "false");
-#endif 
 
         // One of these should be true!
            if(typeIsList!=true)
@@ -1926,15 +1765,6 @@ string AstNodeClass::buildListIteratorStringForReferenceToPointers(string typeNa
      bool typeIsSgNode                     = typeName.find('*') != string::npos;
 #endif
             
-#if 0
-     printf ("typeIsPointerToListOfPointers    = %s \n",typeIsPointerToListOfPointers ? "true" : "false");
-     printf ("typeIsPointerToListOfNonpointers = %s \n",typeIsPointerToListOfNonpointers ? "true" : "false");
-     printf ("typeIsPointerToList              = %s \n",typeIsPointerToList ? "true" : "false");
-     printf ("typeIsSimpleListOfPointers       = %s \n",typeIsSimpleListOfPointers ? "true" : "false");
-     printf ("typeIsList                       = %s \n",typeIsList ? "true" : "false");
-     printf ("typeIsSgNode                     = %s \n",typeIsSgNode ? "true" : "false");
-#endif 
-
   // One of these should be true!
      if(typeIsList!=true)
           return "";
@@ -2157,15 +1987,6 @@ std::string AstNodeClass::buildListIteratorStringForChildIndex(string typeName, 
      bool typeIsSgNode                     = typeName.find('*') != string::npos;
 #endif
             
-#if 0
-     printf ("typeIsPointerToListOfPointers    = %s \n",typeIsPointerToListOfPointers ? "true" : "false");
-     printf ("typeIsPointerToListOfNonpointers = %s \n",typeIsPointerToListOfNonpointers ? "true" : "false");
-     printf ("typeIsPointerToList              = %s \n",typeIsPointerToList ? "true" : "false");
-     printf ("typeIsSimpleListOfPointers       = %s \n",typeIsSimpleListOfPointers ? "true" : "false");
-     printf ("typeIsList                       = %s \n",typeIsList ? "true" : "false");
-     printf ("typeIsSgNode                     = %s \n",typeIsSgNode ? "true" : "false");
-#endif 
-
   // One of these should be true!
      if (typeIsList != true)
           return "";

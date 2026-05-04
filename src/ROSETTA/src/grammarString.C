@@ -40,12 +40,8 @@ GrammarString::infoFieldsToString() const {
   //   variableNameString
   //  toBeTraversed
   stringstream ss;
-#if 1
-  //ss<<   key;
-  //ss<<","<<functionNameString;
-  //ss<<","<<pureVirtualFunction;
+
   ss<<"access=";
-#if 1
   switch(automaticGenerationOfDataAccessFunctions) {
   case NO_ACCESS_FUNCTIONS: ss<<"no";break;
   case BUILD_ACCESS_FUNCTIONS: ss<<"yes";break;
@@ -53,14 +49,13 @@ GrammarString::infoFieldsToString() const {
   case BUILD_LIST_ACCESS_FUNCTIONS:ss<<"list";break;
   default:
         cerr<<"Error: unknown data access function type."<<endl;
-        ROSE_ABORT();
+        ASSERT_require(false);
   }
-#endif
   ss<<","<<"constr="<<   getIsInConstructorParameterList();
   ss<<","<<"init="<<"\""<<defaultInitializerString<<"\"";
   ss<<","<<"copy="<<toBeCopied;
   ss<<","<<"del="<<   toBeDeleted;
-#endif
+
     return ss.str();
 }
 
@@ -90,98 +85,112 @@ GrammarString::getFunctionPrototypeString () const
   // This function returns the "functionNameString" which is used to
   // hold source code and header file prototypes.  Other functions return
   // more specialized strings for constructor parameter lists etc.
-
-  // printf ("In GrammarString::getFunctionPrototypeString(): typeNameString = %s \n",typeNameString.c_str());
-  // printf ("In GrammarString::getFunctionPrototypeString(): functionNameString = \n %s \n",functionNameString.c_str());
-
      return functionNameString;
    }
 
 string
-GrammarString::getRawString () const
-   {
-  // return the prebuild string (from which the keys are computed!)
-  // This function returns the "functionNameString" which is used to
-  // hold source code and header file prototypes.  Other functions return
-  // more specialized strings for constructor parameter lists etc.
-     return functionNameString;
-   }
+GrammarString::getRawString() const {
+    // return the prebuild string (from which the keys are computed!)
+    // This function returns the "functionNameString" which is used to
+    // hold source code and header file prototypes.  Other functions return
+    // more specialized strings for constructor parameter lists etc.
+    return functionNameString;
+}
 
 string
-listIteratorInitialization ( string typeName, string iteratorName, string listName, string accessOperator )
-   {
-     string returnString  = "     " + typeName + "::const_iterator " + iteratorName + " = " + listName + accessOperator + "begin(); \n";
-     return returnString;
-   }
+listIteratorInitialization(string /*typeName*/, string iteratorName, string listName, string accessOperator) {
+    string returnString;
 
+    // ---------- NOTE --------
+    // get_args() returns a value not a reference for SgTemplateParameterPtrList and SgTemplateArgumentPtrList.
+    // It is important for iterators to work on a copy of the returned value, otherwise, a warning is triggered:
+    // "warning: object backing the pointer will be destroyed at the end of the full-expression".
+    //
+    // ChatGPT says this usage is a Heisenbug, see issue #950
+    // ------------------------
 
-string
-forLoopOpening ( string iteratorName, string listName, string accessOperator )
-   {
-     string returnString = "     for ( /* empty by design */; " + iteratorName
-                         + " != " + listName + accessOperator + "end(); ++"
-                         + iteratorName + ") \n        { \n";
-     return returnString;
-   }
+    if (listName == "get_args()") {
+        // For this listName, get_args() returns a value, explicitly work with a copy
+        returnString += "    auto get_args_copy = get_args();\n";
+        returnString += "    auto " + iteratorName + " = get_args_copy.begin();\n";
+        returnString += "    auto iterator_end = get_args_copy.end();\n";
+    }
+    else if (listName == "result->get_args()") {
+        // For this listName, result->get_args() returns a value, explicitly work with a copy
+        returnString += "    auto result_get_args_copy = result->get_args();\n";
+        returnString += "    auto " + iteratorName + " = result_get_args_copy.begin();\n";
+        returnString += "    auto result_it_end = result_get_args_copy.end();\n";
+    }
+    else {
+        returnString += "    auto " + iteratorName + " = " + listName + accessOperator + "begin();\n";
+    }
 
-string
-forLoopBody ( string typeName, string variableName, string iteratorName )
-   {
-     string returnString = "          " + typeName + " " + variableName + " = *" + iteratorName + "; \n";
-     return returnString;
-   }
-
-#if 0
-string
-forLoopBodyForCopy ( string typeName, string variableName )
-   {
-     string returnString = "          " + typeName + " " + variableName + " = NULL; \n";
-     return returnString;
-   }
-#endif
+    return returnString;
+}
 
 string
-conditionalToSetParent ( string variableName)
-   {
-#if 0
-     string returnString = "          if (" + variableName + " != NULL && " + variableName + "->get_parent() == NULL ) \n"
-                         + "             { \n"
-                         + "               " + variableName + "->set_parent(result); \n"
-                         + "             } \n";
-#else
-  // DQ (8/29/2006): Skip setting the parents of types since they are shared and it is enforced that they have NULL valued parent pointers.
-     string returnString = "          if ( (" + variableName + " != NULL) && (" + variableName + "->get_parent() == NULL) && (isSgType(" + variableName + ") == NULL) ) \n"
-                         + "             { \n"
-                         + "               " + variableName + "->set_parent(result); \n"
-                         + "             } \n";
-#endif
+forLoopOpening(std::string iteratorName, std::string listName, std::string accessOperator) {
+    string returnString;
 
-     return returnString;
-   }
+    // ---------- NOTE --------
+    // get_args() returns a value not a reference for SgTemplateParameterPtrList and SgTemplateArgumentPtrList.
+    // It is important for iterators to work on a copy of the returned value, otherwise, a warning is triggered:
+    // "warning: object backing the pointer will be destroyed at the end of the full-expression".
+    //
+    // ChatGPT says this usage is a Heisenbug, see issue #950
+    // ------------------------
 
-string
-conditionalToCopyVariable ( string typeName, string variableNameSource, string variableNameCopy, string iteratorName )
-   {
-  // string returnString = "          " + typeName + " " + variableNameCopy + " = NULL; \n"
-  // PC (8/3/2006): Flexibility improvement to copy mechanism
-     string returnString = "          if (" + variableNameSource + " != NULL) \n"
-                         + "             { \n"
-                         + "               " + variableNameCopy + " = static_cast<" + typeName + ">(help.copyAst(" + iteratorName + ")); \n"
-                         + "             } \n"
-                         + "            else \n"
-                         + "             { \n"
-                         + "               " + variableNameCopy + " = NULL; \n"
-                         + "             } \n";
-     return returnString;
-   }
-
+    if (listName == "get_args()") {
+        returnString += "    for (/* empty by design */; " + iteratorName
+                     + " != iterator_end; ++"
+                     + iteratorName + ") {\n";
+    }
+    else if (listName == "result->get_args()") {
+        returnString += "    for (/* empty by design */; " + iteratorName
+                     + " != result_it_end; ++"
+                     + iteratorName + ") {\n";
+    }
+    else {
+        returnString += "    for (/* empty by design */; " + iteratorName
+                     + " != " + listName + accessOperator + "end(); ++"
+                     + iteratorName + ") {\n";
+    }
+    return returnString;
+}
 
 string
-forLoopClosing()
-   {
-     string returnString = "        } \n";
-     return returnString;
-   }
+forLoopBody(string typeName, string variableName, string iteratorName) {
+    string returnString = "          " + typeName + " " + variableName + " = *" + iteratorName + "; \n";
+    return returnString;
+}
+
+string
+conditionalToSetParent(string variableName) {
+    string returnString = "        if ((" + variableName + " != nullptr) && (" + variableName + "->get_parent() == nullptr) && (isSgType(" + variableName + ") == nullptr)) {\n"
+                        + "            " + variableName + "->set_parent(result);\n"
+                        + "       } \n";
+
+    return returnString;
+}
+
+string
+conditionalToCopyVariable(string typeName, string variableNameSource, string variableNameCopy, string iteratorName) {
+    string returnString = "          if (" + variableNameSource + " != nullptr) \n"
+                        + "             { \n"
+                        + "               " + variableNameCopy + " = static_cast<" + typeName + ">(help.copyAst(" + iteratorName + ")); \n"
+                        + "             } \n"
+                        + "            else \n"
+                        + "             { \n"
+                        + "               " + variableNameCopy + " = nullptr; \n"
+                        + "             } \n";
+    return returnString;
+}
+
+string
+forLoopClosing() {
+    string returnString = "        }\n";
+    return returnString;
+}
 
 string
 variableInitialization ( string copyOfVariableName, string sourceVariableName )
@@ -193,19 +202,15 @@ variableInitialization ( string copyOfVariableName, string sourceVariableName )
 string
 variableDeclaration ( string typeName, string variableName )
    {
-     string returnString = "     " + typeName + " " + variableName + " = NULL; \n";
+     string returnString = "     " + typeName + " " + variableName + " = nullptr; \n";
      return returnString;
    }
 
-// DQ (9/28/2022): Fixing compiler warning for argument not used.
-// string stringCopyConditional ( string typeName, string variableName, string copyVariableName )
 string
 stringCopyConditional ( string variableName, string copyVariableName )
    {
-  // string returnString = "     " + typeName + " " + copyVariableName + " = NULL; \n"
-     string returnString = "     if (" + variableName + " != NULL) \n"
+     string returnString = "     if (" + variableName + " != nullptr) \n"
                          + "          " + copyVariableName + " = strdup(" + variableName + "); \n";
-                      // + "     result->" + variableName + " = " + copyVariableName + "; \n";
      return returnString;
    }
 
@@ -218,36 +223,29 @@ conditionalToBuildNewVariable ( string typeName, string variableNameSource, stri
   // "Sg_File_Info::generateDefaultFileInfoForTransformationNode()").
      if (typeName == "$GRAMMAR_PREFIX__File_Info")
         {
-       // DQ (10/21/2005): The copy should be a semantic preserving as possible
-       // (so don't make copies as transformations and call the copy constructor).
-       // rhs = "          " + newVariableName + " = Sg_File_Info::generateDefaultFileInfoForTransformationNode(); \n";
           rhs = "          " + newVariableName + " = new Sg_File_Info(*" + variableNameSource + "); \n";
         }
        else
         {
           rhs = "          " + newVariableName + " = new " + typeName + "( *" + variableNameSource + "); \n";
         }
-     string returnString = "     if ( " + variableNameSource + " != NULL ) \n"
+     string returnString = "     if ( " + variableNameSource + " != nullptr ) \n"
                          + "        { \n"
                          + rhs
                          + "        } \n"
                          + "       else \n"
                          + "        { \n"
-                         + "          " + newVariableName + " = NULL; \n"
+                         + "          " + newVariableName + " = nullptr; \n"
                          + "        } \n";
-
-  // printf ("returnString = %s \n",returnString.c_str());
-  // ROSE_ASSERT(typeName != "Sg_File_Info");
 
      return returnString;
    }
    
 namespace
 {
-  // PP (10/20/22) copied from Grammar.C
-  bool isAstNodePtrVector(const string& typeString)
+
+bool isAstNodePtrVector(const string& typeString)
   {
-    // consider using regex similar to: "(std::)?vector<\*>"
     return    boost::starts_with(typeString, "std::vector<Sg")
            && boost::ends_with(typeString, "*>");
   }
@@ -263,13 +261,10 @@ namespace
   }
 }
    
-
-// DQ (9/28/2022): Fixing compiler warning for argument not used.
-// string GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
 string
 GrammarString::buildCopyMemberFunctionSetParentSource()
    {
-  // DQ (9/25/2005): This function builds code to reset parent pointers in the copy function
+  // This function builds code to reset parent pointers in the copy function
 
      string returnString;
 
@@ -279,12 +274,9 @@ GrammarString::buildCopyMemberFunctionSetParentSource()
      ROSE_ASSERT (typeName.empty() == false);
      ROSE_ASSERT (variableName.empty() == false);
 
-  // printf ("In GrammarString::buildCopyMemberFunctionSetParentSource(): type = %s variable = %s \n",typeName.c_str(),variableName.c_str());
-
   // Check if the type name is "char*"
      bool typeIsCharString = typeName.find("char*") != string::npos && typeName.find("char**") == string::npos;
 
-  // if ( strstr(typeName.c_str(),"char*") != NULL && strstr(typeName.c_str(),"char**") == NULL)
      if ( typeIsCharString )
         {
        // Nothing to do since strings don't have parents
@@ -312,15 +304,6 @@ GrammarString::buildCopyMemberFunctionSetParentSource()
           bool typeIsList                       = typeIsPointerToList || typeIsSimpleListOfPointers;
 #ifndef NDEBUG
           bool typeIsSgNode                     = typeName.find('*') != string::npos && !isAstNodePtrVector(typeName);
-#endif
-
-#if 0
-          printf ("typeIsPointerToListOfPointers    = %s \n",typeIsPointerToListOfPointers ? "true" : "false");
-          printf ("typeIsPointerToListOfNonpointers = %s \n",typeIsPointerToListOfNonpointers ? "true" : "false");
-          printf ("typeIsPointerToList              = %s \n",typeIsPointerToList ? "true" : "false");
-          printf ("typeIsSimpleListOfPointers       = %s \n",typeIsSimpleListOfPointers ? "true" : "false");
-          printf ("typeIsList                       = %s \n",typeIsList ? "true" : "false");
-          printf ("typeIsSgNode                     = %s \n",typeIsSgNode ? "true" : "false");
 #endif
 
        // One of these should be true!
@@ -365,7 +348,6 @@ GrammarString::buildCopyMemberFunctionSetParentSource()
                          accessOperator = ".";
                        }
 
-                 // iteratorBaseType = string("NeedBaseType_of_") + typeName;
                     int positionOfListPtrSubstring = typeName.find("ListPtr");
                     int positionOfPtrSubstring     = typeName.find("Ptr",positionOfListPtrSubstring);
                     iteratorBaseType = typeName.substr(0,positionOfPtrSubstring);
@@ -382,11 +364,6 @@ GrammarString::buildCopyMemberFunctionSetParentSource()
                     needPointer = "*";
                     accessOperator = ".";
 
-                 // Need to generate different code, for example:
-                 //      SgStatementPtrList::const_iterator cpinit_stmt = get_init_stmt().begin();
-                 // instead of:
-                 //      SgStatementPtrList::const_iterator init_stmt_copy_iterator = init_stmt_copy.begin();
-
                     copyOfList = string("result->get_") + variableName + "()";
                     iteratorName = variableName + "_iterator";
                   }
@@ -400,19 +377,18 @@ GrammarString::buildCopyMemberFunctionSetParentSource()
                else {
                  listElementType = astNodeType(typeName) + needPointer;
                }
-               
 
             // Declare the loop index iterator
-               returnString  += commentString + listIteratorInitialization(iteratorBaseType,iteratorName,copyOfList,accessOperator);
+               returnString += commentString + listIteratorInitialization(iteratorBaseType,iteratorName,copyOfList,accessOperator);
 
             // Open up the loop over the list elements
-               returnString  += forLoopOpening(iteratorName,copyOfList,accessOperator);
+               returnString += forLoopOpening(iteratorName, copyOfList, accessOperator);
 
             // Declare the a loop variable (reference to current element of list)
-               returnString  += forLoopBody(listElementType,listElementName,iteratorName);
+               returnString += forLoopBody(listElementType, listElementName, iteratorName);
 
             // insert the conditional test (also used below)
-               returnString  += conditionalToSetParent(listElementName);
+               returnString += conditionalToSetParent(listElementName);
 
             // close off the loop
                returnString  += forLoopClosing();
@@ -432,36 +408,25 @@ GrammarString::buildCopyMemberFunctionSetParentSource()
      return returnString;
    }
 
-// DQ (9/26/2005): This is the new source code generator for the copy mechanism.
-// the previous version was coplex and didn't generate the correct code to support
-// the copy of a SgFile within the pointer to the list of SgFile in SgProject.
-// I will see if I can fix this :-).
-
-
-// Note that the input parameter is never used!
 string
-GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
-   {
-  // DQ (9/25/2005): This function builds code to copy the data members (within the copy function)
+GrammarString::buildCopyMemberFunctionSource(bool buildConstructorArgument) {
+    // This function builds code to copy the data members (within the copy function)
 
-  // Return value for this function
-     string returnString;
+    // Return value for this function
+    string returnString;
 
-  // Support for adding commented to generated source code
-     string commentString;
+    // Support for adding commented to generated source code
+    string commentString;
 
-     string variableName = getVariableNameString();
-     string typeName     = getTypeNameString();
+    string variableName = getVariableNameString();
+    string typeName = getTypeNameString();
 
-     ROSE_ASSERT (typeName.empty() == false);
-     ROSE_ASSERT (variableName.empty() == false);
-
-  // printf ("In GrammarString::buildCopyMemberFunctionSetParentSource(): type = %s variable = %s \n",typeName.c_str(),variableName.c_str());
+    ROSE_ASSERT (typeName.empty() == false);
+    ROSE_ASSERT (variableName.empty() == false);
 
   // Check if the type name is "char*"
      bool typeIsCharString = typeName.find("char*") != string::npos && typeName.find("char**") == string::npos;
 
-  // if ( strstr(typeName.c_str(),"char*") != NULL && strstr(typeName.c_str(),"char**") == NULL)
      if ( typeIsCharString )
         {
        // Always copy C style strings
@@ -469,17 +434,8 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
           string sourceVariableName = "p_" + variableName;
           commentString = "  // case: typeName == char* or char** for " + variableName + "\n";
        // Declare the copy of the variable
-       // returnString += "     " + typeName + " " + variableName + "_copy; \n";
-          returnString += "     " + typeName + " " + copyOfVariableName + "; \n";
-
-       // DQ (9/28/2022): Fixing compiler warning for argument not used.
-       // returnString += commentString + stringCopyConditional(typeName,sourceVariableName,copyOfVariableName);
+          returnString += "    " + typeName + " " + copyOfVariableName + "; \n";
           returnString += commentString + stringCopyConditional(sourceVariableName,copyOfVariableName);
-
-       // string copyOfVariableName = "result->p_" + variableName;
-       // printf ("\n\n*****************************************************\n");
-       // printf ("Case of typeIsCharString: buildConstructorArgument = %s \n",buildConstructorArgument ? "true" : "false");
-       // printf ("Case of typeIsCharString (before variableInitialization): returnString = %s \n",returnString.c_str());
 
           if (buildConstructorArgument == false)
              {
@@ -487,13 +443,8 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
             // code because it will be set with the call to the constructor.  So don't output this
             // generated code when generating code to handle constructor arguments.
                returnString += variableInitialization(copyOfVariableName,sourceVariableName);
-
-            // DQ (3/23/2006): Set the internal value by calling the access function to set it.
-            // Need to add (for example): "result->set_value(value_copy);"
                returnString += "     result->" + sourceVariableName + " = " + copyOfVariableName + ";\n";
              }
-
-       // printf ("Case of typeIsCharString: returnString = %s \n",returnString.c_str());
 
           return returnString;
         }
@@ -517,18 +468,6 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
                                                      || isAstNodePtrVector(typeName) // PP added to support std::vector<SageNode*>
                                                      ));
           bool typeIsList                       = typeIsPointerToList || typeIsSimpleListOfPointers;
-
-
-#if 0
-          std::cerr << "* " << typeName << std::endl;
-          printf ("typeIsPointerToListOfPointers    = %s \n",typeIsPointerToListOfPointers ? "true" : "false");
-          printf ("typeIsPointerToListOfNonpointers = %s \n",typeIsPointerToListOfNonpointers ? "true" : "false");
-          printf ("typeIsPointerToList              = %s \n",typeIsPointerToList ? "true" : "false");
-          printf ("typeIsSimpleListOfPointers       = %s \n",typeIsSimpleListOfPointers ? "true" : "false");
-          printf ("typeIsList                       = %s \n",typeIsList ? "true" : "false");
-          printf ("typeIsSgNode                     = %s \n",typeIsSgNode ? "true" : "false");
-#endif
-          //~ std::cerr << typeName << std::endl;
 
        // One of these should be true!
           ROSE_ASSERT(typeIsList == true  || typeIsSgNode == true);
@@ -595,11 +534,6 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
                     needPointer = "*";
                     accessOperator = ".";
 
-                 // Need to generate different code, for example:
-                 //      SgStatementPtrList::const_iterator cpinit_stmt = get_init_stmt().begin();
-                 // instead of:
-                 //      SgStatementPtrList::const_iterator init_stmt_copy_iterator = init_stmt_copy.begin();
-
                     originalList = string("get_") + variableName + "()";
                     iteratorName = string("source_") + variableName + "_iterator";
                   }
@@ -633,11 +567,6 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
 
             // close off the loop
                returnString += forLoopClosing();
-#if 0
-            // DQ (10/22/2005): Copy the "variableName + _copy" back to the "result->p_ + variableName + _copy"
-            // returnString += "  /* copy " + variableName + "_copy" + " to the result */ \n";
-               returnString += "     result->p_" + variableName + " = " + variableName + "_copy;" + " // list case \n";
-#endif
              }
             else
              {
@@ -650,27 +579,18 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
                string sourceVariableName = string("get_") + variableName + "()";
             // insert the conditional test (also used above)
                returnString += commentString + conditionalToCopyVariable(variableType,sourceVariableName,copyOfVariableName,sourceVariableName);
-#if 0
-            // DQ (10/22/2005): Copy the "variableName + _copy" back to the "result->p_ + variableName + _copy"
-            // returnString += "  /* copy " + variableName + "_copy" + " to the result */ \n";
-               returnString += "     result->p_" + variableName + " = " + variableName + "_copy;" + " // non list case \n";
-#endif
 
                if (buildConstructorArgument == false)
                   {
                  // DQ (3/10/2007): SgFunctionDeclaration has a parameter list that is maintained internally so we want to avoid overwitting it.
                     returnString += "  /* check for a valid pointer and delete if present */ \n";
-                    returnString += "     if (result->p_" + variableName + " != NULL) delete result->p_" + variableName + "; \n";
+                    returnString += "     if (result->p_" + variableName + " != nullptr) delete result->p_" + variableName + "; \n";
                   }
              }
-#if 1
           if (buildConstructorArgument == false)
              {
-            // DQ (10/22/2005): Copy the "variableName + _copy" back to the "result->p_ + variableName + _copy"
-            // returnString += "  /* copy " + variableName + "_copy" + " to the result */ \n";
                returnString += "     result->p_" + variableName + " = " + variableName + "_copy;" + " \n";
              }
-#endif
         }
        else
         {
@@ -678,38 +598,8 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
           returnString += commentString;
 
        // Declare the copy of the variable
-       // returnString += "     " + typeName + " " + variableName + "_copy; \n";
-
-#if 0
-          string copyOfVariableName;
-          string sourceVariableName;
-
-       // Not all data members have access functions (though this might be fixed at some point)
-          if ( automaticGenerationOfDataAccessFunctions == BUILD_ACCESS_FUNCTIONS ||
-               automaticGenerationOfDataAccessFunctions == BUILD_FLAG_ACCESS_FUNCTIONS ||
-               automaticGenerationOfDataAccessFunctions == BUILD_LIST_ACCESS_FUNCTIONS )
-             {
-               copyOfVariableName = variableName + "_copy";
-               sourceVariableName = string("get_") + variableName + "()";
-
-            // Declare the copy of the variable
-               returnString += "     " + typeName + " " + copyOfVariableName + "; \n";
-             }
-            else
-             {
-               copyOfVariableName = "result->p_" + variableName;
-               sourceVariableName = "p_" + variableName;
-
-            // Declare the copy of the variable
-            // returnString += "     " + typeName + " " + copyOfVariableName + "; \n";
-             }
-#else
-       // Declare the copy of the variable
-       // returnString       += "     " + typeName + " " + variableName + "_copy = p_" + variableName + "; // needs initialization? \n";
           string variableType = typeName;
           string sourceVariableName = variableName + "_copy";
-#endif
-       // returnString += variableInitialization(copyOfVariableName,sourceVariableName);
 
           if (toBeCopied == COPY_DATA)
              {
@@ -717,6 +607,7 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
 
                commentString = "  // case: toBeCopied == COPY_DATA for " + variableName + "\n";
                returnString += commentString;
+
             // Declare the copy of the variable (requires initialization)
                returnString       += "     " + typeName + " " + variableName + "_copy = p_" + variableName + "; \n";
                string copyOfVariableName = "result->p_" + variableName;
@@ -736,7 +627,7 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
                     returnString += commentString;
 
                  // Declare the copy of the variable (does not require initialization)
-                    returnString       += "     " + typeName + " " + variableName + "_copy = NULL; \n";
+                    returnString       += "     " + typeName + " " + variableName + "_copy = nullptr; \n";
                     string copyOfVariableName = "p_" + variableName;
                     ROSE_ASSERT(typeIsSgNode == true);
                     unsigned long int positionOfStarSubstring = typeName.find("*");
@@ -745,23 +636,18 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
                     returnString += conditionalToBuildNewVariable(variableBaseType,copyOfVariableName,sourceVariableName);
                     if (buildConstructorArgument == false)
                        {
-                      // DQ (3/10/2007): SgFunctionDeclaration has a parameter list that is maintings internally so we want to avoid overwitting it.
                          returnString += "  /* check for a valid pointer and delete if present */ \n";
-                         returnString += "     if (result->p_" + variableName + " != NULL) delete result->p_" + variableName + "; \n";
+                         returnString += "     if (result->p_" + variableName + " != nullptr) delete result->p_" + variableName + "; \n";
 
                          returnString += "  /* add assignment to result here */ \n";
-                      // DQ (10/22/2005): Copy the "variableName + _copy" back to the "result->p_ + variableName + _copy"
                          returnString += "     result->p_" + variableName + " = " + variableName + "_copy;" + " \n";
                        }
                   }
              }
         }
 
-  // ROSE_ASSERT(false);
-
      return returnString;
    }
-
 
 string
 GrammarString::getDataPrototypeString () const
@@ -772,8 +658,6 @@ GrammarString::getDataPrototypeString () const
      return returnString;
    }
 
-
-// DQ (3/22/2017): Added to support output of "override" keyword to reduce Clang warnings.
 bool
 GrammarString::generate_override_keyword( string variableNameString ) const
    {
@@ -797,7 +681,6 @@ GrammarString::generate_override_keyword( string variableNameString ) const
      return returnResult;
    }
 
-
 string
 GrammarString::getDataAccessFunctionPrototypeString () const
    {
@@ -813,9 +696,6 @@ GrammarString::getDataAccessFunctionPrototypeString () const
         }
 
      string variableNameStringTmp = string(variableNameString);
-#if 0
-     printf ("In GrammarString::getDataAccessFunctionPrototypeString(): variableNameStringTmp = %s \n",variableNameStringTmp.c_str());
-#endif
      bool use_override_keyword = generate_override_keyword(variableNameStringTmp);
 
      string returnString;
@@ -826,12 +706,6 @@ GrammarString::getDataAccessFunctionPrototypeString () const
 
           case BUILD_ACCESS_FUNCTIONS:
           case BUILD_FLAG_ACCESS_FUNCTIONS:
-#if 0
-               returnString = "     public: \n         " + typeNameStringTmp + " get_" +
-                         variableNameStringTmp + "() const;\n         void set_"
-                         + variableNameStringTmp + "(" + typeNameStringTmp + " " +
-                         variableNameStringTmp + ");\n";
-#else
             // DQ (3/21/2017): Added support to eliminate override warnings for Clang C++11 mode.
                if (use_override_keyword == true)
                   {
@@ -847,7 +721,6 @@ GrammarString::getDataAccessFunctionPrototypeString () const
                          + variableNameStringTmp + "(" + typeNameStringTmp + " " +
                          variableNameStringTmp + ");\n";
                   }
-#endif
                break;
 
           case BUILD_LIST_ACCESS_FUNCTIONS:
@@ -857,20 +730,8 @@ GrammarString::getDataAccessFunctionPrototypeString () const
                          + "(); \n";
                break;
           default:
-               ROSE_ABORT();
+               ASSERT_require(false);
         }
-
-#if 0
-     printf ("In GrammarString::getDataAccessFunctionPrototypeString(): returnString = %s \n",returnString.c_str());
-#endif
-#if 0
-  // DQ (3/22/2017): Debuggung code.
-     if (variableNameStringTmp == "startOfConstruct")
-        {
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-        }
-#endif
 
      return returnString;
    }
@@ -878,37 +739,20 @@ GrammarString::getDataAccessFunctionPrototypeString () const
 string
 GrammarString::getFunctionNameString ( AstNodeClass & node )
    {
-
-  // printf ("Inside of GrammarString::getFunctionNameString(node) \n");
-
      string memberFunctionString = functionNameString;
-
-#if 0
-     printf ("pureVirtualFunction = %s \n",(pureVirtualFunction == true) ? "true" : "false");
-     printf ("node.isRootNode() = %s \n",(node.isRootNode() == true) ? "true" : "false");
-     printf ("node.isLeafNode() = %s \n",(node.isLeafNode() == true) ? "true" : "false");
-#endif
 
      if (pureVirtualFunction == true)
         {
-       // Now we have to edit the string
-       // ROSE_ASSERT (pureVirtualFunction == false);
-
           string className = node.getName();
-
           string derivedClassString;
-
-       // printf ("EDIT className (%s) durring copy \n",className);
           string parentClassName    = "NO PARENT FOUND";
-          if (node.getBaseClass() == NULL)
+
+          if (node.getBaseClass() == nullptr)
              {
                parentClassName    = node.getBaseClass()->getName();
 
             // Later this has to be automatically derived
                derivedClassString = ": " + parentClassName + "(exp)";
-
-            // printf ("Exiting when node.parentTreeNode != NULL (parentClassName %s) ... \n",parentClassName);
-            // ROSE_ABORT();
              }
 
           string pureVirtualMarkerString = "";
@@ -917,14 +761,8 @@ GrammarString::getFunctionNameString ( AstNodeClass & node )
                pureVirtualMarkerString = " = 0";
              }
 
-       // printf ("Exiting when node.parentTreeNode != NULL (parentClassName %s) ... \n",parentClassName);
-       // ROSE_ABORT();
-
-       // printf ("EDIT parentClassName (%s) durring copy \n",parentClassName);
-
           memberFunctionString = copyEdit (memberFunctionString,"$PURE_VIRTUAL_MARKER",pureVirtualMarkerString);
           memberFunctionString = copyEdit (memberFunctionString,"$CLASSNAME",className);
-       // memberFunctionString = copyEdit (memberFunctionString,"$BASECLASS_CONSTRUCTOR_CALL",derivedClassString);
         }
 
      return memberFunctionString;
@@ -933,23 +771,9 @@ GrammarString::getFunctionNameString ( AstNodeClass & node )
 string
 GrammarString::getConstructorPrototypeParameterString()
    {
-  // Not clear yet if we need to know the node!
-  // This function assembles the parameter in a form in which it can be used
-  // within the constructor prototype code declaration.
-
-  // Verify that this is a GrammarString object representing a
-  // data variable (with type, variable name, and an initializer)
-
-#if 1   // BP : 10/25/2001, rewritten to make only one alloc instead of allocs and deletes
-     // and also fixes a memory leak
      string startString =  getConstructorSourceParameterString();
      string endString   = getDefaultInitializerString();
      string returnString = startString + " " + endString;
-#else
-     char* returnString = getConstructorSourceParameterString();
-     returnString = stringConcatenate (returnString," ");
-     returnString = stringConcatenate (returnString,getDefaultInitializerString());
-#endif
 
      return returnString;
    }
@@ -957,12 +781,7 @@ GrammarString::getConstructorPrototypeParameterString()
 string
 GrammarString::getConstructorSourceParameterString()
    {
-  // Not clear yet if we need to know the node!
-  // This function assembles the parameter in a form in which it can be used
-  // within the constructor source code definition.
-
      string returnString = getTypeNameString() + " " + getVariableNameString();
-
      return returnString;
    }
 
@@ -1004,10 +823,6 @@ GrammarString::GrammarString(
      toBeTraversed(toBeTraversedDuringTreeTraversal),
      toBeDeleted(delete_flag)
 {
-  //string tempString = defaultInitializerString;
-  // printf ("GrammarString constructor: tempString.length() = %d tempString = %s \n",
-  //      tempString.length(),tempString.c_str());
-
   // setup the main function string from the type and variable name (not indented properly)
   functionNameString = inputTypeNameString + " " + inputVariableNameString + " " + inputDefaultInitializerString + ";";
 
@@ -1018,7 +833,6 @@ GrammarString::GrammarString(
 }
 
 GrammarString::GrammarString( const string& inputFunctionNameString )
-  // DQ (12/7/2003): Reordered parameters
    : pureVirtualFunction(0), functionNameString(inputFunctionNameString),
      typeNameString(""), variableNameString(""),
      defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER),
@@ -1031,7 +845,6 @@ GrammarString::GrammarString( const string& inputFunctionNameString )
    }
 
 GrammarString::GrammarString( const GrammarString & X )
-  // DQ (12/7/2003): Reordered parameters
    : pureVirtualFunction(0), functionNameString(""),
      typeNameString(""), variableNameString(""),
      defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER),
@@ -1039,8 +852,6 @@ GrammarString::GrammarString( const GrammarString & X )
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
      toBeDeleted(NO_DELETE)
    {
-  // printf ("Calling the GrammarString copy CONSTRUCTOR! \n");
-
   // It is a common technique to implement the copy constructor using the operator=
   // so that we can consolidate detail on the implementation and provide a consistent
   // semantics.
@@ -1055,9 +866,6 @@ GrammarString::operator= ( const GrammarString & X )
      typeNameString           = X.typeNameString;
      variableNameString       = X.variableNameString;
      defaultInitializerString = X.defaultInitializerString;
-
-  // printf ("Exiting in GrammarString::operator= \n");
-  // ROSE_ABORT();
 
      key                                      = X.key;
      pureVirtualFunction                      = X.pureVirtualFunction;
@@ -1111,22 +919,13 @@ operator== ( const GrammarString & X, const GrammarString & Y )
                       i++;
                     }
 
-#if 0
-               if (tempResult == true)
-                    printf ("X.functionNameString = %s \n",X.functionNameString);
-#endif
-
                returnValue = tempResult;
              }
         }
 
-  // For now this should always evaluate to be false (later this will not be so)
-  // ROSE_ASSERT (returnValue == false);
-
      return returnValue;
    }
 
-// DQ & AJ (12/3/2004): Added support for deleation of data members
 DeleteEnum
 GrammarString::getToBeDeleted() const
    {
@@ -1195,15 +994,12 @@ BuildAccessEnum GrammarString::generateDataAccessFunctions() const
 void
 GrammarString::consistencyCheck() const
    {
-  // Error checking (not sure what is a good test here!)
      ROSE_ASSERT (key > 0);
    }
 
 void
 GrammarString::display( const string& label ) const
    {
-     //     printf ("In GrammarString::display ( %s ) \n",label);
-     // BP : 10/10/2001, changed printf to cout
      cout << "In GrammarString::display ( " << label << endl;
      printf ("functionNameString = %s \n",functionNameString.c_str());
      printf ("typeNameString = %s \n",typeNameString.c_str());
@@ -1212,8 +1008,6 @@ GrammarString::display( const string& label ) const
      printf ("key = %d \n",key);
    }
 
-// BP : 10/25/2001, a non recursive version that
-// allocs memory only once
 string GrammarString::copyEdit ( const string& inputString,
                                  const string& oldToken,
                                  const string& newToken )
@@ -1225,7 +1019,6 @@ bool
 GrammarString::isContainedIn ( const string& longString, const string& shortString )
    {
   // This function checks to see if the shortString is contained within the longString
-
      return (longString.find(shortString) != string::npos);
    }
 
@@ -1233,13 +1026,10 @@ GrammarString::isContainedIn ( const string& longString, const string& shortStri
 string
 GrammarString::buildDestructorSource()
    {
-  // DQ (5/22/2006): This function builds code for the destructor data members (within the destructor)
+  // This function builds code for the destructor data members (within the destructor)
 
   // Return value for this function
-     string returnString;
-
-  // Support for adding commented to generated source code
-     string commentString;
+     string returnString, commentString;
 
      string variableName = getVariableNameString();
      string typeName     = getTypeNameString();
@@ -1249,8 +1039,6 @@ GrammarString::buildDestructorSource()
      ROSE_ASSERT (typeName.empty()     == false);
      ROSE_ASSERT (variableName.empty() == false);
 
-  // printf ("In GrammarString::buildDestructorSource(): type = %s variable = %s \n",typeName.c_str(),variableName.c_str());
-
   // Check if the type name is "char*"
      bool typeIsCharString = typeName.find("char*") != string::npos && typeName.find("char**") == string::npos;
 
@@ -1259,18 +1047,11 @@ GrammarString::buildDestructorSource()
        // Always copy C style strings
           string sourceVariableName = "p_" + variableName;
           commentString = "  // case: typeName == char* or char** for " + variableName + "\n";
-       // returnString += "     delete [] " + sourceVariableName + "; \n";
-          returnString += "     " + sourceVariableName + " = NULL; \n";
-
-       // DQ (9/5/2006): Get the order right, so that comment appears before the code fragment
-       // returnString += commentString;
+          returnString += "     " + sourceVariableName + " = nullptr; \n";
           returnString = commentString + returnString;
 
           return returnString;
         }
-
-  // The rule is that if it is not a char* or char** then if it is a pointer type it is a pointer to a Sage IR node
-  // bool typeIsSgNode = strstr(typeName.c_str(), "*");
 
   // Set all all data members to default values
      if ( true )
@@ -1287,22 +1068,7 @@ GrammarString::buildDestructorSource()
           int typeSize = typeName.size();
           bool typeIsSimpleListOfNonpointers    = (typeIsSimpleListOfPointers == false) && ( typeSize > 4 && typeName.substr( typeSize-4 ) == "List" );
 
-       // bool typeIsList                       = typeIsPointerToList || typeIsSimpleListOfPointers;
           bool typeIsList                       = typeIsPointerToList || typeIsSimpleListOfPointers || typeIsSimpleListOfNonpointers;
-
-#if 0
-          printf ("typeIsPointerToListOfPointers    = %s \n",typeIsPointerToListOfPointers    ? "true" : "false");
-          printf ("typeIsPointerToListOfNonpointers = %s \n",typeIsPointerToListOfNonpointers ? "true" : "false");
-          printf ("typeIsPointerToList              = %s \n",typeIsPointerToList              ? "true" : "false");
-          printf ("typeIsSimpleListOfPointers       = %s \n",typeIsSimpleListOfPointers       ? "true" : "false");
-          printf ("typeIsSimpleListOfNonpointers    = %s \n",typeIsSimpleListOfNonpointers    ? "true" : "false");
-          printf ("typeIsList                       = %s \n",typeIsList                       ? "true" : "false");
-          printf ("typeIsSgNode                     = %s \n",typeIsSgNode                     ? "true" : "false");
-#endif
-
-       // One of these should be true!
-       // ROSE_ASSERT(typeIsList == true  || typeIsSgNode == true);
-       // ROSE_ASSERT(typeIsList == false || typeIsSgNode == false);
 
           string listElementType = "default-error-type";
 
@@ -1329,7 +1095,7 @@ GrammarString::buildDestructorSource()
                   {
                     commentString += "  // case: listType (typeIsPointerToList == true) for " + variableName + "\n";
 
-                    returnString += "     p_" + variableName + " = NULL;\n";
+                    returnString += "     p_" + variableName + " = nullptr;\n";
                     returnString = commentString + returnString;
                   }
                  else
@@ -1342,9 +1108,7 @@ GrammarString::buildDestructorSource()
              }
             else
              {
-            // ROSE_ASSERT(typeIsSgNode == true);
                commentString += "  // case: not a listType for " + variableName + "\n";
-
                returnString += "     p_" + variableName + " " + initializerString +";" + " // non list case \n";
                returnString = commentString + returnString;
              }
@@ -1354,712 +1118,150 @@ GrammarString::buildDestructorSource()
    }
 
 string
-GrammarString::containerElementTypeString(AstNodeClass & node) const
-   {
-  // DQ (10/8/2014): This returns the name of the type where this data member is a container.
-  // The container type is required as part of ATerm support in reading the ATerms and generating
-  // the ROSE IR.
+GrammarString::containerElementTypeString(AstNodeClass & node) const {
+    // DQ (10/8/2014): This returns the name of the type where this data member is a container.
+    // The container type is required as part of ATerm support in reading the ATerms and generating
+    // the ROSE IR.
 
-     string typenameString = this->getTypeNameString();
-     AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
+    string typenameString = this->getTypeNameString();
+    AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
-     string returnString = "";
+    string returnString = "";
 
-#if 0
-     printf ("In GrammarString::containerElementTypeString(): node = %s typenameString = %s \n",node.getName().c_str(),typenameString.c_str());
-#endif
-
-  // ROSE_ASSERT(typeKind == AstNodeClass::SGCLASS_POINTER_LIST);
-     if (typeKind == AstNodeClass::SGCLASS_POINTER_LIST)
-        {
-       // return the case using a switch over the types (for now).
-          if (typenameString == "SgFilePtrList")
-             {
-               returnString = "SgFile";
-               goto done;
-             }
-
-          if (typenameString == "SgDirectoryPtrList")
-             {
-               returnString = "SgDirectory";
-               goto done;
-             }
-
-          if (typenameString == "SgTemplateArgumentPtrList")
-             {
-               returnString = "SgTemplateArgument";
-               goto done;
-             }
-
-          if (typenameString == "SgTemplateParameterPtrList")
-             {
-               returnString = "SgTemplateParameter";
-               goto done;
-             }
-
-          if (typenameString == "SgJavaImportStatementPtrList")
-             {
-               returnString = "SgJavaImportStatement";
-               goto done;
-             }
-
-          if (typenameString == "SgClassDeclarationPtrList")
-             {
-               returnString = "SgClassDeclaration";
-               goto done;
-             }
-
-          if (typenameString == "SgVarRefExpPtrList")
-             {
-            // returnString = "SgExpression";
-               returnString = "SgVarRefExp";
-               goto done;
-             }
-
-          if (typenameString == "SgDeclarationStatementPtrList")
-             {
-               returnString = "SgDeclarationStatement";
-               goto done;
-             }
-
-          if (typenameString == "SgStatementPtrList")
-             {
-               returnString = "SgStatement";
-               goto done;
-             }
-
-          if (typenameString == "SgInitializedNamePtrList")
-             {
-               returnString = "SgInitializedName";
-               goto done;
-             }
-
-          if (typenameString == "SgOmpClausePtrList")
-             {
-               returnString = "SgOmpClause";
-               goto done;
-             }
-
-          if (typenameString == "SgKeyDatumPairPtrList")
-             {
-               returnString = "SgKeyDatumPair";
-               goto done;
-             }
-
-          if (typenameString == "SgJavaMemberValuePairPtrList")
-             {
-               returnString = "SgJavaMemberValuePair";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmStatementPtrList")
-             {
-               returnString = "SgAsmStatement";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmExpressionPtrList")
-             {
-               returnString = "SgAsmExpression";
-               goto done;
-             }
-
-          if (typenameString == "SgExpressionPtrList")
-             {
-               returnString = "SgExpression";
-               goto done;
-             }
-
-          if (typenameString == "SgRenamePairPtrList")
-             {
-               returnString = "SgRenamePair";
-               goto done;
-             }
-
-          if (typenameString == "SgInterfaceBodyPtrList")
-             {
-               returnString = "SgInterfaceBody";
-               goto done;
-             }
-
-          if (typenameString == "SgCommonBlockObjectPtrList")
-             {
-               returnString = "SgCommonBlockObject";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmRegisterReferenceExpressionPtrList")
-             {
-               returnString = "SgAsmRegisterReferenceExpression";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmNEEntryPointPtrList")
-             {
-               returnString = "SgAsmNEEntryPoint";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmNERelocEntryPtrList")
-             {
-               returnString = "SgAsmNERelocEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmLEPageTableEntryPtrList")
-             {
-               returnString = "SgAsmLEPageTableEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmLEEntryPointPtrList")
-             {
-               returnString = "SgAsmLEEntryPoint";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmLERelocEntryPtrList")
-             {
-            // This is a typedef in Node.code:
-            //      typedef SgAsmNERelocEntry SgAsmLERelocEntry;
-            // I think this is thus missing from the header files we use for this file.
-            // returnString = "SgAsmLERelocEntry";
-               returnString = "SgAsmNERelocEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmGenericSectionPtrList")
-             {
-               returnString = "SgAsmGenericSection";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmGenericHeaderPtrList")
-             {
-               returnString = "SgAsmGenericHeader";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfSymbolPtrList")
-             {
-               returnString = "SgAsmElfSymbol";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfRelocEntryPtrList")
-             {
-               returnString = "SgAsmElfRelocEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmPEExportEntryPtrList")
-             {
-               returnString = "SgAsmPEExportEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfSegmentTableEntryPtrList")
-             {
-               returnString = "SgAsmElfSegmentTableEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfSymverEntryPtrList")
-             {
-               returnString = "SgAsmElfSymverEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfSymverNeededEntryPtrList")
-             {
-               returnString = "SgAsmElfSymverNeededEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmCoffSymbolPtrList")
-             {
-               returnString = "SgAsmCoffSymbol";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmPERVASizePairPtrList")
-             {
-               returnString = "SgAsmPERVASizePair";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmPEImportDirectoryPtrList")
-             {
-               returnString = "SgAsmPEImportDirectory";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmDwarfMacroPtrList")
-             {
-               returnString = "SgAsmDwarfMacro";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmDwarfLinePtrList")
-             {
-               returnString = "SgAsmDwarfLine";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmDwarfCompilationUnitPtrList")
-             {
-               returnString = "SgAsmDwarfCompilationUnit";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmDwarfConstructPtrList")
-             {
-               returnString = "SgAsmDwarfConstruct";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmPEImportItemPtrList")
-             {
-               returnString = "SgAsmPEImportItem";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmInterpretationPtrList")
-             {
-               returnString = "SgAsmInterpretation";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfSymverDefinedEntryPtrList")
-             {
-               returnString = "SgAsmElfSymverDefinedEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfSymverNeededAuxPtrList")
-             {
-               returnString = "SgAsmElfSymverNeededAux";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmGenericFilePtrList")
-             {
-               returnString = "SgAsmGenericFile";
-               goto done;
-             }
-
-
-          if (typenameString == "SgAsmElfSymverDefinedAuxPtrList")
-             {
-               returnString = "SgAsmElfSymverDefinedAux";
-               goto done;
-             }
-
-       // DQ (12/10/2014): We need to add this to C++11 IR node to support code generation for the ATerms support.
-          if (typenameString == "SgLambdaCapturePtrList")
-             {
-               returnString = "SgLambdaCapture";
-               goto done;
-             }
-
-       // DQ (12/2/2018): New lists have to include an entry to return the element type of the list.
-          if (typenameString == "SgIncludeFilePtrList")
-             {
-               returnString = "SgIncludeFile";
-               goto done;
-             }
-
-#if 0
-          if (typenameString == "SgAsmElfSymverDefinedAuxList")
-             {
-            // This node is a problem, not clear what to return.
-            // returnString = "SgAsmElfSymverDefinedAux";
-               returnString = "SgNode";
-               goto done;
-             }
-#endif
-#if 0
-          if (typenameString == "")
-             {
-               returnString = "*";
-               goto done;
-             }
-#endif
-
-          printf ("ERROR: In GrammarString::containerElementTypeString(): unhandled case: node = %s typenameString = %s \n",node.getName().c_str(),typenameString.c_str());
-
-          done: ;
-#if 0
-             {
-            // returnString = "SgFile*";
-               returnString = typenameString + ": unimplemented";
-               printf ("ERROR: GrammarString::containerElementTypeString() note yet defined for container: typenameString = %s \n",typenameString.c_str());
-            // ROSE_ASSERT(false);
-             }
-#endif
+    if (typeKind == AstNodeClass::SGCLASS_POINTER_LIST) {
+        if      (typenameString == "SgFilePtrList")                           returnString = "SgFile";
+        else if (typenameString == "SgDirectoryPtrList")                      returnString = "SgDirectory";
+        else if (typenameString == "SgTemplateArgumentPtrList")               returnString = "SgTemplateArgument";
+        else if (typenameString == "SgTemplateParameterPtrList")              returnString = "SgTemplateParameter";
+        else if (typenameString == "SgJavaImportStatementPtrList")            returnString = "SgJavaImportStatement";
+        else if (typenameString == "SgClassDeclarationPtrList")               returnString = "SgClassDeclaration";
+        else if (typenameString == "SgVarRefExpPtrList")                      returnString = "SgVarRefExp";
+        else if (typenameString == "SgDeclarationStatementPtrList")           returnString = "SgDeclarationStatement";
+        else if (typenameString == "SgStatementPtrList")                      returnString = "SgStatement";
+        else if (typenameString == "SgInitializedNamePtrList")                returnString = "SgInitializedName";
+        else if (typenameString == "SgOmpClausePtrList")                      returnString = "SgOmpClause";
+        else if (typenameString == "SgKeyDatumPairPtrList")                   returnString = "SgKeyDatumPair";
+        else if (typenameString == "SgJavaMemberValuePairPtrList")            returnString = "SgJavaMemberValuePair";
+        else if (typenameString == "SgAsmStatementPtrList")                   returnString = "SgAsmStatement";
+        else if (typenameString == "SgAsmExpressionPtrList")                  returnString = "SgAsmExpression";
+        else if (typenameString == "SgExpressionPtrList")                     returnString = "SgExpression";
+        else if (typenameString == "SgRenamePairPtrList")                     returnString = "SgRenamePair";
+        else if (typenameString == "SgInterfaceBodyPtrList")                  returnString = "SgInterfaceBody";
+        else if (typenameString == "SgCommonBlockObjectPtrList")              returnString = "SgCommonBlockObject";
+        else if (typenameString == "SgAsmRegisterReferenceExpressionPtrList") returnString = "SgAsmRegisterReferenceExpression";
+        else if (typenameString == "SgAsmNEEntryPointPtrList")                returnString = "SgAsmNEEntryPoint";
+        else if (typenameString == "SgAsmNERelocEntryPtrList")                returnString = "SgAsmNERelocEntry";
+        else if (typenameString == "SgAsmLEPageTableEntryPtrList")            returnString = "SgAsmLEPageTableEntry";
+        else if (typenameString == "SgAsmLEEntryPointPtrList")                returnString = "SgAsmLEEntryPoint";
+        else if (typenameString == "SgAsmLERelocEntryPtrList")                returnString = "SgAsmNERelocEntry";
+        else if (typenameString == "SgAsmGenericSectionPtrList")              returnString = "SgAsmGenericSection";
+        else if (typenameString == "SgAsmGenericHeaderPtrList")               returnString = "SgAsmGenericHeader";
+        else if (typenameString == "SgAsmElfSymbolPtrList")                   returnString = "SgAsmElfSymbol";
+        else if (typenameString == "SgAsmElfRelocEntryPtrList")               returnString = "SgAsmElfRelocEntry";
+        else if (typenameString == "SgAsmPEExportEntryPtrList")               returnString = "SgAsmPEExportEntry";
+        else if (typenameString == "SgAsmElfSegmentTableEntryPtrList")        returnString = "SgAsmElfSegmentTableEntry";
+        else if (typenameString == "SgAsmElfSymverEntryPtrList")              returnString = "SgAsmElfSymverEntry";
+        else if (typenameString == "SgAsmElfSymverNeededEntryPtrList")        returnString = "SgAsmElfSymverNeededEntry";
+        else if (typenameString == "SgAsmCoffSymbolPtrList")                  returnString = "SgAsmCoffSymbol";
+        else if (typenameString == "SgAsmPERVASizePairPtrList")               returnString = "SgAsmPERVASizePair";
+        else if (typenameString == "SgAsmPEImportDirectoryPtrList")           returnString = "SgAsmPEImportDirectory";
+        else if (typenameString == "SgAsmDwarfMacroPtrList")                  returnString = "SgAsmDwarfMacro";
+        else if (typenameString == "SgAsmDwarfLinePtrList")                   returnString = "SgAsmDwarfLine";
+        else if (typenameString == "SgAsmDwarfCompilationUnitPtrList")        returnString = "SgAsmDwarfCompilationUnit";
+        else if (typenameString == "SgAsmDwarfConstructPtrList")              returnString = "SgAsmDwarfConstruct";
+        else if (typenameString == "SgAsmPEImportItemPtrList")                returnString = "SgAsmPEImportItem";
+        else if (typenameString == "SgAsmInterpretationPtrList")              returnString = "SgAsmInterpretation";
+        else if (typenameString == "SgAsmElfSymverDefinedEntryPtrList")       returnString = "SgAsmElfSymverDefinedEntry";
+        else if (typenameString == "SgAsmElfSymverNeededAuxPtrList")          returnString = "SgAsmElfSymverNeededAux";
+        else if (typenameString == "SgAsmGenericFilePtrList")                 returnString = "SgAsmGenericFile";
+        else if (typenameString == "SgAsmElfSymverDefinedAuxPtrList")         returnString = "SgAsmElfSymverDefinedAux";
+        else if (typenameString == "SgLambdaCapturePtrList")                  returnString = "SgLambdaCapture";
+        else if (typenameString == "SgIncludeFilePtrList")                    returnString = "SgIncludeFile";
+        else {
+            printf ("ERROR: In GrammarString::containerElementTypeString(): unhandled case: node = %s typenameString = %s \n",
+                    node.getName().c_str(),typenameString.c_str());
         }
-       else
-        {
-          printf ("ERROR: GrammarString::containerElementTypeString() only defined for AstNodeClass::SGCLASS_POINTER_LIST type data members \n");
-          printf ("   --- typenameString = %s \n",typenameString.c_str());
-          ROSE_ABORT();
-        }
+    }
+    else {
+        printf ("ERROR: GrammarString::containerElementTypeString() only defined for AstNodeClass::SGCLASS_POINTER_LIST type data members \n");
+        printf ("   --- typenameString = %s \n",typenameString.c_str());
+        ASSERT_require(false);
+    }
 
-     return returnString;
-   }
-
+    return returnString;
+}
 
 string
-GrammarString::containerAppendFunctionNameString(AstNodeClass & node) const
-   {
-  // DQ (10/8/2014): This returns the name of the append function for the container.
-  // This is not standardized in ROSE (and shoudl be).
+GrammarString::containerAppendFunctionNameString(AstNodeClass & node) const {
+    // This returns the name of the append function for the container.
+    // This is not standardized in ROSE (and should be).
 
-     string typenameString = this->getTypeNameString();
-     AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
+    string typenameString = this->getTypeNameString();
+    AstNodeClass::TypeEvaluation typeKind = node.evaluateType(typenameString);
 
-  // Maybe this is the simplest way to handle this.
-  // string returnString = "append";
-  // string returnString = "get_listOfFile().push_back";
-     string returnString = string("get_") + this->getVariableNameString() + "().push_back";
+    string returnString = string("get_") + this->getVariableNameString() + "().push_back";
 
-#if 0
-     printf ("In GrammarString::containerAppendFunctionNameString(): node = %s typenameString = %s \n",node.getName().c_str(),typenameString.c_str());
-#endif
+    if (typeKind == AstNodeClass::SGCLASS_POINTER_LIST) {
+        if (typenameString == "SgFilePtrList")                           goto done;
+        if (typenameString == "SgDirectoryPtrList")                      goto done;
+        if (typenameString == "SgTemplateArgumentPtrList")               goto done;
+        if (typenameString == "SgTemplateParameterPtrList")              goto done;
+        if (typenameString == "SgJavaImportStatementPtrList")            goto done;
+        if (typenameString == "SgClassDeclarationPtrList")               goto done;
+        if (typenameString == "SgVarRefExpPtrList")                      goto done;
+        if (typenameString == "SgDeclarationStatementPtrList")           goto done;
+        if (typenameString == "SgStatementPtrList")                      goto done;
+        if (typenameString == "SgInitializedNamePtrList")                goto done;
+        if (typenameString == "SgOmpClausePtrList")                      goto done;
+        if (typenameString == "SgKeyDatumPairPtrList")                   goto done;
+        if (typenameString == "SgJavaMemberValuePairPtrList")            goto done;
+        if (typenameString == "SgAsmStatementPtrList")                   goto done;
+        if (typenameString == "SgAsmExpressionPtrList")                  goto done;
+        if (typenameString == "SgExpressionPtrList")                     goto done;
+        if (typenameString == "SgRenamePairPtrList")                     goto done;
+        if (typenameString == "SgInterfaceBodyPtrList")                  goto done;
+        if (typenameString == "SgCommonBlockObjectPtrList")              goto done;
+        if (typenameString == "SgAsmRegisterReferenceExpressionPtrList") goto done;
+        if (typenameString == "SgAsmNEEntryPointPtrList")                goto done;
+        if (typenameString == "SgAsmNERelocEntryPtrList")                goto done;
+        if (typenameString == "SgAsmLEPageTableEntryPtrList")            goto done;
+        if (typenameString == "SgAsmLEEntryPointPtrList")                goto done;
+        if (typenameString == "SgAsmLERelocEntryPtrList")                goto done;
+        if (typenameString == "SgAsmGenericSectionPtrList")              goto done;
+        if (typenameString == "SgAsmGenericHeaderPtrList")               goto done;
+        if (typenameString == "SgAsmElfSymbolPtrList")                   goto done;
+        if (typenameString == "SgAsmElfRelocEntryPtrList")               goto done;
+        if (typenameString == "SgAsmPEExportEntryPtrList")               goto done;
+        if (typenameString == "SgAsmElfSegmentTableEntryPtrList")        goto done;
+        if (typenameString == "SgAsmElfSymverEntryPtrList")              goto done;
+        if (typenameString == "SgAsmElfSymverNeededEntryPtrList")        goto done;
+        if (typenameString == "SgAsmCoffSymbolPtrList")                  goto done;
+        if (typenameString == "SgAsmPERVASizePairPtrList")               goto done;
+        if (typenameString == "SgAsmPEImportDirectoryPtrList")           goto done;
+        if (typenameString == "SgAsmDwarfMacroPtrList")                  goto done;
+        if (typenameString == "SgAsmDwarfLinePtrList")                   goto done;
+        if (typenameString == "SgAsmDwarfCompilationUnitPtrList")        goto done;
+        if (typenameString == "SgAsmDwarfConstructPtrList")              goto done;
+        if (typenameString == "SgAsmPEImportItemPtrList")                goto done;
+        if (typenameString == "SgAsmInterpretationPtrList")              goto done;
+        if (typenameString == "SgAsmElfSymverDefinedEntryPtrList")       goto done;
+        if (typenameString == "SgAsmElfSymverNeededAuxPtrList")          goto done;
+        if (typenameString == "SgAsmGenericFilePtrList")                 goto done;
+        if (typenameString == "SgAsmElfSymverDefinedAuxPtrList")         goto done;
+        if (typenameString == "SgLambdaCapturePtrList")                  goto done;
+        if (typenameString == "SgIncludeFilePtrList")                    goto done;
 
-  // ROSE_ASSERT(typeKind == AstNodeClass::SGCLASS_POINTER_LIST);
-     if (typeKind == AstNodeClass::SGCLASS_POINTER_LIST)
-        {
-       // return the case using a switch over the types (for now).
-          if (typenameString == "SgFilePtrList")
-             {
-            // returnString = "SgFile";
-               goto done;
-             }
+        printf("ERROR: In GrammarString::containerAppendFunctionNameString(): unhandled case: node = %s typenameString = %s \n",
+               node.getName().c_str(),typenameString.c_str());
 
-          if (typenameString == "SgDirectoryPtrList")
-             {
-            // returnString = "SgDirectory";
-               goto done;
-             }
+        done: ;
+    }
+    else {
+        printf("ERROR: GrammarString::containerAppendFunctionNameString() only defined for AstNodeClass::SGCLASS_POINTER_LIST type data members \n");
+        printf("   --- typenameString = %s \n",typenameString.c_str());
+        ASSERT_require(false);
+    }
 
-          if (typenameString == "SgTemplateArgumentPtrList")
-             {
-            // returnString = "SgTemplateArgument";
-               goto done;
-             }
-
-          if (typenameString == "SgTemplateParameterPtrList")
-             {
-               // returnString = "SgTemplateParameter";
-               goto done;
-             }
-
-          if (typenameString == "SgJavaImportStatementPtrList")
-             {
-               // returnString = "SgJavaImportStatement";
-               goto done;
-             }
-
-          if (typenameString == "SgClassDeclarationPtrList")
-             {
-               // returnString = "SgClassDeclaration";
-               goto done;
-             }
-
-          if (typenameString == "SgVarRefExpPtrList")
-             {
-               // returnString = "SgExpression";
-               goto done;
-             }
-
-          if (typenameString == "SgDeclarationStatementPtrList")
-             {
-               // returnString = "SgDeclarationStatement";
-               goto done;
-             }
-
-          if (typenameString == "SgStatementPtrList")
-             {
-               // returnString = "SgStatement";
-               goto done;
-             }
-
-          if (typenameString == "SgInitializedNamePtrList")
-             {
-               // returnString = "SgInitializedName";
-               goto done;
-             }
-
-          if (typenameString == "SgOmpClausePtrList")
-             {
-               // returnString = "SgOmpClause";
-               goto done;
-             }
-
-          if (typenameString == "SgKeyDatumPairPtrList")
-             {
-               // returnString = "SgKeyDatumPair";
-               goto done;
-             }
-
-          if (typenameString == "SgJavaMemberValuePairPtrList")
-             {
-               // returnString = "SgJavaMemberValuePair";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmStatementPtrList")
-             {
-               // returnString = "SgAsmStatement";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmExpressionPtrList")
-             {
-               // returnString = "SgAsmExpression";
-               goto done;
-             }
-
-          if (typenameString == "SgExpressionPtrList")
-             {
-               // returnString = "SgExpression";
-               goto done;
-             }
-
-          if (typenameString == "SgRenamePairPtrList")
-             {
-               // returnString = "SgRenamePair";
-               goto done;
-             }
-
-          if (typenameString == "SgInterfaceBodyPtrList")
-             {
-               // returnString = "SgInterfaceBody";
-               goto done;
-             }
-
-          if (typenameString == "SgCommonBlockObjectPtrList")
-             {
-               // returnString = "SgCommonBlockObject";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmRegisterReferenceExpressionPtrList")
-             {
-               // returnString = "SgAsmRegisterReferenceExpression";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmNEEntryPointPtrList")
-             {
-               // returnString = "SgAsmNEEntryPoint";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmNERelocEntryPtrList")
-             {
-               // returnString = "SgAsmNERelocEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmLEPageTableEntryPtrList")
-             {
-               // returnString = "SgAsmLEPageTableEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmLEEntryPointPtrList")
-             {
-               // returnString = "SgAsmLEEntryPoint";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmLERelocEntryPtrList")
-             {
-            // This is a typedef in Node.code:
-            //      typedef SgAsmNERelocEntry SgAsmLERelocEntry;
-            // I think this is thus missing from the header files we use for this file.
-            // returnString = "SgAsmLERelocEntry";
-               // returnString = "SgAsmNERelocEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmGenericSectionPtrList")
-             {
-               // returnString = "SgAsmGenericSection";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmGenericHeaderPtrList")
-             {
-               // returnString = "SgAsmGenericHeader";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfSymbolPtrList")
-             {
-               // returnString = "SgAsmElfSymbol";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfRelocEntryPtrList")
-             {
-               // returnString = "SgAsmElfRelocEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmPEExportEntryPtrList")
-             {
-               // returnString = "SgAsmPEExportEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfSegmentTableEntryPtrList")
-             {
-               // returnString = "SgAsmElfSegmentTableEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfSymverEntryPtrList")
-             {
-               // returnString = "SgAsmElfSymverEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfSymverNeededEntryPtrList")
-             {
-               // returnString = "SgAsmElfSymverNeededEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmCoffSymbolPtrList")
-             {
-               // returnString = "SgAsmCoffSymbol";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmPERVASizePairPtrList")
-             {
-               // returnString = "SgAsmPERVASizePair";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmPEImportDirectoryPtrList")
-             {
-               // returnString = "SgAsmPEImportDirectory";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmDwarfMacroPtrList")
-             {
-               // returnString = "SgAsmDwarfMacro";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmDwarfLinePtrList")
-             {
-               // returnString = "SgAsmDwarfLine";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmDwarfCompilationUnitPtrList")
-             {
-               // returnString = "SgAsmDwarfCompilationUnit";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmDwarfConstructPtrList")
-             {
-               // returnString = "SgAsmDwarfConstruct";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmPEImportItemPtrList")
-             {
-               // returnString = "SgAsmPEImportItem";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmInterpretationPtrList")
-             {
-               // returnString = "SgAsmInterpretation";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfSymverDefinedEntryPtrList")
-             {
-               // returnString = "SgAsmElfSymverDefinedEntry";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmElfSymverNeededAuxPtrList")
-             {
-               // returnString = "SgAsmElfSymverNeededAux";
-               goto done;
-             }
-
-          if (typenameString == "SgAsmGenericFilePtrList")
-             {
-               // returnString = "SgAsmGenericFile";
-               goto done;
-             }
-
-
-          if (typenameString == "SgAsmElfSymverDefinedAuxPtrList")
-             {
-               // returnString = "SgAsmElfSymverDefinedAux";
-               goto done;
-             }
-          if (typenameString == "SgLambdaCapturePtrList")
-            {
-            goto done;
-            }
-
-
-       // DQ (12/2/2018): Added this support because the windows support failed with the message below, but I don't see why an error code what returned.
-          if (typenameString == "SgIncludeFilePtrList")
-             {
-               // returnString = "SgIncludeFile";
-               goto done;
-             }
-
-#if 0
-          if (typenameString == "SgAsmElfSymverDefinedAuxList")
-             {
-            // This node is a problem, not clear what to return.
-            // returnString = "SgAsmElfSymverDefinedAux";
-               returnString = "SgNode";
-               goto done;
-             }
-#endif
-#if 0
-          if (typenameString == "")
-             {
-               returnString = "*";
-               goto done;
-             }
-#endif
-
-          printf ("ERROR: In GrammarString::containerAppendFunctionNameString(): unhandled case: node = %s typenameString = %s \n",node.getName().c_str(),typenameString.c_str());
-
-          done: ;
-#if 0
-             {
-            // returnString = "SgFile*";
-               returnString = typenameString + ": unimplemented";
-               printf ("ERROR: GrammarString::containerAppendFunctionNameString() note yet defined for container: typenameString = %s \n",typenameString.c_str());
-            // ROSE_ASSERT(false);
-             }
-#endif
-        }
-       else
-        {
-          printf ("ERROR: GrammarString::containerAppendFunctionNameString() only defined for AstNodeClass::SGCLASS_POINTER_LIST type data members \n");
-          printf ("   --- typenameString = %s \n",typenameString.c_str());
-          ROSE_ABORT();
-        }
-
-     return returnString;
-   }
+    return returnString;
+}
 
