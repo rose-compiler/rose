@@ -1420,12 +1420,11 @@ m4_pattern_allow([LT_LIBEXT])dnl From http://www.mail-archive.com/libtool-commit
 # I had to promote it to configure.in, right before calling  ROSE_SUPPORT_ROSE_PART_2
 #test -z "$SED" && SED=sed
 
-AC_PROG_LIBTOOL
-AC_LIBLTDL_CONVENIENCE dnl We need to use our version because libtool can't handle when we use libtool v2 but the v1 libltdl is installed on a system
-AC_SUBST(LTDLINCL)
-AC_SUBST(LIBLTDL)
-AC_LIBTOOL_DLOPEN
-AC_LIB_LTDL(recursive)
+LT_INIT([dlopen])
+LT_CONFIG_LTDL_DIR([libltdl])
+LTDL_CONVENIENCE
+LTDL_INIT([recursive])
+
 dnl AC_LT DL_SHLIBPATH dnl Get the environment variable like LD_LIBRARY_PATH for the Fortran support to use
 dnl This seems to be an internal variable, set by different macros in different
 dnl Libtool versions, but with the same name
@@ -1703,8 +1702,7 @@ dnl (8/29/2007): This was added to provide more portable times upon the
 dnl suggestion of Matt Sottile at LANL.
 dnl ---------------------------------------------------------------------
 AC_C_INLINE
-AC_HEADER_TIME
-AC_CHECK_HEADERS([sys/time.h c_asm.h intrinsics.h mach/mach_time.h])
+AC_CHECK_HEADERS([sys/time.h time.h c_asm.h intrinsics.h mach/mach_time.h])
 
 AC_CHECK_TYPE([hrtime_t],[AC_DEFINE(HAVE_HRTIME_T, 1, [Define to 1 if hrtime_t is defined in <sys/time.h>])],,[#if HAVE_SYS_TIME_H
 #include <sys/time.h>
