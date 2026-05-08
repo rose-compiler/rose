@@ -28,7 +28,7 @@ AC_DEFUN([ROSE_SUPPORT_CAPSTONE],[
     if test "$capstone" = no; then
         AC_MSG_NOTICE([skipping check for capstone])
     else
-        AC_CHECKING([for capstone])
+        AC_MSG_CHECKING([for capstone])
 	AC_LANG_PUSH([C++])
 	AC_LINK_IFELSE([
 	    AC_LANG_SOURCE([

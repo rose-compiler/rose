@@ -4,7 +4,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_1],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_1.
 
-
 # Used by Rose::initialize. See the top-level CMakeLists.txt for more details.
 ROSE_CONFIG_TOKEN="rose-$(cat $srcdir/ROSE_VERSION)"
 
@@ -17,26 +16,17 @@ ROSE_CONFIG_TOKEN="rose-$(cat $srcdir/ROSE_VERSION)"
 # application using ROSE might require.
 # *********************************************************************
 
-# DQ (2/11/2010): Jeremiah reported this as bad syntax, I think he is correct.
-# I'm not sure how this made it into this file.
-# AMTAR ?= $(TAR)
 AMTAR="$TAR"
 
-# DQ (9/9/2009): Added test.
 if test "$am__tar" = "false"; then
    AC_MSG_FAILURE([am__tar set to false])
 fi
 
-# DQ (9/9/2009): Added test.
 if test "$am__untar" = "false"; then
    AC_MSG_FAILURE([am__untar set to false])
 fi
 
-# DQ (3/20/2009): Trying to get information about what system we are on so that I
-# can detect Cygwin and OSX (and other operating systems in the future).
 AC_CANONICAL_BUILD
-# AC_CANONICAL_HOST
-# AC_CANONICAL_TARGET
 
 AC_MSG_CHECKING([machine hardware cpu])
 AC_MSG_RESULT([$build_cpu])
@@ -49,17 +39,11 @@ AC_MSG_RESULT([$build_os])
 
 DETERMINE_OS
 
-# DQ (3/20/2009): The default is to assume Linux, so skip supporting this test.
-# AM_CONDITIONAL(ROSE_BUILD_OS_IS_LINUX,  [test "x$build_os" = xlinux-gnu])
 AM_CONDITIONAL(ROSE_BUILD_OS_IS_OSX,    [test "x$build_vendor" = xapple])
 AM_CONDITIONAL(ROSE_BUILD_OS_IS_CYGWIN, [test "x$build_os" = xcygwin])
 
-# DQ (9/10/2009): A more agressive attempt to identify the OS vendor
-# This sets up automake conditional variables for each OS vendor name.
 DETERMINE_OS_VENDOR
 
-# This appears to be a problem for Java (and so the Fortran support).
-# CHECK_SSL
 ROSE_SUPPORT_SSL
 
 # Need the SSL automake conditional so that libssl can be added selectively for only those
@@ -69,24 +53,6 @@ AM_CONDITIONAL(ROSE_USE_SSL_SUPPORT, [test "x$enable_ssl" = xyes])
 configure_date=`date '+%A %B %e %H:%M:%S %Y'`
 AC_SUBST(configure_date)
 # echo "In ROSE/con figure: configure_date = $configure_date"
-
-# DQ (1/27/2008): Added based on suggestion by Andreas.  This allows
-# the binary analysis to have more specific information. However, it
-# appears that it requires version 2.61 of autoconf and we are using 2.59.
-# echo "$host_cpu"
-# echo "host_cpu = $host_cpu"
-# echo "host_vendor = $host_vendor"
-# echo "ac_cv_host = $ac_cv_host"
-# echo "host = $host"
-# This does not currently work - I don't know why!
-# AC_DEFINE([ROSE_HOST_CPU],$host_cpu,[Machine CPU Name where ROSE was configured.])
-
-# DQ (9/7/2006): Allow the default prefix to be the current build tree
-# This does not appear to work properly
-# AC_PREFIX_DEFAULT(`pwd`)
-
-# echo "In configure: prefix = $prefix"
-# echo "In configure: pwd = $PWD"
 
 if test "$prefix" = NONE; then
    AC_MSG_NOTICE([setting prefix to default: "$PWD"])
@@ -98,12 +64,9 @@ fi
 AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
 
 ROSE_CONFIGURE_SECTION([Checking GNU Fortran])
-# DQ (10/18/2010): Check for gfortran (required for syntax checking and semantic analysis of input Fortran codes)
 AX_WITH_PROG(GFORTRAN_PATH, [gfortran], [])
 AC_SUBST(GFORTRAN_PATH)
 
-# DQ (11/17/2016): We need to make sure that --without-gfortran does not set USE_GFORTRAN_IN_ROSE to true.
-# if test "x$GFORTRAN_PATH" != "x"; then
 if test "x$GFORTRAN_PATH" != "x" -a "$GFORTRAN_PATH" != "no"; then
    AC_DEFINE([USE_GFORTRAN_IN_ROSE], [1], [Mark that GFORTRAN is available])
 else
@@ -120,25 +83,22 @@ AC_MSG_NOTICE([GFORTRAN_PATH = "$GFORTRAN_PATH"])
   AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
   AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
 
-# Rasmussen (01/13/2021): Moved checking for Java until after language configuration
-# options are set.  Otherwise configure fails if jdk libraries aren't found even if not used.
   ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
-  ROSE_SUPPORT_UPC
   ROSE_SUPPORT_COMPASS2
   ROSE_SUPPORT_GMP
   ROSE_SUPPORT_ISL
   ROSE_SUPPORT_MPI
   ROSE_SUPPORT_SPOT
 
+# UPC is in the process of being removed.
+# The test files are still present and probably should be removed [Rasmussen, 2026.05.07].
+# ROSE_SUPPORT_UPC
+
 ##
 #########################################################################################
 
-
-## Rasmussen (11/19/2017): Support for using the modified GNU Octave parser.
-#
+# Check on the modified GNU Octave parser.
 ROSE_SUPPORT_OCTAVE
-#########################################################################################
-
 
 # *******************************************************
 # ROSE/projects directory compilation & testing
@@ -172,6 +132,7 @@ else
    enableval=yes 
 fi
 AM_CONDITIONAL(ROSE_BUILD_TESTS_DIRECTORY_SUPPORT, [test "x$support_tests_directory" = xyes])
+
 # *******************************************************
 # ROSE/tutorial directory compilation & testing
 # *******************************************************
@@ -202,25 +163,16 @@ if test "x$enable_memory_pool_no_reuse" = "xyes"; then
   AC_DEFINE([ROSE_USE_MEMORY_POOL_NO_REUSE], [], [Whether to use a special no-reuse mode of memory pools])
 fi
 
-# DQ (11/14/2011): Added new configure mode to support faster development of langauge specific
-# frontend support (e.g. for work on new EDG 4.3 front-end integration into ROSE).
 AC_ARG_ENABLE(internalFrontendDevelopment, AS_HELP_STRING([--enable-internalFrontendDevelopment], [Enable development mode to reduce files required to support work on language frontends]))
 AM_CONDITIONAL(ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT, [test "x$enable_internalFrontendDevelopment" = xyes])
 if test "x$enable_internalFrontendDevelopment" = "xyes"; then
   AC_MSG_WARN([using reduced set of files to support faster development of language frontend work; e.g. new EDG version 4.3 to translate EDG to ROSE (internal use only)!])
 
-# DQ (11/14/2011): It is not good enough for this to be processed here (added to the rose_config.h file)
-# since it is seen too late in the process.
-# AC_DEFINE([ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT], [], [Whether to use internal reduced mode to support integration of the new EDG version 4.x])
 fi
 
-# This is the support for using EDG as the frontend in ROSE.
+# front-ends
 ROSE_SUPPORT_EDG
-
-# This is the support for using Clang as a frontend in ROSE not the support for Clang as a compiler to compile ROSE source code.
 ROSE_SUPPORT_CLANG
-
-# Support for using F18/Flang as a Fortran frontend in ROSE
 ROSE_SUPPORT_FLANG
 
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
@@ -288,17 +240,12 @@ if test "x$enable_experimental_flang_frontend" = "xyes"; then
   AC_DEFINE([ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION], [], [Enables development of experimental fortran flang frontend])
 fi
 
-# DQ (8/23/2017): Added support for new csharp front-end development.
 AC_ARG_ENABLE(experimental_csharp_frontend,
     AS_HELP_STRING([--enable-experimental_csharp_frontend], [Enable experimental csharp frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION, [test "x$enable_experimental_csharp_frontend" = xyes])
 if test "x$enable_experimental_csharp_frontend" = "xyes"; then
   AC_MSG_WARN([using this mode enables experimental csharp front-end (internal development only)!])
   AC_DEFINE([ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION], [], [Enables development of experimental csharp frontend])
-
-# DQ (8/23/2017): Need to review now to get the MONO_HOME and ROSLYN_HOME environment variables.
-# mono_home=$MONO_HOME
-# rosyln_home=$ROSYLN_HOME
 
   mono_home=`roslyn-config mono-home`
   roslyn_home=`roslyn-config csharp-home`
@@ -339,7 +286,6 @@ if test "x$enable_experimental_libadalang_frontend" = "xyes"; then
   AC_DEFINE([ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION], [], [Enables development of experimental ada frontend using libadalang])
 fi
 
-
 # DQ (6/7/2013): Added support for debugging new ada front-end development.
 AC_ARG_ENABLE(debug_output_for_experimental_ada_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_ada_frontend], [Enable debugging output (spew) of new ADA/ROSE connection]))
@@ -369,7 +315,7 @@ if test "x$enable_experimental_libadalang_frontend" = "xyes"; then
   AC_SUBST(gnat_home)
 fi
 
-# DQ (8/23/2017): Added support for new Jovial front-end development.
+# Jovial front-end development.
 AC_ARG_ENABLE(experimental_jovial_frontend,
     AS_HELP_STRING([--enable-experimental_jovial_frontend], [Enable experimental jovial frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION, [test "x$enable_experimental_jovial_frontend" = xyes])
@@ -378,7 +324,7 @@ if test "x$enable_experimental_jovial_frontend" = "xyes"; then
   AC_DEFINE([ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION], [], [Enables development of experimental jovial frontend])
 fi
 
-# DQ (8/23/2017): Added support for debugging new jovial front-end development.
+# Debugging Jovial front-end development.
 AC_ARG_ENABLE(debug_output_for_experimental_jovial_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_jovial_frontend], [Enable debugging output (spew) of new JOVIAL/ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_jovial_frontend" = xyes])
@@ -387,10 +333,7 @@ if test "x$enable_debug_output_for_experimental_jovial_frontend" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new JOVIAL/ROSE connection code])
 fi
 
-# Rasmussen (9/18/2020): Removed --experimental_cobol_frontend option and associated code
-# This was required because the Cobol frontend depended on SgUntyped nodes which have been deleted.
-
-# Rasmussen (10/30/2017): Added support for new Octave/Matlab front-end development.
+# Octave/Matlab front-end development.
 AC_ARG_ENABLE([experimental_matlab_frontend],
     AS_HELP_STRING([--enable-experimental_matlab_frontend], [Enable experimental Octave/Matlab frontend development (default=no)]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION, [test "x$enable_experimental_matlab_frontend" = xyes])
@@ -399,7 +342,7 @@ if test "x$enable_experimental_matlab_frontend" = "xyes"; then
   AC_DEFINE([ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION], [], [Enables development of experimental Octave/Matlab frontend])
 fi
 
-# Rasmussen (10/30/2017): Added support for debugging new Octave/Matlab front-end development.
+# Debugging Octave/Matlab front-end development.
 AC_ARG_ENABLE(debug_output_for_experimental_matlab_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_matlab_frontend], [Enable debugging output (spew) of new Octave/Matlab ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_MATLAB_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_matlab_frontend" = xyes])
@@ -408,16 +351,6 @@ if test "x$enable_debug_output_for_experimental_matlab_frontend" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_MATLAB_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new Octave/Matlab ROSE connection code])
 fi
 
-# DQ (8/18/2009): Removed this conditional macro.
-# DQ (4/23/2009): Added support for commandline specification of using new graph IR nodes.
-# AC_ARG_ENABLE(newGraphNodes, AS_HELP_STRING([--enable-newGraphNodes], [Enable new (experimental) graph IR nodes]))
-#AM_CONDITIONAL(ROSE_USE_NEW_GRAPH_NODES, [test "x$enable_newGraphNodes" = xyes])
-#if test "x$enable_newGraphNodes" = "xyes"; then
-#  AC_MSG_WARN([Using the new graph IR nodes in ROSE (experimental)!])
-#  AC_DEFINE([ROSE_USE_NEW_GRAPH_NODES], [], [Whether to use the new graph IR nodes])
-#fi
-
-# DQ (5/2/2009): Added support for backward compatability of new IR nodes with older API.
 AC_ARG_ENABLE(use_new_graph_node_backward_compatability,
     AS_HELP_STRING([--enable-use_new_graph_node_backward_compatability], [Enable new (experimental) graph IR nodes backward compatability API]))
 AM_CONDITIONAL(ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY, [test "x$enable_use_new_graph_node_backward_compatability" = xyes])
@@ -425,7 +358,6 @@ if test "x$enable_use_new_graph_node_backward_compatability" = "xyes"; then
   AC_MSG_WARN([using the new graph IR nodes in ROSE (experimental)!])
   AC_DEFINE([ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY], [], [Whether to use the new graph IR nodes compatability option with older API])
 fi
-
 
 # Set up for use of bison to build dot2gml tool in directory
 # src/roseIndependentSupport/dot2gml.  This is made optional
@@ -438,28 +370,8 @@ AC_ARG_ENABLE(dot2gml_translator,
 ])
 AM_CONDITIONAL(DOT_TO_GML_TRANSLATOR,test "$enable_dot2gml_translator" = yes)
 
-# Set the value of srcdir so that it will be an absolute path instead of a relative path
-# srcdir=`dirname "$0"`
-# echo "In ROSE/con figure: srcdir = $srcdir"
-# echo "In ROSE/con figure: $0"
-# Record the location of the build tree (so it can be substituted into ROSE/docs/Rose/rose.cfg)
-# topSourceDirectory=`dirname "$0"`
-# echo "In ROSE/con figure: topSourceDirectory = $topSourceDirectory"
-# AC_SUBST(topSourceDirectory)
-
-# echo "Before test for CANONICAL HOST: CC (CC = $CC)"
-
 AC_CANONICAL_HOST
 
-# *****************************************************************
-
-# DQ (12/3/2016): Added support for specification of specific warnings a for those specific warnings to be treated as errors.
-# ROSE_SUPPORT_FATAL_WARNINGS
-
-# *****************************************************************
-
-# DQ (3/21/2017): Moved this to here (earlier than where is it used below) so that
-# the warnings options can use the compiler vendor instead of the compiler name.
 AC_LANG(C++)
 
 # Get frontend compiler vendor
@@ -474,16 +386,6 @@ AC_MSG_NOTICE([ax_cv_cxx_compiler_vendor    = $ax_cv_cxx_compiler_vendor"])
 AC_MSG_NOTICE([FRONTEND_CXX_COMPILER_VENDOR = "$FRONTEND_CXX_COMPILER_VENDOR"])
 
 unset ax_cv_cxx_compiler_vendor
-
-# DQ (9/20/20): Moving the setup of compiler flags to after the macros that define the compiler versions are computed.
-# Setup default options for C and C++ compilers compiling ROSE source code.
-# ROSE_FLAG_C_OPTIONS
-# ROSE_FLAG_CXX_OPTIONS
-
-# echo "Exiting after computing the frontend compiler vendor"
-# exit 1
-
-# *****************************************************************
 
 # DQ (11/14/2011): This is defined here since it must be seen before any processing of the rose_config.h file.
 if test "x$enable_internalFrontendDevelopment" = "xyes"; then
@@ -502,6 +404,7 @@ AC_MSG_NOTICE([CPPFLAGS = "$CPPFLAGS"])
 
 # DQ (10/17/2010): This defines an advanced level of uniform support for debugging and compiler warnings in ROSE.
 AC_MSG_CHECKING([for enabled advanced warning support])
+
 # Default is that advanced warnings is off, but this can be changed later so that advanced warnings would have to be explicitly turned off.
 AC_ARG_ENABLE(advanced_warnings, AS_HELP_STRING([--enable-advanced-warnings], [Support for an advanced uniform warning level for ROSE development]),[enableval=yes],[enableval=no])
 AM_CONDITIONAL(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT, [test "x$enable_advanced_warnings" = xyes])
@@ -518,7 +421,7 @@ if test "x$enable_advanced_warnings" = "xyes"; then
 # Incrementally add the advanced options
   if test "$CXX_ADVANCED_WARNINGS"; then CXXFLAGS="$CXXFLAGS $CXX_ADVANCED_WARNINGS"; fi
 fi
-# ROSE_USE_UNIFORM_DEBUG_SUPPORT=7
+
 AC_SUBST(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT)
 
 AC_MSG_NOTICE([after processing --enable-advanced-warnings: CXX_ADVANCED_WARNINGS = "${CXX_ADVANCED_WARNINGS}"])
@@ -529,16 +432,7 @@ AC_MSG_NOTICE([CFLAGS   = "$CFLAGS"])
 AC_MSG_NOTICE([CXXFLAGS = "$CXXFLAGS"])
 AC_MSG_NOTICE([CPPFLAGS = "$CPPFLAGS"])
 
-# echo "Exiting in support after enabled advanced warnings"
-# exit 1
-
-# *****************************************************************
-
-# DQ: added here to see if it would be defined for the template tests and avoid placing
-# a $(CXX_TEMPLATE_REPOSITORY_PATH) directory in the top level build directory (a minor error)
 CXX_TEMPLATE_REPOSITORY_PATH='$(top_builddir)/src'
-
-# *****************************************************************
 
 AC_ARG_ENABLE(assertion-behavior,
     AS_HELP_STRING([--enable-assertion-behavior[=MODE]],
@@ -565,16 +459,11 @@ esac
 
 AC_DEFINE_UNQUOTED([ROSE_ASSERTION_BEHAVIOR], [$assertion_behavior], [Determines how failed assertions should behave.])
 
-# *****************************************************************
-
 # ********************************************************************************
 #    Option support for the Address Sanitizer and other related Sanitizer tools.
 # ********************************************************************************
 
 ROSE_SUPPORT_SANITIZER
-
-# *****************************************************************
-
 
 # ********************************************************************************
 #    Option support for the Linux Coverage Test tools.
@@ -585,9 +474,7 @@ ROSE_SUPPORT_LCOV
 # *****************************************************************
 # ROSE_HOME should be relative to top_srcdir or top_builddir.
 ROSE_HOME=.
-# ROSE_HOME=`pwd`/$top_srcdir
 AC_SUBST(ROSE_HOME)
-# echo "In ROSE/configure: ROSE_HOME = $ROSE_HOME"
 
 AC_LANG(C++)
 
@@ -596,39 +483,14 @@ ROSE_SUPPORT_PYTHON
 
 ROSE_SUPPORT_BOOST
 
-# Rasmussen (12/16/2017): Added test for Bison version (Mac OSX Bison version may be too old)
-# Only needed for CXX
-# ROSE_SUPPORT_BISON
-
-# DQ (11/5/2009): Added test for GraphViz's ``dot'' program
 ROSE_SUPPORT_GRAPHVIZ
 
 AX_LIB_SQLITE3
 AX_LIB_MYSQL
 AM_CONDITIONAL(ROSE_USE_MYSQL,test "$found_mysql" = yes)
 
-# DQ (9/15/2009): I have moved this to before the backend compiler selection so that
-# we can make the backend selection a bit more compiler dependent. Actually we likely
-# don't need this!
-# DQ (9/17/2006): These should be the same for both C and C++ (else we will need separate macros)
-# Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler
-# specific and system specific header files as for the backend compiler.  These depend
-# upon the selection of the back-end compiler.
-# GET_COMPILER_SPECIFIC_DEFINES
-
 # Test this macro here at the start to avoid long processing times (before it fails)
 CHOOSE_BACKEND_COMPILER
-
-# *****************************************************************
-
-# echo "DQ (7/26/2020): Exiting after CHOOSE_BACKEND_COMPILER"
-# exit 1
-
-# *****************************************************************
-
-# Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).
-# This function must be called from this support-rose file (error in ./build if called from the GET COMPILER SPECIFIC DEFINES macro.
-# AC_LANG_PUSH(C)
 
 # Get frontend compiler vendor
 AX_COMPILER_VENDOR
@@ -641,12 +503,7 @@ unset ax_cv_cxx_compiler_vendor
   AC_MSG_NOTICE([after resetting CXX to be the backend compiler: CXX = "$CXX"])
 
   AX_COMPILER_VENDOR
-# returns string ax_cv_cxx_compiler_vendor if this is the C++ compiler else returns
-# the vendor for the C compiler in ax_cv_c_compiler_vendor for the C compiler.
-# CcompilerVendorName= $ax_cv_c_compiler_vendor
-# CxxcompilerVendorName= $ax_cv_cxx_compiler_vendor
-# echo "Output the names of the vendor for the C or C++ backend compilers."
-# echo "Using back-end C   compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_c_compiler_vendor   for processing of unparsed source files from ROSE preprocessors."
+
   AC_MSG_NOTICE([using back-end C++ compiler = "$BACKEND_CXX_COMPILER" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors])
   BACKEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
 
@@ -655,12 +512,6 @@ unset ax_cv_cxx_compiler_vendor
 
 AC_MSG_NOTICE([FRONTEND_CXX_COMPILER_VENDOR = "$FRONTEND_CXX_COMPILER_VENDOR"])
 
-# echo "Exiting after computing the backend compiler vendor"
-# exit 1
-
-# *****************************************************************
-
-# DQ (2/27/2016): Added version 4.9.x to supported compilers.
 AC_MSG_CHECKING([whether your compiler is a GNU compiler and the version that is supported by ROSE (4.0.x - 6.3.x)])
 AC_ARG_ENABLE([gcc-version-check],AS_HELP_STRING([--disable-gcc-version-check],[Disable GCC version 4.0.x - 6.3.x verification check]),,[enableval=yes])
 if test "x$FRONTEND_CXX_COMPILER_VENDOR" = "xgnu" ; then
@@ -687,8 +538,6 @@ else
     AC_MSG_RESULT([not a GNU compiler])
 fi
 
-# *****************************************************************
-
 # DQ (2/7/17): This is a problem reported by Robb (sometimes gcc is not installed).
 # This is used in EDG (host_envir.h)  Test by building a bad version of gcc
 # use shell script called gcc with "exit 1" inside.
@@ -706,15 +555,6 @@ else
    GCC_VERSION=4
    GCC_MINOR_VERSION=8
 fi
-
-# echo "Exiting after test for GNU compiler and setting the version info for EDG (GCC_VERSION and GCC_MINOR_VERSION)."
-# exit 1
-
-# DQ (7/27/2020): debugging info
-# echo "After computing GNU version: GCC_VERSION       = $GCC_VERSION"
-# echo "After computing GNU version: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
-
-# *****************************************************************
 
 # DQ (2/7/2017): These macros test for C++11 and C++14 features and
 # the default behavior of the CXX compiler.  Unfortunately the also
@@ -746,23 +586,11 @@ CXX="$save_CXX"
 
 AC_MSG_NOTICE([after restoring the saved value of CXX: CXX = "$CXX", CXXCPP = "$CXXCPP"])
 
-# echo "Exiting in support-rose after computing the C++ mode (c++11, and c++14 modes)"
-# exit 1
-
-# *****************************************************************
-
-# DQ (12/7/2016): Added support for specification of specific warnings a for those specific warnings to be treated as errors.
 ROSE_SUPPORT_FATAL_WARNINGS
-
-# *****************************************************************
-
-# echo "Exiting in support-rose after computing the compiler vendor name for the C and C++ compilers."
-# exit 1
 
 # End macro ROSE_SUPPORT_ROSE_PART_1.
 ]
 )
-
 
 AC_DEFUN([ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES],
 [
@@ -771,22 +599,13 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES],
 AC_MSG_NOTICE([in ROSE SUPPORT ROSE BUILD INCLUDE FILES: Using back-end C++ compiler = "$BACKEND_CXX_COMPILER" compiler vendor name = "$ax_cv_cxx_compiler_vendor" for processing of unparsed source files from ROSE preprocessors])
 
 # DQ (7/26/2020): Spelling it correctly so that we can force the directory of header files to be rebuilt.
-# Note that this directory name is not spelled correctly, is this a typo?
-# JJW (12/10/2008): We don't preprocess the header files for the new interface
-# rm -rf ./include-stagin
-# echo "Changes spelling of include-stagin to force the directory of header files to be rebuilt."
-rm -rf ./include-stagin
 
-# DQ (7/27/2020): debugging info
-# echo "Before processing include files: GCC_VERSION       = $GCC_VERSION"
-# echo "Before processing include files: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
+# Note that this directory name is not spelled correctly, is this a typo?
+rm -rf ./include-stagin
 
 if test x$enable_clang_frontend = xyes; then
   INSTALL_CLANG_SPECIFIC_HEADERS
 else
-
-# DQ (7/26/2020): Process this macro only to better support testing.
-# GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
 
   # DQ (11/1/2011): I think that we need these for more complex header file
   # requirements than we have seen in testing C code to date.  Previously
@@ -796,19 +615,8 @@ else
 fi
 
 # End macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
-
-# *****************************************************************
-# echo "DQ (7/26/2020): Exiting after ROSE SUPPORT ROSE BUILD INCLUDE FILES (Skipped C header files!)"
-# exit 1
-# *****************************************************************
 ]
 )
-
-# *****************************************************************
-# The exit here does not appear to force an exit.
-# echo "DQ (7/26/2020): Exiting after ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES"
-# exit 1
-# *****************************************************************
 
 #-----------------------------------------------------------------------------
 
@@ -820,7 +628,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_2],
 # So make this a requirement so that it will not be expanded there.
 m4_require([_LT_SYS_DYNAMIC_LINKER])
 
-# AC_REQUIRE([AC_PROG_CXX])
 AC_PROG_CXX
 
 AC_MSG_NOTICE([in configure.in ... CXX = "$CXX"])
@@ -838,27 +645,14 @@ ROSE_FLAG_C_OPTIONS
 ROSE_FLAG_CXX_OPTIONS
 ROSE_FLAG_OPTIONS
 
-# This must go after the setup of the headers options
-# Setup the CXX_INCLUDE_STRING to be used by EDG to find the correct headers
-# SETUP_BACKEND_COMPILER_SPECIFIC_REFERENCES
-# JJW (12/10/2008): We don't preprocess the header files for the new interface,
-# but we still need to use the original C++ header directories
 ROSE_CONFIGURE_SECTION([Checking backend C/C++ compiler specific references])
 SETUP_BACKEND_C_COMPILER_SPECIFIC_REFERENCES
 SETUP_BACKEND_CXX_COMPILER_SPECIFIC_REFERENCES
 
-# echo "In configure.in ... CXX = $CXX : exiting after call to setup backend C and C++ compilers specific references."
-# exit 1
-
-# DQ (1/15/2007): Check if longer internal make check rule is to be used (default is short tests)
 ROSE_SUPPORT_LONG_MAKE_CHECK_RULE
 
 # Make the use of longer test optional where it is used in some ROSE/tests directories
 AM_CONDITIONAL(ROSE_USE_LONG_MAKE_CHECK_RULE,test "$with_ROSE_LONG_MAKE_CHECK_RULE" = yes)
-
-# The libxml2 library is availabe in /usr/lib on most Linux systems, however this is not
-# enough when using the Intel compilers.  So we need to turn it on explicitly when we
-# expect it to work with a specific platform/compiler combination.
 
 # JJW -- use standard version in /usr/share/aclocal, and configure XML only
 # once for roseHPCT and BinaryContextLookup
@@ -899,46 +693,25 @@ AC_ARG_WITH(alloc-trace, [  --with-alloc-trace     Memory pool allocation tracin
             [AC_DEFINE([ROSE_ALLOC_TRACE], 0, [Without tracing of memory pool operation])]
             )
 
-# Add --disable-binary-analysis-tests flag to turn off tests that sometimes
-# sometimes break.
-# Pei-Hung (10/24/2016) use only ROSE_BUILD_BINARY_ANALYSIS_SUPPORT to control binary analysis tests
-# AC_ARG_ENABLE(binary-analysis-tests, AS_HELP_STRING([--disable-binary-analysis-tests], [Disable tests of ROSE binary analysis code]), binary_analysis_tests="$withval", binary_analysis_tests=yes)
-# AM_CONDITIONAL(USE_BINARY_ANALYSIS_TESTS, test "x$binary_analysis_tests" = "xyes")
-
 # Figure out what version of lex we have available
 # flex works better than lex (this gives a preference to flex (flex is gnu))
-AM_PROG_LEX
+AM_PROG_LEX([noyywrap])
 AC_SUBST(LEX)
 AC_PROG_YACC
 AC_SUBST(YACC)
 
-# echo "After test for LEX: CC (CC = $CC)"
-
-# DQ (4/1/2001) Need to call this macro to avoid having "MAKE" set to "make" in the
-# top level Makefile (this is important to getting gmake to be used in the "make distcheck"
-# makefile rule.  (This does not seem to work, since calling "make distcheck" still fails and
-# only "gmake distcheck" seems to work.  I don't know why!
 AC_PROG_MAKE_SET
 
-# DQ (9/21/2009): Debugging for RH release 5
 AC_MSG_NOTICE([testing the value of CC: (CC = "$CC")])
 AC_MSG_NOTICE([testing the value of CPPFLAGS: (CPPFLAGS = "$CPPFLAGS")])
 
-# Call supporting macro for MAPLE
 ROSE_SUPPORT_MAPLE
 
 # Setup Automake conditional in Projects/programModeling/Makefile.am
 AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
 
-# DQ (5/21/2017): I don't think we use this anymore.
-#ROSE_SUPPORT_VXWORKS
-
 # Setup Automake conditional.
 AM_CONDITIONAL(ROSE_USE_VXWORKS,test ! "$with_vxworks" = no)
-
-# DQ (5/23/2017): I don't think we use this anymore.
-# DQ (4/10/2010): Added configure support for Backstroke project.
-# ROSE_SUPPORT_BACKSTROKE
 
 #Call supporting macro for IDA PRO
 ROSE_SUPPORT_IDA
@@ -953,29 +726,11 @@ ROSE_SUPPORT_LIBFFI
 # Setup Automake conditional in projects/interpreter/Makefile.am
 AM_CONDITIONAL(ROSE_USE_LIBFFI,test ! "$with_libffi" = no)
 
-
-# DQ (3/13/2009): Trying to get Intel Pin and ROSE to both use the same version of libdwarf.
-# DQ (3/10/2009): The Dwarf support in Intel Pin conflicts with the Dwarf support in ROSE.
-# Maybe there is a way to fix this later, for now we want to disallow it.
-# echo "with_dwarf    = $with_dwarf"
-# echo "with_IntelPin = $with_IntelPin"
-#if test "$with_dwarf" != no && test "$with_IntelPin" != no; then
-# # echo "Support for both DWARF and Intel Pin fails, these configure options are incompatable."
-#   AC_MSG_ERROR([Support for both DWARF and Intel Pin fails, these configure options are incompatable!])
-#fi
-
-# DQ (3/14/2013): Adding support for Aterm library use in ROSE.
+# Aterm library is used by the Jovial frontend
 ROSE_SUPPORT_ATERM
 
-# DQ (1/22/2016): Added support for stratego (need to know the path to sglri executable for Experimental Fortran support).
+# Stratego/XT library used by the Jovial frontend
 ROSE_SUPPORT_STRATEGO
-
-# RASMUSSEN (11/16/2017): Removed check for OFP Stratego tools binary installation (Experimental Fortran support).
-# Now assumes that the OFP Fortran parse table (Fortran.tbl) is stored in the source directory.
-# RASMUSSEN (2/22/2017): Added support for OFP Stratego tools binary installation (Experimental Fortran support).
-# This assumes that OFP is installed from an OFP release and not imported and built with ROSE directly.
-
-#ROSE_SUPPORT_OFP_STRATEGO
 
 if test "x$enable_experimental_fortran_frontend" = "xyes"; then
    if test "x$ATERM_LIBRARY_PATH" = "x"; then
@@ -986,7 +741,7 @@ if test "x$enable_experimental_fortran_frontend" = "xyes"; then
    fi
 fi
 
-# Rasmussen (10/24/2017): ATerm and Stratego/XT tools binary installation required for Jovial support.
+# ATerm and Stratego/XT tools binary installation required for Jovial support.
 if test "x$enable_experimental_jovial_frontend" = "xyes"; then
    if test "x$ATERM_LIBRARY_PATH" = "x"; then
       AC_MSG_ERROR([support for experimental_jovial_frontend requires Aterm library support, --with-aterm=PATH must be specified!])
@@ -996,13 +751,12 @@ if test "x$enable_experimental_jovial_frontend" = "xyes"; then
    fi
 fi
 
-# Rasmussen (11/19/2017): Octave/Matlab parser installation required for Matlab support.
+# Octave/Matlab parser installation required for Matlab support.
 if test "x$enable_experimental_matlab_frontend" = "xyes"; then
    if test "x$OCTAVE_PARSER_INSTALL_TARFILE" = "x"; then
       AC_MSG_ERROR([support for experimental_matlab_frontend requires the modified GNU Octave parser, --with-octave-parser=PATH must be specified!])
    fi
 fi
-
 
 ROSE_SUPPORT_MINT
 
@@ -1043,7 +797,6 @@ ROSE_SUPPORT_GCC_OMP
 # Configuration commandline support for OpenMP in ROSE
 AM_CONDITIONAL(ROSE_USE_GCC_OMP,test ! "$with_parallel_ast_traversal_omp" = no)
 
-
 # JJW and TP (3-17-2008) -- added MPI support
 AC_ARG_WITH(parallel_ast_traversal_mpi,
 [  --with-parallel_ast_traversal_mpi     Enable AST traversal in parallel using MPI.],
@@ -1051,7 +804,6 @@ AC_ARG_WITH(parallel_ast_traversal_mpi,
 ])
 AM_CONDITIONAL(ROSE_MPI,test "$with_parallel_ast_traversal_mpi" = yes)
 AC_CHECK_TOOLS(MPICXX, [mpiCC mpic++ mpicxx])
-
 
 # TPS (2-11-2009) -- added PCH Support
 AC_ARG_WITH(pch,
@@ -1071,24 +823,15 @@ else
   AC_MSG_NOTICE("PCH disabled: no Support for PCH")
 fi
 
-
-
-
-
-
 # TP SUPPORT FOR OPENGL
-#AC_DEFINE([openGL],1,[By default OpenGL is disabled.])
 AC_ARG_ENABLE([rose-openGL],
   [  --enable-rose-openGL  enable openGL],
   [  rose_openGL=${enableval}
 AC_PATH_X dnl We need to do this by hand for some reason
 
-# DQ (9/26/2015): Using more recent autoconf macro to avoid warnings.
-# MDL_HAVE_OPENGL
 AC_FIND_OPENGL
 
 AC_MSG_NOTICE([have_GL = "$have_GL" and have_glut = "$have_glut" and rose_openGL = "$rose_openGL"])
-#AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$openGL" = xno)
 if test ! "x$rose_openGL" = xno; then
    AC_MSG_NOTICE([checking OpenGL dependencies..."])
   if test "x$have_GL" = xyes; then
@@ -1106,7 +849,6 @@ fi
   AC_MSG_NOTICE([OpenGL disabled])
 ])
 AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno)
-
 
 AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, false)
 
@@ -1143,12 +885,10 @@ AC_CHECK_PROGS(INDENT, [indent])
 AM_CONDITIONAL(ROSE_USE_INDENT, [test "x$INDENT" = "xindent"])
 AC_MSG_NOTICE([INDENT = "$INDENT"])
 
-# DQ (9/30/2009): Added checking for tclsh command (common in Linux, but not on some platforms).
 AC_CHECK_PROGS(TCLSH, [tclsh])
 AM_CONDITIONAL(ROSE_USE_TCLSH, [test "x$TCLSH" = "xtclsh"])
 AC_MSG_NOTICE([TCLSH = "$TCLSH"])
 
-# Call supporting macro for OFP
 ROSE_SUPPORT_OFP
 
 # DQ (3/6/2013): The major version number must match or the ac_pkg_swig.m4 will report
@@ -1156,7 +896,7 @@ ROSE_SUPPORT_OFP
 # AC_PROG_SWIG(1.3.31)
 AC_PROG_SWIG(2.0.0)
 SWIG_ENABLE_CXX
-#AS (10/23/07): introduced conditional use of javaport
+
 AC_ARG_WITH([javaport],
    [  --with-javaport ... Enable generation of Java bindings for ROSE using Swig],
    [with_javaport=$withval],
@@ -1174,40 +914,22 @@ if test "x$with_javaport" = "xyes"; then
   fi
   AC_MSG_WARN([enabling Java binding support -- SWIG produces invalid C++ code, so -fno-strict-aliasing is being added to CXXFLAGS to work around this issue.  If you are not using GCC as a compiler, this flag will need to be changed.])
   CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
-
-# DQ (3/6/2013): Added support to permit conditional compilation for use of SWIG.
-# SWIG has restricted support for C++ and so we need to tailor ROSE to fix into
-# the subset of C++ that SWIG can support.  We only want to turn this ON when SWIG
-# is processing the ROSE source code.  So it need not generate an entry in rose_config.h.
-# AC_DEFINE([ROSE_USE_SWIG_SUPPORT], [], [Whether to use SWIG support or not within ROSE])
 fi
 
-# Call supporting macro for Haskell
 ROSE_SUPPORT_HASKELL
 
 ROSE_SUPPORT_CUDA
 
-# if swi-prolog is available
 ROSE_SUPPORT_SWIPL
-
-# Call support macro for Z3
 
 ROSE_SUPPORT_Z3
 
-# Call supporting macro for bddbddb
 ROSE_SUPPORT_BDDBDDB
 
 # Setup Automake conditional in Projects/DatalogAnalysis/Makefile.am
 AM_CONDITIONAL(ROSE_USE_BDDBDDB,test ! "$with_bddbddb" = no)
 
-# Call supporting macro for VISUALIZATION (FLTK and GraphViz)
 ROSE_SUPPORT_VISUALIZATION
-
-# if ((test ! "$with_FLTK_include" = no) || (test ! "$with_FLTK_libs" = no) || (test ! "$with_GraphViz_include" = no) || (test ! "$with_GraphViz_libs" = no)); then
-#   echo "Skipping visualization support!"
-# else
-#   echo "Setting up visualization support!"
-# fi
 
 # Setup Automake conditional in src/roseIndependentSupport/visualization/Makefile.am
 AM_CONDITIONAL(ROSE_USE_VISUALIZATION,(test ! "$with_FLTK_include" = no) || (test ! "$with_FLTK_libs" = no) || (test ! "$with_GraphViz_include" = no) || (test ! "$with_GraphViz_libs" = no))
@@ -1215,8 +937,6 @@ AM_CONDITIONAL(ROSE_USE_VISUALIZATION,(test ! "$with_FLTK_include" = no) || (tes
 # *********************************************************************
 # Option to control internal support of PPL (Parma Polyhedron Library)
 # *********************************************************************
-
-# TV (05/25/2010): Check for Parma Polyhedral Library (PPL)
 
 AC_ARG_WITH(
         [ppl],
@@ -1386,15 +1106,6 @@ ROSE_CHECK_OPENCL
 # allow either user or developer level documentation using Doxygen
 ROSE_SUPPORT_DOXYGEN
 
-# DQ (8/25/2004): Disabled fast docs option.
-# Setup Automake conditional to allow use of Doxygen Tag file to speedup
-# generation of Rose documentation this does not however provide the
-# best organized documentation so we use it as an option to speed up
-# the development of the documenation and then alternatively build the
-# final documentation.
-# AM_CONDITIONAL(DOXYGEN_GENERATE_FAST_DOCS,test "$enable_doxygen_generate_fast_docs" = yes)
-# echo "In configure.in: enable_doxygen_generate_fast_docs = $enable_doxygen_generate_fast_docs"
-
 # Test for setup of document merge of Sage docs with Rose docs
 # Causes document build process to take longer but builds better documentation
 if (test "$enable_doxygen_generate_fast_docs" = yes) ; then
@@ -1404,21 +1115,11 @@ else
 fi
 
 AC_PROG_CXXCPP
-dnl AC_PROG_RANLIB
-# echo "In configure.in (before libtool win32 setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
-dnl AC_LIBTOOL_WIN32_DLL -- ROSE is probably not set up for this
 
-# echo "In configure.in (before libtool setup): disabling static libraries by default (use --enable-static or --enable-static= to override)"
 AC_DISABLE_STATIC
 
-# echo "In configure.in (before libtool setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
 LT_AC_PROG_SED dnl This seems to not be called, even though it is needed in the other macros
 m4_pattern_allow([LT_LIBEXT])dnl From http://www.mail-archive.com/libtool-commit@gnu.org/msg01369.html
-
-# Liao 8/17/2010. Tried to work around a undefined SED on NERSC hopper.
-# But this line is expanded after AC_PROG_LIBTOOL.
-# I had to promote it to configure.in, right before calling  ROSE_SUPPORT_ROSE_PART_2
-#test -z "$SED" && SED=sed
 
 LT_INIT([dlopen])
 LT_CONFIG_LTDL_DIR([libltdl])
@@ -1430,13 +1131,8 @@ dnl This seems to be an internal variable, set by different macros in different
 dnl Libtool versions, but with the same name
 AC_DEFINE_UNQUOTED(ROSE_SHLIBPATH_VAR, ["$shlibpath_var"], [Variable like LD_LIBRARY_PATH])
 
-#echo 'int i;' > conftest.$ac_ext
 AC_TRY_EVAL(ac_compile);
-# echo "In configure.in (after libtool setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
 
-# Various functions for finding the location of librose.* (used to make the
-# ROSE executables relocatable to different locations without recompilation on
-# some platforms)
 AC_CHECK_HEADERS([dlfcn.h], [have_dladdr=yes], [have_dladdr=no])
 if test "x$have_dladdr" = "xyes"; then
   AC_CHECK_LIB([dl], [dladdr], [], [have_dladdr=no])
@@ -1450,64 +1146,21 @@ else
 fi
 AM_CONDITIONAL(USE_ROSE_IN_BUILD_TREE_VAR, [test "x$use_rose_in_build_tree_var" = "xyes"])
 
-# Figure out what version of lex we have available
-# flex works better than lex (this gives a preference to flex (flex is gnu))
-dnl AM_PROG_LEX
-dnl AC_SUBST(LEX)
-# This will work with flex and lex (but flex will not set LEXLIB to -ll unless it finds the gnu
-# flex library which is not often installed (and at any rate not installed on our system at CASC)).
-# Once the lex file contains its own version of yywrap then we will not need this set explicitly.
-
-# next two lines commented out by BP : 10/29/2001,
-# the flex library IS installed on our systems, setting it to -ll causes problems on
-# Linux systems
-# echo "Setting LEXLIB explicitly to -ll (even if flex is used: remove this once lex file contains it's own version of yywrap)"
-# dnl LEXLIB='-ll'
-# dnl AC_SUBST(LEXLIB)
-
 # Determine what C++ compiler is being used.
 AC_MSG_CHECKING(what the C++ compiler $CXX really is)
 BTNG_INFO_CXX_ID
 AC_MSG_RESULT($CXX_ID-$CXX_VERSION)
 
-# Define various C++ compiler options.
-# echo "Before ROSE_FLAG _ CXX_OPTIONS macro"
-# ROSE_FLAG_C_OPTIONS
-# ROSE_FLAG_CXX_OPTIONS
-# echo "Outside of ROSE_FLAG _ CXX_OPTIONS macro: CXX_DEBUG= $CXX_DEBUG"
-
 # Enable turning on purify and setting its options, etc.
 ROSE_SUPPORT_PURIFY
-# echo "In ROSE/configure: AUX_LINKER = $AUX_LINKER"
 
 # Enable turning on Insure and setting its options, etc.
 ROSE_SUPPORT_INSURE
-# echo "In ROSE/configure: AUX_LINKER = $AUX_LINKER"
-
-# DQ (7/8/2004): Added support for shared libraries using Brian's macros
-# ROSE_TEST_LIBS="-L`pwd`/src"
-
-# DQ (9/7/2006): build the directory where libs will be placed.
-# mkdir -p $prefix/libs
-# echo "Before calling \"mkdir -p $prefix/lib\": prefix = $prefix"
-# mkdir -p $prefix/lib
-
-# DQ (1/14/2007): I don't think this is required any more!
-# ROSE_TEST_LIBS="-L$prefix/lib"
 
 # Determine how to create C++ libraries.
 AC_MSG_CHECKING(how to create C++ libraries)
 BTNG_CXX_AR
 AC_MSG_RESULT($CXX_STATIC_LIB_UPDATE and $CXX_DYNAMIC_LIB_UPDATE)
-
-# DQ (6/23/2004) Commented out due to warning in running build
-# I do not know why in this case, INCLUDES is not generically
-# defined and automatically substituted.  It usually is.  BTNG.
-# INCLUDES='-I. -I$(srcdir) -I$(top_builddir)'
-# AC_SUBST(INCLUDES)
-
-# We don't need to select between SAGE 2 and SAGE 3 anymore (must use SAGE 3)
-# SAGE_VAR_INCLUDES_AND_LIBS
 
 # Let user specify where to find A++P++ installation.
 # Specify by --with-AxxPxx= or setting AxxPxx_PREFIX.
@@ -1544,58 +1197,15 @@ AC_SUBST(Axx_INCLUDES)
 AC_SUBST(Axx_LIBS)
 AC_SUBST(Pxx_INCLUDES)
 AC_SUBST(Pxx_LIBS)
-# AC_SUBST(optional_AxxPxxSpecificExample_subdirs)
-# AC_SUBST(optional_AxxPxxSpecificTest_subdirs)
-# Do not append to INCLUDES and LIBS because Axx is not needed everywhere.
-# It is only needed in EXAMPLES.
-# Set up A++/P++ directories that require A++/P++ Libraries (EXAMPLES)
+
 AM_CONDITIONAL(AXXPXX_SPECIFIC_TESTS,test ! "$with_AxxPxx" = no)
 
-# BTNG_CHOOSE_STL defines STL_DIR and STL_INCLUDES
-# BTNG_CHOOSE_STL
-# echo "STL_INCLUDE = $STL_INCLUDE"
-# AC _SUB ST(STL_INCLUDES)
-# AC _SUB ST(STL_DIR)
-
-# We no longer want to have the ROSE configure.in setup the PerformanceTests/Makefile
-# PerformanceTests/Makefile
 AC_ARG_WITH(PERFORMANCE_TESTS,
    [  --with-PERFORMANCE_TESTS ... compile and run performance tests within both A++ and P++],, with_PERFORMANCE_TESTS=no )
-# BTNG_AC_LOG(with_PERFORMANCE_TESTS is $with_PERFORMANCE_TESTS)
-# with_PERFORMANCE_TESTS variable is exported so that other packages
-# (e.g. indirect addressing) can set
-# themselves up dependent upon the use/non-use of PADRE
+
 export with_PERFORMANCE_TESTS;
 
-# Inclusion of PerformanceTests and/or its sublibraries.
-# if test "$with_PERFORMANCE_TESTS" = no; then
-#   # If PerformanceTests is not specified, then don't use it.
-#     echo "Skipping PerformanceTests!"
-# else
-#   # If PERFORMANCE_TESTS is specified, then configure in PERFORMANCE_TESTS
-#   # without regard to its sublibraries.
-#   # subdir_list="BenchmarkBase $subdir_list"
-#   # optional_PERFORMANCE_subdirs="TESTS/PerformanceTests/BenchmarkBase"
-#   # optional_PERFORMANCE_subdirs="TESTS/PerformanceTests"
-#   optional_PERFORMANCE_subdirs="PerformanceTests"
-#   # echo "Setup PerformanceTests! optional_PERFORMANCE_subdirs = $optional_PERFORMANCE_subdirs"
-#   AC_CONFIG_SUBDIRS(TESTS/PerformanceTests/BenchmarkBase)
-# fi
-
-dnl # PC (8/16/2006): Now we test for GCJ since MOPS uses it
-dnl AC_ARG_WITH([gcj],
-dnl [  --with-gcj .................. Specify use of Java (gcj must be in path, required for use with ROSE/projects/FiniteStateModelChecker which uses MOPS internally)], [
-dnl    AM_PROG_GCJ
-dnl    echo "GCJ = '$GCJ'"
-dnl    if test "x$GCJ" == "x" ; then
-dnl      echo "gcj not found in path; please add gcj to path or omit --with-gcj option"
-dnl      exit 1
-dnl    fi
-dnl    with_gcj=yes
-dnl ],[
-dnl    _AM_IF_OPTION([no-dependencies],, [_AM_DEPENDENCIES(GCJ)])
-dnl ])
-with_gcj=no ; # JJW 5-22-2008 The code that was here before broke if gcj was not present, even if the --with-gcj flag was absent
+with_gcj=no ;
 AM_CONDITIONAL(USE_GCJ,test "$with_gcj" = yes)
 
 ROSE_CONFIGURE_SECTION([Checking system capabilities])
@@ -1607,32 +1217,6 @@ AC_SEARCH_LIBS(clock_gettime, [rt], [
   RT_LIBS=""
 ])
 AC_SUBST(RT_LIBS)
-
-# DQ (9/11/2006): Removed performance tests conditional, the performance tests were
-# removed previously, but we still have the tests/nonsmoke/functional/PerformanceTests directory.
-# AM_CONDITIONAL(ROSE_PERFORMANCE_TESTS,test ! "$with_PERFORMANCE_TESTS" = no)
-
-# DQ (9/11/2006): skipping use of optional_PERFORMANCE_subdirs
-# There is no configure.in in TESTS/PerformanceTests (only in TESTS/PerformanceTests/BenchmarkBase)
-# AC_CONFIG_SUBDIRS(TESTS/PerformanceTests)
-# AC_CONFIG_SUBDIRS(TESTS/PerformanceTests/BenchmarkBase)
-# AC_SUBST(optional_PERFORMANCE_subdirs)
-
-# DQ (12/16/2009): This option is now removed since the developersScratchSpace has been
-# removed from the ROSE's git repository and it is a separate git repository that can be
-# checked out internally by ROSE developers.
-# Set up for Dan Quinlan's development test directory.
-# AC_ARG_ENABLE(dq-developer-tests,
-# [--enable-dq-developer-tests   Development option for Dan Quinlan (disregard).],
-# [ echo "Setting up optional ROSE/developersScratchSpace/Dan directory"
-# if test -d ${srcdir}/developersScratchSpace; then
-#   :
-# else
-#   echo "This is a non-developer version of ROSE (source distributed with EDG binary)"
-#   enable_dq_developer_tests=no
-# fi
-# ])
-# AM_CONDITIONAL(DQ_DEVELOPER_TESTS,test "$enable_dq_developer_tests" = yes)
 
 ## This should be set after a complex test (turn it on as default)
 AC_DEFINE([HAVE_EXPLICIT_TEMPLATE_INSTANTIATION],[],[Use explicit template instantiation.])
@@ -1665,14 +1249,12 @@ rm -rf Templates.DB
 
 #-----------------------------------------------------------------------------
 
-
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_3],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_3.
 
 ## Setup the EDG specific stuff
 SETUP_EDG
-
 
 ROSE_ARG_ENABLE(
   [alternate-edg-build-cpu],
@@ -1713,12 +1295,33 @@ AC_CHECK_FUNCS([gethrtime read_real_time time_base_to_time clock_gettime mach_ab
 dnl Cray UNICOS _rtc() (real-time clock) intrinsic
 AC_MSG_CHECKING([for _rtc intrinsic])
 rtc_ok=yes
-AC_TRY_LINK([#ifdef HAVE_INTRINSICS_H
-#include <intrinsics.h>
-#endif], [_rtc()], [AC_DEFINE(HAVE__RTC,1,[Define if you have the UNICOS _rtc() intrinsic.])], [rtc_ok=no])
-AC_MSG_RESULT($rtc_ok)
+
 dnl ---------------------------------------------------------------------
 
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[
+#ifdef HAVE_INTRINSICS_H
+#include <intrinsics.h>
+#endif
+/* includes */
+    ]],
+    [[
+      /* body */
+      _rtc()
+    ]]
+  )],
+    [
+      AC_DEFINE(HAVE__RTC,1,[Define if you have the UNICOS _rtc() intrinsic.])
+    ],
+    [
+      rtc_ok=no
+    ]
+)
+
+dnl ---------------------------------------------------------------------
+
+AC_MSG_RESULT($rtc_ok)
 
 # Record the location of the build tree (so it can be substituted into ROSE/docs/Rose/rose.cfg)
 top_pwd=$PWD
@@ -1814,20 +1417,10 @@ if test "x$with_QRose" != xno; then
    fi
 fi
 
-# *****************************************************
-#   Support for RoseQt GUI (ROSE specific Qt widgets)
-# *****************************************************
-
-# ROSE_SUPPORT_ROSEQT
-# echo "with_roseQt = $with_roseQt"
-# AM_CONDITIONAL(ROSE_WITH_ROSEQT,test x"$with_roseQt" != x"no")
-
 # ****************************************************
 #   Support for Assembly Semantics (binary analysis)
 ROSE_SUPPORT_BINARY
-# ****************************************************
 
-# Was inside ROSE_SUPPORT_BINARY. It is no longer used by binary anslysis, but other parts of ROSE use it.
 ROSE_SUPPORT_YICES
 
 ROSE_SUPPORT_PYTHON_API
@@ -1840,7 +1433,6 @@ if test "x$found_libnuma" = xyes; then
 fi
 
 AM_CONDITIONAL(ROSE_USE_LIBNUMA, [test "x$found_libnuma" = xyes])
-
 
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
@@ -1855,15 +1447,6 @@ AC_DEFINE(CONFIG_ROSE, 1, [Always defined and used for checking whether global C
 ]
 )
 
-
-
-
-dnl ---------------------------------------------------------------
-dnl CLASSPATH_COND_IF(COND, SHELL-CONDITION, [IF-TRUE], [IF-FALSE])
-dnl ---------------------------------------------------------------
-dnl Automake 1.11 can emit conditional rules for AC_CONFIG_FILES,
-dnl using AM_COND_IF.  This wrapper uses it if it is available,
-dnl otherwise falls back to code compatible with Automake 1.9.6.
 AC_DEFUN([CLASSPATH_COND_IF],
 [m4_ifdef([AM_COND_IF],
   [AM_COND_IF([$1], [$3], [$4])],
@@ -1880,7 +1463,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_5],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_5.
 
-# DQ (9/21/2009): Debugging for RH release 5
 AC_MSG_NOTICE([CC = "$CC"])
 AC_MSG_NOTICE([CPPFLAGS = "$CPPFLAGS"])
 
@@ -1925,8 +1507,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_6.
 
-# RV 9/14/2005: Removed src/3rdPartyLibraries/PDFLibrary/Makefile
-# JJW 1/30/2008: Removed rose_paths.h as it is now built by a separate Makefile included from $(top_srcdir)/Makefile.am
 AC_CONFIG_FILES([
 Makefile
 config/Makefile
@@ -2089,7 +1669,6 @@ tutorial/roseHPCT/Makefile
 
 #-----------------------------------------------------------------------------
 
-
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_7],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_7.
@@ -2114,19 +1693,6 @@ AC_CONFIG_COMMANDS([rosePublicConfig.h],[
     AC_MSG_NOTICE([building rosePublicConfig.h])
     make rosePublicConfig.h
 ])
-
-# [TOO1, 2014-04-22]
-# TODO: Re-enable once we phase out support for older version of Autotools.
-#       Specifically, Pontetec is using Autoconf 2.59 and Automake 1.9.6.
-# Rewrite the definitions for srcdir, top_srcdir, builddir, and top_builddir so they use the "abs_" versions instead.
-#AC_CONFIG_COMMANDS([absoluteNames],
-#[[
-#       echo "rewriting makefiles to use absolute paths for srcdir, top_srcdir, builddir, and top_builddir..."
-#       find . -name Makefile | xargs sed -i~ \
-#           -re 's/^(srcdir|top_srcdir|builddir|top_builddir) = \..*/\1 = $(abs_\1)/'
-#]])
-
-
 
 # End macro ROSE_SUPPORT_ROSE_PART_7.
 ]

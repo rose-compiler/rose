@@ -68,17 +68,23 @@ AC_DEFUN([AX_BOOST_SERIALIZATION],
 
         AC_CACHE_CHECK(whether the boost::serialization headers are available,
             ax_cv_boost_serialization,
-            [   AC_LANG_PUSH([C++])
-                AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[@%:@include <fstream>
-                    @%:@include <boost/archive/text_oarchive.hpp>
-                    @%:@include <boost/archive/text_iarchive.hpp>
-                ]],
-                [[  std::ofstream ofs("filename");
-                    boost::archive::text_oarchive oa(ofs);
-                    return 0;
-                ]]),
-                ax_cv_boost_serialization=yes, ax_cv_boost_serialization=no)
-                AC_LANG_POP([C++])
+            [AC_LANG_PUSH([C++])
+             AC_COMPILE_IFELSE(
+               [AC_LANG_PROGRAM(
+                 [[
+        @%:@include <fstream>
+        @%:@include <boost/archive/text_oarchive.hpp>
+        @%:@include <boost/archive/text_iarchive.hpp>
+                 ]],
+                 [[
+        std::ofstream ofs("filename");
+        boost::archive::text_oarchive oa(ofs);
+        return 0;
+                 ]]
+               )],
+               [ax_cv_boost_serialization=yes],
+               [ax_cv_boost_serialization=no])
+             AC_LANG_POP([C++])
             ])
 
         if test "x$ax_cv_boost_serialization" = "xyes"; then

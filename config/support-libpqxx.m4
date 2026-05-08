@@ -33,7 +33,7 @@ AC_DEFUN([ROSE_SUPPORT_LIBPQXX],[
     if test $pqxx = no; then
         AC_MSG_NOTICE([skipping check for libpqxx])
     else
-        AC_CHECKING([for libpqxx])
+        AC_MSG_CHECKING([for libpqxx])
         AC_LANG_PUSH([C++])
         AC_LINK_IFELSE([
             AC_LANG_SOURCE([

@@ -13,7 +13,6 @@ DEFAULT_INCLUDES =
 
 # -I../../.. is needed in order to find <rosePublicConfig.h> from <featureTests.h> needed by RoseDatabase.C
 AM_CPPFLAGS = -I../../.. $(filter-out -I.,$(ROSE_INCLUDES))
-CPPFLAGS = -I../../.. $(filter-out -I.,$(ROSE_INCLUDES))
 
 # The ROSE library should not be linked into Sawyer tools since (1) it's not needed, and (2) it hasn't been built yet at
 # the point where Sawyer tools are being linked. In other words, Sawyer tools are not ROSE tools.  Sawyer tools probably

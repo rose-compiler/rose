@@ -42,18 +42,14 @@ dnl 2. Name of variable to set to the version number.
 [
 # Start macro BTNG_INFO_CXX_ID_NAMES
   AC_REQUIRE([AC_PROG_CXXCPP])
-  AC_LANG_SAVE
-  AC_LANG_CPLUSPLUS
+
+  AC_LANG_PUSH([C++])
+
   BTNG_AC_LOG(CXXP is $CXX)
   BTNG_AC_LOG(CXXCPP is $CXXCPP)
 
   $1=unknown
   $2=unknown
-
-dnl Do not change the following chain of if blocks into a case statement.
-dnl We may eventually have a compiler that must be tested in a different
-dnl method
-
 
   # Check if it is a Sun compiler.
   if test $$1 = unknown; then
@@ -68,7 +64,6 @@ changequote([,])
       rm -f conftest.C
     )
   fi
-
 
   # Check if it is a GNU compiler.
   if test $$1 = unknown; then
@@ -86,7 +81,6 @@ yes;
     )
   fi
 
-
   # Check if it is a DEC compiler.
   if test $$1 = unknown; then
     BTNG_AC_LOG(checking if $CXX is dec)
@@ -98,7 +92,6 @@ yes;
       rm -f conftest.C
     )
   fi
-
 
   # Check if it is a KAI compiler.
   if test $$1 = unknown; then
@@ -112,7 +105,6 @@ yes;
     )
   fi
 
-
   # Check if it is a SGI compiler.
   if test $$1 = unknown; then
     BTNG_AC_LOG(checking if $CXX is sgi)
@@ -124,7 +116,6 @@ yes;
       rm -f conftest.C
     )
   fi
-
 
   # Check if it is a IBM compiler.
   if test $$1 = unknown; then
@@ -142,15 +133,10 @@ yes;
     )
   fi
 
-
-  AC_LANG_RESTORE
+  AC_LANG_POP([C++])
   BTNG_AC_LOG_VAR(CXX_ID CXX_VERSION)
 # End macro BTNG_INFO_CXX_ID_NAMES
 ])
-
-
-
-
 
 AC_DEFUN([BTNG_INFO_CC_ID_NAMES],
 dnl Arguments are:
@@ -159,18 +145,13 @@ dnl 2. Name of variable to set to the version number.
 [
 # Start macro BTNG_INFO_CC_ID_NAMES
   AC_REQUIRE([AC_PROG_CPP])
-  AC_LANG_SAVE
-  AC_LANG_C
+  AC_LANG_PUSH([C])
+
   BTNG_AC_LOG(CC is $CC)
   BTNG_AC_LOG(CPP is $CPP)
 
   $1=unknown
   $2=unknown
-
-dnl Do not change the following chain of if blocks into a case statement.
-dnl We may eventually have a compiler that must be tested in a different
-dnl method
-
 
   # Check if it is a Sun compiler.
   if test $$1 = unknown; then
@@ -186,7 +167,6 @@ changequote([,])
     )
   fi
 
-
   # Check if it is a GNU compiler.
   if test $$1 = unknown; then
     BTNG_AC_LOG(checking if $CC is gnu)
@@ -200,7 +180,6 @@ yes;
     )
   fi
 
-
   # Check if it is a DEC compiler.
   if test $$1 = unknown; then
     BTNG_AC_LOG(checking if $CC is dec)
@@ -212,7 +191,6 @@ yes;
       rm -f conftest.c
     )
   fi
-
 
   # Check if it is a KAI compiler.
   if test $$1 = unknown; then
@@ -226,7 +204,6 @@ yes;
     )
   fi
 
-
   # Check if it is a SGI compiler.
   if test $$1 = unknown; then
     BTNG_AC_LOG(checking if $CC is sgi)
@@ -238,7 +215,6 @@ yes;
       rm -f conftest.c
     )
   fi
-
 
   # Check if it is a IBM compiler.
   if test $$1 = unknown; then
@@ -268,8 +244,7 @@ yes;
     BTNG_AC_LOG(ac_cpp is restored to $ac_cpp)
   fi
 
-
-  AC_LANG_RESTORE
+  AC_LANG_POP([C])
   BTNG_AC_LOG_VAR(CC_ID CC_VERSION)
 # End macro BTNG_INFO_CC_ID_NAMES
 ])

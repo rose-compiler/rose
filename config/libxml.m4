@@ -58,7 +58,11 @@ dnl Now check if the installed libxml is sufficiently new.
 dnl (Also sanity checks the results of xml2-config to some extent)
 dnl
       rm -f conf.xmltest
-      AC_TRY_RUN([
+
+dnl --------------------------------------
+      AC_RUN_IFELSE(
+        [AC_LANG_SOURCE([[
+/* complete program */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -133,7 +137,13 @@ main()
     }
   return 1;
 }
-],, no_xml=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
+        ]])],
+        [ : ],
+        [ no_xml=yes ],
+        [ AC_MSG_NOTICE([cross compiling; assumed OK]) ]
+      )
+dnl --------------------------------------
+
        CPPFLAGS="$ac_save_CPPFLAGS"
        LIBS="$ac_save_LIBS"
      fi
@@ -156,23 +166,41 @@ main()
           echo "*** Could not run libxml test program, checking why..."
           CPPFLAGS="$CPPFLAGS $XML_CPPFLAGS"
           LIBS="$LIBS $XML_LIBS"
-          AC_TRY_LINK([
+
+dnl --------------------------------------
+          AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM(
+              [[
+/* includes */
 #include <libxml/xmlversion.h>
 #include <stdio.h>
-],      [ LIBXML_TEST_VERSION; return 0;],
-        [ echo "*** The test program compiled, but did not run. This usually means"
-          echo "*** that the run-time linker is not finding LIBXML or finding the wrong"
-          echo "*** version of LIBXML. If it is not finding LIBXML, you'll need to set your"
-          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
-          echo "*** to the installed location  Also, make sure you have run ldconfig if that"
-          echo "*** is required on your system"
-          echo "***"
-          echo "*** If you have an old version installed, it is best to remove it, although"
-          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH" ],
-        [ echo "*** The test program failed to compile or link. See the file config.log for the"
-          echo "*** exact error that occured. This usually means LIBXML was incorrectly installed"
-          echo "*** or that you have moved LIBXML since it was installed. In the latter case, you"
-          echo "*** may want to edit the xml2-config script: $XML2_CONFIG" ])
+              ]],
+              [[
+                /* body */
+                LIBXML_TEST_VERSION;
+                return 0;
+              ]]
+            )],
+              [
+                echo "*** The test program compiled and linked, but did not run. This usually means"
+                echo "*** that the run-time linker is not finding LIBXML or finding the wrong"
+                echo "*** version of LIBXML. If it is not finding LIBXML, you'll need to set your"
+                echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
+                echo "*** to the installed location  Also, make sure you have run ldconfig if that"
+                echo "*** is required on your system"
+                echo "***"
+                echo "*** If you have an old version installed, it is best to remove it, although"
+                echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"
+              ],
+              [
+                echo "*** The test program failed to compile or link. See the file config.log for the"
+                echo "*** exact error that occured. This usually means LIBXML was incorrectly installed"
+                echo "*** or that you have moved LIBXML since it was installed. In the latter case, you"
+                echo "*** may want to edit the xml2-config script: $XML2_CONFIG"
+              ]
+          )
+dnl --------------------------------------
+
           CPPFLAGS="$ac_save_CPPFLAGS"
           LIBS="$ac_save_LIBS"
        fi

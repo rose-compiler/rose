@@ -9,22 +9,6 @@
 # should define the variable ROSE_HOME to be the relative path to the root
 # of the ROSE directory tree.
 
-# This fixes some problem caused by automake or autoconf
-# (detailed documentation is in the ChangeLog)
-# MAKE=gmake
-
-# DQ (8/10/2007): Valentin suggested this be commented out.
-# DQ (4/23/2006): This is the default when build using automake version 1.6.3 but it
-# causes errors so we would like to specify --run automake instead
-# AUTOMAKE = ${SHELL} $(top_srcdir)/config/missing --run automake-1.6
-# AUTOMAKE = ${SHELL} $(top_srcdir)/config/missing --run automake
-
-# force ranlib to just call touch so that *.so (dynamic libraries) will not
-# be run with ranlib (which is a error).  This allows us to use dynamic
-# libraries as the default within ROSE.
-# JJW 7/25/2008: Do we really need this?
-## RANLIB = touch
-
 # JJW (2/25/2008): set a flag (only used when running ROSE applications) to
 # have them run using the build tree rather than the install tree -- this is
 # important for "make check" in an uninstalled copy of ROSE.
@@ -44,7 +28,6 @@ if ROSE_USE_SQLITE_DATABASE
    ROSE_SQLITE_DATABASE_INCLUDE  = $(SQLITE3_CFLAGS)
    SQLITE_DATABASE_INCLUDE       = $(SQLITE3_CFLAGS) -I$(top_srcdir)/src/roseExtensions/sqlite3x
    SQLITE_DATABASE_LIBS          = $(SQLITE3_LDFLAGS)
-#   ROSE_SQLITE_DATABASE_OBJS     = $(top_builddir)/src/roseExtensions/sqlite3x/*o
    ROSE_SQLITE_DATABASE_LIB_NAME = RoseSQLite3xDatabase
    ROSE_SQLITE_DATABASE_LIB_FILE = lib$(ROSE_SQLITE_DATABASE_LIB_NAME).la
    ROSE_SQLITE_DATABASE_LIBS     = -l$(ROSE_SQLITE_DATABASE_LIB_NAME)
@@ -74,15 +57,13 @@ RT_LIBS = @RT_LIBS@
 
 VALGRIND_BINARY = @VALGRIND_BINARY@
 
-# ROSE-HPCToolkit module
 if ROSE_BUILD_ROSEHPCT
   ROSE_ROSEHPCT_INCLUDES = -I$(top_srcdir)/src/roseExtensions/roseHPCToolkit/include
   ROSE_ROSEHPCT_LIBS = -lrosehpct
   ROSE_ROSEHPCT_LIBS_WITH_PATH = $(top_builddir)/src/roseExtensions/roseHPCToolkit/src/librosehpct.la
-# ROSE_ROSEHPCT_LIB_FILE = librosehpct.so
 endif
 
-# ROSE-YICES Package (destributed by SRI as a static library)
+# ROSE-YICES Package (distributed by SRI as a static library)
 if ROSE_HAVE_LIBYICES
   ROSE_YICES_INCLUDES = -I@ROSE_YICES_PREFIX@/include
   ROSE_YICES_LIBS = -lyices
@@ -185,12 +166,9 @@ if ROSE_USE_PHP
   ROSE_PHP_LIBS_WITH_PATH = $(php_path)/lib/libphc.so $(php_path)/lib/libphp5.so $(LIBLTDL)
 endif
 
-# ASR (06/09/2010): adding llvm support variables
 if ROSE_USE_LLVM
   ROSE_LLVM_INCLUDES = -I$(llvm_path)/include
   ROSE_LLVM_LIBS = -L$(llvm_path)/lib -lLLVMXCoreCodeGen -lLLVMXCoreAsmPrinter -lLLVMXCoreInfo -lLLVMSystemZCodeGen -lLLVMSystemZAsmPrinter -lLLVMSystemZInfo -lLLVMSparcCodeGen -lLLVMSparcAsmPrinter -lLLVMSparcInfo -lLLVMPowerPCCodeGen -lLLVMPowerPCAsmPrinter -lLLVMPowerPCInfo -lLLVMpic16passes -lLLVMPIC16AsmPrinter -lLLVMPIC16CodeGen -lLLVMPIC16Info -lLLVMMSP430CodeGen -lLLVMMSP430AsmPrinter -lLLVMMSP430Info -lLLVMMSIL -lLLVMMSILInfo -lLLVMMipsAsmPrinter -lLLVMMipsCodeGen -lLLVMMipsInfo -lLLVMMBlazeAsmPrinter -lLLVMMBlazeCodeGen -lLLVMMBlazeInfo -lLLVMLinker -lLLVMipo -lLLVMInterpreter -lLLVMInstrumentation -lLLVMJIT -lLLVMExecutionEngine -lLLVMCppBackend -lLLVMCppBackendInfo -lLLVMCellSPUCodeGen -lLLVMCellSPUAsmPrinter -lLLVMCellSPUInfo -lLLVMCBackend -lLLVMCBackendInfo -lLLVMBlackfinCodeGen -lLLVMBlackfinAsmPrinter -lLLVMBlackfinInfo -lLLVMBitWriter -lLLVMX86Disassembler -lLLVMX86AsmParser -lLLVMX86AsmPrinter -lLLVMX86CodeGen -lLLVMX86Info -lLLVMAsmParser -lLLVMARMAsmParser -lLLVMMCParser -lLLVMARMAsmPrinter -lLLVMARMCodeGen -lLLVMARMInfo -lLLVMArchive -lLLVMBitReader -lLLVMAlphaCodeGen -lLLVMSelectionDAG -lLLVMAlphaAsmPrinter -lLLVMAsmPrinter -lLLVMCodeGen -lLLVMScalarOpts -lLLVMInstCombine -lLLVMTransformUtils -lLLVMipa -lLLVMAnalysis -lLLVMTarget -lLLVMMC -lLLVMCore -lLLVMAlphaInfo -lLLVMSupport -lLLVMSystem
-
-# adding all libraries for now
 
 endif
 
@@ -215,16 +193,10 @@ if ROSE_USE_INTEL_PIN
   INTEL_PIN_INCLUDE_PATHS = -I$(INTEL_PIN_PATH)/source/include -I$(INTEL_PIN_PATH)/source/include/gen -I$(INTEL_PIN_PATH)/extras/xed2-intel64/include -I$(INTEL_PIN_PATH)/source/tools/InstLib
 
 # DQ (3/8/2009): These cause rose/src/testSharedRoseLib to fail, I don't know why (fails in system call to map()).
-# INTEL_PIN_LIB_PATHS     = -L$(INTEL_PIN_PATH)/intel64/lib -L$(INTEL_PIN_PATH)/extras/xed2-intel64/lib -L$(INTEL_PIN_PATH)/intel64/lib-ext
   INTEL_PIN_LIB_PATHS     = -L$(INTEL_PIN_PATH)/intel64/lib -L$(INTEL_PIN_PATH)/extras/xed2-intel64/lib
 
 # Do we want to handle this differently when Dwarf is used optionally with ROSE.
   INTEL_PIN_LIBS          = -lpin -lxed -ldwarf -lelf -ldl
-#if ROSE_HAVE_LIBDWARF
-#  INTEL_PIN_LIBS          = -lpin -lxed -lelf -ldl
-#else
-#  INTEL_PIN_LIBS          = -lpin -lxed -ldwarf -lelf -ldl
-#endif
 endif
 
 if ROSE_USE_ETHER
@@ -243,12 +215,9 @@ if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
   ROSE_FLANG_LIBS     = -L$(FLANG_INSTALL_PATH)/lib -lLLVMDemangle -lLLVMSupport -lLLVMFrontendDirective -lLLVMFrontendOpenMP -lLLVMFrontendOpenACC -lFortranParser -lFortranSemantics -lFortranEvaluate -lFortranCommon -lFortranSupport -lFortranDecimal -lFortranLower -lncurses
 endif
 
-# DQ (5/9/2017): Adding Ada library support.
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
   ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
   DOT_ASIS_LIB_DIR_ = $(abs_top_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/parser/asis_adapter/lib
-#  ROSE_ADA_LIBS = -ldot_asis
-#  ROSE_ADA_LIBS_WITH_PATH = $(DOT_ASIS_LIB_DIR_)/libdot_asis.so
 endif
 
 if ROSE_USE_EDG_QUAD_FLOAT
@@ -256,14 +225,9 @@ if ROSE_USE_EDG_QUAD_FLOAT
 endif
 
 
-# DQ (1/9/2010): Added use of libimf with libm (the two go together when using Intel icc and icpc)
 if USING_INTEL_COMPILER
-#  ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lm
-# DQ (11/16/2017): We need to link in these Intel specific required libraries to avoid: error hidden symbol `__intel_cpu_features_init_x'
-# ROSE_INTEL_COMPILER_MATH_LIBS =
 ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lirng -lintlc -lsvml
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-#    ROSE_INTEL_COMPILER_MATH_LIBS += -limf
 endif
 ROSE_INTEL_COMPILER_MATH_LIBS += -lm
 endif
@@ -479,50 +443,10 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(BOOST_CPPFLAGS)
 endif
 
-# DQ (10/23/2015): These paths have been replaces with the following variables.
-# These variable are empty for now (reflecting the default usage, and need to
-# be set properly where ever Clang support is processed as a configure option.
-#    -I$(top_srcdir)/src/frontend/CxxFrontend/ClangFrontend
-#    -I$(top_srcdir)/src/frontend/CxxFrontend/Clang
-#    $(ROSE_CLANG_FRONTEND_INCLUDE)
-#    $(ROSE_CLANG_INCLUDE)
-
 SWIG_ROSE_INCLUDES = $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH)
 ROSE_INCLUDES = -I$(top_builddir) -I$(top_builddir)/src $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH)
 
-# DQ (8/15/2010): I have removed these directories from the include paths since it no longer exists.
-# I expect that the directories were removed and the include list not properly cleaned up.
-# -I$(top_srcdir)/src/midend/binaryAnalyses/graph
-# -I$(top_srcdir)/src/midend/programTransformation/runtimeTransformation
-# -I$(top_srcdir)/projects/dataBase
-
-# DQ (12/22/2008): Move Boost directory to front and used "-isystem" option so
-# that a system with a previous (older) installation of boost does not interfer
-# with the use of ROSE (and the version of boost specified using "--with-boost").
-# $(BOOST_CPPFLAGS)
-
-# DQ (10/28/2008): I think these should be included, I don't know why they
-# were removed (used with Microsoft Windows tests, and Yices tests).
-# DQ: Not used currently
-#     $(ROSE_WINE_INCLUDES)
-
-# DQ (5/3/2007): Removed from ROSE
-#     -I$(top_srcdir)/src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers
-#     -I$(top_srcdir)/src/midend/programAnalysis/staticProgramSlicing
-
-# DQ (10/22/2004): Removed when I could not get annotation work to compile properly with make distcheck rule
-#     -I$(top_srcdir)/src/midend/programAnalysis/annotationLanguageParser
-
-# New way using two libraries
-# ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.a $(top_builddir)/src/libedg.a
-# ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.so $(top_builddir)/src/libedg.so
-# ROSE_LIBS_WITH_PATH = $(libdir)/librose.so $(libdir)/libedg.so
-# ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la
-# ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la $(JAVA_JVM_LIB)
-# JJW 7/25/2008: This should probably just be the same as ROSE_LIBS
 ROSE_LIBS_WITH_PATH = $(ROSE_LIBS)
-
-# ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(LEXLIB) $(SQLITE_DATABASE_LIBS) $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) $(JAVA_JVM_LIB) $(RT_LIBS)
 
 # MS 10/19/2015: added ROSE_BOOST_LIBS variable to share exact same
 # boost libs list in ROSE an in the ROSTTA Makefiles.
@@ -542,17 +466,8 @@ ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm $(JAVA_JVM_LINK) \
   $(ROSE_QUAD_FLOAT_MATH) $(ROSE_CAPSTONE_LIBS_WITH_PATH)
 
 if ROSE_USE_CLANG_FRONTEND
-# DQ (10/23/2020): Pei-Hung and I think this may not be required (not available on my system).
-# I get the error:
-#    /bin/ld: skipping incompatible /lib/libtinfo.so when searching for -ltinfo
-#    clang-10: error: linker command failed with exit code 1 (use -v to see invocation)
-# ROSE_LIBS += $(CLANG_LDFLAGS) -ltinfo
 ROSE_LIBS += $(CLANG_LDFLAGS)
 endif
-
-#if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-#ROSE_LIBS += $(libroseAdalibraries)
-#endif
 
 #========================================================================================================================
 # These are the "-R directory" switches that need to be passed to libtool running in link mode to make sure that ROSE
@@ -609,7 +524,6 @@ ROSE_RPATHS =                                                                   
             )                                                                           \
           )
 
-
 # Rasmussen (3/23/2018): Added ROSE_LINK_RPATHS to enable linking on Mac OSX with ROSE installation
 if OS_MACOSX
 ROSE_LINK_RPATHS = $(addprefix -Xlinker -rpath -Xlinker , $(filter-out -R , $(ROSE_RPATHS)))
@@ -634,29 +548,7 @@ show-rpaths:
 
 INTEL_COMPILER_RPATHS = $(shell $(top_srcdir)/scripts/intel-compiler-rpaths.sh)
 
-# DQ (3/8/2009): This fails when I try to include it (fails in rose/src/testSharedRoseLib).
-#  $(INTEL_PIN_LIB_PATHS) $(INTEL_PIN_LIBS)
-
-# DQ (3/14/2009): It is cleaner to just required that Intel Pin support require setting
-# the LD_LIBRARYPATH to include: $(INTEL_PIN_PATH)/intel64/lib-ext
-
-
-# This ROSE_SEPARATE_LIBS is used for the linking of preprocessor.C used within
-# development. The use of the seperate libraries make the linking faster where the
-# main librose library is not built.  Libtool may have changed this so that we could
-# just link to librose now just as easily, but one has to rebuild librose each time
-# instead of just the individual shared library.
-# JJW 7/25/2008: This should probably just be the same as ROSE_LIBS
 ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
-
-# QY (11/2/04): removed -lastoutlining from ROSE_SEPARATE_LIBS
-
-# DQ (10/22/2004): Removed when I could not get annotation work to compile properly
-# with make distcheck rule
-# -lannotationLanguageParser(appears after -lvaluePropagation)
-
-# Test harness variables. See "rth_run.pl --help" for more info.  The RTH_RUN_FLAGS is meant to be set on the
-# "make" command-line, but the default depends on the value of the verbosity $(V) flag.
 
 RTH_RUN_FLAGS_V_ =
 RTH_RUN_FLAGS_V_0 =
@@ -675,8 +567,6 @@ RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
 
-# DQ (9/27/2015): Added to support new use of AM_CPPFLAGS instead of INCLUDES
-# (depreicated in automake and for which many warnings are generated).
 CPPFLAGS = $(AM_CPPFLAGS)
 
 clean-test-targets:
@@ -685,6 +575,6 @@ clean-test-targets:
 	rm -f $(TEST_TARGETS:.passed=.out)
 	rm -f $(TEST_TARGETS:.passed=.err)
 
-clean-local: clean-test-targets
+rose-clean-local: clean-test-targets
 
 .PHONY: clean-test-targets

@@ -30,7 +30,7 @@ check-local: $(TEST_TARGETS)
 $(TEST_TARGETS):
 	@$(RTH_RUN) CMD="./$(@:.test=)" $(top_srcdir)/scripts/test_exit_status $@
 
-clean-local:
+clean-local: rose-clean-local
 	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot
 	rm -f $(TEST_TARGETS)
 

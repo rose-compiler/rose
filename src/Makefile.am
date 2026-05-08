@@ -18,12 +18,6 @@ SUBDIRS += generated AstNodes
 # is run then we only need a single directory
 AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES)
 
-
-# DQ (7/23/2008): New handling of EDG builds a single library instead of two.
-# Binary distributions of ROSE store the binary for EDG related code in the source tree.
-# JJW (8/3/2008): See src/frontend/CxxFrontend/Makefile.am.forBinaryEDG for
-# more information on this process.
-# TV (08/2012): changed 'libroseEDGlibraries' to 'libroseCxxlibraries' while adding Clang support to ROSE
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 if ROSE_USE_CLANG_FRONTEND
    libroseCxxlibraries = frontend/CxxFrontend/Clang/libroseClangFrontend.la
@@ -52,8 +46,6 @@ else
    libroseExperimentalFlangParserlibraries =
 endif
 
-# Rasmussen (01/21/2018): Adding general support for experimental languages
-# Rasmussen (05/29/2018): Moved parse tables for installation in $(prefix)/share/rose
 if ROSE_BUILD_ATERM_SUPPORT
    libroseExperimentalGeneralLanguagelibraries = \
         frontend/Experimental_General_Language_Support/libexperimentalRoseGeneralLanguage.la \
@@ -63,10 +55,6 @@ else
    libroseExperimentalGeneralLanguagelibraries =
 endif
 
-# Rasmussen (09/14/2022): Removed experimental-ofp-rose-connection (replaced by flang frontend)
-
-# DQ (8/15/2011): Revert back to what we had before to fix Hudson java only test.
-# DQ (8/14/2011): Need this change to match Makefile changes in ECJ_ROSE_Connection/Makefile.am
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
 else
@@ -85,33 +73,14 @@ else
    librosePythonlibraries =
 endif
 
-# DQ (28/8/2017): Adding more general language support.
 if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
    libroseCsharplibraries = frontend/Experimental_Csharp_ROSE_Connection/libexperimentalRoseCsharp.la
 else
    libroseCsharplibraries =
 endif
 
-# DQ (28/8/2017): Adding more general language support.
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
    libroseAdalibraries = frontend/Experimental_Ada_ROSE_Connection/libexperimentalRoseAda.la
-
-
-# DQ (31/8/2017): This library needs to be provided at configure time.
-#   DOT_ASIS_LIB_DIR_ ?= /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib
-#   DOT_ASIS_LIB_DIR_ = $(abs_top_builddir)/src/frontend/Experimental_Ada_ROSE_Connection/dot_asis/dot_asis_library/lib
-#   dot_asis_lib_dir := $(DOT_ASIS_LIB_DIR_)
-
-# DQ (31/8/2017): At least the Asis library needs to be provided built in to GNAT (atypical installation of GNAT).
-#  asis_lib_dir = @gnat_home@/lib/asis/asislib
-#  gnat_lib_dir = @gnat_home@/lib/gcc/x86_64-pc-linux-gnu/6.3.1/adalib
-
-# DQ (31/8/2017): Some of these need to be built in ROSE as libtool constructed libraries (maybe also as dynamic libraries).
-# Charles is working on this and it should be ready 4/9/2017.
-# libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.a ${asis_lib_dir}/libasis.a ${gnat_lib_dir}/libgnarl.a ${gnat_lib_dir}/libgnat.a
-#  libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.so
-#  libroseAdalibraries += -Wl,-rpath -Wl,${dot_asis_lib_dir}/libdot_asis.so
-#   libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.so
 else
 # Ada is not enabled
    libroseAdalibraries =
@@ -123,15 +92,12 @@ else
    libroseLibadalanglibraries =
 endif
 
-
-# DQ (28/8/2017): Adding more general language support.
 if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
    libroseJoviallibraries = frontend/Experimental_Jovial_ROSE_Connection/libexperimentalRoseJovial.la
 else
    libroseJoviallibraries =
 endif
 
-# Rasmussen (11/19/2017): Adding language support for Matlab
 if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
    libroseMatlablibraries = frontend/Experimental_Matlab_ROSE_Connection/libexperimentalRoseMatlab.la
 else
@@ -166,8 +132,6 @@ else
    OPT_SQLITE3_LDFLAGS =
 endif
 
-# TOO (11/22/2011): flattening midend Makefiles => TODO: move conditional compilation to Makefile.
-# TODO: correct list!
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
@@ -182,8 +146,6 @@ libroseLibraries = \
    $(top_builddir)/src/util/libroseSaywer.la \
    $(libroseBinaryLibraries)
 
-# DQ (12/18/2016): Moved below to make POET optional.
-#  $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
 else
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
@@ -220,23 +182,7 @@ libroseLibraries = \
    $(top_builddir)/src/AstNodes/Expression/libroseAstNodesExpression.la \
    $(libroseSqlite3xConnection)
 
-# DQ (12/18/2016): Moved below to make POET optional.
-#  $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
 endif
-
-# DQ (1/14/2017): Remove POET uniformally until it can be added to provide greater portability (working on Ubuntu systems).
-# if !OS_VENDOR_UBUNTU
-# if !OS_VENDOR_DEBIAN
-# # DQ (12/18/2016): make POET optional (skip on Debian and Ubuntu systems until the
-# # build is better and can avoid linking issues for these operating systems.
-#    libroseLibraries += $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
-# endif
-# endif
-
-# DQ (4/17/2010): Added support to permit minimal ROSE configurations (e.g. --enable-only-fortran).
-# used $(libroseOpenFortranParserlibraries) to replace $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la
-# used $(librosePHPlibraries) to replace $(top_builddir)/src/frontend/PHPFrontend/librosePHPFrontend.la
-
 
 EXTRA_DIST = CMakeLists.txt extra.docs
 
@@ -642,19 +588,13 @@ nobase_pkginclude_HEADERS=								\
 
 all-local:
 
-# PC (9/15/2006): force the use of the C++ linker
 LINK = $(CXXLINK)
 
 lib_LTLIBRARIES = librose.la
 
-# if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_USE_INTERNAL_JAVA_SUPPORT
    JAVA_JVM_FLAGS = $(JAVA_JVM_LINK)
-
-# OpenFortranParser-${OFP_VERSION}.jar:
-#	cd ${top_builddir}/src/3rdPartyLibraries/fortran-parser; $(MAKE) get_jar_file
 endif
-
 
 librose_la_SOURCES = dummyCppFileForLibrose.C
 
@@ -674,11 +614,6 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) \
           $(OPT_SQLITE3_LDFLAGS) \
           $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) $(ROSE_FLANG_LIBS)
-
-# DQ (6/9/2017): Removed because it failes for "make install" rule on my machine.
-# This was located after the BOOST_WAVE_LIB line in the librose_la_LIBADD rule above.
-#          -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf
-# Added this library to the libroseLibraries rule farther above in this file.
 endif
 
 # libelf is a prerequisite for using libdwarf
@@ -686,7 +621,6 @@ if ROSE_HAVE_LIBELF
    librose_la_LIBADD += $(ROSE_ELF_LIBS_WITH_PATH)
 endif
 
-# DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell
 if ROSE_HAVE_LIBDWARF
    librose_la_LIBADD += $(ROSE_DWARF_LIBS_WITH_PATH)
 endif
@@ -702,20 +636,11 @@ endif
 if ROSE_EXPERIMENTAL_LIBADALANG_ROSE_CONNECTION
   librose_la_LIBADD += -L${GNAT_HOME}/lib -ladalang
 endif
-# librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext
+
 librose_la_LDFLAGS = -no-undefined $(ROSE_RPATHS)
 
-#librose_la_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
-#if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-#  librose_la_LDFLAGS += -R ${DOT_ASIS_LIB_DIR_}
-#endif
-
-# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
 if USING_CLANG_COMPILER
-# librose_la_LIBADD += -lstdc++
-# librose_la_LIBADD += -lstdc++ -fno-rtti
 librose_la_LIBADD += -lstdc++
-librose_la_LDFLAGS += -fno-rtti
 endif
 librose_la_LDFLAGS += -fno-rtti
 
@@ -725,17 +650,9 @@ if OS_MACOSX
   librose_la_LDFLAGS += $(ROSE_LINK_RPATHS)
 endif
 
-# if ROSE_USE_OPEN_FORTRAN_PARSER
-# librose_la_DEPENDENCIES += OpenFortranParser-${OFP_VERSION}.jar
-# endif
-
 # Build list of all required libraries so that they can be built in parallel
-# REQUIRED_LIBS = $(libdir)/libedg.la
 REQUIRED_LIBS = librose.la
 
-
-# DQ (3/14/2009): In this file we have to overwrite existing values in LDFLAGS (to build librose.so).
-# DQ (3/14/2009): We have to clear the LDFLAGS variable...  This is not so great.
 LDFLAGS =
 if OS_MACOSX
 if ROSE_HAVE_LIBGCRYPT
@@ -770,13 +687,10 @@ rose_feature_tests_DEPENDENCIES =
 rose_feature_tests_CPPFLAGS =
 rose_feature_tests_LDADD =
 
-# if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
   rose_config_LDFLAGS += $(ROSE_LINK_RPATHS)
 endif
-# endif
 
-# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
 if USING_CLANG_COMPILER
 rose_config_LDADD += -lstdc++
 rose_config_LDFLAGS += -fno-rtti
@@ -846,8 +760,7 @@ endif
 rose_config_cfgdir = $(libdir)
 rose_config_cfg_DATA = rose-config.cfg
 
-# Rasmussen (3/23/2018): Added ROSE_RPATHS and ROSE_LINK_RPATHS to enable
-# linking on Mac OSX from a ROSE installations.
+# ROSE_RPATHS and ROSE_LINK_RPATHS are used to enable linking on Mac OSX from a ROSE installation.
 rose-config.cfg:
 	$(AM_V_GEN) (										\
 		echo "# DEPRECATED 2025-10-10. Use pkg-config or RoseConfig.cmake instead.";	\
@@ -1283,50 +1196,50 @@ endif
 #if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
 #if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
 
-ROSEBIN_LDADD        = $(ROSE_LIBS)
-ROSEBIN_LDFLAGS      = $(ROSE_RPATHS)
-ROSEBIN_DEPENDENCIES = $(REQUIRED_LIBS)
+ROSE_BIN_LD_ADD   = $(ROSE_LIBS)
+ROSE_BIN_LD_FLAGS = $(ROSE_RPATHS)
+ROSE_BIN_DEPEND   = $(REQUIRED_LIBS)
+
 if USING_CLANG_COMPILER
-  ROSEBIN_LDADD   += -lstdc++
-  ROSEBIN_LDFLAGS += -fno-rtti
+  ROSE_BIN_LD_ADD += -lstdc++
 endif
-  ROSEBIN_LDFLAGS += -fno-rtti
+ROSE_BIN_LD_FLAGS += -fno-rtti
 
 if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
-  ROSEBIN_LDFLAGS += $(ROSE_LINK_RPATHS)
+  ROSE_BIN_LD_FLAGS += $(ROSE_LINK_RPATHS)
 endif
 endif
 
 rose_compiler_SOURCES      = rose-compiler.C
-rose_compiler_LDFLAGS      = $(ROSEBIN_LDFLAGS)
-rose_compiler_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_compiler_LDFLAGS      = $(ROSE_BIN_LD_FLAGS)
+rose_compiler_DEPENDENCIES = $(ROSE_BIN_DEPEND)
 rose_compiler_CPPFLAGS     =
-rose_compiler_LDADD        = $(ROSEBIN_LDADD)
+rose_compiler_LDADD        = $(ROSE_BIN_LD_ADD)
 
 rose_cc_SOURCES      = rose-compiler.C
-rose_cc_LDFLAGS      = $(ROSEBIN_LDFLAGS)
-rose_cc_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_cc_LDFLAGS      = $(ROSE_BIN_LD_FLAGS)
+rose_cc_DEPENDENCIES = $(ROSE_BIN_DEPEND)
 rose_cc_CPPFLAGS     = -DROSE_COMPILER_FOR_LANGUAGE="\"c\""
-rose_cc_LDADD        = $(ROSEBIN_LDADD)
+rose_cc_LDADD        = $(ROSE_BIN_LD_ADD)
 
 rose_c___SOURCES      = rose-compiler.C
-rose_c___LDFLAGS      = $(ROSEBIN_LDFLAGS)
-rose_c___DEPENDENCIES = $(REQUIRED_LIBS)
+rose_c___LDFLAGS      = $(ROSE_BIN_LD_FLAGS)
+rose_c___DEPENDENCIES = $(ROSE_BIN_DEPEND)
 rose_c___CPPFLAGS     = -DROSE_COMPILER_FOR_LANGUAGE="\"c++\""
-rose_c___LDADD        = $(ROSEBIN_LDADD)
+rose_c___LDADD        = $(ROSE_BIN_LD_ADD)
 
 rose_fortran_SOURCES      = rose-compiler.C
-rose_fortran_LDFLAGS      = $(ROSEBIN_LDFLAGS)
-rose_fortran_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_fortran_LDFLAGS      = $(ROSE_BIN_LD_FLAGS)
+rose_fortran_DEPENDENCIES = $(ROSE_BIN_DEPEND)
 rose_fortran_CPPFLAGS     = -DROSE_COMPILER_FOR_LANGUAGE="\"fortran\""
-rose_fortran_LDADD        = $(ROSEBIN_LDADD)
+rose_fortran_LDADD        = $(ROSE_BIN_LD_ADD)
 
 rose_ada_SOURCES      = rose-compiler.C
-rose_ada_LDFLAGS      = $(ROSEBIN_LDFLAGS)
-rose_ada_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_ada_LDFLAGS      = $(ROSE_BIN_LD_FLAGS)
+rose_ada_DEPENDENCIES = $(ROSE_BIN_DEPEND)
 rose_ada_CPPFLAGS     = -DROSE_COMPILER_FOR_LANGUAGE="\"ada\""
-rose_ada_LDADD        = $(ROSEBIN_LDADD)
+rose_ada_LDADD        = $(ROSE_BIN_LD_ADD)
 
 if OS_MACOSX
   rose_compiler_LDFLAGS += $(ROSE_LINK_RPATHS)
@@ -1400,7 +1313,6 @@ check-hello-fortran:
 	${AM_V_at}echo "end program hello"                        >> hello-world.f90
 	${AM_V_at}./rose-fortran -rose:ast:write hello-world-f90.ast hello-world.f90 -o hello-world-f90
 	${AM_V_at}./hello-world-f90
-#	${AM_V_at}./rose-compiler -rose:ast:read hello-world-f90.ast
 endif
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
 check-hello-ada:
@@ -1411,9 +1323,6 @@ check-hello-ada:
 	${AM_V_at}echo "  Ada.Text_IO.Put_Line(\"Hello World\");" >> hello-world.adb
 	${AM_V_at}echo "end Hello_World;"                         >> hello-world.adb
 	${AM_V_at}./rose-ada hello-world.adb
-# just test frontend/backend in ROSE
-#~ 	${AM_V_at}./hello-world-f90
-#	${AM_V_at}./rose-compiler -rose:ast:read hello-world-f90.ast
 endif
 
 
@@ -1436,12 +1345,10 @@ endif
 
 ########################################################################################################################
 
-# Rasmussen (3/23/2018): Added installing libtool to the bin directory to support
-# linking an application using ROSE from a ROSE installations.
+# libtool installed to the bin directory to support linking an application
+# using ROSE from a ROSE installation.
 bin_SCRIPTS += ../libtool
 
-
-# DQ (1/10/2004): remove the librose.a and libedg.a files so that distclean will work cleanly
 # Do not remove libraries indiscriminately with wildcards [Matzke, 2017-06-19]
 clean-local:
 	rm -rf librose.a librose.so testSharedRoseLib testMultiRoseLib $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
@@ -1453,21 +1360,16 @@ distclean-local:
 cleanTest:
 	rm -rf *.lo testSharedRoseLib testMultiRoseLib
 
-# DQ (9/14/2006): These are required!
 # Note that uninstall-hook does not work, but uninstall-local does.
 uninstall-local:
 	rm -f $(DESTDIR)$(libdir)/libedg.so
 	rm -f $(DESTDIR)$(libdir)/librose.so
-#	rm -f $(libdir)/libedg.so
-#	rm -f $(libdir)/librose.so
 	@echo "************************************************************"
 	@echo "**** make uninstall rule complete (terminated normally) ****"
 	@echo "************************************************************"
 
 
 rebuildPrelinker:
-#	DQ (12/21/2009): The locaion of the EDG directory has been changed now that it is a submodule in our git repository.
-#	rm -f frontend/CxxFrontend/EDG_3.3/util/edg_prelink.lo
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	rm -f frontend/CxxFrontend/EDG/EDG_3.3/util/edg_prelink.lo
 endif

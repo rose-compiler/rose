@@ -3,9 +3,6 @@ AC_DEFUN([AC_FIND_OPENGL],
   AC_REQUIRE([AC_PROG_CC])
   AC_REQUIRE([AC_PATH_X])
 
-# DQ (9/26/2015): Commented out to avoid aclocal, automake, and autoconf warnings.
-# AC_REQUIRE([AC_PATH_XTRA])
-
   AC_CACHE_CHECK([for OpenGL], mdl_cv_have_OpenGL,
   [
 dnl Check for Mesa first, unless we were asked not to.
@@ -25,16 +22,11 @@ dnl Check for Mesa first, unless we were asked not to.
 	GLX_search_list="GLX MesaGLX"
     fi
 
-    AC_LANG_SAVE
-    AC_LANG_C
+    AC_LANG_PUSH([C])
 
-dnl If we are running under X11 then add in the appropriate libraries.
 if test x"$no_x" != xyes; then
-dnl Add everything we need to compile and link X programs to GL_X_CFLAGS
-dnl and GL_X_LIBS.
-  GL_CFLAGS="$X_CFLAGS"
-#   GL_X_LIBS="$X_PRE_LIBS $X_LIBS -lX11 -lXext -lXmu -lXt -lXi $X_EXTRA_LIBS"
-   GL_X_LIBS="$X_PRE_LIBS $X_LIBS -lX11 -lXext -lXmu -lXt $X_EXTRA_LIBS"
+    GL_CFLAGS="$X_CFLAGS"
+    GL_X_LIBS="$X_PRE_LIBS $X_LIBS -lX11 -lXext -lXmu -lXt $X_EXTRA_LIBS"
 fi
     GL_save_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$GL_CFLAGS"
@@ -42,15 +34,14 @@ fi
     GL_save_LIBS="$LIBS"
     LIBS="$GL_X_LIBS"
 
-    # Save the "AC_MSG_RESULT file descriptor" to FD 8.
-    exec 8>&AC_FD_MSG
+    # Save the "AS_MESSAGE_FD file descriptor" to FD 8.
+    exec 8>&AS_MESSAGE_FD
 
-    # Temporarily turn off AC_MSG_RESULT so that the user gets pretty
+    # Temporarily turn off AS_MESSAGE_FD so that the user gets pretty
     # messages.
-    exec AC_FD_MSG>/dev/null
+    exec AS_MESSAGE_FD>/dev/null
 
     AC_SEARCH_LIBS(glAccum,         $GL_search_list,  have_GL=yes,   have_GL=no)
-    # JAS AC_SEARCH_LIBS(gluBeginCurve,   $GLU_search_list, have_GLU=yes,  have_GLU=no)
     AC_SEARCH_LIBS(glXChooseVisual, $GLX_search_list, have_GLX=yes,  have_GLX=no)
 
     if test -n "$LIBS"; then
@@ -63,7 +54,7 @@ fi
 
     LIBS="-lglut $LIBS"
 
-    AC_SEARCH_LIBS(glutInit,        glut,             have_glut=yes, have_glut=no)
+    AC_SEARCH_LIBS(glutInit, glut, have_glut=yes, have_glut=no)
 
     if test -n "$LIBS"; then
       mdl_cv_have_glut=yes
@@ -74,15 +65,7 @@ fi
     fi
 
     # Restore pretty messages.
-    exec AC_FD_MSG>&8
-
-#     if test -n "$LIBS"; then
-#       mdl_cv_have_OpenGL=yes
-#       GL_LIBS="$LIBS"
-#     else
-#       mdl_cv_have_OpenGL=no
-#       GL_CFLAGS=
-#     fi
+    exec AS_MESSAGE_FD>&8
 
 dnl Reset GL_X_LIBS regardless, since it was just a temporary variable
 dnl and we don't want to be global namespace polluters.
@@ -91,7 +74,7 @@ dnl and we don't want to be global namespace polluters.
     LIBS="$GL_save_LIBS"
     CPPFLAGS="$GL_save_CPPFLAGS"
 
-    AC_LANG_RESTORE
+    AC_LANG_POP([C])
 
 dnl bugfix: dont forget to cache this variables, too
     mdl_cv_GL_CFLAGS="$GL_CFLAGS"

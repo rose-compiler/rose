@@ -158,26 +158,33 @@ AC_DEFUN([LX_QUERY_MPI_COMPILER],
 	AC_MSG_WARN([$3 MPI compiler not found])
      fi
 
-     #echo "flags: $ROSE_WITH_MPI_$3FLAGS"
-
      # try linking a MPI program
      #
      OLD_CPPFLAGS=$CPPFLAGS
      OLD_LIBS=$LIBS
      CPPFLAGS=$ROSE_WITH_MPI_$3FLAGS
      LIBS=$ROSE_WITH_MPI_$3LDFLAGS
-     AC_TRY_LINK([#include <mpi.h>],
-                [int rank, size;
-                 MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-                 MPI_Comm_size(MPI_COMM_WORLD, &size);],
-                [# Add a define for testing at compile time.
-                 AC_DEFINE([HAVE_MPI], [1], [Define to 1 if you have MPI libs and headers.])
-                 have_$3_mpi='yes'
-                 AC_MSG_NOTICE([$3 MPI compiler binary found under $4])],
-                [# zero out mpi flags so we don't link against the faulty library.
-                 ROSE_WITH_MPI_$3FLAGS=""
-                 ROSE_WITH_MPI_$3LDFLAGS=""
-                 have_$3_mpi='no'])
+
+     AC_LANG_PUSH([C])
+
+     AC_LINK_IFELSE(
+       [AC_LANG_PROGRAM(
+         [[#include <mpi.h>]],
+         [[int rank, size;
+           MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+           MPI_Comm_size(MPI_COMM_WORLD, &size);]]
+       )],
+       [# Add a define for testing at compile time.
+        AC_DEFINE([HAVE_MPI], [1], [Define to 1 if you have MPI libs and headers.])
+        have_$3_mpi='yes'
+        AC_MSG_NOTICE([$3 MPI compiler binary found under $4])],
+       [# zero out mpi flags so we don't link against the faulty library.
+        ROSE_WITH_MPI_$3FLAGS=""
+        ROSE_WITH_MPI_$3LDFLAGS=""
+        have_$3_mpi='no']
+     )
+
+     AC_LANG_POP([C])
 
      #Substitute in Makefiles
      AC_SUBST($1)

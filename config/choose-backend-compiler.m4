@@ -7,7 +7,6 @@ dnl for the correct back-end C++ compiler are identified for use in preprocessor
 dnl build using ROSE)
 [
 # Make sure that we select a backend compiler before building the backend specific header files
-# AC_BEFORE([CHOOSE_BACKEND_COMPILER],[GENERATE_BACKEND_COMPILER_SPECIFIC_HEADERS])
   AC_BEFORE([CHOOSE_BACKEND_COMPILER],[GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS])
 
   ROSE_CONFIGURE_SECTION([Checking ROSE backend])
@@ -44,7 +43,6 @@ dnl build using ROSE)
 
 AC_MSG_NOTICE([testing value of FC = "$FC"])
 
-# DQ (10/3/2008): Added option to specify backend fortran compiler
   AC_ARG_WITH(alternate_backend_fortran_compiler,
     [  --with-alternate_backend_fortran_compiler=<compiler name>
                                 Specify an alternative fortran back-end compiler],
@@ -57,11 +55,9 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
     [ 
     # Alternatively use the specified fortran compiler
 	   BACKEND_FORTRAN_COMPILER="$FC"
-	 # BACKEND_FORTRAN_COMPILER="gfortran"
       AC_MSG_NOTICE([default back-end fortran compiler for generated translators to use: "$BACKEND_FORTRAN_COMPILER"])
     ])
 
-# DQ (4/2/2011): Added option to specify backend Java compiler
   AC_ARG_WITH(alternate_backend_java_compiler,
     [  --with-alternate_backend_java_compiler=<compiler name>
                                 Specify an alternative java back-end compiler],
@@ -77,7 +73,6 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
       AC_MSG_NOTICE([default back-end java compiler for generated translators to use: "$BACKEND_JAVA_COMPILER"])
     ])
 
-# DQ (29/8/2017): Added option to specify backend Csharp compiler
   AC_ARG_WITH(alternate_backend_csharp_compiler,
     [  --with-alternate_backend_csharp_compiler=<compiler name>
                                 Specify an alternative csharp back-end compiler],
@@ -93,7 +88,6 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
       AC_MSG_NOTICE([default back-end csharp compiler for generated translators to use: "$BACKEND_CSHARP_COMPILER"])
     ])
 
-# DQ (29/8/2017): Added option to specify backend Ada compiler
   AC_ARG_WITH(alternate_backend_ada_compiler,
     [  --with-alternate_backend_ada_compiler=<compiler name>
                                 Specify an alternative ada back-end compiler],
@@ -106,14 +100,10 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
     [ 
     # Alternatively use the specified GNAT Ada compiler
 
-    # DQ (9/12/2017): Note that the command needs to be "gnat" and the "compile" option 
-    # must be added into the generated command line for the backend compiler.
-    # BACKEND_ADA_COMPILER="gnat compile"
       BACKEND_ADA_COMPILER="gnat"
       AC_MSG_NOTICE([default back-end ada compiler for generated translators to use: "$BACKEND_ADA_COMPILER"])
     ])
 
-# DQ (29/8/2017): Added option to specify backend Jovial compiler
   AC_ARG_WITH(alternate_backend_jovial_compiler,
     [  --with-alternate_backend_jovial_compiler=<compiler name>
                                 Specify an alternative jovial back-end compiler],
@@ -129,7 +119,6 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
       AC_MSG_NOTICE([default back-end jovial compiler for generated translators to use: "$BACKEND_JOVIAL_COMPILER"])
     ])
 
-# Rasmussen (10/30/2017): Added option to specify backend MATLAB compiler
   AC_ARG_WITH(alternate_backend_matlab_compiler,
     [  --with-alternate_backend_matlab_compiler=<compiler name>
                                 Specify an alternative MATLAB back-end compiler],
@@ -144,10 +133,6 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 	   BACKEND_MATLAB_COMPILER="octave"
       AC_MSG_NOTICE([default back-end MATLAB compiler for generated translators to use: "$BACKEND_MATLAB_COMPILER"])
     ])
-
-# DQ (8/29/2005): Added support for version numbering of backend compiler
-# BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
-# BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
 
   AC_MSG_NOTICE([BACKEND_CXX_COMPILER = "$BACKEND_CXX_COMPILER"])
   if test x$BACKEND_CXX_COMPILER == xclang++; then
@@ -361,39 +346,10 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
               AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = "$XCODE_VERSION_MAJOR"])
           fi
 
-#        # Note "build_os" is a variable determined by autoconf.
-#          case $build_os in
-#              darwin13*)
-#                # This is Mac OSX version 10.9 (not clear on what version of clang this maps to via XCode)
-#                  BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
-#                  BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=6
-#                  BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
-#                  ;;
-#              darwin14*)
-#                # This is Mac OSX version 10.10 (not clear on what version of clang this maps to via XCode)
-#                  BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
-#                  BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
-#                  BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
-#                  ;;
-#              darwin15*)
-#                # This is Mac OSX version 10.11
-#                  BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
-#                  BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
-#                  BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
-#                  ;;
-#              *)
-#                  echo "Error: Apple Mac OSX version not recognized as either darwin13, 14, or darwin15 ... (build_os = $build_os)";
-#                  exit 1;
-#          esac
-
-        # DQ (12/3/2016): Added debugging for LLVM on MACOSX.
           AC_MSG_NOTICE([compilerVendorName = "$compilerVendorName"])
 	  AC_MSG_NOTICE([BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER = "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"])
           AC_MSG_NOTICE([BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER = "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"])
           AC_MSG_NOTICE([BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER = "$BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER"])
-
-        # echo "Detected use of GNU backend compiler name on Mac OSX system"
-        # exit 1
 
       else
         AC_MSG_NOTICE([Detected using MacPorts GCC backend compiler])
@@ -964,12 +920,6 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
   C_COMPILER_NAME=$(basename "$BACKEND_C_COMPILER")
   COMPILER_NAME=$(basename "$BACKEND_CXX_COMPILER")
 
-# echo "default back-end compiler for generated preprocessors will be: $BACKEND_CXX_COMPILER"
-# export BACKEND_CXX_COMPILER
-# AC_DEFINE_UNQUOTED([CXX_COMPILER_NAME],"$BACKEND_CXX_COMPILER",[Name of backend C++ compiler.])
-# echo "default back-end compiler for generated preprocessors will be: $BACKEND_CXX_COMPILER compiler name = $compilerName"
-
-# DQ (1/15/2007): This does not work, it seems that BACKEND_C_COMPILER must be a simple name not a compound name using an option!
 # Specify any option that specific backend compiler require (e.g. -restrict)
   case $COMPILER_NAME in
     gcc*|g++*)
@@ -1024,15 +974,12 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
   export BACKEND_CSHARP_COMPILER
   AC_DEFINE_UNQUOTED([BACKEND_CSHARP_COMPILER_NAME_WITH_PATH],"$BACKEND_CSHARP_COMPILER",[Name of backend Csharp compiler including path (may or may not explicit include path; used to call backend).])
 
-# DQ (29/8/2017): Adding more general language support.
   export BACKEND_ADA_COMPILER
   AC_DEFINE_UNQUOTED([BACKEND_ADA_COMPILER_NAME_WITH_PATH],"$BACKEND_ADA_COMPILER",[Name of backend Ada compiler including path (may or may not explicit include path; used to call backend).])
 
-# DQ (29/8/2017): Adding more general language support.
   export BACKEND_JOVIAL_COMPILER
   AC_DEFINE_UNQUOTED([BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH],"$BACKEND_JOVIAL_COMPILER",[Name of backend Jovial compiler including path (may or may not explicit include path; used to call backend).])
 
-# DQ (30/8/2017): Testing the new language support.
   AC_MSG_NOTICE([BACKEND_CXX_COMPILER     = "$BACKEND_CXX_COMPILER"])
   AC_MSG_NOTICE([BACKEND_C_COMPILER       = "$BACKEND_C_COMPILER"])
   AC_MSG_NOTICE([BACKEND_FORTRAN_COMPILER = "$BACKEND_FORTRAN_COMPILER"])
@@ -1104,26 +1051,15 @@ AM_CONDITIONAL(USING_GCC_4_0_4_BACKEND_COMPILER, [test "x$BACKEND_C_COMPILER_VER
 # TOO (2/17/2011): Detect Tensilica Xtensa C/C++ compiler
 if test "x$BACKEND_C_COMPILER_NAME" == "xxt-xcc"; then
   AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, true)
-#  AC_DEFINE_UNQUOTED([USING_XTENSA_BACKEND_COMPILER],true,[Tensilica's Xtensa compiler.])
   AC_MSG_NOTICE([the backend C/C++ compilers have been identified as Tensilica Xtensa compilers])
 else
   AM_CONDITIONAL(USING_XTENSA_BACKEND_COMPILER, false)
 fi
 
-
-# AC_LANG_PUSH(C)
 AC_MSG_NOTICE([build input file for backend compiler])
 echo 'int main(int argc, char** argv){ asm("nop");}' > conftest_asm.c
 
 AC_MSG_NOTICE([run backend compiler on input file: "$BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_asm.c"])
-# Handle the 3 cases of true false and cross-compilation
-# AC_TRY_RUN(`$BACKEND_C_COMPILER -c conftest_asm.c`,asm_ok=yes,asm_ok=no,asm_ok=no)
-# AC_TRY_RUN(conftest_asm.c,asm_ok=yes,asm_ok=no,asm_ok=no)
-# ac_compiler_gnu="$BACKEND_C_COMPILER -Werror=implicit-function-declaration"
-# AC_TRY_RUN([int main(){ __asm__("nop");}],asm_ok=yes,asm_ok=no,asm_ok=no)
-# AC_TRY_COMPILE([],[asm("nop");],asm_ok=yes,asm_ok=no)
-# asm_ok=eval($BACKEND_C_COMPILER -Werror=implicit-function-declaration -c conftest_asm.c)
-# if test `$BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_asm.c`; then
 $BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_asm.c 2>/dev/null
 status=$?
 if test "x$status" = "x0"; then
@@ -1139,24 +1075,11 @@ fi
 
 AC_MSG_CHECKING(does the backend C compiler ($BACKEND_C_COMPILER) support asm statements)
 AC_MSG_RESULT($asm_ok)
-# AC_DEFINE_UNQUOTED([BACKEND_C_COMPILER_SUPPORTS_ASM],test "x$asm_ok" = "xyes",[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
-# AC_DEFINE([BACKEND_C_COMPILER_SUPPORTS_ASM],[test "x$asm_ok" = "xyes"],[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
-# AC_LANG_POP(C)
 
-# echo "exiting as a test of asm!"
-# exit 1
-
-# AC_LANG_PUSH(C)
 AC_MSG_NOTICE([build input file for backend compiler])
 echo 'int main(int argc, char** argv){ __asm__("nop");}' > conftest_undescore_asm.c
 
 AC_MSG_NOTICE([run backend compiler on input file: "$BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_undescore_asm.c"])
-# Handle the 3 cases of true false and cross-compilation
-# AC_TRY_RUN(`$BACKEND_C_COMPILER -c conftest_undescore_asm.c`,underscore_asm_ok=yes,underscore_asm_ok=no,underscore_asm_ok=no)
-# ac_compiler_gnu="$BACKEND_C_COMPILER -Werror=implicit-function-declaration"
-# AC_TRY_COMPILE([],[int main(int,char**){ __asm__("nop");}],underscore_asm_ok=yes,underscore_asm_ok=no)
-# AC_TRY_COMPILE([],[__asm__("nop");],underscore_asm_ok=yes,underscore_asm_ok=no)
-# if test `$BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_undescore_asm.c`; then
 $BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_undescore_asm.c 2>/dev/null
 status=$?
 
@@ -1173,28 +1096,11 @@ fi
 
 AC_MSG_CHECKING(does the backend C compiler ($BACKEND_C_COMPILER) support __asm__ statements)
 AC_MSG_RESULT($underscore_asm_ok)
-# AC_DEFINE_UNQUOTED([BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM],test "x$underscore_asm_ok" = "xyes",[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
-# AC_DEFINE([BACKEND_C_COMPILER_SUPPORTS_UNDESCORE_ASM],[test "x$underscore_asm_ok" = "xyes"],[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
-# AC_LANG_POP(C)
 
-
-
-# Also need to test: asm(".symver ff_av_gettime,av_gettime@LIBAVFORMAT_54") which fails better when used with 4.2.4 compiler.
-# This test fails for both 4.4 and 4.2 compilers where as the tests above pass for 4.2 and fails for 4.4 compilers.
-# The error message is also different for this example using a longer string than thge example above.
-# AC_LANG_PUSH(C)
 AC_MSG_NOTICE([build input file for backend compiler])
 echo 'asm(".symver ff_av_gettime,av_gettime@LIBAVFORMAT_54");' > conftest_long_string_asm.c
 
 AC_MSG_NOTICE([run backend compiler on input file: "$BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_long_string_asm.c"])
-# Handle the 3 cases of true false and cross-compilation
-# AC_TRY_RUN(`$BACKEND_C_COMPILER -c conftest_asm.c`,asm_ok=yes,asm_ok=no,asm_ok=no)
-# AC_TRY_RUN(conftest_asm.c,asm_ok=yes,asm_ok=no,asm_ok=no)
-# ac_compiler_gnu="$BACKEND_C_COMPILER -Werror=implicit-function-declaration"
-# AC_TRY_RUN([int main(){ __asm__("nop");}],asm_ok=yes,asm_ok=no,asm_ok=no)
-# AC_TRY_COMPILE([],[asm("nop");],asm_ok=yes,asm_ok=no)
-# asm_ok=eval($BACKEND_C_COMPILER -Werror=implicit-function-declaration -c conftest_asm.c)
-# if test `$BACKEND_C_COMPILER -std=c99 -Werror=implicit-function-declaration -c conftest_asm.c`; then
 $BACKEND_C_COMPILER -std=c99 -c conftest_long_string_asm.c 2>/dev/null
 status=$?
 if test "x$status" = "x0"; then
@@ -1210,16 +1116,6 @@ fi
 
 AC_MSG_CHECKING(does the backend C compiler ($BACKEND_C_COMPILER) support asm statements)
 AC_MSG_RESULT($long_string_asm_ok)
-# AC_DEFINE_UNQUOTED([BACKEND_C_COMPILER_SUPPORTS_ASM],test "x$asm_ok" = "xyes",[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
-# AC_DEFINE([BACKEND_C_COMPILER_SUPPORTS_ASM],[test "x$asm_ok" = "xyes"],[The backend C compiler might not support asm and might require __asm__ instead (e.g. GNU gcc).])
-# AC_LANG_POP(C)
-
-# echo "exiting as a test of asm!"
-# exit 1
-
-
-# echo "exiting as a test of __asm__!"
-# exit 1
 
 ###################################################################################################
 ])
