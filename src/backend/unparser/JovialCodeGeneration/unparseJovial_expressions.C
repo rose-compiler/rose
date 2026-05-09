@@ -550,31 +550,30 @@ UnparseJovial::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
 }
 
 void
-UnparseJovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
-  {
-     SgJovialTablePresetExp* table_preset = isSgJovialTablePresetExp(expr);
-     ASSERT_not_null(table_preset);
+UnparseJovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info) {
+    SgJovialTablePresetExp* table_preset = isSgJovialTablePresetExp(expr);
+    ASSERT_not_null(table_preset);
 
-     SgExprListExp* presets = table_preset->get_preset_list();
-     ASSERT_not_null(presets);
+    SgExprListExp* presets{table_preset->get_preset_list()};
+    ASSERT_not_null(presets);
 
-     if (table_preset->get_need_paren()) curprint("(");
+    if (table_preset->get_need_paren()) curprint("(");
 
-  // Unparse the preset list individually (to get parentheses/precedence proper)
-     bool first = true;
-     for (SgExpression* preset : presets->get_expressions())
-       {
-         if (first) first = false;
-         else curprint(",");
-         if (preset->variantT() != V_SgNullExpression) // otherwise "()" is printed
-           // Unparsing comments will probably be moved to C++ eventually
-           unparseCommentsBefore(preset, info);
-           unparseExpression(preset, info);
-           unparseCommentsAfter(preset, info);
-       }
+    // Unparse the preset list individually (to get parentheses/precedence proper)
+    bool first = true;
+    for (SgExpression* preset : presets->get_expressions()) {
+        if (first) first = false;
+        else curprint(",");
+        if (preset->variantT() != V_SgNullExpression) { // otherwise "()" is printed
+            // Unparsing comments will probably be moved to C++ eventually
+            unparseCommentsBefore(preset, info);
+            unparseExpression(preset, info);
+            unparseCommentsAfter(preset, info);
+        }
+    }
 
-     if (table_preset->get_need_paren()) curprint(")");
-  }
+    if (table_preset->get_need_paren()) curprint(")");
+}
 
 void
 UnparseJovial::unparsePresetPos(SgExpression* expr, SgUnparse_Info& info)
