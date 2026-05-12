@@ -13,74 +13,59 @@ namespace AstUtilInterface{
 
    template<class NodeIterator, class EdgeIterator> class WholeProgramDependenceAnalysis;
    class OperatorSideEffect {
-     public:
-     enum class EnumVariant {Modify, Read, Kill, Alias, Call, CallUnknown, ModifyUnknown, ReadUnknown, Decl, Allocate, Free, Parameter, Return, Unexpected};
-     OperatorSideEffect(EnumVariant e, SgNode* details=0) 
-              {  enum_ = e;  details_ = details; }
+    public:
+     enum class EnumVariant {Modify, Read, Kill, Alias, Call,  Decl, Allocate, Free, Parameter, Return, Unexpected};
 
-     const EnumVariant& get_enum() const { return enum_; }
-     SgNode* get_details() const { return details_; } 
-
-     OperatorSideEffect(const std::string& what, const std::string& attr) { 
-       if (attr == "unknown") {  
-          if (what == "modify") { enum_ = EnumVariant::ModifyUnknown; }
-          else if (what == "read") { enum_ = EnumVariant::ReadUnknown; }
-          else if (what == "call") { enum_ = EnumVariant::CallUnknown; }
-          else { std::cerr << "unexpected side effect name for unknown:" << what << "\n"; 
-                 assert(0); }
-       } else if (attr == "kill") { enum_ = EnumVariant::Kill; }
-       else if (attr == "decl") { enum_ = EnumVariant::Decl; }
-       else if (attr == "alias") { enum_ = EnumVariant::Alias; }
-       else if (attr == "allocate") { enum_ = EnumVariant::Allocate; }
-       else if (attr == "free") { enum_ = EnumVariant::Free; }
-       else {
-          assert(attr == ""); 
-          if (what == "modify") { enum_ = EnumVariant::Modify; }
-          else if (what == "read") { enum_ = EnumVariant::Read; }
-          else if (what == "call") { enum_ = EnumVariant::Call; }
-          else if (what == "parameter") { enum_ = EnumVariant::Parameter; }
-          else if (what == "return") { enum_ = EnumVariant::Return; }
-          else { std::cerr << "unexpected side effect name for:" << what << "\n"; assert(0); }
-       }
-     }
-     inline std::string attr_name() const { 
-       switch (enum_) {
-        case EnumVariant::Kill: return "kill";
-        case EnumVariant::CallUnknown: return "unknown";
-        case EnumVariant::ModifyUnknown: return "unknown";
-        case EnumVariant::ReadUnknown: return "unknown";
-        case EnumVariant::Decl: return "decl";
-        case EnumVariant::Alias: return "alias";
-        case EnumVariant::Allocate: return "allocate";
-        case EnumVariant::Free: return "free";
-        default:
-          return "";
-       }
-      }
-     inline std::string relation_name() const {
-       switch (enum_) {
-        case EnumVariant::ModifyUnknown: 
-        case EnumVariant::Kill: 
-        case EnumVariant::Decl: 
-        case EnumVariant::Alias: 
-        case EnumVariant::Allocate: 
-        case EnumVariant::Free: 
-        case EnumVariant::Modify: return "modify";
-        case EnumVariant::ReadUnknown: 
-        case EnumVariant::Read: return "read";
-        case EnumVariant::CallUnknown: 
-        case EnumVariant::Call: return "call";
-        case EnumVariant::Parameter: return "parameter";
-        case EnumVariant::Return: return "return";
-        default:
-          std::cerr << "Error: Unexpected enum value:" << (int)enum_ << "\n";
-          assert(false);
-          return "";
-       }
-      }
     private:
       EnumVariant enum_ = EnumVariant::Unexpected; 
       SgNode* details_ = 0;
+      bool is_unknown_ = false;
+
+    public:
+     OperatorSideEffect(EnumVariant e, SgNode* details=0, bool is_unknown=false) 
+              {  enum_ = e;  details_ = details; is_unknown_ = is_unknown; }
+
+     const EnumVariant& get_enum() const { return enum_; }
+     SgNode* get_details() const { return details_; } 
+     bool is_unknown() const { return is_unknown_; }
+     void set_is_unknown(bool b) { is_unknown_ = b; }
+
+     OperatorSideEffect(const std::vector<std::string>& info) { 
+       for (const auto& what : info) {
+         if (what == "unknown") {  is_unknown_ = true; } 
+         else if (what == "kill") { enum_ = EnumVariant::Kill; }
+         else if (what == "decl") { enum_ = EnumVariant::Decl; }
+         else if (what == "alias") { enum_ = EnumVariant::Alias; }
+         else if (what == "allocate") { enum_ = EnumVariant::Allocate; }
+         else if (what == "free") { enum_ = EnumVariant::Free; }
+         else if (what == "modify") { enum_ = EnumVariant::Modify; }
+         else if (what == "read") { enum_ = EnumVariant::Read; }
+         else if (what == "call") { enum_ = EnumVariant::Call; }
+         else if (what == "parameter") { enum_ = EnumVariant::Parameter; }
+         else if (what == "return") { enum_ = EnumVariant::Return; }
+         else { std::cerr << "unexpected side effect name for:" << what << "\n"; assert(0); }
+       }
+     }
+     std::vector<std::string> relations() const {
+       std::vector<std::string> result;
+       switch (enum_) {
+        case EnumVariant::Kill: result.push_back("modify"); result.push_back("kill"); break;
+        case EnumVariant::Decl: result.push_back("modify"); result.push_back("decl"); break;
+        case EnumVariant::Alias: result.push_back("modify"); result.push_back("alias"); break;
+        case EnumVariant::Allocate: result.push_back("modify"); result.push_back("allocate"); break;
+        case EnumVariant::Free: result.push_back("modify"); result.push_back("free"); break;
+        case EnumVariant::Modify: result.push_back("modify"); result.push_back("assign"); break;
+        case EnumVariant::Call: result.push_back("call"); break;
+        case EnumVariant::Read: result.push_back("read"); break;
+        case EnumVariant::Parameter: result.push_back("read"); result.push_back("parameter"); break;
+        case EnumVariant::Return: result.push_back("read"); result.push_back("return"); break;
+        default:
+          std::cerr << "Error: Unexpected enum value:" << (int)enum_ << "\n";
+          assert(false);
+        }
+        if (is_unknown_) { result.push_back("Unknown"); } 
+        return result;
+      }
    };
    
    //! Interface for saving side effects of operations.

@@ -15,7 +15,7 @@ namespace AstUtilInterface {
 
 std::string CollectDependences::local_read_string(std::istream& input_file) {
     std::string next_string;
-    char c ;
+    char c = 0;
     while ((input_file >> c).good()) {
        switch (c) {
        case '\\':
@@ -86,33 +86,33 @@ void CollectDependences::CollectFromFile(std::istream& input_file, DependenceTab
         if (dest == "")  break;
         if (dest == "}" || dest == ";") continue;
         Log.push("Destination name: " + dest);
-        std::string next_string, source, dep_type, attr;
+        std::string next_string, source;
+        std::vector<std::string> dep_types;
         // Read and process all the components that `dest' depends on immediately.
         while ((next_string = local_read_string(input_file)) != "") {
              if (next_string == ";") {
                if (source != "") {
-                  DependenceEntry e(dest, source, dep_type, attr);
+                  DependenceEntry e(dest, source, dep_types);
                   main_table.SaveDependence(e);
                   if (update_annotations_) save_annotation(e);
-                  Log.push( "Saving " + source + "->" + dest + "[" + dep_type + "]");
+                  Log.push( "Saving " + e.to_string());
                }
                Log.push("Done reading line\n");
                break;
-            } else if (next_string == "->") {
-               source = dest;
-               Log.push("Setting source = " + source);
-               dest = local_read_string(input_file); 
-               Log.push("Setting dest = " + dest);
-            } else if (next_string == ":") {
+            } else if (next_string == "->" || next_string == ":") {
+               bool reverse = (next_string == "->");
                source = local_read_string(input_file); 
-               if (source == "[") {
+               while (source == "[") {
                   while ((next_string = local_read_string(input_file)) != "]") {
-                    dep_type += next_string;
                     if (next_string == "") {
                        Log.fatal("Expecting \"]\" but get " + next_string);
                     }
+                    dep_types.push_back(next_string);
                   }
                   source = local_read_string(input_file); 
+               }
+               if (reverse) {
+                  std::swap(source, dest);
                }
                if (source == ";") {
                   Log.push("Warning: Skipping empty dependence for " + dest +"!");
@@ -120,17 +120,6 @@ void CollectDependences::CollectFromFile(std::istream& input_file, DependenceTab
                   break; 
                } 
                Log.push("Successfully setting source = " + source);
-            } else if (next_string == "=") {
-               attr = "";
-               while ((next_string = local_read_string(input_file)) != "") {
-                  if (next_string == ";" || next_string == "\n") 
-                      break;
-                  attr += next_string;
-               }
-               if (next_string == ";") {
-                  input_file.putback(';');
-               }
-               Log.push("Setting attr:  " + attr);
             } else if (next_string == "{") {
                Log.push("Skipping graph configuration: " + dest + " " + next_string);
                break;
@@ -189,9 +178,9 @@ void WholeProgramDependenceAnalysis<NodeIterator,EdgeIterator>::ComputeDependenc
   if (AstInterface::IsFunctionDefinition(input, &function_name, &params, 0, &body, 0, 0,/*use_global_name*/true) && body != 0) {
     Log.push("Computing dependences for " + input->unparseToString());
     std::function<bool(const AstNodePtr&, const AstNodePtr&, const AstUtilInterface::OperatorSideEffect&)> save_dep = 
-        [this,input,body,&DebugSaveDep] (const AstNodePtr& first, const AstNodePtr& second, const AstUtilInterface::OperatorSideEffect& relation) {
+        [this,input,body,&DebugSaveDep] (const AstNodePtr& first, const AstNodePtr&, const AstUtilInterface::OperatorSideEffect& relation) {
         assert(main_table != 0);
-        main_table->addEdge(main_table->addNode(first.get_ptr()), main_table->addNode(second.get_ptr()), relation);
+        main_table->addEdge(main_table->addNode(input), main_table->addNode(first.get_ptr()), relation);
         return true;
       };
      AstUtilInterface::ComputeAstSideEffects(input, &save_dep, annot_table);

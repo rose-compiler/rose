@@ -81,7 +81,7 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
       if (collect != 0) (*collect)(first, second, OperatorSideEffect(OperatorSideEffect::EnumVariant::Alias, 0));
       return true;
     };
-    auto save_memory_ref = [&alias_map, &is_function, &collect, &ast, &body, add_to_dep_analysis] (AstNodePtr ref, const OperatorSideEffect& what) {
+    auto save_memory_ref = [&alias_map, &is_function, &collect, &ast, &body, add_to_dep_analysis] (AstNodePtr ref, OperatorSideEffect what) {
       bool done_annot = false;
       AstNodeList  subrefs;
       if (!ref.is_unknown() && !AstInterface::IsMemoryAccess(ref, &subrefs)) {
@@ -110,6 +110,7 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
         } else {
            if (is_unknown_ref) {
               ref.set_is_unknown_reference();
+              what.set_is_unknown(true);
            }
            DebugAstUtil([&ref](){ return "Did not find aliased reference:" + AstInterface::AstToString(ref); });
         }
@@ -128,42 +129,35 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
       return done_annot; /* done annotation? */
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_mod = [&done_annot_mod,&save_memory_ref] (AstNodePtr first, AstNodePtr second) { 
-       if (save_memory_ref(first, OperatorSideEffect(OperatorSideEffect::EnumVariant::Modify, second.get_ptr()))) { 
+       if (save_memory_ref(first, OperatorSideEffect(OperatorSideEffect::EnumVariant::Modify, second.get_ptr(), first.is_unknown()))) { 
           DebugAstUtil([](){ return "Done mod annotation."; });
           done_annot_mod = true;
        }
        return true;
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_read = [&save_memory_ref,&done_annot_read] (AstNodePtr first, AstNodePtr second) {
-      if (save_memory_ref(first, OperatorSideEffect(OperatorSideEffect::EnumVariant::Read, second.get_ptr()))) {
+      if (save_memory_ref(first, OperatorSideEffect(OperatorSideEffect::EnumVariant::Read, second.get_ptr(), first.is_unknown()))) {
          DebugAstUtil([](){ return "Done read annotation."; });
          done_annot_read = true;
       }
       return true;
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_kill = [&collect] (AstNodePtr first, AstNodePtr second) {
-      if (collect != 0) return (*collect)(first, second, OperatorSideEffect(OperatorSideEffect::EnumVariant::Kill, second.get_ptr()));
+      if (collect != 0) return (*collect)(first, second, OperatorSideEffect(OperatorSideEffect::EnumVariant::Kill, second.get_ptr(), first.is_unknown()));
       return true;
     };
     std::function<bool(AstNodePtr, AstNodePtr)> save_call = [&collect,&ast, &is_function, &done_annot_call, &done_annot_mod, &done_annot_read, &body, add_to_dep_analysis] (AstNodePtr first, AstNodePtr second) {
       if (is_function && !AstInterface::IsLocalRef(first, body)) {
          done_annot_call = true;
+         OperatorSideEffect relation(OperatorSideEffect::EnumVariant::Call, second.get_ptr(), first.is_unknown());
          if (add_to_dep_analysis != 0) {
-            add_to_dep_analysis->SaveOperatorSideEffect(ast, GetVariableSignature(first), OperatorSideEffect(OperatorSideEffect::EnumVariant::Call, second.get_ptr())); 
+            add_to_dep_analysis->SaveOperatorSideEffect(ast, GetVariableSignature(first), relation); 
          } 
-         if (do_annot) {
-            AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::EnumVariant::Call);
-         }
+         if (do_annot)  AddOperatorSideEffectAnnotation(ast, first, relation); 
          if (first.is_unknown()) {
             done_annot_call = true;
             done_annot_mod = true;
             done_annot_read = true;
-            if (add_to_dep_analysis != 0)  {
-               add_to_dep_analysis->SaveOperatorSideEffect(ast, GetVariableSignature(first), OperatorSideEffect(OperatorSideEffect::EnumVariant::CallUnknown, second.get_ptr())); 
-            }
-            if (do_annot) {
-               AddOperatorSideEffectAnnotation(ast, first, OperatorSideEffect::EnumVariant::CallUnknown);
-            }
          }
       }
       DebugAstUtil([&first](){ return "save call:" + AstInterface::AstToString(first); });
@@ -252,7 +246,7 @@ void AstUtilInterface::AddOperatorSideEffectAnnotation(
               SgNode* op_ast, const AstNodePtr& var, 
               const AstUtilInterface::OperatorSideEffect& relation)
 {
-  DebugAstUtil([&relation, &var](){ return "Adding operator annotation: " + relation.relation_name() + ":" + "var is : " + AstInterface::AstToString(var); });
+  DebugAstUtil([&relation, &var](){ return "Adding operator annotation: " + AstInterface::AstToString(var); });
   if (!AstInterface::IsFunctionDefinition(op_ast)) {
      DebugAstUtil([&op_ast](){ return "Expecting an operator but getting " + AstInterface::AstToString(op_ast);});
      return;
@@ -310,7 +304,7 @@ std::string AstUtilInterface::GetVariableSignature(const AstNodePtr&  variable) 
      if (AstInterface::get_fileInfo(variable, &filename, &lineno)) {
         std::stringstream loc;
         loc << "Line:" << lineno;
-        DependenceEntry e(sig, filename, "", loc.str());
+        DependenceEntry e(sig, filename, { loc.str() });
         dict_table->SaveDependence(e);
      }
   }

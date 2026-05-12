@@ -20,17 +20,12 @@ namespace {
 
 namespace AstUtilInterface {
 
-std::ostream& operator << (std::ostream& output, const DependenceEntry& e) { 
-        output << e.first_entry() << " : " ;
-        if (e.type_entry() != "") {
-            output << "[ " << e.type_entry() << " ] ";
-        }
-        output << e.second_entry();
-        if (e.attr_entry() != "") {
-             output << " = " << e.attr_entry()  << " ;";
-        } else {
-             output << " ;";
-        }
+std::ostream& operator << (std::ostream& output, const DependenceEntry& dep) { 
+        output << dep.first_entry() << " : " ;
+        for (const auto& e : dep.type_entries()) {
+            output << "[ " << e << " ] ";
+        } 
+        output << dep.second_entry() << " ;";
         return output;
 }
 
@@ -158,9 +153,10 @@ class ClusterDependences {
       bool do_cluster = clusters[cluster_name].size() > 1;
       if (do_cluster) {
         output << "subgraph \"cluster_" << cluster_name << "\" {\n";
-        output << "  style=filled;\n";
-        output << "  color=lightgrey;\n";
-        output << "  label=\"" << cluster_name << "\";\n";
+        output << "  style=invis;\n";
+ //       output << "  style=filled;\n";
+ //       output << "  color=lightgrey;\n";
+ //       output << "  label=\"" << cluster_name << "\";\n";
       }
       for (auto cluster_member : clusters[cluster_name]) {
         if (functions.find(cluster_member) != functions.end()) {
@@ -208,10 +204,9 @@ void DependenceTable:: ClearOperatorSideEffect(SgNode* op) {
 
 bool DependenceTable::
      SaveOperatorSideEffect(SgNode* op, const AstNodePtr& varref, const AstUtilInterface::OperatorSideEffect& relation) {
-  std::string attr = relation.attr_name();;
-  const auto& rel_sig = relation.relation_name();
+  std::vector<std::string> rel_sig = relation.relations();
   const auto& op_sig = AstUtilInterface::GetVariableSignature(op);
-  DependenceEntry e(op_sig, AstUtilInterface::GetVariableSignature(varref), rel_sig, attr);
+  DependenceEntry e(op_sig, AstUtilInterface::GetVariableSignature(varref), rel_sig);
   SaveDependence(e);
   return true;
 }
@@ -228,6 +223,7 @@ void CollectTransitiveDependences:: Compute(
     }
     Log.push("Collect transitive dependence for " + input);
     result.insert(input);
+    DependenceTable::InsertNode(input);
     const auto& dependences = DependenceTable::get_dependences(input);
     // Terminates if dependences are empty, with the loop below skipped.
     for (const auto& dependence : dependences) {

@@ -19,31 +19,30 @@ namespace AstUtilInterface {
 // Representing dependence information between two entities.
 class DependenceEntry {
      private:
-      std::string first_, second_, deptype_, attr_;
+      std::string first_, second_;
+      std::vector<std::string> deptype_;
      public:
-      DependenceEntry(const std::string& first, const std::string& second, const std::string& deptype, const std::string& attr)
-             : first_(first), second_(second), deptype_(deptype), attr_(attr) {}
+      DependenceEntry(const std::string& first, const std::string& second, const std::vector<std::string>& deptype)
+             : first_(first), second_(second), deptype_(deptype) {}
       std::string first_entry() const { return first_; }
       std::string second_entry() const { return second_; }
-      std::string type_entry() const { return deptype_; }
-      std::string attr_entry() const { return attr_; }
+      const std::vector<std::string>& type_entries() const { return deptype_; }
+      std::string type_entry() const { return deptype_.empty()? "" : deptype_[0]; }
+      std::string attr_entry() const { return deptype_.size() > 1? deptype_[1] : ""; }
       bool operator == (const DependenceEntry& e2) const { 
            return first_ == e2.first_ && second_ == e2.second_ && deptype_ == e2.deptype_; 
        }
       bool operator < (const DependenceEntry& e2) const 
         { return first_ < e2.first_ || (first_ == e2.first_ && second_ < e2.second_) ||
                  (first_ == e2.first_ && second_ == e2.second_ && deptype_ < e2.deptype_); }
-      std::string to_string() const { return first_ + " : " + " [ " + deptype_ + " ] " + second_ + " = " + attr_; }
-      bool first_is_function() const { return true; }
-      bool second_is_function() const { return type_entry() == "call"; }
-      bool output_data_dependence(std::ostream& output) const {
-          if (attr_entry() != "") {
-             output << second_entry() << " : [ " << type_entry() << " ] " << attr_entry() << " ;\n";
-             return true;
-          }
-          return false;
-      }
-
+      std::string to_string() const { 
+         std::string res = first_ + " : ";
+         for (const auto& e : deptype_) {
+           res = res + " [ " + e + " ] ";
+         }
+         res = res + second_; 
+         return res;
+       }
 };
 
 std::ostream& operator << (std::ostream& output, const DependenceEntry& e);
@@ -69,9 +68,6 @@ class DependenceTable : public SaveOperatorSideEffectInterface {
     // Output the new dependences into a new file. 
     void OutputDependences(std::ostream& output) {
          CollectDependences([&output](const DependenceEntry& e) { output << e << std::endl; });
-    }
-    void OutputDataDependences(std::ostream& output) {
-        CollectDependences([&output](const DependenceEntry& e) { e.output_data_dependence(output); });
     }
     void OutputDependencesInGUI(std::ostream& output); 
     void ClearDependence(const std::string& sig) {
@@ -130,9 +126,6 @@ class DependenceTable : public SaveOperatorSideEffectInterface {
    }
    std::string current_start(const DependenceEntry& e) const {
      return (direction_ == Direction::CollectBackward)? e.second_entry() : e.first_entry();
-   }
-   std::string current_attr(const DependenceEntry& e) const {
-     return e.attr_entry();
    }
    std::string current_type(const DependenceEntry& e) const {
      return e.type_entry();
@@ -203,9 +196,8 @@ class FlowGraphViaDependenceTable :
        return sig;
     }
    virtual DependenceEntry addEdge(const std::string& p1, const std::string& p2, const Edge& t) {
-      const auto& rel_sig = t.relation_name();
-      const auto& attr = t.attr_name();
-      DependenceEntry e(p1, p2, rel_sig, attr);
+      const auto& rel_sig = t.relations();
+      DependenceEntry e(p1, p2, rel_sig);
       DependenceTable::SaveDependence(e);
       return e;
     }
