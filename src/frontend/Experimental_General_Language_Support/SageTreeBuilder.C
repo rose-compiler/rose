@@ -850,7 +850,7 @@ Leave(SgFunctionDeclaration* declaration, SgScopeStatement* param_scope)
        param_scope->set_parent(declaration);
 
        // The scope of the parameter names may end up connected incorrectly (gitlab-issue-287.jov)
-       if (auto proc = isSgProcedureHeaderStatement(declaration)) {
+       if (isSgProcedureHeaderStatement(declaration)) {
          for (auto arg : declaration->get_parameterList()->get_args()) {
            SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(arg->get_name(), param_scope);
            if (symbol) {

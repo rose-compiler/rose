@@ -20,10 +20,7 @@ namespace si = SageInterface;
 #  define WARNING_FOR_NONREAL_DEVEL 0
 #endif
 
-// DQ (9/2/2020): Moved to the top of the file from the SgInitializedName case in the evaluate inherited attribute function.
-// DQ (4/27/2019): Set these to be the same for now.
 #define DEBUG_INITIALIZED_NAME 0
-// #define DEBUG_INITIALIZED_NAME DEBUG_NAME_QUALIFICATION_LEVEL
 
 // DQ (10/17/2020): Worked with Tristan, but this was the only way that I could turn on the debug output for my tool in ROSE_GARDEN.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
@@ -31,7 +28,6 @@ namespace si = SageInterface;
 #endif
 
 #define DEBUG_NONTERMINATION 0
-
 
 // support for Ada
 namespace
@@ -114,8 +110,6 @@ namespace
 
       // default for all scopes and declarations
       void handle(const SgStatement&)              { withoutName(); }
-
-      // void handle(const SgGlobal&)               { withName("Standard"); } // \todo
 
       // scopes that may have names
       // \todo do we also need named loops?
@@ -241,16 +235,9 @@ namespace
                                           NameQualificationSynthesizedAttribute
                                         >
   {
-   // DQ (8/1/2025): Adding support for typedef to this map so that we can later change it to an unordered_map.
       typedef std::unordered_map<SgNode*,std::string> NameQualificationMapType;
       typedef std::map<SgNode*,NameQualificationMapType> NameQualificationMapOfMapsType;
-#if 0
-      typedef std::set<SgNode*> NameQualificationSetType;
-#else
-   // This must match the setting in the NameQualificationTraversal class.
-   // typedef std::unordered_set<SgNode*> NameQualificationSetType;
       typedef NameQualificationTraversal::NameQualificationSetType NameQualificationSetType;
-#endif
 
       using InheritedAttribute   = NameQualificationInheritedAttributeAda;
       using SynthesizedAttribute = NameQualificationSynthesizedAttribute;
@@ -262,10 +249,6 @@ namespace
       using ScopeRenamingContainer = NameQualificationTraversalState::ScopeRenamingContainer;
 
       /// constructor for primary traversal
-      // NameQualificationTraversalAda( std::map<SgNode*,std::string> & input_qualifiedNameMapForNames,
-      //                                std::map<SgNode*,std::map<SgNode*,std::string> > & input_qualifiedNameMapForMapsOfTypes,
-      //                                NameQualificationTraversalState& traversalState
-      //                              )
          NameQualificationTraversalAda( NameQualificationMapType & input_qualifiedNameMapForNames,
                                      NameQualificationMapOfMapsType & input_qualifiedNameMapForMapsOfTypes,
                                      NameQualificationTraversalState& traversalState
@@ -279,9 +262,6 @@ namespace
       /// constructor for sub traversal
       /// \details
       ///   like a copy constructor except that it allows to pass in the name map
-      // NameQualificationTraversalAda( const NameQualificationTraversalAda& orig,
-      //                                std::map<SgNode*,std::string>& input_qualifiedNameMapForNames
-      //                              )
       NameQualificationTraversalAda( const NameQualificationTraversalAda& orig,
                                      NameQualificationMapType& input_qualifiedNameMapForNames
                                    )
@@ -344,15 +324,7 @@ namespace
       /// creates a type mapping that is used for the type-subtree with reference node \ref n.
       /// Note, the subtree is NOT created iff already in type traversal mode. In this case,
       ///   the current mapping is returned.
-      // std::map<SgNode*,std::string>& createQualMapForTypeSubtreeIfNeeded(const SgNode& n);
       NameQualificationMapType& createQualMapForTypeSubtreeIfNeeded(const SgNode& n);
-
-      // PP (04/05/24): referencedNameSet currently not in use by Ada
-      //~ /// returns referencedNameSet
-      //~ std::set<SgNode*>& get_referencedNameSet() { return referencedNameSet; }
-
-      /// returns current qualifiedNameMapForNames
-      // std::map<SgNode*,std::string>& get_qualifiedNameMapForNames() { return qualifiedNameMapForNames; }
       NameQualificationMapType& get_qualifiedNameMapForNames() { return qualifiedNameMapForNames; }
 
       /// called after a unit change in global scope is detected.
@@ -375,16 +347,7 @@ namespace
 
       // references to ROSE wide maps
       // \{
-      // PP (04/05/24): referencedNameSet currently not in use by Ada
-      //~ std::set<SgNode*>&                                referencedNameSet;
-      // std::map<SgNode*,std::string>&                    qualifiedNameMapForNames;
       NameQualificationMapType&                    qualifiedNameMapForNames;
-
-      // std::map<SgNode*,std::string>&                    qualifiedNameMapForTypes;
-      //~ std::map<SgNode*,std::string> & qualifiedNameMapForTemplateHeaders;
-      //~ std::map<SgNode*,std::string>&                    typeNameMap;
-      // std::map<SgNode*,std::map<SgNode*,std::string> >& qualifiedNameMapForMapsOfTypes;
-      // std::map<SgNode*,NameQualificationMapType>& qualifiedNameMapForMapsOfTypes;
       NameQualificationMapOfMapsType& qualifiedNameMapForMapsOfTypes;
       // \}
 
@@ -2876,6 +2839,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
 
   // DQ (5/22/2024): Count the number of function invocations so that we can turn on forceSkip selectively.
      static size_t functionCallCounter = 0;
+     (void) functionCallCounter; //defeat clang warning message
 
      functionCallCounter++;
 

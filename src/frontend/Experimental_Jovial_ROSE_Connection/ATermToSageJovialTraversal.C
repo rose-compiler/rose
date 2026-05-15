@@ -8057,7 +8057,7 @@ ATbool ATermToSageJovialTraversal::traverse_NentFunction(ATerm term, SgFunctionC
 // The variable may be a table name or table type name
    SgSymbol* symbol = SI::lookupSymbolInParentScopes(var_name, SB::topScopeStack());
    if (symbol) {
-     if (SgVariableSymbol* var_sym = isSgVariableSymbol(symbol)) {
+     if (isSgVariableSymbol(symbol)) {
        param  = SB::buildVarRefExp(var_name, SB::topScopeStack());
      }
      else if (SgJovialTableType* type = isSgJovialTableType(symbol->get_type())) {
