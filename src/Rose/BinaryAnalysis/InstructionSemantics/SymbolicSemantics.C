@@ -1910,15 +1910,33 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
 }
 
 BaseSemantics::SValue::Ptr
+RiscOperators::readLocal(uint8_t index) {
+    auto frame = currentState()->frameState();
+    ASSERT_not_null(frame);
+    return frame->readLocal(index);
+}
+
+void
+RiscOperators::writeLocal(uint8_t index, const BaseSemantics::SValue::Ptr &value){
+    auto frame = currentState()->frameState();
+    ASSERT_not_null(frame);
+    ASSERT_not_null(value);
+    return frame->writeLocal(index, value);
+}
+
+BaseSemantics::SValue::Ptr
 RiscOperators::popOperand() {
     auto frame = currentState()->frameState();
+    ASSERT_not_null(frame);
     return frame->popOperand();
 }
 
 void
-RiscOperators::pushOperand(const BaseSemantics::SValue::Ptr &a) {
+RiscOperators::pushOperand(const BaseSemantics::SValue::Ptr &value) {
     auto frame = currentState()->frameState();
-    frame->pushOperand(a);
+    ASSERT_not_null(frame);
+    ASSERT_not_null(value);
+    frame->pushOperand(value);
 }
 
 } // namespace

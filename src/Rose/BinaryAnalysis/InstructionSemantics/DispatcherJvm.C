@@ -87,17 +87,27 @@ struct IP_iconst_5: P {
 
 // Load int from local variable (0x15)
 struct IP_load: P {
-    void p(D /*d*/, Ops /*ops*/, I insn, A args) {
+    void p(D /*d*/, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        //TODO: Read variable and push value
+
+        SgAsmExpression* value = args[0];
+        (void) value; // value needs to be converted to an integral index
+
+        //TODO: get index value from the expression (don't know how to do this, punt for now)
+        uint8_t index{0};
+
+        // Read local variable 0 and push result
+        ops->pushOperand(ops->readLocal(index));
     }
 };
 
 // Load int from local variable 0 (0x1a)
 struct IP_load_0: P {
-    void p(D /*d*/, Ops /*ops*/, I insn, A args) {
+    void p(D /*d*/, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        //TODO: Read variable and push value
+
+        // Read local variable 0 and push result
+        ops->pushOperand(ops->readLocal(0));
     }
 };
 
@@ -120,10 +130,9 @@ struct IP_store_0: P {
     void p(D /*d*/, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
 
-        // Pop value from operand stack, then write it to local variables array
+        // Pop value from operand stack, then write it to local variable 0
         SValue::Ptr value = ops->popOperand();
-
-        //TODO:: write variable to local variables array
+        ops->writeLocal(0, value);
     }
 };
 

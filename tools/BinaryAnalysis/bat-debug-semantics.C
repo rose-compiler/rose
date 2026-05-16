@@ -132,7 +132,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     return args;
 }
 
-
 // The first argument is an optional starting address of the form "=N" where N is a hexadecimal value without the leading "0x"
 // and the bytes are hexidecimal without the leading "0x".
 template<class StringIterator>
@@ -278,6 +277,17 @@ makeMemoryState(const Settings &settings, const P2::Partitioner::ConstPtr &parti
     }
 }
 
+static BaseSemantics::FrameState::Ptr
+makeFrameState(const Settings &settings, const BaseSemantics::SValue::Ptr &protoval, const RegisterDictionary::Ptr& /*regdict*/) {
+    const std::string className = settings.valueClassName.orElse(settings.opsClassName);
+
+    if (className == "symbolic") {
+        return BaseSemantics::FrameState::instance(protoval);
+    } else {
+        throw std::runtime_error("unrecognized register state class name \"" + className + "\"; see --rstate=list\n");
+    }
+}
+
 static BaseSemantics::RiscOperators::Ptr
 makeRiscOperators(const Settings &settings, const P2::Partitioner::ConstPtr &partitioner) {
     const std::string &className = settings.opsClassName;
@@ -302,7 +312,15 @@ makeRiscOperators(const Settings &settings, const P2::Partitioner::ConstPtr &par
     BaseSemantics::RegisterState::Ptr istate = makeRegisterState(settings, protoval, arch->interruptDictionary());
     istate->purpose(BaseSemantics::AddressSpace::Purpose::INTERRUPTS);
 
-    BaseSemantics::State::Ptr state = BaseSemantics::State::instance(rstate, mstate, istate);
+    BaseSemantics::State::Ptr state;
+
+    if (className == "symbolic") {
+        BaseSemantics::FrameState::Ptr fstate = makeFrameState(settings, protoval, regdict);
+        fstate->purpose(BaseSemantics::AddressSpace::Purpose::FRAMES);
+        state = BaseSemantics::State::instance(rstate, mstate, istate, fstate);
+    } else {
+        state = BaseSemantics::State::instance(rstate, mstate, istate);
+    }
 
     if (className == "concrete") {
         return ConcreteSemantics::RiscOperators::instanceFromState(state, solver);

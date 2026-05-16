@@ -872,13 +872,37 @@ public:
      *  all other respects, it's similar to @ref readMemory. */
     virtual SValuePtr peekMemory(RegisterDescriptor segreg, const SValuePtr &addr, const SValuePtr &dflt) = 0;
 
-    /** Pushes a value to the Frame Operand Stack.
+    //FIX_ME documentation
+
+    /** Reads a value from the local variable table in the current frame.
      *
-     *  The base implementation simply delegates to the current semantic State, which probably delegates to a frame state,
+     *  This method
      *  but subclasses are welcome to override this behavior at any level.
      *
-     */
-    virtual void pushOperand(const SValuePtr &value);
+     *  A register state will typically implement storage for hardware registers, but higher layers (the State, RiscOperators,
+     *  Dispatcher, ...)  should not be concerned about the size of the register they're trying to read.  For example, a
+     *  register state for a 32-bit x86 architecture will likely have a storage location for the 32-bit EAX register, but it
+     *  should be possible to ask @ref readRegister to return the value of AX (the low-order 16-bits).  In order to accomplish
+     *  this, some level of the readRegister delegations needs to invoke @ref extract to obtain the low 16 bits.  The
+     *  RiscOperators object is passed along the delegation path for this purpose.  The inverse @ref concat operation will be
+     *  needed at some level when we ask @ref readRegister to return a value that comes from multiple storage locations in the
+     *  register state (such as can happen if an x86 register state holds individual status flags and we ask for the 32-bit
+     *  EFLAGS register).
+     *
+     *  If the variable state can distinguish between a variable that has never been accessed and a variable that has only been
+     *  read, then the @p dflt value is stored into the variable the first time it's read. This ensures that reading the
+     *  variable a second time with no intervening write will return the same value as the first read.  If a @p dflt is not
+     *  provided then one is constructed by invoking @ref undefined_.
+     *
+     *  There needs to be a certain level of cooperation between the RiscOperators, State, and frame state classes to decide
+     *  which layer should invoke the @ref extract or @ref concat (or whatever other RISC operations might be necessary).
+     *
+     *  @{ */
+    virtual SValuePtr readLocal(uint8_t index);
+    /** @} */
+
+    // TODO: document following methods
+    virtual void writeLocal(uint8_t index, const SValuePtr &value);
 
     /** Pops a value from the Frame Operand Stack.
      *
@@ -887,6 +911,14 @@ public:
      *
      */
     virtual SValuePtr popOperand();
+
+    /** Pushes a value to the Frame Operand Stack.
+     *
+     *  The base implementation simply delegates to the current semantic State, which probably delegates to a frame state,
+     *  but subclasses are welcome to override this behavior at any level.
+     *
+     */
+    virtual void pushOperand(const SValuePtr &value);
 };
 
 std::ostream& operator<<(std::ostream&, const RiscOperators&);

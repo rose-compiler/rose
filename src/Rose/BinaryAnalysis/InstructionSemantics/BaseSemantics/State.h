@@ -48,8 +48,12 @@ public:
     using Ptr = StatePtr;
 
 private:
-    SValuePtr protoval_;                                // initial value used to create additional values as needed.
     std::vector<AddressSpacePtr> addressSpaces_;        // ordered address spaces
+    SValuePtr protoval_;                                // Initial value used to create additional values as needed.
+    RegisterStatePtr registers_;                        // All machine register values for this semantic state.
+    MemoryStatePtr memory_;                             // All memory for this semantic state.
+    RegisterStatePtr interrupts_;                       // Whether interrupts occurred.
+    FrameStatePtr frame_;                               // Stores JVM local variables and operand stack for executing method.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization.
@@ -63,6 +67,10 @@ private:
         ASSERT_require2(version >= 2, version);
         s & BOOST_SERIALIZATION_NVP(protoval_);
         s & BOOST_SERIALIZATION_NVP(addressSpaces_);
+        s & BOOST_SERIALIZATION_NVP(registers_);
+        s & BOOST_SERIALIZATION_NVP(memory_);
+        s & BOOST_SERIALIZATION_NVP(interrupts_);
+        s & BOOST_SERIALIZATION_NVP(frame_);
     }
 #endif
 
@@ -74,6 +82,7 @@ protected:
     // needed for serialization
     State();
 
+    State(const RegisterStatePtr &registers, const MemoryStatePtr &memory, const RegisterStatePtr &interrupts, const FrameStatePtr &frame);
     State(const RegisterStatePtr &registers, const MemoryStatePtr &memory, const RegisterStatePtr &interrupts);
     State(const RegisterStatePtr &registers, const MemoryStatePtr &memory);
 
@@ -87,6 +96,10 @@ public:
     // Static allocating constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Instantiate a new state object with specified register, memory, interrupt, and frame address spaces. */
+    static StatePtr instance(const RegisterStatePtr &registers, const MemoryStatePtr &memory,
+                             const RegisterStatePtr &interrupts, const FrameStatePtr &frame);
+
     /** Instantiate a new state object with specified register, memory, and interrupt address spaces. */
     static StatePtr instance(const RegisterStatePtr &registers, const MemoryStatePtr &memory, const RegisterStatePtr &interrupts);
 
@@ -305,6 +318,9 @@ public:
      *  See also @ref frameState, which returns a null pointer if the frame state is not present. */
     bool hasFrameState() const;
 
+    virtual SValuePtr readLocal(uint8_t index);
+    virtual void writeLocal(uint8_t index, const SValuePtr &value);
+
     /** Pop an operand value from the frame.
      *
      *  Calls @ref popOperand on the address space returned by @ref frameState, which must be non-null. */
@@ -484,6 +500,12 @@ public:
     WithFormatter operator+(const std::string &linePrefix);
     /** @} */
 
+    /** Merge operation for data flow analysis.
+     *
+     *  Merges the @p other state into this state. Returns true if this state changed, false otherwise.  This method usually
+     *  isn't overridden in subclasses since all the base implementation does is invoke the merge operation on the memory state
+     *  and register state. */
+    virtual bool merge(const StatePtr &other, RiscOperators *ops);
 };
 
 std::ostream& operator<<(std::ostream&, const State&);

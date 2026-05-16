@@ -32,6 +32,27 @@ operator<<(std::ostream &o, const State::WithFormatter &x) {
 
 State::State() {}
 
+State::State(const RegisterState::Ptr &registers, const MemoryState::Ptr &memory,
+             const RegisterState::Ptr &interrupts, const FrameState::Ptr &frame) {
+    protoval_ = notnull(notnull(registers)->protoval());
+
+    ASSERT_not_null(registers);
+    ASSERT_require(registers->purpose() == AddressSpace::Purpose::REGISTERS);
+    insertAddressSpace(registers);
+
+    ASSERT_not_null(memory);
+    ASSERT_require(memory->purpose() == AddressSpace::Purpose::MEMORY);
+    insertAddressSpace(memory);
+
+    ASSERT_not_null(interrupts);
+    ASSERT_require(interrupts->purpose() == AddressSpace::Purpose::INTERRUPTS);
+    insertAddressSpace(interrupts);
+
+    ASSERT_not_null(frame);
+    ASSERT_require(frame->purpose() == AddressSpace::Purpose::FRAMES);
+    insertAddressSpace(frame);
+}
+
 State::State(const RegisterState::Ptr &registers, const MemoryState::Ptr &memory, const RegisterState::Ptr &interrupts) {
     protoval_ = notnull(notnull(registers)->protoval());
 
@@ -67,6 +88,12 @@ State::State(const State &other)
 }
 
 State::~State() {}
+
+State::Ptr
+State::instance(const RegisterState::Ptr &registers, const MemoryState::Ptr &memory,
+                const RegisterStatePtr &interrupts, const FrameStatePtr &frame) {
+    return Ptr(new State(registers, memory, interrupts, frame));
+}
 
 State::Ptr
 State::instance(const RegisterState::Ptr &registers, const MemoryState::Ptr &memory, const RegisterStatePtr &interrupts) {
@@ -171,6 +198,13 @@ State::write(const AddressSpace::Ptr &space, const AddressSpaceAddress &addr, co
     ASSERT_not_null(dflt);
     ASSERT_require(dflt->nBits() > 0);
     space->write(addr, dflt, addrOps, valOps);
+}
+
+bool
+State::merge(const StatePtr &other, RiscOperators *ops) {
+    ASSERT_not_null(other);
+    ASSERT_not_null(ops);
+    return false;
 }
 
 bool
@@ -284,6 +318,19 @@ State::frameState() const {
 bool
 State::hasFrameState() const {
     return frameState() != nullptr;
+}
+
+SValuePtr
+State::readLocal(uint8_t index) {
+    ASSERT_not_null(frameState());
+    return frameState()->readLocal(index);
+}
+
+void
+State::writeLocal(uint8_t index, const SValuePtr &value){
+    ASSERT_not_null(value);
+    ASSERT_not_null(frameState());
+    return frameState()->writeLocal(index, value);
 }
 
 SValue::Ptr
@@ -442,13 +489,6 @@ State::printMemory(std::ostream &stream, const std::string &prefix) const {
 void
 State::printMemory(std::ostream &stream, Formatter &fmt) const {
     notnull(memoryState())->print(stream, fmt);
-}
-
-void
-State::printInterrupts(std::ostream &stream, const std::string &prefix) {
-    Formatter fmt;
-    fmt.set_line_prefix(prefix);
-    printInterrupts(stream, fmt);
 }
 
 void

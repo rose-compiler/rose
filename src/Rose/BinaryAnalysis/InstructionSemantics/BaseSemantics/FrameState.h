@@ -66,12 +66,29 @@ public:
     using Ptr = FrameStatePtr;
 
 private:
-    std::vector<SValuePtr> stack_;
+    std::vector<SValuePtr> stack_; // operand stack for the frame
+    std::vector<SValuePtr> locals_; // local variables array for the frame
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Serialization
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(MemoryState);
+        s & BOOST_SERIALIZATION_NVP(stack_);
+        s & BOOST_SERIALIZATION_NVP(locals_);
+    }
+#endif
 
 public:
     ~FrameState();
 
 protected:
+    FrameState(); // for serialization
+
     // All memory states should be heap allocated; use instance(), create(), or clone() instead.
     explicit FrameState(const SValuePtr &valProtoval);
 
@@ -105,15 +122,11 @@ public:
     virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) override;
 
-    /** Push an operand value to a frame.
-     *
-     */
-    virtual void pushOperand(const SValuePtr &value) override;
+    SValuePtr readLocal(uint8_t index) override;
+    void writeLocal(uint8_t index, const SValuePtr &value) override;
 
-    /** Pop an operand value from a frame.
-     *
-     */
-    virtual SValuePtr popOperand() override;
+    SValuePtr popOperand() override;
+    void pushOperand(const SValuePtr &value) override;
 
 public:
     virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const override;
@@ -125,6 +138,10 @@ public:
 } // namespace
 } // namespace
 } // namespace
+
+#ifdef ROSE_ENABLE_BOOST_SERIALIZATION
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::FrameState);
+#endif
 
 #endif
 #endif

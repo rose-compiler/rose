@@ -58,6 +58,8 @@ private:
     // Real constructors
 protected:
     MemoryState();                                      // for serialization
+
+    MemoryState(Purpose, const std::string &name, const SValuePtr &valProtoval); // for deriving classes
     MemoryState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval);
     MemoryState(const MemoryStatePtr &other);
 
@@ -166,6 +168,9 @@ public:
      *  decide which layer (if any) should handle splitting a multi-byte value into multiple memory locations. */
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
                              RiscOperators *addrOps, RiscOperators *valOps) = 0;
+
+    virtual SValuePtr readLocal(uint8_t index);
+    virtual void writeLocal(uint8_t index, const SValuePtr &value);
 
     /** Push an operand value to a frame.
      *

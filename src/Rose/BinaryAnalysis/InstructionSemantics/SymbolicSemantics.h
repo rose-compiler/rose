@@ -1108,8 +1108,11 @@ public:
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) override;
 
-    virtual BaseSemantics::SValuePtr popOperand() override;
-    virtual void pushOperand(const BaseSemantics::SValuePtr &a) override;
+    BaseSemantics::SValuePtr readLocal(uint8_t index) override;
+    void writeLocal(uint8_t index, const BaseSemantics::SValuePtr &value) override;
+
+    BaseSemantics::SValuePtr popOperand() override;
+    void pushOperand(const BaseSemantics::SValuePtr &value) override;
 
 public:
     BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg,

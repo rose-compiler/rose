@@ -98,7 +98,6 @@ RiscOperators::filterIndirectJumpTarget(const SValue::Ptr &a) {
     return a->copy();
 }
 
-
 void
 RiscOperators::startInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
@@ -564,16 +563,28 @@ RiscOperators::peekRegister(RegisterDescriptor reg, const SValue::Ptr &dflt_) {
     return currentState()->peekRegister(reg, dflt, this);
 }
 
-void
-RiscOperators::pushOperand(const SValue::Ptr &value) {
+SValue::Ptr
+RiscOperators::readLocal(uint8_t index) {
     ASSERT_not_null(currentState());
-    currentState()->pushOperand(value);
+    return currentState()->readLocal(index);
+}
+
+void
+RiscOperators::writeLocal(uint8_t index, const SValuePtr &value) {
+    ASSERT_not_null(currentState());
+    currentState()->writeLocal(index, value);
 }
 
 SValue::Ptr
 RiscOperators::popOperand() {
     ASSERT_not_null(currentState());
     return currentState()->popOperand();
+}
+
+void
+RiscOperators::pushOperand(const SValue::Ptr &value) {
+    ASSERT_not_null(currentState());
+    currentState()->pushOperand(value);
 }
 
 void

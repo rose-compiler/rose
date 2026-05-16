@@ -19,6 +19,12 @@ namespace BaseSemantics {
 MemoryState::MemoryState()
     : AddressSpace(AddressSpace::Purpose::MEMORY, "memory"), byteOrder_(ByteOrder::ORDER_UNSPECIFIED), byteRestricted_(true) {}
 
+MemoryState::MemoryState(Purpose p, const std::string &name, const SValuePtr &valProtoval)
+    : AddressSpace(p, name), addrProtoval_(valProtoval), valProtoval_(valProtoval),
+      byteOrder_(ByteOrder::ORDER_UNSPECIFIED), byteRestricted_(true) {
+    ASSERT_not_null(valProtoval);
+}
+
 MemoryState::MemoryState(const SValue::Ptr &addrProtoval, const SValue::Ptr &valProtoval)
     : AddressSpace(AddressSpace::Purpose::MEMORY, "memory"), addrProtoval_(addrProtoval), valProtoval_(valProtoval),
       byteOrder_(ByteOrder::ORDER_UNSPECIFIED), byteRestricted_(true) {
@@ -79,14 +85,28 @@ MemoryState::set_byteOrder(ByteOrder::Endianness bo) {
     byteOrder_ = bo;
 }
 
+SValuePtr
+MemoryState::readLocal(uint8_t index) {
+    (void) index;
+    ASSERT_require2(false, "No implementation of not base class MemoryState::readLocal\n");
+    return {};
+}
+
 void
-MemoryState::pushOperand(const SValuePtr &) {
-    ASSERT_require2(false, "No implementation of base class MemoryState::pushOperand\n");
+MemoryState::writeLocal(uint8_t index, const SValuePtr &value){
+    (void) index;  (void) value;
+    ASSERT_require2(false, "No implementation of not base class MemoryState::writeLocal\n");
+}
+
+void
+MemoryState::pushOperand(const SValuePtr &value) {
+    (void) value;
+    ASSERT_require2(false, "No implementation of not base class MemoryState::pushOperand\n");
 }
 
 SValue::Ptr
 MemoryState::popOperand() {
-    ASSERT_require2(false, "No implementation of base class MemoryState::popOperand\n");
+    ASSERT_require2(false, "No implementation of not base class MemoryState::popOperand\n");
     return {};
 }
 

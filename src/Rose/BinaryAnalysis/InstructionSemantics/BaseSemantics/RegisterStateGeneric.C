@@ -352,8 +352,9 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValue::Ptr &df
 
     // Fast case: the state does not store this register or any register that might overlap with this register.
     if (!registers_.exists(reg)) {
-        if (!accessCreatesLocations_)
+        if (!accessCreatesLocations_) {
             return dflt;
+        }
         SValue::Ptr newval = dflt->copy();
         std::string regname = regdict->lookup(reg);
         boost::erase_all(regname, "[");
