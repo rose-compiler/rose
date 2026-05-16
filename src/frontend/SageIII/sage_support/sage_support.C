@@ -39,11 +39,6 @@
 #include <boost/foreach.hpp>
 #include <Sawyer/FileSystem.h>
 
-// DQ (12/22/2019): I don't need this now, and it is an issue for some compilers (e.g. GNU 4.9.4).
-// DQ (12/21/2019): Require hash table support for determining the shared nodes in the ASTs.
-// #include <unordered_map>
-
-
 #ifdef __INSURE__
 // Provide a dummy function definition to support linking with Insure++.
 // We have not identified why this is required.  This fixes the problem of
@@ -52,12 +47,10 @@ std::ostream &
 operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bool, std::allocator<bool> >& m)
    {
      printf ("Inside of std::ostream & operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bool, std::allocator<bool> >& m): A test! \n");
-  // ROSE_ASSERT(false);
      return os;
    }
 #endif
 
-// DQ (9/26/2018): Added so that we can call the display function for TokenStreamSequenceToNodeMapping (for debugging).
 #include "tokenStreamMapping.h"
 
 using namespace std;
@@ -69,23 +62,7 @@ using namespace Sawyer::Message::Common;
 
 const string FileHelper::pathDelimiter = "/";
 
-/* These symbols are defined when we include sage_support.h above - ZG (4/5/2013)
-// DQ (9/17/2009): This appears to only be required for the GNU 4.1.x compiler (not for any earlier or later versions).
-extern const std::string ROSE_GFORTRAN_PATH;
-
-// CER (10/11/2011): Added to allow OFP jar file to depend on version number based on date.
-extern const std::string ROSE_OFP_VERSION_STRING;
-*/
-
-// DQ (12/6/2014): Moved this from the unparser.C fle to here so that it can
-// be called before any processing of the AST (so that it relates to the original
-// AST before transformations).
-// void buildTokenStreamMapping(SgSourceFile* sourceFile);
-// void buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & tokenVector);
-
-// DQ (11/30/2015): Adding general support fo the detection of macro expansions and include file expansions.
 void detectMacroOrIncludeFileExpansions(SgSourceFile* sourceFile);
-
 
 #ifdef _MSC_VER
 // DQ (11/29/2009): MSVC does not support snprintf, but "_snprintf" is equivalent
@@ -94,8 +71,6 @@ void detectMacroOrIncludeFileExpansions(SgSourceFile* sourceFile);
 #define snprintf _snprintf
 #endif
 
-// DQ (2/12/2011): Added const so that this could be called in get_mangled() (and more generally).
-// std::string SgValueExp::get_constant_folded_value_as_string()
 std::string
 SgValueExp::get_constant_folded_value_as_string() const
    {
@@ -113,19 +88,16 @@ SgValueExp::get_constant_folded_value_as_string() const
                const SgIntVal* integerValueExpression = isSgIntVal(this);
                ASSERT_not_null(integerValueExpression);
                int numericValue = integerValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %d \n",numericValue);
                snprintf (buffer,max_buffer_size,"%d",numericValue);
                s = buffer;
                break;
              }
 
-       // DQ (10/4/2010): Added case
           case V_SgLongIntVal:
              {
                const SgLongIntVal* integerValueExpression = isSgLongIntVal(this);
                ASSERT_not_null(integerValueExpression);
                long int numericValue = integerValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
                snprintf (buffer,max_buffer_size,"%ld",numericValue);
                s = buffer;
                break;
@@ -136,19 +108,16 @@ SgValueExp::get_constant_folded_value_as_string() const
             const SgLongLongIntVal* integerValueExpression = isSgLongLongIntVal(this);
             ASSERT_not_null(integerValueExpression);
             long long int numericValue = integerValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
             snprintf (buffer,max_buffer_size,"%lld",numericValue);
             s = buffer;
             break;
          }
 
-       // DQ (10/5/2010): Added case
           case V_SgShortVal:
              {
                const SgShortVal* integerValueExpression = isSgShortVal(this);
                ASSERT_not_null(integerValueExpression);
                short int numericValue = integerValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
                snprintf (buffer,max_buffer_size,"%d",numericValue);
                s = buffer;
                break;
@@ -159,7 +128,6 @@ SgValueExp::get_constant_folded_value_as_string() const
                const SgUnsignedShortVal* integerValueExpression = isSgUnsignedShortVal(this);
                ASSERT_not_null(integerValueExpression);
                unsigned short int numericValue = integerValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %ld \n",numericValue);
                snprintf (buffer,max_buffer_size,"%u",numericValue);
                s = buffer;
                break;
@@ -170,31 +138,26 @@ SgValueExp::get_constant_folded_value_as_string() const
                const SgUnsignedLongLongIntVal* integerValueExpression = isSgUnsignedLongLongIntVal(this);
                ASSERT_not_null(integerValueExpression);
                unsigned long long int numericValue = integerValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %llu \n",numericValue);
                snprintf (buffer,max_buffer_size,"%llu",numericValue);
                s = buffer;
                break;
              }
 
-       // DQ (8/19/2009): Added case
           case V_SgUnsignedLongVal:
              {
                const SgUnsignedLongVal* integerValueExpression = isSgUnsignedLongVal(this);
                ASSERT_not_null(integerValueExpression);
                unsigned long int numericValue = integerValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %llu \n",numericValue);
                snprintf (buffer,max_buffer_size,"%lu",numericValue);
                s = buffer;
                break;
              }
 
-       // DQ (8/19/2009): Added case
           case V_SgUnsignedIntVal:
              {
                const SgUnsignedIntVal* integerValueExpression = isSgUnsignedIntVal(this);
                ASSERT_not_null(integerValueExpression);
                unsigned int numericValue = integerValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %llu \n",numericValue);
                snprintf (buffer,max_buffer_size,"%u",numericValue);
                s = buffer;
                break;
@@ -243,7 +206,6 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
-       // PL (3/24/2025): Added case
           case V_SgUnsignedCharVal:
              {
                const SgUnsignedCharVal* charValueExpression = isSgUnsignedCharVal(this);
@@ -264,7 +226,6 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
-       // PL (3/24/2025): Added case
           case V_SgSignedCharVal:
              {
                const SgSignedCharVal* charValueExpression = isSgSignedCharVal(this);
@@ -285,61 +246,51 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
-       // DQ (10/4/2010): Added case
           case V_SgFloatVal:
              {
                const SgFloatVal* floatValueExpression = isSgFloatVal(this);
                ASSERT_not_null(floatValueExpression);
                float numericValue = floatValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %f \n",numericValue);
                snprintf (buffer,max_buffer_size,"%f",numericValue);
                s = buffer;
                break;
              }
 
-       // DQ (10/4/2010): Added case
           case V_SgDoubleVal:
              {
                const SgDoubleVal* floatValueExpression = isSgDoubleVal(this);
                ASSERT_not_null(floatValueExpression);
                double numericValue = floatValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %f \n",numericValue);
                snprintf (buffer,max_buffer_size,"%lf",numericValue);
                s = buffer;
                break;
              }
 
-       // DQ (10/4/2010): Added case
           case V_SgLongDoubleVal:
              {
                const SgLongDoubleVal* floatValueExpression = isSgLongDoubleVal(this);
                ASSERT_not_null(floatValueExpression);
                long double numericValue = floatValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %f \n",numericValue);
                snprintf (buffer,max_buffer_size,"%Lf",numericValue);
                s = buffer;
                break;
              }
 
-       // DQ (11/22/2025): Added case to support Ada
           case V_SgFloat128Val:
              {
                const SgFloat128Val* floatValueExpression = isSgFloat128Val(this);
                ASSERT_not_null(floatValueExpression);
                long double numericValue = floatValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %f \n",numericValue);
                snprintf (buffer,max_buffer_size,"%Lf",numericValue);
                s = buffer;
                break;
              }
 
-       // DQ (10/4/2010): Added case
           case V_SgEnumVal:
              {
                const SgEnumVal* enumValueExpression = isSgEnumVal(this);
                ASSERT_not_null(enumValueExpression);
                int numericValue = enumValueExpression->get_value();
-            // printf ("numericValue of constant folded expression = %d \n",numericValue);
                snprintf (buffer,max_buffer_size,"%d",numericValue);
                s = string("_enum_") + string(buffer);
                break;
@@ -779,21 +730,8 @@ determineFileType(vector<string> argv, int & /*nextErrorCode*/, SgProject* proje
 
        // This should be an absolute path
           string targetSubstring = "/";
-
-       // Zack Galbreath 1/9/2014: Windows absolute paths do not begin with "/".
-       // The following printf could cause problems for our testing systems because
-       // it contains the word "error".
-       // [Robb P Matzke 2017-04-21]: Such a low-level utility function as this shouldn't be emitting output at all, especially
-       // not on standard output, because it makes it problematic to call this in situations where the file might not
-       // exist.
-       #ifndef _MSC_VER
-          //if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
-          //     printf ("sourceFilename encountered an error in filename\n");
-       #endif
-
           string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
 
-       // DQ (1/8/2014): We need to handle the case of "/dev/null" being used as an input filename.
           if (filenameExtension == "/dev/null")
              {
                printf ("Warning: detected use of /dev/null as input filename: not yet supported (exiting with 0 exit code) \n");
@@ -1271,7 +1209,6 @@ namespace Ecj {
 }// Rose
 #endif
 
-
 // *****************************************************************************************
 // *****************************************************************************************
 // *****************************************************************************************
@@ -1281,7 +1218,6 @@ namespace Ecj {
 // *****************************************************************************************
 
 // DQ (4/10/2017): Adding incremental support for ROSE use of Sawyer command line handling to ROSE.
-
 #define ROSE_SAWYER_COMMENT_LINE_DEBUG 0
 
 #if 0
@@ -1488,24 +1424,11 @@ int
 SgProject::parse(const vector<string>& argv)
    {
   // Not sure that if we are just linking that we should call a function called "parse()"!!!
-
-  // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
 
   // DQ (4/10/2017): Experiment with Saywer for comment line parsing.
   // Parse Sawyer-recognized switches and the rest we'll pass to Outliner and frontend like before.
      std::vector<std::string> sawyer_args = parseCommandLine(argv);
-
-#if 0
-  // Unclear if we want to use this feature of Sawyer.
-     if (rose_settings.useOldCommandlineParser)
-        {
-       // Example of usage from outliner.
-       // Outliner::commandLineProcessing(args);  // this is the old way
-
-          printf ("In SgProject::parse(): Permit optional command line handling using the older approach (not supported) \n");
-        }
-#endif
 
   // TOO1 (2014/01/22): TODO: Consider moving CLI processing out of SgProject
   // constructor. We can't set any error codes on SgProject since SgProject::parse
@@ -2192,87 +2115,12 @@ SgFile::secondaryPassOverSourceFile()
   //  1) Just the source file (no header files)
   //  2) Just the header files (not the source file)
 
-  // DQ (02/20/2021): Using the performance tracking within ROSE.
      TimingPerformance timer ("AST secondaryPassOverSourceFile:");
-
-#if 0
-     printf ("################ In SgFile::secondaryPassOverSourceFile(): this = %p = %s \n",this,this->class_name().c_str());
-     printf (" --- filename ============================================= %s \n",this->getFileName().c_str());
-     printf (" --- get_header_file_unparsing_optimization()             = %s \n",this->get_header_file_unparsing_optimization() ? "true" : "false");
-     printf (" --- get_header_file_unparsing_optimization_source_file() = %s \n",this->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
-     printf (" --- get_header_file_unparsing_optimization_header_file() = %s \n",this->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
-#endif
 
 #define DEBUG_SECONDARY_PASS 0
 
   // To support initial testing we will call one phase immediately after the other.  Late we will call the second phase, header
   // file processing, from within the unparser when we know what header files are intended to be unparsed.
-
-#if 0
-  // DQ (4/24/2021): Trying to debug the header file optimization support.
-
-  // DQ (12/21/2019): Two of these three are not used and generate a compiler warning.
-  // bool header_file_unparsing_optimization             = false;
-  // bool header_file_unparsing_optimization_source_file = false;
-     bool header_file_unparsing_optimization_header_file = false;
-
-  // DQ (4/24/2021): Trying to debug the header file optimization support.
-  // if (this->get_header_file_unparsing_optimization() == true)
-        {
-       // DQ (12/21/2019): This not used and generates a compiler warning.
-       // header_file_unparsing_optimization = true;
-
-       // DQ (4/24/2021): Trying to debug the header file optimization support.
-       // if (this->get_header_file_unparsing_optimization_source_file() == true)
-             {
-#if DEBUG_SECONDARY_PASS
-               printf ("In SgFile::secondaryPassOverSourceFile(): this = %p = %s name = %s this->get_header_file_unparsing_optimization_header_file() = %s \n",
-                    this,this->class_name().c_str(),this->getFileName().c_str(),this->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
-#endif
-
-            // DQ (4/24/2021): Trying to debug the header file optimization support.
-            // DQ (9/19/2019): Set this to false explicitly (testing).
-            // if (this->get_header_file_unparsing_optimization_header_file() == true)
-                  {
-                    printf ("In SgFile::secondaryPassOverSourceFile(): this = %p = %s name = %s explicitly call this->set_header_file_unparsing_optimization_header_file(false) \n",
-                         this,this->class_name().c_str(),this->getFileName().c_str());
-
-                 // DQ (4/24/2021): Debugging the header file optimization support.
-                 // this->set_header_file_unparsing_optimization_header_file(false);
-                    printf ("Skip setting this->set_header_file_unparsing_optimization_header_file(false) \n");
-                  }
-
-               ROSE_ASSERT(this->get_header_file_unparsing_optimization_header_file() == false);
-#if DEBUG_SECONDARY_PASS
-               printf ("In SgFile::secondaryPassOverSourceFile(): Optimize the collection of comments and CPP directives to seperate handling of the source file from the header files \n");
-#endif
-            // DQ (12/21/2019): This not used and generates a compiler warning.
-            // header_file_unparsing_optimization_source_file = true;
-             }
-            else
-             {
-               ROSE_ASSERT(this->get_header_file_unparsing_optimization_source_file() == false);
-
-            // DQ (4/24/2021): Trying to debug the header file optimization support.
-            // if (this->get_header_file_unparsing_optimization_header_file() == true)
-                  {
-#if DEBUG_SECONDARY_PASS
-                    printf ("Optimize the collection of comments and CPP directives to seperate handling of the header files from the source file \n");
-#endif
-                    header_file_unparsing_optimization_header_file = true;
-                  }
-             }
-        }
-#endif
-
-#if 0
-     printf ("################ In SgFile::secondaryPassOverSourceFile(): (after preamble tests): this = %p = %s \n",this,this->class_name().c_str());
-     printf (" --- filename ============================================= %s \n",this->getFileName().c_str());
-  // printf (" --- header_file_unparsing_optimization_header_file       = %s \n",header_file_unparsing_optimization_header_file ? "true" : "false");
-     printf (" --- get_header_file_unparsing_optimization()             = %s \n",this->get_header_file_unparsing_optimization() ? "true" : "false");
-     printf (" --- get_header_file_unparsing_optimization_source_file() = %s \n",this->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
-     printf (" --- get_header_file_unparsing_optimization_header_file() = %s \n",this->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
-#endif
 
   // **************************************************************************
   //                      Secondary Pass Over Source File
@@ -2308,18 +2156,7 @@ SgFile::secondaryPassOverSourceFile()
         {
        // This is set in the unparser now so that we can handle the source file plus all header files
 
-       // DQ (8/19/2019): When header file optimization is turned on the this asertion is incorrect.
-       // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList == NULL);
-
-       // DQ (8/19/2019): When header file optimization is turned on the this asertion is incorrect.
-       // Build the empty list container so that we can just add lists for new files as they are encountered
-       // p_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
-       // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
-
              {
-            // DQ (9/23/2019): We need to support calling this function multiple times.
-            // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList == NULL);
-            // p_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
                if (p_preprocessorDirectivesAndCommentsList == nullptr)
                   {
 #if DEBUG_SECONDARY_PASS
@@ -2337,9 +2174,6 @@ SgFile::secondaryPassOverSourceFile()
                   }
                ASSERT_not_null(p_preprocessorDirectivesAndCommentsList);
              }
-
-       // DQ (4/19/2006): since they can take a while and includes substantial
-       // file I/O we make this optional (selected from the command line).
 
        // DQ (12/17/2008): The merging of CPP directives and comments from either the
        // source file or including all the include files is not implemented as a single
@@ -2371,7 +2205,6 @@ SgFile::secondaryPassOverSourceFile()
             // can debug the insertion of linemarkers from first phase of CPP processing.
                if (requiresCPP == false)
                   {
-                 // DQ (10/18/2020): This is enforced within attachPreprocessingInfo(), so move the enforcement to be as early as possible.
                     ROSE_ASSERT(sourceFile->get_processedToIncludeCppDirectivesAndComments() == false);
 #if DEBUG_SECONDARY_PASS
                     printf ("@@@@@@@@@@@@@@ In SgFile::secondaryPassOverSourceFile(): Calling attachPreprocessingInfo(): sourceFile = %p = %s filename = %s \n",
@@ -2380,7 +2213,6 @@ SgFile::secondaryPassOverSourceFile()
                     attachPreprocessingInfo(sourceFile);
 #if DEBUG_SECONDARY_PASS
                     printf ("@@@@@@@@@@@@@@ DONE: In SgFile::secondaryPassOverSourceFile(): Calling attachPreprocessingInfo(): sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
-                 // printf ("In SgFile::secondaryPassOverSourceFile(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
                   }
 
@@ -2390,12 +2222,9 @@ SgFile::secondaryPassOverSourceFile()
             // and when toke-based unparsing is used, drives the processing of the token stream (generation of the token map to the AST).
 
         {
-       // DQ (8/18/2019): Add performance analysis support.
           TimingPerformance timer ("EDG-ROSE header file support for tokens:");
-
-       // DQ (7/2/2020): Use this variable for now while debuging this code moved from the parse() function.
           SgFile* file = sourceFile;
-       // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
+
           if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) &&
                ( (file->get_unparse_tokens() == true)     || (file->get_use_token_stream_to_improve_source_position_info() == true) ) )
              {
@@ -2407,25 +2236,11 @@ SgFile::secondaryPassOverSourceFile()
                   }
 
 #if DEBUG_SECONDARY_PASS
-            // SgSourceFile* sourceFile = isSgSourceFile(this);
-            // printf ("In SgFile::secondaryPassOverSourceFile(): sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
                printf ("In SgFile::secondaryPassOverSourceFile(): Building token stream mapping map! \n");
 #endif
-
-            // DQ (1/18/2021): This is now moved to the buildCommentAndCppDirectiveList() function (closer to where the vector of tokens is generated).
-            // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
-            // and attaches the toke stream to the SgSourceFile IR node.
-            // *** Next we have to attached the data base ***
-            // buildTokenStreamMapping(sourceFile);
-
-            // DQ (9/26/2018): We should be able to enforce this for the current header file we have just processed.
                ASSERT_not_null(sourceFile->get_globalScope());
 
-            // DQ (12/2/2018): We can't enforce this for an empty file (see test in roseTests/astTokenStreamTests).
-            // ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
-
 #if DEBUG_SECONDARY_PASS
-            // DQ (1/19/2021): This is a test for calling the get_tokenSubsequenceMap() function.
                printf ("Testing first use of SgSourceFile::get_tokenSubsequenceMap() function:sourceFile = %p = %s \n",sourceFile,sourceFile->getFileName().c_str());
                map<SgNode*,TokenStreamSequenceToNodeMapping*> & temp_tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
                printf ("DONE: Testing first use of SgSourceFile::get_tokenSubsequenceMap() function:sourceFile = %p = %s \n",sourceFile,sourceFile->getFileName().c_str());
@@ -2552,12 +2367,13 @@ SgSourceFile::fixupASTSourcePositionsBasedOnDetectedLineDirectives(set<int> equi
    }
 
 int
-SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> /*inputCommandLine*/ )
+SgSourceFile::build_Fortran_AST(vector<string> argv, vector<string> inputCommandLine)
    {
   // Rasmussen (1/24/2022): Transitioning to using Flang as the Fortran parser.
   // The variable ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION will be defined at configuration
   // but not ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT.  Unfortunately the latter variable is
   // too tightly coupled with Java usage at the moment. The Flang parser doesn't require Java.
+     (void) argv; (void) inputCommandLine; // defeat clang warning messages
 
      if (get_experimental_flang_frontend() == true) {
        int status{-1};
@@ -2613,12 +2429,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> /*inputComm
      }
 
      extern SgSourceFile* OpenFortranParser_globalFilePointer;
-
-  // DQ (10/26/2010): Moved from SgSourceFile::callFrontEnd() so that the stack will
-  // be empty when processing Java language support (not Fortran).
      FortranParserState* currStks = new FortranParserState();
-
-  // printf ("######################### Inside of SgSourceFile::build_Fortran_AST() ############################ \n");
 
      bool requires_C_preprocessor = get_requires_C_preprocessor();
      if (requires_C_preprocessor == true)
@@ -2986,27 +2797,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> /*inputComm
      }
 
 
-  // This is part of debugging output to call OFP and output the list of parser actions that WOULD be called.
-  // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");
      if (get_output_parser_actions() == true)
         {
-       // DQ (1/19/2008): New version of OFP requires different calling syntax.
-       // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " --dump " + get_sourceFileNameWithPath();
           vector<string> OFPCommandLine;
           OFPCommandLine.push_back(JAVA_JVM_PATH);
           OFPCommandLine.push_back(classpath);
           OFPCommandLine.push_back("fortran.ofp.FrontEnd");
           OFPCommandLine.push_back("--dump");
-       // OFPCommandLine.push_back("--tokens");
 
-       // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
           for (size_t i = 0; i < includeList.size(); i++)
              {
                OFPCommandLine.push_back(includeList[i]);
              }
 
-       // DQ (5/19/2008): Support for C preprocessing
           if (requires_C_preprocessor == true)
              {
             // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
@@ -3038,7 +2842,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> /*inputComm
              }
 
        // If this was selected as an option then we can stop here (rather than call OFP again).
-       // printf ("--- get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
           if (get_exit_after_parser() == true)
              {
                printf ("Exiting after parsing... \n");
@@ -3048,12 +2851,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> /*inputComm
        // End of option handling to generate list of OPF parser actions.
         }
 
-  // Option to just run the parser (not constructing the AST) and quit.
-  // printf ("get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
      if (get_exit_after_parser() == true)
         {
-       // DQ (1/19/2008): New version of OFP requires different calling syntax.
-       // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " " + get_sourceFileNameWithPath();
           vector<string> OFPCommandLine;
           OFPCommandLine.push_back(JAVA_JVM_PATH);
           OFPCommandLine.push_back(classpath);
@@ -3061,13 +2860,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> /*inputComm
 
           bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
 
-       // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
           for (size_t i = 0; i < includeList.size(); i++)
              {
                OFPCommandLine.push_back(includeList[i]);
-
-            // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
 
             // I think we have to permit an optional space between the "-I" and the path
                if ("-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
@@ -3141,8 +2937,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> /*inputComm
      for (size_t i = 0; i < includeList.size(); i++)
         {
           frontEndCommandLine.push_back(includeList[i]);
-
-       // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
 
        // I think we have to permit an optional space between the "-I" and the path
           if (  "-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
@@ -3291,10 +3085,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> /*inputComm
 
           string sourceFilename              = get_sourceFileNameWithPath();
           string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
-#if 0
-          printf ("Need to preprocess the CPP generated fortran file so that we can attribute source code statements to files: sourceFileNameOutputFromCpp = %s \n",sourceFileNameOutputFromCpp.c_str());
-#endif
-#if 1
        // Note that the collection of CPP linemarker directives from the CPP generated file
        // (and their insertion into the AST), should be done before the collection and
        // insertion of the Comments and more general CPP directives from the original source
@@ -3303,18 +3093,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> /*inputComm
        // from the original file.
 
           attachPreprocessingInfo(this);
-
-       // DQ (12/19/2008): Now we have to do an analysis of the AST to interpret the linemarkers.
           processCppLinemarkers();
-
-#endif
         }
 
-  // printf ("######################### Leaving SgSourceFile::build_Fortran_AST() ############################ \n");
-
-
-  // DQ (10/26/2010): Moved from SgSourceFile::callFrontEnd() so that the stack will
-  // be empty when processing Java language support (not Fortran).
      delete  currStks;
      currStks = nullptr;
 
@@ -3462,6 +3243,7 @@ Rose::Frontend::Java::Run(SgProject* project)
 int
 Rose::Frontend::Java::Ecj::RunBatchMode(SgProject* project)
    {
+     (void) project; // defeat clang warning message
      int status = 0;
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -3646,6 +3428,7 @@ Rose::Frontend::Java::Ecj::GetVerbosity(const SgProject*)
 int
 SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
    {
+     (void) argv; (void) inputCommandLine; // defeat clang warning messages
      if (this -> get_package() != nullptr || this -> attributeExists("error")) { // Has this file been processed already? If so, ignore it.
         return 0;
      }
@@ -3950,6 +3733,7 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::LinemarkerTraversal( co
 void
 SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode )
    {
+     (void) astNode; // defeat clang warning message
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
     // DXN (02/21/2011): Consider the case of SgInterfaceBody.
@@ -3964,7 +3748,6 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
         }
 
      SgStatement* statement = isSgStatement(astNode);
-  // printf ("LinemarkerTraversal::visit(): statement = %p = %s \n",statement,(statement != nullptr) ? statement->class_name().c_str() : "NULL");
      if (statement != nullptr)
         {
           if ( SgProject::get_verbose() > 1 )
@@ -4409,12 +4192,6 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
              }
             else
              {
-            // DQ (1/28/2016): Tone this down a bit to be less sarcastic.
-            // DQ (4/12/2015): Make this a more friendly message than what the OS provides on abort() (which is "Aborted (core dumped)").
-            // Exit because there are errors in the input program
-            // cout << "Errors in Processing: (frontend_failed)" << endl;
-            // ROSE_ABORT("Errors in Processing: (frontend_failed)");
-            // printf ("Errors in Processing Input File: (throwing an instance of \"frontend_failed\" exception due to errors detected in the input code), have a nice day! \n");
                printf ("Errors in Processing Input File: throwing an instance of \"frontend_failed\" exception due to syntax errors detected in the input code \n");
                if (Rose::KeepGoing::g_keep_going) {
                  raise(SIGABRT); // raise a signal to be handled by the keep going support , instead of exit. Liao 4/25/2017
@@ -4483,12 +4260,9 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
 
      if (get_Fortran_only() == true)
         {
-       // printf ("Fortran language support in SgFile::compileOutput() not implemented \n");
-       // ROSE_ASSERT(false);
           compilerNameOrig = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
         }
 
-  // BP : 11/13/2001, checking to see that the compiler name is set
      string compilerName = compilerNameOrig + " ";
 
 #if 1
@@ -4579,11 +4353,6 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
   // Build the commandline to hand off to the C++/C compiler
      vector<string> compilerCmdLine = buildCompilerCommandLineOptions (argv,fileNameIndex, compilerName );
 
-#if 0
-  // DQ (3/15/2020): There are only two places where this is called (here and in the CompilerOutputParser::processFile() function).
-     printf ("In SgFile::compileOutput(): After buildCompilerCommandLineOptions(): compilerCmdLine.size() = %" PRIuPTR " compilerCmdLine = %s \n",compilerCmdLine.size(),StringUtility::listToString(compilerCmdLine).c_str());
-#endif
-
   // Support for compiling .C files as C++ on Visual Studio
 #ifdef _MSC_VER
      if (get_Cxx_only() == true)
@@ -4595,11 +4364,7 @@ SgFile::compileOutput(vector<string>& argv, int fileNameIndex)
 
      int returnValueForCompiler = 0;
 
-  // error checking
-  // display("Called from SgFile::compileOutput()");
-
   // Allow conditional skipping of the final compile step for testing ROSE.
-  // printf ("SgFile::compileOutput(): get_skipfinalCompileStep() = %s \n",get_skipfinalCompileStep() ? "true" : "false");
      if (get_skipfinalCompileStep() == false)
         {
        // Debugging code
@@ -5260,8 +5025,6 @@ SgFile::isPrelinkPhase() const
   // called only on SgProjects). Not happy with this mechanism!
      if (get_parent() != nullptr)
         {
-       // DQ (1/24/2010): Now that we have directory support, the parent of a SgFile does not have to be a SgProject.
-       // SgProject* project = isSgProject(get_parent());
           SgProject* project = TransformationSupport::getProject(this);
 
           ASSERT_not_null(project);
@@ -5269,10 +5032,6 @@ SgFile::isPrelinkPhase() const
         }
 
      return returnValue;
-
-  // Note that project can be false if this is called on an intermediate file
-  // generated by the rewrite system.
-  // return (project == NULL) ? false : project->get_prelink();
    }
 
 // DQ (10/14/2010): Removing reference to macros defined in rose_config.h (defined in the header file as a default parameter).
@@ -5495,16 +5254,6 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
   #endif
 #endif
         }
-
-     // TOO1 (2015/05/11): Causes automake configure tests to fail. Checking ld linker, as example:
-     //
-     //     identityTranslator -print-prog-name=ld -rose:verbose 0
-     //     In SgProject::link command line = g++ -print-prog-name=ld
-     //     ld
-     //if ( get_verbose() > 0 )
-     //   {
-     //     printf ("In SgProject::link command line = %s \n",CommandlineProcessing::generateStringFromArgList(linkingCommand,false,false).c_str());
-     //   }
 
      int status = systemFromVector(linkingCommand);
 
@@ -5872,13 +5621,6 @@ StringUtility::demangledName ( string s )
                cout << "Cannot execute popen_wrapper" << endl;
                return "unknown demangling " + s;
              }
-#if 0
-       // Debugging...
-          for (size_t i = 0; i < result.size (); i++)
-             {
-               cout << "[" << i << "]\t : " << result [i] << endl;
-             }
-#endif
         }
        else
         {
@@ -6034,9 +5776,6 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                SgDotExp * dotExp = isSgDotExp(functionExp);
                ASSERT_not_null(dotExp);
                ASSERT_not_null(dotExp->get_rhs_operand());
-#if 0
-               printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case V_SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
-#endif
             // There are four different types of function call reference expression in ROSE.
                SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
                if (memberFunctionRefExp == nullptr)
@@ -6132,10 +5871,6 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
           case V_SgConstructorInitializer:
              {
                ASSERT_not_null(functionExp->get_file_info());
-#if 0
-               printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): Found a case of SgConstructorInitializer \n");
-               functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): new case to be supported: checking this out: debug");
-#endif
                break;
              }
 
@@ -6156,11 +5891,6 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
        // This should not resolve to a symbol.
           case V_SgPntrArrRefExp:
              {
-#if 0
-               printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): Found a case of SgPntrArrRefExp \n");
-               ASSERT_not_null(functionExp->get_file_info());
-               functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): new case to be supported: checking this out: debug");
-#endif
                break;
              }
 
@@ -6271,15 +6001,6 @@ void preventConstructionOnStack(SgNode* n)
   // the compiler used to compile ROSE, but this is what we would want.
 
 #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == 0)
-  // For the GNU 4.0.x make this a warning, since it appears to fail due to a
-  // poor implementaiton for just this compiler and no other version of GNU.
-  // Just that we are pringing this warning is a problem for many tests (maybe this should be enable within verbose mode).
-     if (dist < -10000 || dist > 10000)
-        {
-#if 0
-          printf ("Warning: preventConstructionOnStack() reporting object on stack, not allowed. dist = %ld \n",dist);
-#endif
-        }
 #else
   // For all other versions of the GNU compiler make this an error.
      assert (dist < -10000 || dist > 10000);

@@ -781,6 +781,7 @@ Rose::KeepGoing::GetTimestamp(const std::string& format)
 
 void Rose::KeepGoing::touch(const std::string& pathname)
 {
+    (void) pathname; // defeat clang warning message
   
 #ifdef __linux__  // commented out to pass windows test for now
     int fd = open(pathname.c_str(),
