@@ -28,6 +28,9 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Serialization {
+
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+
 namespace FlatBuffers {
 
 static constexpr uint32_t version = 1;
@@ -54,7 +57,7 @@ static constexpr uint32_t version = 1;
  * */
 class Serializer {
   public:
-    explicit Serializer(const Partitioner2::PartitionerConstPtr&);
+    explicit Serializer(const P2::PartitionerConstPtr&);
     ~Serializer() = default;
 
     Serializer(const Serializer&)            = delete;
@@ -79,22 +82,22 @@ class Serializer {
     void write(const boost::filesystem::path&) const;
 
   private:
-    Partitioner2::PartitionerConstPtr               partitioner_;
+    P2::PartitionerConstPtr                         partitioner_;
     std::vector<char>                               bytes_;
     std::unique_ptr<flatbuffers::FlatBufferBuilder> builder_;
 
   protected:
     Handle<Architecture> architecture(const BinaryAnalysis::Architecture::BaseConstPtr& arch);
     Handle<Instruction>  instruction(const SgAsmInstruction* const& insn);
-    Handle<BasicBlock>   basicBlock(const Partitioner2::BasicBlockPtr& bb);
-    Handle<Function>     function(const Partitioner2::FunctionPtr& f);
-    Handle<CfgEdge>      cfgEdge(const Partitioner2::ControlFlowGraph::Edge& e);
-    Handle<Cfg>          cfg(const Partitioner2::ControlFlowGraph& cfg);
+    Handle<BasicBlock>   basicBlock(const P2::BasicBlockPtr& bb);
+    Handle<Function>     function(const P2::FunctionPtr& f);
+    Handle<CfgEdge>      cfgEdge(const P2::ControlFlowGraph::Edge& e);
+    Handle<Cfg>          cfg(const P2::ControlFlowGraph& cfg);
     Handle<Segment>      segment(const BinaryAnalysis::MemoryMap::Super::Node& seg);
     Handle<MemoryMap>    mmap(const BinaryAnalysis::MemoryMap& map);
     std::pair<Handle<InstructionList>, Handle<BasicBlockList>>
-                         instructionsBasicBlocks(const std::vector<Partitioner2::BasicBlockPtr>& bbs);
-    Handle<FunctionList> functions(const std::vector<Partitioner2::FunctionPtr>& funs);
+                         instructionsBasicBlocks(const std::vector<P2::BasicBlockPtr>& bbs);
+    Handle<FunctionList> functions(const std::vector<P2::FunctionPtr>& funs);
     Handle<Root>         partitioner(/*partitioner_*/);
 };
 
@@ -128,28 +131,31 @@ class Deserializer {
      *    4. Rebuild functions by attaching basic blocks from step 3. Additionally add placeholder basic blocks for
      * empty functions.
      **/
-    Partitioner2::PartitionerPtr load();
+    P2::PartitionerPtr load(const P2::BasePartitionerSettings& settings);
+    // Load with default settings (useful in testing)
+    P2::PartitionerPtr load();
 
   private:
     // Underlying bytes
     std::vector<char> bytes_;
 
     // Current partitioner
-    Partitioner2::PartitionerPtr partitioner_;
+    P2::PartitionerPtr partitioner_;
 
     // Index ROSE instructions and basic blocks by start address.
     // This is needed because generally FlatBuffer structures use addresses as lightweight references.
     // For example, FlatBuffer basic blocks save their constituent instructions as a list of addresses.
     // We use external explicit maps (instead of the partitioner) so that the Deserializer can create detached
     // partitioner objects.
-    std::unordered_map<Address, SgAsmInstruction*>             instructions_;
-    std::unordered_map<Address, Partitioner2::BasicBlock::Ptr> basic_blocks_;
+    std::unordered_map<Address, SgAsmInstruction*>   instructions_;
+    std::unordered_map<Address, P2::BasicBlock::Ptr> basic_blocks_;
 
     /**
-     * Create a ROSE memory map from a FlatBuffer memory map and a bitwidth for objects in the memory space.
+     * Create a ROSE memory map from a FlatBuffer memory map.
      * This function has no side effects and assumes that the input map is non-null.
+     * ROSE memory maps are byte-addressable, so intervals are created with size equal to the buffer size.
      */
-    BinaryAnalysis::MemoryMap::Ptr mmap(const MemoryMap* map, const size_t& object_width) const;
+    BinaryAnalysis::MemoryMap::Ptr mmap(const MemoryMap* map) const;
 
     /**
      * Deserialization factory methods. Each of these methods is responsible for updating deserialization state.

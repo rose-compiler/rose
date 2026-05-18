@@ -70,8 +70,10 @@ class FlatBufferSerializer final: public SerialIo::Serializer {
 
 class FlatBufferDeserializer final: public SerialIo::Deserializer {
   public:
-    Partitioner2::PartitionerPtr
-    loadPartitioner(const std::vector<char>& data, Serialization::ProgressCallback progress) override {
+    Partitioner2::PartitionerPtr loadPartitioner(
+      const std::vector<char>& data, const Partitioner2::BasePartitionerSettings& settings,
+      Serialization::ProgressCallback progress
+    ) override {
 
         // Report initial progress
         if (progress)
@@ -86,7 +88,7 @@ class FlatBufferDeserializer final: public SerialIo::Deserializer {
         if (progress)
             progress(data.size(), data.size(), "flatbuffers");
 
-        return loader.load();
+        return loader.load(settings);
     }
 };
 
@@ -145,7 +147,7 @@ fromFBEndianness(FB::Endianness order) {
 }
 
 static FB::CfgEdgePurpose
-toFBEdgePurpose(P2::EdgeType t) {
+toFBEdgePurpose(const P2::EdgeType& t) {
     switch (t) {
     case P2::EdgeType::E_NORMAL:
         return FB::CfgEdgePurpose::Normal;
@@ -159,6 +161,24 @@ toFBEdgePurpose(P2::EdgeType t) {
         return FB::CfgEdgePurpose::FunctionTransfer;
     case P2::EdgeType::E_USER_DEFINED:
         throw Exception("Cannot serialize user edges");
+    default:
+        throw Exception("Unhandled CFG edge type");
+    }
+}
+
+static P2::EdgeType
+fromFBEdgePurpose(const FB::CfgEdgePurpose& t) {
+    switch (t) {
+    case FB::CfgEdgePurpose::Normal:
+        return P2::EdgeType::E_NORMAL;
+    case FB::CfgEdgePurpose::FunctionCall:
+        return P2::EdgeType::E_FUNCTION_CALL;
+    case FB::CfgEdgePurpose::FunctionReturn:
+        return P2::EdgeType::E_FUNCTION_RETURN;
+    case FB::CfgEdgePurpose::CallReturn:
+        return P2::EdgeType::E_CALL_RETURN;
+    case FB::CfgEdgePurpose::FunctionTransfer:
+        return P2::EdgeType::E_FUNCTION_XFER;
     default:
         throw Exception("Unhandled CFG edge type");
     }
@@ -472,27 +492,34 @@ Deserializer::verify() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BinaryAnalysis::MemoryMap::Ptr
-Deserializer::mmap(const FB::MemoryMap* map, const size_t& object_width) const {
+Deserializer::mmap(const FB::MemoryMap* map) const {
     auto ba_map = BinaryAnalysis::MemoryMap::instance();
     ba_map->byteOrder(fromFBEndianness(map->endianness()));
 
     for (auto seg : *map->segments()) {
-        if (!seg)
+        if (!seg || !seg->bytes()) {
+            std::cerr << "Skipping segment";
+            if (seg) {
+                std::cerr << " at " << seg->address();
+            }
+            std::cerr << std::endl;
             continue;
+        }
 
         const auto bytes = seg->bytes();
         auto       buf   = BinaryAnalysis::MemoryMap::AllocatingBuffer::instance(bytes->size());
 
+        const auto seg_name = seg->name();
+
         buf->write(bytes->data(), 0, bytes->size());
 
         BinaryAnalysis::MemoryMap::Segment ba_seg(
-          buf, 0, fromAccessibilityMask(seg->accessibility()), seg->name()->str()
+          buf, 0, fromAccessibilityMask(seg->accessibility()), seg_name ? seg_name->str() : ""
         );
 
-        auto interval = AddressInterval::hull(
-          seg->address(), seg->address() + bytes->size() * object_width
-        );
-
+        // ROSE memory maps are byte-addressable, so the interval size equals the buffer size.
+        // Use baseSize to create the interval with the correct size (avoids off-by-one from hull's inclusiveness)
+        auto interval = AddressInterval::baseSize(seg->address(), bytes->size());
         ba_map->insert(interval, ba_seg);
     }
 
@@ -506,6 +533,12 @@ Deserializer::instruction(const Instruction* const& fb_instr) {
     const auto        instr_prov = partitioner_->instructionProvider();
     SgAsmInstruction* insn       = instr_prov.at(instr_addr); // Automatically disassembles the address
 
+    if (!insn) {
+        std::cerr << "Bad instruction at " << (void*)instr_addr << std::endl;
+        std::cerr << "Memory map: " << *partitioner_->memoryMap() << std::endl;
+        ASSERT_always_not_null2(insn, "Could not disassemble instruction at " + instr_addr);
+    }
+
     instructions_[instr_addr] = insn;
 }
 
@@ -515,8 +548,10 @@ Deserializer::basicBlock(const BasicBlock* const& fb_bb) {
     const auto bb_addr = *fb_bb->addresses()->begin();
     auto       bb      = P2::BasicBlock::instance(bb_addr, partitioner_);
 
-    for (const auto& instr_addr : *fb_bb->addresses())
+    for (const auto& instr_addr : *fb_bb->addresses()) {
+        ASSERT_always_require2(instructions_.count(instr_addr), "Missing instruction at address " + instr_addr);
         bb->append(partitioner_, instructions_[instr_addr]);
+    }
 
     basic_blocks_[bb_addr] = bb;
     partitioner_->attachBasicBlock(bb);
@@ -550,6 +585,12 @@ Deserializer::cfg(const Cfg* const& fb_cfg) {}
 
 P2::PartitionerPtr
 Deserializer::load() {
+    const Partitioner2::BasePartitionerSettings settings;
+    return load(settings);
+}
+
+P2::PartitionerPtr
+Deserializer::load(const P2::BasePartitionerSettings& settings) {
     if (!verify())
         throw Exception("invalid flatbuffer data for Partitioner");
 
@@ -567,10 +608,14 @@ Deserializer::load() {
         })
         .orElse(BinaryAnalysis::Architecture::findByName(default_arch))
         .orThrow(Exception("Unknown or missing architecture name: " + arch_name + " (default: " + default_arch + ")"));
-    auto map = mmap(root->memory_map(), arch->bitsPerWord());
+    auto map = mmap(root->memory_map());
 
     // Create a fresh partitioner.
     partitioner_ = P2::Partitioner::instance(arch, map);
+
+    partitioner_->settings(settings);
+    partitioner_->autoAddCallReturnEdges(true);
+    partitioner_->assumeFunctionsReturn(true);
 
     for (const auto& fb_instr : *root->instructions()->instructions())
         instruction(fb_instr);

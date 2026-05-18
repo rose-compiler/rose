@@ -261,15 +261,24 @@ class SerialIo::Deserializer {
   public:
     virtual ~Deserializer() = default;
 
-    /** Deserialize a partitioner from a binary payload.
+    /** Deserialize a partitioner from a binary payload with default partitioner settings.
      *
      * @param data Pointer to the serialized data
-     * @param size Size of the serialized data in bytes
      * @param progress A callback function to report progress during deserialization
      * @return The deserialized partitioner object
      */
     virtual Partitioner2::PartitionerPtr
-    loadPartitioner(const std::vector<char>& data, Serialization::ProgressCallback progress) = 0;
+    loadPartitioner(const std::vector<char>& data, Serialization::ProgressCallback progress);
+
+    /** Deserialize a partitioner from a binary payload.
+     *
+     * @param data Pointer to the serialized data
+     * @param settings Partitioner settings for materialization
+     * @param progress A callback function to report progress during deserialization
+     * @return The deserialized partitioner object
+     */
+    virtual Partitioner2::PartitionerPtr
+    loadPartitioner(const std::vector<char>& data, const Partitioner2::BasePartitionerSettings& settings, Serialization::ProgressCallback progress) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

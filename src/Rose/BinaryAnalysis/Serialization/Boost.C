@@ -249,8 +249,10 @@ class BoostDeserializer final: public SerialIo::Deserializer {
         }
     }
 
-    Partitioner2::PartitionerPtr
-    loadPartitioner(const std::vector<char>& data, Serialization::ProgressCallback progress) override {
+    Partitioner2::PartitionerPtr loadPartitioner(
+      const std::vector<char>&        data, const Partitioner2::BasePartitionerSettings&,
+      Serialization::ProgressCallback progress
+    ) override {
 
         // Report initial progress
         if (progress)
