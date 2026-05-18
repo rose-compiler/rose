@@ -1,8 +1,5 @@
 variables:
-    THIS_FILE: ".gitlab-ci.yml"
     TEST_SCRIPTS_BRANCH: "master"
-    ROSE_REMOTE_URL: "rose-github:rose-compiler/rose.git"
-    ROSE_GENERATED_REMOTE_URL: "rose-github:rose-compiler/rose-full.git"
     TEST_DIRECTORY: "testing-scripts"
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_STRATEGY: clone
@@ -12,6 +9,11 @@ variables:
 workflow:
     rules:
         - if: $TEST_TYPE == "release"
+          when: always
+          variables:
+              PIPE_TYPE: "weekly-merge"
+              PIPE_NAME: "Weekly Merge"
+        - if: $CI_COMMIT_BRANCH == "weekly-squash"
           when: always
           variables:
               PIPE_TYPE: "release"
@@ -290,7 +292,7 @@ Failure-Cleanup:
         - git fetch origin staging-backup
         - git push -f $SSH_ORIGIN origin/staging-backup:refs/heads/staging-rc
         
-#jobs to relese edg binaries ------------------------------------------------------------------------------------------------------------------------------------
+#jobs to release edg binaries ------------------------------------------------------------------------------------------------------------------------------------
 
 EDG-Binaries:
     rules:
@@ -315,10 +317,27 @@ EDG-Binaries:
     script:
         - ./$TEST_DIRECTORY/edg_launcher.sh $COMPILER
 
+#job to create the weekly commit and push to weekly-squash. The release tests will then run.
+Push-Weekly:
+    rules:
+        - if: $PIPE_TYPE == "weekly-merge"
+          when: on_success
+        - when: never
+    stage: Release
+    tags:
+        - network
+    resource_group: deployment
+    variables:
+        GIT_STRATEGY: clone
+    before_script:
+        - if [ -d $TEST_DIRECTORY ] ; then cd $TEST_DIRECTORY ; git pull origin master ; cd .. ; else git clone -b $TEST_SCRIPTS_BRANCH $TEST_SCRIPTS $TEST_DIRECTORY ; fi
+    script:
+        - ./$TEST_DIRECTORY/util/push_weekly.sh
+
 #jobs for release pipeline --------------------------------------------------------------------------------------------------------------------------------------
 .release-base:
     rules:
-        - if: $PIPE_TYPE == "release"
+        - if: $PIPE_TYPE == "release" && $CI_COMMIT_BRANCH == "weekly-squash"
           when: always
         - when: never
     stage: Release-Tests
@@ -329,15 +348,6 @@ EDG-Binaries:
         - if [ -d $TEST_DIRECTORY ] ; then cd $TEST_DIRECTORY ; git pull origin master ; cd .. ; else git clone -b $TEST_SCRIPTS_BRANCH $TEST_SCRIPTS $TEST_DIRECTORY ; fi
     script:
         - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME
-
-Push-Weekly:
-    extends: .release-base
-    stage: Release
-    tags:
-        - network
-    resource_group: deployment
-    script:
-        - ./$TEST_DIRECTORY/util/push_weekly.sh
 
 Clang-Frontend:
     extends: .release-base
