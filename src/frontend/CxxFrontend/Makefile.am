@@ -23,7 +23,7 @@ EDG_GENERATE_SIG = $(top_srcdir)/scripts/edg-generate-sig
 # This is where EDG binaries are stored
 ROSE_WEB_SERVER         = http://rosecompiler.org
 EDGBIN_LOCAL_TARBALLS   = /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries
-EDGBIN_REMOTE_TARBALLS  = http://edg-binaries.rosecompiler.org
+EDGBIN_REMOTE_TARBALLS  = https://github.com/llnl/rose/releases
 EDGBIN_STAGING_TARBALLS = /nfs/casc/overture/ROSE/git/ROSE_EDG_Binaries-staging
 
 # The EDG hash is stored in a file, which gets around problems of using $(shell...), but means that we shouldn't use
@@ -68,7 +68,7 @@ show-edg-hash: $(EDGBIN_SIGNATURE_FILE)
 show-edg-name: $(EDGBIN_SIGNATURE_FILE)
 	@echo $(EDGBIN_NAME).tar.gz
 show-edg-url: $(EDGBIN_SIGNATURE_FILE)
-	@echo $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz
+	@echo $(EDGBIN_REMOTE_TARBALLS)/download/v$(PACKAGE_VERSION)/$(EDGBIN_NAME).tar.gz
 
 
 if ROSE_HAS_EDG_SOURCE
@@ -129,7 +129,7 @@ else
 
 all-am: EDG/libroseEDG.la
 
-EDG_HELP_URL="https://github.com/rose-compiler/rose/wiki/EDG-Installation-Instructions"
+EDG_HELP_URL="https://github.com/llnl/rose/wiki/EDG-Installation-Instructions"
 
 #(see above): .PHONY: check-network
 check-network:
@@ -167,7 +167,7 @@ EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE)
 	else													\
 	    $(MAKE) check-network || exit 1;									\
 	    echo "Downloading EDG binary tarball: $(EDGBIN_NAME).tar.gz";					\
-	    if ! wget -q --spider -t 3 --wait=1 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz; then		\
+	    if ! wget -q --spider -t 3 --wait=1 $(EDGBIN_REMOTE_TARBALLS)/download/v$(PACKAGE_VERSION)/$(EDGBIN_NAME).tar.gz; then		\
 	        echo "The needed EDG binary is unavailable." >&2;						\
 	        echo "This is likely because there is not a binary distributed for your current compiler." >&2;	\
 	        echo "For more information on EDG binaries visit" >&2;						\
@@ -175,7 +175,7 @@ EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE)
 	        echo "$(CONTACT_INFO)" >&2;									\
 	        exit 1;												\
 	    fi;													\
-	    wget -O "$(EDGBIN_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz";			\
+	    wget -O "$(EDGBIN_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/download/v$(PACKAGE_VERSION)/$(EDGBIN_NAME).tar.gz";			\
 	    touch $(EDGBIN_NAME).tar.gz;									\
 	fi
 

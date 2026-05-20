@@ -298,6 +298,8 @@ EDG-Binaries:
     rules:
         - if: $PIPE_TYPE == "develop" && $FULL_TEST == "true" && $CI_COMMIT_BRANCH == "nightly"
           when: on_success
+        - if: $PIPE_TYPE == "release" && $CI_COMMIT_BRANCH == "weekly-squash"
+          when: on_success
         - when: never
     stage: EDG
     tags:
@@ -408,7 +410,7 @@ SAPOH-reporting:
       - job: SAPOH-ubi9-cmake-cxx-binaries
     
 Doxygen:
-    extends: .release-base 
+    extends: .release-base
     stage: Deploy
 
 ACATS:
@@ -482,3 +484,14 @@ Push-Weekly-Generated:
 
 Ubuntu-EDG-Binary:
     extends: .release-base
+
+Deploy-EDG:
+    extends: .release-base
+    stage: Deploy
+    tags:
+        - network
+    resource_group: deployment
+    needs:
+      - job: EDG-Binaries
+    script:
+        - ./$TEST_DIRECTORY/util/push_edg_binaries.sh
