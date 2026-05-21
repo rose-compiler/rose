@@ -96,6 +96,7 @@ void CollectDependences::CollectFromFile(std::istream& input_file, DependenceTab
                   main_table.SaveDependence(e);
                   if (update_annotations_) save_annotation(e);
                   Log.push( "Saving " + e.to_string());
+               } else {
                }
                Log.push("Done reading line\n");
                break;
@@ -103,19 +104,23 @@ void CollectDependences::CollectFromFile(std::istream& input_file, DependenceTab
                bool reverse = (next_string == "->");
                source = local_read_string(input_file); 
                while (source == "[") {
+                  source = "";
                   while ((next_string = local_read_string(input_file)) != "]") {
                     if (next_string == "") {
                        Log.fatal("Expecting \"]\" but get " + next_string);
                     }
-                    dep_types.push_back(next_string);
+                    source += next_string; 
                   }
+                  dep_types.push_back(source);
                   source = local_read_string(input_file); 
                }
                if (reverse) {
                   std::swap(source, dest);
                }
                if (source == ";") {
-                  Log.push("Warning: Skipping empty dependence for " + dest +"!");
+                  Log.push("Createing Node with attribute for " + dest);
+                  main_table.InsertNode(dest); 
+                  main_table.get_nodeInfo(dest) = dep_types;
                   next_string = ";"; source = "";
                   break; 
                } 

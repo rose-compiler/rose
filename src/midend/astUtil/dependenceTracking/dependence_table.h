@@ -49,6 +49,15 @@ std::ostream& operator << (std::ostream& output, const DependenceEntry& e);
 
 //! Stores dependence entries in a table.
 class DependenceTable : public SaveOperatorSideEffectInterface {
+    protected:
+    // Saves information about each node.
+   struct NodeInfo {
+       // Length of the longest chain.
+       int node_index = -1;
+       std::vector<DependenceEntry> edges;
+       std::vector<std::string> attributes;
+       NodeInfo(int _index) : node_index(_index) { assert(node_index >= 0); }
+   };
   public:
     enum Direction {CollectForward, CollectBackward};
 
@@ -77,12 +86,20 @@ class DependenceTable : public SaveOperatorSideEffectInterface {
           p1.edges.clear();
         }
     }
-    bool InsertNode(const std::string sig) {
-       if (node_map_.find(sig) != node_map_.end()) 
-         return false;
-       nodes_.push_back(sig);
-       node_map_.insert({sig, NodeInfo(nodes_.size()-1)});
-       return true;
+    bool InsertNode(const std::string& sig) {
+       const auto& p1 = node_map_.find(sig);
+       if (p1 == node_map_.end()) {
+          nodes_.push_back(sig);
+          node_map_.insert({sig, NodeInfo(nodes_.size()-1)});
+          return true;
+       }
+       return false;
+    }
+    const std::vector<std::string>& get_nodeInfo(const std::string& sig) const {
+       return node_map_.at(sig).attributes;
+    }
+    std::vector<std::string>& get_nodeInfo(const std::string& sig) {
+       return node_map_.at(sig).attributes;
     }
     // Save a dependence entry.
     virtual bool SaveDependence(const DependenceEntry& e) {
@@ -114,13 +131,6 @@ class DependenceTable : public SaveOperatorSideEffectInterface {
     } 
 
   protected:
-    // Saves information about each node.
-   struct NodeInfo {
-       // Length of the longest chain.
-       int node_index = -1;
-       std::vector<DependenceEntry> edges;
-       NodeInfo(int _index) : node_index(_index) { assert(node_index >= 0); }
-   };
    std::string next_start(const DependenceEntry& e) const {
      return (direction_ == Direction::CollectBackward)? e.first_entry() : e.second_entry();
    }

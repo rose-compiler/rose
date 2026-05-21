@@ -43,6 +43,7 @@ class ClusterDependences {
     std::set<std::string> functions;
     // the integer keeping track of new clusters created.
     int cluster_index_ = 0;
+    DependenceTable& deptable;
 
     bool setupNamespace(const std::string& s) {
        auto namespace_pos = s.rfind("::");
@@ -54,6 +55,7 @@ class ClusterDependences {
        return false;
     }
   public:
+     ClusterDependences(DependenceTable& t) : deptable(t) {}
     // Call for each node of the graph to set up clustering.
     void setupNode (const std::string& s) {
        assert(s != "");
@@ -139,13 +141,10 @@ class ClusterDependences {
     };
  public:
     std::string edge_to_string (const std::string& s, std::ostream& /* output */) {
-       std::string color = "black";
-       if (s == "modify") color = "red";
-       else if (s == "read") color = "green";
        if (s != ""){
-          return "[ label=\"" + s + "\", color=" + color + "]";
+          return "[ label=\"" + s + "\" ]";
        }
-       return "[ color=" + color + "]";
+       return "";
     };
 
     // Output clustering of nodes in different namespaces.
@@ -160,10 +159,14 @@ class ClusterDependences {
       }
       for (auto cluster_member : clusters[cluster_name]) {
         if (functions.find(cluster_member) != functions.end()) {
-          output << "\"" << wrap_string(cluster_member) << "\" [shape=box] ; \n";
+          output << "\"" << wrap_string(cluster_member) << "\" [shape=box]";
         } else {
-          output << "\"" << wrap_string(cluster_member) << "\" [shape=diamond] ; \n";
+          output << "\"" << wrap_string(cluster_member) << "\" [shape=diamond]";
         }
+        for (auto attr : deptable.get_nodeInfo(cluster_member)) {
+           output << " [ " << attr << " ] ";
+        }
+        output << ";\n";
       }
       if (do_cluster) {
          output << "}\n";
@@ -187,7 +190,7 @@ class ClusterDependences {
 
 void DependenceTable :: OutputDependencesInGUI(std::ostream& output) {
     // Save all the nodes into different clusters based on their namespaces.
-    ClusterDependences clusters;
+    ClusterDependences clusters(*this);
     CollectDependences([&clusters](const DependenceEntry& e) {
        clusters.setupNode(e.first_entry()); 
        clusters.setupNode(e.second_entry()); 
