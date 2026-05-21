@@ -42,7 +42,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -50,7 +50,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -33393,7 +33393,59 @@ private:
         debugSerializationEnd("SgAsmCilTypeDef");
     }
 #endif // ROSE_ENABLE_BOOST_SERIALIZATION
+  public:
+    /// TypeAttribute Flags (II.23.1.15)
+    using TypeFlags = std::uint32_t;
 
+    enum : TypeFlags
+    {
+      // Visibility attributes
+      FLG_VISIBILITY_MASK           = 0x00000007, ///< Use this mask to retrieve visibility information.
+                                                  ///< These 3 bits contain one of the following values:
+        FLG_NOT_PUBLIC                = 0x00000000, ///< Class has no public scope
+        FLG_PUBLIC                    = 0x00000001, ///< Class has public scope
+        FLG_NESTED_PUBLIC             = 0x00000002, ///< Class is nested with public visibility
+        FLG_NESTED_PRIVATE            = 0x00000003, ///< Class is nested with private visibility
+        FLG_NESTED_FAMILY             = 0x00000004, ///< Class is nested with family visibility
+        FLG_NESTED_ASSEMBLY           = 0x00000005, ///< Class is nested with assembly visibility
+        FLG_NESTED_FAM_AND_ASSEM      = 0x00000006, ///< Class is nested with family and assembly visibility
+        FLG_NESTED_FAM_OR_ASSEM       = 0x00000007, ///< Class is nested with family or assembly visibility
+      // class layout attributes
+      FLG_LAYOUT_MASK               = 0x00000018, ///< Use this mask to retrieve class layout information.
+                                                  ///< These 2 bits contain one of the following values:
+        FLG_AUTO_LAYOUT               = 0x00000000, ///< Class fields are auto-laid out
+        FLG_SEQUENTIAL_LAYOUT         = 0x00000008, ///< Class fields are laid out sequentially
+        FLG_EXPLICIT_LAYOUT           = 0x00000010, ///< Layout is supplied explicitly
+      // class semantics attributes
+      FLG_CLASS_SEMANTICS_MASK      = 0x00000020, ///< Use this mask to retrieve class semantics information.
+                                                  ///< This bit contains one of the following values:
+        FLG_CLASS                     = 0x00000000, ///< Type is a class
+        FLG_INTERFACE                 = 0x00000020, ///< Type is an interface
+      // special semantics in addition to class semantics
+      FLG_ABSTRACT                  = 0x00000080, ///< Class is abstract
+      FLG_SEALED                    = 0x00000100, ///< Class cannot be extended
+      FLG_SPECIAL_NAME              = 0x00000400, ///< Class name is special
+      // implementation attributes
+      FLG_IMPORT                    = 0x00001000, ///< Class/Interface is imported
+      FLG_SERIALIZABLE              = 0x00002000, ///< Reserved (Class is serializable)
+      // string formatting attributes
+      FLG_STRING_FORMAT_MASK        = 0x00030000, ///< Use this mask to retrieve string information for native interop.
+                                                  ///< These 2 bits contain one of the following values:
+        FLG_ANSI_CLASS                = 0x00000000, ///< LPSTR is interpreted as ANSI
+        FLG_UNICODE_CLASS             = 0x00010000, ///< LPSTR is interpreted as Unicode
+        FLG_AUTO_CLASS                = 0x00020000, ///< LPSTR is interpreted automatically
+        FLG_CUSTOM_FORMAT_CLASS       = 0x00030000, ///< A non-standard encoding specified by CustomStringFormatMask
+      FLG_CUSTOM_STRING_FORMAT_MASK = 0x00C00000, ///< Use this mask to retrieve non-standard encoding information for native interop.
+                                                  ///< The meaning of the values of these 2 bits is unspecified.
+      // class initialization attributes
+      FLG_BEFORE_FIELD_INIT         = 0x00100000, ///< Initialize the class before first static field access
+      // additional flags
+      FLG_RT_SPECIAL_NAME           = 0x00000800, ///< CLI provides special behavior, depending upon the name of the Type
+      FLG_HAS_SECURITY              = 0x00040000, ///< Type has security associate with it
+      FLG_IS_TYPE_FORWARDER         = 0x00200000, ///< This ExportedType entry is a type forwarder
+    };
+
+  private:
 public:
     /** Property: Flags.
      *
@@ -35382,6 +35434,37 @@ private:
       BDY_INVALID_SECTION_HEADER      = -8,  ///< extra section could not be read completely or is inconsistent
       BDY_INVALID_CLAUSE_KIND         = -9,  ///< clauses section length and kind do not match
       BDY_INVALID_CLAUSE_LENGTH       = -10, ///< clause could not be read completely
+    };
+
+    /// MethodAttribute Flags (II.23.1.10)
+    using MethodFlags = std::uint16_t;
+
+    enum : MethodFlags {
+      FLG_MEMBERACCESS_MASK   = 0x0007, ///< These 3 bits contain one of the following values:
+        FLG_COMPILER_CONTROLLED = 0x0000, ///< Member not referenceable
+        FLG_PRIVATE             = 0x0001, ///< Accessible only by the parent type
+        FLG_FAM_AND_ASSEM       = 0x0002, ///< Accessible by sub-types only in this Assembly
+        FLG_ASSEM               = 0x0003, ///< Accessibly by anyone in the Assembly
+      FLG_FAMILY              = 0x0004, ///< Accessible only by type and sub-types
+      FLG_FAM_OR_ASSEM        = 0x0005, ///< Accessibly by sub-types anywhere, plus anyone in assembly
+      FLG_PUBLIC              = 0x0006, ///< Accessibly by anyone who has visibility to this scope
+      FLG_STATIC              = 0x0010, ///< Defined on type, else per instance
+      FLG_FINAL               = 0x0020, ///< Method cannot be overridden
+      FLG_VIRTUAL             = 0x0040, ///< Method is virtual
+      FLG_HIDEBYSIG           = 0x0080, ///< Method hides by name+sig, else just by name
+      FLG_VTABLE_LAYOUT_MASK  = 0x0100, ///< Use this mask to retrieve vtable attributes. This bit contains one of the following values:
+        FLG_REUSE_SLOT          = 0x0000, ///< Method reuses existing slot in vtable
+        FLG_NEW_SLOT            = 0x0100, ///< Method always gets a new slot in the vtable
+      FLG_STRICT              = 0x0200, ///< Method can only be overriden if also accessible
+      FLG_ABSTRACT            = 0x0400, ///< Method does not provide an implementation
+      FLG_SPECIAL_NAME        = 0x0800, ///< Method is special
+      // interop attributes
+      FLG_P_INVOKE_IMPL       = 0x2000, ///< Implementation is forwarded through PInvoke
+      FLG_UNMANAGED_EXPORT    = 0x0008, ///< Reserved: shall be zero for conforming implementations
+      // additional flags
+      FLG_RT_SPECIAL_NAME     = 0x1000, ///< CLI provides special behavior, depending upon the name of the method
+      FLG_HAS_SECURITY        = 0x4000, ///< Method has security associate with it
+      FLG_REQUIRE_SEC_OBJECT  = 0x8000, ///< Method calls another method containing security code.
     };
 
   private:
@@ -38787,7 +38870,33 @@ private:
         debugSerializationEnd("SgAsmCilField");
     }
 #endif // ROSE_ENABLE_BOOST_SERIALIZATION
+  public:
+    using FieldFlags = std::uint16_t;
 
+    enum : FieldFlags {
+      FLG_FIELD_ACCESS_MASK    = 0x0007, ///< These 3 bits contain one of the following values:
+        FLG_COMPILER_CONTROLLED  = 0x0000, ///< Member not referenceable
+        FLG_PRIVATE              = 0x0001, ///< Accessible only by the parent type
+        FLG_FAMANDASSEM          = 0x0002, ///< Accessible by sub-types only in this Assembly
+        FLG_ASSEMBLY             = 0x0003, ///< Accessibly by anyone in the Assembly
+        FLG_FAMILY               = 0x0004, ///< Accessible only by type and sub-types
+        FLG_FAMORASSEM           = 0x0005, ///< Accessibly by sub-types anywhere, plus anyone in assembly
+        FLG_PUBLIC               = 0x0006, ///< Accessibly by anyone who has visibility to this scope field contract attributes
+      FLG_STATIC               = 0x0010, ///< Defined on type, else per instance
+      FLG_INIT_ONLY            = 0x0020, ///< Field can only be initialized, not written to after init
+      FLG_LITERAL              = 0x0040, ///< Value is compile time constant
+      FLG_NOT_SERIALIZED       = 0x0080, ///< Reserved (to indicate this field should not be serialized when type is remoted)
+      FLG_SPECIAL_NAME         = 0x0200, ///< Field is special
+      // interop attributes
+      FLG_PINVOKE_IMPL         = 0x2000, ///< Implementation is forwarded through PInvoke.
+      // additional flags
+      FLG_RT_SPECIAL_NAME      = 0x0400, ///< CLI provides 'special' behavior, depending upon the name of the field
+      FLG_HAS_FIELD_MARSHAL    = 0x1000, ///< Field has marshalling information
+      FLG_HAS_DEFAULT          = 0x8000, ///< Field has default
+      FLG_HAS_FIELD_RVA        = 0x0100, ///< Field has RVA
+    };
+
+  private:
 public:
     /** Property: Flags.
      *
