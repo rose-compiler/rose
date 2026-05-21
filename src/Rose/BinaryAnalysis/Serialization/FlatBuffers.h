@@ -101,7 +101,30 @@ class Serializer {
     Handle<Root>         partitioner(/*partitioner_*/);
 };
 
-/** Loads a Partitioner2::Partitioner from a FlatBuffer. */
+/** Loads a Partitioner2::Partitioner from a FlatBuffer.
+ *
+ * This class deserializes partitioner state from FlatBuffers format. By default, it uses
+ * the instruction provider to reconstruct instructions from the memory map, which is
+ * efficient for traditional binary formats (ELF, PE, etc.).
+ *
+ * For architectures that don't use memory maps (e.g., JVM), the deserializer can be
+ * configured to prefer reconstructing instructions from stored bytes. This is controlled
+ * via the @ref preferStoredBytes flag, which is automatically set based on the architecture.
+ *
+ * The deserialization process always maintains a fallback: if the primary method fails
+ * (instruction provider or stored bytes), it automatically tries the alternative method.
+ * This ensures robustness across different binary formats and edge cases.
+ *
+ * **IMPORTANT CFG RESTORATION BEHAVIOR:**
+ * The deserializer treats the serialized CFG as ground truth and overrides the partitioner's
+ * auto-generated CFG structure. The deserialization process:
+ *
+ * 1. Constructs basic blocks and functions through normal attachment, which creates CFG vertices
+ * 2. Removes all discovered CFG edges from basic block vertices
+ * 3. Restores edges from the serialized CFG with their exact types and targets
+ *
+ * This ensures the deserialized CFG exactly matches the original serialized CFG, including
+ * edge types (E_FUNCTION_CALL vs. E_CALL_RETURN), edge counts, and graph structure. */
 class Deserializer {
   public:
     Deserializer() = default;
@@ -120,6 +143,13 @@ class Deserializer {
 
     /** Verify that the loaded bytes are a valid FlatBuffer for the Partitioner root type. */
     bool verify() const;
+
+    /** Set whether to prefer stored bytes over instruction provider.
+     *
+     * @param prefer If true, use stored bytes first; if false, use instruction provider first.
+     *
+     * This should be set to true for architectures that don't use memory maps (e.g., JVM). */
+    void preferStoredBytes(bool prefer) { preferStoredBytes_ = prefer; }
 
     /** Materialize and return a new partitioner instance from the FlatBuffer data.
      *
@@ -150,12 +180,37 @@ class Deserializer {
     std::unordered_map<Address, SgAsmInstruction*>   instructions_;
     std::unordered_map<Address, P2::BasicBlock::Ptr> basic_blocks_;
 
+    /** Prefer stored bytes over instruction provider.
+     *
+     * When true, attempts to reconstruct instructions from stored bytes before
+     * using the instruction provider. This is necessary for architectures like JVM
+     * that don't use traditional memory maps.
+     *
+     * When false (default), uses the instruction provider first and falls back to
+     * stored bytes only if the provider fails. This maintains backward compatibility
+     * and efficiency for traditional binary formats (ELF, PE). */
+    bool preferStoredBytes_ = false;
+
     /**
      * Create a ROSE memory map from a FlatBuffer memory map.
      * This function has no side effects and assumes that the input map is non-null.
      * ROSE memory maps are byte-addressable, so intervals are created with size equal to the buffer size.
      */
     BinaryAnalysis::MemoryMap::Ptr mmap(const MemoryMap* map) const;
+
+    /**
+     * Reconstruct instruction from stored bytes.
+     *
+     * Creates a temporary memory map containing the stored instruction bytes and uses the
+     * partitioner's architecture to disassemble the instruction. This method is used as a
+     * fallback when the instruction provider cannot reconstruct the instruction from the
+     * main memory map (e.g., for architectures like JVM that don't use memory maps).
+     *
+     * @param addr The address of the instruction
+     * @param bytes The stored instruction bytes from the FlatBuffer
+     * @return The disassembled instruction, or nullptr if disassembly fails
+     */
+    SgAsmInstruction* disassembleFromBytes(Address addr, const flatbuffers::Vector<uint8_t>* bytes) const;
 
     /**
      * Deserialization factory methods. Each of these methods is responsible for updating deserialization state.

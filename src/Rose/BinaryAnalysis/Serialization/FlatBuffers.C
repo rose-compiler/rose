@@ -5,6 +5,7 @@
 #include <sage3basic.h>
 
 #include <Rose/BinaryAnalysis/Serialization/FlatBuffers.h>
+#include <Rose/Diagnostics.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
@@ -36,6 +37,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+using namespace Rose::Diagnostics;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -115,6 +118,20 @@ namespace P2       = Rose::BinaryAnalysis::Partitioner2;
 namespace FB       = Rose::BinaryAnalysis::Serialization::FlatBuffers;
 using Serializer   = FB::Serializer;
 using Deserializer = FB::Deserializer;
+
+// Diagnostics
+static Sawyer::Message::Facility mlog;
+
+// Initialize diagnostics
+void
+initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Serialization::FlatBuffers");
+        mlog.comment("FlatBuffers serialization and deserialization");
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Helpers: enum conversions
@@ -332,10 +349,17 @@ Serializer::mmap(const BinaryAnalysis::MemoryMap& map) {
     std::vector<Serializer::Handle<FB::Segment>> segments;
     segments.reserve(map.size());
 
-    for (const auto& node : map.nodes())
+    mlog[TRACE] << "serializing memory map with " << map.nSegments() << " segments" << std::endl;
+
+    for (const auto& node : map.nodes()) {
+        mlog[TRACE] << "  segment at " << StringUtility::addrToString(node.key().least())
+                    << " size=" << node.key().size() << " buffer_size=" << node.value().buffer()->size() << std::endl;
         segments.push_back(segment(node));
+    }
 
     const auto fb_segs = builder_->CreateVector(segments);
+
+    mlog[TRACE] << "created " << segments.size() << " FlatBuffer segments" << std::endl;
 
     return FB::CreateMemoryMap(*builder_, endianness, fb_segs);
 }
@@ -390,6 +414,9 @@ Serializer::functions(const std::vector<Partitioner2::FunctionPtr>& p_funs) {
 Serializer::Handle<FB::Root>
 Serializer::partitioner() {
 
+    mlog[TRACE] << "starting serialization" << std::endl;
+    mlog[TRACE] << "memory map has " << partitioner_->memoryMap()->nSegments() << " segments" << std::endl;
+
     // Save major structures.
     auto fbArch = architecture(partitioner_->architecture());
     auto fbMap  = mmap(*partitioner_->memoryMap());
@@ -398,13 +425,16 @@ Serializer::partitioner() {
     const auto instrs_bbs = instructionsBasicBlocks(partitioner_->basicBlocks());
     const auto funs       = functions(partitioner_->functions());
 
+    mlog[TRACE] << "creating root with memory map" << std::endl;
     return FB::CreateRoot(*builder_, fbArch, fbMap, instrs_bbs.first, instrs_bbs.second, funs, fbCfg);
 }
 
 // Top-level serializer methods
 
 Serializer::Serializer(const P2::PartitionerConstPtr& p) :
-  partitioner_(p), builder_{std::make_unique<flatbuffers::FlatBufferBuilder>(1024 * 1024)} {}
+  partitioner_(p), builder_{std::make_unique<flatbuffers::FlatBufferBuilder>(1024 * 1024)} {
+    initDiagnostics();
+}
 
 void
 Serializer::save() {
@@ -496,13 +526,28 @@ Deserializer::mmap(const FB::MemoryMap* map) const {
     auto ba_map = BinaryAnalysis::MemoryMap::instance();
     ba_map->byteOrder(fromFBEndianness(map->endianness()));
 
+    mlog[TRACE] << "map=" << (map ? "valid" : "null") << std::endl;
+    if (map) {
+        mlog[TRACE] << "segments=" << (map->segments() ? "valid" : "null") << std::endl;
+        if (map->segments()) {
+            mlog[TRACE] << "deserializing " << map->segments()->size() << " segments" << std::endl;
+        }
+    }
+
+    int segmentCount = 0;
+    int skippedCount = 0;
     for (auto seg : *map->segments()) {
+        segmentCount++;
         if (!seg || !seg->bytes()) {
-            std::cerr << "Skipping segment";
+            skippedCount++;
+            mlog[WHERE] << "skipping segment #" << segmentCount;
             if (seg) {
-                std::cerr << " at " << seg->address();
+                mlog[WHERE] << " at " << StringUtility::addrToString(seg->address());
+                mlog[WHERE] << " (bytes=" << (seg->bytes() ? "valid" : "null") << ")";
+            } else {
+                mlog[WHERE] << " (seg=null)";
             }
-            std::cerr << std::endl;
+            mlog[WHERE] << std::endl;
             continue;
         }
 
@@ -520,23 +565,92 @@ Deserializer::mmap(const FB::MemoryMap* map) const {
         // ROSE memory maps are byte-addressable, so the interval size equals the buffer size.
         // Use baseSize to create the interval with the correct size (avoids off-by-one from hull's inclusiveness)
         auto interval = AddressInterval::baseSize(seg->address(), bytes->size());
+        mlog[TRACE] << "  deserializing segment at " << StringUtility::addrToString(seg->address())
+                    << " size=" << bytes->size() << std::endl;
         ba_map->insert(interval, ba_seg);
     }
+
+    mlog[TRACE] << "deserialized " << (segmentCount - skippedCount) << " segments, skipped " << skippedCount
+                << std::endl;
+    mlog[TRACE] << "final memory map has " << ba_map->nSegments() << " segments" << std::endl;
 
     return ba_map;
 }
 
+SgAsmInstruction*
+Deserializer::disassembleFromBytes(Address addr, const flatbuffers::Vector<uint8_t>* bytes) const {
+    // Create a temporary memory map with the stored bytes
+    auto tempMap  = BinaryAnalysis::MemoryMap::instance();
+    auto buf      = BinaryAnalysis::MemoryMap::StaticBuffer::instance(bytes->data(), bytes->size());
+    auto interval = AddressInterval::baseSize(addr, bytes->size());
+    tempMap->insert(
+      interval, BinaryAnalysis::MemoryMap::Segment(
+                  buf, 0, BinaryAnalysis::MemoryMap::READABLE | BinaryAnalysis::MemoryMap::EXECUTABLE, "temp"
+                )
+    );
+
+    // Get disassembler from architecture
+    auto disassembler = partitioner_->architecture()->newInstructionDecoder();
+
+    // Disassemble from the temporary map
+    try {
+        return disassembler->disassembleOne(tempMap, addr);
+    } catch (const Disassembler::Exception& e) {
+        mlog[WHERE] << "failed to disassemble from stored bytes at " << StringUtility::addrToString(addr) << ": "
+                    << e.what() << std::endl;
+        return nullptr;
+    }
+}
+
 void
 Deserializer::instruction(const Instruction* const& fb_instr) {
+    // Reconstruct instruction using either instruction provider or stored bytes.
+    // The order is determined by preferStoredBytes_ flag:
+    // - false (default): instruction provider first, stored bytes as fallback
+    // - true (JVM, etc.): stored bytes first, instruction provider as fallback
+    // This dual approach ensures compatibility across all architectures.
 
     const auto        instr_addr = fb_instr->address();
-    const auto        instr_prov = partitioner_->instructionProvider();
-    SgAsmInstruction* insn       = instr_prov.at(instr_addr); // Automatically disassembles the address
+    SgAsmInstruction* insn       = nullptr;
+
+    if (preferStoredBytes_) {
+        // For architectures without memory maps (e.g., JVM), try stored bytes first
+        const auto stored_bytes = fb_instr->bytes();
+        if (stored_bytes && stored_bytes->size() > 0) {
+            mlog[TRACE] << "reconstructing from stored bytes at " << StringUtility::addrToString(instr_addr) << " ("
+                        << stored_bytes->size() << " bytes)" << std::endl;
+            insn = disassembleFromBytes(instr_addr, stored_bytes);
+            if (insn) {
+                mlog[TRACE] << "  successfully created instruction, actual address: "
+                            << StringUtility::addrToString(insn->get_address()) << std::endl;
+            }
+        }
+
+        // Fall back to instruction provider if stored bytes failed
+        if (!insn) {
+            const auto instr_prov = partitioner_->instructionProvider();
+            insn                  = instr_prov.at(instr_addr);
+        }
+    } else {
+        // Default behavior: use instruction provider first
+        const auto instr_prov = partitioner_->instructionProvider();
+        insn                  = instr_prov.at(instr_addr);
+
+        // Fall back to stored bytes if provider failed
+        if (!insn) {
+            const auto stored_bytes = fb_instr->bytes();
+            if (stored_bytes && stored_bytes->size() > 0) {
+                insn = disassembleFromBytes(instr_addr, stored_bytes);
+            }
+        }
+    }
 
     if (!insn) {
-        std::cerr << "Bad instruction at " << (void*)instr_addr << std::endl;
-        std::cerr << "Memory map: " << *partitioner_->memoryMap() << std::endl;
-        ASSERT_always_not_null2(insn, "Could not disassemble instruction at " + instr_addr);
+        mlog[WHERE] << "bad instruction at " << StringUtility::addrToString(instr_addr) << std::endl;
+        mlog[WHERE] << "memory map: " << *partitioner_->memoryMap() << std::endl;
+        ASSERT_always_not_null2(
+          insn, "Could not disassemble instruction at " + StringUtility::addrToString(instr_addr)
+        );
     }
 
     instructions_[instr_addr] = insn;
@@ -581,7 +695,142 @@ Deserializer::function(const Function* const& fb_fun) {
 }
 
 void
-Deserializer::cfg(const Cfg* const& fb_cfg) {}
+Deserializer::cfg(const Cfg* const& fb_cfg) {
+    if (!fb_cfg || !fb_cfg->edges())
+        return;
+
+    mlog[TRACE] << "restoring CFG with " << fb_cfg->edges()->size() << " edges" << std::endl;
+
+    // Phase 1: Ensure all vertices exist in the CFG
+    // Collect all addresses that should have vertices
+    std::unordered_set<Address> serializedAddresses;
+    for (const auto* fb_edge : *fb_cfg->edges()) {
+        // Source address always exists
+        serializedAddresses.insert(fb_edge->src());
+
+        // Target address (if not a special vertex)
+        if (fb_edge->tgt_type() == FB::CfgEdgeTarget::AddressTarget) {
+            const auto* addrTarget = fb_edge->tgt_as_AddressTarget();
+            if (addrTarget) {
+                serializedAddresses.insert(addrTarget->address());
+            }
+        }
+    }
+
+    // Create placeholders for any missing vertices
+    for (const auto& addr : serializedAddresses) {
+        partitioner_->insertPlaceholder(addr);
+    }
+
+    // Phase 2: Clear auto-generated edges from basic block vertices
+    // Only clear from normal blocks, leave special vertices alone
+    auto& cfg = partitioner_->cfg_;
+    for (auto vertex = cfg.vertices().begin(); vertex != cfg.vertices().end(); ++vertex) {
+        if (vertex->value().type() == P2::V_BASIC_BLOCK) {
+            const auto& bblock = vertex->value().bblock();
+            // Only clear edges from normal blocks (not empty, not placeholders)
+            if (bblock && !bblock->isEmpty())
+                cfg.clearOutEdges(vertex);
+        }
+    }
+
+    mlog[TRACE] << "cleared auto-generated edges, restoring " << fb_cfg->edges()->size() << " serialized edges"
+                << std::endl;
+
+    // Phase 3: Restore serialized edges as ground truth
+    size_t edgesRestored = 0;
+    for (const auto* fb_edge : *fb_cfg->edges()) {
+        // Find source vertex by address
+        auto source = partitioner_->findPlaceholder(fb_edge->src());
+        if (source == cfg.vertices().end()) {
+            mlog[WARN] << "cannot find source vertex at " << StringUtility::addrToString(fb_edge->src())
+                       << ", skipping edge" << std::endl;
+            continue;
+        }
+
+        // Find or identify target vertex
+        P2::ControlFlowGraph::VertexIterator target;
+        if (fb_edge->tgt_type() == FB::CfgEdgeTarget::AddressTarget) {
+            const auto* addrTarget = fb_edge->tgt_as_AddressTarget();
+            if (addrTarget) {
+                target = partitioner_->findPlaceholder(addrTarget->address());
+                if (target == cfg.vertices().end()) {
+                    mlog[WARN] << "cannot find target vertex at " << StringUtility::addrToString(addrTarget->address())
+                               << ", skipping edge" << std::endl;
+                    continue;
+                }
+            } else {
+                mlog[WARN] << "null address target, skipping edge" << std::endl;
+                continue;
+            }
+        } else if (fb_edge->tgt_type() == FB::CfgEdgeTarget::IndeterminateTarget) {
+            target = partitioner_->indeterminateVertex();
+        } else {
+            mlog[WARN] << "unknown edge target type, skipping edge" << std::endl;
+            continue;
+        }
+
+        // Create edge with serialized type and confidence
+        const auto* edgeData = fb_edge->data();
+        if (!edgeData) {
+            mlog[WARN] << "missing edge data, skipping edge" << std::endl;
+            continue;
+        }
+
+        P2::EdgeType edgeType = fromFBEdgePurpose(edgeData->purpose());
+        P2::CfgEdge  edge(edgeType, P2::ASSUMED); // Default confidence
+
+        // Insert the edge
+        cfg.insertEdge(source, target, edge);
+        edgesRestored++;
+    }
+
+    mlog[TRACE] << "restored " << edgesRestored << " CFG edges" << std::endl;
+
+    // Phase 4: Ensure special vertex invariants are maintained
+    size_t placeholdersFix = 0, nonexistingFixed = 0;
+    for (auto vertex = cfg.vertices().begin(); vertex != cfg.vertices().end(); ++vertex) {
+        if (vertex->value().type() != P2::V_BASIC_BLOCK)
+            continue;
+
+        const auto& bblock = vertex->value().bblock();
+
+        if (!bblock) {
+            // Pure placeholder - MUST have exactly 1 edge to undiscovered
+            if (vertex->nOutEdges() == 0) {
+                cfg.insertEdge(vertex, partitioner_->undiscoveredVertex());
+                placeholdersFix++;
+            } else if (vertex->nOutEdges() > 1) {
+                cfg.clearOutEdges(vertex);
+                cfg.insertEdge(vertex, partitioner_->undiscoveredVertex());
+                placeholdersFix++;
+                mlog[WARN] << "placeholder at " << StringUtility::addrToString(vertex->value().address())
+                           << " had multiple edges, replaced with undiscovered edge" << std::endl;
+            } else {
+                auto edge = vertex->outEdges().begin();
+                auto target = edge->target();
+                if (target != partitioner_->undiscoveredVertex() && target != partitioner_->indeterminateVertex() &&
+                    target != partitioner_->nonexistingVertex()) {
+                    cfg.clearOutEdges(vertex);
+                    cfg.insertEdge(vertex, partitioner_->undiscoveredVertex());
+                    placeholdersFix++;
+                    mlog[WARN] << "placeholder at " << StringUtility::addrToString(vertex->value().address())
+                               << " had edge to non-special vertex" << std::endl;
+                }
+            }
+        } else if (bblock->isEmpty()) {
+            // Nonexisting block - MUST have exactly 1 edge to nonexisting
+            if (vertex->nOutEdges() != 1 || vertex->outEdges().begin()->target() != partitioner_->nonexistingVertex()) {
+                cfg.clearOutEdges(vertex);
+                cfg.insertEdge(vertex, partitioner_->nonexistingVertex(), P2::CfgEdge(P2::E_USER_DEFINED));
+                nonexistingFixed++;
+            }
+        }
+    }
+
+    mlog[TRACE] << "fixed " << placeholdersFix << " placeholders and " << nonexistingFixed << " nonexisting blocks"
+                << std::endl;
+}
 
 P2::PartitionerPtr
 Deserializer::load() {
@@ -591,31 +840,45 @@ Deserializer::load() {
 
 P2::PartitionerPtr
 Deserializer::load(const P2::BasePartitionerSettings& settings) {
+    initDiagnostics();
+
     if (!verify())
         throw Exception("invalid flatbuffer data for Partitioner");
 
     const FB::Root* root = FB::GetRoot(bytes_.data());
     ASSERT_not_null(root);
 
+    mlog[TRACE] << "root=" << (root ? "valid" : "null") << std::endl;
+    mlog[TRACE] << "root->memory_map()=" << (root->memory_map() ? "valid" : "null") << std::endl;
+
     const auto arch_name    = root->architecture()->name()->str();
     const auto default_arch = "ppc32-be";
+
+    mlog[TRACE] << "deserializing as arch: " << arch_name << std::endl;
 
     auto arch =
       BinaryAnalysis::Architecture::findByName(arch_name)
         .orElse([arch_name](const auto& e) -> auto {
-            std::cerr << "Unknown architecture, defaulting to PowerPC: " << arch_name << std::endl;
+            mlog[WHERE] << "unknown architecture, defaulting to PowerPC: " << arch_name << std::endl;
             return Sawyer::makeError(e);
         })
         .orElse(BinaryAnalysis::Architecture::findByName(default_arch))
         .orThrow(Exception("Unknown or missing architecture name: " + arch_name + " (default: " + default_arch + ")"));
+
+    // Set preference for architectures without memory maps
+    if (arch_name == "jvm") {
+        preferStoredBytes_ = true;
+        mlog[TRACE] << "JVM architecture detected, preferring stored bytes" << std::endl;
+    }
+
+    mlog[TRACE] << "about to call mmap(root->memory_map())" << std::endl;
     auto map = mmap(root->memory_map());
+    mlog[TRACE] << "after mmap, map has " << map->nSegments() << " segments" << std::endl;
 
     // Create a fresh partitioner.
     partitioner_ = P2::Partitioner::instance(arch, map);
 
     partitioner_->settings(settings);
-    partitioner_->autoAddCallReturnEdges(true);
-    partitioner_->assumeFunctionsReturn(true);
 
     for (const auto& fb_instr : *root->instructions()->instructions())
         instruction(fb_instr);

@@ -304,6 +304,8 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+    friend class Rose::BinaryAnalysis::Serialization::FlatBuffers::Deserializer;
+
     BasePartitionerSettings settings_;                  // settings adjustable from the command-line
     Configuration config_;                              // configuration information about functions, blocks, etc.
     Architecture::BaseConstPtr architecture_;           // architecture information such as the ISA, word size, etc.
