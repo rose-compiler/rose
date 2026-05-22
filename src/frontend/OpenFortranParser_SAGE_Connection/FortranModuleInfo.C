@@ -291,7 +291,7 @@ FortranModuleInfo::createSgSourceFile(string modName)
      printf ("In FortranModuleInfo::createSgSourceFile(): Calling the fronend explicitly! \n");
 #endif
 
-   // DQ (6/13/2013): Since we seperated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
+   // DQ (6/13/2013): Since we separated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
      newFile->runFrontend(errorCode);
 
   // DQ (6/13/2013): At least report that the error code is not checked, this is just something that I noticed but don't want to modify just now.

@@ -15758,7 +15758,7 @@ void c_action_print_stmt(Token_t* label, Token_t* printKeyword, Token_t* /*eos*/
             // ROSE_ASSERT(astNodeStack.empty() == false);
             if (astNodeStack.empty() == false)
             {
-                // This is the case of "format (10/)" which processes "10" and "/" seperately (I think this is a bug, see test2007_241.f).
+                // This is the case of "format (10/)" which processes "10" and "/" separately (I think this is a bug, see test2007_241.f).
                 SgFormatItemList* formatItemList = isSgFormatItemList(
                         astNodeStack.front());
                 astNodeStack.pop_front();

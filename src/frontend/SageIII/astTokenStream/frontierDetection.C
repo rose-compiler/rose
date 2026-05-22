@@ -711,7 +711,7 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
           printf ("ROSE_tokenUnparsingTestingMode = %s \n",ROSE_tokenUnparsingTestingMode ? "true" : "false");
 #endif
 
-       // DQ (5/31/2021): The support for a testing mode is not moved to a seperate traversal (artificialFrontier.C).
+       // DQ (5/31/2021): The support for a testing mode is not moved to a separate traversal (artificialFrontier.C).
        // DQ (12/1/2013): Added switch to control testing mode for token unparsing.
        // Test codes in the tests/nonsmoke/functional/roseTests/astTokenStreamTests directory turn on this 
        // variable so that all regression tests can be processed to mix the unparsing of 
@@ -1380,7 +1380,7 @@ FrontierDetectionForTokenStreamMapping::numberOfNodesInSubtree(SgSourceFile* sou
 void
 frontierDetectionForTokenStreamMapping(SgSourceFile* sourceFile, bool traverseHeaderFiles)
    {
-  // This frontier detection happens before we associate token subsequences to the AST (in a seperate map).
+  // This frontier detection happens before we associate token subsequences to the AST (in a separate map).
      ASSERT_not_null(sourceFile);
 
      FrontierDetectionForTokenStreamMapping_InheritedAttribute inheritedAttribute(sourceFile);

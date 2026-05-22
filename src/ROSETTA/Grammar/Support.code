@@ -18301,7 +18301,7 @@ SgTemplateArgument::get_mangled_name (void) const
             // DQ (9/21/2012): We need to support defining a mangled name that uses the name of the declaration where the template
             // argument is used.  E.g. In "template <class T> X<T> foo();", the return type "X<T>" shuld have a uniquely mangled
             // name from that of a similar return type in any other function.  The template declaration support will define an
-            // instantiation of "X<T>" which must be seperate from all other tempalte functions having a similar return type.
+            // instantiation of "X<T>" which must be separate from all other tempalte functions having a similar return type.
             // This is the say that te restrict sharing of "X<T>" by supporting a mangled name that forces each functions reference
             // to such a type to be different.
                ROSE_ASSERT(this->get_parent() != NULL);

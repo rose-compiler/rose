@@ -249,7 +249,7 @@ sub fixup_row {
   # by looking at the operands.
   $row->{kind} = "far" . $row->{kind} if $row->{mnemonic} =~ /^(call|jmp)$/ && $row->{comment} =~ /\bfar\b/;
 
-  # The reference manual doesn't have seperate mnemonics for near vs. far returns.
+  # The reference manual doesn't have separate mnemonics for near vs. far returns.
   $row->{kind} .= "f" if $row->{mnemonic} eq 'ret' && $row->{comment} =~ /\bfar\b/i;
 
   # The reference manual has a mistake for the SUB instruction. There is no "SUB r/m64, r32" instruction as indicated. It

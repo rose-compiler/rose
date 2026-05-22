@@ -3093,7 +3093,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("In buildVariableDeclaration(): initializedName = %p = %s initializer = %p \n",initializedName,initializedName->get_name().str(),initializedName->get_initializer());
 
-       // DQ (11/29/2007): This is an odd API in ROSE, the initializer (already a part of the SgInitializedName, must be provide seperately to the append_variable() member function).
+       // DQ (11/29/2007): This is an odd API in ROSE, the initializer (already a part of the SgInitializedName, must be provide separately to the append_variable() member function).
        // variableDeclaration->append_variable(initializedName,initializedName->get_initializer());
           variableDeclaration->prepend_variable(initializedName,initializedName->get_initializer());
 
@@ -5114,7 +5114,7 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
                   {
                  // DQ (2/1/2011): Since we will generate a label and with name "*" and independently resolve which 
                  // label argument is referenced in the return statement, we need not bury the name directly into 
-                 // the arg_name (unless we need to have the references be seperate in the symbol table, so maybe we do!).
+                 // the arg_name (unless we need to have the references be separate in the symbol table, so maybe we do!).
 
                  // Note that alternate return is an obsolescent feature in Fortran 95 and Fortran 90
                  // initializedName = new SgInitializedName(arg_name,SgTypeVoid::createType(),NULL,procedureDeclaration,NULL);

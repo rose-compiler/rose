@@ -280,7 +280,7 @@ Currently the lex pass saves all "extern \"C\" {" declarations and treats them a
 CPP directive (along with comments), they are then woven back into the AST as 
 a separate pass.
 
-\deprecated This is now redundant with the seperate preprocessing phase.
+\deprecated This is now redundant with the separate preprocessing phase.
 
 \internal Not sure that we need or want this mechanism (or this implementation of it).
 Not that the mechanism that we have is better and based on the scanning for extern "X"

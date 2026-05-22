@@ -3025,7 +3025,7 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
                SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(declaration);
                ROSE_ASSERT(templateInstantiationDeclaration != NULL);
 
-            // Note that we can't use the mangled name because they might not be unique across multiple translation units if seperately compiled).
+            // Note that we can't use the mangled name because they might not be unique across multiple translation units if separately compiled).
             // string type_name = templateInstantiationDeclaration->get_name();
             // string type_name = templateInstantiationDeclaration->get_mangled_name();
             // string type_name = templateInstantiationDeclaration->get_templateName();
@@ -9273,7 +9273,7 @@ SageInterface::isMemberFunctionMemberReference(SgMemberFunctionRefExp* memberFun
 bool
 SageInterface::isDataMemberReference(SgVarRefExp* varRefExp)
    {
-  // This function is used to support the name qualification of data member references seperate from name qualification
+  // This function is used to support the name qualification of data member references separate from name qualification
   // of variables that might be members (e.g. "X x; x.A::y;" instead of "A::y" (which is just simple name qualification)).
 
   // DQ (2/8/2019): Adding support for detecting when to use added name qualification for pointer-to-member expressions.
@@ -19693,7 +19693,7 @@ void SageInterface::markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physi
    {
   // DQ (7/13/2021): This function marks nodes in a subtree to be a transformation, but avoids marking subtrees of the SgCastExp.
   // This is important because currently the marking of an implicit cast will cause it to be unparsed, even though it is marked
-  // as implicit.  This detail of precedence of implicit flags over transformation flags needs to be fixed seperated.
+  // as implicit.  This detail of precedence of implicit flags over transformation flags needs to be fixed separated.
   // This function has been implemented as part of debugging this issue.
      (void) root;  (void) physical_file_id; // defeat clang warning messages
 

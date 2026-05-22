@@ -56,11 +56,11 @@ class TokenStreamSequenceToNodeMapping
        // TokenStreamSequenceToNodeMapping data structure.  The best example
        // of this is the case of a variable declaration using multiple variables
        // (e.g. "int a,b,c;").  This will currently be normalized to be three
-       // seperate variable declarations (though this will be fixed in the future).
+       // separate variable declarations (though this will be fixed in the future).
        // Since each of the variable declarations will have the same source 
        // position in the generated AST, the same token sequence will map to 
-       // each of the seperate (normalized) variable declarations.  Thus the
-       // TokenStreamSequenceToNodeMapping can be shared all of the seperate 
+       // each of the separate (normalized) variable declarations.  Thus the
+       // TokenStreamSequenceToNodeMapping can be shared all of the separate 
        // variable declarations.  Now that we have a container of SgNodes,
        // this boolean should be true iff the container has more than 1 node.
           bool shared;
@@ -144,7 +144,7 @@ class Graph_TokenMappingTraversal : public AstSimpleProcessing
 // between unparsing from the AST and unparsing from the token stream.
 #include "simpleFrontierDetection.h"
 
-// DQ (11/8/2015): We need a seperate traversal to recognise from the 
+// DQ (11/8/2015): We need a separate traversal to recognise from the 
 // token stream mapping, what subtrees are a part of macro expansions 
 // that are transformations.  These macro eexpansions must be unparsed
 // as a single unit (we can't just unparse parts of them from the token 

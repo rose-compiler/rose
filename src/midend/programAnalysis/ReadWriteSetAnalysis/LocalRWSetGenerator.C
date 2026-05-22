@@ -738,7 +738,7 @@ std::set<ReadWriteSets::AccessSetRecord> LocalRWSetGenerator::recursivelyMakeAcc
     else if(isSgConditionalExp(current)) {
         //This isn't really how this should work, due to a bug in
         //Qings code I used to generate the RWSets.  The RWsets should've
-        //returned this as 3 seperate references, one: A? B:C, because
+        //returned this as 3 separate references, one: A? B:C, because
         //A is a write and B & C are reads.  But Matt thinks it's OK
         //for now 
         // Test is ternary_test2.cxx

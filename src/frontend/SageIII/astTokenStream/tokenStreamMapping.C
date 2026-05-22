@@ -334,7 +334,7 @@ TokenStreamSequenceToNodeMapping::display(string label) const
 TokenStreamSequenceToNodeMapping*
 TokenStreamSequenceToNodeMapping::createTokenInterval (SgSourceFile* sourceFile, SgNode* n, int input_leading_whitespace_start, int input_leading_whitespace_end, int input_token_subsequence_start, int input_token_subsequence_end, int input_trailing_whitespace_start, int input_trailing_whitespace_end, int input_else_whitespace_start, int input_else_whitespace_end)
    {
-  // The token interval is unique and using it we define an interval tree (of tokens) on the AST to seperate the token stream over the AST IR nodes.
+  // The token interval is unique and using it we define an interval tree (of tokens) on the AST to separate the token stream over the AST IR nodes.
   // This function defines a set which used a unique key for any possible interval.
 
      ROSE_ASSERT(tokenStreamSize > 0);
@@ -718,7 +718,7 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
                label += string("\n name = ") + classDeclaration->get_name().str();
              }
 
-       // This could be a seperate subgraph...if it were seperated from this AST traversal into a seperate AST traversal.
+       // This could be a separate subgraph...if it were separated from this AST traversal into a separate AST traversal.
        // Check if we have strored token information about this AST IR node.
           if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
              {
@@ -1069,10 +1069,10 @@ end [shape=Msquare];
 
      Graph_TokenMappingTraversal traversal(tokenList,tokenStreamSequenceMap);
 
-  // This could be a seperate subgraph...
+  // This could be a separate subgraph...
      traversal.traverse(source_file,preorder);
 
-  // This could be a seperate subgraph...
+  // This could be a separate subgraph...
      for (size_t i = 0; i < tokenList.size(); i++)
         {
 #if 0
@@ -2348,7 +2348,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                                      // DQ (1/13/2015): Detect multiple references to the same token subsequence (happens for multiple or nested statements in macros).
                                      // See inputmoveDeclarationToInnermostScope_test2015_44.C for an example.  This location does not work for this test, since the 
-                                     // target statements that nest are in a deeper level of the AST.  So I think we need a seperate traversal to address this.
+                                     // target statements that nest are in a deeper level of the AST.  So I think we need a separate traversal to address this.
 
                                          if ( (current_token_sequence_start == previous_token_sequence_start) && (current_token_sequence_end == previous_token_sequence_end) )
                                            {
@@ -3306,7 +3306,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          printf ("Test 4: mappingInfo->leading_whitespace_start = %d \n",mappingInfo->leading_whitespace_start);
                          printf ("Test 4: mappingInfo->leading_whitespace_end   = %d \n",mappingInfo->leading_whitespace_end);
 #endif
-                      // These statements have syntax that seperate the main construct from the construct's associated body (namely the ")" closing parenthesis).
+                      // These statements have syntax that separate the main construct from the construct's associated body (namely the ")" closing parenthesis).
                          if ( (switchStatement != NULL && mappingInfo->node == switchStatement->get_body()) ||
                               (whileStatement  != NULL && mappingInfo->node == whileStatement->get_body())  ||
                               (forStatement    != NULL && mappingInfo->node == forStatement->get_loop_body()) )
@@ -5529,7 +5529,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                  }
                             }
 
-                      // DQ (1/24/2015): Handle the seperate case of a SgNullStatement in a SgForInitStatement.
+                      // DQ (1/24/2015): Handle the separate case of a SgNullStatement in a SgForInitStatement.
                          if (isNullForInitStatement == true)
                             {
                            // while ( (*start_of_token_subsequence)->beginning_fpi.line_num < starting_line && start_of_token_subsequence != end_of_token_subsequence)
@@ -7587,7 +7587,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile, bool traverseHeaderFiles)
 void
 buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & tokenVector)
    {
-  // DQ (12/6/2014): This function seperates the initial generation of the token stream and it's mapping to the AST from 
+  // DQ (12/6/2014): This function separates the initial generation of the token stream and it's mapping to the AST from 
   // the assocaited connection to the computed frontier after transformations have been done to define where the AST
   // should be using the token stream unparsing and where it should be using the AST unparsing.
 

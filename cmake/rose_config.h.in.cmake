@@ -5,7 +5,7 @@
  * (running cmake before running make within the build process). Values should not be hardcoded and should be based on
  * the cmake configuration. Do not include conditional logic in this file.
  *
- * Since this file is contains name-space pollution (symbols not beginning with "ROSE_") there is a seperate file
+ * Since this file is contains name-space pollution (symbols not beginning with "ROSE_") there is a separate file
  * (rosePublicConfig.h.in.cmake) to create a non-polluting file (rosePublicConfig.h) for inclusion into user code (either directly 
  * or via other ROSE public header files). Defines in rosePublicConfig.h MUST have "ROSE_" at the start.
  * 

@@ -563,7 +563,7 @@ insertFriendDecl (const SgFunctionDeclaration* func,
         printf ("In insertFriendDecl(): Outliner::useNewFile                 = %s \n",Outliner::useNewFile  ? "true" : "false");
       }
 
-   // DQ (1/17/2020): This should be a predict specific to if we are outlineing code to a seperate file.
+   // DQ (1/17/2020): This should be a predict specific to if we are outlineing code to a separate file.
    // Also, what we do here might depende more of if the class definition is in the source file or not.
    // if (sourceFile->get_unparseHeaderFiles() == true)
       if (Outliner::useNewFile == true)
@@ -744,7 +744,7 @@ insertFriendDecl (const SgFunctionDeclaration* func,
          {
         // If we are not unparsing headers we still have to worry about class declarations that 
         // are in the original source file (*.C input file) and which would be duplicated in the 
-        // copy of the original source file when we outline to a seperate file.
+        // copy of the original source file when we outline to a separate file.
 
            if (enable_debug)
            {

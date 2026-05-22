@@ -49,7 +49,7 @@ FixupInitializersUsingIncludeFilesTraversal::FixupInitializersUsingIncludeFilesT
 void
 FixupInitializersUsingIncludeFilesTraversal::findAndRemoveMatchingInclude(SgStatement* statement, SgExpression* expression, PreprocessingInfo::RelativePositionType location_to_search)
    {
-  // DQ (8/27/2020): At least this code can likely be refactored with the code above to a seperate function.
+  // DQ (8/27/2020): At least this code can likely be refactored with the code above to a separate function.
      AttachedPreprocessingInfoType* comments = statement->getAttachedPreprocessingInfo();
      if (comments != nullptr)
         {
@@ -226,7 +226,7 @@ FixupInitializersUsingIncludeFilesTraversal::evaluateInheritedAttribute ( SgNode
                  // Search for the CPP include directive in either the variableDeclaration (attached after the statement) 
                  // or the following statement (attached before the statement).
 
-                 // DQ (8/27/2020): At least this code can likely be refactored with the code below to a seperate function.
+                 // DQ (8/27/2020): At least this code can likely be refactored with the code below to a separate function.
                     AttachedPreprocessingInfoType* comments = inheritedAttribute.variableDeclaration->getAttachedPreprocessingInfo();
                     if (comments != nullptr)
                        {

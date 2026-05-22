@@ -200,7 +200,7 @@ experimental_openFortranParser_main(int argc, char **argv)
                   }
                  else
                   {
-                 // This only skips over the options that begin with "-I" but not "-I <path>" (where the "-I" and the path are seperated by a space).
+                 // This only skips over the options that begin with "-I" but not "-I <path>" (where the "-I" and the path are separated by a space).
                     if (strncmp(argv[i], "-I", 2) == 0)
                        {
                       // Skip the include dir stuff; it's handled by the lexer.
@@ -276,7 +276,7 @@ experimental_openFortranParser_main(int argc, char **argv)
   // We have to read that aterm file and generate an uninterpreted AST, then iterate
   // on the uninterpreted AST to resolve types, disambiguate function calls and 
   // array references, etc.; until we have a correctly formed AST.  These operations
-  // will be seperate passes over the AST which should build a simpler frontend to
+  // will be separate passes over the AST which should build a simpler frontend to
   // use as a basis for fortran research and also permit a better design for the
   // frontend to maintain and develop cooperatively with community support.
 

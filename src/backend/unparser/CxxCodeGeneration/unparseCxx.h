@@ -446,7 +446,7 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           void unparseTypeAttributes ( SgDeclarationStatement* declaration );
 
        // DQ (5/24/2013): Added to support refactoing of the code to unparse the template arguments when
-       // they are generated seperately for SgFunctionRefExp and SgMemberFunctionRefExp IR nodes.
+       // they are generated separately for SgFunctionRefExp and SgMemberFunctionRefExp IR nodes.
        // void unparseGeneratedTemplateArgumentsList (SgName unqualifiedName, SgName qualifiedName, SgLocatedNode* locatedNode, SgUnparse_Info& info);
 
        // DQ (7/12/2013): Added support for type trait builtin functions.

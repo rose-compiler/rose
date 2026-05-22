@@ -855,7 +855,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
             // DQ (2/20/2021): This conditional fixes the performance problem with the use of ROSE without the token-based unparsing.
             // The token based unparsing is more expensive mostly because of the call to buildTokenStreamMapping().  We might have to
-            // look into that seperately.  Since it is about as expensive as the cost of the frontend with token-based unparsing.
+            // look into that separately.  Since it is about as expensive as the cost of the frontend with token-based unparsing.
             // DQ (2/18/2021): We only want to process the token stream if sourceFile->get_unparse_tokens() is true (specified on the command line).
             // Currently we have to call this else we get an error in the unparser.  This should be fixed for performance reasons.
             // We currently output a message in buildTokenStreamMapping() when sourceFile->get_unparse_tokens() == false.

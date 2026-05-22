@@ -1,6 +1,6 @@
 // This forms the dot file for a call graph generated incrementally.
 // Things to consider:
-//   1) Generate subgraphs to show the seperate translation units (for each file).
+//   1) Generate subgraphs to show the separate translation units (for each file).
 //   2) Build a single data structure to represent the call graph and associated data:
 //         Source position of function declaration, function definition, and function calls
 

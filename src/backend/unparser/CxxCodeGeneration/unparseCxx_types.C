@@ -185,7 +185,7 @@ Unparse_Type::unparseTypeOfType(SgType* type, SgUnparse_Info& info)
           SgFunctionParameterRefExp* functionParameterRefExp = isSgFunctionParameterRefExp(typeof_node->get_base_expression());
           if (functionParameterRefExp != NULL)
              {
-            // DQ (3/31/2015): I am not sure I understand this case well enough and I want to debug it seperately.
+            // DQ (3/31/2015): I am not sure I understand this case well enough and I want to debug it separately.
 
             // In this case just use the type directly.
                ASSERT_not_null(typeof_node->get_base_type());
@@ -195,7 +195,7 @@ Unparse_Type::unparseTypeOfType(SgType* type, SgUnparse_Info& info)
 
 #error "DEAD CODE!"
 
-               printf ("Exiting as a test: debug this case seperately for unparseTypeOfType() \n");
+               printf ("Exiting as a test: debug this case separately for unparseTypeOfType() \n");
                ROSE_ABORT();
 
                unparseType(typeof_node->get_base_type(),info);
@@ -1611,7 +1611,7 @@ Unparse_Type::unparseTemplateTypedefName(SgTemplateInstantiationTypedefDeclarati
   // code look more like the original input code (where before we have always unparsed template arguments
   // resulting in some very long function calls in the generated code).  Note that if some template
   // arguments are specified and some are not then control over not unparsing template arguments that
-  // where not explicit in the original code will be handled seperately in the near future (in the
+  // where not explicit in the original code will be handled separately in the near future (in the
   // SgTemplateArgument IR nodes).
   // unparseTemplateArgumentList(templateInstantiationFunctionDeclaration->get_templateArguments(),info);
      if (unparseTemplateArguments == true)

@@ -211,7 +211,7 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 
 // DQ (10/4/2014): Not clear if this is the best way to control use of ATerm.
 // I think we need a specific macro to be defined for when ATerms are being used.
-// Also I want to initially seperate this from Windows support.
+// Also I want to initially separate this from Windows support.
 // Rasmussen (04/17/2019): Support for ATerms has been deprecated.
 #ifndef _MSC_VER
 //  #include "atermSupport.h"

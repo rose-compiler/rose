@@ -13,7 +13,7 @@ IR nodes should be:
 SgFunctionDeclaration:
      SgProgramDeclaration
          This is just the declaration of the entry point for the program ("main").
-         It has its own IR node in Fortran because it is a seperate language construct.
+         It has its own IR node in Fortran because it is a separate language construct.
 
      SgProcedureDeclaration
           SgFunctionDeclaration

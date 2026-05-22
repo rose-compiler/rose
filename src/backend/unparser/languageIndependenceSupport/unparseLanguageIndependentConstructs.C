@@ -477,7 +477,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                  // use the logical source position as a basis for knowing which statements to be output.  The case of C/C++ is
                  // more sophisticated (test autoconf test codes) and so it requires the physical source position.  Ideally, the
                  // fortran support would have the same implementation, but the handling of intermdiate preprocessed files makes
-                 // this more complex (and it should be a seperate fix to handle that).
+                 // this more complex (and it should be a separate fix to handle that).
                     statementfilename = stmt->get_file_info()->get_filenameString();
 
 #if DEBUG_STATEMENT_FROM_FILE
@@ -1113,7 +1113,7 @@ UnparseLanguageIndependentConstructs::canBeUnparsedFromTokenStream(SgSourceFile*
                canBeUnparsed = (tokenSubsequence->token_subsequence_start != -1);
 
             // DQ (11/29/2013): Added support for the detection of redundantly mapped statements to token sequences.
-            // E.g. ROSE normalizations of variable declaration with multiple variables into seperate (multiple)
+            // E.g. ROSE normalizations of variable declaration with multiple variables into separate (multiple)
             // SgVariableDeclaration IR nodes in the AST.
                std::multimap<int,SgStatement*> & redundantlyMappedTokensToStatementMultimap = sourceFile->get_redundantlyMappedTokensToStatementMultimap();
 
@@ -1276,7 +1276,7 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
           int lastTokenIndex = tokenSubsequence->token_subsequence_end;
 
        // DQ (11/29/2013): Added support for the detection of redundantly mapped statements to token sequences.
-       // E.g. ROSE normalizations of variable declaration with multiple variables into seperate (multiple)
+       // E.g. ROSE normalizations of variable declaration with multiple variables into separate (multiple)
        // SgVariableDeclaration IR nodes in the AST.
           std::multimap<int,SgStatement*> & redundantlyMappedTokensToStatementMultimap = sourceFile->get_redundantlyMappedTokensToStatementMultimap();
           std::set<int> & redundantTokenEndings = sourceFile->get_redundantTokenEndingsSet();
@@ -2783,7 +2783,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): associatedFrontierNode = %p \n",associatedFrontierNode);
 #endif
             // Check is this is marked as already being handled via the unparsing of the token stream from another statement.
-            // For example, variable declarations containing multiple variables will be represented as seperate SgVariableDeclaration
+            // For example, variable declarations containing multiple variables will be represented as separate SgVariableDeclaration
             // IR nodes in the AST, but will have been unparsed using a single token stream.
             // static int lastUnparsedToken = 0;
 
@@ -3681,7 +3681,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
             else
              {
 #if DEBUG_USING_CURPRINT
-               curprint("\n/* In unparseStatement(): outputStatementAsTokens == true (1st part, case handled seperately) */");
+               curprint("\n/* In unparseStatement(): outputStatementAsTokens == true (1st part, case handled separately) */");
 #endif
              }
 
@@ -6507,7 +6507,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
              }
             else
              {
-            // If this is the case of suppressOutputOfDotExp == true, then output a space to seperate the output tokens (simplifies debugging).
+            // If this is the case of suppressOutputOfDotExp == true, then output a space to separate the output tokens (simplifies debugging).
                curprint(" ");
              }
 
@@ -7739,7 +7739,7 @@ UnparseLanguageIndependentConstructs::unparseIncludeDirectiveStatement (SgStatem
   // DQ (12/1/2018): This code may be required when unparsing using the header file unparsing support but not using the token unparsing.
      if (usingTokenUnparsing == false)
         {
-       // DQ (9/24/2018): I think we want CPP directivs to be unparsed from the SgAttachedPreprocessingInfo lists on statements, instead of seperately.
+       // DQ (9/24/2018): I think we want CPP directivs to be unparsed from the SgAttachedPreprocessingInfo lists on statements, instead of separately.
        // This is the better choice because then the other comments and any other CPP directives will be unparsed as in the original code.
        // NOTE: If we don't suppores this here, then there will be two include directives unparsed.
           SgHeaderFileBody* headerFileBody = directive -> get_headerFileBody();

@@ -3744,7 +3744,7 @@ SgArrayType::get_mangled(void) const
        //    This is important for the Intel C++ compiler (version 14) because it defaults to C++11 instead of C++98.
        //    Forcing the false branch below does at least make the C++98 and C++11 modes uniform, and allows the test code to now pass uniformally
        //    for both C++98 and C++11 modes, but does not really fix the problem well.  We want to where ever possible evaluate the expression to
-       //    a constant value literal, but this is part of a seperate issue specific to use of expressions in array bounds (test2015_.C).
+       //    a constant value literal, but this is part of a separate issue specific to use of expressions in array bounds (test2015_.C).
           const SgValueExp* value = NULL;
 
 #if DEBUG_ARRAY_TYPE_MANGLED_NAME_WITH_CONSTANT_FOLDING

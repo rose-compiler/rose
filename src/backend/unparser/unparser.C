@@ -248,7 +248,7 @@ Unparser::unparseFile(SgSourceFile* file, SgUnparse_Info& info, SgScopeStatement
      SgUnparse_Info::set_previouslyUnparsedStatement(nullptr);
      SgUnparse_Info::set_previousStatementUnparsedFromTokenStream(false);
 
-  // DQ (10/29/2018): I now think we need to support this mechanism of specifying the scope to be unparsed seperately.
+  // DQ (10/29/2018): I now think we need to support this mechanism of specifying the scope to be unparsed separately.
   // This is essential to the support for header files representing nested scopes inside of the global scope.
   // Traversing the global scope does not permit these inner nested scopes to be traversed using the unparser.
 
@@ -4216,7 +4216,7 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
 #endif
                                                 }
 #if 0
-                                          // Since the SgGlobal is shared across the input source file and header files, this should be true for each source file seperately.
+                                          // Since the SgGlobal is shared across the input source file and header files, this should be true for each source file separately.
                                           // ROSE_ASSERT (firstAndLastStatementsToUnparseInScopeMap.find(scope) == firstAndLastStatementsToUnparseInScopeMap.end());
                                           // if (firstAndLastStatementsToUnparseInScopeMap.find(scope) == firstAndLastStatementsToUnparseInScopeMap.end())
                                           // ROSE_ASSERT(firstAndLastStatementsToUnparseInScopeMap != NULL);
@@ -4424,7 +4424,7 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
                                 // if (scope != NULL)
                                    if (skipScope == false && scope != nullptr)
                                       {
-                                     // Since the SgGlobal is shared across the input source file and header files, this should be true for each source file seperately.
+                                     // Since the SgGlobal is shared across the input source file and header files, this should be true for each source file separately.
 #if 0
                                         ROSE_ASSERT (firstAndLastStatementsToUnparseInScopeMap.find(scope) == firstAndLastStatementsToUnparseInScopeMap.end());
                                         if (firstAndLastStatementsToUnparseInScopeMap.find(scope) == firstAndLastStatementsToUnparseInScopeMap.end())

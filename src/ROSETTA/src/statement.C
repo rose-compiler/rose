@@ -1717,7 +1717,7 @@ Grammar::setUpStatements ()
 
   // DQ (9/5/2014): This marks the function as only partially represented in the text string saved and used in the unparser.
   // Functions like this were modified in the class template representation to be a function prototype and the
-  // the defining declaration represented seperately (and with a partial string internally (representing only the function body)).
+  // the defining declaration represented separately (and with a partial string internally (representing only the function body)).
      TemplateFunctionDeclaration.setDataPrototype ( "bool", "string_represents_function_body", "= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1743,7 +1743,7 @@ Grammar::setUpStatements ()
 
   // DQ (9/5/2014): This marks the function as only partially represented in the text string saved and used in the unparser.
   // Functions like this were modified in the class template representation to be a function prototype and the
-  // the defining declaration represented seperately (and with a partial string internally (representing only the function body)).
+  // the defining declaration represented separately (and with a partial string internally (representing only the function body)).
      TemplateMemberFunctionDeclaration.setDataPrototype ( "bool", "string_represents_function_body", "= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2456,7 +2456,7 @@ Grammar::setUpStatements ()
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/28/2012): We need to support lists of types at the end of a typedef declaration. ROSE presently
-  // will output seperate declarations for each type.  This is OK (but will be fixed) however it interferes
+  // will output separate declarations for each type.  This is OK (but will be fixed) however it interferes
   // with the new support for un-named types in typedef declarations.  so we want to mark declarations that
   // are output assocuated with a previous declaration.  Example of where this is relevant is:
   //      typedef struct { } S,T;
@@ -2597,7 +2597,7 @@ Grammar::setUpStatements ()
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (5/16/2013): This is where we put the union of all of the symbols for all of the namespace definitions that
-  // are logically the same namespace, but seperated structurally because C++ namespaces can be re-entrant.
+  // are logically the same namespace, but separated structurally because C++ namespaces can be re-entrant.
   // Note that only SgAliasSymbols are put here and that the original symbol is placed into the namespace definition
   // associated with its declaration.
      NamespaceDefinitionStatement.setDataPrototype ( "SgNamespaceDefinitionStatement*", "global_definition", "= NULL",
@@ -3828,7 +3828,7 @@ Grammar::setUpStatements ()
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LinemarkerDirectiveStatement.setDataPrototype ( "std::string", "filename", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // The integer values are stored as char (values are '1', '2', '3', '4'), flag values are seperated by spaces.
+  // The integer values are stored as char (values are '1', '2', '3', '4'), flag values are separated by spaces.
      LinemarkerDirectiveStatement.setDataPrototype ( "SgUnsignedCharList", "flaglist", "",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

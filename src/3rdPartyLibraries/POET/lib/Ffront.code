@@ -310,7 +310,7 @@ private(@vars@)
 shared(@vars@)
 </code>
 
-<* Variables are seperated into lines to avoid going beyond limited columns. *>
+<* Variables are separated into lines to avoid going beyond limited columns. *>
 <code OMPParallelBegin pars=(private, shared)>
 @ ret=OMPParallelDo;
 for (rest=private; rest!=NULL; rest=cdr rest)
