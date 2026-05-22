@@ -267,8 +267,8 @@ readConfigFile(const Settings &settings) {
 }
 
 /**
- * makeLibrarySearchPaths takes a space seperated list of directories, and returns
- * a colon seperated list of directories.
+ * makeLibrarySearchPaths takes a space separated list of directories, and returns
+ * a colon separated list of directories.
  * As part of this, quoted strings are unquoted.
  **/
 static std::string
@@ -309,7 +309,7 @@ makeLibrarySearchPaths(const std::string &str) {
     ASSERT_require2(quoted=='\0', "mismatched quotes");
   }
 
-  //Turn them all into a colon-seperated string
+  //Turn them all into a colon-separated string
   std::string retval;
   for (size_t i=0; i<args.size(); ++i) {
     retval += (retval.empty()?"":":") + args[i];
@@ -337,7 +337,7 @@ main(int argc, char *argv[]) {
   // Print the value
   Configuration::const_iterator found = config.find(key);
   if (found != config.end()) {
-    if (key == "libdirs") { //Special case for libdirs, which is stored space seperated in the file, but returns as colon seperated
+    if (key == "libdirs") { //Special case for libdirs, which is stored space separated in the file, but returns as colon separated
       std::cout <<makefileEscape(makeLibrarySearchPaths(found->second)) <<"\n";
     } else {
       std::cout <<makefileEscape(found->second) <<"\n";

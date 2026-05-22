@@ -9,7 +9,7 @@
 
     Include files are collected in the EDG/ROSE translation, the include files are not 
     in the AST unless we traverse the AST and add then explicitly.  The goal is to simplify 
-    the handling of include directives seperately from other CPP directives.
+    the handling of include directives separately from other CPP directives.
 
    \internal This post processing needs to be run before unparsing.
 

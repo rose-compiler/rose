@@ -267,7 +267,7 @@ class PreprocessingInfo
 
        // DQ (1/15/2015): Adding support for token-based unparsing. When new comments and CPP directives are added we need
        // to record these as a kind of transformation that will trigger the token stream representation to NOT be used and
-       // the comments and CPP directives unparsed from the AST seperately from the associated IR node being unparsed from
+       // the comments and CPP directives unparsed from the AST separately from the associated IR node being unparsed from
        // the AST.  The problem is that we wnat to record where there might be comments or CPP directives removed and having
        // a flag here is not going to work for that.  so we have to also record that the ROSEAttributesList has changed.
           bool p_isTransformation;
@@ -527,7 +527,7 @@ class ROSEAttributesList
 
        // DQ (1/15/2015): Adding support for token-based unparsing. When new comments and CPP directives are added we need
        // to record these as a kind of transformation that will trigger the token stream representation to NOT be used and
-       // the comments and CPP directives unparsed from the AST seperately from the associated IR node being unparsed from
+       // the comments and CPP directives unparsed from the AST separately from the associated IR node being unparsed from
        // the AST.  The problem is that we want to record where there might be comments or CPP directives removed and having
        // a flag here is not going to work for that, so we have to also record that the ROSEAttributesList has changed.
        // bool p_isTransformation;

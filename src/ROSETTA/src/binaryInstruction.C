@@ -29118,7 +29118,7 @@ public:
  // can't use SgAsmDwarfLine because those are postions that have addresses associated
  // with instructions. so a better design is to store these explicitly, making them
  // easy to set from the print_attribute() function. The SgAsmDwarfLine* source_position
- // above is there for the purpose of being able to be filled in via a seperate analysis.
+ // above is there for the purpose of being able to be filled in via a separate analysis.
 public:
     int const& get_decl_file_id() const;
     void set_decl_file_id(int const&);

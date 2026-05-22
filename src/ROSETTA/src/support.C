@@ -784,7 +784,7 @@ Grammar::setUpSupport ()
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/11/2021): We need to to support the dynamic library feature (used by the code segregation tool, and likely future tools).
-  // This feature is also part of outliner which supports outlining to a seperate file. Also, this is used to avoid running the
+  // This feature is also part of outliner which supports outlining to a separate file. Also, this is used to avoid running the
   // computation of first and last statements of include file.
      SourceFile.setDataPrototype   ( "bool", "isDynamicLibrary", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1117,8 +1117,8 @@ Grammar::setUpSupport ()
 
   // DQ (4/17/2015): Adding support to save the original specification of the object file name from the command line (as specified using the "-o" option).
   // This is required for multiple file support which is using the "-o" option to specify the executable name when linking.  We have to split up the
-  // command so that we can call ROSE seperately with each file to generate a new source file and then call the backend compiler to generate the object
-  // file, and then call the linker seperately to using the object files to generate the named executable.
+  // command so that we can call ROSE separately with each file to generate a new source file and then call the backend compiler to generate the object
+  // file, and then call the linker separately to using the object files to generate the named executable.
      File.setDataPrototype         ( "std::string" , "objectFileNameWithPath", "= \"\"",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "std::string" , "objectFileNameWithoutPath", "= \"\"",

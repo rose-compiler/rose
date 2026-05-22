@@ -166,7 +166,7 @@ namespace CodeThorn {
     // logger facility
     static Sawyer::Message::Facility logger;
 
-    // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
+    // used by transferAssignOp to separate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
     typedef std::list<std::pair<EStatePtr,MemoryUpdatePair> > MemoryUpdateList;
     MemoryUpdateList evalAssignOpMemUpdates(SgAssignOp* assignOp, EStatePtr estate);

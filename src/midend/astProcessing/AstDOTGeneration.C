@@ -473,7 +473,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
        // DQ (4/2/2020): Need to add more detail to the graph output so that we can debug Cxx_tests/test2020_02.C.
           nodelabel += string("\\n isExtern = ") + (genericDeclaration->get_declarationModifier().get_storageModifier().isExtern() ? "true " : "false ");
 
-       // DQ (10/18/2020): Add the reference to the defining and non-defining declarations. Debugging outlining into seperate file.
+       // DQ (10/18/2020): Add the reference to the defining and non-defining declarations. Debugging outlining into separate file.
           nodelabel += string("\\n firstNondefiningDeclaration = ") + StringUtility::numberToString(genericDeclaration->get_firstNondefiningDeclaration());
           nodelabel += string("\\n definingDeclaration = ") + StringUtility::numberToString(genericDeclaration->get_definingDeclaration());
 

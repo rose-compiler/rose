@@ -362,7 +362,7 @@ SimpleFrontierDetectionForTokenStreamMapping::numberOfNodesInSubtree(SgSourceFil
 void
 simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile, bool traverseHeaderFiles )
    {
-  // This frontier detection happens before we associate token subsequences to the AST (in a seperate map).
+  // This frontier detection happens before we associate token subsequences to the AST (in a separate map).
      ASSERT_not_null(sourceFile);
      TimingPerformance timer ("AST Simple Frontier Detection For Token Stream Mapping:");
 

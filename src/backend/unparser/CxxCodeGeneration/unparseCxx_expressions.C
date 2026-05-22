@@ -525,7 +525,7 @@ Unparse_ExprStmt::unparseTemplateFunctionName(SgTemplateInstantiationFunctionDec
   // code look more like the original input code (where before we have always unparsed template arguments
   // resulting in some very long function calls in the generated code).  Note that if some template
   // arguments are specified and some are not then control over not unparsing template arguments that
-  // where not explicit in the original code will be handled seperately in the near future (in the
+  // where not explicit in the original code will be handled separately in the near future (in the
   // SgTemplateArgument IR nodes).
      if (unparseTemplateArguments == true)
         {
@@ -2539,10 +2539,10 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                       // DQ (2/9/2010): Fix for test2010_03.C
                       // DQ (6/15/2013): The code for processing the function name when it contains template arguments that requires name qualification.
 
-                      // DQ (5/25/2013): Added support to unparse the template arguments seperately from the member function name (which should NOT
+                      // DQ (5/25/2013): Added support to unparse the template arguments separately from the member function name (which should NOT
                       // include the template arguments when unparsing). Note the the template arguments in the name are important for the generation
                       // of mangled names for use in symbol tabls, but that we need to output the member function name and it's template arguments
-                      // seperately so that they name qulification can be computed and saved in the name qualification name maps.
+                      // separately so that they name qulification can be computed and saved in the name qualification name maps.
 
                       // Note that this code below is a copy of that from the support for unpasing the SgTemplateInstantiationFunctionDecl (in function above).
 
@@ -2587,10 +2587,10 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                          curprint("/* In unparseMFuncRefSupport(): function name IS output */ \n");
 #endif
 
-                      // DQ (5/25/2013): Added support to unparse the template arguments seperately from the member function name (which should NOT
+                      // DQ (5/25/2013): Added support to unparse the template arguments separately from the member function name (which should NOT
                       // include the template arguments when unparsing). Note the the template arguments in the name are important for the generation
                       // of mangled names for use in symbol tabls, but that we need to output the member function name and it's template arguments
-                      // seperately so that they name qulification can be computed and saved in the name qualification name maps.
+                      // separately so that they name qulification can be computed and saved in the name qualification name maps.
 
                       // Note that this code below is a copy of that from the support for unpasing the SgTemplateInstantiationFunctionDecl (in function above).
                          SgDeclarationStatement* declaration = mfd;
@@ -3213,7 +3213,7 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
           SgExpression* expression = isSgExpression(*operand);
 
        // DQ (7/13/2013): Build a new SgUnparse_Info so that we can skip passing on any existing referenceNode for name qualification.
-       // We need to debug name qualification seperately, if it is required, likely it could be fore any referenced types.
+       // We need to debug name qualification separately, if it is required, likely it could be fore any referenced types.
           SgUnparse_Info newinfo(info);
           newinfo.set_reference_node_for_qualification(operatorExp);
           ASSERT_not_null(newinfo.get_reference_node_for_qualification());

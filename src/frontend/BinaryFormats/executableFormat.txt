@@ -144,7 +144,7 @@ that we have?  And then test it to make sure it is identical.
    a) "undefined = 0", if possible, and 
    b) "default = <nonzero value>"
 
-   This provides seperate values for use by the destructor and default values to make it
+   This provides separate values for use by the destructor and default values to make it
    clear when values are uninitialized properly.
 
 5) A lot of data members are public and don't have access functions, this complicates the

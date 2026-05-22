@@ -1598,7 +1598,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 
 #if 1 /* TOP_LEVEL_IF */
   // DQ (12/31/2019): This version does not detect a cycle that Robb's version detects in processing Cxx11_tests/test2016_23.C.
-  // This will have to be investigated seperately from the issue I am working on currently.
+  // This will have to be investigated separately from the issue I am working on currently.
 
   // DQ (10/20/2012): This is the older version of this implementation.  Until I am sure that
   // the newer version (below) is what we want to use I will resolve this conflict by keeping

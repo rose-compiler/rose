@@ -179,7 +179,7 @@ class AttachPreprocessingInfoTreeTrav
                bool reset_start_index, ROSEAttributesList *currentListOfAttributes );
 
        // DQ (2/16/2021): This function supports iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber().
-       // It seperates the case where comments and CPP directives are put in the scope or attached to the bottom of the previous statement.
+       // It separates the case where comments and CPP directives are put in the scope or attached to the bottom of the previous statement.
           void handleBracedScopes(SgLocatedNode* previousLocatedNode, SgStatement* bracedScope, int lineOfClosingBrace, bool reset_start_index, ROSEAttributesList *currentListOfAttributes);
 
        // Member function to be executed on each node of the AST

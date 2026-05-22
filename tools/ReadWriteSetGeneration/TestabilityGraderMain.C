@@ -81,7 +81,7 @@ void countFunction(const ReadWriteSets::FunctionReadWriteRecord& thisFuncRecord,
      thisFuncRecord.accessType == ReadWriteSets::AccessType::ACCESSTYPE_UNKNOWN ||
      thisFuncRecord.globality == ReadWriteSets::Globality::GLOBALITY_UNKNOWN) {
     functionCount[12] += 1;
-    //Count function pointers seperately because I'm not sure about testability
+    //Count function pointers separately because I'm not sure about testability
   } else if(thisFuncRecord.accessType == ReadWriteSets::AccessType::FUNCTION_POINTER_DEREF) {
     functionCount[11] += 1;
   } else {

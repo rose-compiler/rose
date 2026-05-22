@@ -729,7 +729,7 @@ void attachPreprocessingInfo(SgSourceFile *sageFilePtr, const std::string & new_
 #endif
 
 #if 0
-  // DQ (5/4/2020): Test the collection of comments and CPP directives seperately from attachng them to the AST.
+  // DQ (5/4/2020): Test the collection of comments and CPP directives separately from attachng them to the AST.
      printf ("Skipping attaching the list as a test \n");
      return;
 #endif
@@ -765,7 +765,7 @@ void attachPreprocessingInfo(SgSourceFile *sageFilePtr, const std::string & new_
              {
                ROSE_ASSERT(sageFilePtr->get_header_file_unparsing_optimization_header_file() == false);
 #if 0
-               printf ("In attachPreprocessingInfo(): Optimize the collection of comments and CPP directives to seperate handling of the source file from the header files \n");
+               printf ("In attachPreprocessingInfo(): Optimize the collection of comments and CPP directives to separate handling of the source file from the header files \n");
 #endif
                header_file_unparsing_optimization_source_file = true;
              }
@@ -777,7 +777,7 @@ void attachPreprocessingInfo(SgSourceFile *sageFilePtr, const std::string & new_
             // if (sageFilePtr->get_header_file_unparsing_optimization_header_file() == true)
                   {
 #if 0
-                    printf ("Optimize the collection of comments and CPP directives to seperate handling of the header files from the source file \n");
+                    printf ("Optimize the collection of comments and CPP directives to separate handling of the header files from the source file \n");
 #endif
                     header_file_unparsing_optimization_header_file = true;
                   }
@@ -826,7 +826,7 @@ void attachPreprocessingInfo(SgSourceFile *sageFilePtr, const std::string & new_
 
   // DQ (6/2/2020): Change the API to pass in the CPP directives and comments list.
   // Also disable boolean processAllFiles since these are no longer processed in the
-  // traversal (adding CPP directives and comments from each file is a seperate).
+  // traversal (adding CPP directives and comments from each file is a separate).
   // AttachPreprocessingInfoTreeTrav tt(sageFilePtr,processAllFiles);
      AttachPreprocessingInfoTreeTrav tt(sageFilePtr,commentAndCppDirectiveList);
 

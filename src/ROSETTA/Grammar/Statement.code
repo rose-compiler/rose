@@ -9037,7 +9037,7 @@ SgDeclarationStatement::unparseNameToString()
 
                i++;
 
-            // If there are more arguments then we need a "," to seperate them.
+            // If there are more arguments then we need a "," to separate them.
                if (i != templateArgumentsList->end())
                   {
                  // Since we have a few places were these names are generated the code is sensative to names being
@@ -10177,7 +10177,7 @@ SgFunctionDeclaration::get_mangled_name() const
         {
           SgName mangledName;
 
-       // DQ (6/23/2010): Added support to maintain seperate "main()" functions as unique (to avoid them being merged).
+       // DQ (6/23/2010): Added support to maintain separate "main()" functions as unique (to avoid them being merged).
           if (this->get_name() == "main")
              {
             // Append the pointer to the name to make this unique to avoid multiple function "main()" from being merged.

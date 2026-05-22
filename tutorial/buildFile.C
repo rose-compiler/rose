@@ -71,7 +71,7 @@ int main (int argc, char *argv[])
      functionDeclaration->get_file_info()->display("function declaration");
 #endif
 
-  // Find the associated nondefining declaration to unparse seperately as a function prototype in a header file.
+  // Find the associated nondefining declaration to unparse separately as a function prototype in a header file.
      SgFunctionDeclaration* nondefiningFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
      ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
 

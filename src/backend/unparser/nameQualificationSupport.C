@@ -3293,7 +3293,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
   //    3) The positonStatement is required to allow name qualification decisions to be based on the reference
   //       declarations position in scope relative to the input declaration.  Some function declarations require
   //       name qualification depending on if they appear before or after a prototype declaration for the function
-  //       that would define it's scope (seperate from its visability.
+  //       that would define it's scope (separate from its visability.
 
   // Note: we are evaluating the name qualification for references to declarations (e.g. the defining member
   // function outside of the class which contains the non-defining (prototype) member function declaration).
@@ -4715,7 +4715,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                            // if (associatedClassDeclaration->get_firstNondefiningDeclaration() == classDeclaration->get_firstNondefiningDeclaration())
                               if ( (classDeclaration != NULL) && (associatedClassDeclaration->get_firstNondefiningDeclaration() == classDeclaration->get_firstNondefiningDeclaration()) )
                                  {
-                                // DQ (1/4/2020): This is the better implementation and it should be isolated into a seperate
+                                // DQ (1/4/2020): This is the better implementation and it should be isolated into a separate
                                 // function so that we can call it from the case V_SgTypedefSymbol and case V_SgEnumSymbol
                                 // (and maybe some other locations as well (generating more test codes to drive this would be helpful).
 
@@ -5573,7 +5573,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
                mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): Calling generateNestedTraversalWithExplicitScope(): with expression = %p = %s and currentScope = %p = %s \n",
                     expression,expression->class_name().c_str(),currentScope,currentScope->class_name().c_str());
 #endif
-            // DQ (3/15/2019): Added Comment: This is required because the expression can be a subtree that would have to be seperately traversed.
+            // DQ (3/15/2019): Added Comment: This is required because the expression can be a subtree that would have to be separately traversed.
                generateNestedTraversalWithExplicitScope(expression,currentScope);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_NAME_QUALIFICATION_LEVEL_FOR_TEMPLATE_ARGUMENTS
@@ -7974,7 +7974,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
   // DQ (4/18/2019): Added support for traversals over the type, so that we can support SgPointerMemberType which can exist within nested type.
   // Because this can happen in nexted types we need the type traversal to discover these.  I am hoping this will not be a performance issue
-  // for long types stemming from template instatiations, if so we might want to detect these seperately and avoid name qualification for them.
+  // for long types stemming from template instatiations, if so we might want to detect these separately and avoid name qualification for them.
      SgPointerMemberType* pointerMemberType = isSgPointerMemberType(n);
      if (pointerMemberType != NULL)
         {
@@ -8293,7 +8293,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                is_simple_data_member = true;
              }
 
-       // DQ (4/26/2019): The initializer should be processed as an expression to be name qualified seperately.
+       // DQ (4/26/2019): The initializer should be processed as an expression to be name qualified separately.
 #if DEBUG_INITIALIZED_NAME
           mfprintf(mlog [ WARN ] ) ("############################################# \n");
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: Check for initializer \n");
@@ -8439,7 +8439,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
 
 
-            // DQ (4/26/2019): The initializer should be processed as an expression to be name qualified seperately.
+            // DQ (4/26/2019): The initializer should be processed as an expression to be name qualified separately.
             // DQ (10/18/2020): Moved declaration to where it is being used.
                SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(initializedName->get_type());
 
@@ -10344,7 +10344,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                       // DQ (12/21/2015): When this is a data member of a class/struct then we are consistatnly overqualifying the SgVarRefExp
                       // because we are not considering the case of a variable of type class that is being used with the SgArrowExp or SgDotExp
                       // which would not require the name qualification.  The only case where we would still need the name qualification is the
-                      // relatively rare case of multiple inheritance (which must be detected seperately).
+                      // relatively rare case of multiple inheritance (which must be detected separately).
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          mfprintf(mlog [ WARN ] ) ("variableDeclaration = %p \n",variableDeclaration);
@@ -11976,7 +11976,7 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
   // function and thus query if one of them was declard in a scope that defined its
   // scope definatively.  This class should be a part of an AST Information sort of
   // object that we would use to collect similar analysis information that would be
-  // seperate from the AST, but might be used with the AST for certain purposes
+  // separate from the AST, but might be used with the AST for certain purposes
   // (e.g. removning all functions including all associated non-defining declarations).
 
   // DQ (4/6/2014): Adding support for new analysis results. Fails for test2013_242.C.

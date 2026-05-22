@@ -1469,7 +1469,7 @@ Grammar::buildDataMember(AstNodeClass & node, GrammarString* grammarString, bool
                dataMemberString_post += string("       // containerElementTypeString        = ") + containerElementTypeString + "\n";
                dataMemberString_post += string("       // containerAppendFunctionNameString = ") + containerAppendFunctionNameString + "\n";
 #endif
-            // In the case of a list of ROSE IR nodes we need to build the elements of the list seperately in a loop.
+            // In the case of a list of ROSE IR nodes we need to build the elements of the list separately in a loop.
                dataMemberString_post += "          vector<ATerm> terms = getAtermList(" + atermArgumentsName + integer_counter_string + ");\n";
                dataMemberString_post += "          printf (\"vector<ATerm> terms.size() = %zu \\n\",terms.size()); \n";
                dataMemberString_post += "          for (size_t i = 0; i < terms.size(); ++i)\n";

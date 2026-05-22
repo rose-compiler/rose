@@ -1158,7 +1158,7 @@ Grammar::setUpTypes ()
   // DQ (8/12/2012): I might not need this, since I have a more direct approach.
   // DQ (8/12/2012): I need a mechanism to store references to types (typically in template instantiations)
   // that have not been seen yet and will be fixed up later.  I will use a SgDefaultType (used similarly in
-  // the Fortran support) and then fixed up in a seperate pass of AST post-processing.  At this point the
+  // the Fortran support) and then fixed up in a separate pass of AST post-processing.  At this point the
   // type_translation_cache map (of EDG types to ROSE types) should have a valid entry (because all of the
   // template instantiations will have been processed).  Note that this need not confuse the name mangling
   // since that can alternatively be done with either the typedef type of the typedef's base type.  It is

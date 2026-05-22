@@ -54,14 +54,14 @@ public:
         /** Construct a specimen for a specific executable.
          *
          *  The executable name is only used to specify where the debugging symbols are stored. The actual executable being
-         *  executed is run under the control of the GDB server which is configured seperately from the ROSE library which
+         *  executed is run under the control of the GDB server which is configured separately from the ROSE library which
          *  talks to the GDB client. */
         Specimen(const boost::filesystem::path &exeName);
 
         /** Construct a specimen for a specific executable and GDB server.
          *
          *  The executable name is only used to specify where the debugging symbols are stored. The actual executable being
-         *  executed is run under the control of the GDB server which is configured seperately from the ROSE library which
+         *  executed is run under the control of the GDB server which is configured separately from the ROSE library which
          *  talks to the GDB client.
          *
          *  The @p host and @p port describe how to connect to the GDB server. */

@@ -754,7 +754,7 @@ SgLocatedNode::isTransformation() const {
     if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
         if (result != expression->get_operatorPosition()->isTransformation()) {
             printf("Warning: this = %p = %s result != expression->get_operatorPosition()->isTransformation() \n",this,this->class_name().c_str());
-            printf("   --- Suggest calling the set transformation on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
+            printf("   --- Suggest calling the set transformation on the SgLocated node directly, instead of on the SgFileInfo objects separately. \n");
         }
     }
 
@@ -807,7 +807,7 @@ SgLocatedNode::isShared() const {
     if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
         if (result != expression->get_operatorPosition()->isShared()) {
             printf("Warning: this = %p = %s result != expression->get_operatorPosition()->isShared() \n",this,this->class_name().c_str());
-            printf("   --- Suggest calling the set shared on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
+            printf("   --- Suggest calling the set shared on the SgLocated node directly, instead of on the SgFileInfo objects separately. \n");
         }
     }
 
@@ -858,7 +858,7 @@ SgLocatedNode::isFrontendSpecific() const {
     if (expression != nullptr && expression->get_operatorPosition() != nullptr) {
         if (result != expression->get_operatorPosition()->isFrontendSpecific()) {
             printf("Warning: this = %p = %s result != expression->get_operatorPosition()->isFrontendSpecific() \n",this,this->class_name().c_str());
-            printf("   --- Suggest calling the set shared on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
+            printf("   --- Suggest calling the set shared on the SgLocated node directly, instead of on the SgFileInfo objects separately. \n");
         }
     }
 

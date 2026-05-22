@@ -31,7 +31,7 @@ using namespace Rose::Diagnostics;
 
 namespace EDG_ROSE_Translation
    {
-  // DQ (6/3/2019): The case of outlining to a seperate file will have transformations
+  // DQ (6/3/2019): The case of outlining to a separate file will have transformations
   // that this checking will fail on because it is for the typical case of checking the
   // AST for transformations after construction of the AST from an typical input file.
 #if defined(ROSE_BUILD_CXX_LANGUAGE_SUPPORT) && !defined(ROSE_USE_CLANG_FRONTEND)
@@ -1414,7 +1414,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
           bool reuseTheAssociatedVariableDeclaration = ((associatedVariableDeclaration != nullptr) && (associatedVariableDeclaration->get_builtFromUseOnly() == true));
           if (reuseTheAssociatedVariableDeclaration == true)
              {
-            // Build a seperate SgVariableDeclaration so that we can avoid sharing the SgInitializedName
+            // Build a separate SgVariableDeclaration so that we can avoid sharing the SgInitializedName
             // (and it's possible initializer which would be an error for the secondary declaration
             // (the declaration in the class for the case of a static declaration))
 
@@ -2881,7 +2881,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
                ROSE_ASSERT(buildTemplateDeclaration == false || templateParameterList != NULL);
 
             // DQ (8/13/2013): We need to test for function symbols (which will include member function symbols),
-            // template functions and template member functions. Each must be tested for seperately because template
+            // template functions and template member functions. Each must be tested for separately because template
             // functions and template member functions are not connected to derivation which non-template functions
             // and non-template member functions are connected through derivation.
                ROSE_ASSERT(scope->lookup_function_symbol(nameWithTemplateArguments) != NULL ||
@@ -3199,7 +3199,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
           ROSE_ASSERT(scope->lookup_template_function_symbol(nameWithTemplateArguments,func_type,templateParameterList) != NULL);
         }
 
-  // DQ (2/11/2012): If this is a template instantiation then we have to set the template name (seperate from the name of the function which can include template parameters)).
+  // DQ (2/11/2012): If this is a template instantiation then we have to set the template name (separate from the name of the function which can include template parameters)).
      setTemplateNameInTemplateInstantiations(func,nameWithoutTemplateArguments);
 
 #if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
@@ -3838,7 +3838,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
           ASSERT_not_null(isSgMemberFunctionDeclaration(defining_func));
         }
 
-  // DQ (2/11/2012): If this is a template instantiation then we have to set the template name (seperate from the name of the function which can include template parameters)).
+  // DQ (2/11/2012): If this is a template instantiation then we have to set the template name (separate from the name of the function which can include template parameters)).
      setTemplateNameInTemplateInstantiations(defining_func,nameWithoutTemplateArguments);
 
   // DQ (9/16/2012): Setup up the template arguments and the parents of the template arguments.
@@ -3877,7 +3877,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
 void
 SageBuilder::setTemplateNameInTemplateInstantiations( SgFunctionDeclaration* func, const SgName & name )
    {
-  // DQ (2/11/2012): If this is a template instantiation then we have to set the template name (seperate from the name of the function which can include template parameters)).
+  // DQ (2/11/2012): If this is a template instantiation then we have to set the template name (separate from the name of the function which can include template parameters)).
 
      SgTemplateInstantiationFunctionDecl*       templateInstantiationFunctionDecl       = isSgTemplateInstantiationFunctionDecl(func);
      SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(func);
@@ -12068,7 +12068,7 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
 
      if (mysymbol != NULL) // set links if nondefining declaration already exists.
         {
-       // DQ (3/7/2012): Build a seperate non-defining declaration (reusing the existing one will cause the test for unique statements to fail).
+       // DQ (3/7/2012): Build a separate non-defining declaration (reusing the existing one will cause the test for unique statements to fail).
        // printf ("WARNING: Even if the first non-defining SgTemplateClassDeclaration is found in the symbol table then likely we still might want to build a 2nd one. \n");
        // nondefdecl = isSgTemplateClassDeclaration(mysymbol->get_declaration());
           SgClassType* classType = isSgClassType(mysymbol->get_type());
@@ -13940,7 +13940,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
         }
 #endif
 
-  // DQ (6/3/2019): The case of outlining to a seperate file will have transformations
+  // DQ (6/3/2019): The case of outlining to a separate file will have transformations
   // that this checking will fail on because it is for the typical case of checking the
   // AST for transformations after construction of the AST from an typical input file.
      EDG_ROSE_Translation::suppress_detection_of_transformations = true;
@@ -13988,7 +13988,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
   // DQ (3/6/2014): For Java, this function can only be called AFTER the SgFile has been added to the file list in the SgProject.
   // For C/C++ it does not appear to matter if the call is made before the SgFile has been added to the file list in the SgProject.
-  // DQ (6/14/2013): Since we seperated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
+  // DQ (6/14/2013): Since we separated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
      result->runFrontend(nextErrorCode);
 
 #if 0
@@ -14223,7 +14223,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
 #error "DEAD CODE!"
 
-       // Need seperate list to avoid iterator invalidation.
+       // Need separate list to avoid iterator invalidation.
        // for (SgDeclarationStatementPtrList::iterator i = removeList.begin(); i != removeList.end(); i++)
           for (std::vector<SgDeclarationStatementPtrList::iterator>::iterator i = removeList.begin(); i != removeList.end(); i++)
              {
@@ -14471,7 +14471,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
                if (temp_file->getFileName() == file->getFileName())
                   {
                  // Then the temp_file is the original version of the file we are building for a second time
-                 // (usually as a part of the outlining to a seperate file).  and we need to mark at least the
+                 // (usually as a part of the outlining to a separate file).  and we need to mark at least the
                  // unparsing headr file optimizations to be the same across thje two file.
 
                  // DQ (6/12/2021): The header_file_unparsing_optimization is now a static data member and the
@@ -16991,7 +16991,7 @@ SageBuilder::fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* insertio
 #if DEBUG_FUNCTION_DECLARATION
                     printf ("Warning: case V_SgFunctionDeclaration: functionSymbol_original not in target file \n");
 #endif
-                 // DQ (3/13/2014): Handle the case of a member function seperately (I think this can't appear in Java, only in C++).
+                 // DQ (3/13/2014): Handle the case of a member function separately (I think this can't appear in Java, only in C++).
                  // ROSE_ASSERT(isSgMemberFunctionSymbol(symbol_copy) == NULL);
                     ROSE_ASSERT(isSgMemberFunctionSymbol(symbol_original) == NULL);
 
@@ -17532,7 +17532,7 @@ SageBuilder::fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* insertio
 #if 0
                          printf ("Error: The associated variable = %s should have been found in a parent scope of the target AST \n",variableSymbol_copy->get_name().str());
 #endif
-                      // We need to look into the scope of the block used to define the statments as seperate snippets (same issue as for functions).
+                      // We need to look into the scope of the block used to define the statments as separate snippets (same issue as for functions).
 
                       // If could be that the symbol is in the local scope of the snippet AST.
                          SgStatement* enclosingStatement_original = TransformationSupport::getStatement(varRefExp_original);

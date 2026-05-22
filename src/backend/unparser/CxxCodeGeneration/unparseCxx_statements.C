@@ -992,7 +992,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      ROSE_ABORT();
 #endif
 
-  // DQ (8/9/2013): refactored to support additional refactoring to seperate out code to unparse SgInitializedName.
+  // DQ (8/9/2013): refactored to support additional refactoring to separate out code to unparse SgInitializedName.
      bool oldStyleDefinition = funcdecl_stmt->get_oldStyleDefinition();
 
 #if 0
@@ -3043,7 +3043,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                   }
                  else
                   {
-                 // DQ (8/2/2012): Else it was compiler generated and we have to explicitly ask if we have seperately determined that it should be output.
+                 // DQ (8/2/2012): Else it was compiler generated and we have to explicitly ask if we have separately determined that it should be output.
                  // We only look at the isOutputInCodeGeneration() if this is a compiler generated function.
                     if ( templateInstantiationFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true )
                        {
@@ -6403,7 +6403,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           if (templateInstantiation != NULL)
              {
 #if 0
-               printf ("In unparseClassDeclStmt(): name used must be reset to exclude template arguments (since they must be output seperately): nm = %s \n",nm.str());
+               printf ("In unparseClassDeclStmt(): name used must be reset to exclude template arguments (since they must be output separately): nm = %s \n",nm.str());
                printf ("   --- templateInstantiation->get_templateName() = %s \n",templateInstantiation->get_templateName().str());
                printf ("   --- templateInstantiation->get_name()         = %s \n",templateInstantiation->get_name().str());
 #endif
