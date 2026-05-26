@@ -334,6 +334,12 @@ State::writeLocal(uint8_t index, const SValuePtr &value){
 }
 
 SValue::Ptr
+State::peekOperand() {
+    ASSERT_not_null(frameState());
+    return frameState()->peekOperand();
+}
+
+SValue::Ptr
 State::popOperand() {
     ASSERT_not_null(frameState());
     return frameState()->popOperand();

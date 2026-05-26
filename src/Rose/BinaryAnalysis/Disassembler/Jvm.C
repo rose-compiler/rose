@@ -612,7 +612,8 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, Address start, AddressSet*)
         va += appendOperand<uint8_t>(map, va, chars, operands); // atype
         break;
       case opcode::anewarray: // 0xbd (189)
-        va += appendOperand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::arraylength: // 0xbe (190)
         break;

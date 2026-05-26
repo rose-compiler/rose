@@ -5,6 +5,8 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/StringUtility/NumberToString.h>
 
+#include <iostream>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
@@ -21,7 +23,7 @@ FrameState::FrameState() : MemoryState() {
 }
 
 FrameState::FrameState(const SValue::Ptr &valProtoval)
-  : MemoryState(valProtoval, valProtoval), locals_(MAX_LOCALS) {
+    : MemoryState(valProtoval, valProtoval), locals_{} {
     purpose(AddressSpace::Purpose::FRAMES);
     name("frame");
 }
@@ -78,27 +80,36 @@ FrameState::writeMemory(const SValue::Ptr &address_, const SValue::Ptr &value_, 
 }
 
 SValue::Ptr
-FrameState::readLocal(uint8_t index) {
-     ASSERT_require(index < locals_.size());
-     return locals_[index]; // may be null if not yet initialized
+FrameState::readLocal(uint8_t index) const {
+    auto found = locals_.find(index);
+    if (found != locals_.end()) {
+        return found->second;
+    }
+    return {};
 }
 
 void
-FrameState::writeLocal(uint8_t index, const SValuePtr &value) {
-    ASSERT_require(index < locals_.size());
-    locals_[index] = value;
+FrameState::writeLocal(uint8_t index, const SValuePtr &sval) {
+    locals_[index] = sval;
 }
 
-void
-FrameState::pushOperand(const SValuePtr &value) {
-    stack_.push_back(value);
+SValue::Ptr
+FrameState::peekOperand() {
+    ASSERT_require2(stack_.size() >= 1, "ERROR: operand stack is empty\n");
+    return stack_.back();
 }
 
 SValue::Ptr
 FrameState::popOperand() {
+    ASSERT_require2(stack_.size() >= 1, "ERROR: operand stack is empty\n");
     auto val = stack_.back();  // get value
-    stack_.pop_back();         // remove it
+    stack_.pop_back();          // remove it
     return val;
+}
+
+void
+FrameState::pushOperand(const SValuePtr &sval) {
+    stack_.push_back(sval);
 }
 
 bool
@@ -123,23 +134,71 @@ FrameState::print(std::ostream &out, Formatter &formatter_) const {
     }
 
     //TODO::use formatter
-    for (auto val : stack_) {
-        if (val != nullptr) {
-            out << "    " << *val << "\n";
+    for (auto sval : stack_) {
+        if (sval != nullptr) {
+            out << "    ";
+            if (sval->kind() == JvmValueKind::Integer) {
+                out << *sval << ":Integer";
+            }
+            else if (sval->kind() == JvmValueKind::Long) {
+                out << *sval << ":Long";
+            }
+            else if (sval->kind() == JvmValueKind::Float) {
+                out << *sval << ":Float";
+            }
+            else if (sval->kind() == JvmValueKind::Double) {
+                out << *sval << ":Double";
+            }
+            else if (sval->kind() == JvmValueKind::ArrayReference) {
+                SValuePtr count = sval->arrayLength();
+                out << "ArrayReference[" << *count << "]";
+                if (sval->hasTypeDescriptor()) {
+                    out << ":" << sval->typeDescriptor();
+                }
+                out << "\n";
+            }
+            out << "\n";
         } else {
             out << "    NULL\n";
         }
     }
 
     bool first{true};
-    for (size_t i = 0; i < locals_.size(); ++i) {
-        auto val = locals_[i];
-        if (val != nullptr) {
-            if (first) {
-                out << "  locals:\n";
-                first = false;
+
+//TODO:Print and test category-2 types
+#if 0
+local[1] = Long value
+local[2] = unusable/continuation slot
+#endif
+
+    for (const auto &[idx, sval] : locals_) {
+        if (first) {
+            out << "  locals:\n";
+            first = false;
+        }
+        if (sval != nullptr) {
+            out << "    " << idx << ": ";
+            if (sval->kind() == JvmValueKind::Integer) {
+                out << *sval << ":Integer";
             }
-            out << "    " << i << ": " << *val << "\n";
+            else if (sval->kind() == JvmValueKind::Long) {
+                out << *sval << ":Long";
+            }
+            else if (sval->kind() == JvmValueKind::Float) {
+                out << *sval << ":Float";
+            }
+            else if (sval->kind() == JvmValueKind::Double) {
+                out << *sval << ":Double";
+            }
+            else if (sval->kind() == JvmValueKind::ArrayReference) {
+                SValuePtr count = sval->arrayLength();
+                out << "ArrayReference[" << *count << "]";
+                if (sval->hasTypeDescriptor()) {
+                    out << ":" << sval->typeDescriptor();
+                }
+                out << "\n";
+            }
+            out << "\n";
         }
     }
 }

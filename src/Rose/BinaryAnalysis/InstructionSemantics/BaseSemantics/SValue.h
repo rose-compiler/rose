@@ -21,6 +21,36 @@ namespace InstructionSemantics {
 namespace BaseSemantics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      JVM Semantic Values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** JVM type system
+Category 1:
+  int
+  float
+  reference
+  returnAddress
+
+Category 2:
+  long
+  double
+*/
+
+/** Kind of an SValue for emulating JVM instructions. */
+enum class JvmValueKind {
+    Unknown,
+    Integer,
+    Long,
+    Float,
+    Double,
+    ArrayReference,
+    ObjectReference,
+    ReturnAddress,
+    Invalid
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Semantic Values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -45,6 +75,9 @@ public:
 
 protected:
     size_t width;                               /** Width of the value in bits. Typically (not always) a power of two. */
+    JvmValueKind kind_ = JvmValueKind::Unknown; /** Kind of the value type. */
+    SValuePtr arrayLength_;                     /** Symbolic length of the array if an ArrayReference. */
+    std::string typeDescriptor_;   /** Description of the type if a Reference, empty means no descriptor. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -55,6 +88,9 @@ private:
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(width);
+        s & BOOST_SERIALIZATION_NVP(kind_);
+        s & BOOST_SERIALIZATION_NVP(arrayLength_);
+        s & BOOST_SERIALIZATION_NVP(typeDescriptor_);
     }
 #endif
     
@@ -172,6 +208,20 @@ public:
      *
      * This function should not be overridden by subclasses. Instead, it calls @ref get_width to do its work. */
     size_t nBits() const /*final*/;
+
+    /** Property: value kind. */
+    virtual JvmValueKind kind() const;
+    virtual void kind(JvmValueKind k);
+
+    /** Property: array length. */
+    virtual void arrayLength(const SValuePtr &sval);
+    virtual SValuePtr arrayLength() const;
+    virtual bool hasArrayLength() const;
+
+    /** Property: type descriptor. */
+    virtual void typeDescriptor(const std::string &s);
+    virtual const std::string& typeDescriptor() const;
+    virtual bool hasTypeDescriptor() const;
 
     /** Determines whether a value is a data-flow bottom.
      *

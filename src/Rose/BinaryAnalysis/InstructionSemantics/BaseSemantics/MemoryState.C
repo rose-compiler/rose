@@ -86,28 +86,34 @@ MemoryState::set_byteOrder(ByteOrder::Endianness bo) {
 }
 
 SValuePtr
-MemoryState::readLocal(uint8_t index) {
+MemoryState::readLocal(uint8_t index) const {
     (void) index;
-    ASSERT_require2(false, "No implementation of not base class MemoryState::readLocal\n");
+    ASSERT_require2(false, "No implementation for MemoryState::readLocal\n");
     return {};
 }
 
 void
 MemoryState::writeLocal(uint8_t index, const SValuePtr &value){
     (void) index;  (void) value;
-    ASSERT_require2(false, "No implementation of not base class MemoryState::writeLocal\n");
+    ASSERT_require2(false, "No implementation for MemoryState::writeLocal\n");
+}
+
+SValue::Ptr
+MemoryState::peekOperand() {
+    ASSERT_require2(false, "No implementation for MemoryState::peekOperand\n");
+    return {};
+}
+
+SValue::Ptr
+MemoryState::popOperand() {
+    ASSERT_require2(false, "No implementation for MemoryState::popOperand\n");
+    return {};
 }
 
 void
 MemoryState::pushOperand(const SValuePtr &value) {
     (void) value;
-    ASSERT_require2(false, "No implementation of not base class MemoryState::pushOperand\n");
-}
-
-SValue::Ptr
-MemoryState::popOperand() {
-    ASSERT_require2(false, "No implementation of not base class MemoryState::popOperand\n");
-    return {};
+    ASSERT_require2(false, "No implementation for MemoryState::pushOperand\n");
 }
 
 } // namespace

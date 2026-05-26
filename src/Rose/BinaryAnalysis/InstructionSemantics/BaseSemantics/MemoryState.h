@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/AddressSpace.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 
@@ -169,18 +170,23 @@ public:
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
                              RiscOperators *addrOps, RiscOperators *valOps) = 0;
 
-    virtual SValuePtr readLocal(uint8_t index);
+    virtual SValuePtr readLocal(uint8_t index) const;
     virtual void writeLocal(uint8_t index, const SValuePtr &value);
 
-    /** Push an operand value to a frame.
+    /** Peek at an operand value.
      *
      */
-    virtual void pushOperand(const SValuePtr &value);
+    virtual SValuePtr peekOperand();
 
-    /** Pop an operand value from a frame.
+    /** Pop an operand value.
      *
      */
     virtual SValuePtr popOperand();
+
+    /** Push an operand value.
+     *
+     */
+    virtual void pushOperand(const SValuePtr &value);
 };
 
 } // namespace

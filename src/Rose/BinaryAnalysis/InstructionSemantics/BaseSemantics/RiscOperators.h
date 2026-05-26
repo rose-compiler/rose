@@ -904,6 +904,14 @@ public:
     // TODO: document following methods
     virtual void writeLocal(uint8_t index, const SValuePtr &value);
 
+    /** Peeks at a value from the Frame Operand Stack.
+     *
+     *  The base implementation simply delegates to the current semantic State, which probably delegates to a frame state,
+     *  but subclasses are welcome to override this behavior at any level.
+     *
+     */
+    virtual SValuePtr peekOperand();
+
     /** Pops a value from the Frame Operand Stack.
      *
      *  The base implementation simply delegates to the current semantic State, which probably delegates to a frame state,

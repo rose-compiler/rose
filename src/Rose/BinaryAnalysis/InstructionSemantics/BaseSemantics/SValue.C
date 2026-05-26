@@ -58,6 +58,46 @@ SValue::nBits() const {
     return get_width();
 }
 
+JvmValueKind
+SValue::kind() const {
+    return kind_;
+}
+
+void
+SValue::kind(JvmValueKind k) {
+    kind_ = k;
+}
+
+const std::string&
+SValue::typeDescriptor() const {
+    return typeDescriptor_;
+}
+
+void
+SValue::typeDescriptor(const std::string &s) {
+    typeDescriptor_ = s;
+}
+
+bool
+SValue::hasTypeDescriptor() const {
+    return typeDescriptor_.size() > 0;
+}
+
+SValuePtr
+SValue::arrayLength() const {
+    return arrayLength_;
+}
+
+void
+SValue::arrayLength(const SValuePtr &sval) {
+    arrayLength_ = sval;
+}
+
+bool
+SValue::hasArrayLength() const {
+    return arrayLength_ != nullptr;
+}
+
 SValue::WithFormatter
 SValue::with_format(Formatter &fmt) {
     return WithFormatter(SValuePtr(this), fmt);

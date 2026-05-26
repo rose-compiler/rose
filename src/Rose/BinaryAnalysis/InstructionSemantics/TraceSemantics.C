@@ -150,12 +150,12 @@ RiscOperators::onlyInstructions(const bool b) {
 }
 
 bool
-RiscOperators::shouldPrint() const {
+RiscOperators::shouldPrint() {
     return shouldPrint(currentInstruction());
 }
 
 bool
-RiscOperators::shouldPrint(SgAsmInstruction *insn) const {
+RiscOperators::shouldPrint(SgAsmInstruction *insn) {
     return stream_ && (!onlyInstructions_ || insn);
 }
 
@@ -1457,6 +1457,20 @@ RiscOperators::writeMemory(RegisterDescriptor a, const BaseSemantics::SValue::Pt
     try {
         subdomain_->writeMemory(a, b, c, d);
         after();
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
+BaseSemantics::SValue::Ptr
+RiscOperators::peekOperand() {
+    before("peekOperand");
+    try {
+        return after(subdomain_->peekOperand());
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;

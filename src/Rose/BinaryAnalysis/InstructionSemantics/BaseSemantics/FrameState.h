@@ -67,7 +67,8 @@ public:
 
 private:
     std::vector<SValuePtr> stack_; // operand stack for the frame
-    std::vector<SValuePtr> locals_; // local variables array for the frame
+    std::map<size_t, SValuePtr> locals_; // local variables for the frame
+    std::set<size_t> invalidLocalSlots_; // invalid value in locals_ (used for longs and doubles as they take up two slots)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -122,15 +123,15 @@ public:
     virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
                                  RiscOperators *addrOps, RiscOperators *valOps) override;
 
-    SValuePtr readLocal(uint8_t index) override;
+    SValuePtr readLocal(uint8_t index) const override;
     void writeLocal(uint8_t index, const SValuePtr &value) override;
 
+    SValuePtr peekOperand() override;
     SValuePtr popOperand() override;
     void pushOperand(const SValuePtr &value) override;
 
 public:
     virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const override;
-
     virtual void print(std::ostream&, Formatter&) const override;
 };
     

@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 #include <Combinatorics.h>                              // rose
@@ -321,15 +322,20 @@ public:
     virtual SValuePtr readLocal(uint8_t index);
     virtual void writeLocal(uint8_t index, const SValuePtr &value);
 
-    /** Pop an operand value from the frame.
+    /** Peek at an operand value.
      *
-     *  Calls @ref popOperand on the address space returned by @ref frameState, which must be non-null. */
-    virtual SValuePtr popOperand();
+     *  Calls @ref peekOperand on the address space returned by @ref frameState, which must be non-null. */
+    virtual SValuePtr peekOperand();
 
-    /** Push an operand value to a frame.
+    /** Push an operand value.
      *
      *  Calls @ref pushOperand on the address space returned by @ref frameState, which must be non-null. */
     virtual void pushOperand(const SValuePtr &value);
+
+    /** Pop an operand value.
+     *
+     *  Calls @ref popOperand on the address space returned by @ref frameState, which must be non-null. */
+    virtual SValuePtr popOperand();
 
     /** Read a value from a register.
      *

@@ -576,6 +576,12 @@ RiscOperators::writeLocal(uint8_t index, const SValuePtr &value) {
 }
 
 SValue::Ptr
+RiscOperators::peekOperand() {
+    ASSERT_not_null(currentState());
+    return currentState()->peekOperand();
+}
+
+SValue::Ptr
 RiscOperators::popOperand() {
     ASSERT_not_null(currentState());
     return currentState()->popOperand();

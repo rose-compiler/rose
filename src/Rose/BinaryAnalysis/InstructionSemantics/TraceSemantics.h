@@ -225,8 +225,8 @@ protected:
                                                 const std::string &what="result");
     std::string register_name(RegisterDescriptor);
 
-    bool shouldPrint() const;
-    bool shouldPrint(SgAsmInstruction*) const;
+    bool shouldPrint();
+    bool shouldPrint(SgAsmInstruction*);
 
     void before(const std::string&);
     void before(const std::string&, RegisterDescriptor);
@@ -240,6 +240,7 @@ protected:
     void before(const std::string&, size_t);
     void before(const std::string&, size_t, uint64_t);
     void before(const std::string&, const BaseSemantics::SValuePtr&);
+
     void before(const std::string&, const BaseSemantics::SValuePtr&, size_t);
     void before(const std::string&, const BaseSemantics::SValuePtr&, size_t, size_t);
     void before(const std::string&, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
@@ -364,6 +365,7 @@ public:
     virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) override;
 
+    virtual BaseSemantics::SValuePtr peekOperand() override;
     virtual BaseSemantics::SValuePtr popOperand() override;
     virtual void pushOperand(const BaseSemantics::SValue::Ptr &a) override;
 };
