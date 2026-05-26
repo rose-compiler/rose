@@ -13,7 +13,7 @@ workflow:
           variables:
               PIPE_TYPE: "weekly-merge"
               PIPE_NAME: "Weekly Merge"
-        - if: $CI_COMMIT_BRANCH == "weekly-squash"
+        - if: $CI_COMMIT_BRANCH == "weekly"
           when: always
           variables:
               PIPE_TYPE: "release"
@@ -296,9 +296,7 @@ Failure-Cleanup:
 
 EDG-Binaries:
     rules:
-        - if: $PIPE_TYPE == "develop" && $FULL_TEST == "true" && $CI_COMMIT_BRANCH == "nightly"
-          when: on_success
-        - if: $PIPE_TYPE == "release" && $CI_COMMIT_BRANCH == "weekly-squash"
+        - if: $PIPE_TYPE == "release" && $CI_COMMIT_BRANCH == "weekly"
           when: on_success
         - when: never
     stage: EDG
@@ -319,7 +317,7 @@ EDG-Binaries:
     script:
         - ./$TEST_DIRECTORY/edg_launcher.sh $COMPILER
 
-#job to create the weekly commit and push to weekly-squash. The release tests will then run.
+#job to create the weekly commit and push to weekly. The release tests will then run.
 Push-Weekly:
     rules:
         - if: $PIPE_TYPE == "weekly-merge"
@@ -339,7 +337,7 @@ Push-Weekly:
 #jobs for release pipeline --------------------------------------------------------------------------------------------------------------------------------------
 .release-base:
     rules:
-        - if: $PIPE_TYPE == "release" && $CI_COMMIT_BRANCH == "weekly-squash"
+        - if: $PIPE_TYPE == "release" && $CI_COMMIT_BRANCH == "weekly"
           when: always
         - when: never
     stage: Release-Tests
