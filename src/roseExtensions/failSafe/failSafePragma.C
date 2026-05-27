@@ -538,7 +538,7 @@ void FailSafe::parse_directives_to_attributes(SgSourceFile* sageFilePtr)
   //TODO check language extension flag for turning on this support
   //if (sageFilePtr->get_failsafe() == false) return
 
-  if (sageFilePtr->get_Fortran_only()||sageFilePtr->get_F77_only()||sageFilePtr->get_F90_only()|
+  if (sageFilePtr->get_Fortran_only()||sageFilePtr->get_F77_only()||sageFilePtr->get_F90_only() ||
     sageFilePtr->get_F95_only() || sageFilePtr->get_F2003_only())
   {
      //TODO handle Fortran later
