@@ -1661,22 +1661,35 @@ IsAliasingDecl( const AstNodePtr& _s, AstList* vars, AstList* aliases)
       SgInitializedNamePtrList& names = isSgVariableDeclaration(s)->get_variables();
       for ( SgInitializedNamePtrList::iterator p = names.begin(); 
             p != names.end(); ++p) {
-         has_alias = has_alias || IsAliasingDecl(*p, vars, aliases);
+         if (IsAliasingDecl(*p, vars, aliases))
+            has_alias = true;
       }
      return has_alias;
      } 
    case V_SgInitializedName: {
      auto* var = isSgInitializedName(s);
+     SgExpression* init = var->get_initializer();
+     if (init == 0) return false;
+     if (init->variantT() == V_SgAssignInitializer) {
+        init = isSgAssignInitializer(init)->get_operand();
+     }
      switch (var->get_type()->variantT()) {
-      case V_SgPointerType:
-      case V_SgReferenceType: {
-         SgExpression* def = var->get_initializer();
-         if (def != 0 && IsMemoryAccess(def, aliases)) {
+      case V_SgPointerType: {
+         if (IsAddressOfOp(init)) {
            if (vars != 0) vars->push_back(var);
+           if (aliases != 0) aliases->push_back(init);
            return true;
          }
-        }
-        ROSE_FALLTHROUGH;
+         return false;
+       }
+      case V_SgReferenceType: {
+         if (IsMemoryAccess(init)) {
+           if (vars != 0) vars->push_back(var);
+           if (aliases != 0) aliases->push_back(init);
+           return true;
+         }
+         return false;
+       }
       default:
          return false;
      }
@@ -2395,11 +2408,18 @@ AstInterface::GetArrayType(const AstNodeType& base, const AstNodeList& index)
 }
 
 bool AstInterface::
-IsAddressOfOp( const AstNodePtr& _s)
+IsAddressOfOp( const AstNodePtr& _s, AstNodePtr* ref)
 {  
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   if (s == 0) return false;
-  return (s->variantT() == V_SgAddressOfOp);  
+  if (s->variantT() == V_SgAssignInitializer) {
+    s = isSgAssignInitializer(s)->get_operand();
+  }
+  if (s->variantT() == V_SgAddressOfOp) {
+      if (ref != 0) *ref=isSgAddressOfOp(s)->get_operand();
+      return true;
+  }  
+  return false;
 }
 
 
@@ -2481,17 +2501,28 @@ IsMemoryAccess( const AstNodePtr& _s, AstNodeList* subrefs)
   switch (s->variantT()) {
   case V_SgConstructorInitializer: return false;
   case V_SgAssignInitializer:
-      return IsMemoryAccess(isSgAssignInitializer(s)->get_operand(), subrefs);
-  case V_SgAddressOfOp:
+     if (subrefs != 0) {
+        IsMemoryAccess(isSgAssignInitializer(s)->get_operand(), subrefs);
+     }
+     return false;
   case V_SgCastExp:
       return IsMemoryAccess(isSgUnaryOp(s)->get_operand(), subrefs);
+  case V_SgAddressOfOp:
+      if (subrefs != 0) {
+          IsMemoryAccess(isSgUnaryOp(s)->get_operand(), subrefs);
+      }
+      return false;
   case V_SgCommaOpExp: {
      auto* e1 = isSgCommaOpExp(s)->get_lhs_operand(), *e2 = isSgCommaOpExp(s)->get_rhs_operand();
-     return IsMemoryAccess(e1, subrefs) && IsMemoryAccess(e2, subrefs);
+     IsMemoryAccess(e1, subrefs);
+     IsMemoryAccess(e2, subrefs);
+     return false;
     }
   case V_SgConditionalExp: {
      auto* e1 = isSgConditionalExp(s)->get_true_exp(), *e2 = isSgConditionalExp(s)->get_false_exp();
-     return IsMemoryAccess(e1, subrefs) && IsMemoryAccess(e2, subrefs);
+     IsMemoryAccess(e1, subrefs);
+     IsMemoryAccess(e2, subrefs);
+     return false;
     }
   case V_SgPointerDerefExp:
       if (subrefs != 0) { subrefs->push_back(isSgUnaryOp(s)->get_operand()); }
@@ -3292,10 +3323,13 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
           for (AstTypeList::const_iterator p = paramtypes->begin(); 
              p != paramtypes->end() && p1 != args->end(); ++p,++p1) {
              SgType* t = AstNodeTypeImpl(*p).get_ptr();
-             if (t != 0 && t->variantT() == V_SgReferenceType) {
+             AstNodePtr ref = *p1;
+             if (t != 0 && 
+                 ((t->variantT() == V_SgReferenceType)  || 
+                      (t->variantT() == V_SgPointerType && IsAddressOfOp(*p1, &ref)))) {
                 auto* modifier = isSgConstVolatileModifier(t->get_modifiers());
                 if (modifier == 0 || !modifier->isConst()) {
-                   outargs->push_back(*p1); 
+                   outargs->push_back(ref); 
                 }
              }
           }

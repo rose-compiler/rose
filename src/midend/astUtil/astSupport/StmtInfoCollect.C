@@ -47,19 +47,16 @@ AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc, AstNodePtr* cal
 void StmtInfoCollect::
 AppendFuncCallWrite( AstInterface& fa, const AstNodePtr& fc)
 {
-  AstInterface::AstNodeList args;
-  if (!fa.IsFunctionCall(fc, 0, 0, &args)) {
+  DebugLocalInfoCollect([&fc]() { return "Append Function Call write " + AstInterface::AstToString(fc); } );
+  AstInterface::AstNodeList outargs;
+  if (!fa.IsFunctionCall(fc, 0, 0, &outargs)) {
+      DebugLocalInfoCollect([&fc]() { return "quiting b/c Not function call: " + AstInterface::AstToString(fc); } );
       // We can't figure out the arguments right now. Skip. It's OK b/c an unknown will also be returned.
       return;
   }
-  for (AstInterface::AstNodeList::const_iterator p2 = args.begin();
-       p2 != args.end(); ++p2) {
-    AstNodePtr c = AstNodePtrImpl(*p2).get_ptr();
-    if (c == AstNodePtr())
-       continue;
-    if (fa.IsMemoryAccess(c)) {
-       AppendModLoc( fa, c);
-    }
+  for (const AstNodePtr& c : outargs) {
+    DebugLocalInfoCollect([&c]() { return "Function write Argument?: " + AstInterface::AstToString(c); } );
+    AppendModLoc( fa, c);
   }
 }
 
@@ -190,20 +187,15 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
          AppendFuncCall(fa, AstNodePtrImpl(s).get_ptr());
          Skip(s);
    } 
-     // Jim Leek 2023/02/07  Added IsSgAddressOfOp because I want it
-     // to behave the same as a memory access, although it isn't one exactly
-    else if ( fa.IsMemoryAccess(s, &vars) || fa.IsAddressOfOp(s)) {
+    else if (fa.IsAddressOfOp(s, &lhs)) {
+       SkipOnly(lhs);
+    }
+    else if ( fa.IsMemoryAccess(s, &vars)) {
         DebugLocalInfoCollect([&s](){ return " append read set " + AstInterface::AstToString(s); });
         if (!fa.IsSameVarRef(s, fa.GetParent(s))) { /*QY: skip s if it refers to the same thing as parent*/
           ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
           if (mp == 0 || mp->find(s) == mp->end() || (*mp)[s].readlhs) {
-              if (!vars.empty()) {
-                 for (const auto& v : vars) {
-                   AppendReadLoc(fa, v);
-                 }
-              }
-              else
-                 AppendReadLoc(fa, s);
+              AppendReadLoc(fa, s);
           }
         }
         AstNodeList arglist;
@@ -218,13 +210,21 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
    }
  }
  else {
+       AstInterface::AstNodeList vars;
        DebugLocalInfoCollect([&s](){ return "postvisiting cur node " + AstInterface::AstToString(s); });
        if (modstack.size() && modstack.back().root == AstNodePtrImpl(s).get_ptr()) {
           const ModMap &modmap = modstack.back().modmap;
           for (typename ModMap::const_iterator p = modmap.begin();
                p != modmap.end(); ++p) {
-              std::pair<const AstNodePtr,ModRecord> c = *p;
-             AppendModLoc( fa, c.first, c.second.rhs);
+             std::pair<const AstNodePtr,ModRecord> c = *p;
+             if (!fa.IsMemoryAccess(c.first, &vars)  && !vars.empty()) {
+                 // Here s is not a single reference but is a group of memory references.
+                 for (const auto& v : vars) {
+                   AppendModLoc(fa, v);
+                 }
+             } else {
+               AppendModLoc( fa, c.first, c.second.rhs);
+             }
           }
           modstack.pop_back();
        }
@@ -326,7 +326,7 @@ class CollectModRefWrap : public CollectReadRefWrap
 void StmtSideEffectCollect::
 AppendAliasDecl(AstInterface& /* fa */, const AstNodePtr& variable, const AstNodePtr& var_init)
     {
-     DebugLocalInfoCollect([&variable,&var_init](){ return "appending var decl " + AstInterface::AstToString(variable) + " = " + AstInterface::AstToString(var_init); });
+     DebugLocalInfoCollect([&variable,&var_init](){ return "appending alias decl " + AstInterface::AstToString(variable) + " = " + AstInterface::AstToString(var_init); });
      AstNodeType vartype;
      if(curstmt == 0) return;
      if (alias_collect != 0) {

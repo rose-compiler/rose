@@ -337,7 +337,7 @@ public:
   bool IsIOInputStmt( const AstNodePtr& s, AstList* varlist = 0);
   bool IsIOOutputStmt( const AstNodePtr& s, AstList* explist = 0);
 
-  bool IsAddressOfOp( const AstNodePtr& _s);
+  static bool IsAddressOfOp( const AstNodePtr& _s, AstNodePtr* ref = 0);
   // returns if s references memory stores; add the stores into subrefs if the pointer is given.
   static bool IsMemoryAccess( const AstNodePtr& s, AstNodeList* subrefs = 0);
   static bool IsMemoryAllocation( const AstNodePtr& s, AstNodeType* allocType = 0, AstNodePtr* init = 0);

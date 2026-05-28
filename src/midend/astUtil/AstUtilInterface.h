@@ -54,7 +54,7 @@ namespace AstUtilInterface{
         case EnumVariant::Alias: result.push_back("modify"); result.push_back("alias"); break;
         case EnumVariant::Allocate: result.push_back("modify"); result.push_back("allocate"); break;
         case EnumVariant::Free: result.push_back("modify"); result.push_back("free"); break;
-        case EnumVariant::Modify: result.push_back("modify"); result.push_back("assign"); break;
+        case EnumVariant::Modify: result.push_back("modify"); break;
         case EnumVariant::Call: result.push_back("call"); break;
         case EnumVariant::Read: result.push_back("read"); break;
         case EnumVariant::Parameter: result.push_back("read"); result.push_back("parameter"); break;
