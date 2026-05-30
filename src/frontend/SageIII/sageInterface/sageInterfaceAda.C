@@ -34,12 +34,6 @@ namespace
     return ::si::Ada::isAttribute(attr, attrname);
   }
 
-  inline
-  bool isClassAttribute(const SgAdaAttributeExp* attr)
-  {
-    return attr && isClassAttribute(*attr);
-  }
-
   bool isRangeAttribute(const SgAdaAttributeExp& attr)
   {
     const std::string attrname = "range";

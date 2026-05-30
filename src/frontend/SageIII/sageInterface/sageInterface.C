@@ -20455,7 +20455,6 @@ SageInterface::deleteAST ( SgNode* n )
                 SgTemplateDeclaration * template_defining = nullptr;
                 SgMemberFunctionDeclaration * memFunc = nullptr;
                 SgTypedefDeclaration * typedef_defining = nullptr;
-                SgFunctionDeclaration * function_decl = nullptr;
                 SgTemplateInstantiationDecl * templateInstantiate_defining = nullptr;
                 DeletedStatementContainer& deletedStatements;
 
@@ -20499,8 +20498,8 @@ SageInterface::deleteAST ( SgNode* n )
                 : template_defining(decl), deletedStatements(deletedStmt)
                 {}
 
-                ClassicVisitor(SgFunctionDeclaration* decl, DeletedStatementContainer& deletedStmt)
-                : function_decl(decl), deletedStatements(deletedStmt)
+                ClassicVisitor(SgFunctionDeclaration* /*decl*/, DeletedStatementContainer& deletedStmt)
+                    : /*function_decl(decl),*/ deletedStatements(deletedStmt)
                 {}
 
                 ClassicVisitor(SgMemberFunctionDeclaration* decl, DeletedStatementContainer& deletedStmt)

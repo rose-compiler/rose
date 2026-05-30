@@ -137,19 +137,19 @@ FrameState::print(std::ostream &out, Formatter &formatter_) const {
     for (auto sval : stack_) {
         if (sval != nullptr) {
             out << "    ";
-            if (sval->kind() == JvmValueKind::Integer) {
+            if (sval->kind() == ValueKind::Integer32) {
                 out << *sval << ":Integer";
             }
-            else if (sval->kind() == JvmValueKind::Long) {
+            else if (sval->kind() == ValueKind::Integer64) {
                 out << *sval << ":Long";
             }
-            else if (sval->kind() == JvmValueKind::Float) {
+            else if (sval->kind() == ValueKind::Float32) {
                 out << *sval << ":Float";
             }
-            else if (sval->kind() == JvmValueKind::Double) {
+            else if (sval->kind() == ValueKind::Float64) {
                 out << *sval << ":Double";
             }
-            else if (sval->kind() == JvmValueKind::ArrayReference) {
+            else if (sval->kind() == ValueKind::ArrayReference) {
                 SValuePtr count = sval->arrayLength();
                 out << "ArrayReference[" << *count << "]";
                 if (sval->hasTypeDescriptor()) {
@@ -171,26 +171,29 @@ local[1] = Long value
 local[2] = unusable/continuation slot
 #endif
 
-    for (const auto &[idx, sval] : locals_) {
+    for (const auto &entry : locals_) {
+        const auto &idx = entry.first;
+        const auto &sval = entry.second;
+
         if (first) {
             out << "  locals:\n";
             first = false;
         }
         if (sval != nullptr) {
             out << "    " << idx << ": ";
-            if (sval->kind() == JvmValueKind::Integer) {
+            if (sval->kind() == ValueKind::Integer32) {
                 out << *sval << ":Integer";
             }
-            else if (sval->kind() == JvmValueKind::Long) {
+            else if (sval->kind() == ValueKind::Integer64) {
                 out << *sval << ":Long";
             }
-            else if (sval->kind() == JvmValueKind::Float) {
+            else if (sval->kind() == ValueKind::Float32) {
                 out << *sval << ":Float";
             }
-            else if (sval->kind() == JvmValueKind::Double) {
+            else if (sval->kind() == ValueKind::Float64) {
                 out << *sval << ":Double";
             }
-            else if (sval->kind() == JvmValueKind::ArrayReference) {
+            else if (sval->kind() == ValueKind::ArrayReference) {
                 SValuePtr count = sval->arrayLength();
                 out << "ArrayReference[" << *count << "]";
                 if (sval->hasTypeDescriptor()) {

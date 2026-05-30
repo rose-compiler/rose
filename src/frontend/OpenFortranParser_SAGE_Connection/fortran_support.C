@@ -23,24 +23,18 @@ Token_t *create_token(int line, int col, int type, const char *text)
   {
          Token_t *tmp_token = NULL;
 
-      // DQ (11/5/2016): Can't use C++ "delete" in token.c file from OFP jar file since it is compiled using a C compiler (so use malloc here).
-      // DQ (11/5/2016): Updated the token.c file in the OFP jar file to fix this bug and make the new (here) consistant with the delete (there).
-      // DQ (11/4/2016): Since in the OFP this is deleted using free (token.c in the build tree), we want 
-      // to allocate it using the associated C style malloc (bug caught using address sanitizer).
-      // DQ (9/11/2011): We want to use the C++ new and delete memory allocation 
-      // and not mix C's malloc/free with C++'s new/delete mechanisms.
-      // tmp_token = (Token_t*) malloc(sizeof(Token_t));
-      // tmp_token = new Token_t();
          tmp_token = (Token_t*) malloc(sizeof(Token_t));
          ROSE_ASSERT(tmp_token != NULL);
          tmp_token->line = line;
          tmp_token->col = col;
          tmp_token->type = type;
- /* Make a copy of our own to make sure it isn't freed on us.  */
-    if (text != NULL)
-         tmp_token->text = strdup(text);
-      else
-         tmp_token->text = NULL;
+
+         /* Make a copy of our own to make sure it isn't freed on us.  */
+         if (text != nullptr) {
+             tmp_token->text = strdup(text);
+         } else {
+             tmp_token->text = nullptr;
+         }
 
          return tmp_token;
   }
@@ -49,11 +43,7 @@ Token_t *create_token(int line, int col, int type, const char *text)
 string
 getCurrentFilename()
    {
-  // DQ (12/18/2008): Added comment:  This function supports the Fortran "include" 
-  // mechanism and is independent of the CPP specific "#include" mechanism.
-
      string filename;
-  // ROSE_ASSERT (astIncludeStack.empty() == false);
 
      if (astIncludeStack.size() <= 1)
         {
@@ -64,8 +54,6 @@ getCurrentFilename()
              {
             // This source file requires CPP processing, so this would be the generated file with the "_preprocessed.f*" suffix.
                filename = OpenFortranParser_globalFilePointer->generate_C_preprocessor_intermediate_filename(filename);
-
-            // printf ("##### Using filename = %s for the name in the file_info for a CPP generated file \n",filename.c_str());
              }
         }
        else
@@ -126,10 +114,6 @@ setSourcePositionCompilerGenerated( SgLocatedNode* locatedNode )
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(locatedNode != NULL);
 
-#if 0
-     printf ("In setSourcePositionCompilerGenerated(): locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
-#endif
-
   // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
      ROSE_ASSERT(locatedNode->get_endOfConstruct()   != NULL);
      ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
@@ -137,7 +121,6 @@ setSourcePositionCompilerGenerated( SgLocatedNode* locatedNode )
      locatedNode->get_startOfConstruct()->setCompilerGenerated();
      locatedNode->get_endOfConstruct()->setCompilerGenerated();
 
-  // DQ (2/15/2013): Added support to set the operatorPosition source position consistantly.
      SgExpression* expression = isSgExpression(locatedNode);
      if (expression != NULL)
         {
@@ -158,9 +141,6 @@ setSourcePosition( SgInitializedName* initializedName )
 
   // The SgInitializedName only has a startOfConstruct source position.
      ROSE_ASSERT(initializedName != NULL);
-  // ROSE_ASSERT(initializedName->get_startOfConstruct() == NULL);
-  // initializedName->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-  // initializedName->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
 
      if (initializedName->get_startOfConstruct() == NULL)
         {
@@ -180,7 +160,6 @@ setSourcePosition( SgInitializedName* initializedName )
                printf ("Unnecessary call to setSourcePosition(SgInitializedName = %p = %s ) for start info. \n",initializedName,SageInterface::get_name(initializedName).c_str());
         }
 
-       // Liao 11/5/2010, add end file info
      if (initializedName->get_endOfConstruct() == NULL)
         {
           Sg_File_Info* fileInfo = new Sg_File_Info(getCurrentFilename(),0,0);
@@ -205,8 +184,6 @@ setSourcePosition( SgInitializedName* initializedName )
 void
 setSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList )
    {
-  // printf ("In setSourcePosition locatedNode = %p = %s tokenList.size() = %ld \n",locatedNode,locatedNode->class_name().c_str(),tokenList.size());
-
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(locatedNode != NULL);
 
@@ -221,9 +198,6 @@ setSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList )
      ROSE_ASSERT(firstToken->text != NULL);
      ROSE_ASSERT(lastToken->text  != NULL);
 
-  // printf ("firstToken->text = %s \n",firstToken->text);
-  // printf ("lastToken->text  = %s \n",lastToken->text);
-
      ROSE_ASSERT(firstToken->line > 0);
      ROSE_ASSERT(lastToken->line  > 0);
 
@@ -235,7 +209,6 @@ setSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList )
 
      ROSE_ASSERT(filename.empty() == false);
 
-  // DQ (1/23/2008): New assertions
      if (locatedNode->get_startOfConstruct() != NULL)
         {
           printf ("WARNING: removing predefined START Sg_File_Info object in locatedNode = %p = %s = %s \n",locatedNode,locatedNode->class_name().c_str(),SageInterface::get_name(locatedNode).c_str());
@@ -243,7 +216,6 @@ setSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList )
           locatedNode->set_startOfConstruct(NULL);
         }
 
-  // DQ (1/23/2008): New assertions
      if (locatedNode->get_endOfConstruct() != NULL)
         {
           printf ("WARNING: removing predefined END Sg_File_Info object in locatedNode = %p = %s = %s \n",locatedNode,locatedNode->class_name().c_str(),SageInterface::get_name(locatedNode).c_str());
@@ -251,7 +223,6 @@ setSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList )
           locatedNode->set_endOfConstruct(NULL);
         }
 
-  // DQ (1/23/2008): New assertions
      ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
      ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
 
@@ -262,7 +233,6 @@ setSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList )
      locatedNode->get_startOfConstruct()->set_parent(locatedNode);
      locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
 
-  // DQ (2/15/2013): Added support to set the operatorPosition source position consistantly.
      SgExpression* expression = isSgExpression(locatedNode);
      if (expression != NULL)
         {
@@ -317,11 +287,8 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
 
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(locatedNode != NULL);
-
      ROSE_ASSERT(token != NULL);
 
-  // DQ (12/11/2007): Modified to permit tokens to be built (as in R1219)
-  //   ROSE_ASSERT(token->line > 0);
      ROSE_ASSERT(token->line >= 0);  // DXN (08/25/ 2011): FIXME - Workaround OFP bug that incorrectly returns a token with line number = 0, as in the following example:
      /*       subroutine FOURT()
       *       DO 125 I1=1, 2
@@ -332,7 +299,6 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
       *  Here the token is the label 125; when this label is parsed the second time around, label->line = 0 and label->col = -1
       */
 
-  // DQ (3/4/2013): Add a warning to support debuging this problem.
      if (token->line == 0)
         {
           printf ("WARNING: locatedNode = %p = %s using token->line == 0 to set source psoition information \n",locatedNode,locatedNode->class_name().c_str());
@@ -352,7 +318,6 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
           locatedNode->set_endOfConstruct(NULL);
         }
 
-  // DQ (1/23/2008): New assertions
      ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
      ROSE_ASSERT(locatedNode->get_endOfConstruct() == NULL);
 
@@ -371,11 +336,9 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
      locatedNode->get_startOfConstruct()->set_parent(locatedNode);
      locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
 
-  // DQ (2/15/2013): Added support to set the operatorPosition source position consistantly.
      SgExpression* expression = isSgExpression(locatedNode);
      if (expression != NULL)
         {
-       // ROSE_ASSERT(expression->get_operatorPosition() != NULL);
           if (expression->get_operatorPosition() != NULL)
              {
                expression->get_operatorPosition()->updateSourcePosition(locatedNode->get_startOfConstruct());
@@ -390,15 +353,11 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
 void
 setSourcePosition  ( SgInitializedName* initializedName, const TokenListType & tokenList )
    {
-  // printf ("In setSourcePosition initializedName = %p = %s tokenList.size() = %ld \n",initializedName,initializedName->get_name().str(),tokenList.size());
-
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(initializedName != NULL);
 
   // Get the first and last tokens from the token list (information about middle tokens 
   // is held in the token strean to be attached to the AST).
-  // const SgToken* firstToken = tokenList.front();
-  // const SgToken* lastToken  = tokenList.back();
      const Token_t* firstToken = tokenList.front();
      const Token_t* lastToken  = tokenList.back();
 
@@ -447,7 +406,6 @@ setOperatorSourcePosition  ( SgExpression* expr, Token_t* token )
 
   // Set these based on the source position information from the operator token
      expr->set_operatorPosition (new Sg_File_Info(filename,token->line,token->col));
-
      expr->get_operatorPosition()->set_parent(expr);
    }
 

@@ -3,6 +3,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Cil.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Cil.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherCil.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
 #include <Rose/BinaryAnalysis/Unparser/Cil.h>
 #include <stringify.h>                                  // ROSE
@@ -31,8 +32,23 @@ Cil::registerDictionary() const {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    if (!registerDictionary_.isCached())
-        registerDictionary_ = RegisterDictionary::instance(name());
+    if (!registerDictionary_.isCached()) {
+        auto regs = RegisterDictionary::instance(name());
+
+        // Special purpose registers
+        regs->insert("gp", cil_regclass_spr, 0, 0, 32); // global pointer
+        regs->insert("pc", cil_regclass_spr, 1, 0, 32); // program counter
+        regs->insert("sp", cil_regclass_spr, 2, 0, 32); // stack pointer
+        regs->insert("fp", cil_regclass_spr, 3, 0, 32); // stack frame pointer
+
+        // Special registers
+        regs->instructionPointerRegister("pc");
+        regs->stackPointerRegister("sp");
+        regs->stackFrameRegister("fp");
+
+        registerDictionary_ = regs;
+    }
+
     return registerDictionary_.get();
 }
 
@@ -662,6 +678,11 @@ Cil::newInstructionDecoder() const {
 Unparser::Base::Ptr
 Cil::newUnparser() const {
     return Unparser::Cil::instance(shared_from_this());
+}
+
+InstructionSemantics::BaseSemantics::DispatcherPtr
+Cil::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) const {
+    return InstructionSemantics::DispatcherCil::instance(shared_from_this(), ops);
 }
 
 } // namespace

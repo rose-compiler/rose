@@ -192,43 +192,6 @@ namespace JvmSemantics {
         return static_cast<uint8_t>(ivExpr->get_value());
     }
 
-    SValue::Ptr
-    makeConstant(Ops ops, const std::string &kind, int64_t value, size_t nBits) {
-        ASSERT_not_null(ops);
-        JvmValueKind valueKind{JvmValueKind::Unknown};
-
-        if (kind == "a") {
-            valueKind = JvmValueKind::ArrayReference;
-        }
-        else if (kind == "o") {
-            valueKind = JvmValueKind::ObjectReference;
-        }
-        else if (kind == "b") {
-            valueKind = JvmValueKind::Integer;
-        }
-        else if (kind == "i") {
-            valueKind = JvmValueKind::Integer;
-        }
-        else if (kind == "l") {
-            valueKind = JvmValueKind::Long;
-        }
-        else if (kind == "f") {
-            valueKind = JvmValueKind::Float;
-        }
-        else if (kind == "d") {
-            valueKind = JvmValueKind::Double;
-        }
-        else {
-            ASSERT_require2(false, "unimplemented JvmValueKind in makeConstant()\n");
-        }
-
-        // Create the SValue and set its type/kind
-        auto sval = ops->number_(nBits, value);
-        sval->kind(valueKind);
-
-        return sval;
-    }
-
     using Args = std::vector<SgAsmExpression*>;
 
     uint8_t  u1(SgAsmExpression*);
@@ -339,9 +302,6 @@ namespace JvmSemantics {
 // monitor ownership, or CFG successor construction call `jvmUnsupported` rather
 // than silently doing the wrong thing.
 // -----------------------------------------------------------------------------
-
-using JvmSemantics::makeConstant;
-using JvmSemantics::asU1;
 
 namespace JvmSemantics {
 
@@ -567,7 +527,7 @@ namespace JvmSemantics {
 
         // Pop the count and set it to have ArrayReference properties
         SValue::Ptr count = ops->popOperand();
-        count->kind(JvmValueKind::ArrayReference);
+        count->kind(ValueKind::ArrayReference);
         count->arrayLength(count);
         count->typeDescriptor("<unknown-type>"); // obtain from constant pool
 
@@ -807,12 +767,12 @@ bool isSubclassOf(SgClassType* derived, SgClassType* base) {
 
     SValue::Ptr
     arrayLength(Ops /*ops*/, SValue::Ptr arrayRef) {
-        ASSERT_require(arrayRef->kind() == JvmValueKind::ArrayReference);
+        ASSERT_require(arrayRef->kind() == ValueKind::ArrayReference);
         ASSERT_require(arrayRef->hasArrayLength());
 
         // Get the array length from the array and convert it to Integer kind
         SValuePtr length = arrayRef->arrayLength();
-        length->kind(JvmValueKind::Integer);
+        length->kind(ValueKind::Integer32);
         return length;
     }
 }
@@ -885,10 +845,9 @@ struct IP_aconst_null: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_aload: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 1);
-        const uint32_t index = asU1(args[0]);
-        ops->pushOperand(ops->readLocal(index));
+        ops->pushOperand(ops->readLocal(d->asU1(args[0])));
     }
 };
 
@@ -1122,9 +1081,9 @@ struct IP_bastore: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_bipush: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 1);
-        ops->pushOperand(makeConstant(ops, "b", asU1(args[0]), 32));
+        ops->pushOperand(d->makeConstant("b", d->asU1(args[0]), 32));
     }
 };
 
@@ -1317,9 +1276,9 @@ struct IP_dcmpg: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_dconst_0: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "d", 0, 64));
+        ops->pushOperand(d->makeConstant("d", 0, 64));
     }
 };
 
@@ -1329,9 +1288,9 @@ struct IP_dconst_0: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_dconst_1: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "d", 1, 64));
+        ops->pushOperand(d->makeConstant("d", 1, 64));
     }
 };
 
@@ -1783,9 +1742,9 @@ struct IP_fcmpg: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_fconst_0: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "f", 0, 32));
+        ops->pushOperand(d->makeConstant("f", 0, 32));
     }
 };
 
@@ -1795,9 +1754,9 @@ struct IP_fconst_0: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_fconst_1: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "f", 1, 32));
+        ops->pushOperand(d->makeConstant("f", 1, 32));
     }
 };
 
@@ -1807,9 +1766,9 @@ struct IP_fconst_1: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_fconst_2: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "f", 2, 32));
+        ops->pushOperand(d->makeConstant("f", 2, 32));
     }
 };
 
@@ -2252,10 +2211,9 @@ struct IP_iastore: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_iconst_m1: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ASSERT_require2(false, "Can't make a negative integral constant");
-        ops->pushOperand(makeConstant(ops, "i", -1, 32));
+        ops->pushOperand(d->makeConstant("i", -1, 32));
     }
 };
 
@@ -2265,9 +2223,9 @@ struct IP_iconst_m1: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_iconst_0: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "i", 0, 32));
+        ops->pushOperand(d->makeConstant("i", 0, 32));
     }
 };
 
@@ -2277,9 +2235,9 @@ struct IP_iconst_0: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_iconst_1: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "i", 1, 32));
+        ops->pushOperand(d->makeConstant("i", 1, 32));
     }
 };
 
@@ -2289,9 +2247,9 @@ struct IP_iconst_1: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_iconst_2: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "i", 2, 32));
+        ops->pushOperand(d->makeConstant("i", 2, 32));
     }
 };
 
@@ -2301,9 +2259,9 @@ struct IP_iconst_2: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_iconst_3: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "i", 3, 32));
+        ops->pushOperand(d->makeConstant("i", 3, 32));
     }
 };
 
@@ -2313,9 +2271,9 @@ struct IP_iconst_3: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_iconst_4: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "i", 4, 32));
+        ops->pushOperand(d->makeConstant("i", 4, 32));
     }
 };
 
@@ -2325,9 +2283,9 @@ struct IP_iconst_4: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_iconst_5: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "i", 5, 32));
+        ops->pushOperand(d->makeConstant("i", 5, 32));
     }
 };
 
@@ -2560,10 +2518,9 @@ struct IP_iinc: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_iload: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 1);
-        uint8_t idx = asU1(args[0]);
-        ops->pushOperand(ops->readLocal(idx));
+        ops->pushOperand(ops->readLocal(d->asU1(args[0])));
     }
 };
 
@@ -2808,10 +2765,9 @@ struct IP_ishr: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_istore: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 1);
-        const uint8_t idx = asU1(args[0]);
-        ops->writeLocal(idx, ops->popOperand());
+        ops->writeLocal(d->asU1(args[0]), ops->popOperand());
     }
 };
 
@@ -3075,9 +3031,9 @@ struct IP_lcmp: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_lconst_0: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "l", 0, 64));
+        ops->pushOperand(d->makeConstant("l", 0, 64));
     }
 };
 
@@ -3087,9 +3043,9 @@ struct IP_lconst_0: P {
         // Run-time Exceptions:
         //   None specified other than VirtualMachineError subclasses.
 struct IP_lconst_1: P {
-    void p(D /*d*/, Ops ops, I insn, Args args) {
+    void p(D d, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        ops->pushOperand(makeConstant(ops, "l", 1, 64));
+        ops->pushOperand(d->makeConstant("l", 1, 64));
     }
 };
 
@@ -3735,6 +3691,7 @@ DispatcherJvm::initializeDispatchTable() {
     iprocSet(0x45,  new Jvm::IP_fstore_2);
     iprocSet(0x46,  new Jvm::IP_fstore_3);
 
+    iprocSet(0x02,  new Jvm::IP_iconst_m1);
     iprocSet(0x03,  new Jvm::IP_iconst_0);
     iprocSet(0x04,  new Jvm::IP_iconst_1);
     iprocSet(0x05,  new Jvm::IP_iconst_2);

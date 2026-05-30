@@ -4,7 +4,9 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
 
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
@@ -60,9 +62,14 @@ private:
     template<class S>
     void load(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+#if 0
         regcache_init();
         iproc_init();
         memory_init();
+#else
+        initializeDispatchTable();
+        initializeMemoryState();
+#endif
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
@@ -73,23 +80,24 @@ private:
 
 protected:
     DispatcherCil(const Architecture::BaseConstPtr&);   // prototypical constructor
-
     DispatcherCil(const Architecture::BaseConstPtr&, const BaseSemantics::RiscOperatorsPtr&);
+
+#if 0
+    /** Load the cached register descriptors.
+     *
+     *  This happens at construction when the @ref registerDictionary property is changed. */
+    void regcache_init(const Architecture::Base::ConstPtr&);
+#endif
 
     /** Loads the iproc table with instruction processing functors.
      *
      *  This normally happens from the constructor. */
-    void iproc_init();
-
-    /** Load the cached register descriptors.
-     *
-     *  This happens at construction when the @ref registerDictionary property is changed. */
-    void regcache_init();
+    void initializeDispatchTable();
 
     /** Make sure memory is set up correctly.
      *
      *  For instance, byte order should be big endian. */
-    void memory_init();
+    void initializeMemoryState();
 
 public:
     ~DispatcherCil();
@@ -110,8 +118,10 @@ public:
 
     virtual RegisterDescriptor instructionPointerRegister() const override;
     virtual RegisterDescriptor stackPointerRegister() const override;
-    virtual int iprocKey(SgAsmInstruction *insn_) const override;
     virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=0) override;
+
+    int iprocKey(SgAsmInstruction *insn_) const override;
+    BaseSemantics::InsnProcessor* iprocLookup(SgAsmInstruction *insn) override;
 
     /** Set or clear FPSR EXC INAN bit. */
     void updateFpsrExcInan(const BaseSemantics::SValuePtr &a, SgAsmType *aType,

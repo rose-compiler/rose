@@ -58,13 +58,13 @@ SValue::nBits() const {
     return get_width();
 }
 
-JvmValueKind
+ValueKind
 SValue::kind() const {
     return kind_;
 }
 
 void
-SValue::kind(JvmValueKind k) {
+SValue::kind(ValueKind k) {
     kind_ = k;
 }
 

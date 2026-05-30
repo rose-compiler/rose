@@ -11,6 +11,11 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
+// CIL major register numbers.
+enum CilRegisterClass {
+    cil_regclass_spr, // Special purpose registers. Minors are 0..3.
+};
+
 enum CilFamily {
     Cil_family         = 0xffffffff,                   // All CIL Instruction sets
 };

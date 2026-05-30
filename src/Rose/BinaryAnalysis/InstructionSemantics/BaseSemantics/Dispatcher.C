@@ -112,6 +112,56 @@ Dispatcher::number_(size_t nbits, uint64_t number) const {
     return operators()->number_(nbits, number);
 }
 
+int8_t
+Dispatcher::asS1(const SgAsmExpression* expr) {
+    auto ivExpr = isSgAsmIntegerValueExpression(expr);
+    ASSERT_not_null(ivExpr);
+    return static_cast<int8_t>(ivExpr->get_signedValue());
+}
+
+uint8_t
+Dispatcher::asU1(const SgAsmExpression* expr) {
+    auto ivExpr = isSgAsmIntegerValueExpression(expr);
+    ASSERT_not_null(ivExpr);
+    return static_cast<uint8_t>(ivExpr->get_signedValue());
+}
+
+SValue::Ptr
+Dispatcher::makeConstant(const std::string &kind, int64_t value, size_t nBits) {
+        ValueKind valueKind{ValueKind::Unknown};
+
+        if (kind == "a") {
+            valueKind = ValueKind::ArrayReference;
+        }
+        else if (kind == "o") {
+            valueKind = ValueKind::ObjectReference;
+        }
+        else if (kind == "b") {
+            valueKind = ValueKind::Integer32;
+        }
+        else if (kind == "i") {
+            valueKind = ValueKind::Integer32;
+        }
+        else if (kind == "l") {
+            valueKind = ValueKind::Integer64;
+        }
+        else if (kind == "f") {
+            valueKind = ValueKind::Float32;
+        }
+        else if (kind == "d") {
+            valueKind = ValueKind::Float64;
+        }
+        else {
+            ASSERT_require2(false, "unimplemented ValueKind in makeConstant()\n");
+        }
+
+        // Create the SValue and set its type/kind
+        auto sval = operators_->number_(nBits, value);
+        sval->kind(valueKind);
+
+        return sval;
+    }
+
 RegisterDictionary::Ptr
 Dispatcher::registerDictionary() const {
     return architecture()->registerDictionary();

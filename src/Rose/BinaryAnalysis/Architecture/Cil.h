@@ -49,6 +49,9 @@ public:
 
     Disassembler::BasePtr newInstructionDecoder() const override;
     Unparser::BasePtr newUnparser() const override;
+
+    InstructionSemantics::BaseSemantics::DispatcherPtr
+    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
 };
 
 } // namespace

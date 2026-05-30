@@ -36,17 +36,19 @@ Category 2:
   double
 */
 
-/** Kind of an SValue for emulating JVM instructions. */
-enum class JvmValueKind {
+/** Kind of an SValue for emulating JVM and CIL instructions. */
+enum class ValueKind {
     Unknown,
-    Integer,
-    Long,
-    Float,
-    Double,
+    Integer32,       // JVM Integer
+    Integer64,       // JVM Long
+    NativeInt,
+    Float32,         // JVM Float
+    Float64,         // JVM Double
     ArrayReference,
     ObjectReference,
-    ReturnAddress,
-    Invalid
+    ManagedPointer,
+    UnmanagedPointer,
+    ReturnAddress
 };
 
 
@@ -75,7 +77,7 @@ public:
 
 protected:
     size_t width;                               /** Width of the value in bits. Typically (not always) a power of two. */
-    JvmValueKind kind_ = JvmValueKind::Unknown; /** Kind of the value type. */
+    ValueKind kind_ = ValueKind::Unknown;       /** Kind of the value type. */
     SValuePtr arrayLength_;                     /** Symbolic length of the array if an ArrayReference. */
     std::string typeDescriptor_;   /** Description of the type if a Reference, empty means no descriptor. */
 
@@ -210,8 +212,8 @@ public:
     size_t nBits() const /*final*/;
 
     /** Property: value kind. */
-    virtual JvmValueKind kind() const;
-    virtual void kind(JvmValueKind k);
+    virtual ValueKind kind() const;
+    virtual void kind(ValueKind k);
 
     /** Property: array length. */
     virtual void arrayLength(const SValuePtr &sval);

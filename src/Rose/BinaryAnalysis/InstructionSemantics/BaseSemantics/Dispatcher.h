@@ -60,6 +60,12 @@ protected:
     typedef std::vector<InsnProcessor*> InsnProcessors;
     InsnProcessors iproc_table;
 
+public:
+    // Make a constant number_
+    virtual SValuePtr makeConstant(const std::string &kind, int64_t value, size_t nBits);
+    virtual int8_t  asS1(const SgAsmExpression* expr);
+    virtual uint8_t asU1(const SgAsmExpression* expr);
+
 #ifdef ROSE_ENABLE_BOOST_SERIALIZATION
 private:
     friend class boost::serialization::access;
