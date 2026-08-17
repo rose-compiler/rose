@@ -30,32 +30,63 @@ class SgAsmCilMethodDef: public SgAsmCilMetadata {
     using MethodFlags = std::uint16_t;
     
     enum : MethodFlags {  
-      FLG_MEMBERACCESS_MASK   = 0x0007, ///< These 3 bits contain one of the following values:
-        FLG_COMPILER_CONTROLLED = 0x0000, ///< Member not referenceable
-        FLG_PRIVATE             = 0x0001, ///< Accessible only by the parent type
-        FLG_FAM_AND_ASSEM       = 0x0002, ///< Accessible by sub-types only in this Assembly
-        FLG_ASSEM               = 0x0003, ///< Accessibly by anyone in the Assembly
+      FLG_COMPILER_CONTROLLED = 0x0000, ///< Member not referenceable
+      FLG_PRIVATE             = 0x0001, ///< Accessible only by the parent type
+      FLG_FAM_AND_ASSEM       = 0x0002, ///< Accessible by sub-types only in this Assembly
+      FLG_ASSEM               = 0x0003, ///< Accessibly by anyone in the Assembly
       FLG_FAMILY              = 0x0004, ///< Accessible only by type and sub-types
       FLG_FAM_OR_ASSEM        = 0x0005, ///< Accessibly by sub-types anywhere, plus anyone in assembly
       FLG_PUBLIC              = 0x0006, ///< Accessibly by anyone who has visibility to this scope
+      FLG_MEMBERACCESS_MASK   = 0x0007, ///< Mask accessibility flags
+      
       FLG_STATIC              = 0x0010, ///< Defined on type, else per instance
       FLG_FINAL               = 0x0020, ///< Method cannot be overridden
       FLG_VIRTUAL             = 0x0040, ///< Method is virtual
       FLG_HIDEBYSIG           = 0x0080, ///< Method hides by name+sig, else just by name
-      FLG_VTABLE_LAYOUT_MASK  = 0x0100, ///< Use this mask to retrieve vtable attributes. This bit contains one of the following values:
-        FLG_REUSE_SLOT          = 0x0000, ///< Method reuses existing slot in vtable
-        FLG_NEW_SLOT            = 0x0100, ///< Method always gets a new slot in the vtable
+
+      FLG_REUSE_SLOT          = 0x0000, ///< Method reuses existing slot in vtable
+      FLG_NEW_SLOT            = 0x0100, ///< Method always gets a new slot in the vtable
+      FLG_VTABLE_LAYOUT_MASK  = FLG_REUSE_SLOT | FLG_NEW_SLOT, ///< Mask to retrieve vtable attributes. This bit contains one of the following values:
+      
       FLG_STRICT              = 0x0200, ///< Method can only be overriden if also accessible
       FLG_ABSTRACT            = 0x0400, ///< Method does not provide an implementation
       FLG_SPECIAL_NAME        = 0x0800, ///< Method is special
+      
       // interop attributes    
       FLG_P_INVOKE_IMPL       = 0x2000, ///< Implementation is forwarded through PInvoke
       FLG_UNMANAGED_EXPORT    = 0x0008, ///< Reserved: shall be zero for conforming implementations
+      
       // additional flags    
       FLG_RT_SPECIAL_NAME     = 0x1000, ///< CLI provides special behavior, depending upon the name of the method
       FLG_HAS_SECURITY        = 0x4000, ///< Method has security associate with it
       FLG_REQUIRE_SEC_OBJECT  = 0x8000, ///< Method calls another method containing security code.
     };
+    
+    /// II.23.1.11 Flags for methods [MethodImplAttributes]
+    /// e.g., https://github.com/stakx/ecma-335/blob/master/docs/ii.23.1.11-flags-for-methods-methodimplattributes.md
+    
+    using MethodImplFlags = std::uint16_t;
+  
+    enum : MethodImplFlags {
+      MIF_CIL                 = 0x0000,
+      MIF_NATIVE              = 0x0001,
+      MIF_OPTIL_RESERVED      = 0x0002,
+      MIF_RUNTIME             = 0x0003,
+      MIF_CODETYPE_MASK       = MIF_CIL | MIF_NATIVE | MIF_OPTIL_RESERVED | MIF_RUNTIME,
+                              
+      MIF_MANAGED             = 0x0000,
+      MIF_UNMANAGED           = 0x0004, 
+      MIF_MANAGED_MASK        = MIF_MANAGED | MIF_UNMANAGED, 
+                              
+      MIF_FORWARD_REF         = 0x0010,
+      MIF_PRSERVE_SIG         = 0x0080,
+      MIF_INTERNAL_CALL       = 0x1000,
+      MIF_SYNCHRONIZED        = 0x0020,
+      MIF_NO_INLINING         = 0x0008,
+      MIF_MAX_METHOD_IMPL_VAL = 0xFFFF,
+      MIF_NO_OPTIMIZATION     = 0x0040,      
+    };
+  
     
   private:  
     
@@ -142,7 +173,13 @@ class SgAsmCilMethodDef: public SgAsmCilMetadata {
      *  tiny header is used. */
     [[using Rosebud: rosetta]]
     int bodyState = BDY_NOT_PROCESSED;
-  
+    
+    /** Property: RVA_limit (ROSE extension)
+     *
+     *  The limit indicates the one past the last element of a 
+     *  CIL code block. If the code is not CIL, RVA_limit is 0. */
+    [[using Rosebud: rosetta]]
+    uint32_t RVA_limit = 0;
 
 public:
     void parse(const std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

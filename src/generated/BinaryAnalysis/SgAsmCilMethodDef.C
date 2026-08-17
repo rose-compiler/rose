@@ -149,6 +149,17 @@ SgAsmCilMethodDef::set_bodyState(int const& x) {
     set_isModified(true);
 }
 
+uint32_t const&
+SgAsmCilMethodDef::get_RVA_limit() const {
+    return p_RVA_limit;
+}
+
+void
+SgAsmCilMethodDef::set_RVA_limit(uint32_t const& x) {
+    this->p_RVA_limit = x;
+    set_isModified(true);
+}
+
 SgAsmCilMethodDef::~SgAsmCilMethodDef() {
     destructorHelper();
 }
@@ -165,7 +176,8 @@ SgAsmCilMethodDef::SgAsmCilMethodDef()
     , p_stackSize(0)
     , p_hasMoreSections(0)
     , p_localVarSigTok(0)
-    , p_bodyState(BDY_NOT_PROCESSED) {}
+    , p_bodyState(BDY_NOT_PROCESSED)
+    , p_RVA_limit(0) {}
 
 void
 SgAsmCilMethodDef::initializeProperties() {
@@ -181,6 +193,7 @@ SgAsmCilMethodDef::initializeProperties() {
     p_hasMoreSections = 0;
     p_localVarSigTok = 0;
     p_bodyState = BDY_NOT_PROCESSED;
+    p_RVA_limit = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

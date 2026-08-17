@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
+#include <Rose/BinaryAnalysis/AddressIntervalSet.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
@@ -12,6 +13,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/regex.hpp>
 #include <stdexcept>
+#include <tuple>
 
 #ifdef ROSE_ENABLE_PYTHON_API
 #undef slots                                            // stupid Qt pollution
@@ -191,14 +193,27 @@ public:
      *
      *  Decodes and partitions any sections of type SgAsmCliHeader. These sections contain CIL byte code.
      *
-     *  Returns true if a section containing CIL code was found, false otherwise. */
-    virtual bool partitionCilSections(const PartitionerPtr&);
+     *  Returns a tuple whose first member is true if a section containing CIL code was found, false otherwise. The second
+     *  member contains the RVAs of all native functions referred to by the CIL method metadata. */
+    virtual std::tuple<bool, std::vector<Address>> partitionCilSections(const PartitionerPtr&);
 
     /** Determine whether the interpretation header contains a CIL code section
      *
      *  When the interpretation has a header with a section named "CLR Runtime Header", it
      *  contains CIL code.  This predicate returns true for such interpretations. */
     bool hasCilCodeSection();
+
+    /** Convert a CIL method RVA to a virtual address.
+     *
+     *  Uses the same interpretation header model as entry-point RVA conversion, preferring a mapped executable address when one
+     *  is available. */
+    virtual Address cilMethodRvaToVa(Address) const;
+
+    /** Convert and validate CIL method RVAs to virtual addresses.
+     *
+     *  Unmapped RVAs are skipped. Non-executable mappings are retained, but diagnosed, so callers can still see the native
+     *  MethodDef start in the secondary partitioner. */
+    virtual std::vector<Address> cilMethodRvasToVas(const std::vector<Address>&) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner mid-level functions
@@ -272,6 +287,9 @@ public:
      *  A function is created at each address and is attached to the partitioner's CFG/AUM. Returns a list of such functions,
      *  some of which may have existed prior to this call. */
     virtual std::vector<FunctionPtr> makeUserFunctions(const PartitionerPtr&, const std::vector<Address>&);
+
+    /** Make functions at native MethodDef addresses discovered from CIL metadata. */
+    virtual std::vector<FunctionPtr> makeCilNativeFunctions(const PartitionerPtr&, const std::vector<Address>&);
 
     /** Discover as many basic blocks as possible.
      *
@@ -543,7 +561,29 @@ public:
     //                                  Internal stuff
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+    struct BinaryPartitionPass {
+        enum class Kind {
+            primary,
+            cilNativeSecondary
+        };
+
+        Kind kind = Kind::primary;
+        std::vector<Address> cilNativeFunctionVas;
+
+        bool isCilNativeSecondary() const {
+            return Kind::cilNativeSecondary == kind;
+        }
+    };
+
     void init();
+    void runPartitionerWithSavedSettings(const PartitionerPtr&, BinaryPartitionPass&);
+    PartitionerPtr createPartitionerForMap(const Architecture::BaseConstPtr&, const MemoryMapPtr&);
+    AddressIntervalSet cilManagedCodeExclusionIntervals() const;
+    MemoryMapPtr filteredCilNativeMemoryMap(const AddressIntervalSet&, const std::vector<Address>&) const;
+    PartitionerPtr partitionCilNativeFunctions(const std::vector<Address>&);
+    void runPartitionerInit(const PartitionerPtr&, const BinaryPartitionPass&);
+    void runPartitionerRecursive(const PartitionerPtr&, BinaryPartitionPass&);
+    void discoverFunctions(const PartitionerPtr&, const BinaryPartitionPass&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Overrides documented in the base class
@@ -575,6 +615,7 @@ public:
     bool isNonContainer(const std::string&) override;
     bool areContainersParsed() const override;
     PartitionerPtr createPartitioner() override;
+    void runPartitioner(const PartitionerPtr&) override;
     void runPartitionerInit(const PartitionerPtr&) override;
     void runPartitionerRecursive(const PartitionerPtr&) override;
     void runPartitionerFinal(const PartitionerPtr&) override;

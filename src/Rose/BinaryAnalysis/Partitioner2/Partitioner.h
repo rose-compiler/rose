@@ -312,6 +312,7 @@ private:
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap::Ptr memoryMap_;                          // description of memory, especially insns and non-writable
     SgAsmInterpretation *interpretation_ = nullptr;     // Interpretation corresponding to the memory map
+    PartitionerPtr secondaryPartitioner_;               // optional runtime-only secondary partitioner
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
     CfgVertexIndex vertexIndex_;                        // Vertex-by-address index for the CFG
     AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
@@ -465,6 +466,17 @@ public:
      * @{ */
     SgAsmInterpretation *interpretation() const;
     void interpretation(SgAsmInterpretation*);
+    /** @} */
+
+    /** Property: Optional secondary partitioner.
+     *
+     *  Some specimens contain code for more than one architecture. In those cases, this partitioner remains the primary result
+     *  and may point to a secondary partitioner for code that must be decoded with another architecture. This relationship is
+     *  runtime-only and is not saved in RBA files.
+     * @{ */
+    PartitionerPtr secondaryPartitioner();
+    PartitionerConstPtr secondaryPartitioner() const;
+    void secondaryPartitioner(const PartitionerPtr&);
     /** @} */
 
     /** Returns true if address is executable.
@@ -1733,7 +1745,7 @@ public:
     void detachFunction(const FunctionPtr&);
 
     /** Entry points of the binary.
-     * 
+     *
      *  Returns a vector of functions which correspond to binary entry points.
      *
      *  Thread safety: Not thread safe. */

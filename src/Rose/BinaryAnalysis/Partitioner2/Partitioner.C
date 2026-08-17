@@ -178,6 +178,9 @@ Partitioner::operator=(BOOST_RV_REF(Partitioner) other) {
     interpretation_ = other.interpretation_;
     other.interpretation_ = nullptr;
 
+    secondaryPartitioner_ = other.secondaryPartitioner_;
+    other.secondaryPartitioner_ = Partitioner::Ptr();
+
     solver_ = other.solver_;
     other.solver_ = SmtSolver::Ptr();
 
@@ -307,6 +310,21 @@ Partitioner::interpretation() const {
 void
 Partitioner::interpretation(SgAsmInterpretation *interp) {
     interpretation_ = interp;
+}
+
+Partitioner::Ptr
+Partitioner::secondaryPartitioner() {
+    return secondaryPartitioner_;
+}
+
+Partitioner::ConstPtr
+Partitioner::secondaryPartitioner() const {
+    return secondaryPartitioner_;
+}
+
+void
+Partitioner::secondaryPartitioner(const Partitioner::Ptr &partitioner) {
+    secondaryPartitioner_ = partitioner;
 }
 
 bool

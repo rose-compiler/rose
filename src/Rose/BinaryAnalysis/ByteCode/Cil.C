@@ -294,11 +294,12 @@ CilMethod::CilMethod(std::string name, Address va, SgAsmCilMetadataRoot* mdr, Sg
 {
     insns_ = new SgAsmInstructionList;
 
-    SgAsmBlock* blk = sgMethod_->get_body();
+    if (SgAsmBlock* blk = sgMethod_->get_body()) {
     for (SgAsmStatement* stmt : blk->get_statementList()) {
         auto insn = isSgAsmCilInstruction(stmt);
         ASSERT_not_null(insn);
         insns_->get_instructions().push_back(insn);
+        }
     }
 }
 
@@ -408,10 +409,11 @@ CilClass::CilClass(std::string name, NamespacePtr ns, SgAsmCilMetadataRoot* root
         SgAsmCilMethodDef* methodDef = methods.at(i);
         ASSERT_not_null(methodDef);
 
-//TODO::FIXME:I think there is a test case for this to fix
-        if (methodDef->get_RVA() == 0) {
+        constexpr std::uint16_t nativeCode = SgAsmCilMethodDef::MIF_NATIVE;
+        constexpr std::uint16_t codeTypeMask = SgAsmCilMethodDef::MIF_CODETYPE_MASK;
+        if (methodDef->get_RVA() == 0 || (methodDef->get_ImplFlags() & codeTypeMask) == nativeCode) {
             // TODO: double check test file to see if this is an interface (a nop!)
-            std::cerr << "methodDef rva == 0 // abstract\n";
+            // std::cerr << "methodDef rva == 0 // abstract\n";
             continue;
         }
 

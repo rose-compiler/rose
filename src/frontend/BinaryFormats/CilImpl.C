@@ -3553,55 +3553,8 @@ disassemble( rb::Address base_va,
   return { blk, bdyState };
 }
 
-// II.23.1.11 Flags for methods [MethodImplAttributes]
-//   https://github.com/stakx/ecma-335/blob/master/docs/ii.23.1.11-flags-for-methods-methodimplattributes.md
-// \{
-
-enum struct CodeTypeMask
-{
-  cil            = 0x0000,
-  native         = 0x0001,
-  optil_reserved = 0x0002,
-  runtime        = 0x0003,
-  mask           = cil | native | optil_reserved | runtime,
-};
-
-inline
-CodeTypeMask operator&(int lhs, CodeTypeMask rhs)
-{
-  return static_cast<CodeTypeMask>(lhs & int(rhs));
-}
-
-inline
-CodeTypeMask operator&(CodeTypeMask lhs, int rhs)
-{
-  return static_cast<CodeTypeMask>(int(lhs) & rhs);
-}
-
-inline
-CodeTypeMask operator&(CodeTypeMask lhs, CodeTypeMask rhs)
-{
-  return static_cast<CodeTypeMask>(int(lhs) & int(rhs));
-}
 
 
-enum struct ManagedMask
-{
-  unmanaged      = 0x0004,
-  managed        = 0x0000,
-  mask           = unmanaged | managed,
-};
-
-enum struct ImplementationInfo
-{
-  forwardRef        = 0x0010,
-  preserveSig       = 0x0080,
-  internalCall      = 0x1000,
-  synchronized      = 0x0020,
-  noInlining        = 0x0008,
-  maxMethodImplVal  = 0xffff,
-  noOptimization    = 0x0040
-};
 
 // \}
 
@@ -3930,13 +3883,13 @@ void decodeMetadata(Rose::BinaryAnalysis::Address base_va, SgAsmCilMetadataHeap*
       continue;
     }
 
-    if ((m->get_ImplFlags() & CodeTypeMask::mask) == CodeTypeMask::native)
+    if ((m->get_ImplFlags() & SgAsmCilMethodDef::MIF_CODETYPE_MASK) == SgAsmCilMethodDef::MIF_NATIVE)
     {
       m->set_bodyState(SgAsmCilMethodDef::BDY_NOT_AVAILABLE);
       continue;
     }
 
-    if ((m->get_ImplFlags() & CodeTypeMask::mask) == CodeTypeMask::runtime)
+    if ((m->get_ImplFlags() & SgAsmCilMethodDef::MIF_CODETYPE_MASK) == SgAsmCilMethodDef::MIF_RUNTIME)
     {
       mlog[ERROR] << "Code is runtime provided. Please share specimen with ROSE developers."
                   << "\n  #" << methodCtr << " " << m->get_Name_string() << " @" << std::hex << rva << std::dec
@@ -3945,7 +3898,7 @@ void decodeMetadata(Rose::BinaryAnalysis::Address base_va, SgAsmCilMetadataHeap*
       continue;
     }
 
-    if ((m->get_ImplFlags() & CodeTypeMask::mask) == CodeTypeMask::optil_reserved)
+    if ((m->get_ImplFlags() & SgAsmCilMethodDef::MIF_CODETYPE_MASK) == SgAsmCilMethodDef::MIF_OPTIL_RESERVED)
     {
       mlog[ERROR] << "OPTIL code is not supported."
                   << "\n  #" << methodCtr << " " << m->get_Name_string() << " @" << std::hex << rva << std::dec
@@ -4040,7 +3993,7 @@ void decodeMetadata(Rose::BinaryAnalysis::Address base_va, SgAsmCilMetadataHeap*
       //~ root->set_ErrorFree(false);
     }
 
-    ASSERT_require((m->get_ImplFlags() & CodeTypeMask::mask) == CodeTypeMask::cil);
+    ASSERT_require((m->get_ImplFlags() & SgAsmCilMethodDef::MIF_CODETYPE_MASK) == SgAsmCilMethodDef::MIF_CIL);
 
     SgAsmBlock* blk = nullptr;
     auto        arch   = rb::Architecture::findByName("cil").orThrow();
@@ -4059,24 +4012,27 @@ void decodeMetadata(Rose::BinaryAnalysis::Address base_va, SgAsmCilMetadataHeap*
       root->set_ErrorFree(false);
       continue;
     }
+    
 
-    bool        hasMoreSections = m->get_hasMoreSections();
+    bool                          hasMoreSections = m->get_hasMoreSections();
     Rose::BinaryAnalysis::Address secRva     = codeRVA + codeLen;
-    Rose::BinaryAnalysis::Address sectionRva = base_va + secRva;
+    Rose::BinaryAnalysis::Address sectionVA = base_va + secRva;
 
+    m->set_RVA_limit(secRva);
+    
     while (hasMoreSections)
     {
       // extra sections start at next 4 bound boundary
-      Rose::BinaryAnalysis::Address const   alignedSectionRva = (sectionRva + 3) & ~3;
+      Rose::BinaryAnalysis::Address const   alignedSectionVA = (sectionVA + 3) & ~3;
       SgAsmCilMethodData* section = nullptr;
       //~ mlog[WARN]
         //~ << "parse: " << m->get_Name_string()
-        //~ << " +s@ 0x" << std::setw(8) << std::setfill('0') << std::hex << (alignedSectionRva-base_va) << std::dec
+        //~ << " +s@ 0x" << std::setw(8) << std::setfill('0') << std::hex << (alignedSectionVA-base_va) << std::dec
         //~ << " m@ 0x" << std::setw(8) << std::setfill('0') << std::hex << rva << std::dec
         //~ << " base_va=" << std::setfill('0') << std::hex << base_va << std::dec
         //~ << std::endl;
 
-      std::tie(section, sectionRva, bodyState) = parseSection(*fhdr, alignedSectionRva);
+      std::tie(section, sectionVA, bodyState) = parseSection(*fhdr, alignedSectionVA);
 
       if (bodyState != SgAsmCilMethodDef::BDY_NOT_PROCESSED)
       {
@@ -4085,9 +4041,10 @@ void decodeMetadata(Rose::BinaryAnalysis::Address base_va, SgAsmCilMetadataHeap*
       }
 
       ASSERT_not_null(section);
+      m->set_RVA_limit(sectionVA-base_va);
       section->set_parent(m);
       m->get_methodData().push_back(section);
-      hasMoreSections = section->hasMoreSections();
+      hasMoreSections = section->hasMoreSections();      
     }
 
     updateBodyState(bodyState, SgAsmCilMethodDef::BDY_FULLY_DECODED);
@@ -4186,8 +4143,10 @@ void encodeMetadata(std::vector<std::uint8_t>& buf, Rose::BinaryAnalysis::Addres
     if (rva == 0) continue;
 
     // only code that can be parsed can be unparsed ..
-    ASSERT_require(  ((m->get_ImplFlags() & CodeTypeMask::mask) == CodeTypeMask::cil)
-                  || ((m->get_ImplFlags() & CodeTypeMask::mask) == CodeTypeMask::native)
+    // \todo this requires more work to invoke the native unparser
+    //       and escape without exception when unexpected values are present
+    ASSERT_require(  ((m->get_ImplFlags() & SgAsmCilMethodDef::MIF_CODETYPE_MASK) == SgAsmCilMethodDef::MIF_CIL)
+                  || ((m->get_ImplFlags() & SgAsmCilMethodDef::MIF_CODETYPE_MASK) == SgAsmCilMethodDef::MIF_NATIVE)
                   );
 
     // \todo revise and write directly into buf

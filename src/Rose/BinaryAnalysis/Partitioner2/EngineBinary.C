@@ -53,6 +53,11 @@
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Stopwatch.h>
 
+#include <SgAsmCilMetadataHeap.h>
+#include <SgAsmCilMethodDef.h>
+#include <SgAsmCilMethodDefTable.h>
+
+#include <algorithm>
 using namespace Rose::Diagnostics;
 
 namespace Rose {
@@ -1529,10 +1534,325 @@ EngineBinary::createPartitioner() {
     return createTunedPartitioner();
 }
 
-void EngineBinary::runPartitionerInit(const Partitioner::Ptr &partitioner) {
+namespace {
+
+class PartitionerSettingsGuard {
+    PartitionerSettings &settings_;
+    PartitionerSettings saved_;
+
+public:
+    explicit PartitionerSettingsGuard(PartitionerSettings &settings)
+        : settings_(settings), saved_(settings) {}
+
+    ~PartitionerSettingsGuard() {
+        settings_ = saved_;
+    }
+};
+
+class ArchitectureGuard {
+    Architecture::Base::ConstPtr &architecture_;
+    Architecture::Base::ConstPtr saved_;
+
+public:
+    explicit ArchitectureGuard(Architecture::Base::ConstPtr &architecture)
+        : architecture_(architecture), saved_(architecture) {}
+
+    ~ArchitectureGuard() {
+        architecture_ = saved_;
+    }
+};
+
+class MemoryMapGuard {
+    EngineBinary &engine_;
+    MemoryMap::Ptr saved_;
+
+public:
+    explicit MemoryMapGuard(EngineBinary &engine)
+        : engine_(engine), saved_(engine.memoryMap()) {}
+
+    ~MemoryMapGuard() {
+        engine_.memoryMap(saved_);
+    }
+};
+
+Architecture::Base::ConstPtr
+nativeArchitectureForCilInterpretation(SgAsmInterpretation *interp) {
+    ASSERT_not_null(interp);
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+
+    for (const Architecture::Base::Ptr &arch: Architecture::registeredDefinitions()) {
+        if (arch->name() == "cil" || arch->name() == "jvm")
+            continue;
+
+        bool allHeadersMatch = true;
+        for (SgAsmGenericHeader *header: headers) {
+            if (!arch->matchesHeader(header)) {
+                allHeadersMatch = false;
+                break;
+            }
+        }
+        if (allHeadersMatch)
+            return arch;
+    }
+
+    return Architecture::Base::ConstPtr();
+}
+
+SgAsmCilMetadataRoot*
+cilMetadataRoot(SgAsmInterpretation *interp, const char *activity) {
+    SgAsmCilMetadataRoot *retval = nullptr;
+
+    if (interp) {
+        ASSERT_not_null(interp->get_headers());
+        for (SgAsmGenericHeader *header: interp->get_headers()->get_headers()) {
+            for (SgAsmGenericSection *section: header->get_sectionsByName("CLR Runtime Header")) {
+                if (SgAsmCliHeader *cliHeader = isSgAsmCliHeader(section)) {
+                    if (retval) {
+                        mlog[WARN] <<"multiple CIL code sections seen";
+                        if (activity && *activity)
+                            mlog[WARN] <<" while " <<activity;
+                        mlog[WARN] <<"\n";
+                    }
+                    retval = cliHeader->get_metadataRoot();
+                }
+            }
+        }
+    }
+
+    return retval;
+}
+
+} // namespace
+
+Partitioner::Ptr
+EngineBinary::createPartitionerForMap(const Architecture::Base::ConstPtr &architecture, const MemoryMap::Ptr &map) {
+    ASSERT_not_null(architecture);
+
+    ArchitectureGuard architectureGuard(architecture_);
+    MemoryMapGuard memoryMapGuard(*this);
+
+    architecture_ = architecture;
+    memoryMap(map);
+    return createPartitioner();
+}
+
+void
+EngineBinary::runPartitionerWithSavedSettings(const Partitioner::Ptr &partitioner, BinaryPartitionPass &pass) {
+    ASSERT_not_null(partitioner);
+    PartitionerSettingsGuard guard(settings().partitioner);
+
+    Sawyer::Message::Stream info(mlog[INFO]);
+    Sawyer::Stopwatch timer;
+    info <<"disassembling and partitioning";
+    runPartitionerInit(partitioner, pass);
+    runPartitionerRecursive(partitioner, pass);
+    runPartitionerFinal(partitioner);
+    info <<"; took " <<timer <<"\n";
+
+    if (settings().partitioner.doingPostAnalysis)
+        updateAnalysisResults(partitioner);
+
+    if (SmtSolverPtr solver = partitioner->smtSolver())
+        solver->resetStatistics();
+}
+
+namespace {
+
+bool hasNativeCode(const SgAsmCilMethodDef& m)
+{
+    constexpr std::uint16_t nativeCode = SgAsmCilMethodDef::MIF_NATIVE;
+    constexpr std::uint16_t codeTypeMask = SgAsmCilMethodDef::MIF_CODETYPE_MASK;
+    
+    return (m.get_ImplFlags() & codeTypeMask) == nativeCode;
+}
+
+} // namespace
+
+AddressIntervalSet
+EngineBinary::cilManagedCodeExclusionIntervals() const {
+    AddressIntervalSet retval;
+    MemoryMap::Ptr map = memoryMap();
+    if (!map)
+        return retval;
+
+    SgAsmCilMetadataRoot *mdr = cilMetadataRoot(interpretation(), "filtering secondary native map");
+    if (!mdr)
+        return retval;
+
+    SgAsmCilMetadataHeap *metadataHeap = mdr->get_MetadataHeap();
+    ASSERT_not_null(metadataHeap);
+
+    SgAsmCilMethodDefTable *methodDefs = metadataHeap->get_MethodDefTable();
+    ASSERT_not_null(methodDefs);
+
+    for (SgAsmCilMethodDef *methodDef: methodDefs->get_elements()) {
+        ASSERT_not_null(methodDef);
+        const Address rva = methodDef->get_RVA();
+        if (rva == 0 || hasNativeCode(*methodDef))
+            continue;
+
+        const Address rvaLimit = methodDef->get_RVA_limit();
+        if (rvaLimit <= rva) {
+            mlog[WARN] <<"managed CIL MethodDef RVA " <<StringUtility::addrToString(rva)
+                       <<" has no decoded RVA limit; secondary native map filter skipped it\n";
+            continue;
+        }
+
+        const Address va = cilMethodRvaToVa(rva);
+        const Address vaLimit = cilMethodRvaToVa(rvaLimit);
+        ASSERT_require (vaLimit > va); 
+
+        const size_t bodySize = vaLimit - va;
+        const AddressInterval bodyInterval = AddressInterval::baseSize(va, bodySize);
+        
+        if (!map->at(va).exists()) {
+            mlog[WARN] <<"managed CIL MethodDef RVA " <<StringUtility::addrToString(rva)
+                       <<" converted to unmapped VA " <<StringUtility::addrToString(va)
+                       <<"; secondary native map section filter skipped it\n";
+            continue;
+        }
+        
+        if (map->at(va).limit(bodySize).read(nullptr).size() != bodySize) {
+            mlog[WARN] <<"managed CIL MethodDef RVA interval [" <<StringUtility::addrToString(rva)
+                       <<", " <<StringUtility::addrToString(rvaLimit)
+                       <<") converted to partially unmapped VA interval [" <<StringUtility::addrToString(bodyInterval.least())
+                       <<", " <<StringUtility::addrToString(vaLimit)
+                       <<"); secondary native map filter skipped it\n";
+            continue;
+        }
+
+        retval.insert(bodyInterval);
+    }
+
+    if (retval.size() == 0)
+        mlog[INFO] <<"collected " <<StringUtility::plural(retval.size(), "managed CIL method body interval")
+                   <<" for secondary native partitioner memory map filtering\n";
+
+    return retval;
+}
+
+namespace {
+
+uint64_t
+executableBytes(const MemoryMap::Ptr &map) {
+    uint64_t retval = 0;
+    if (map) {
+        for (const MemoryMap::Node &node: map->nodes()) {
+            if ((node.value().accessibility() & MemoryMap::EXECUTABLE) != 0)
+                retval += node.key().size();
+        }
+    }
+    return retval;
+}
+
+} // namespace
+
+MemoryMap::Ptr
+EngineBinary::filteredCilNativeMemoryMap(const AddressIntervalSet &excludedIntervals,
+                                         const std::vector<Address> &nativeStarts) const {
+    MemoryMap::Ptr original = memoryMap();
+    if (!original || excludedIntervals.isEmpty())
+        return original;
+
+    MemoryMap::Ptr filtered = original->shallowCopy();
+    filtered->byteOrder(original->byteOrder());
+    const uint64_t originalExecutableBytes = executableBytes(original);
+
+    size_t nErased = 0;
+    size_t nRetainedForNativeStarts = 0;
+    for (const AddressInterval &interval: excludedIntervals.intervals()) {
+        if (!interval.isEmpty()) {
+            bool containsNativeStart = false;
+            for (Address nativeStart: nativeStarts) {
+                if (interval.contains(nativeStart)) {
+                    containsNativeStart = true;
+                    break;
+                }
+            }
+            if (containsNativeStart) {
+                ++nRetainedForNativeStarts;
+                continue;
+            }
+            filtered->erase(interval);
+            ++nErased;
+        }
+    }
+
+    const uint64_t filteredExecutableBytes = executableBytes(filtered);
+    mlog[INFO] <<"erased " <<StringUtility::plural(nErased, "managed CIL exclusion interval")
+               <<" from secondary native partitioner memory map";
+    if (filteredExecutableBytes <= originalExecutableBytes) {
+        mlog[INFO] <<" (" <<StringUtility::plural(originalExecutableBytes - filteredExecutableBytes, "executable byte")
+                   <<" removed)";
+    }
+    mlog[INFO] <<"\n";
+    if (nRetainedForNativeStarts != 0) {
+        mlog[INFO] <<"retained " <<StringUtility::plural(nRetainedForNativeStarts, "managed CIL exclusion interval")
+                   <<" in secondary native partitioner memory map because it contains a native MethodDef start\n";
+    }
+
+    return filtered;
+}
+
+Partitioner::Ptr
+EngineBinary::partitionCilNativeFunctions(const std::vector<Address> &nativeStarts) {
+    ASSERT_forbid(nativeStarts.empty());
+
+    Sawyer::Message::Stream info(mlog[INFO]);
+    info <<"partitioning " <<StringUtility::plural(nativeStarts.size(), "native CIL MethodDef function") <<"\n";
+
+    Architecture::Base::ConstPtr nativeArchitecture = nativeArchitectureForCilInterpretation(interpretation());
+    if (!nativeArchitecture) {
+        mlog[WARN] <<"cannot find a native architecture for CIL MethodDef functions; secondary partitioner not created\n";
+        return Partitioner::Ptr();
+    }
+
+    const AddressIntervalSet excludedIntervals = cilManagedCodeExclusionIntervals();
+    MemoryMap::Ptr nativeMap = filteredCilNativeMemoryMap(excludedIntervals, nativeStarts);
+    Partitioner::Ptr nativePartitioner = createPartitionerForMap(nativeArchitecture, nativeMap);
+    nativePartitioner->interpretation(interpretation());
+
+    ArchitectureGuard architectureGuard(architecture_);
+    architecture_ = nativeArchitecture;
+
+    BinaryPartitionPass nativePass;
+    nativePass.kind = BinaryPartitionPass::Kind::cilNativeSecondary;
+    nativePass.cilNativeFunctionVas = nativeStarts;
+
+    runPartitionerWithSavedSettings(nativePartitioner, nativePass);
+
+    nativePartitioner->interpretation(interpretation());
+    info <<"secondary native CIL partitioner has " <<StringUtility::plural(nativePartitioner->nFunctions(), "function") <<"\n";
+    return nativePartitioner;
+}
+
+void
+EngineBinary::runPartitioner(const Partitioner::Ptr &primary) {
+    ASSERT_not_null(primary);
+
+    primary->secondaryPartitioner(Partitioner::Ptr());
+
+    BinaryPartitionPass primaryPass;
+    runPartitionerWithSavedSettings(primary, primaryPass);
+    const std::vector<Address> nativeStarts = primaryPass.cilNativeFunctionVas;
+
+    if (!nativeStarts.empty()) {
+        Partitioner::Ptr nativePartitioner = partitionCilNativeFunctions(nativeStarts);
+        primary->secondaryPartitioner(nativePartitioner);
+    }
+}
+
+void
+EngineBinary::runPartitionerInit(const Partitioner::Ptr &partitioner) {
+    BinaryPartitionPass pass;
+    runPartitionerInit(partitioner, pass);
+}
+
+void
+EngineBinary::runPartitionerInit(const Partitioner::Ptr &partitioner, const BinaryPartitionPass &pass) {
     Sawyer::Message::Stream where(mlog[WHERE]);
 
-    if (hasCilCodeSection()) {
+    if (hasCilCodeSection() && !pass.isCilNativeSecondary()) {
         settings().partitioner.findingImportFunctions = false; // Don't find "_Cor_CorExeMain"
         settings().partitioner.findingEntryFunctions = false; // Do not find "_start"
         settings().partitioner.findingInterFunctionCalls = false; // chases memory willy nilly looking for instructions
@@ -1564,10 +1884,20 @@ void EngineBinary::runPartitionerInit(const Partitioner::Ptr &partitioner) {
 
     SAWYER_MESG(where) <<"marking user-defined functions\n";
     makeUserFunctions(partitioner, settings().partitioner.functionStartingVas);
+    if (pass.isCilNativeSecondary()) {
+        SAWYER_MESG(where) <<"marking native CIL MethodDef functions\n";
+        makeCilNativeFunctions(partitioner, pass.cilNativeFunctionVas);
+    }
 }
 
 void
 EngineBinary::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
+    BinaryPartitionPass pass;
+    runPartitionerRecursive(partitioner, pass);
+}
+
+void
+EngineBinary::runPartitionerRecursive(const Partitioner::Ptr &partitioner, BinaryPartitionPass &pass) {
     Sawyer::Message::Stream where(mlog[WHERE]);
 
     // Create the symbolic execution state
@@ -1593,14 +1923,21 @@ EngineBinary::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
     auto ops = InstructionSemantics::SymbolicSemantics::RiscOperators::instanceFromState(state, solver);
     InstructionSemantics::BaseSemantics::RiscOperatorsPtr baseOps = ops;
 
-    // Decode and partition any CIL byte code (sections with name "CLR Runtime Header")
+
+    // Decode and partition any CIL byte code (sections with name "CLR Runtime Header") during the primary pass only.
+    if (!pass.isCilNativeSecondary()) {
     SAWYER_MESG(where) <<"decoding and partitioning CIL byte code\n";
-    bool foundCilSection = partitionCilSections(partitioner);
-    if (foundCilSection) return;
+        const auto cilPartition = partitionCilSections(partitioner);
+        const bool foundCilSection = std::get<0>(cilPartition);
+        if (foundCilSection) {
+            pass.cilNativeFunctionVas = cilMethodRvasToVas(std::get<1>(cilPartition));
+            return;
+        }
+    }
 
     // Start discovering instructions and forming them into basic blocks and functions
     SAWYER_MESG(where) <<"discovering and populating functions\n";
-    discoverFunctions(partitioner);
+    discoverFunctions(partitioner, pass);
 
     // Try to attach basic blocks to functions
     SAWYER_MESG(where) <<"marking function call targets\n";
@@ -1697,25 +2034,88 @@ EngineBinary::hasCilCodeSection() {
     return false;
 }
 
-bool
-EngineBinary::partitionCilSections(const Partitioner::Ptr &partitioner) {
-    SgAsmCilMetadataRoot* mdr{nullptr};
-    if (auto interp{interpretation()}) {
-        for (SgAsmGenericHeader* header : interp->get_headers()->get_headers()) {
-            auto sections = header->get_sectionsByName("CLR Runtime Header");
-            for (SgAsmGenericSection* section : sections) {
-                if (auto cliHeader = isSgAsmCliHeader(section)) {
-                    if (mdr != nullptr) {
-                        mlog[WARN] << "multiple CIL code sections seen by partitionCilSections\n";
+Address
+EngineBinary::cilMethodRvaToVa(Address rva) const {
+    SgAsmGenericHeader *firstHeader = nullptr;
+    Sawyer::Optional<Address> firstMappedVa;
+
+    if (SgAsmInterpretation *interp = interpretation()) {
+        for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers()) {
+            if (!firstHeader)
+                firstHeader = fileHeader;
+
+            RelativeVirtualAddress relativeVa(rva);
+            relativeVa.bindBestSection(fileHeader);
+            const Address va = relativeVa.va().orElse(fileHeader->get_baseVa() + rva);
+
+            if (MemoryMap::Ptr map = memoryMap()) {
+                if (map->at(va).exists()) {
+                    if (!firstMappedVa)
+                        firstMappedVa = va;
+                    if (map->at(va).require(MemoryMap::EXECUTABLE).exists())
+                        return va;
                     }
-                    mdr = cliHeader->get_metadataRoot();
+            } else if (!firstMappedVa) {
+                firstMappedVa = va;
                 }
             }
         }
+    if (firstMappedVa)
+        return firstMappedVa.get();
+    return firstHeader ? firstHeader->get_baseVa() + rva : rva;
+}
+
+std::vector<Address>
+EngineBinary::cilMethodRvasToVas(const std::vector<Address> &rvas) const {
+    std::vector<Address> retval;
+    MemoryMap::Ptr map = memoryMap();
+
+    for (Address rva: rvas) {
+        const Address va = cilMethodRvaToVa(rva);
+        if (map && !map->at(va).exists()) {
+            mlog[WARN] <<"skipping native CIL MethodDef RVA " <<StringUtility::addrToString(rva)
+                       <<": converted VA " <<StringUtility::addrToString(va) <<" is not mapped\n";
+        } else {
+            if (map && !map->at(va).require(MemoryMap::EXECUTABLE).exists()) {
+                mlog[WARN] <<"native CIL MethodDef RVA " <<StringUtility::addrToString(rva)
+                           <<" converted to non-executable VA " <<StringUtility::addrToString(va) <<"\n";
+            }
+            if (std::find(retval.begin(), retval.end(), va) == retval.end())
+                retval.push_back(va);
+        }
     }
 
+    if (!rvas.empty()) {
+        mlog[INFO] <<"converted " <<StringUtility::plural(retval.size(), "native CIL MethodDef RVA")
+                   <<" from " <<StringUtility::plural(rvas.size(), "metadata entry") <<"\n";
+    }
+    return retval;
+}
+
+std::tuple<bool, std::vector<Address>>
+EngineBinary::partitionCilSections(const Partitioner::Ptr &partitioner) {
+    SgAsmCilMetadataRoot *mdr = cilMetadataRoot(interpretation(), "partitioning CIL sections");
+
     // If there is a "CLR Runtime Header" section, it's CIL byte code
-    if (mdr) {
+    if (!mdr)
+      return { false, {} }; // No CIL sections encountered
+
+    std::vector<Address>    nativeFunctionRvas;
+
+    SgAsmCilMetadataHeap* metadataHeap = mdr->get_MetadataHeap();
+    ASSERT_not_null(metadataHeap);
+
+    SgAsmCilMethodDefTable* methodDefs = metadataHeap->get_MethodDefTable();
+    ASSERT_not_null(methodDefs);
+
+    for (SgAsmCilMethodDef* methodDef : methodDefs->get_elements()) {
+        ASSERT_not_null(methodDef);
+        if (methodDef->get_RVA() != 0 && hasNativeCode(*methodDef))
+            nativeFunctionRvas.push_back(methodDef->get_RVA());
+    }
+
+    if (!nativeFunctionRvas.empty())
+        mlog[INFO] <<"discovered " <<StringUtility::plural(nativeFunctionRvas.size(), "native CIL MethodDef RVA") <<"\n";
       // Don't do post analysis on a dotnet specimen
       settings().partitioner.doingPostAnalysis = false;
 
@@ -1724,6 +2124,7 @@ EngineBinary::partitionCilSections(const Partitioner::Ptr &partitioner) {
 
       auto nss = cilContainer->namespaces();
       ASSERT_require(nss.size() > 0);
+      // \TODO cilContainer goes out of scope ...
 
       auto ns = nss[0];
       auto cls = ns->classes();
@@ -1732,10 +2133,7 @@ EngineBinary::partitionCilSections(const Partitioner::Ptr &partitioner) {
       // Make the ByteCode analysis class available
       analysisClass_ = cls[0];
 
-      return true;
-    }
-
-    return false; // No CIL sections encountered
+    return { true, std::move(nativeFunctionRvas) };
 }
 
 Partitioner::Ptr
@@ -1938,6 +2336,25 @@ EngineBinary::makeUserFunctions(const Partitioner::Ptr &partitioner, const std::
         Function::Ptr function = Function::instance(va, SgAsmFunction::FUNC_CMDLINE);
         insertUnique(retval, partitioner->attachOrMergeFunction(function), sortFunctionsByAddress);
     }
+    return retval;
+}
+
+std::vector<Function::Ptr>
+EngineBinary::makeCilNativeFunctions(const Partitioner::Ptr &partitioner, const std::vector<Address> &vas) {
+    ASSERT_not_null(partitioner);
+    std::vector<Function::Ptr> retval;
+
+    for (Address va: vas) {
+        const std::string name = "cil_native_" + StringUtility::addrToString(va);
+        Function::Ptr function = Function::instance(va, name, SgAsmFunction::FUNC_CMDLINE);
+        function->comment("Native method body discovered from CIL MethodDef metadata.");
+
+        Function::Ptr attached = partitioner->attachOrMergeFunction(function);
+        insertUnique(retval, attached, sortFunctionsByAddress);
+    }
+
+    if (!retval.empty())
+        mlog[INFO] <<"seeded " <<StringUtility::plural(retval.size(), "native CIL MethodDef function") <<"\n";
     return retval;
 }
 
@@ -2219,6 +2636,12 @@ EngineBinary::makeFunctionFromInterFunctionCalls(const Partitioner::Ptr &partiti
 
 void
 EngineBinary::discoverFunctions(const Partitioner::Ptr &partitioner) {
+    BinaryPartitionPass pass;
+    discoverFunctions(partitioner, pass);
+}
+
+void
+EngineBinary::discoverFunctions(const Partitioner::Ptr &partitioner, const BinaryPartitionPass &pass) {
     ASSERT_not_null(partitioner);
     Address nextPrologueVa = 0;                         // where to search for function prologues
     Address nextInterFunctionCallVa = 0;                // where to search for inter-function call instructions
@@ -2234,7 +2657,7 @@ EngineBinary::discoverFunctions(const Partitioner::Ptr &partitioner) {
 
         // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's entry
         // block, so go back and look for more basic blocks again.
-        if (!hasCilCodeSection() && !partitioner->memoryMap()->isEmpty()) {
+        if ((!hasCilCodeSection() || pass.isCilNativeSecondary()) && !partitioner->memoryMap()->isEmpty()) {
             if (nextPrologueVa < partitioner->memoryMap()->hull().greatest()) {
                 std::vector<Function::Ptr> newFunctions =
                     makeNextPrologueFunction(partitioner, nextPrologueVa, nextPrologueVa /*out*/);
