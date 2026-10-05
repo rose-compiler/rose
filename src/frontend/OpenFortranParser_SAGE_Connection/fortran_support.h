@@ -158,6 +158,16 @@ class MultipartReferenceType
                hasCo_deref               = X.hasCo_deref;
              }
 
+       // PL (10/5/2026): fix warning for deprecated implicit `operator=` definition
+          MultipartReferenceType & operator= ( const MultipartReferenceType & X )
+             {
+               name                      = X.name;
+               hasSelectionSubscriptList = X.hasSelectionSubscriptList;
+               hasImageSelector          = X.hasImageSelector;
+               hasCo_deref               = X.hasCo_deref;
+               return *this;
+             }
+
        // We need a copy constructor and the operator== to support use of this class in STL.
           bool operator== ( const MultipartReferenceType & X )
              {

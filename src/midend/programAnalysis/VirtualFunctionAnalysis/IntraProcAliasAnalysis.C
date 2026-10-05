@@ -92,7 +92,7 @@ CompactRepresentation::CompactRepresentation(const CompactRepresentation& copy) 
 }
 
 CompactRepresentation& CompactRepresentation::operator=(const CompactRepresentation& p) {
-        ASSERT_require(reinterpret_cast<std::intptr_t>(this) != reinterpret_cast<std::intptr_t>(nullptr));
+        ASSERT_this();
 
         if(this != &p) {
             delete graph;
@@ -177,7 +177,7 @@ void CompactRepresentation::addMayAliasRelation(const AliasRelationNode &left, c
  }
 
 bool CompactRepresentation::operator==(const CompactRepresentation &that) const {
-    ASSERT_require(reinterpret_cast<std::intptr_t>(this) != reinterpret_cast<std::intptr_t>(nullptr));
+    ASSERT_this();
     return (getHash() == that.getHash());
 }
 
@@ -187,8 +187,7 @@ bool CompactRepresentation::operator !=(const CompactRepresentation &that) const
 
 
 void CompactRepresentation::toDot(const std::string& file_name) {
-
-        ASSERT_require(reinterpret_cast<std::intptr_t>(this) != reinterpret_cast<std::intptr_t>(nullptr));
+        ASSERT_this();
 
         std::ofstream ofile(file_name.c_str(), std::ios::out);
 

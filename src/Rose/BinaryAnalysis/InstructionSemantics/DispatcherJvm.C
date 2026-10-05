@@ -576,7 +576,7 @@ namespace JvmSemantics {
         }
     }
 
-    void execute_invokedynamic(D d, Ops ops, size_t index, SgAsmInstruction *insn) {
+    void execute_invokedynamic(D /* d */, Ops ops, size_t index, SgAsmInstruction *insn) {
         ASSERT_not_null(ops);
         ASSERT_not_null(insn);
 

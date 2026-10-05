@@ -235,7 +235,8 @@ AddressUsers::basicBlockExists(const BasicBlock::Ptr &bb) const {
 
 BasicBlock::Ptr
 AddressUsers::basicBlockExists(Address va) const {
-    const std::vector<BasicBlock::Ptr> &candidates = findBasicBlock(va).basicBlocks();
+    const AddressUser& basicblock = findBasicBlock(va);
+    const std::vector<BasicBlock::Ptr> &candidates = basicblock.basicBlocks();
     for (const BasicBlock::Ptr &bb: candidates) {
         if (bb->address() == va)
             return bb;

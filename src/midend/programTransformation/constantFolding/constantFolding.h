@@ -42,6 +42,9 @@ class ConstantFoldingSynthesizedAttribute
           ConstantFoldingSynthesizedAttribute() : newValueExp(NULL) {};
           ConstantFoldingSynthesizedAttribute ( const ConstantFoldingSynthesizedAttribute & X )
              : newValueExp(X.newValueExp) {};
+          ConstantFoldingSynthesizedAttribute& operator= ( const ConstantFoldingSynthesizedAttribute & X ) {
+            newValueExp = X.newValueExp; return *this;
+          }
    };
 
 class ConstantFoldingTraversal

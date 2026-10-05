@@ -23,7 +23,7 @@ struct AliasRelationNode{
     int derefLevel;
 
     bool operator==(const AliasRelationNode &that) const {
-        ASSERT_require(reinterpret_cast<std::intptr_t>(this) != reinterpret_cast<std::intptr_t>(nullptr));
+        ASSERT_this();
         return (this->var == that.var && this->derefLevel == that.derefLevel);
     }
 

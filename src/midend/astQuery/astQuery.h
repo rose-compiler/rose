@@ -337,7 +337,9 @@ template<typename NodeFunctional>
         _Result (*__x)(SgNode*),
         AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes ){
       // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
-      return querySubTree(subTree, __x, defineQueryType);
+      // PL (10/5/2026): Fixed issue where the removal of std::ptr_fun resulted in the wrong function
+      //                 getting invoked, creating a recursive call.
+      return querySubTree(subTree, std::function<_Result(SgNode*)>(__x), defineQueryType);
     }
 
   /********************************************************************************
@@ -389,7 +391,9 @@ template<typename NodeFunctional>
     _Result queryRange (typename _Result::iterator begin, typename _Result::iterator end,
         _Result (*__x)(SgNode*)){
       // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
-      return queryRange(begin,end,__x);
+      // PL (10/5/2026): Fixed issue where the removal of std::ptr_fun resulted in the wrong function
+      //                 getting invoked, creating a recursive call.
+      return queryRange(begin,end,std::function<_Result(SgNode*)>(__x));
     }
 
   /****************************************************************************
@@ -453,7 +457,9 @@ _Result queryMemoryPool (
     _Result (*__x)(SgNode*),
     VariantVector* targetVariantVector = NULL ){
   // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
-  return queryMemoryPool(__x, targetVariantVector);
+  // PL (10/5/2026): Fixed issue where the removal of std::ptr_fun resulted in the wrong function
+  //                 getting invoked, creating a recursive call.
+  return queryMemoryPool(std::function<_Result(SgNode*)>(__x), targetVariantVector);
 }
 
 

@@ -383,6 +383,7 @@ void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::insertVariableId(V
               SgClassDeclaration* memberRecordDecl = isSgClassDeclaration(memberRecordType->get_declaration());
               ROSE_ASSERT(memberRecordDecl);
               if(memberRecordDecl->get_class_type() == SgClassDeclaration::e_union) {
+                const auto qualified_name = memberRecordDecl->get_qualified_name().getString();
                 // Nested union found. Recursively call insertVariableId(...) for the first member of the nested union:
                 if((memberRecordDecl = isSgClassDeclaration(memberRecordDecl->get_definingDeclaration()))){
                   SgClassDefinition* unionRecordDef = memberRecordDecl->get_definition();
@@ -399,7 +400,7 @@ void CodeThorn::ComputeAddressTakenInfo::OperandToVariableId::insertVariableId(V
                   }
                 }
                 else {
-                  throw CodeThorn::Exception("Nested union variable " + cati.vidm.variableName(unionMemberVarId) + ": Unable to find defining declaration of union " + memberRecordDecl->get_qualified_name().getString() + ".");
+                  throw CodeThorn::Exception("Nested union variable " + cati.vidm.variableName(unionMemberVarId) + ": Unable to find defining declaration of union " + qualified_name + ".");
                   // (We could add all variables (that are members of an union) to the address-taken set instead.)
                 }
               }

@@ -1625,10 +1625,10 @@ void SgAsmJvmModule::unparse(std::ostream& os) const
   // requires[]
   uint16_t requiresCount = get_requires().size();
   Jvm::writeValue(os, requiresCount);
-  for (auto requires : get_requires()) {
-    Jvm::writeValue(os, requires->requires_index);
-    Jvm::writeValue(os, requires->requires_flags);
-    Jvm::writeValue(os, requires->requires_version_index);
+  for (auto requires_ : get_requires()) {
+    Jvm::writeValue(os, requires_->requires_index);
+    Jvm::writeValue(os, requires_->requires_flags);
+    Jvm::writeValue(os, requires_->requires_version_index);
   }
 
   // exports[]

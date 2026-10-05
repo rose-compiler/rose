@@ -534,7 +534,7 @@ get_alias_map( const std::string& varname, const AstNodePtr& scope)
 }
 
 void StmtVarAliasCollect::
-AppendVariableDecl( AstInterface& fa, const AstNodePtr& var, const AstNodePtr& init, const AstNodePtr& desig) {
+AppendVariableDecl( AstInterface& fa, const AstNodePtr& var, const AstNodePtr& init, const AstNodePtr& /* desig */) {
   return AppendModLoc(fa, var, init);
 }
 
