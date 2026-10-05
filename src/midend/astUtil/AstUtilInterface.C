@@ -115,8 +115,10 @@ void AstUtilInterface::ComputeAstSideEffects(SgNode* ast,
            if (is_unknown_ref) {
               ref.set_is_unknown_reference();
               what.set_is_unknown(true);
+              DebugAstUtil([&ref](){ return "Did not find aliasing for unknown reference:" + AstInterface::AstToString(ref); });
+           } else {
+              DebugAstUtil([&ref](){ return "Did not find aliasing for known reference:" + AstInterface::AstToString(ref); });
            }
-           DebugAstUtil([&ref](){ return "Did not find aliased reference:" + AstInterface::AstToString(ref); });
         }
       }
       if (collect != 0) (*collect)(ref, src, what);

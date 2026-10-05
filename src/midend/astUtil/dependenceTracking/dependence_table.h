@@ -153,8 +153,8 @@ class SelectDependences : public DependenceTable{
     std::set<std::string> tag_first_, tag_second_, tag_type_;
   protected:
     bool SaveDependence(const DependenceEntry& e) override {
-       if ((tag_first_ .empty() || tag_first_.find(e.first_entry()) != tag_first_.end())  && (tag_second_ .empty() || tag_second_.find(e.second_entry()) != tag_second_.end())
-   && (tag_type_.empty() || tag_type_.find(e.type_entry())!=tag_type_.end())) {
+       if ((tag_first_ .empty() || tag_first_.find(e.first_entry()) == tag_first_.end())  && (tag_second_ .empty() || tag_second_.find(e.second_entry()) == tag_second_.end())
+   && (tag_type_.empty() || tag_type_.find(e.type_entry())==tag_type_.end())) {
           DependenceTable::SaveDependence(e);
           return true;
        }
