@@ -467,6 +467,8 @@ Status-Post-Processing:
 
 Coverage-Analysis:
     extends: .release-base
+    tags:
+      - workpool:large:rhel9
     parallel:
         matrix:
             - VERSION:
