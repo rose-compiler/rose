@@ -130,14 +130,13 @@ SAWYER_EXPORT extern AssertFailureHandler assertFailureHandler;
 #define ASSERT_always_not_implemented(note)                                                                                    \
     Sawyer::Assert::fail("not implemented yet", NULL, boost::lexical_cast<std::string>(note),                                  \
                          __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
-#define ASSERT_always_this() /*void*/
 
 #ifdef __clang_analyzer__
     // The Clang analyzer doesn't recognize Sawyer::Assert::fail, but it does recognize C's assert
     #define ASSERT_always_require2(expr, note) assert(expr)
     #define ASSERT_always_forbid2(expr, note) assert(!(expr))
     #define ASSERT_always_not_null2(expr, note) assert((expr) != nullptr)
-    #define ASSERT_this2() assert(this != NULL)
+    #define ASSERT_always_this() assert(this != NULL)
 #else
     #define ASSERT_always_require2(expr, note)                                                                                 \
         ((expr) ?                                                                                                              \
@@ -180,7 +179,7 @@ SAWYER_EXPORT extern AssertFailureHandler assertFailureHandler;
             ROSE_ASSERT_DIAG_POP                                                                                               \
         } while (false)
 
-    #define ASSERT_this2()                                                                                                     \
+    #define ASSERT_always_this()                                                                                                     \
         ASSERT_suppress_nonnull_compare((this != NULL) ?                                                                       \
             static_cast<void>(0) :                                                                                             \
             Sawyer::Assert::fail("null pointer",                                                                               \
@@ -214,7 +213,7 @@ SAWYER_EXPORT extern AssertFailureHandler assertFailureHandler;
 #define ASSERT_not_null2(expr, note)    ASSERT_always_not_null2(expr, note)
 #define ASSERT_not_reachable(note)      ASSERT_always_not_reachable(note)
 #define ASSERT_not_implemented(note)    ASSERT_always_not_implemented(note)
-#define ASSERT_this()                   ASSERT_this2()
+#define ASSERT_this()                   ASSERT_always_this()
 
 #endif
 
