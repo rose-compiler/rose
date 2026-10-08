@@ -252,6 +252,7 @@ namespace JvmSemantics {
         ASSERT_not_null(nullRef);
 
         nullRef->kind(ValueKind::ObjectReference);
+        nullRef->nullness(Nullness::DefinitelyNull);
         nullRef->symbolName("null");
 
         return nullRef;
