@@ -16,10 +16,6 @@ namespace TaintSemantics {
 //                                      SValue
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SValue::~SValue() {}
-
-SValue::SValue() {}
-
 SValue::SValue(const size_t nbits)
     : Super(nbits) {}
 
@@ -88,8 +84,11 @@ SValue::boolean_(const bool value) const {
 BaseSemantics::SValue::Ptr
 SValue::copy(const size_t new_width) const {
     Ptr retval(new SValue(*this));
-    if (new_width != 0 && new_width != retval->nBits())
+
+    if (new_width != 0 && new_width != retval->nBits()) {
         retval->set_width(new_width);
+    }
+
     return retval;
 }
 

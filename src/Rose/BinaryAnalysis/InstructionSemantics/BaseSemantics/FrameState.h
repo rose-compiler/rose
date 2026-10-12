@@ -72,6 +72,7 @@ private:
     std::vector<SValuePtr> stack_;  // operand stack for the frame
     std::vector<SValuePtr> locals_; // local variables for the frame
     ByteCode::Method::Ptr method_;  // method associated with this invocation frame
+    SValuePtr currentException_;    // exception currently associated with this frame
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -87,6 +88,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(stack_);
         s & BOOST_SERIALIZATION_NVP(locals_);
         s & BOOST_SERIALIZATION_NVP(method_);
+        s & BOOST_SERIALIZATION_NVP(currentException_);
     }
 #endif
 
@@ -137,6 +139,10 @@ public:
     SValuePtr peekOperand(size_t depth = 0) override;
     SValuePtr popOperand() override;
     void pushOperand(const SValuePtr &value) override;
+
+    /** The exception currently associated with this frame. */
+    SValuePtr currentException() const;
+    void currentException(const SValuePtr &value);
 
 public:
     void hash(Combinatorics::Hasher&, RiscOperators* addrOps, RiscOperators* valOps) const override;

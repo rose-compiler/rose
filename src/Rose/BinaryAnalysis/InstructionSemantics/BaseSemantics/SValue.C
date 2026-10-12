@@ -29,18 +29,13 @@ SValue::WithFormatter::print(std::ostream &stream) const {
 // SValue
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SValue::SValue()
-    : width(0) {}
+SValue::SValue(const size_t nbits) : width(nbits) {
+}
 
-SValue::SValue(const size_t nbits)
-    : width(nbits) {}
-
-SValue::SValue(const SValue &other)
-    : Sawyer::SharedObject(other), width(other.width) {}
-
+SValue::SValue(const SValue&) = default;
 SValue& SValue::operator=(const SValue&) = default;
     
-SValue::~SValue() {}
+SValue::~SValue() = default;
 
 SValue::Ptr
 SValue::createMerged(const SValue::Ptr &other, const MergerPtr &merger, const SmtSolver::Ptr &solver) const {

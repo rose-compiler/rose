@@ -82,11 +82,10 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 public:
-    ~SValue();
+    ~SValue() = default;
 
 protected:
-    SValue();                                           // needed for serialization
-
+    SValue() = default;
     explicit SValue(size_t nbits);
     SValue(size_t nbits, uint64_t number);
     SValue(ExprPtr);

@@ -202,6 +202,8 @@ public:
     /** Shared-ownership pointer. */
     using Ptr = SValuePtr;
 
+    virtual ~SValue();
+
 protected:
     /** The symbolic expression for this value.  Symbolic expressions are reference counted. */
     ExprPtr expr;
@@ -218,7 +220,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        roseAstSerializationRegistration(s);            // "defs" has SgAsmInstruction ASTs
+        roseAstSerializationRegistration(s); // "defs" has SgAsmInstruction ASTs
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
         s & BOOST_SERIALIZATION_NVP(expr);
         s & BOOST_SERIALIZATION_NVP(defs);
@@ -228,10 +230,13 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    SValue();                                           // needed for serialization
-    explicit SValue(size_t nbits);
+    SValue(); // needed for serialization
     SValue(size_t nbits, uint64_t number);
-    SValue(ExprPtr expr);
+    explicit SValue(size_t nbits);
+    explicit SValue(ExprPtr expr);
+
+    SValue(const SValue&) = default;
+    SValue& operator=(const SValue&) = default;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors

@@ -207,7 +207,6 @@ namespace JvmSemantics {
 
     void branch_ifnonnull(Ops ops, I insn, Args args);
     void branch_ifnull(Ops ops, I insn, Args args);
-    void execute_athrow(Ops ops, I insn, Args args);
     void execute_monitorenter(Ops ops, I insn, Args args);
     void execute_monitorexit(Ops ops, I insn, Args args);
 
@@ -577,7 +576,7 @@ namespace JvmSemantics {
         }
     }
 
-    void execute_invokedynamic(D /* d */, Ops ops, size_t index, SgAsmInstruction *insn) {
+    void execute_invokedynamic(D /*d*/, Ops ops, size_t index, SgAsmInstruction *insn) {
         ASSERT_not_null(ops);
         ASSERT_not_null(insn);
 
@@ -979,7 +978,6 @@ namespace JvmSemantics {
         ops->writeRegister(pcReg, nextPc);
     }
 
-    void execute_athrow(Ops, I, Args) { jvmUnsupported("execute_athrow"); }
     void execute_monitorenter(Ops, I, Args) { jvmUnsupported("execute_monitorenter"); }
     void execute_monitorexit(Ops, I, Args) { jvmUnsupported("execute_monitorexit"); }
 
@@ -1482,7 +1480,35 @@ struct IP_astore_3: P {
 struct IP_athrow: P {
     void p(D /*d*/, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        JvmSemantics::execute_athrow(ops, insn, args);
+
+        auto exceptionObject = ops->popOperand();
+
+        auto state = ops->currentState();
+        ASSERT_not_null(state);
+
+        auto frame = state->currentFrame();
+        ASSERT_not_null(frame);
+
+        SValuePtr newException;
+
+        switch (exceptionObject->nullness()) {
+          case BaseSemantics::Nullness::DefinitelyNull:
+              newException = DispatcherJvm::
+                  syntheticObjectReference(state->protoval(), "Ljava/lang/NullPointerException;");
+              newException->nullness(BaseSemantics::Nullness::DefinitelyNonNull);
+              break;
+          case BaseSemantics::Nullness::MaybeNull:
+              newException = DispatcherJvm::
+                  syntheticObjectReference(state->protoval(), "Ljava/lang/Throwable;");
+              newException->nullness(BaseSemantics::Nullness::DefinitelyNonNull);
+              break;
+          case BaseSemantics::Nullness::DefinitelyNonNull:
+              newException = exceptionObject;
+              break;
+        }
+
+        frame->currentException(newException);
+        state->terminate();
     }
 };
 
@@ -4546,6 +4572,10 @@ struct IP_new_: P {
         const std::string descriptor = "L" + className + ";";
         auto sval = DispatcherJvm::syntheticObjectReference(ops->protoval(), descriptor, symbolName);
 
+        if (className == "java/lang/RuntimeException") {
+            sval->nullness(Nullness::DefinitelyNonNull);
+        }
+
         ops->pushOperand(sval);
     }
 };
@@ -4938,7 +4968,7 @@ DispatcherJvm::initializeDispatchTable() {
     iprocSet(0xbc,  new Jvm::IP_newarray);
     iprocSet(0xbd,  new Jvm::IP_anewarray);
     iprocSet(0xbe,  new Jvm::IP_arraylength);
-//  iprocSet(0xbf,  new Jvm::IP_athrow);
+    iprocSet(0xbf,  new Jvm::IP_athrow);
 
     iprocSet(0x10,  new Jvm::IP_bipush);
     iprocSet(0x11,  new Jvm::IP_sipush);

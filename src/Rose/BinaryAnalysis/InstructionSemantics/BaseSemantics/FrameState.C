@@ -349,6 +349,16 @@ FrameState::pushOperand(const SValuePtr &sval) {
     stack_.push_back(sval);
 }
 
+SValuePtr
+FrameState::currentException() const {
+    return currentException_;
+}
+
+void
+FrameState::currentException(const SValuePtr &value) {
+    currentException_ = value;
+}
+
 bool
 FrameState::merge(const AddressSpace::Ptr &other_, RiscOperators */*addrOps*/, RiscOperators */*valOps*/) {
     ASSERT_require2(name() == other_->name(), "TODO::FrameState::merge(), names diff");

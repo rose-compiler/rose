@@ -62,8 +62,11 @@ SValue::number_(const size_t nBits, const uint64_t number) const {
 BaseSemantics::SValue::Ptr
 SValue::copy(const size_t new_width) const {
     Ptr retval(new SValue(*this));
-    if (new_width != 0 && new_width != retval->nBits())
+
+    if (new_width != 0 && new_width != retval->nBits()) {
         retval->set_width(new_width);
+    }
+
     return retval;
 }
 

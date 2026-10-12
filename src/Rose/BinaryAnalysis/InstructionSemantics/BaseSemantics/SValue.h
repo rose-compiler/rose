@@ -80,7 +80,7 @@ public:
     using Ptr = SValuePtr;
 
 protected:
-    size_t width;                               /** Width of the value in bits. Typically (not always) a power of two. */
+    size_t width = 0;                           /** Width of the value in bits. Typically (not always) a power of two. */
     ValueKind kind_ = ValueKind::Unknown;       /** Kind of the value type. */
     Nullness nullness_ = Nullness::MaybeNull;   /** Nullness state for reference-like values. */
     SValuePtr arrayLength_;                     /** Symbolic length of the array if an ArrayReference. */
@@ -109,8 +109,9 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Normal, protected, C++ constructors
 protected:
-    SValue();                                           // needed for serialization
-    explicit SValue(size_t nbits);                      // hot
+    SValue() = default;
+    explicit SValue(size_t nbits);
+
     SValue(const SValue&);
     SValue& operator=(const SValue&);
 
@@ -135,7 +136,7 @@ public:
      *  method is closely related.
      *
      *  @sa unspecified_ */
-    virtual SValuePtr undefined_(size_t nbits) const = 0; // hot
+    virtual SValuePtr undefined_(size_t nbits) const = 0;
 
     /** Create a new unspecified semantic value. The new semantic value will have the same dynamic type as the value on which
      *  this virtual method is called.  Undefined (@ref undefined_) and unspecified are closely related.  Unspecified values
@@ -157,7 +158,7 @@ public:
     /** Create a new concrete semantic value. The new value will represent the specified concrete value and have the same
      *  dynamic type as the value on which this virtual method is called. This is the most common way that a new constant is
      *  created.  The @p number is truncated to contain @p nbits bits (higher order bits are cleared). */
-    virtual SValuePtr number_(size_t nbits, uint64_t number) const = 0; // hot
+    virtual SValuePtr number_(size_t nbits, uint64_t number) const = 0;
 
     /** Create a new, Boolean value. The new semantic value will have the same dynamic type as the value on
      *  which this virtual method is called. This is how 1-bit flag register values (among others) are created. The base

@@ -65,21 +65,22 @@ Merger::instance(size_t n) {
 //                                      SValue
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SValue::SValue() {}
+SValue::~SValue() = default;
+
+SValue::SValue() {
+    // This definition required for serialization
+}
 
 SValue::SValue(size_t nbits)
-    : BaseSemantics::SValue(nbits) {
-    expr = SymbolicExpression::makeIntegerVariable(nbits);
+  : BaseSemantics::SValue(nbits), expr(SymbolicExpression::makeIntegerVariable(nbits)) {
 }
 
 SValue::SValue(size_t nbits, uint64_t number)
-    : BaseSemantics::SValue(nbits) {
-    expr = SymbolicExpression::makeIntegerConstant(nbits, number);
+  : BaseSemantics::SValue(nbits), expr(SymbolicExpression::makeIntegerConstant(nbits, number)) {
 }
 
-SValue::SValue(ExprPtr expr)
-    : BaseSemantics::SValue(expr->nBits()) {
-    this->expr = expr;
+SValue::SValue(ExprPtr e)
+  : BaseSemantics::SValue(e->nBits()), expr(e) {
 }
 
 SValue::Ptr
@@ -141,15 +142,10 @@ SValue::boolean_(bool value) const {
 BaseSemantics::SValue::Ptr
 SValue::copy(size_t new_width) const {
     SValue::Ptr retval(new SValue(*this));
-    if (new_width!=0 && new_width!=retval->nBits()) {
+
+    if (new_width != 0 && new_width != retval->nBits()) {
         retval->set_width(new_width);
     }
-
-    retval->kind(kind());
-    retval->arrayLength(arrayLength());
-    retval->typeDescriptor(typeDescriptor());
-    retval->symbolName(symbolName());
-
     return retval;
 }
 
