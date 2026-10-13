@@ -479,6 +479,9 @@ class TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute : As
 
        // Required copy constructor.
           TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute(const TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute & X);
+
+       // Fix for deprecated operator=.
+          TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute & operator=(const TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute & X);
    };
 
 class TestForProperLanguageAndSymbolTableCaseSensitivity : public AstTopDownProcessing<TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute> 

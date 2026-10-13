@@ -58,6 +58,8 @@ class SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute
 
           SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute ( const SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute & X ); // : processChildNodes(X.processChildNodes) {};
 
+          SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute & operator= ( const SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute & X );
+
    };
 
    
@@ -80,6 +82,8 @@ class SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute
           SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute(SgNode* n);
 
           SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute(const SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute & X);
+
+          SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute & operator=(const SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute & X);
    };
 
 

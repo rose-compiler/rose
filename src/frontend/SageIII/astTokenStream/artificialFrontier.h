@@ -50,6 +50,8 @@ class ArtificialFrontier_InheritedAttribute
 
           ArtificialFrontier_InheritedAttribute ( const ArtificialFrontier_InheritedAttribute & X );
 
+          ArtificialFrontier_InheritedAttribute & operator= ( const ArtificialFrontier_InheritedAttribute & X );
+
    };
 
    
@@ -73,6 +75,8 @@ class ArtificialFrontier_SynthesizedAttribute
           ArtificialFrontier_SynthesizedAttribute(SgNode* n);
 
           ArtificialFrontier_SynthesizedAttribute(const ArtificialFrontier_SynthesizedAttribute & X);
+
+          ArtificialFrontier_SynthesizedAttribute & operator=(const ArtificialFrontier_SynthesizedAttribute & X);
    };
 
 

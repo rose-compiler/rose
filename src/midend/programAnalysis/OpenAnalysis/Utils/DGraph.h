@@ -112,6 +112,7 @@ public:
   /** The DFSIterator here is just an extension of BaseGraph::DFSIterator to allow proper casting. */
   class DFSIterator : public BaseGraph::DFSIterator {
   public:
+    using BaseGraph::DFSIterator::operator bool;
     DFSIterator (DGraph& g) : BaseGraph::DFSIterator(g) { std::cerr << "Dgraph DFSIterator" << p << std::endl; }
     virtual ~DFSIterator () {}
     operator Node* () { return dynamic_cast<Node*>(p); }
@@ -121,6 +122,7 @@ public:
   /** The BFSIterator here is just an extension of BaseGraph::DFSIterator to allow proper casting. */
   class BFSIterator : public BaseGraph::BFSIterator {
   public:
+    using BaseGraph::BFSIterator::operator bool;
     BFSIterator (DGraph& g) : BaseGraph::BFSIterator(g) {}
     virtual ~BFSIterator () {}
     operator Node* () { return dynamic_cast<Node*>(p); }
@@ -188,6 +190,7 @@ public:
   /** The NodesIterator is just and extension of BaseGraph::NodesIterator to provide access to DGraph nodes. */
   class NodesIterator : public BaseGraph::NodesIterator {
   public:
+    using BaseGraph::NodesIterator::operator bool;
     NodesIterator (DGraph& g) : BaseGraph::NodesIterator(g) {}
     virtual ~NodesIterator () {}
     operator Node* () { return dynamic_cast<Node*>(*iter); }
@@ -197,6 +200,7 @@ public:
   /** The BiDirNodesIterator is just an extension of BaseGraph::BiDirNodesIterator to provide access to DGraph nodes. */
   class BiDirNodesIterator : public BaseGraph::BiDirNodesIterator {
   public:
+    using BaseGraph::BiDirNodesIterator::operator bool;
     BiDirNodesIterator (DGraph& g) : BaseGraph::BiDirNodesIterator(g) {}
     BiDirNodesIterator (DGraph& g, dirType d) : BaseGraph::BiDirNodesIterator(g, d) {}
     virtual ~BiDirNodesIterator () {}
@@ -207,6 +211,7 @@ public:
   /** The EdgesIterator is just and extension of BaseGraph::EdgesIterator to provide access to DGraph edges. */
   class EdgesIterator : public BaseGraph::EdgesIterator {
   public:
+    using BaseGraph::EdgesIterator::operator bool;
     EdgesIterator (DGraph& g) : BaseGraph::EdgesIterator(g) {}
     virtual ~EdgesIterator () {}
     operator Edge* () { return dynamic_cast<Edge*>(*iter); }

@@ -134,6 +134,14 @@ AttachPreprocessingInfoTreeTraversalInheritedAttrribute::AttachPreprocessingInfo
      isPartOfFunctionParameterList            = X.isPartOfFunctionParameterList;
    }
 
+AttachPreprocessingInfoTreeTraversalInheritedAttrribute & AttachPreprocessingInfoTreeTraversalInheritedAttrribute::operator=(const AttachPreprocessingInfoTreeTraversalInheritedAttrribute & X)
+   {
+     isPartOfTemplateDeclaration              = X.isPartOfTemplateDeclaration;
+     isPartOfTemplateInstantiationDeclaration = X.isPartOfTemplateInstantiationDeclaration;
+     isPartOfFunctionParameterList            = X.isPartOfFunctionParameterList;
+     return *this;
+   }
+
 
 void
 AttachPreprocessingInfoTreeTrav::handleBracedScopes(SgLocatedNode* previousLocatedNode, SgStatement* bracedScope,int lineOfClosingBrace, bool reset_start_index, ROSEAttributesList *currentListOfAttributes)

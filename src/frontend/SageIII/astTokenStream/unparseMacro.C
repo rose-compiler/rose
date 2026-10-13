@@ -22,6 +22,7 @@ class FindSmallestStatementsInh
 
     FindSmallestStatementsInh (bool inSubtree = false) : inSubtreeOfStatement(inSubtree) {};
     FindSmallestStatementsInh ( const FindSmallestStatementsInh & X ) : inSubtreeOfStatement(X.inSubtreeOfStatement){};
+    FindSmallestStatementsInh & operator= ( const FindSmallestStatementsInh & X ) { inSubtreeOfStatement = X.inSubtreeOfStatement; return *this; };
 };
 
 //Find set of topmost nodes that match a macro call. By topmost nodes we mean the first nodes that are encountered in

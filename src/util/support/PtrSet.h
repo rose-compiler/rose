@@ -76,6 +76,7 @@ class PtrSetWrap
   class iterator : public Iterator {
    public:
     iterator( const Iterator& that) : Iterator(that) {}
+    iterator( const iterator& that) = default;
     bool operator == (const iterator& that) const
       { return Iterator::operator==(that); }
 

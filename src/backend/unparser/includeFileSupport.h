@@ -12,6 +12,7 @@ namespace IncludeFileSupport {
 
                InheritedAttribute ();
                InheritedAttribute ( const InheritedAttribute & X);
+               InheritedAttribute & operator= ( const InheritedAttribute & X);
         };
 
      class SynthesizedAttribute
@@ -25,6 +26,7 @@ namespace IncludeFileSupport {
                SynthesizedAttribute ();
                SynthesizedAttribute (SgIncludeFile* include_file);
                SynthesizedAttribute ( const SynthesizedAttribute & X);
+               SynthesizedAttribute & operator= ( const SynthesizedAttribute & X);
         };
 
      class PrefixTraversal : public AstTopDownBottomUpProcessing<InheritedAttribute,SynthesizedAttribute>

@@ -6158,6 +6158,15 @@ TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute(const Test
      caseInsensitive = X.caseInsensitive;
    }
 
+TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute &
+TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute::
+operator=(const TestForProperLanguageAndSymbolTableCaseSensitivity_InheritedAttribute & X)
+   {
+     sourceFile      = X.sourceFile;
+     caseInsensitive = X.caseInsensitive;
+     return *this;
+   }
+
 namespace
 {
   bool isCaseInsensitive(SgSourceFile* sourceFile)

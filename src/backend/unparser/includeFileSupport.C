@@ -16,6 +16,11 @@ IncludeFileSupport::InheritedAttribute::InheritedAttribute ( const IncludeFileSu
      path_prefix = X.path_prefix;
    }
 
+IncludeFileSupport::InheritedAttribute& IncludeFileSupport::InheritedAttribute::operator= ( const IncludeFileSupport::InheritedAttribute & X)
+   {
+     path_prefix = X.path_prefix;
+     return *this;
+   }
 
 IncludeFileSupport::SynthesizedAttribute::SynthesizedAttribute ()
    {
@@ -37,6 +42,12 @@ IncludeFileSupport::SynthesizedAttribute::SynthesizedAttribute ( const IncludeFi
      include_file = X.include_file;
    }
 
+IncludeFileSupport::SynthesizedAttribute& IncludeFileSupport::SynthesizedAttribute::operator= ( const IncludeFileSupport::SynthesizedAttribute & X)
+   {
+     path_prefix  = X.path_prefix;
+     include_file = X.include_file;
+     return *this;
+   }
 
 IncludeFileSupport::InheritedAttribute 
 IncludeFileSupport::PrefixTraversal::evaluateInheritedAttribute ( SgNode* node, IncludeFileSupport::InheritedAttribute inheritedAttribute )

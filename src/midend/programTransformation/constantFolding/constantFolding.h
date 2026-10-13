@@ -32,6 +32,14 @@ class ConstantFoldingInheritedAttribute
                isPartOfFoldedExpression(X.isPartOfFoldedExpression),
                internalTestingAgainstFrontend(X.internalTestingAgainstFrontend)
              {};
+
+       // Need to implement operator=
+          ConstantFoldingInheritedAttribute & operator= ( const ConstantFoldingInheritedAttribute & X ) {
+               isConstantFoldedValue = X.isConstantFoldedValue;
+               isPartOfFoldedExpression = X.isPartOfFoldedExpression;
+               internalTestingAgainstFrontend = X.internalTestingAgainstFrontend;
+               return *this;
+             }
    };
 
 class ConstantFoldingSynthesizedAttribute
@@ -88,6 +96,10 @@ class ConstantUnFoldingSynthesizedAttribute
           ConstantUnFoldingSynthesizedAttribute() : newExp(NULL) {};
           ConstantUnFoldingSynthesizedAttribute ( const ConstantUnFoldingSynthesizedAttribute & X )
              : newExp(X.newExp) {};
+          ConstantUnFoldingSynthesizedAttribute& operator= ( const ConstantUnFoldingSynthesizedAttribute & X ) {
+               newExp = X.newExp;
+               return *this;
+             }
    };
 
 class ConstantUnFoldingTraversal

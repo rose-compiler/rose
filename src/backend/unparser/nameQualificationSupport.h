@@ -92,6 +92,7 @@ class NameQualificationSynthesizedAttribute
           NameQualificationSynthesizedAttribute();
           NameQualificationSynthesizedAttribute(SgNode* astNode);
           NameQualificationSynthesizedAttribute( const NameQualificationSynthesizedAttribute & X );
+          NameQualificationSynthesizedAttribute& operator=( const NameQualificationSynthesizedAttribute & X );
    };
 
 class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQualificationInheritedAttribute, NameQualificationSynthesizedAttribute>

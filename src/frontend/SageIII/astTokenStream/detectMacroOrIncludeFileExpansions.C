@@ -29,6 +29,14 @@ DetectMacroOrIncludeFileExpansionsInheritedAttribute( const DetectMacroOrInclude
      macroExpansion = X.macroExpansion;
    }
 
+DetectMacroOrIncludeFileExpansionsInheritedAttribute&
+DetectMacroOrIncludeFileExpansionsInheritedAttribute::
+operator=( const DetectMacroOrIncludeFileExpansionsInheritedAttribute & X )
+   {
+     macroExpansion = X.macroExpansion;
+     return *this;
+   }
+
 // Synthesized attribute member functions
 DetectMacroOrIncludeFileExpansionsSynthesizedAttribute::DetectMacroOrIncludeFileExpansionsSynthesizedAttribute()
    {
@@ -47,6 +55,15 @@ DetectMacroOrIncludeFileExpansionsSynthesizedAttribute( const DetectMacroOrInclu
    {
      node           = X.node;
      macroExpansion = X.macroExpansion;
+   }
+
+DetectMacroOrIncludeFileExpansionsSynthesizedAttribute&
+DetectMacroOrIncludeFileExpansionsSynthesizedAttribute::
+operator=( const DetectMacroOrIncludeFileExpansionsSynthesizedAttribute & X )
+   {
+     node           = X.node;
+     macroExpansion = X.macroExpansion;
+     return *this;
    }
 
 // AST traversal class member functions

@@ -68,6 +68,9 @@ class AttachPreprocessingInfoTreeTraversalInheritedAttrribute
        // DQ (8/6/2012): Added copy constructor.
           AttachPreprocessingInfoTreeTraversalInheritedAttrribute(const AttachPreprocessingInfoTreeTraversalInheritedAttrribute & X);
 
+       // PL (10/12/2026): Added operator=
+          AttachPreprocessingInfoTreeTraversalInheritedAttrribute & operator=(const AttachPreprocessingInfoTreeTraversalInheritedAttrribute & X);
+
        // DQ (8/6/2012): This is a part of fixing the CPP directives for templates until they are no longer unparsed as strings.
           bool isPartOfTemplateDeclaration;
 

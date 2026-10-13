@@ -23,6 +23,18 @@ MaxSourceExtents::InheritedAttribute::InheritedAttribute(const InheritedAttribut
      end_column   = X.end_column;
    }
 
+MaxSourceExtents::InheritedAttribute& MaxSourceExtents::InheritedAttribute::operator=(const InheritedAttribute & X)
+   {
+     processChildNodes = X.processChildNodes;
+     sourceFile        = X.sourceFile;
+     start_line        = X.start_line;
+     start_column      = X.start_column;
+     end_line          = X.end_line;
+     end_column        = X.end_column;
+
+     return *this;
+   }
+
 MaxSourceExtents::SynthesizedAttribute::SynthesizedAttribute()
    {
      node = nullptr;
@@ -48,6 +60,18 @@ MaxSourceExtents::SynthesizedAttribute::SynthesizedAttribute(const SynthesizedAt
      start_column = X.start_column;
      end_line     = X.end_line;
      end_column   = X.end_column;
+   }
+
+MaxSourceExtents::SynthesizedAttribute& MaxSourceExtents::SynthesizedAttribute::operator=(const SynthesizedAttribute & X)
+   {
+     node = X.node;
+
+     start_line   = X.start_line;
+     start_column = X.start_column;
+     end_line     = X.end_line;
+     end_column   = X.end_column;
+
+     return *this;
    }
 
 MaxSourceExtents::InheritedAttribute

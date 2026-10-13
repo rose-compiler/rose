@@ -455,6 +455,7 @@ class InheritedAttribute // : AstInheritedAttribute
           InheritedAttribute(SgSourceFile* input_sourceFile, SgNode* n, int start, int end,bool processed);
 
           InheritedAttribute ( const InheritedAttribute & X ); // : processChildNodes(X.processChildNodes) {};
+          InheritedAttribute & operator= ( const InheritedAttribute & X );
    };
 
 // InheritedAttribute::InheritedAttribute(vector<stream_element*> & ts) : tokenStream(ts), processChildNodes(true) 
@@ -482,6 +483,21 @@ InheritedAttribute::InheritedAttribute ( const InheritedAttribute & X )
      node                    = X.node;
    }
 
+InheritedAttribute & InheritedAttribute::operator= ( const InheritedAttribute & X ) 
+   {
+     sourceFile              = X.sourceFile;
+     processChildNodes       = X.processChildNodes;
+
+     start_of_token_sequence = X.start_of_token_sequence;
+     end_of_token_sequence   = X.end_of_token_sequence;
+
+  // DQ (4/30/2021): Adding the node associated with the inherited attribute.
+     node                    = X.node;
+
+     return *this;
+   }
+
+
 
 // DQ (11/25/2018): This name appears to collide silently at link time with any ROSE tools that uses the same name.
 // This is important to fix ASAP.  For now I will verify the behavior further by changing the name in the ROSE tools 
@@ -496,6 +512,7 @@ class SynthesizedAttribute
          SynthesizedAttribute(SgNode* n);
 
          SynthesizedAttribute(const SynthesizedAttribute & X);
+         SynthesizedAttribute & operator=(const SynthesizedAttribute & X);
    };
 
 SynthesizedAttribute::SynthesizedAttribute()
@@ -523,6 +540,14 @@ SynthesizedAttribute::SynthesizedAttribute(const SynthesizedAttribute & X)
      node = X.node;
    }
 
+SynthesizedAttribute & SynthesizedAttribute::operator=(const SynthesizedAttribute & X)
+   {
+#if 0
+     printf ("In SynthesizedAttribute(const SynthesizedAttribute & X): copy constructor: X.node = %p = %s \n",X.node,(X.node != NULL) ? X.node->class_name().c_str() : "null");
+#endif
+     node = X.node;
+     return *this;
+   }
    
 // We need this to be a SgTopDownBottomUpProcessing traversal.
 // class TokenMappingTraversal : public AstTopDownProcessing<InheritedAttribute>

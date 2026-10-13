@@ -27,6 +27,8 @@ class InheritedAttribute
           InheritedAttribute(SgSourceFile* input_sourceFile, int input_start_line, int input_start_column, int input_end_line, int input_end_column, bool processed);
 
           InheritedAttribute ( const InheritedAttribute & X );
+
+          InheritedAttribute& operator= ( const InheritedAttribute & X );
    };
 
 class SynthesizedAttribute
@@ -43,6 +45,8 @@ class SynthesizedAttribute
           SynthesizedAttribute(SgNode* n, int start_line, int start_column, int end_line, int end_column);
 
           SynthesizedAttribute(const SynthesizedAttribute & X);
+
+          SynthesizedAttribute& operator=(const SynthesizedAttribute & X);
    };
 
 

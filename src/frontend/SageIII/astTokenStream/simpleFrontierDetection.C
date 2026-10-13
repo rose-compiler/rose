@@ -64,6 +64,23 @@ SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute(const SimpleFron
    }
 
 
+SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute&
+SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute::
+operator=(const SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute &X)
+   {
+     sourceFile        = X.sourceFile;
+     processChildNodes = X.processChildNodes;
+
+     isFrontier = X.isFrontier;
+
+     unparseUsingTokenStream             = X.unparseUsingTokenStream;
+     unparseFromTheAST                   = X.unparseFromTheAST;
+     containsNodesToBeUnparsedFromTheAST = X.containsNodesToBeUnparsedFromTheAST;
+
+     return *this;
+   }
+
+
 SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute::
 SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute()
    {
@@ -101,6 +118,23 @@ SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute(const SimpleFr
      containsNodesToBeUnparsedFromTheAST = X.containsNodesToBeUnparsedFromTheAST;
 
      containsNodesToBeUnparsedFromTheTokenStream = X.containsNodesToBeUnparsedFromTheTokenStream;
+   }
+
+
+SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute&
+SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute::
+operator=(const SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute & X)
+   {
+     node       = X.node;
+     isFrontier = X.isFrontier;
+
+     unparseUsingTokenStream             = X.unparseUsingTokenStream;
+     unparseFromTheAST                   = X.unparseFromTheAST;
+     containsNodesToBeUnparsedFromTheAST = X.containsNodesToBeUnparsedFromTheAST;
+
+     containsNodesToBeUnparsedFromTheTokenStream = X.containsNodesToBeUnparsedFromTheTokenStream;
+
+     return *this;
    }
 
 

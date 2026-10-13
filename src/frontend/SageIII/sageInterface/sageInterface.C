@@ -19708,6 +19708,12 @@ void SageInterface::markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physi
                     isCastSubtree    = X.isCastSubtree;
                     physical_file_id = X.physical_file_id;
                   }
+               InheritedAttribute& operator=(const InheritedAttribute & X)
+                  {
+                    isCastSubtree    = X.isCastSubtree;
+                    physical_file_id = X.physical_file_id;
+                    return *this;
+                  }
         };
 
 // DQ (7/21/21): This code construction does not work with the GNU 4.9.x compilers.

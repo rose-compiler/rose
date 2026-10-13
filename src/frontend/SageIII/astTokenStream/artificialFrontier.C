@@ -32,6 +32,14 @@ ArtificialFrontier_InheritedAttribute(const ArtificialFrontier_InheritedAttribut
      sourceFile = X.sourceFile;
    }
 
+ArtificialFrontier_InheritedAttribute &
+ArtificialFrontier_InheritedAttribute::
+operator =(const ArtificialFrontier_InheritedAttribute &X)
+   {
+     sourceFile = X.sourceFile;
+     return *this;
+   }
+
 ArtificialFrontier_SynthesizedAttribute::
 ArtificialFrontier_SynthesizedAttribute()
    {
@@ -48,6 +56,14 @@ ArtificialFrontier_SynthesizedAttribute::
 ArtificialFrontier_SynthesizedAttribute(const ArtificialFrontier_SynthesizedAttribute &X)
    {
      node = X.node;
+   }
+
+ArtificialFrontier_SynthesizedAttribute &
+ArtificialFrontier_SynthesizedAttribute::
+operator=(const ArtificialFrontier_SynthesizedAttribute &X)
+   {
+     node = X.node;
+     return *this;
    }
 
 ArtificialFrontierTraversal::

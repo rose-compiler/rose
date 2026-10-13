@@ -2456,6 +2456,17 @@ NameQualificationSynthesizedAttribute::NameQualificationSynthesizedAttribute ( c
    }
 
 
+NameQualificationSynthesizedAttribute& NameQualificationSynthesizedAttribute::operator= ( const NameQualificationSynthesizedAttribute & X )
+   {
+  // Copy constructor.
+
+  // DQ (8/2/2020): Added support for debugging.
+     node = X.node;
+
+     return *this;
+   }
+
+
 // *******************
 // NameQualificationTraversal
 // *******************

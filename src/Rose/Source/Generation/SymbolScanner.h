@@ -20,6 +20,7 @@ struct SymbolScannerBase : public ROSE_VisitTraversal {
 
 template <typename API>
 struct SymbolScanner : public SymbolScannerBase<SymbolScanner<API>> {
+  using SymbolScannerBase<SymbolScanner<API>>::visit;
   API & api;
 
   SymbolScanner(API & api_) : api(api_) {}
@@ -31,6 +32,7 @@ struct SymbolScanner : public SymbolScannerBase<SymbolScanner<API>> {
 
 template <>
 struct SymbolScanner<void> : public SymbolScannerBase<SymbolScanner<void>> {
+  using SymbolScannerBase<SymbolScanner<void>>::visit;
   struct api_t {
     std::map<std::string, std::set<SgNamespaceSymbol *> > namespaces;
     std::map<std::string, std::set<SgClassSymbol *> > classes;
