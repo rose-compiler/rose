@@ -2600,7 +2600,6 @@ IsMemoryFree( const AstNodePtr& s, AstNodeType* exptype, AstNodePtr* variable)
        return false;
     }
     if (name == "free") {
-       assert(params.size() == 1);
        if (variable != 0) {
          *variable = SkipCasting(params.front().get_ptr()); 
        }
