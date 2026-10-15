@@ -207,8 +207,6 @@ namespace JvmSemantics {
 
     void branch_ifnonnull(Ops ops, I insn, Args args);
     void branch_ifnull(Ops ops, I insn, Args args);
-    void execute_monitorenter(Ops ops, I insn, Args args);
-    void execute_monitorexit(Ops ops, I insn, Args args);
 
     // Runtime-exception hooks. These are intended to be executable checks in the
     // concrete JVM semantics state, not documentation-only comments. A symbolic
@@ -714,10 +712,28 @@ namespace JvmSemantics {
         ASSERT_not_null(index);
 
         ASSERT_require(arrayRef->kind() == ValueKind::ArrayReference);
+        ASSERT_require(arrayRef->nullness() == Nullness::DefinitelyNonNull);
         ASSERT_require(index->kind() == ValueKind::Integer32);
 
         // Array contents are not modeled yet.
-        return ops->undefined_(nBits);
+        auto value = ops->undefined_(nBits);
+        value->nullness(Nullness::DefinitelyNull);
+
+        const std::string &desc = arrayRef->typeDescriptor();
+
+        if (!desc.empty() && desc[0] == '[') {
+            const std::string elementDesc = desc.substr(1);
+
+            if (!elementDesc.empty() && elementDesc[0] == 'L') {
+                value->kind(ValueKind::ObjectReference);
+                value->typeDescriptor(elementDesc);
+            } else if (!elementDesc.empty() && elementDesc[0] == '[') {
+                value->kind(ValueKind::ArrayReference);
+                value->typeDescriptor(elementDesc);
+            }
+        }
+
+        return value;
     }
 
     void execute_array_load(Ops ops, ArrayElementKind loadKind) {
@@ -756,19 +772,28 @@ namespace JvmSemantics {
               break;
           case ArrayElementKind::Reference: {
               std::string elementDescriptor = descriptor.substr(1);
+
               if (elementDescriptor[0] == '[') {
                   result = DispatcherJvm::syntheticArrayReference(ops->protoval(), elementDescriptor);
                   const auto &dimensions = arrayRef->arrayDimensions();
-                  if (dimensions.size() > 1) {
+
+                  if (!dimensions.empty()) {
+                      result->arrayLength(dimensions[0]);
                       std::vector<SValuePtr> remaining(dimensions.begin() + 1, dimensions.end());
                       result->arrayDimensions(remaining);
-                      result->arrayLength(remaining[0]);
+                      result->nullness(Nullness::DefinitelyNonNull);
+                  } else {
+                      // No nested dimension was allocated.
+                      result->nullness(Nullness::DefinitelyNull);
                   }
+
               } else {
-                  result = readArrayElement(ops, arrayRef, index, 32);
+                  result = readArrayElement(ops, arrayRef, index,
+                                            DispatcherJvm::nBitsForKind(ValueKind::ObjectReference));
                   result->kind(ValueKind::ObjectReference);
                   result->typeDescriptor(elementDescriptor);
               }
+
               break;
           }
           case ArrayElementKind::ByteOrBoolean: {
@@ -952,13 +977,23 @@ namespace JvmSemantics {
 
         SValuePtr condition;
 
-        switch (branchKind) {
-            case NullBranchKind::IfNull:
-                condition = ops->isEqual(reference, nullRef);
-                break;
-            case NullBranchKind::IfNonNull:
-                condition = ops->isNotEqual(reference, nullRef);
-                break;
+        switch (reference->nullness()) {
+          case Nullness::DefinitelyNull:
+              condition = ops->boolean_(branchKind == NullBranchKind::IfNull);
+              break;
+          case Nullness::DefinitelyNonNull:
+              condition = ops->boolean_(branchKind == NullBranchKind::IfNonNull);
+              break;
+          case Nullness::MaybeNull:
+              switch (branchKind) {
+                case NullBranchKind::IfNull:
+                    condition = ops->isEqual(reference, nullRef);
+                    break;
+                case NullBranchKind::IfNonNull:
+                    condition = ops->isNotEqual(reference, nullRef);
+                    break;
+              }
+              break;
         }
         ASSERT_not_null(condition);
 
@@ -977,9 +1012,6 @@ namespace JvmSemantics {
         auto nextPc = ops->ite(condition, target, fallThrough);
         ops->writeRegister(pcReg, nextPc);
     }
-
-    void execute_monitorenter(Ops, I, Args) { jvmUnsupported("execute_monitorenter"); }
-    void execute_monitorexit(Ops, I, Args) { jvmUnsupported("execute_monitorexit"); }
 
     void throwIfNull(Ops /*ops*/, const char *exceptionName, SValue::Ptr ref) {
         if (ref && ref->get_number() == 0)
@@ -1210,7 +1242,37 @@ using JvmSemantics::InvocationKind;
 struct IP_aaload: P {
     void p(D /*d*/, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        execute_array_load(ops, ArrayElementKind::Reference);
+
+        auto state = ops->currentState();
+        ASSERT_not_null(state);
+        auto frame = state->currentFrame();
+        ASSERT_not_null(frame);
+
+        auto arrayRef = ops->peekOperand(1);
+
+        switch (arrayRef->nullness()) {
+          case Nullness::DefinitelyNull: {
+              ops->popOperand(); // index
+              ops->popOperand(); // arrayref
+
+              // raise NPE and terminate
+              auto except = DispatcherJvm::syntheticObjectReference(
+                  state->protoval(), "Ljava/lang/NullPointerException;");
+
+              except->nullness(Nullness::DefinitelyNonNull);
+              frame->currentException(except);
+              state->terminate();
+              break;
+          }
+          case Nullness::MaybeNull:
+              // Either normal execution or NullPointerException is possible.
+              // No path splitting is modeled; continue with the normal load.
+              execute_array_load(ops, ArrayElementKind::Reference);
+              break;
+          case Nullness::DefinitelyNonNull:
+              execute_array_load(ops, ArrayElementKind::Reference);
+              break;
+        }
     }
 };
 
@@ -1344,7 +1406,13 @@ struct IP_anewarray: P {
         ASSERT_require2(length->kind() == ValueKind::Integer32, "anewarray requires Integer32 stack value");
 
         auto arrayRef = DispatcherJvm::syntheticArrayReference(ops->protoval(), descriptor);
+
         arrayRef->arrayLength(length);
+        arrayRef->nullness(Nullness::DefinitelyNonNull);
+
+        // anewarray allocates only this dimension.
+        // Nested array elements, if any, are initially null.
+        arrayRef->arrayDimensions({});
 
         ops->pushOperand(arrayRef);
     }
@@ -1492,17 +1560,17 @@ struct IP_athrow: P {
         SValuePtr newException;
 
         switch (exceptionObject->nullness()) {
-          case BaseSemantics::Nullness::DefinitelyNull:
+          case Nullness::DefinitelyNull:
               newException = DispatcherJvm::
                   syntheticObjectReference(state->protoval(), "Ljava/lang/NullPointerException;");
-              newException->nullness(BaseSemantics::Nullness::DefinitelyNonNull);
+              newException->nullness(Nullness::DefinitelyNonNull);
               break;
-          case BaseSemantics::Nullness::MaybeNull:
+          case Nullness::MaybeNull:
               newException = DispatcherJvm::
                   syntheticObjectReference(state->protoval(), "Ljava/lang/Throwable;");
-              newException->nullness(BaseSemantics::Nullness::DefinitelyNonNull);
+              newException->nullness(Nullness::DefinitelyNonNull);
               break;
-          case BaseSemantics::Nullness::DefinitelyNonNull:
+          case Nullness::DefinitelyNonNull:
               newException = exceptionObject;
               break;
         }
@@ -3505,7 +3573,7 @@ struct IP_instanceof: P {
 
         // No type match found; push an undefined value
         //
-        auto result = ops->undefined_(32);
+        auto result = ops->undefined_(DispatcherJvm::nBitsForKind(ValueKind::Integer32));
         result->kind(ValueKind::Integer32);
         ops->pushOperand(result);
     }
@@ -4504,19 +4572,19 @@ struct IP_monitorenter: P {
         ASSERT_not_null(monitoredObject);
 
         switch (monitoredObject->nullness()) {
-          case BaseSemantics::Nullness::DefinitelyNull: {
+          case Nullness::DefinitelyNull: {
               auto exceptionObject
                 = DispatcherJvm::syntheticObjectReference(ops->protoval(), "Ljava/lang/NullPointerException;");
 
-              exceptionObject->nullness(BaseSemantics::Nullness::DefinitelyNonNull);
+              exceptionObject->nullness(Nullness::DefinitelyNonNull);
               frame->currentException(exceptionObject);
               state->terminate();
               break;
           }
-          case BaseSemantics::Nullness::DefinitelyNonNull:
+          case Nullness::DefinitelyNonNull:
               // Normal monitor operation; no monitor state modeled yet.
               break;
-          case BaseSemantics::Nullness::MaybeNull:
+          case Nullness::MaybeNull:
               // Both normal and exceptional paths are possible.
               // No monitor/null path splitting is modeled yet.
               break;
@@ -4543,20 +4611,20 @@ struct IP_monitorexit: P {
         ASSERT_not_null(monitoredObject);
 
         switch (monitoredObject->nullness()) {
-          case BaseSemantics::Nullness::DefinitelyNull: {
+          case Nullness::DefinitelyNull: {
               auto exceptionObject =
                   DispatcherJvm::syntheticObjectReference(
                       ops->protoval(), "Ljava/lang/NullPointerException;");
 
-              exceptionObject->nullness(BaseSemantics::Nullness::DefinitelyNonNull);
+              exceptionObject->nullness(Nullness::DefinitelyNonNull);
               frame->currentException(exceptionObject);
               state->terminate();
               break;
           }
-          case BaseSemantics::Nullness::DefinitelyNonNull:
+          case Nullness::DefinitelyNonNull:
               // Normal monitor operation; no monitor state modeled yet.
               break;
-          case BaseSemantics::Nullness::MaybeNull:
+          case Nullness::MaybeNull:
               // Both normal and exceptional paths are possible.
               // No monitor/null path splitting is modeled yet.
               break;
@@ -4579,19 +4647,29 @@ struct IP_multianewarray: P {
         const size_t dimensions = d->asU1(args[1]);
         ASSERT_require2(dimensions > 0, "multianewarray requires at least one dimension");
 
-        std::vector<SValue::Ptr> lengths(dimensions);
+        std::vector<SValue::Ptr> nestedDimensions(dimensions - 1);
+        SValue::Ptr outerLength;
 
         for (size_t i = dimensions; i > 0; --i) {
             auto length = ops->popOperand();
-            ASSERT_require2(length->kind() == ValueKind::Integer32, "multianewarray requires Integer32 dimension sizes");
-            lengths[i-1] = length;
+            ASSERT_require2(length->kind() == ValueKind::Integer32,
+                            "multianewarray requires Integer32 dimension sizes");
+
+            if (i == 1) {
+                outerLength = length;
+            } else {
+                nestedDimensions[i - 2] = length;
+            }
         }
 
         std::string descriptor = JS::className(ops, index); // e.g. "[[[I"
 
         auto arrayRef = DispatcherJvm::syntheticArrayReference(ops->protoval(), descriptor);
-        arrayRef->arrayLength(lengths[0]);
-        arrayRef->arrayDimensions(lengths);
+
+        arrayRef->arrayLength(outerLength);
+        arrayRef->arrayDimensions(nestedDimensions);
+
+        arrayRef->nullness(Nullness::DefinitelyNonNull);
 
         ops->pushOperand(arrayRef);
     }
@@ -4674,7 +4752,9 @@ struct IP_newarray: P {
         ASSERT_require2(length->kind() == ValueKind::Integer32, "newarray requires Integer32 stack value");
 
         auto arrayRef = DispatcherJvm::syntheticArrayReference(ops->protoval(), descriptor);
+
         arrayRef->arrayLength(length);
+        arrayRef->nullness(Nullness::DefinitelyNonNull);
 
         ops->pushOperand(arrayRef);
     }
@@ -5503,7 +5583,7 @@ DispatcherJvm::syntheticArrayReference(const BaseSemantics::SValuePtr &protoval,
     ASSERT_require(!descriptor.empty());
     ASSERT_require(descriptor.front() == '[');
 
-    BaseSemantics::SValuePtr reference = protoval->undefined_(protoval->nBits());
+    BaseSemantics::SValuePtr reference = protoval->undefined_(nBitsForKind(ValueKind::ArrayReference));
     ASSERT_not_null(reference);
 
     reference->kind(BaseSemantics::ValueKind::ArrayReference);
@@ -5514,7 +5594,7 @@ DispatcherJvm::syntheticArrayReference(const BaseSemantics::SValuePtr &protoval,
     }
 
     // The array type is known, but its length is not.
-    BaseSemantics::SValuePtr length = protoval->undefined_(32);
+    BaseSemantics::SValuePtr length = protoval->undefined_(nBitsForKind(ValueKind::Integer32));
     ASSERT_not_null(length);
 
     length->kind(BaseSemantics::ValueKind::Integer32);

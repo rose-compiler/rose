@@ -83,8 +83,8 @@ protected:
     size_t width = 0;                           /** Width of the value in bits. Typically (not always) a power of two. */
     ValueKind kind_ = ValueKind::Unknown;       /** Kind of the value type. */
     Nullness nullness_ = Nullness::MaybeNull;   /** Nullness state for reference-like values. */
-    SValuePtr arrayLength_;                     /** Symbolic length of the array if an ArrayReference. */
-    std::vector<SValuePtr> arrayDimensions_;    /** Known lengths of nested array dimensions. */
+    SValuePtr arrayLength_;                     /** Length of this array object. */
+    std::vector<SValuePtr> arrayDimensions_;    /** Lengths of allocated nested dimensions below this array. */
     std::string typeDescriptor_;   /** Description of the type if a Reference, empty means no descriptor. */
     std::string symbolName_;       /** Name of the symbolic program entity represented by this value; empty means none. */
 
