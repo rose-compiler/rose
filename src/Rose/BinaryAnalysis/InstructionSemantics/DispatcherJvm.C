@@ -4488,26 +4488,79 @@ struct IP_lxor: P {
 
 // monitorenter (194 (0xc2))
         // Description:
-        //   Enter or exit the monitor associated with objectref.
+        //   Enter the monitor associated with monitoredObject.
         // Run-time Exceptions:
         //   NullPointerException if objectref is null.
 struct IP_monitorenter: P {
     void p(D /*d*/, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        JvmSemantics::execute_monitorenter(ops, insn, args);
+
+        auto state = ops->currentState();
+        ASSERT_not_null(state);
+        auto frame = state->currentFrame();
+        ASSERT_not_null(frame);
+
+        auto monitoredObject = ops->popOperand();
+        ASSERT_not_null(monitoredObject);
+
+        switch (monitoredObject->nullness()) {
+          case BaseSemantics::Nullness::DefinitelyNull: {
+              auto exceptionObject
+                = DispatcherJvm::syntheticObjectReference(ops->protoval(), "Ljava/lang/NullPointerException;");
+
+              exceptionObject->nullness(BaseSemantics::Nullness::DefinitelyNonNull);
+              frame->currentException(exceptionObject);
+              state->terminate();
+              break;
+          }
+          case BaseSemantics::Nullness::DefinitelyNonNull:
+              // Normal monitor operation; no monitor state modeled yet.
+              break;
+          case BaseSemantics::Nullness::MaybeNull:
+              // Both normal and exceptional paths are possible.
+              // No monitor/null path splitting is modeled yet.
+              break;
+        }
     }
 };
 
 // monitorexit (195 (0xc3))
         // Description:
-        //   Enter or exit the monitor associated with objectref.
+        //   Exit the monitor associated with monitoredObject.
         // Run-time Exceptions:
         //   NullPointerException if objectref is null.
         //   IllegalMonitorStateException if the current thread does not own the monitor.
 struct IP_monitorexit: P {
     void p(D /*d*/, Ops ops, I insn, Args args) {
         assert_args(insn, args, 0);
-        JvmSemantics::execute_monitorexit(ops, insn, args);
+
+        auto state = ops->currentState();
+        ASSERT_not_null(state);
+        auto frame = state->currentFrame();
+        ASSERT_not_null(frame);
+
+        auto monitoredObject = ops->popOperand();
+        ASSERT_not_null(monitoredObject);
+
+        switch (monitoredObject->nullness()) {
+          case BaseSemantics::Nullness::DefinitelyNull: {
+              auto exceptionObject =
+                  DispatcherJvm::syntheticObjectReference(
+                      ops->protoval(), "Ljava/lang/NullPointerException;");
+
+              exceptionObject->nullness(BaseSemantics::Nullness::DefinitelyNonNull);
+              frame->currentException(exceptionObject);
+              state->terminate();
+              break;
+          }
+          case BaseSemantics::Nullness::DefinitelyNonNull:
+              // Normal monitor operation; no monitor state modeled yet.
+              break;
+          case BaseSemantics::Nullness::MaybeNull:
+              // Both normal and exceptional paths are possible.
+              // No monitor/null path splitting is modeled yet.
+              break;
+        }
     }
 };
 
@@ -4572,9 +4625,7 @@ struct IP_new_: P {
         const std::string descriptor = "L" + className + ";";
         auto sval = DispatcherJvm::syntheticObjectReference(ops->protoval(), descriptor, symbolName);
 
-        if (className == "java/lang/RuntimeException") {
-            sval->nullness(Nullness::DefinitelyNonNull);
-        }
+        sval->nullness(Nullness::DefinitelyNonNull);
 
         ops->pushOperand(sval);
     }
@@ -5183,8 +5234,8 @@ DispatcherJvm::initializeDispatchTable() {
     iprocSet(0xba,  new Jvm::IP_invokedynamic);
     iprocSet(0xc0,  new Jvm::IP_checkcast);
     iprocSet(0xc1,  new Jvm::IP_instanceof);
-//  iprocSet(0xc2,  new Jvm::IP_monitorenter);
-//  iprocSet(0xc3,  new Jvm::IP_monitorexit);
+    iprocSet(0xc2,  new Jvm::IP_monitorenter);
+    iprocSet(0xc3,  new Jvm::IP_monitorexit);
     iprocSet(0xc4,  new Jvm::IP_wide);
     iprocSet(0xc5,  new Jvm::IP_multianewarray);
 

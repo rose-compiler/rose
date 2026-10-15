@@ -152,8 +152,11 @@ Attribute::~Attribute() = default;
 // Class
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Class::Class(std::string name, Address va, NamespacePtr ns) : name_{std::move(name)}, address_{va}, namespace_{ns} {}
-Class::~Class() {}
+Class::Class(std::string name, Address va, NamespacePtr ns) : name_{std::move(name)}, address_{va}, namespace_{ns} {
+    ns->append(sharedFromThis());
+}
+
+Class::~Class() = default;
 
 const std::string&
 Class::name() const {
@@ -501,12 +504,13 @@ void Class::digraph() const {
 // Namespace
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Namespace::Namespace(std::string name) : name_{name} {
+Namespace::Namespace(std::string name, ContainerPtr container) : name_{name} {
+    container->append(sharedFromThis());
 }
 
 Namespace::Ptr
-Namespace::instance(std::string name) {
-    return Ptr(new Namespace(name));
+Namespace::instance(std::string name, ContainerPtr container) {
+    return Ptr(new Namespace(std::move(name), container));
 }
 
 std::string
@@ -556,6 +560,11 @@ Container::nextSystemReservedVa() {
 const std::vector<Namespace::Ptr>&
 Container::namespaces() const {
     return namespaces_;
+}
+
+void
+Container::append(Namespace::Ptr ptr) {
+    namespaces_.push_back(ptr);
 }
 
 void

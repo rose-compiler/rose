@@ -22,9 +22,11 @@ using InstructionMap = std::map<Address, SgAsmInstruction*>;
 // Forward references
 class Class;
 class Namespace;
+class Container;
 
 using ClassPtr = Sawyer::SharedPointer<Class>;
 using NamespacePtr = Sawyer::SharedPointer<Namespace>;
+using ContainerPtr = Sawyer::SharedPointer<Container>;
 
 /** Base class for ByteCode Fields.
  *
@@ -217,13 +219,14 @@ class Class: public Sawyer::SharedObject,
 class Namespace: public Sawyer::SharedObject,
                  public Sawyer::SharedFromThis<Namespace> {
   public:
-    /** Shared ownership pointer. */
+    /** Shared ownership pointers. */
     using Ptr = Sawyer::SharedPointer<Namespace>;
+    using ContainerPtr = Sawyer::SharedPointer<Container>; // forward declaration
 
     virtual ~Namespace() = default;
 
     /** Allocating constructor. */
-    static Ptr instance(std::string name);
+    static Ptr instance(std::string name, ContainerPtr container);
 
     virtual std::string name() const;
     virtual void partition(const PartitionerPtr &partitioner,
@@ -235,7 +238,7 @@ class Namespace: public Sawyer::SharedObject,
 
   protected:
     Namespace() = delete;
-    explicit Namespace(std::string name);
+    explicit Namespace(std::string name, ContainerPtr container);
 
     std::vector<ByteCode::Class::Ptr> classes_;
 
@@ -262,6 +265,8 @@ class Container: public Sawyer::SharedObject,
     virtual std::string name() const;
     virtual bool isSystemReserved(const std::string &name) const = 0;
     virtual void partition(const PartitionerPtr &partitioner);
+
+    void append(Namespace::Ptr ptr);
 
     const std::vector<Namespace::Ptr>& namespaces() const;
 

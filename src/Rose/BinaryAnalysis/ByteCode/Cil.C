@@ -530,12 +530,12 @@ void CilClass::dump() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CilNamespace::Ptr
-CilNamespace::instance(const std::string name, SgAsmCilMetadataRoot* mdr) {
-    return Ptr(new CilNamespace(std::move(name), mdr));
+CilNamespace::instance(const std::string name, ContainerPtr container, SgAsmCilMetadataRoot* mdr) {
+    return Ptr(new CilNamespace(std::move(name), container, mdr));
 }
 
-CilNamespace::CilNamespace(const std::string name, SgAsmCilMetadataRoot* mdr)
-  : Namespace(std::move(name)), mdr_{mdr} {
+CilNamespace::CilNamespace(const std::string name, ContainerPtr container, SgAsmCilMetadataRoot* mdr)
+  : Namespace(std::move(name), container), mdr_{mdr} {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -544,7 +544,7 @@ CilNamespace::CilNamespace(const std::string name, SgAsmCilMetadataRoot* mdr)
 
 CilContainer::Ptr
 CilContainer::instance(std::string name, SgAsmCilMetadataRoot* mdr) {
-    return Ptr(new CilContainer(name, mdr));
+    return Ptr(new CilContainer(std::move(name), mdr));
 }
 
 CilContainer::CilContainer(std::string name, SgAsmCilMetadataRoot* root)
@@ -567,8 +567,7 @@ CilContainer::CilContainer(std::string name, SgAsmCilMetadataRoot* root)
     
         thisNamespace = sgTypeDef->get_TypeNamespace_string();
         if (lastNamespace != thisNamespace) {
-            CilNamespace::Ptr ns = CilNamespace::instance(utf8ToString(sgTypeDef->get_TypeNamespace_string()), mdr_);
-            namespaces_.push_back(ns);
+            CilNamespace::instance(utf8ToString(sgTypeDef->get_TypeNamespace_string()), sharedFromThis(), mdr_);
 
             if (TRACE_CONSTRUCTION) {
                 if (lastNamespace) std::cout << "}" << std::endl;

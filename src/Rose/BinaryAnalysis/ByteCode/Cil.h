@@ -96,13 +96,13 @@ public:
     using Ptr = Sawyer::SharedPointer<CilNamespace>;
 
     /** Allocating constructor. */
-    static Ptr instance(const std::string, SgAsmCilMetadataRoot*);
+    static Ptr instance(const std::string, ContainerPtr, SgAsmCilMetadataRoot*);
 
     ~CilNamespace() = default;
     CilNamespace() = delete;
 
 private:
-    CilNamespace(const std::string, SgAsmCilMetadataRoot*);
+    CilNamespace(const std::string, ContainerPtr, SgAsmCilMetadataRoot*);
     [[maybe_unused]] SgAsmCilMetadataRoot* mdr_;
 };
 

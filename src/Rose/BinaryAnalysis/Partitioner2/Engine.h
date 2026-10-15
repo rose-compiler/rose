@@ -368,6 +368,7 @@ protected:
     ByteCode::Class::Ptr analysisClass_;                // the ByteCode analysis class used for partitioning
     Architecture::BaseConstPtr architecture_;           // architecture-specific information
     InstructionSemantics::BaseSemantics::StatePtr state_; // the semantics machine state
+    ByteCode::Container::Ptr container_;                  // the Container for all namespaces, classes, ...
     ByteCode::ClassRepository::Ptr classes_;              // Repository of ByteCode Classes
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

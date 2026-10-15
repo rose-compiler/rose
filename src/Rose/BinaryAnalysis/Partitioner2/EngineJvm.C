@@ -883,12 +883,15 @@ NOTES:
     fileList->get_files().push_back(gf);
     gf->set_parent(fileList);
 
-    // Create a JvmClass
-    ByteCode::Namespace::Ptr ns = ByteCode::Namespace::instance("");
-    ByteCode::JvmClass::Ptr jvmClass = ByteCode::JvmClass::instance(className, ns, jfh);
+    // Create the container and its namespace
+    container_ = ByteCode::JvmContainer::instance("JvmContainer");
+    ByteCode::Namespace::Ptr jvmNamespace = ByteCode::Namespace::instance("JvmNamespace", container_);
+
+    // Create the analysis class and append it to its namespace
+    analysisClass_ = ByteCode::JvmClass::instance(className, jvmNamespace, jfh);
 
     // Insert the class into the repository
-    bool inserted = classes_->insert(jvmClass);
+    bool inserted = classes_->insert(analysisClass_);
     ASSERT_require2(inserted, "duplicate class in repository");
 
     // Decode instructions for each method and determine the complete address envelope for this class. JVM method
@@ -899,7 +902,7 @@ NOTES:
     Address nextNoCodeMethodVa = baseVa + 1;
     size_t nNoCodeMethods = 0;
 
-    for (const ByteCode::Method::Ptr &method: jvmClass->methods()) {
+    for (const ByteCode::Method::Ptr &method: analysisClass_->methods()) {
         method->decode(disassembler);
         const std::vector<SgAsmInstruction*> &instructions = method->instructions()->get_instructions();
         if (instructions.empty()) {
@@ -911,7 +914,7 @@ NOTES:
         }
 
         // Connect the method to its declaring class
-        method->declaringClass(&*jvmClass);
+        method->declaringClass(&*analysisClass_);
 
         // Search method invocations for unknown classes
         discoverFunctionCalls(method, functions_, discoveredClasses);
@@ -1071,10 +1074,11 @@ EngineJvm::roseFrontendReplacement(const std::vector<fs::path> &paths) {
 
 // TODO: try to remove this initialization
 //       Perhaps SgFile::doSetupForConstructor(argv, project); // (but we are post constructor!)
-    jvmComposite->set_sourceFileNameWithPath(fs::absolute(paths[0]).string()); // best we can do
-    jvmComposite->set_sourceFileNameWithoutPath(paths[0].filename().string()); // best we can do
-    jvmComposite->initializeSourcePosition(paths[0].string());                 // best we can do
-    jvmComposite->set_originalCommandLineArgumentList(std::vector<std::string>(1, paths[0].string())); // best we can do
+    const auto path = paths.front();
+    jvmComposite->set_sourceFileNameWithPath(fs::absolute(path).string()); // best we can do
+    jvmComposite->set_sourceFileNameWithoutPath(path.filename().string()); // best we can do
+    jvmComposite->initializeSourcePosition(path.string());                 // best we can do
+    jvmComposite->set_originalCommandLineArgumentList(std::vector<std::string>(1, path.string())); // best we can do
     ASSERT_not_null(jvmComposite->get_file_info());
 
     // Load class files starting at this virtual address
@@ -1316,15 +1320,11 @@ EngineJvm::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
             auto pool = jfh->get_constant_pool();
             ASSERT_not_null(pool);
 
-            ByteCode::Namespace::Ptr ns = ByteCode::Namespace::instance("");
-
             auto classIndex = jfh->get_this_class();
             std::string className = ByteCode::constantPoolEntryName(classIndex, pool);
 
+            // Retrieve the class from the class repository (will fail if not found)
             auto jvmClass = ByteCode::JvmClass::promote(classByName(className));
-
-            // Make the ByteCode analysis class available
-            analysisClass_ = jvmClass;
 
             // Start discovering instructions and forming them into basic blocks and functions
             SAWYER_MESG(where) <<"discovering and populating functions\n";
